@@ -1,6 +1,7 @@
 import os from 'os';
+import { numberLessThanTen, numberGreaterThanTen } from '../../middleware/hearMiddleware';
 
-// base controller
+// controller for tests
 export default function(controller) {
 
 	controller.on('user_typing', (bot, message) => {
@@ -23,6 +24,14 @@ export default function(controller) {
 
 	});
 
+	// messing around w/ custom hear middleware
+	controller.hears(controller.utterances.hears.number, 'direct_message', numberLessThanTen, (bot, message) => {
+			bot.reply(message, "That is a number less than 10!");
+	});
+	controller.hears(controller.utterances.hears.number, 'direct_message', numberGreaterThanTen, (bot, message) => {
+			bot.reply(message, "That is a number greater than 10!");
+	});
+
 	controller.hears(["chip"], 'direct_message', (bot, message) => {
 
 		bot.api.reactions.add({
@@ -37,7 +46,8 @@ export default function(controller) {
 			}
 		})
 
-		bot.reply(message, "Chip, as in... Chocolate chip?");
+		setTimeout(()=>{bot.reply(message, "Chip, as in... Chocolate chip?")}, 2000);
+
 
 	});
 

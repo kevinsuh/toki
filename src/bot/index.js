@@ -22,6 +22,16 @@ let addUtterances = (bot) => {
 // for the controller to store
 let addHearUtterances = (bot) => {
 	var hearUtterances = {};
+
+	// hello words
 	hearUtterances.hello = ["hi", "hey", "sup", "yo", "holla", "h", "hello", "hola", "waddup", "whats up"];
+
+	// numbers
+	var numbers = new Array(100);
+	for (var i = 0; i < i.length; i++) {
+		numbers[i] = i;
+	}
+	hearUtterances.number = i;
+
 	bot.utterances.hears = hearUtterances;
 }
