@@ -13,6 +13,7 @@
 import Botkit from 'botkit';
 import os from 'os';
 import tasksController from './controllers/tasks';
+import setupBot from './bot';
 
 // THIS MUST BE TAKEN OUT WHEN IN PRODUCTION
 var token = `xoxb-48507738372-KwxgAW6WrQN2tG0S61619R1F`; // this is token to navi_bot specifically
@@ -29,6 +30,11 @@ var bot = controller.spawn({
 bot.startRTM((err, bot, payload) => {
     console.log("RTM Connection finished! Bot is now on and listening");
 });
+
+/**
+ *      BEEF UP NAVI BOT
+ */
+setupBot(bot);
 
 /**
  *      SET UP NAVI'S CONTROLLERS

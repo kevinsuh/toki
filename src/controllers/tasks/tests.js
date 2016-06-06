@@ -3,6 +3,10 @@ import os from 'os';
 // base controller
 export default function(controller) {
 
+	controller.on('user_typing', (bot, message) => {
+		console.log("user is typing!");
+	});
+
 	controller.hears(['kevin'], 'direct_message', (bot, message) => {
 
 		bot.api.reactions.add({
@@ -19,7 +23,7 @@ export default function(controller) {
 
 	});
 
-	controller.hears(['chip'], 'direct_message', (bot, message) => {
+	controller.hears(["chip"], 'direct_message', (bot, message) => {
 
 		bot.api.reactions.add({
 			timestamp: message.ts,
@@ -37,7 +41,7 @@ export default function(controller) {
 
 	});
 
-	controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function(bot, message) {
+	controller.hears(controller.utterances.hears.hello, 'direct_message,direct_mention,mention', function(bot, message) {
 
 	    bot.api.reactions.add({
 	        timestamp: message.ts,
