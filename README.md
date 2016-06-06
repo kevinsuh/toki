@@ -1,8 +1,12 @@
 # Navi's existence in slack.
 
-## Core functionalities:
+### Core functionalities:
 * Take task list
 * Prioritize task list
 * Organize work sessions
 * Reflect and recalibrate
 * Keep track of what you got done and how you felt
+
+#### Eventual features:
+* GCal integration
+* Analytics
