@@ -24,6 +24,19 @@ var token = `xoxb-48507738372-KwxgAW6WrQN2tG0S61619R1F`; // this is token to nav
  */
 var controller = Botkit.slackbot();
 
+/**
+ *      CUSTOM CONTROLLER FUNCTIONS
+ */
+
+// send typing indicator to channel
+controller.isTyping = (bot, message) => {
+    bot.send({
+        type: "typing",
+        channel: message.channel
+    });
+    setTimeout(()=>{console.log("finished typing")},500);
+};
+
 var bot = controller.spawn({
     token
 });

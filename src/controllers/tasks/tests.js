@@ -4,6 +4,9 @@ import { numberLessThanTen, numberGreaterThanTen } from '../../middleware/hearMi
 // controller for tests
 export default function(controller) {
 
+	console.log("controller passed in!");
+	console.log(controller);
+
 	controller.on('user_typing', (bot, message) => {
 		console.log("user is typing!");
 	});
@@ -44,9 +47,10 @@ export default function(controller) {
 			if (err) {
 				bot.botkit.log('Failed to add emoji reaction :(', err);
 			}
-		})
+		});
 
-		setTimeout(()=>{bot.reply(message, "Chip, as in... Chocolate chip?")}, 2000);
+		controller.isTyping(bot, message);
+		bot.reply(message, "Chip, as in... Chocolate chip?")}
 
 
 	});
