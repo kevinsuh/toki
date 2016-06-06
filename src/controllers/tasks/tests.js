@@ -1,5 +1,8 @@
 import os from 'os';
 import { numberLessThanTen, numberGreaterThanTen } from '../../middleware/hearMiddleware';
+import { helloResponse, randomInt } from '../../lib/botResponses';
+
+console.log(randomInt);
 
 // controller for tests
 export default function(controller) {
@@ -49,9 +52,13 @@ export default function(controller) {
 			}
 		});
 
-		controller.isTyping(bot, message);
-		bot.reply(message, "Chip, as in... Chocolate chip?")}
-
+		bot.send({
+        type: "typing",
+        channel: message.channel
+    });
+    setTimeout(()=>{
+    	bot.reply(message, "Chip, as in... Chocolate chip?");
+    }, randomInt(500, 1500));
 
 	});
 
@@ -67,12 +74,18 @@ export default function(controller) {
 	        }
 	    });
 
-
 	    controller.storage.users.get(message.user, function(err, user) {
 	        if (user && user.name) {
 	            bot.reply(message, 'Hello ' + user.name + '!!');
 	        } else {
-	            bot.reply(message, 'Hello.');
+	        	var response = helloResponse();
+	        	bot.send({
+				        type: "typing",
+				        channel: message.channel
+				    });
+				    setTimeout(()=> {
+				    	bot.reply(message, response);
+				    }, randomInt(500, 1500));
 	        }
 	    });
 	});
