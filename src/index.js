@@ -10,20 +10,18 @@
     token=<MY TOKEN> node slack_bot.js
 */
 
-if (!process.env.token) {
-    console.log('Error: Specify token in environment');
-    process.exit(1);
-}
-
 import Botkit from 'botkit';
 import os from 'os';
+
+// THIS MUST BE TAKEN OUT WHEN IN PRODUCTION
+var token = `xoxb-48507738372-KwxgAW6WrQN2tG0S61619R1F`;
 
 var controller = Botkit.slackbot({
     debug: true,
 });
 
 var bot = controller.spawn({
-    token: process.env.token
+    token
 }).startRTM();
 
 
