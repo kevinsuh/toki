@@ -15,8 +15,8 @@ if (!process.env.token) {
     process.exit(1);
 }
 
-var Botkit = require('botkit');
-var os = require('os');
+import Botkit from 'botkit';
+import os from 'os';
 
 var controller = Botkit.slackbot({
     debug: true,
