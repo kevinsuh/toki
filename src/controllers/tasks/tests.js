@@ -14,7 +14,7 @@ export default function(controller) {
 		console.log("user is typing!");
 	});
 
-	controller.hears(['kevin'], 'direct_message', (bot, message) => {
+	controller.hears(['kevin', 'kev[in]*'], 'direct_message', (bot, message) => {
 
 		bot.api.reactions.add({
 			timestamp: message.ts,
