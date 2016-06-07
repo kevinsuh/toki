@@ -13,6 +13,7 @@
 import Botkit from 'botkit';
 import os from 'os';
 import tasksController from './controllers/tasks';
+import workSessionsController from './controllers/work_sessions';
 import setupBot from './bot';
 import setupReceiveMiddleware from './middleware/receiveMiddleware';
 import miscellaneousController from './controllers/miscellaneousController';
@@ -59,5 +60,6 @@ setupReceiveMiddleware(controller);
  *      SET UP NAVI'S CONTROLLERS
  */
 tasksController(controller);
+workSessionsController(controller);
 miscellaneousController(controller);
 

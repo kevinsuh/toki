@@ -3,7 +3,8 @@ import { numberLessThanTen, numberGreaterThanTen } from '../middleware/hearMiddl
 import { helloResponse, randomInt } from '../lib/botResponses';
 import { wit } from '../index';
 
-// controller for tests
+// MISC functionalities
+// easter eggs, fun things, non-important (like saying hello)
 export default function(controller) {
 
 	controller.on('user_typing', (bot, message) => {

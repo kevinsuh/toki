@@ -20,7 +20,9 @@
   "homepage": "https://github.com/kevinsuh/navi_bot",
   "dependencies": {
     "botkit": "^0.2.0",
-    "botkit-middleware-witai": "0.0.2"
+    "botkit-middleware-witai": "0.0.2",
+    "moment": "^2.13.0",
+    "moment-timezone": "^0.5.4"
   },
   "devDependencies": {
     "babel-cli": "^6.9.0",
