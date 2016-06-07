@@ -3,18 +3,7 @@
 export default function(bot) {
 	console.log("Currently beefing up navi bot");
 
-	addUtterances(bot);
 	addHearUtterances(bot);
-
-}
-
-let addUtterances = (bot) => {
-	var newUtterances = {};
-	newUtterances.hello = /^(hi|hello|hey|h|yo|sup|holla)/i;
-
-	for (var key in newUtterances) {
-		bot.utterances[key] = newUtterances[key];
-	}
 
 }
 
@@ -24,7 +13,7 @@ let addHearUtterances = (bot) => {
 	var hearUtterances = {};
 
 	// hello words
-	hearUtterances.hello = ["hi", "hey", "sup", "yo", "holla", "hello", "hola"];
+	hearUtterances.hello = ["^([hi]{0,5}$|hello{0,8}$|hey{0,5}$|yo{0,4}$|sup{0,5}$|holla{0,5}$)"];
 
 	// numbers
 	var numbers = new Array(100);

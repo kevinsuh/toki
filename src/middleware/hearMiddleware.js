@@ -7,12 +7,6 @@
 
 
 export function numberLessThanTen(patterns, message) {
-	console.log("in number less than ten middleware");
-	console.log("patterns:")
-	console.log(patterns);
-	console.log("\n\n\n");
-	console.log("message:");
-	console.log(message);
 
 	var number = parseInt(message.text);
 	if (number) {
@@ -26,12 +20,6 @@ export function numberLessThanTen(patterns, message) {
 
 
 export function numberGreaterThanTen(patterns, message) {
-	console.log("in number greater than ten middleware");
-	console.log("patterns:")
-	console.log(patterns);
-	console.log("\n\n\n");
-	console.log("message:");
-	console.log(message);
 
 	var number = parseInt(message.text);
 	if (number) {

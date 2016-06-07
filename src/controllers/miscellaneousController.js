@@ -1,21 +1,16 @@
 import os from 'os';
-import { numberLessThanTen, numberGreaterThanTen } from '../../middleware/hearMiddleware';
-import { helloResponse, randomInt } from '../../lib/botResponses';
-import { wit } from '../../index';
-
-console.log(randomInt);
+import { numberLessThanTen, numberGreaterThanTen } from '../middleware/hearMiddleware';
+import { helloResponse, randomInt } from '../lib/botResponses';
+import { wit } from '../index';
 
 // controller for tests
 export default function(controller) {
-
-	console.log("controller passed in!");
-	console.log(controller);
 
 	controller.on('user_typing', (bot, message) => {
 		console.log("user is typing!");
 	});
 
-	controller.hears(['kevin', 'kev[in]*'], 'direct_message', (bot, message) => {
+	controller.hears(['^(kevin)$', '^(kev[in]*)$'], 'direct_message', (bot, message) => {
 
 		bot.api.reactions.add({
 			timestamp: message.ts,
@@ -31,14 +26,6 @@ export default function(controller) {
 
 	});
 
-	// this is only for start_day parsed intent from wit
-	// we are relying on wit to do all of the NL parsing for us
-	// so that it normalizes into intent strings for us to decipher
-	// instead of reg ex
-	controller.hears(['start_day'], 'direct_message', wit.hears, (bot, message) => {
-		bot.reply(message, "Okay let's start the day then!");
-	});
-
 	// messing around w/ custom hear middleware
 	controller.hears(controller.utterances.hears.number, 'direct_message', numberLessThanTen, (bot, message) => {
 			bot.reply(message, "That is a number less than 10!");
@@ -47,7 +34,7 @@ export default function(controller) {
 			bot.reply(message, "That is a number greater than 10!");
 	});
 
-	controller.hears(["chip"], 'direct_message', (bot, message) => {
+	controller.hears(["^chip$"], 'direct_message', (bot, message) => {
 
 		bot.api.reactions.add({
 			timestamp: message.ts,
@@ -73,14 +60,10 @@ export default function(controller) {
 
 	controller.hears(controller.utterances.hears.hello, 'direct_message', function (bot, message) {
 
-		console.log("hello message:");
-		console.log(message.match);
-		console.log(message.match[0]);
-
 		bot.api.reactions.add({
 			timestamp: message.ts,
 			channel: message.channel,
-			name: 'robot_face'
+			name: 'wave'
 		}, function (err, res) {
 			if (err) {
 				bot.botkit.log('Failed to add emoji reaction :(', err);
@@ -91,22 +74,21 @@ export default function(controller) {
 			if (user && user.name) {
 				bot.reply(message, 'Hello ' + user.name + '!!');
 			} else {
-				var response = (0, helloResponse)();
+				var response = helloResponse();
 				bot.send({
-					type: "typing",
-					channel: message.channel
-				});
-				setTimeout(() => {
-					console.log("replying!");
-					bot.reply(message, {
-						text: response,
-						username: "HelloBot",
-						icon_emoji: ":wave:"});
-				}, randomInt(500, 1500)
-				);
+        	type: "typing",
+        	channel: message.channel
+		    });
+		    setTimeout(()=>{
+		    	bot.reply(message, response);
+		    }, randomInt(500, 1500));
 			}
 		});
 	});
+
+	/**
+	 * 		BOTKIT EXAMPLE CODE
+	 */
 
 	controller.hears(["let's start a (.*) conversation about (.*)"], ["direct_message"], (bot, message) => {
 		var adjective = message.match[1];
