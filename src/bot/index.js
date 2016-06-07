@@ -24,7 +24,7 @@ let addHearUtterances = (bot) => {
 	var hearUtterances = {};
 
 	// hello words
-	hearUtterances.hello = ["hi", "hey", "sup", "yo", "holla", "h", "hello", "hola", "waddup", "whats up"];
+	hearUtterances.hello = ["hi", "hey", "sup", "yo", "holla", "hello", "hola"];
 
 	// numbers
 	var numbers = new Array(100);

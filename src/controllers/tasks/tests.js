@@ -62,32 +62,50 @@ export default function(controller) {
 
 	});
 
-	controller.hears(controller.utterances.hears.hello, 'direct_message,direct_mention,mention', function(bot, message) {
+	controller.hears(controller.utterances.hears.hello, 'direct_message', function (bot, message) {
 
-	    bot.api.reactions.add({
-	        timestamp: message.ts,
-	        channel: message.channel,
-	        name: 'robot_face',
-	    }, function(err, res) {
-	        if (err) {
-	            bot.botkit.log('Failed to add emoji reaction :(', err);
-	        }
-	    });
+		console.log("hello message:");
+		console.log(message.match);
+		console.log(message.match[0]);
 
-	    controller.storage.users.get(message.user, function(err, user) {
-	        if (user && user.name) {
-	            bot.reply(message, 'Hello ' + user.name + '!!');
-	        } else {
-	        	var response = helloResponse();
-	        	bot.send({
-				        type: "typing",
-				        channel: message.channel
-				    });
-				    setTimeout(()=> {
-				    	bot.reply(message, response);
-				    }, randomInt(500, 1500));
-	        }
-	    });
+		bot.api.reactions.add({
+			timestamp: message.ts,
+			channel: message.channel,
+			name: 'robot_face'
+		}, function (err, res) {
+			if (err) {
+				bot.botkit.log('Failed to add emoji reaction :(', err);
+			}
+		});
+
+		controller.storage.users.get(message.user, function (err, user) {
+			if (user && user.name) {
+				bot.reply(message, 'Hello ' + user.name + '!!');
+			} else {
+				var response = (0, helloResponse)();
+				bot.send({
+					type: "typing",
+					channel: message.channel
+				});
+				setTimeout(() => {
+					console.log("replying!");
+					bot.reply(message, {
+						text: response,
+						username: "HelloBot",
+						icon_emoji: ":wave:"});
+				}, randomInt(500, 1500)
+				);
+			}
+		});
+	});
+
+	controller.hears(["let's start a (.*) conversation about (.*)"], ["direct_message"], (bot, message) => {
+		var adjective = message.match[1];
+		var topic = message.match[2];
+		bot.startConversation(message, (err, convo) => {
+			convo.say(`You want a ${adjective} type of conversation`);
+			convo.say(`And you want to talk about ${topic}!`);
+		})
 	});
 
 	controller.hears(['call me (.*)', 'my name is (.*)'], 'direct_message,direct_mention,mention', function(bot, message) {
@@ -105,7 +123,7 @@ export default function(controller) {
 	    });
 	});
 
-	controller.hears(['what is my name', 'who am i'], 'direct_message,direct_mention,mention', function(bot, message) {
+	controller.hears(['what is my name', 'who am i'], 'direct_message', function(bot, message) {
 
 	    controller.storage.users.get(message.user, function(err, user) {
 	        if (user && user.name) {
@@ -115,12 +133,17 @@ export default function(controller) {
 	                if (!err) {
 	                    convo.say('I do not know your name yet!');
 	                    convo.ask('What should I call you?', function(response, convo) {
+	                    	console.log("inside of first question CB");
+	                    	console.log(convo);
 	                        convo.ask('You want me to call you `' + response.text + '`?', [
 	                            {
 	                                pattern: 'yes',
 	                                callback: function(response, convo) {
 	                                    // since no further messages are queued after this,
 	                                    // the conversation will end naturally with status == 'completed'
+	                                    console.log(`inside of second question CB that you answered yes to: ${response.text}`);
+	                                    console.log(response);
+	                                    console.log(convo);
 	                                    convo.next();
 	                                }
 	                            },
@@ -145,6 +168,8 @@ export default function(controller) {
 	                    }, {'key': 'nickname'}); // store the results in a field called nickname
 
 	                    convo.on('end', function(convo) {
+	                    	console.log("convo is done...");
+	                    	console.log(convo);
 	                        if (convo.status == 'completed') {
 	                            bot.reply(message, 'OK! I will update my dossier...');
 
@@ -154,6 +179,9 @@ export default function(controller) {
 	                                        id: message.user,
 	                                    };
 	                                }
+	                                var responses = convo.extractResponses(); // returns the JS object of key:values. If you don't specify, the key will be string of your question. the value is an object with text property being the user's response
+	                                console.log("This convo's responses are:");
+	                                console.log(responses);
 	                                user.name = convo.extractResponse('nickname');
 	                                controller.storage.users.save(user, function(err, id) {
 	                                    bot.reply(message, 'Got it. I will call you ' + user.name + ' from now on.');
