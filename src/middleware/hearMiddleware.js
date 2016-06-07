@@ -1,5 +1,3 @@
-import { controller } from '../index';
-
 // all middleware for hear events
 // when using wit middleware, you will get `message.intents`
 // which are the returned intents from wit's service of the incoming natural language input

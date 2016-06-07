@@ -18,6 +18,19 @@ import setupReceiveMiddleware from './middleware/receiveMiddleware';
 
 // THIS MUST BE TAKEN OUT WHEN IN PRODUCTION
 var token = `xoxb-48507738372-KwxgAW6WrQN2tG0S61619R1F`; // this is token to navi_bot specifically
+// THIS MUST BE TAKEN OUT WHEN IN PRODUCTION
+var witToken = `HY7IVXF32KXPA6VBNZEC5C7O6R2ATPX4`;
+
+/**
+ *      INTEGRATE WIT BRAIN
+ */
+
+import Wit from 'botkit-middleware-witai';
+var wit = Wit({
+    token: witToken,
+    minimum_confidence: 0.55
+});
+export { wit };
 
 /**
  *      SET UP NAVI TO RUN
@@ -25,7 +38,7 @@ var token = `xoxb-48507738372-KwxgAW6WrQN2tG0S61619R1F`; // this is token to nav
 var controller = Botkit.slackbot();
 
 /**
- *      CUSTOM CONTROLLER FUNCTIONS
+ *      CONTROLLER FUNCTIONS
  */
 var bot = controller.spawn({
     token
