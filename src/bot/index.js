@@ -4,6 +4,7 @@ export default function(bot) {
 	console.log("Currently beefing up navi bot");
 
 	addHearUtterances(bot);
+	bot.timer = null;
 
 }
 

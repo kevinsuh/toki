@@ -2,6 +2,8 @@ import os from 'os';
 import { wit } from '../../index';
 import moment from 'moment-timezone';
 import { randomInt } from '../../lib/botResponses';
+import http from 'http';
+import bodyParser from 'body-parser';
 
 // END OF A WORK SESSION
 export default function(controller) {
@@ -26,6 +28,11 @@ export default function(controller) {
 		// 5. get numbers to then cross out task list. CROSS TASK LIST BY EDITING MESSAGE
 		// 6. Lastly, how did that session feel? (put the 4 emojis)
 		// 7. Would you like to take a break? Or just respond to what user says
+		
+
+		// this clears the timeout that you set
+		clearTimeout(bot.timer);
+		
 
 		bot.api.reactions.add({
 			timestamp: message.ts,
@@ -90,6 +97,9 @@ function askForReflection(response, convo) {
 		convo.next();
 
 	}, { 'key' : 'reflection' });
+
+	convo.on('end', onFinishReflection);
+
 }
 
 function askForTaskUpdate(response, convo) {
@@ -106,15 +116,60 @@ function askForTaskUpdate(response, convo) {
 	convo.ask("Which tasks did you complete? I’ll update your list :pencil: (i.e `1, 5, 4`)", (response, convo) => {
 		askForBreak(response, convo);
 		convo.next();
-	});
-
+	}, { 'key': 'tasksDone' });
 	
 }
 
 function askForBreak(response, convo) {
+
+	const { task }                = convo;
+	const { bot, source_message } = task;
+
 	convo.say("Excellent!");
-	convo.ask("Would you like to take a 15 minute break now before jumping in to your next focused session?", (response, convo) => {
-		convo.say("Sounds good");
-		convo.next();
-	});
+	convo.ask("Would you like to take a 15 minute break now before jumping in to your next focused session?", [
+			{
+				pattern: bot.utterances.yes,
+				callback: (response, convo) => {
+					convo.say("Sounds great! I'll ping you in 15 minutes :timer_clock:");
+			  	convo.next();
+				}
+			},
+			{
+				pattern: bot.utterances.no,
+				callback: (response, convo) => {
+				  convo.say("Sounds good. I'll be here when you're ready to jump back in :swimmer:");
+				  convo.next();
+				}
+			},
+			{
+				default: true,
+				callback: function(response, convo) {
+					convo.say("Sorry, I didn't get that :dog:");
+				  convo.repeat();
+				  convo.next();
+				}
+			}
+	], { 'key' : 'wantsBreak' });
+}
+
+function onFinishReflection(convo) {
+	if (convo.status == 'completed') {
+		bot.reply(message, 'OK! I will update my dossier...');
+
+		// controller.storage.users.get(message.user, function(err, user) {
+		// 	if (!user) {
+		// 		user = {
+		// 			id: message.user,
+		// 		};
+		// 	}
+		// 	user.name = convo.extractResponse('nickname');
+		// 	controller.storage.users.save(user, function(err, id) {
+		// 		bot.reply(message, 'Got it. I will call you ' + user.name + ' from now on.');
+		// 	});
+		// });
+
+	} else {
+		// this happens if the conversation ended prematurely for some reason
+		bot.reply(message, 'Okay, nevermind then!');
+	}
 }
