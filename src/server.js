@@ -1,7 +1,7 @@
 // modules 
 import express from 'express';
 import bodyParser from 'body-parser';
-var http = require('http').Server(app);
+import http from 'http';
 import dotenv from 'dotenv';
 
 var app = express();
@@ -30,6 +30,6 @@ app.set('port', (process.env.PORT));
 require('./app/controllers')
 
 //START ===================================================
-http.listen(app.get('port'), function(){
+app.listen(app.get('port'), () => {
   console.log('listening on port ' + app.get('port'));
 });
