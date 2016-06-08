@@ -2,11 +2,11 @@
   "name": "navi_bot",
   "version": "1.0.0",
   "description": "Navi's existence in slack",
-  "main": "./build/index.js",
+  "main": "./build/app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "babel -w src/ -d build/ -s",
-    "start": "node ./build/index.js"
+    "start": "node ./build/app.js"
   },
   "repository": {
     "type": "git",
@@ -21,6 +21,8 @@
   "dependencies": {
     "botkit": "^0.2.0",
     "botkit-middleware-witai": "0.0.2",
+    "dotenv": "^2.0.0",
+    "express": "^4.13.4",
     "moment": "^2.13.0",
     "moment-timezone": "^0.5.4"
   },

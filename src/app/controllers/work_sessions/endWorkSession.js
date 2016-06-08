@@ -1,5 +1,5 @@
 import os from 'os';
-import { wit } from '../../index';
+import { wit } from '../index';
 import moment from 'moment-timezone';
 import { randomInt } from '../../lib/botResponses';
 import http from 'http';
