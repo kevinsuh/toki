@@ -11,7 +11,7 @@ var app = express();
 dotenv.load();
 
 // public folder for images, css,...
-app.use(express.static(__dirname + '/public'))
+app.use('/assets', express.static(`${__dirname}/public`));
 
 //parsing
 app.use(bodyParser.json()); // for parsing application/json

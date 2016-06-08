@@ -74,8 +74,6 @@ if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.PORT) {
 
 var controller = Botkit.slackbot();
 
-export { controller };
-
 //CONNECTION FUNCTIONS
 export function connect(team_config) {
   var bot = controller.spawn(team_config);

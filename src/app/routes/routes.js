@@ -1,5 +1,6 @@
 import request from 'request';
-import botController from '../controllers';
+import { connect } from '../controllers';
+import controllerRoot from '../controllers';
 
 export default (app) => {
 
@@ -93,11 +94,11 @@ export default (app) => {
   var startBot = (team) => {
     console.log(team.name + " start bot")
 
-    botController.connect(team)
+    connect(team)
   }
 
   var saveUser = function(auth, identity) {
-    
+
     // what scopes did we get approved for?
     var scopes = auth.scope.split(/\,/);
 
