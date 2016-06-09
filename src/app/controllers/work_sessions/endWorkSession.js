@@ -98,7 +98,7 @@ function askForReflection(response, convo) {
 
 	}, { 'key' : 'reflection' });
 
-	convo.on('end', onFinishReflection);
+	convo.on('end', finishReflection);
 
 }
 
@@ -152,24 +152,27 @@ function askForBreak(response, convo) {
 	], { 'key' : 'wantsBreak' });
 }
 
-function onFinishReflection(convo) {
-	if (convo.status == 'completed') {
-		bot.reply(message, 'OK! I will update my dossier...');
+function finishReflection(convo) {
 
-		// controller.storage.users.get(message.user, function(err, user) {
-		// 	if (!user) {
-		// 		user = {
-		// 			id: message.user,
-		// 		};
-		// 	}
-		// 	user.name = convo.extractResponse('nickname');
-		// 	controller.storage.users.save(user, function(err, id) {
-		// 		bot.reply(message, 'Got it. I will call you ' + user.name + ' from now on.');
-		// 	});
-		// });
+	const { task }                = convo;
+	const { bot, source_message } = task;
+
+	if (convo.status == 'completed') {
+
+		// all of user responses in object
+		var res = convo.extractResponses();
+
+		var reflection = convo.extractResponse('reflection');
+		convo.say(`Nice. Your reflection was: ${reflection}`);
+
+		console.log("FINISH REFLECTION");
+		console.log(bot);
+		console.log(JSON.stringify(bot.storage));
+		console.log('\n\n\n\n\n\n\n\n\n\n\n');
+		console.log(JSON.stringify(convo));
 
 	} else {
 		// this happens if the conversation ended prematurely for some reason
-		bot.reply(message, 'Okay, nevermind then!');
+		convo.say(message, 'Okay, nevermind then!');
 	}
 }

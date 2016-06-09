@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "babel -w src/ -d build/ -s",
     "build-css": "node-sass -w src/scss/ -d -o build/public/css",
-    "start": "node ./build/server.js"
+    "start": "node ./build/server.js",
+    "start-dev": "node ./build/dev_slackbot.js"
   },
   "repository": {
     "type": "git",

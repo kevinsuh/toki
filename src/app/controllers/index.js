@@ -46,10 +46,10 @@ if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.PORT) {
 }
 
 // Custom Navi Config
-function customConfigBot(bot) {
+export function customConfigBot(controller) {
 
   // beef up the bot
-  setupBot(bot);
+  setupBot(controller);
   setupReceiveMiddleware(controller);
 
   // add controller functionalities
@@ -88,7 +88,7 @@ controller.on('create_bot', (bot,team) => {
     bot.startRTM((err) => {
       if (!err) {
         console.log("RTM on and listening");
-        customConfigBot(bot);
+        customConfigBot(controller);
         trackBot(bot);
         controller.saveTeam(team, (err, id) => {
           if (err) {
