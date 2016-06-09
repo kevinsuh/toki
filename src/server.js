@@ -22,7 +22,12 @@ app.use(bodyParser.urlencoded({ extended: true })); //for parsing url encoded
 app.set('view engine', 'ejs');
 
 // routes
-require('./app/routes/routes').default((app));
+require('./app/router').default((app));
+
+// Error Handling
+app.use(function(err, req, res, next) {
+    res.status(err.status || 500);
+});
 
 //port for Heroku
 app.set('port', (process.env.PORT));
