@@ -13,6 +13,9 @@ export default (app) => {
   });
 
   // new user creation - redirect from Slack
+  // 1. use returned OAuth Code and send back w/ client_id and secret
+  // 2. authenticate install w/ returned token
+  // 3. start bot and initiate the conversation
   app.get('/new', (req, res) => {
 
     console.log("STARTING TEAM REGISTRATION...");
@@ -31,6 +34,9 @@ export default (app) => {
   });
 
   // sign in with slack -- redirect from slack
+  // 1. use returned OAuth Code and send back w/ client_id and secret
+  // 2. verify user w/ returned token
+  // 3. start bot and initiate the conversation
   app.get('/login', (req, res) => {
 
     console.log("STARTING TEAM LOGIN...");
@@ -180,17 +186,6 @@ export default (app) => {
       }
 
     })
-
-  // res object
-  //   { ok: true,
-  // access_token: 'xoxp-36063701207-36062318368-49265805603-a7272b3e67',
-  // scope: 'identify,bot',
-  // user_id: 'U121U9CAU',
-  // team_name: 'Navi',
-  // team_id: 'T121VLM63',
-  // bot:
-  //  { bot_user_id: 'U1F8T3HB6',
-  //    bot_access_token: 'xoxb-49299119380-L5QGhw29PRlAtpL3avh9DxTC' } }
 
   }
 
