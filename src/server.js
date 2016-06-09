@@ -3,6 +3,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import http from 'http';
 import dotenv from 'dotenv';
+import { connectUsers } from './app/controllers';
 
 var app = express();
 // http = http.Server(app);
@@ -32,4 +33,9 @@ require('./app/controllers')
 //START ===================================================
 app.listen(app.get('port'), () => {
   console.log('listening on port ' + app.get('port'));
+
+  /**
+   *  CONNECT EXISTING BOTS
+   */
+  connectUsers();
 });

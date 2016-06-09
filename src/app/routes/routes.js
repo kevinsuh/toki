@@ -1,6 +1,6 @@
 import request from 'request';
-import { connect } from '../controllers';
-import controllerRoot from '../controllers';
+import { connectOnInstall } from '../controllers';
+import { controller as slack } from '../controllers';
 
 export default (app) => {
 
@@ -9,13 +9,13 @@ export default (app) => {
    */
   // root
   app.get('/', (req, res) => {
-    console.log("root");
     res.render('root');
   });
 
   // new user creation - redirect from Slack
   app.get('/new', (req, res) => {
-    console.log("STARTING TEAM REGISTRATION");
+
+    console.log("STARTING TEAM REGISTRATION...");
 
     // temp authorization code
     var authCode = req.query.code;
@@ -25,21 +25,42 @@ export default (app) => {
       res.redirect('/');
     } else {
       console.log (`New user with auth code: ${authCode}`);
-      performAuth(authCode, res);
+      install(authCode, res);
     }
 
-  })
+  });
 
-  //CREATION ===================================================
+  // sign in with slack -- redirect from slack
+  app.get('/login', (req, res) => {
 
-  var performAuth = function(authCode, res) {
+    console.log("STARTING TEAM LOGIN...");
+
+    // temp authorization code
+    var authCode = req.query.code;
+
+    if (!authCode) {
+      // user refused auth
+      res.redirect('/');
+    } else {
+      console.log (`Logging in user with auth code: ${authCode}`);
+      login(authCode, res);
+    }
+
+  });
+
+  var getAuthAddress = (authCode, uri_path) => {
     //post code, app ID, and app secret, to get token
     var authAddress = 'https://slack.com/api/oauth.access?'
     authAddress += 'client_id=' + process.env.SLACK_ID
     authAddress += '&client_secret=' + process.env.SLACK_SECRET
     authAddress += '&code=' + authCode
-    authAddress += '&redirect_uri=' + process.env.SLACK_REDIRECT + "new"
+    authAddress += '&redirect_uri=' + process.env.SLACK_REDIRECT + uri_path;
+    return authAddress;
+  }
 
+  // for when you are first creating slack app
+  var install = (authCode, res) => {
+    var authAddress = getAuthAddress(authCode, "new");
     request.get(authAddress, function (error, response, body) {
       if (error){
         console.log(error)
@@ -48,12 +69,31 @@ export default (app) => {
         var auth = JSON.parse(body)
         console.log("New user auth")
         console.log(auth)
-
         registerTeam(auth,res)
       }
-    })
+    });
   }
 
+  // for subsequent logins
+  var login = (authCode, res) => {
+
+    var authAddress = getAuthAddress(authCode, "login");
+
+    request.get(authAddress, function (error, response, body) {
+      if (error){
+        console.log(error)
+        res.sendStatus(500)
+      } else {
+        var auth = JSON.parse(body)
+        console.log("User login auth")
+        console.log(auth)
+        authenticateTeam(auth,res)
+      }
+    });
+  }
+
+  // after getting access token...
+  // first time => register
   var registerTeam = (auth, res) => {
     //first, get authenticating user ID
     var url = 'https://slack.com/api/auth.test?'
@@ -91,10 +131,17 @@ export default (app) => {
     })
   }
 
+  // after getting access token...
+  // subsequent times => authenticate
+  var authenticateTeam = (auth, res) => {
+    console.log("in authentiating team")
+    console.log(auth);
+  }
+
   var startBot = (team) => {
     console.log(team.name + " start bot")
 
-    connect(team)
+    connectOnInstall(team)
   }
 
   var saveUser = function(auth, identity) {
