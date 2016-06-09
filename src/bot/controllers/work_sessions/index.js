@@ -1,5 +1,5 @@
 import os from 'os';
-import { wit } from '../../index';
+import { wit } from '../index';
 
 import endWorkSessionController from './endWorkSession';
 import middleWorkSessionController from './middleWorkSession';
