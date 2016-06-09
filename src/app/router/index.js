@@ -1,14 +1,11 @@
 import request from 'request';
-import { controller as slack } from '../controllers';
 
+// our various routes
 import signup from './routes/signup';
 import login from './routes/login';
 
 export default (app) => {
 
-  /**
-   *    PUBLIC PAGES
-   */
   // root
   app.get('/', (req, res) => {
     res.render('root');

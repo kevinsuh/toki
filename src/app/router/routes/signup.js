@@ -1,6 +1,6 @@
 import request from 'request';
-
 import express from 'express';
+
 var router = express.Router();
 
 // bring in helpers
@@ -70,7 +70,18 @@ var registerTeam = (auth, res) => {
           url: identity.url,
           name: identity.team
         }
+        // start the bot!
         startBot(team, "create");
+
+        // user has signed up
+        console.log(`User has logged in. Now we must store that session on our server. Authenticate and Authorize the following user properly:`);
+        console.log("User identity:");
+        console.log(identity);
+        console.log("Auth:");
+        console.log(auth);
+        console.log("Team:");
+        console.log(team);
+
         res.send("Your bot has been installed");
 
         // this isnt working for some reason

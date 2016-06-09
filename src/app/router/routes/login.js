@@ -1,6 +1,6 @@
 import request from 'request';
-
 import express from 'express';
+
 var router = express.Router();
 
 // bring in helpers
@@ -80,8 +80,18 @@ var authenticateTeam = (auth, res) => {
             createdBy: identity.user.id,
             name: identity.user.name
           }
-          console.log(team);
+          // start the bot!
           startBot(team, "login");
+
+          // user has logged in
+          console.log(`User has logged in. Now we must store that session on our server. Authenticate and Authorize the following user properly:`);
+          console.log("User identity:");
+          console.log(identity);
+          console.log("Auth:");
+          console.log(auth);
+          console.log("Team:");
+          console.log(team);
+
           res.send("You have logged in!");
           saveUser(auth, team)
         } else {
