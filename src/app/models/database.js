@@ -6,6 +6,9 @@ import pg from 'pg';
 var connectionString = process.env.DATABASE_URL || 'postgres://localhost:5432';
 var dbName = 'navi';
 
+var dbConnectionString = `${connectionString}/${dbName}`;
+export { dbConnectionString };
+
 // var client = new pg.Client(connectionString);
 // client.connect();
 
@@ -27,5 +30,4 @@ pg.connect(connectionString, function(err, client, done) { // connect to postgre
     });
 });
 
-
-
+}
