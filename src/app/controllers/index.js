@@ -7,7 +7,7 @@ import setupReceiveMiddleware from '../middleware/receiveMiddleware';
 import miscellaneousController from './miscellaneousController';
 import Wit from 'botkit-middleware-witai';
 
-import { firstInstallInitiateConversation } from '../actions/initiation';
+import { firstInstallInitiateConversation, loginInitiateConversation } from '../actions/initiation';
 
 require('dotenv').config();
 
@@ -21,8 +21,6 @@ if (process.env.WIT_TOKEN) {
   });
   
 } else {
-  console.log("NO?");
-  console.log(process.env.SLACK_ID);
   console.log('Error: Specify WIT_TOKEN in environment');
   process.exit(1);
 }
@@ -49,50 +47,71 @@ export function connectOnInstall(team_config) {
   controller.trigger('create_bot', [bot, team_config]);
 }
 
-export function connectUsers() {
+export function connectOnLogin(team_config) {
 
-  controller.storage.users.all((err, allUserData) => {
-    console.log("ALL USERS!");
-    console.log(allUserData);
+  var bot = controller.spawn(team_config);
+  controller.trigger('login_bot', [bot, team_config]);
 
-    if (false) {
-     isnew = false;
-      if (!user) {
-          isnew = true;
-          user = {
-              id: identity.user_id,
-              access_token: auth.access_token,
-              scopes: scopes,
-              team_id: identity.team_id,
-              user: identity.user,
-          };
-      }
-      slack.controller.storage.users.save(user, function(err, id) {
-        if (err) {
-          console.log('An error occurred while saving a user: ', err);
-          slack.controller.trigger('error', [err]);
-        }
-        else {
-          if (isnew) {
-            console.log("New user " + id.toString() + " saved");
+}
+
+// for subsequent logins
+// start RTM API here
+controller.on('login_bot', (bot,team) => {
+
+  if (bots[bot.config.token]) {
+    // already online! do nothing.
+    console.log("already online! do nothing.")
+  } else {
+    bot.startRTM((err) => {
+      if (!err) {
+        customConfigBot(bot);
+        trackBot(bot);
+        console.log("RTM on and listening\n\n\n\n\n\n\n\n\n\n\n");
+        controller.saveTeam(team, (err, id) => {
+          if (err) {
+            console.log("Error saving team")
           }
           else {
-            console.log("User " + id.toString() + " updated");
+            console.log("Team " + team.name + " saved")
           }
-          console.log("================== END TEAM REGISTRATION ==================")
-        }
-      });
-    }; 
-  });
-  console.log(controller.storage);
+        })
+        loginInitiateConversation(bot, team);
+      } else {
+        console.log("RTM failed")
+        console.log(err);
+      }
+    });
+  }
+});
 
-  controller.storage.teams.all((err, allTeamData) => {
-    console.log("ALL TEAMS!");
-    console.log(allTeamData);
+// for first time create
+// start RTM API here
+controller.on('create_bot', (bot,team) => {
 
-  });
-      
-}
+  if (bots[bot.config.token]) {
+    // already online! do nothing.
+    console.log("already online! do nothing.")
+  } else {
+    bot.startRTM((err) => {
+      if (!err) {
+        customConfigBot(bot);
+        trackBot(bot);
+        console.log("RTM on and listening");
+        controller.saveTeam(team, (err, id) => {
+          if (err) {
+            console.log("Error saving team")
+          }
+          else {
+            console.log("Team " + team.name + " saved")
+          }
+        })
+        firstInstallInitiateConversation(bot, team);
+      } else {
+        console.log("RTM failed")
+      }
+    });
+  }
+});
 
 // just a simple way to make sure we don't
 // connect to the RTM twice for the same team
@@ -119,23 +138,20 @@ function customConfigBot(bot) {
   miscellaneousController(controller);
 }
 
+// for subsequent logins
 // start RTM API here
-controller.on('create_bot', (bot,team) => {
+// start RTM API here
+controller.on('login_bot', (bot,team) => {
 
   if (bots[bot.config.token]) {
     // already online! do nothing.
     console.log("already online! do nothing.")
-  }
-  else {
-
+  } else {
     bot.startRTM((err) => {
-
       if (!err) {
-
         customConfigBot(bot);
         trackBot(bot);
         console.log("RTM on and listening");
-
         controller.saveTeam(team, (err, id) => {
           if (err) {
             console.log("Error saving team")
@@ -145,16 +161,14 @@ controller.on('create_bot', (bot,team) => {
           }
         })
       }
-
       else {
         console.log("RTM failed")
       }
-
-      firstInstallInitiateConversation(bot, team);
-
+      loginInitiateConversation(bot, team);
     });
   }
 });
+
 
 //REACTIONS TO EVENTS
 

@@ -33,9 +33,4 @@ require('./app/controllers')
 //START ===================================================
 app.listen(app.get('port'), () => {
   console.log('listening on port ' + app.get('port'));
-
-  /**
-   *  CONNECT EXISTING BOTS
-   */
-  connectUsers();
 });

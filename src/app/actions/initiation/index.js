@@ -3,22 +3,30 @@ import { randomInt } from '../../lib/botResponses';
 import http from 'http';
 import bodyParser from 'body-parser';
 
-// base controller to start actions
+// initiate conversation on first install
 export function firstInstallInitiateConversation(bot, team) {
 
-	bot.send({
-        type: "typing",
-        channel: message.channel
-  });
-  setTimeout(() => {
-  	bot.startPrivateConversation({user: team.createdBy}, (err, convo) => {
+	bot.startPrivateConversation({user: team.createdBy}, (err, convo) => {
 
-  		/**
-  		 * 		INITIATE CONVERSATION WITH INSTALLER
-  		 */
-  		
-  		convo.say(`Hey! I'm Navi`);
-		}
-	)}, randomInt(1500, 2350));
+		/**
+		 * 		INITIATE CONVERSATION WITH INSTALLER
+		 */
+		
+		convo.say(`Hey! I'm Navi`);
+		convo.say(`This is your first time installing me`);
+	});
+
+}
+
+// initiate conversation on login
+export function loginInitiateConversation(bot, team) {
+	console.log("in login initiate convo")
+	console.log(team);
+
+	bot.startPrivateConversation({user: team.createdBy}, (err, convo) => {
+		
+		convo.say(`Hey! I'm Navi`);
+		convo.say(`I'm logged in and ready to go`);
+	});
 
 }

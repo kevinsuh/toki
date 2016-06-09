@@ -1,5 +1,5 @@
 import request from 'request';
-import { connectOnInstall } from '../controllers';
+import { connectOnInstall, connectOnLogin } from '../controllers';
 import { controller as slack } from '../controllers';
 
 export default (app) => {
@@ -99,7 +99,7 @@ export default (app) => {
     var url = 'https://slack.com/api/auth.test?'
     url += 'token=' + auth.access_token
 
-    request.get(url, function (error, response, body) {
+    request.get(url, (error, response, body) =>{
       if (error){
         console.log(error)
         res.sendStatus(500)
@@ -119,13 +119,13 @@ export default (app) => {
             url: identity.url,
             name: identity.team
           }
-          startBot(team)
-          res.send("Your bot has been installed")
+          startBot(team, "create");
+          res.send("Your bot has been installed");
 
-          saveUser(auth, identity)
-        }
-        catch(e){
-          console.log(e)
+          // this isnt working for some reason
+          saveUser(auth, team)
+        } catch(e){
+          console.log(e);
         }
       }
     })
@@ -134,14 +134,73 @@ export default (app) => {
   // after getting access token...
   // subsequent times => authenticate
   var authenticateTeam = (auth, res) => {
-    console.log("in authentiating team")
-    console.log(auth);
+
+    // you have bot access_token now
+    // use this to identify the user
+    var url = 'https://slack.com/api/users.identity?';
+    url += 'token=' + auth.access_token;
+
+    console.log("in authenticate team");
+    console.log(url);
+
+    request.get(url, (error, response, body) => {
+      
+      console.log("in identify user call");
+
+      if (error) {
+        console.log(error);
+        res.sendStatus(500);
+      } else {
+        try {
+          console.log("identified user");
+          var identity = JSON.parse(body);
+          // if identity is true, then activate the bot
+          if (identity.ok) {
+            var team = {
+              id: identity.team.id,
+              bot:{
+                token: auth.bot.bot_access_token,
+                user_id: auth.bot.bot_user_id,
+                createdBy: identity.user.id
+              },
+              createdBy: identity.user.id,
+              name: identity.user.name
+            }
+            console.log(team);
+            startBot(team, "login");
+            res.send("You have logged in!");
+            saveUser(auth, team)
+          } else {
+            res.send("Sorry! Please try again");
+          }
+
+        } catch(e) {
+          console.log(e);
+        }
+      }
+
+    })
+
+  // res object
+  //   { ok: true,
+  // access_token: 'xoxp-36063701207-36062318368-49265805603-a7272b3e67',
+  // scope: 'identify,bot',
+  // user_id: 'U121U9CAU',
+  // team_name: 'Navi',
+  // team_id: 'T121VLM63',
+  // bot:
+  //  { bot_user_id: 'U1F8T3HB6',
+  //    bot_access_token: 'xoxb-49299119380-L5QGhw29PRlAtpL3avh9DxTC' } }
+
   }
 
-  var startBot = (team) => {
+  var startBot = (team, type) => {
     console.log(team.name + " start bot")
-
-    connectOnInstall(team)
+    if (type == 'login') {
+      connectOnLogin(team)
+    } else if (type == 'create') {
+      connectOnInstall(team)
+    }
   }
 
   var saveUser = function(auth, identity) {
