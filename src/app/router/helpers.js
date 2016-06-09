@@ -1,5 +1,5 @@
-import { connectOnLogin, connectOnInstall } from '../controllers';
-import { controller as slack } from '../controllers';
+import { connectOnLogin, connectOnInstall } from '../../bot/controllers';
+import { controller as slack } from '../../bot/controllers';
 
 export function getAuthAddress(authCode, uri_path) {
   //post code, app ID, and app secret, to get token

@@ -3,7 +3,6 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import http from 'http';
 import dotenv from 'dotenv';
-import { connectUsers } from './app/controllers';
 
 var app = express();
 // http = http.Server(app);
@@ -33,7 +32,7 @@ app.use(function(err, req, res, next) {
 app.set('port', (process.env.PORT));
 
 //botkit (apres port)
-require('./app/controllers')
+require('./bot/controllers')
 
 //START ===================================================
 app.listen(app.get('port'), () => {
