@@ -19,17 +19,8 @@ import models from '../../models';
 // index
 router.get('/', (req, res) => {
 
-  // make connect for call
-  pg.connect(dbConnectionString, (err, client, done) => {
-
-    if (err) {
-      done();
-      console.log(err);
-      return res.status(500).json({ success: false, data: err});
-    }
-
-    return returnTasks(client, res);
-
+  models.Task.findAll({}).then((tasks) => {
+    res.json(tasks);
   })
 
 });
@@ -59,9 +50,10 @@ router.post('/', (req, res) => {
 
 // read
 router.get('/:id', (req, res) => {
+  const { id } = req.params;
   models.Task.find({
     where: {
-      id: req.params.id
+      id
     }
   }).then((task) => {
     res.json(task);
@@ -70,30 +62,40 @@ router.get('/:id', (req, res) => {
 
 // update
 router.put('/:id', (req, res) => {
+
+  const { title, done } = req.body;
+  const { id } = req.params;
+
+  models.Task.find({
+    where: {
+      id
+    }
+  }).then((task) => {
+    if (task) {
+      task.updateAttributes( {
+        title,
+        done
+      }).then((task) => {
+        res.send(task);
+      })
+    }
+  })
+
 });
 
 // delete
 router.delete('/:id', (req, res) => {
-});;
 
-var returnTasks = (client, res) => {
+  const { id } = req.params;
 
-  var results = [];
-
-  // make SQL call
-  var query = client.query("SELECT * FROM tasks ORDER by id ASC");
-
-  // read in data through buffer
-  query.on('row', (row) => {
-    results.push(row);
+  models.Task.destroy({
+    where: {
+      id
+    }
+  }).then((task) => {
+    res.json(task);
   })
 
-  // return in JSON format when done
-  query.on('end', ()=> {
-    return res.json(results);
-  });
-
-}
-
+});;
 
 export default router;
