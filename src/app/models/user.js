@@ -2,7 +2,7 @@
 module.exports = function(sequelize, DataTypes) {
   var User = sequelize.define('User', {
     email: DataTypes.STRING,
-    admin: { DataTypes.BOOLEAN,
+    admin: { type: DataTypes.BOOLEAN,
              defaultValue: false
            }
   }, {
@@ -10,6 +10,7 @@ module.exports = function(sequelize, DataTypes) {
       associate: function(models) {
         // associations can be defined here
         User.hasMany(models.Task);
+        User.hasOne(models.SlackUser, { foreignKey: 'UserId' });
       }
     }
   });
