@@ -4,6 +4,11 @@ import bodyParser from 'body-parser';
 import http from 'http';
 import dotenv from 'dotenv';
 
+// CronJob
+import cron from 'cron';
+import cronFunction from './app/cron';
+var CronJob = cron.CronJob;
+
 // botkit
 import { controller, customConfigBot } from './bot/controllers';
 
@@ -32,6 +37,18 @@ app.use(function(err, req, res, next) {
 
 //port for Heroku
 app.set('port', (process.env.PORT));
+
+/**
+ * 						*** CRON JOB ***
+ * @param  time increment in cron format
+ * @param  function to run each increment
+ * @param  function to run at end of cron job
+ * @param  timezone of the job
+ */
+new CronJob('* * * * *', cronFunction, null, true, "America/New_York");
+
+// for dev purposes: every second
+// new CronJob('* * * * * *', cronFunction, null, true, "America/New_York");
 
 
 /**
@@ -69,5 +86,3 @@ app.listen(app.get('port'), () => {
 	});
   
 });
-
-

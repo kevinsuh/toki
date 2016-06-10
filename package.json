@@ -23,6 +23,7 @@
   "dependencies": {
     "botkit": "^0.2.0",
     "botkit-middleware-witai": "0.0.2",
+    "cron": "^1.1.0",
     "dotenv": "^2.0.0",
     "ejs": "^2.4.2",
     "express": "^4.13.4",
