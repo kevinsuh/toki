@@ -7,6 +7,15 @@ import { wit } from './index';
 // easter eggs, fun things, non-important (like saying hello)
 export default function(controller) {
 
+	// TEST
+	controller.on('test_message_send', (bot, userID, message) => {
+
+	  bot.startPrivateConversation({user: userID}, (err, convo) => {
+	    convo.say(message);
+	  });
+
+	});
+
 	controller.on('user_typing', (bot, message) => {
 		console.log("user is typing!");
 	});
