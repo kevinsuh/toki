@@ -35,13 +35,19 @@ router.post('/message_user', (req, res) => {
     include: [
       models.SlackUser
     ]
-  }).then((user) => {
-    bot.startPrivateConversation({user: user.SlackUser.SlackUserId}, (err, convo) => {
+  })
+  .then((user) => {
+
+    bot.startPrivateConversation({
+      user: user.SlackUser.SlackUserId 
+    },
+    (err, convo) => {
       convo.say(`${message}`);
     });
-    res.json(user);
-  });
 
+    res.json(user);
+    
+  })
 })
 
 // create
