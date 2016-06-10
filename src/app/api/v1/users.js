@@ -25,6 +25,25 @@ router.get('/', (req, res) => {
 
 });
 
+// post to user's slack
+router.post('/message_user', (req, res) => {
+
+  const { email, message } = req.body;
+
+  models.User.find({
+    where: { email },
+    include: [
+      models.SlackUser
+    ]
+  }).then((user) => {
+    bot.startPrivateConversation({user: user.SlackUser.SlackUserId}, (err, convo) => {
+      convo.say(`${message}`);
+    });
+    res.json(user);
+  });
+
+})
+
 // create
 router.post('/', (req, res) => {
 
