@@ -6,6 +6,10 @@ import login from './routes/login';
 
 // api calls
 import api_tasks from '../api/v1/tasks';
+import api_users from '../api/v1/users';
+
+// sequelize models
+import models from '../models';
 
 export default (app) => {
 
@@ -20,6 +24,7 @@ export default (app) => {
 
   // api
   app.use('/api/v1/tasks', api_tasks);
+  app.use('/api/v1/users', api_users);
 
 }
 
