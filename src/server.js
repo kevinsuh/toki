@@ -45,10 +45,10 @@ app.set('port', (process.env.PORT));
  * @param  function to run at end of cron job
  * @param  timezone of the job
  */
-new CronJob('* * * * *', cronFunction, null, true, "America/New_York");
+// new CronJob('* * * * *', cronFunction, null, true, "America/New_York");
 
 // for dev purposes: every second
-// new CronJob('* * * * * *', cronFunction, null, true, "America/New_York");
+new CronJob('* * * * * *', cronFunction, null, true, "America/New_York");
 
 
 /**
