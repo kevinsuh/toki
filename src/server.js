@@ -48,7 +48,7 @@ app.set('port', (process.env.PORT));
 // new CronJob('* * * * *', cronFunction, null, true, "America/New_York");
 
 // for dev purposes: every second
-new CronJob('* * * * * *', cronFunction, null, true, "America/New_York");
+new CronJob('*/5 * * * * *', cronFunction, null, true, "America/New_York");
 
 
 /**

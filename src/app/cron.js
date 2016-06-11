@@ -10,7 +10,7 @@ import moment from 'moment';
 export default function() {
 
 	// check for reminders every minute!
-	console.log("hello every minute from cron file");
+	console.log("hello every 5 seconds from cron file");
 	checkForReminders();
 
 }
