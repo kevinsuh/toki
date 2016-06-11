@@ -40,15 +40,21 @@ export default function(controller) {
 	    		// configure necessary properties on convo object
 	    		convo.name = name;
 
+	    		// object with values that are important to me
+	    		convo.dayStart = {};
+
 	    		// start the flow
 	    		askForDayTasks(err, convo);
 
+	    		// on finish conversation
 	    		convo.on('end', (convo) => {
 	    			if (convo.status == 'completed') {
 	    				bot.reply(message,"thx for finishing");
 	    				var responses = convo.extractResponses();
 	    				console.log('done!')
 	    				console.log(responses);
+	    				console.log("here is day start object:");
+	    				console.log(convo.dayStart);
 	    			} else {
 	    				// if convo gets ended prematurely
 	    				bot.reply(message, "Okay then, never mind!");
@@ -97,7 +103,7 @@ function displayTaskList(response, convo) {
 	var taskArray = convertResponseObjectsToTaskArray(tasks);
 
 	// taskArray is now attached to convo
-	convo.taskArray = taskArray;
+	convo.dayStart.taskArray = taskArray;
 
 	console.log("TASKS:")
 	console.log(taskArray);
@@ -110,7 +116,7 @@ function displayTaskList(response, convo) {
 	convo.ask(`You can just list the numbers, like \`3, 4, 1, 2, 5\``, (response, convo) => {
 		prioritizeTaskList(response, convo);
 		convo.next();
-	});
+	}, { 'key' : 'taskPriorities' });
 	
 }
 
@@ -120,7 +126,7 @@ function prioritizeTaskList(response, convo) {
 	const { bot, source_message } = task;
 
 	// organize the task list!
-	var { taskArray } = convo;
+	var { taskArray } = convo.dayStart;
 
 	// get user priority order (`1,4,3,2`), convert it to an array of ints, and use that to prioritize your array
 	var initialPriorityOrder = response.text;
@@ -141,7 +147,7 @@ function prioritizeTaskList(response, convo) {
 		prioritizedTaskArray.push(taskArray[order]);
 	})
 
-	convo.prioritizedTaskArray = prioritizedTaskArray;
+	convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
 
 	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray);
 
@@ -155,7 +161,7 @@ function prioritizeTaskList(response, convo) {
 				convo.ask(`Just say, \`30, 40, 1 hour, 1hr 10 min, 15m\` in order and I'll figure it out and assign those times to the tasks above :smiley:`, (response, convo) => {
 					assignTimeToTasks(response, convo);
 					convo.next();
-				});
+				}, { 'key' : 'timeToTasksResponse' });
 				convo.next();
 			}
 		},
@@ -166,7 +172,7 @@ function prioritizeTaskList(response, convo) {
 				convo.next();
 			}
 		}
-	]);
+	], { 'key' : 'confirmedRightPriority' });
 
 }
 
@@ -175,7 +181,7 @@ function assignTimeToTasks(response, convo) {
 	const { task }                = convo;
 	const { bot, source_message } = task;
 
-	var { prioritizedTaskArray } = convo;
+	var { prioritizedTaskArray } = convo.dayStart;
 
 	var timeToTask = response.text;
 	timeToTask = timeToTask.split(",").map((time) => {
@@ -191,6 +197,8 @@ function assignTimeToTasks(response, convo) {
 		}
 	});
 
+	convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
+
 	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray);
 
 	convo.say("Are these times right?");
@@ -204,6 +212,7 @@ function assignTimeToTasks(response, convo) {
 							pattern: bot.utterances.yes,
 							callback: (response, convo) => {
 								convo.say("Great! It's time for the first session of the day. Let's get crackin :egg:");
+								convo.dayStart.startFirstSession = true;
 								convo.next();
 							}
 						},
@@ -212,10 +221,11 @@ function assignTimeToTasks(response, convo) {
 							callback: (response, convo) => {
 								convo.say("Great! Let me know when you're ready to start");
 								convo.say("Alternatively, you can ask me to remind you to start at a specific time, like `10am` or a relative time like `in 10 minutes`");
+								convo.dayStart.startFirstSession = false;
 								convo.next();
 							}
 						}
-					])
+					], { 'key' : 'startFirstSession' })
 				convo.next();
 			}
 		},
@@ -247,8 +257,6 @@ function convertResponseObjectsToTaskArray(tasks) {
 		taskString += task.text;
 		taskString += '\n';
 	});
-
-	console.log(`TASK STRING: ${taskString}`);
 
 	const commaOrNewLine = /[,\n]+/;
 	var taskStringArray = taskString.split(commaOrNewLine);
