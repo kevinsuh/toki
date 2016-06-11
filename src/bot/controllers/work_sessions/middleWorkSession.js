@@ -21,7 +21,7 @@ export default function(controller) {
 		console.log(JSON.stringify(message.intentObject));
 
 		// these are array of objects
-		const { duration, extend_to } = message.intentObject.entities;
+		const { session_duration, extend_to } = message.intentObject.entities;
 		var now = moment();
 
 		console.log("here extending session");
@@ -29,11 +29,11 @@ export default function(controller) {
 		// var timezone = String(String(now.utc()._d).split("(")[1]).split(")")[0];
 
 		// this means user requested duration extension (i.e. 10 more minutes)
-		if (duration) {
+		if (session_duration) {
 			
 			var durationSeconds = 0;
-			for (var i = 0; i < duration.length; i++) {
-				durationSeconds += duration[i].normalized.value;
+			for (var i = 0; i < session_duration.length; i++) {
+				durationSeconds += session_duration[i].normalized.value;
 			}
 			var durationMinutes = Math.floor(durationSeconds / 60);
 

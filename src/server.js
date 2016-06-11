@@ -70,9 +70,7 @@ app.listen(app.get('port'), () => {
 	    console.log("RTM on and listening");
 
 	    bot.startPrivateConversation({user: "U121ZK15J"}, (err, convo) => {
-	    	console.log("Convo object:");
-	    	console.log(convo);
-				// convo.say(`Hello Kevin. I am a bot that is hosted on your server now :robot_face:`);
+				convo.say(`Hello Kevin. I am a bot that is hosted on your server now :robot_face:`);
 			});
 			// channels that start with "D" are direct message channels
 			// bot.send({

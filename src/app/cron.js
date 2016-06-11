@@ -64,7 +64,7 @@ var checkForReminders = () => {
 		    	}
 		    	console.log(type);
 		    	
-		    	message = `Hey! You wanted a reminder :smiley: :alarm_clock: `;
+		    	message = `Hey! You wanted a reminder (${reminder.customNote}) :smiley: :alarm_clock: `;
 		    	convo.say(message);
 		    });
 

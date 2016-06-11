@@ -6,18 +6,17 @@ module.exports = {
    // add open bool
    queryInterface.addColumn(
       'Reminders',
-      'open',
+      'customNote',
       {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true,
-        allowNull: false
+        type: Sequelize.STRING,
+        allowNull: true
       }
     );
   },
 
   down: function (queryInterface, Sequelize) {
  
-   return queryInterface.removeColumn('Reminders', 'open');
+   return queryInterface.removeColumn('Reminders', 'customNote');
 
   }
 };
