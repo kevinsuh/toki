@@ -5,7 +5,8 @@
 // patterns is the array of strings that your controller is listening to
 // message is the specific message sent (object): the actual text is message.text
 
-if (false) {
+
+/*
 
 export function numberLessThanTen(patterns, message) {
 
@@ -32,4 +33,4 @@ export function numberGreaterThanTen(patterns, message) {
 	}
 }
 
-}
+*/
