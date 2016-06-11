@@ -121,17 +121,12 @@ function prioritizeTaskList(response, convo) {
 
 	// organize the task list!
 	var { taskArray } = convo;
-	console.log("TASK ARRAY!");
-	console.log(taskArray);
-
-	console.log("USER RESPONSE TO PRIORITY!");
-	console.log(response);
 
 	// get user priority order (`1,4,3,2`), convert it to an array of ints, and use that to prioritize your array
 	var initialPriorityOrder = response.text;
 	initialPriorityOrder = initialPriorityOrder.split(",").map((order) => {
 			return parseInt(order)
-		});
+	});
 
 	var priorityOrder = [];
 	initialPriorityOrder.forEach(function(order) {
@@ -157,8 +152,9 @@ function prioritizeTaskList(response, convo) {
 			callback: (response, convo) => {
 				convo.say("Excellent! Last thing: how much time would you like to allocate to each task today?");
 				convo.say(taskListMessage);
-				convo.ask(`Just say \`30, 40, 50, 1 hour, 15 min\` in order and I'll figure it out and assign those times to the tasks above :smiley:`, (response, convo) => {
-					convo.say("holla");
+				convo.ask(`Just say, \`30, 40, 1 hour, 1hr 10 min, 15m\` and I'll figure it out and assign those times to the tasks above in order :smiley:`, (response, convo) => {
+					assignTimeToTasks(response, convo);
+					convo.next();
 				});
 				convo.next();
 			}
@@ -171,6 +167,30 @@ function prioritizeTaskList(response, convo) {
 			}
 		}
 	]);
+
+}
+
+function assignTimeToTasks(response, convo) {
+
+	const { task }                = convo;
+	const { bot, source_message } = task;
+
+	var { prioritizedTaskArray } = convo;
+
+	console.log("RESPONSE!!!: ");
+	console.log(response);
+
+	var timeToTask = response.text;
+	timeToTask = timeToTask.split(",").map((time) => {
+			return parseInt(time);
+	});
+
+	prioritizedTaskArray = prioritizedTaskArray.map((task, index) => {
+		console.log(`index: ${index}`);
+		return {
+
+		}
+	})
 
 }
 
@@ -219,3 +239,48 @@ function convertArrayToTaskListMessage(taskArray) {
 	});
 	return taskListMessage;
 }
+
+/**
+ * convert a string of hours and minutes to total minutes int
+ * @param  {string} string `1hr 2m`, `25 min`, etc.
+ * @return {int}        number of minutes int
+ * very temporary solution...
+ */
+function convertTimeStringToMinutes(timeString) {
+
+	var totalMinutes = 0;
+	var timeArray = timeString.split(" ");
+
+	for (var i = 0; i < timeArray.length; i++) {
+  
+  	if (isNaN(parseInt(timeArray[i])))
+    	continue;
+      
+		var minutes = 0;
+
+		// option 1: int with space (i.e. `1 hr`)
+		if (timeArray[i] == parseInt(timeArray[i])) {
+    	minutes = parseInt(timeArray[i]);
+			var hourOrMinute = timeArray[i+1];
+			if (hourOrMinute && hourOrMinute[0] == "h") {
+				minutes *= 60;
+			}
+		} else {
+			// option 2: int with no space (i.e. `1hr`)
+			// use hacky solution...
+			var minutes = parseInt(timeArray[i]);
+			var minuteString = String(minutes);
+			if (timeArray[i][minuteString.length] == "h") {
+				minutes *= 60;
+			}
+		}
+
+    totalMinutes += minutes;
+
+	}
+
+  
+	return totalMinutes;
+}
+
+
