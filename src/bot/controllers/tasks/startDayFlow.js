@@ -78,7 +78,7 @@ function askForDayTasks(response, convo){
 		console.log("response is:");
 		console.log(response);
 		if (response.text == FINISH_WORD) {
-			convo.say("You can always add more tasks later by telling me, `I'd like to add a task` or something along those lines :grinning:");
+			convo.say("Awesome! You can always add more tasks later by telling me, `I'd like to add a task` or something along those lines :grinning:");
 			displayTaskList(response, convo);
 			convo.next();
 		}
@@ -105,7 +105,7 @@ function displayTaskList(response, convo) {
 	var taskListMessage = convertArrayToTaskListMessage(taskArray);
 
 	// we need to prioritize the task list here to display to user
-	convo.say(`Awesome! Now, please rank your tasks in order of your priorities today`);
+	convo.say(`Now, please rank your tasks in order of your priorities today`);
 	convo.say(taskListMessage);
 	convo.ask(`You can just list the numbers, like \`3, 4, 1, 2, 5\``, (response, convo) => {
 		prioritizeTaskList(response, convo);
@@ -152,7 +152,7 @@ function prioritizeTaskList(response, convo) {
 			callback: (response, convo) => {
 				convo.say("Excellent! Last thing: how much time would you like to allocate to each task today?");
 				convo.say(taskListMessage);
-				convo.ask(`Just say, \`30, 40, 1 hour, 1hr 10 min, 15m\` and I'll figure it out and assign those times to the tasks above in order :smiley:`, (response, convo) => {
+				convo.ask(`Just say, \`30, 40, 1 hour, 1hr 10 min, 15m\` in order and I'll figure it out and assign those times to the tasks above :smiley:`, (response, convo) => {
 					assignTimeToTasks(response, convo);
 					convo.next();
 				});
@@ -162,7 +162,7 @@ function prioritizeTaskList(response, convo) {
 		{
 			pattern: bot.utterances.no,
 			callback: (response, convo) => {
-				convo.say("dammit.... ok");
+				convo.say("dammit.... ok then.");
 				convo.next();
 			}
 		}
@@ -177,20 +177,56 @@ function assignTimeToTasks(response, convo) {
 
 	var { prioritizedTaskArray } = convo;
 
-	console.log("RESPONSE!!!: ");
-	console.log(response);
-
 	var timeToTask = response.text;
 	timeToTask = timeToTask.split(",").map((time) => {
-			return parseInt(time);
+		var minutes = convertTimeStringToMinutes(time);
+		return minutes;
 	});
 
 	prioritizedTaskArray = prioritizedTaskArray.map((task, index) => {
-		console.log(`index: ${index}`);
+		console.log(index);
 		return {
-
+			...task,
+			minutes: timeToTask[index]
 		}
-	})
+	});
+
+	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray);
+
+	convo.say("Are these times right?");
+	convo.ask(taskListMessage, [
+		{
+			pattern: bot.utterances.yes,
+			callback: (response, convo) => {
+				convo.say("Boom! This looks great");
+				convo.ask("Ready to start your first focused work session today?", [
+						{
+							pattern: bot.utterances.yes,
+							callback: (response, convo) => {
+								convo.say("Great! It's time for the first session of the day. Let's get crackin :egg:");
+								convo.next();
+							}
+						},
+						{
+							pattern: bot.utterances.no,
+							callback: (response, convo) => {
+								convo.say("Great! Let me know when you're ready to start");
+								convo.say("Alternatively, you can ask me to remind you to start at a specific time, like `10am` or a relative time like `in 10 minutes`");
+								convo.next();
+							}
+						}
+					])
+				convo.next();
+			}
+		},
+		{
+			pattern: bot.utterances.no,
+			callback: (response, convo) => {
+				convo.say("ah... well then.");
+				convo.next();
+			}
+		}
+	]);
 
 }
 
@@ -234,7 +270,8 @@ function convertArrayToTaskListMessage(taskArray) {
 	var taskListMessage = '';
 	var count = 1;
 	taskArray.forEach((task) => {
-		taskListMessage += `> ${count}) ${task.text}\n`;
+		var minutesMessage = task.minutes ? ` (${task.minutes} minutes)` : '';
+		taskListMessage += `> ${count}) ${task.text}${minutesMessage}\n`;
 		count++;
 	});
 	return taskListMessage;
