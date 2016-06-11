@@ -54,17 +54,9 @@ var checkForReminders = () => {
 		      user: user.SlackUser.SlackUserId 
 		    }, (err, convo) => {
 
-		    	var message;
-		    	switch (type) {
-		    		case 'work_session':
-		    			// if work session, get the time passed since start of session
-		    			message = `Hey! Hope you're doing well in your session :weight_lifter:`;
-		    		default:
-		    		message = `Hey! You wanted a reminder :alarm_clock: `;
-		    	}
-		    	console.log(type);
-		    	
-		    	message = `Hey! You wanted a reminder (${reminder.customNote}) :smiley: :alarm_clock: `;
+		    	var customNote = reminder.customNote ? `\`${reminder.customNote}\`` : '';
+		    	var message = `Hey! You wanted a reminder (${customNote}) :smiley: :alarm_clock: `;
+
 		    	convo.say(message);
 		    });
 
