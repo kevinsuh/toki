@@ -54,10 +54,13 @@ var checkForReminders = () => {
 		      user: user.SlackUser.SlackUserId 
 		    }, (err, convo) => {
 
-		    	var customNote = reminder.customNote ? `\`${reminder.customNote}\`` : '';
-		    	var message = `Hey! You wanted a reminder (${customNote}) :smiley: :alarm_clock: `;
+		    	if (convo) {
+		    		var customNote = reminder.customNote ? `\`${reminder.customNote}\`` : '';
+			    	var message = `Hey! You wanted a reminder (${customNote}) :smiley: :alarm_clock: `;
 
-		    	convo.say(message);
+			    	convo.say(message);
+		    	}
+		    	
 		    });
 
 		  });
