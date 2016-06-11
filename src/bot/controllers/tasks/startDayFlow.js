@@ -11,7 +11,7 @@ const FINISH_WORD = 'done';
 
 // base controller for tasks
 export default function(controller) {
-	
+
 	/**
 	* 	START OF YOUR DAY
 	*/
@@ -73,6 +73,7 @@ function askForDayTasks(response, convo){
 
 	convo.say(`Hey ${convo.name}! What tasks would you like to work on today? :pencil:`);
 	convo.say(`You can enter everything in one line separated by commas, or send me each task in a separate line`);
+
 	convo.ask(`Then just tell me when you're done by saying \`${FINISH_WORD}\``, (response, convo) => {
 		console.log("response is:");
 		console.log(response);
@@ -93,20 +94,15 @@ function displayTaskList(response, convo) {
 	var { tasks } = convo.responses;
 
 	var tasks = convo.responses.tasks;
-	var taskStringArray = convertResponseObjectsToTaskListArray(tasks);
+	var taskArray = convertResponseObjectsToTaskArray(tasks);
 
 	// taskArray is now attached to convo
-	convo.taskStringArray = taskStringArray;
+	convo.taskArray = taskArray;
 
 	console.log("TASKS:")
-	console.log(taskStringArray);
+	console.log(taskArray);
 
-	var taskListMessage = '';
-	var count = 1;
-	taskStringArray.forEach((task) => {
-		taskListMessage += `> ${count}) ${task}\n`;
-		count++;
-	});
+	var taskListMessage = convertArrayToTaskListMessage(taskArray);
 
 	// we need to prioritize the task list here to display to user
 	convo.say(`Awesome! Now, please rank your tasks in order of your priorities today`);
@@ -124,15 +120,18 @@ function prioritizeTaskList(response, convo) {
 	const { bot, source_message } = task;
 
 	// organize the task list!
-	var { taskStringArray } = convo;
-	console.log("TASK STRING ARRAY!");
-	console.log(taskStringArray);
+	var { taskArray } = convo;
+	console.log("TASK ARRAY!");
+	console.log(taskArray);
 
 	console.log("USER RESPONSE TO PRIORITY!");
 	console.log(response);
 
+	// get user priority order (`1,4,3,2`), convert it to an array of ints, and use that to prioritize your array
 	var initialPriorityOrder = response.text;
-	initialPriorityOrder = initialPriorityOrder.split(",").map((order) => { return parseInt(order) });
+	initialPriorityOrder = initialPriorityOrder.split(",").map((order) => {
+			return parseInt(order)
+		});
 
 	var priorityOrder = [];
 	initialPriorityOrder.forEach(function(order) {
@@ -142,19 +141,14 @@ function prioritizeTaskList(response, convo) {
 		}
 	});
 
-	var prioritizedTaskStringArray = [];
+	var prioritizedTaskArray = [];
 	priorityOrder.forEach((order) => {
-		prioritizedTaskStringArray.push(taskStringArray[order]);
+		prioritizedTaskArray.push(taskArray[order]);
 	})
 
-	convo.prioritizedTaskStringArray = prioritizedTaskStringArray;
+	convo.prioritizedTaskArray = prioritizedTaskArray;
 
-	var taskListMessage = '';
-	var count = 1;
-	prioritizedTaskStringArray.forEach((task) => {
-		taskListMessage += `> ${count}) ${task}\n`;
-		count++;
-	});
+	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray);
 
 	convo.say("Is this the right priority?");
 	convo.ask(taskListMessage, [
@@ -164,7 +158,7 @@ function prioritizeTaskList(response, convo) {
 				convo.say("Excellent! Last thing: how much time would you like to allocate to each task today?");
 				convo.say(taskListMessage);
 				convo.ask(`Just say \`30, 40, 50, 1 hour, 15 min\` in order and I'll figure it out and assign those times to the tasks above :smiley:`, (response, convo) => {
-
+					convo.say("holla");
 				});
 				convo.next();
 			}
@@ -186,7 +180,7 @@ function prioritizeTaskList(response, convo) {
  * @param  {[object]} tasks task OBJECTS
  * @return {[string]}       task STRINGS
  */
-function convertResponseObjectsToTaskListArray(tasks) {
+function convertResponseObjectsToTaskArray(tasks) {
 
 	var taskString = '';
 	tasks.forEach((task, index) => {
@@ -201,10 +195,27 @@ function convertResponseObjectsToTaskListArray(tasks) {
 	console.log(`TASK STRING: ${taskString}`);
 
 	const commaOrNewLine = /[,\n]+/;
-	var tasksArray = taskString.split(commaOrNewLine);
-	tasksArray.pop(); // last one will be \n with this reg ex split
+	var taskStringArray = taskString.split(commaOrNewLine);
+	taskStringArray.pop(); // last one will be \n with this reg ex split
 
-	return tasksArray.map((task) => {
-		return task.trim();
+	// this is the final task array we are returning
+	var taskArray = [];
+	taskStringArray.forEach((taskString) => {
+		taskString = taskString.trim();
+		taskArray.push({
+			text: taskString
+		})
 	});
+
+	return taskArray;
+}
+
+function convertArrayToTaskListMessage(taskArray) {
+	var taskListMessage = '';
+	var count = 1;
+	taskArray.forEach((task) => {
+		taskListMessage += `> ${count}) ${task.text}\n`;
+		count++;
+	});
+	return taskListMessage;
 }
