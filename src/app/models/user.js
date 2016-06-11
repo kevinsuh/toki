@@ -7,7 +7,8 @@ module.exports = function(sequelize, DataTypes) {
     email: DataTypes.STRING,
     admin: { type: DataTypes.BOOLEAN,
              defaultValue: false
-           }
+           },
+    nickName: DataTypes.STRING
   }, {
 
     classMethods: {

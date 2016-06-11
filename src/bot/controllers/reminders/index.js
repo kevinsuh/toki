@@ -63,7 +63,7 @@ export default function(controller) {
 		remindTimeStampForDB = remindTimeStamp.format('YYYY-MM-DD HH:mm:ss');
 		remindTimeStamp      = remindTimeStamp.format('h:mm a');
 
-		// send the message and reply
+		// find user then reply
 		models.SlackUser.find({
 			where: { SlackUserId }
 		})

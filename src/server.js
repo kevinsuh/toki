@@ -38,18 +38,6 @@ app.use(function(err, req, res, next) {
 //port for Heroku
 app.set('port', (process.env.PORT));
 
-/**
- * 						*** CRON JOB ***
- * @param  time increment in cron format
- * @param  function to run each increment
- * @param  function to run at end of cron job
- * @param  timezone of the job
- */
-// new CronJob('* * * * *', cronFunction, null, true, "America/New_York");
-
-// for dev purposes: every second
-new CronJob('*/5 * * * * *', cronFunction, null, true, "America/New_York");
-
 
 /**
  * 			START THE SERVER + BOT
@@ -69,8 +57,17 @@ app.listen(app.get('port'), () => {
 	  if (!err) {
 	    console.log("RTM on and listening");
 
+	    /**
+			 * 						*** CRON JOB ***
+			 * @param  time increment in cron format
+			 * @param  function to run each increment
+			 * @param  function to run at end of cron job
+			 * @param  timezone of the job
+			 */
+			new CronJob('*/5 * * * * *', cronFunction, null, true, "America/New_York");
+
 	    bot.startPrivateConversation({user: "U121ZK15J"}, (err, convo) => {
-				convo.say(`Hello Kevin. I am a bot that is hosted on your server now :robot_face:`);
+				convo.say(`Hello! I am live and ready for you :robot_face:`);
 			});
 			// channels that start with "D" are direct message channels
 			// bot.send({
