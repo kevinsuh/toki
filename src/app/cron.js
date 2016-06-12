@@ -54,8 +54,8 @@ var checkForReminders = () => {
 		    }, (err, convo) => {
 
 		    	if (convo) {
-		    		var customNote = reminder.customNote ? `\`${reminder.customNote}\`` : '';
-			    	var message = `Hey! You wanted a reminder (${customNote}) :smiley: :alarm_clock: `;
+		    		var customNote = reminder.customNote ? `(\`${reminder.customNote}\`)` : '';
+			    	var message = `Hey! You wanted a reminder ${customNote} :smiley: :alarm_clock: `;
 
 			    	convo.say(message);
 		    	}

@@ -2,10 +2,12 @@ import os from 'os';
 import { wit } from '../index';
 import http from 'http';
 import bodyParser from 'body-parser';
+import moment from 'moment';
 
 import models from '../../../app/models';
 
 import { randomInt } from '../../lib/botResponses';
+import { convertArrayToTaskListMessage } from '../../lib/messageHelpers';
 
 import startDayFlowController from './startDayFlow';
 
@@ -30,33 +32,41 @@ export default function(controller) {
 
 	controller.hears(['daily_tasks'], 'direct_message', wit.hears, (bot, message) => {
 
-		var request = http.get("http://www.heynavi.co/v1/tasks?startDate=2016-05-05&endDate=2016-05-28&selectedUserID=4", (res) => {
-			
-			res.setEncoding('utf8');
-			var reply = `Your tasks:\n`;
-			var count = 1;
+		const SlackUserId = message.user;
+		var channel       = message.channel;
 
-			var tasksObject = '';
-			res.on("data", (chunk) => {
-				tasksObject += chunk;
-			});
-			res.on("end", () => {
+		// find user then get tasks
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
 
-				tasksObject = JSON.parse(tasksObject);
-				const { tasks } = tasksObject;
+			// temporary fix to get tasks
+			var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
+			user.getTasks({
+				where: [`"createdAt" > ?`, timeAgoForTasks],
+				order: `"priority" ASC`
+			})
+			.then((tasks) => {
 
-				for (let taskObject of tasks) {
-					const { task } = taskObject
-					reply += `${count}) ${task.content}\n`;
-					count += 1;
-				}
+				var taskListMessage = convertArrayToTaskListMessage(tasks);
+				taskListMessage = `Here are your tasks for today! :memo:\n${taskListMessage}`;
+
+				bot.send({
+		        type: "typing",
+		        channel
+		    });
+		    setTimeout(()=>{
+		    	bot.reply(message, taskListMessage);
+		    }, randomInt(1000, 2000));
 				
-				bot.reply(message, reply);
 			});
+			
+		})
 
-		}).on('error', (e) => {
-			console.log(`Got error: ${e.message}`);
-		});
 
 	});
 
