@@ -9,6 +9,7 @@ import { randomInt } from '../../lib/botResponses';
 import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes } from '../../lib/messageHelpers';
 
 const FINISH_WORD = 'done';
+const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
 
 // base controller for tasks
 export default function(controller) {
@@ -58,25 +59,27 @@ export default function(controller) {
     				console.log("here is day start object:");
     				console.log(convo.dayStart);
 
-	    			// store the user's tasks
-    				var { UserId, prioritizedTaskArray } = convo.dayStart;
-    				prioritizedTaskArray.forEach((task, index) => {
-    					const { text, minutes} = task;
-    					var priority = index + 1;
-    					models.Task.create({
-    						text,
-    						minutes,
-    						priority,
-    						UserId
-    					});
-    				});
-
 	    			if (convo.status == 'completed') {
+
+	    				// store the user's tasks
+	    				var { UserId, prioritizedTaskArray } = convo.dayStart;
+	    				prioritizedTaskArray.forEach((task, index) => {
+	    					const { text, minutes} = task;
+	    					var priority = index + 1;
+	    					models.Task.create({
+	    						text,
+	    						minutes,
+	    						priority,
+	    						UserId
+	    					});
+	    				});
+
+	    				// confirm completion of DAY_START flow
 	    				bot.reply(message,"thx for finishing");
 
 	    			} else {
 	    				// if convo gets ended prematurely
-	    				bot.reply(message, "Okay then, never mind!");
+	    				bot.reply(message,"Okay! Exiting now. Let me know when you want to start your day");
 	    			}
 	    		});
 
@@ -98,8 +101,14 @@ function askForDayTasks(response, convo){
 
 	convo.say(`Hey ${convo.name}! What tasks would you like to work on today? :pencil:`);
 	convo.say(`You can enter everything in one line separated by commas, or send me each task in a separate line`);
-
 	convo.ask(`Then just tell me when you're done by saying \`${FINISH_WORD}\``, (response, convo) => {
+
+		for (var i = 0; i < EXIT_EARLY_WORDS.length; i++) {
+			console.log(`in exit early words loop! ${EXIT_EARLY_WORDS[i]}`);
+			if (response.text == EXIT_EARLY_WORDS[i])
+				convo.stop();
+		}
+
 		console.log("response is:");
 		console.log(response);
 		if (response.text == FINISH_WORD) {
