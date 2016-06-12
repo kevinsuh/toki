@@ -4,7 +4,9 @@ module.exports = function(sequelize, DataTypes) {
     text: DataTypes.STRING,
     done: {  type: DataTypes.BOOLEAN,
              defaultValue: false
-          }
+          },
+    priority: DataTypes.INTEGER,
+    minutes: DataTypes.INTEGER
   }, {
     classMethods: {
       associate: function(models) {

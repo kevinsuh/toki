@@ -30,4 +30,3 @@ export function randomInt(min, max) {
 	var randomIndex = Math.floor(Math.random() * (max - min)) + min;
 	return randomIndex;
 }
-

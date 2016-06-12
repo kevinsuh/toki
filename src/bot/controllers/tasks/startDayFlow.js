@@ -41,20 +41,38 @@ export default function(controller) {
 	    		convo.name = name;
 
 	    		// object with values that are important to me
-	    		convo.dayStart = {};
+	    		convo.dayStart = {
+	    			UserId: slackUser.User.id
+	    		};
 
 	    		// start the flow
 	    		askForDayTasks(err, convo);
 
 	    		// on finish conversation
 	    		convo.on('end', (convo) => {
+
+    				var responses = convo.extractResponses();
+    				console.log('done!')
+    				console.log(responses);
+    				console.log("here is day start object:");
+    				console.log(convo.dayStart);
+
+	    			// store the user's tasks
+    				var { UserId, prioritizedTaskArray } = convo.dayStart;
+    				prioritizedTaskArray.forEach((task, index) => {
+    					const { text, minutes} = task;
+    					var priority = index + 1;
+    					models.Task.create({
+    						text,
+    						minutes,
+    						priority,
+    						UserId
+    					});
+    				});
+
 	    			if (convo.status == 'completed') {
 	    				bot.reply(message,"thx for finishing");
-	    				var responses = convo.extractResponses();
-	    				console.log('done!')
-	    				console.log(responses);
-	    				console.log("here is day start object:");
-	    				console.log(convo.dayStart);
+
 	    			} else {
 	    				// if convo gets ended prematurely
 	    				bot.reply(message, "Okay then, never mind!");
