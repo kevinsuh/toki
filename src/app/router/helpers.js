@@ -13,6 +13,7 @@ export function getAuthAddress(authCode, uri_path) {
 
 export function startBot(team, type) {
   console.log(team.name + " start bot")
+  console.log(team);
   if (type == 'login') {
     connectOnLogin(team)
   } else if (type == 'create') {

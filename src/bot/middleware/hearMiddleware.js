@@ -6,6 +6,8 @@
 // message is the specific message sent (object): the actual text is message.text
 
 
+/*
+
 export function numberLessThanTen(patterns, message) {
 
 	var number = parseInt(message.text);
@@ -30,3 +32,5 @@ export function numberGreaterThanTen(patterns, message) {
 		return false;
 	}
 }
+
+*/

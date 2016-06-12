@@ -1,0 +1,28 @@
+{
+  "dev": {
+    "driver": "sqlite3",
+    "filename": "~/dev.db"
+  },
+
+  "test": {
+    "driver": "sqlite3",
+    "filename": ":memory:"
+  },
+
+  "prod": {
+    "driver": "pg",
+    "user": {"ENV": "PRODUCTION_USERNAME"},
+    "password": {"ENV": "PRODUCTION_PASSWORD"}
+  },
+
+  "pg": {
+    "driver": "pg",
+    "user": "test",
+    "password": "test",
+    "host": "localhost",
+    "database": "mydb",
+    "schema": "my_schema"
+  },
+
+  "other": "postgres://uname:pw@server.com/dbname"
+}

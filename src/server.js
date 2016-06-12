@@ -4,8 +4,15 @@ import bodyParser from 'body-parser';
 import http from 'http';
 import dotenv from 'dotenv';
 
+// CronJob
+import cron from 'cron';
+import cronFunction from './app/cron';
+var CronJob = cron.CronJob;
+
+// botkit
+import { controller, customConfigBot } from './bot/controllers';
+
 var app = express();
-// http = http.Server(app);
 
 // configuration 
 dotenv.load();
@@ -31,10 +38,46 @@ app.use(function(err, req, res, next) {
 //port for Heroku
 app.set('port', (process.env.PORT));
 
-//botkit (apres port)
-require('./bot/controllers')
 
-//START ===================================================
+/**
+ * 			START THE SERVER + BOT
+ */
+// ===================================================
+
+customConfigBot(controller);
+var bot = controller.spawn(({
+	token: process.env.BOT_TOKEN
+}));
+export { bot };
+
 app.listen(app.get('port'), () => {
   console.log('listening on port ' + app.get('port'));
+
+	bot.startRTM((err) => {
+	  if (!err) {
+	    console.log("RTM on and listening");
+
+	    /**
+			 * 						*** CRON JOB ***
+			 * @param  time increment in cron format
+			 * @param  function to run each increment
+			 * @param  function to run at end of cron job
+			 * @param  timezone of the job
+			 */
+			new CronJob('*/5 * * * * *', cronFunction, null, true, "America/New_York");
+
+	    bot.startPrivateConversation({user: "U121ZK15J"}, (err, convo) => {
+				convo.say(`Hello! I am live and ready for you :robot_face:`);
+			});
+			// channels that start with "D" are direct message channels
+			// bot.send({
+   //      type: "message",
+   //      channel: "D1F93BHM3",
+   //      text: "hello world?"
+   //  	});
+	  } else {
+	    console.log("RTM failed")
+	  }
+	});
+  
 });

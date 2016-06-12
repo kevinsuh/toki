@@ -3,6 +3,14 @@ import { wit } from '../index';
 import http from 'http';
 import bodyParser from 'body-parser';
 
+import models from '../../../app/models';
+
+import { randomInt } from '../../lib/botResponses';
+
+import startDayFlowController from './startDayFlow';
+
+const FINISH_WORD = 'done';
+
 // base controller for tasks
 export default function(controller) {
 
@@ -14,13 +22,12 @@ export default function(controller) {
 	* 	START OF YOUR DAY
 	*/
 
-	// we are relying on wit to do all of the NL parsing for us
-	// so that it normalizes into `intent` strings for us to decipher
-	controller.hears(['start_day'], 'direct_message', wit.hears, (bot, message) => {
-		bot.reply(message, "Okay let's start the day then!");
-	});
+	startDayFlowController(controller);
 
-	// get my daily tasks
+	/**
+	 * 		YOUR DAILY TASKS
+	 */
+
 	controller.hears(['daily_tasks'], 'direct_message', wit.hears, (bot, message) => {
 
 		var request = http.get("http://www.heynavi.co/v1/tasks?startDate=2016-05-05&endDate=2016-05-28&selectedUserID=4", (res) => {

@@ -23,12 +23,16 @@
   "dependencies": {
     "botkit": "^0.2.0",
     "botkit-middleware-witai": "0.0.2",
+    "cron": "^1.1.0",
     "dotenv": "^2.0.0",
     "ejs": "^2.4.2",
     "express": "^4.13.4",
     "moment": "^2.13.0",
     "moment-timezone": "^0.5.4",
-    "pg": "^5.0.0"
+    "pg": "^5.0.0",
+    "pg-hstore": "^2.3.2",
+    "sequelize": "^3.23.3",
+    "sequelize-cli": "^2.4.0"
   },
   "devDependencies": {
     "babel-cli": "^6.9.0",
