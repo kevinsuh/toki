@@ -140,10 +140,10 @@ function startSessionStartConversation(response, convo) {
 			var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 
 			convo.sessionStart.dailyTasks = dailyTasks;
-
 			convo.say(taskListMessage);
 			convo.say("You can either work on one task by saying `let's work on task 1` or multiple tasks by saying `let's work on tasks 1, 2, and 3`");
 			convo.say("I'll follow up with you when your task should be completed, based on your estimate :wink:");
+
 			askWhichTasksToWorkOn(response, convo);
 			convo.next();
 	})
@@ -271,42 +271,115 @@ function confirmTimeForTasks(response, convo) {
   	console.log(`Your timezone is: ${timeZone}`);
   	var calculatedTime = moment().tz(timeZone).add(totalMinutes, 'minutes').format("h:mm a");
   	convo.say(`Nice! That should take until ${calculatedTime} based on your estimate`);
-		convo.ask(`Would you like to work until ${calculatedTime}?`, [
+  	convo.ask(`Would you like to work until ${calculatedTime}?`, [
 			{
 				pattern: bot.utterances.yes,
 				callback: (response, convo) => {
-					convo.ask("Boom :boom: Would you like me to check in with you during this session to make sure you're on track?", [
-						{
-							pattern: bot.utterances.yes,
-							callback: (response, convo) => {
-								convo.say("Sure thing! Let me know what time you want me to check in with you");
-								convo.ask("I can also check in a certain number of minutes or hours from now, like `40 minutes` or `1 hour`", (response, convo) => {
-
-								}, { 'key' : 'respondTime' });
-							}
-						},
-						{
-							pattern: bot.utterances.no,
-							callback: (response, convo) => {
-
-							}
-						}
-					]);
+					convo.sessionStart.totalMinutes   = totalMinutes;
+					convo.sessionStart.calculatedTime = calculatedTime;
+					askForCheckIn(response, convo);
+					convo.next();
 				}
 			},
 			{
 				pattern: bot.utterances.no,
 				callback: (response, convo) => {
-
+					askForCustomTotalMinutes(response, convo);
+					convo.next();
 				}
 			}
 		]);
 
   });
 
+}
+
+// ask for custom amount of time to work on
+function askForCustomTotalMinutes(response, convo) {
+
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	const SlackUserId = response.user;
+
+	convo.ask("What time would you like to work until? You can also tell me the duration you'd like to work, like `55 minutes` :upside_down_face:", (response, convo) => {
+		confirmCustomTotalMinutes(response, convo);
+		convo.next();
+	});
+
+};
+
+function confirmCustomTotalMinutes(response, convo) {
+
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	const SlackUserId = response.user;
 	
+	// use helper method to get if either minute or hour
+	// create helper method that sees if there is exactly one colon and if so, then will run that specific time in user's timezone
+	// need to figure out how to handle users and their timezones
+	// perhaps have "quit" option then a "configure time zone" option. then we can put it in the DB
+	// OOOH have it in the onboarding flow! we can see if user has tz already or not
 
+	convo.ask(`So you'd like to work until ${"CUSTOM END TIME HERE"}?`, [
+		{
+			pattern: bot.utterances.yes,
+			callback: (response, convo) => {
+				// convo.sessionStart.totalMinutes   = totalMinutes;
+				// convo.sessionStart.calculatedTime = calculatedTime;
+				askForCheckIn(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: bot.utterances.no,
+			callback: (response, convo) => {
+				convo.ask("Yikes, my bad. Let's try this again. Just tell me how many minutes you'd like to work right now", (response, convo) => {
+					var totalMinutes = parseInt(response.text);
+					if (isNaN(totalMinutes)) {
+						convo.say("Ah, don't quite get what you said :dog:");
+						convo.repeat();
+					} else {
+						confirmCustomTotalMinutes(response, convo);
+						convo.next();
+					}
+				});
+			}
+		}
+	]);
 
+}
+
+// ask if user wants a checkin during middle of session
+function askForCheckIn(response, convo) {
+
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	const { tasksToWorkOnArray, dailyTasks }  = convo.sessionStart;
+	const SlackUserId = response.user;
+
+	convo.ask("Boom :boom: Would you like me to check in with you during this session to make sure you're on track?", [
+		{
+			pattern: bot.utterances.yes,
+			callback: (response, convo) => {
+				convo.say("Sure thing! Let me know what time you want me to check in with you");
+				convo.ask("I can also check in a certain number of minutes or hours from now, like `40 minutes` or `1 hour`", (response, convo) => {
+					// use helper method to get if either minute or hour
+					// create helper method that sees if there is exactly one colon and if so, then will run that specific time in user's timezone
+					// need to figure out how to handle users and their timezones
+					// perhaps have "quit" option then a "configure time zone" option. then we can put it in the DB
+					// OOOH have it in the onboarding flow! we can see if user has tz already or not
+					convo.next();
+				}, { 'key' : 'respondTime' });
+			}
+		},
+		{
+			pattern: bot.utterances.no,
+			callback: (response, convo) => {
+				convo.say("Last thing - is there anything you'd like me to remind you during the check in?");
+				convo.next();
+			}
+		}
+	]);
 
 }
 
