@@ -3,7 +3,6 @@ module.exports = function(sequelize, DataTypes) {
   var Reminder = sequelize.define('Reminder', {
     remindTime: DataTypes.DATE,
     UserId: DataTypes.INTEGER,
-    type: DataTypes.STRING,
     customNote: DataTypes.STRING,
     open: DataTypes.BOOLEAN
   }, {
