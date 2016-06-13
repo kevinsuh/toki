@@ -96,6 +96,7 @@ export default function(controller) {
 
 };
 
+// user just started conersation and is entering tasks
 function askForDayTasks(response, convo){
 
 	const { task }                = convo;
@@ -125,6 +126,7 @@ function askForDayTasks(response, convo){
 
 }
 
+// user has just entered his tasks for us to display back
 function displayTaskList(response, convo) {
 
 	const { task }                = convo;
@@ -153,6 +155,7 @@ function displayTaskList(response, convo) {
 	
 }
 
+// user has listed `5, 4, 2, 1, 3` for priorities to handle here
 function prioritizeTaskList(response, convo) {
 
 	const { task }                = convo;
@@ -201,14 +204,18 @@ function prioritizeTaskList(response, convo) {
 		{
 			pattern: bot.utterances.no,
 			callback: (response, convo) => {
-				convo.say("dammit.... ok then.");
+
+				convo.say("Whoops :banana: Let's try to do this again");
+				displayTaskList(response, convo);
 				convo.next();
+
 			}
 		}
 	], { 'key' : 'confirmedRightPriority' });
 
 }
 
+// this is the work we do to actually assign time to tasks
 function assignTimeToTasks(response, convo) {
 
 	const { task }                = convo;
@@ -265,7 +272,13 @@ function assignTimeToTasks(response, convo) {
 		{
 			pattern: bot.utterances.no,
 			callback: (response, convo) => {
-				convo.say("ah... well then.");
+				convo.say("Let's give this another try :repeat_one:");
+				convo.say("Send me the amount of time you'd like to work on each task above, separated by commas. The first time you list will represent the first task above, the second time you list will represent the second task, and on and on");
+				convo.say("I'll assume you mean minutes - like `30` would be 30 minutes - unless you specify hours - like `2 hours`");
+				convo.ask(taskListMessage, (response, convo) => {
+					assignTimeToTasks(response, convo);
+					convo.next();
+				})
 				convo.next();
 			}
 		}
