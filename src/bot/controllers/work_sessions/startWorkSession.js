@@ -79,40 +79,71 @@ export default function(controller) {
 					// on finish convo
 					convo.on('end', (convo) => {
 
-						console.log("ending convo early: \n\n\n\n");
-
 						var responses        = convo.extractResponses();
 						var { sessionStart } = convo;
 
+						// proxy that we have not gone through right flow
+						if (!sessionStart.calculatedTimeObject) {
+							bot.reply(message, "Sorry but something went wrong :dog:. Let's start the session again");
+							return;
+						}
+
 						if (convo.status == 'completed') {
 
-							var { calculatedTime } = sessionStart;
-
-							// success! end convo with user and save items to DB
-							convo.say(`Excellent! See you at ${calculatedTime}! :timer_clock:`);
-							convo.say(`Good luck with: ${"TASKLISTMESSAGE"}`);
+							console.log("finished and this is the data:");
+							console.log(sessionStart);
 
 							/**
-							 *		1. save responses to DB:
+							 * 		1. tell user time and tasks to work on
+							 * 		
+							 *		2. save responses to DB:
 							 *			session:
 							 *				- tasks to work on (tasksToWorkOnArray)
 							 *				- sessionEndTime (calculated)
+							 *				- reminder (time + possible customNote)
 							 *
-							 * 		2. start session
+							 * 		3. start session
 							 */
 
-							// begin thy user's session!
-							bot.reply(message, "Okay let's start the session...?");
+							var { UserId, SlackUserId, dailyTasks, calculatedTime, calculatedTimeObject, tasksToWorkOnArray, checkinTimeObject, reminderNote } = sessionStart;
+
+							var taskObjectsToWorkOnArray = [];
+							dailyTasks.forEach((dailyTask) => {
+								if (tasksToWorkOnArray.indexOf(dailyTask.dataValues.priority) > -1)
+									taskObjectsToWorkOnArray.push(dailyTask);
+							});
+
+							// user wants a reminder
+							if (checkinTimeObject) {
+								var checkInTimeStamp = checkinTimeObject.format("YYYY-MM-DD HH:mm:ss");
+								models.Reminder.create({
+									remindTime: checkInTimeStamp,
+									UserId,
+									customNote: reminderNote
+								});
+							}
+
+							// save session and which tasks are assigned to it
+							console.log("taskObjectsToWorkOnArray:");
+							console.log(taskObjectsToWorkOnArray);
+
+							var taskListMessage = convertArrayToTaskListMessage(taskObjectsToWorkOnArray);
+
+							// success! end convo with user and save items to DB
+							bot.reply(message, `Excellent! See you at ${calculatedTime}! :timer_clock:`);
+							bot.reply(message, `Good luck with: \n${taskListMessage}`);
 
 						} else {
+
+							// ending convo prematurely
+							console.log("ending convo early: \n\n\n\n");
 
 							console.log("controller:");
 							console.log(controller);
 							console.log("\n\n\n\n\nbot:");
 							console.log(bot);
 
-							// if convo ends prematurely
-							
+							// no tasks saved for the day
 							if (sessionStart.noDailyTasks) {
 
 								const { task }                = convo;
@@ -134,6 +165,7 @@ export default function(controller) {
 
 								
 							} else {
+								// default premature end
 								bot.reply(message, "Okay! Exiting now. Let me know when you want to start on a session");
 							}
 
@@ -575,8 +607,6 @@ function getReminderNoteFromUser(response, convo) {
 	const { bot, source_message } = task;
 	const SlackUserId = response.user;
 
-	console.log("Response!");
-	console.log(response);
 	const note = response.text;
 
 	const { sessionStart: { checkinTimeObject, checkinTimeString } } = convo;
@@ -586,14 +616,9 @@ function getReminderNoteFromUser(response, convo) {
 			pattern: bot.utterances.yes,
 			callback: (response, convo) => {
 
-				// USER HAS FINISHED FLOW!!! FINAL SAVED CONVO RESPOSNES!!
-				console.log("finished response: session start obj: \n\n\n\n\n");
-				console.log(convo.sessionStart);
-				console.log("\n\n\n\n\n **** YOU WANT TO ABSTRACT THIS OUT INTO THE CONVO.ON('end') FUNCTIONALITY **** \n\n\n\n\n");
-
-				finishSessionForUser(response, convo);
-
+				convo.sessionStart.reminderNote = note;
 				convo.next();
+
 			}
 		},
 		{
@@ -609,23 +634,3 @@ function getReminderNoteFromUser(response, convo) {
 	]);
 
 }
-
-function finishSessionForUser(response, convo) {
-
-	const { task }                = convo;
-	const { bot, source_message } = task;
-	const SlackUserId = response.user;
-
-	const { sessionStart: {  calculatedTime, checkinTimeObject, checkinTimeString } } = convo;
-
-	// success! save reminder in DB
-	convo.say(`Excellent! See you at ${calculatedTime}! :timer_clock:`);
-	// tasks that user chose
-	convo.say(`Good luck with: ${"TASKLISTMESSAGE"}`);
-
-
-	convo.next();
-}
-
-
-
