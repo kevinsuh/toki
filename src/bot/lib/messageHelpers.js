@@ -65,7 +65,7 @@ export function convertArrayToTaskListMessage(taskArray) {
  * convert a string of hours and minutes to total minutes int
  * @param  {string} string `1hr 2m`, `25 min`, etc.
  * @return {int}        number of minutes int
- * very temporary solution...
+ * HACKY / temporary solution...
  */
 export function convertTimeStringToMinutes(timeString) {
 

@@ -166,14 +166,28 @@ function prioritizeTaskList(response, convo) {
 
 	// get user priority order (`1,4,3,2`), convert it to an array of ints, and use that to prioritize your array
 	var initialPriorityOrder = response.text;
+	
+	// either a non-number, or number > length of tasks
+	var isInvalid = false;
+	var nonNumberTest = new RegExp(/\D/);
 	initialPriorityOrder = initialPriorityOrder.split(",").map((order) => {
-			return parseInt(order)
+		order = order.trim();
+		var orderNumber = parseInt(order);
+		if (nonNumberTest.test(order) || orderNumber > taskArray.length)
+			isInvalid = true;
+		return orderNumber;
 	});
+
+	if (isInvalid) {
+		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
+		displayTaskList(response, convo);
+		return;
+	}
 
 	var priorityOrder = [];
 	initialPriorityOrder.forEach(function(order) {
 		if ( order > 0) {
-			order--; // make it 0-index based
+			order--; // make user-entered numbers 0-index based
 			priorityOrder.push(order);
 		}
 	});
@@ -194,10 +208,7 @@ function prioritizeTaskList(response, convo) {
 			callback: (response, convo) => {
 				convo.say("Excellent! Last thing: how much time would you like to allocate to each task today?");
 				convo.say(taskListMessage);
-				convo.ask(`Just say, \`30, 40, 1 hour, 1hr 10 min, 15m\` in order and I'll figure it out and assign those times to the tasks above :smiley:`, (response, convo) => {
-					assignTimeToTasks(response, convo);
-					convo.next();
-				}, { 'key' : 'timeToTasksResponse' });
+				getTimeToTasks(response, convo);
 				convo.next();
 			}
 		},
@@ -215,22 +226,41 @@ function prioritizeTaskList(response, convo) {
 
 }
 
+// ask the question to get time to tasks
+function getTimeToTasks(response, convo) {
+	convo.ask(`Just say, \`30, 40, 1 hour, 1hr 10 min, 15m\` in order and I'll figure it out and assign those times to the tasks above :smiley:`, (response, convo) => {
+		assignTimeToTasks(response, convo);
+		convo.next();
+	}, { 'key' : 'timeToTasksResponse' });
+}
+
 // this is the work we do to actually assign time to tasks
 function assignTimeToTasks(response, convo) {
 
 	const { task }                = convo;
 	const { bot, source_message } = task;
-
-	var { prioritizedTaskArray } = convo.dayStart;
+	var { prioritizedTaskArray }  = convo.dayStart;
 
 	var timeToTask = response.text;
-	timeToTask = timeToTask.split(",").map((time) => {
+
+	// need to check for invalid responses.
+	// does not say minutes or hours, or is not right length
+	var isInvalid = false;
+	timeToTask = timeToTask.split(",");
+	if (timeToTask.length != prioritizedTaskArray.length) {
+		isInvalid = true;
+	};
+
+	var validMinutesTester = new RegExp(/[\dh]/);
+	timeToTask = timeToTask.map((time) => {
+		if (!validMinutesTester.test(time)) {
+			isInvalid = true;
+		}
 		var minutes = convertTimeStringToMinutes(time);
 		return minutes;
 	});
 
 	prioritizedTaskArray = prioritizedTaskArray.map((task, index) => {
-		console.log(index);
 		return {
 			...task,
 			minutes: timeToTask[index]
@@ -238,8 +268,17 @@ function assignTimeToTasks(response, convo) {
 	});
 
 	convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
-
 	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray);
+
+	// INVALID tester
+	if (isInvalid) {
+		convo.say("Oops, looks like you didn't put in valid times :thinking_face:. Let's try this again");
+		convo.say("Send me the amount of time you'd like to work on each task above, separated by commas. The first time you list will represent the first task above, the second time you list will represent the second task, and on and on");
+		convo.say("I'll assume you mean minutes - like `30` would be 30 minutes - unless you specify hours - like `2 hours`");
+		convo.say(taskListMessage);
+		getTimeToTasks(response, convo);
+		return;
+	}
 
 	convo.say("Are these times right?");
 	convo.ask(taskListMessage, [
