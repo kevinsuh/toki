@@ -302,8 +302,19 @@ function askForCustomTotalMinutes(response, convo) {
 	const SlackUserId = response.user;
 
 	convo.ask("What time would you like to work until? You can also tell me the duration you'd like to work, like `55 minutes` :upside_down_face:", (response, convo) => {
-		confirmCustomTotalMinutes(response, convo);
+
+		var { intentObject: { entities } } = response;
+		// for time to tasks, this is the only one that makes sense
+		if (entities.duration || entities.custom_time) {
+			confirmCustomTotalMinutes(response, convo);
+		} else {
+			// invalid
+			convo.say("I'm sorry, I didn't catch that :dog:");
+			convo.repeat();
+		}
+
 		convo.next();
+
 	});
 
 };
@@ -313,6 +324,14 @@ function confirmCustomTotalMinutes(response, convo) {
 	const { task }                = convo;
 	const { bot, source_message } = task;
 	const SlackUserId = response.user;
+
+	// use Wit to understand the message in natural language!
+	var { intentObject: { entities } } = response;
+	if (entities.duration) {
+
+	} else if (entities.custom_time) {
+
+	}
 	
 	// use helper method to get if either minute or hour
 	// create helper method that sees if there is exactly one colon and if so, then will run that specific time in user's timezone
@@ -363,6 +382,8 @@ function askForCheckIn(response, convo) {
 			callback: (response, convo) => {
 				convo.say("Sure thing! Let me know what time you want me to check in with you");
 				convo.ask("I can also check in a certain number of minutes or hours from now, like `40 minutes` or `1 hour`", (response, convo) => {
+
+
 					// use helper method to get if either minute or hour
 					// create helper method that sees if there is exactly one colon and if so, then will run that specific time in user's timezone
 					// need to figure out how to handle users and their timezones
