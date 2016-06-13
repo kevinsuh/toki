@@ -6,7 +6,7 @@ var router = express.Router();
 
 import { bot } from '../../../server';
 import { controller } from '../../../bot/controllers';
-import { seedDatabaseWithExistingSlackUsers } from '../../../bot/lib/slackApiHelpers';
+import { getTimeZoneOffsetForUser, seedDatabaseWithExistingSlackUsers } from '../../../bot/lib/slackApiHelpers';
 import models from '../../models';
 
 /**

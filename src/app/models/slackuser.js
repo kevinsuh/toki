@@ -2,7 +2,8 @@
 module.exports = function(sequelize, DataTypes) {
   var SlackUser = sequelize.define('SlackUser', {
     UserId: DataTypes.INTEGER,
-    SlackUserId: DataTypes.STRING
+    SlackUserId: DataTypes.STRING,
+    tz: DataTypes.STRING
   }, {
     classMethods: {
       associate: function(models) {

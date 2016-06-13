@@ -5,7 +5,6 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 import { randomInt } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
-import { getTimeZoneOffsetForUser } from '../../lib/slackApiHelpers';
 
 // START OF A WORK SESSION
 export default function(controller) {
@@ -45,7 +44,8 @@ export default function(controller) {
 
 					// object that contains values important to this conversation
 					convo.sessionStart = {
-						UserId: user.id
+						UserId: user.id,
+						SlackUserId
 					};
 
 					// start the flow
@@ -61,7 +61,7 @@ export default function(controller) {
 
 						if (convo.status == 'completed') {
 							// begin thy user's session!
-							bot.reply(message, "Okay let's start the session");
+							bot.reply(message, "Okay let's start the session...?");
 
 						} else {
 							// if convo ends prematurely
@@ -112,6 +112,7 @@ function startSessionStartConversation(response, convo) {
 	const { UserId }              = convo.sessionStart;
 
 	console.log(`in asking which tasks to work on: ${convo.name}`);
+	console.log(`here is session start obj: ${JSON.stringify(convo.sessionStart)}`);
 
 	convo.say(`Which tasks would you like to work on?`);
 
@@ -238,39 +239,62 @@ function confirmTimeForTasks(response, convo) {
 	console.log("TIMEZONE!");
 	console.log(timeZone);
 
-	var calculatedTime = moment().add(totalMinutes, 'minutes').format("h:mm a");
+	// get timezone before continuing
+	bot.startTyping(source_message.channel);
+	bot.api.users.list({
+  	presence: 1
+  }, (err, response) => {
+  	const { members } = response; // members are all users registered to your bot
 
-	convo.say(`Nice! That should take until ${calculatedTime} based on your estimate`);
-	convo.ask(`Would you like to work until ${calculatedTime}?`, [
-		{
-			pattern: bot.utterances.yes,
-			callback: (response, convo) => {
-				convo.ask("Boom :boom: Would you like me to check in with you during this session to make sure you're on track?", [
-					{
-						pattern: bot.utterances.yes,
-						callback: (response, convo) => {
-							convo.say("Sure thing! Let me know what time you want me to check in with you");
-							convo.ask("I can also check in a certain number of minutes or hours from now, like `40 minutes` or `1 hour`", (response, convo) => {
+  	for (var i = 0; i < members.length; i++) {
+  		if (members[i].id == SlackUserId) {
+  			var timeZoneObject = {};
+  			timeZoneObject.tz = members[i].tz;
+  			timeZoneObject.tz_label = members[i].tz_label;
+  			timeZoneObject.tz_offset = members[i].tz_offset;
+  			convo.sessionStart.timeZone = timeZoneObject;
+  			console.log("convo object:");
+  			console.log(convo.sessionStart);
+  			break;
+  		}
+  	}
 
-							}, { 'key' : 'respondTime' });
+  	var calculatedTime = moment().add(totalMinutes, 'minutes').format("h:mm a");
+  	convo.say(`Nice! That should take until ${calculatedTime} based on your estimate`);
+		convo.ask(`Would you like to work until ${calculatedTime}?`, [
+			{
+				pattern: bot.utterances.yes,
+				callback: (response, convo) => {
+					convo.ask("Boom :boom: Would you like me to check in with you during this session to make sure you're on track?", [
+						{
+							pattern: bot.utterances.yes,
+							callback: (response, convo) => {
+								convo.say("Sure thing! Let me know what time you want me to check in with you");
+								convo.ask("I can also check in a certain number of minutes or hours from now, like `40 minutes` or `1 hour`", (response, convo) => {
+
+								}, { 'key' : 'respondTime' });
+							}
+						},
+						{
+							pattern: bot.utterances.no,
+							callback: (response, convo) => {
+
+							}
 						}
-					},
-					{
-						pattern: bot.utterances.no,
-						callback: (response, convo) => {
+					]);
+				}
+			},
+			{
+				pattern: bot.utterances.no,
+				callback: (response, convo) => {
 
-						}
-					}
-				]);
+				}
 			}
-		},
-		{
-			pattern: bot.utterances.no,
-			callback: (response, convo) => {
+		]);
 
-			}
-		}
-	]);
+  });
+
+	
 
 
 

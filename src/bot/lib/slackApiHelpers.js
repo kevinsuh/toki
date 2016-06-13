@@ -12,6 +12,11 @@ import models from '../../app/models';
  */
 export function getTimeZoneOffsetForUser(bot, slackUserID) {
 
+	console.log("inside time offset user!");
+
+	if (!slackUserID || !bot)
+		return;
+
 	bot.api.users.list({
   	presence: 1
   }, (err, response) => {
@@ -72,13 +77,15 @@ export function seedDatabaseWithExistingSlackUsers(bot) {
 						}).then((user) => {
 							models.SlackUser.create({
 								SlackUserId,
-								UserId: user.id
+								UserId: user.id,
+								tz: member.tz
 							})
 						});
 						console.log(`Seeding user number ${count}...`);
 						count++;
 					}
 				});
+
 			});
 		});
 		
