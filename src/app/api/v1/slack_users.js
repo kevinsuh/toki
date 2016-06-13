@@ -6,6 +6,7 @@ var router = express.Router();
 
 import { bot } from '../../../server';
 import { controller } from '../../../bot/controllers';
+import { seedDatabaseWithExistingSlackUsers } from '../../../bot/lib/slackApiHelpers';
 import models from '../../models';
 
 /**
@@ -22,9 +23,7 @@ router.get('/', (req, res) => {
     console.log(slackUsers);
     res.json(slackUsers);
   });
-
-
-
+  seedDatabaseWithExistingSlackUsers(bot);
 });
 
 // create
@@ -61,9 +60,6 @@ router.put('/:slack_user_id', (req, res) => {
 
 // delete
 router.delete('/:slack_user_id', (req, res) => {
-
-
-
-});;
+});
 
 export default router;
