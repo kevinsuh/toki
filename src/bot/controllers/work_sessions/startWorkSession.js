@@ -84,7 +84,7 @@ export default function(controller) {
 
 						// proxy that we have not gone through right flow
 						if (!sessionStart.calculatedTimeObject) {
-							bot.reply(message, "Sorry but something went wrong :dog:. Let's start the session again");
+							bot.reply(message, "Sorry but something went wrong :dog:. Let me know if you want to `start a session` again");
 							return;
 						}
 
@@ -230,36 +230,30 @@ function confirmTasks(response, convo) {
 	const { bot, source_message } = task;
 	const { dailyTasks }          = convo.sessionStart;
 	var { tasksToWorkOn }         = convo.responses;
-	var tasksToWorkOnArray        = tasksToWorkOn.text.split(",");
+	var tasksToWorkOnSplitArray   = tasksToWorkOn.text.split(/(,|and)/);
 
-	var isInvalid = false;
-	var invalidTaskNumber = false;
+	// if we capture 0 valid tasks from string, then we start over
 	var numberRegEx = new RegExp(/[\d]+/);
-	tasksToWorkOnArray = tasksToWorkOnArray.map((task) => {
-		var taskNumber = task.match(numberRegEx);
-		if (taskNumber) { // no number found in that split index!
+	var tasksToWorkOnArray = [];
+	tasksToWorkOnSplitArray.forEach((taskString) => {
+		console.log(`task string: ${taskString}`);
+		var taskNumber = taskString.match(numberRegEx);
+		if (taskNumber) {
 			taskNumber = parseInt(taskNumber[0]);
-			if (taskNumber > dailyTasks.length) {
-				invalidTaskNumber = true;
+			if (taskNumber <= dailyTasks.length) {
+				tasksToWorkOnArray.push(taskNumber);
 			}
-			return taskNumber;
-		} else {
-			isInvalid = true;
-			return taskNumber;
 		}
 	});
 
+	// invalid if we captured no tasks
+	var isInvalid = (tasksToWorkOnArray.length == 0 ? true : false);
 	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 
 	// repeat convo if invalid w/ informative context
 	if (isInvalid) {
 		convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 		convo.say("You can either work on one task by saying `let's work on task 1` or multiple tasks by saying `let's work on tasks 1, 2, and 3`");
-		convo.say(taskListMessage);
-		askWhichTasksToWorkOn(response, convo);
-		return;
-	} else if (invalidTaskNumber) {
-		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
 		convo.say(taskListMessage);
 		askWhichTasksToWorkOn(response, convo);
 		return;
