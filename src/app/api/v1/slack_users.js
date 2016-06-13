@@ -23,6 +23,8 @@ router.get('/', (req, res) => {
     res.json(slackUsers);
   });
 
+
+
 });
 
 // create

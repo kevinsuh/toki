@@ -46,6 +46,7 @@ export default function(controller) {
 
 			// temporary fix to get tasks
 			var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
+			
 			models.DailyTask.findAll({
 				where: [`"DailyTask"."createdAt" > ? AND "Task"."UserId" = ?`, timeAgoForTasks, user.id],
 				order: `"priority" ASC`,

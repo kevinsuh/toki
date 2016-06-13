@@ -15,7 +15,13 @@ export const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
 export default function(controller) {
 
 	/**
-	* 	START OF YOUR DAY
+	* 		START OF YOUR DAY
+	*
+	* 		ask for today's tasks
+	* 		prioritize tasks
+	* 		set time to tasks
+	* 		enter work session flow
+	* 		
 	*/
 
 	controller.hears(['start_day'], 'direct_message', wit.hears, (bot, message) => {
