@@ -202,7 +202,7 @@ function confirmTasks(response, convo) {
 		{
 			pattern: bot.utterances.yes,
 			callback: (response, convo) => {
-				convo.sessionStart.tasksToWorkOn = tasksToWorkOnArray;
+				convo.sessionStart.tasksToWorkOnArray = tasksToWorkOnArray;
 				confirmTimeForTasks(response,convo);
 				convo.next();
 			}
@@ -229,15 +229,20 @@ function confirmTimeForTasks(response, convo) {
 	const { tasksToWorkOnArray, dailyTasks }  = convo.sessionStart;
 	const SlackUserId = response.user;
 
+	console.log("convo sessino start:");
+	console.log(convo.sessionStart);
+
 	var totalMinutes = 0;
 	dailyTasks.forEach((dailyTask) => {
-		var { dataValues: { minutes } } = dailyTask;
-		totalMinutes += parseInt(minutes);
+		if (tasksToWorkOnArray.indexOf(dailyTask.dataValues.priority) > -1) {
+			console.log("tasksToWorkOnArray:");
+			console.log(tasksToWorkOnArray);
+			console.log("this specific daily task:");
+			console.log(dailyTask);
+			var { dataValues: { minutes } } = dailyTask;
+			totalMinutes += parseInt(minutes);
+		}
 	});
-
-	var timeZone = getTimeZoneOffsetForUser(bot, SlackUserId);
-	console.log("TIMEZONE!");
-	console.log(timeZone);
 
 	// get timezone before continuing
 	bot.startTyping(source_message.channel);
@@ -253,13 +258,18 @@ function confirmTimeForTasks(response, convo) {
   			timeZoneObject.tz_label = members[i].tz_label;
   			timeZoneObject.tz_offset = members[i].tz_offset;
   			convo.sessionStart.timeZone = timeZoneObject;
-  			console.log("convo object:");
-  			console.log(convo.sessionStart);
   			break;
   		}
   	}
 
-  	var calculatedTime = moment().add(totalMinutes, 'minutes').format("h:mm a");
+  	var { timeZone } = convo.sessionStart;
+  	if (timeZone && timeZone.tz) {
+  		timeZone = timeZone.tz;
+  	} else {
+  		timeZone = "America/New_York"; // THIS IS WRONG AND MUST BE FIXED
+  	}
+  	console.log(`Your timezone is: ${timeZone}`);
+  	var calculatedTime = moment().tz(timeZone).add(totalMinutes, 'minutes').format("h:mm a");
   	convo.say(`Nice! That should take until ${calculatedTime} based on your estimate`);
 		convo.ask(`Would you like to work until ${calculatedTime}?`, [
 			{
