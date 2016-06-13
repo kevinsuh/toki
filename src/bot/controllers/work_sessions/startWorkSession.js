@@ -49,24 +49,94 @@ export default function(controller) {
 						SlackUserId
 					};
 
-					// start the flow
-					startSessionStartConversation(err, convo);
+					// temporary fix to get tasks
+					var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
+
+					// FIND DAILY TASKS, THEN START THE CONVERSATION
+					models.DailyTask.findAll({
+						where: [`"DailyTask"."createdAt" > ? AND "Task"."UserId" = ?`, timeAgoForTasks, user.id],
+						order: `"priority" ASC`,
+						include: [ models.Task ]
+					}).then((dailyTasks) => {
+
+							console.log("your tasks for the day!");
+							console.log(dailyTasks);
+
+							// user needs to enter daily tasks
+							if (dailyTasks.length == 0) {
+								convo.sessionStart.noDailyTasks = true;
+								convo.stop();
+							}
+
+							// save the daily tasks for reference
+							dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
+							convo.sessionStart.dailyTasks = dailyTasks;
+
+							// entry point of thy conversation
+							startSessionStartConversation(err, convo);
+					});
 
 					// on finish convo
 					convo.on('end', (convo) => {
-						var responses = convo.extractResponses();
-						console.log(`done!`);
-						console.log(responses);
-						console.log(`here is sessionStart object:`);
-						console.log(convo.sessionStart);
+
+						console.log("ending convo early: \n\n\n\n");
+
+						var responses        = convo.extractResponses();
+						var { sessionStart } = convo;
 
 						if (convo.status == 'completed') {
+
+							var { calculatedTime } = sessionStart;
+
+							// success! end convo with user and save items to DB
+							convo.say(`Excellent! See you at ${calculatedTime}! :timer_clock:`);
+							convo.say(`Good luck with: ${"TASKLISTMESSAGE"}`);
+
+							/**
+							 *		1. save responses to DB:
+							 *			session:
+							 *				- tasks to work on (tasksToWorkOnArray)
+							 *				- sessionEndTime (calculated)
+							 *
+							 * 		2. start session
+							 */
+
 							// begin thy user's session!
 							bot.reply(message, "Okay let's start the session...?");
 
 						} else {
+
+							console.log("controller:");
+							console.log(controller);
+							console.log("\n\n\n\n\nbot:");
+							console.log(bot);
+
 							// if convo ends prematurely
-							bot.reply(message, "Okay! Exiting now. Let me know when you want to start on a session");
+							
+							if (sessionStart.noDailyTasks) {
+
+								const { task }                = convo;
+								const { bot, source_message } = task;
+
+								bot.reply(message, "Hey! You haven't entered any tasks yet today. Let's `start the day` before doing a session");
+
+								// should go to start a day... NOT CONFIGURED YET.
+								// var config = {
+								// 	message: source_message
+								// }
+								// error: `cannot set property 'channel' of undefined`
+								// controller.trigger('start_day', [bot, config]);
+
+								// console.log("controller:");
+								// console.log(controller);
+								// console.log("\n\n\n\n\nbot:");
+								// console.log(bot);
+
+								
+							} else {
+								bot.reply(message, "Okay! Exiting now. Let me know when you want to start on a session");
+							}
+
 						}
 					});
 
@@ -86,44 +156,19 @@ function startSessionStartConversation(response, convo) {
 
 	const { task }                = convo;
 	const { bot, source_message } = task;
-	const { UserId }              = convo.sessionStart;
-
-	console.log(`in asking which tasks to work on: ${convo.name}`);
-	console.log(`here is session start obj: ${JSON.stringify(convo.sessionStart)}`);
+	const { UserId, dailyTasks }  = convo.sessionStart;
 
 	convo.say(`Which tasks would you like to work on?`);
 
-	console.log("RESPONSE: ");
-	console.log(response);
-	console.log("\n\n\n\n");
-	console.log("CONVO: ");
-	console.log(convo);
-	console.log("\n\n\n\n\n");
+	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 
-	bot.send({
-		type: "typing",
-		channel: source_message.channel
-	});
-	
-	// temporary fix to get tasks
-	var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
-	models.DailyTask.findAll({
-		where: [`"DailyTask"."createdAt" > ? AND "Task"."UserId" = ?`, timeAgoForTasks, UserId],
-		order: `"priority" ASC`,
-		include: [ models.Task ]
-	}).then((dailyTasks) => {
+	convo.say(taskListMessage);
+	convo.say("You can either work on one task by saying `let's work on task 1` or multiple tasks by saying `let's work on tasks 1, 2, and 3`");
+	convo.say("I'll follow up with you when your task should be completed, based on your estimate :wink:");
 
-			dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
-			var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+	askWhichTasksToWorkOn(response, convo);
+	convo.next();
 
-			convo.sessionStart.dailyTasks = dailyTasks;
-			convo.say(taskListMessage);
-			convo.say("You can either work on one task by saying `let's work on task 1` or multiple tasks by saying `let's work on tasks 1, 2, and 3`");
-			convo.say("I'll follow up with you when your task should be completed, based on your estimate :wink:");
-
-			askWhichTasksToWorkOn(response, convo);
-			convo.next();
-	})
 
 }
 
@@ -577,6 +622,8 @@ function finishSessionForUser(response, convo) {
 	convo.say(`Excellent! See you at ${calculatedTime}! :timer_clock:`);
 	// tasks that user chose
 	convo.say(`Good luck with: ${"TASKLISTMESSAGE"}`);
+
+
 	convo.next();
 }
 

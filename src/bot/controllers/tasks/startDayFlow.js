@@ -88,6 +88,9 @@ export default function(controller) {
 	    				// confirm completion of DAY_START flow
 	    				bot.reply(message,"thx for finishing");
 
+
+	    				// NEED TO TRIGGER SESSION_START HERE
+
 	    			} else {
 	    				// if convo gets ended prematurely
 	    				bot.reply(message,"Okay! Exiting now. Let me know when you want to start your day");
