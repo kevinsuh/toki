@@ -1,11 +1,13 @@
 import request from 'request';
 import express from 'express';
 import pg from 'pg';
+import moment from 'moment-timezone';
 
 var router = express.Router();
 
 import { bot } from '../../../server';
 import { controller } from '../../../bot/controllers';
+import { getTimeZoneOffsetForUser, seedDatabaseWithExistingSlackUsers } from '../../../bot/lib/slackApiHelpers';
 import models from '../../models';
 
 /**
@@ -16,13 +18,55 @@ import models from '../../models';
 // index
 router.get('/', (req, res) => {
 
+// this shows how to use moment-timezone to create timezone specific dates
+if (false) {
+  // 2016-06-13T13:55:00.000-04:00
+  var timeEST = moment.tz("2016-06-13T14:55:00.000", "America/New_York");
+  console.log("huh\n\n\n\n\n");
+
+  console.log("\n\n\n\nEST:")
+  console.log(timeEST.format("YYYY-MM-DD HH:mm:ss"));
+  console.log(timeEST.utc().format("YYYY-MM-DD HH:mm:ss"));
+
+  console.log("\n\n\n\nPST:")
+  var timePST = moment.tz("2016-06-13T14:55:00.000", "America/Los_Angeles");
+  console.log(timePST.format("YYYY-MM-DD HH:mm:ss"));
+  console.log(timePST.utc().format("YYYY-MM-DD HH:mm:ss"));
+  console.log("OKAY...\n\n\n\n")
+
+  var now = moment();
+  var minutesDuration = Math.round(moment.duration(timePST.diff(now)).asMinutes());
+  console.log(`this many minutes difference for 1:55 PST: ${minutesDuration}`);
+
+  var minutesDuration = moment.duration(timeEST.diff(now)).asMinutes();
+  console.log(`this many minutes difference for 1:55 EST: ${minutesDuration}`);
+}
+
+if (false) {
+
+  // this shows how you can ORM inserts w/ associations
+  const id = 2;
+  models.WorkSession.find({
+    where: { id }
+  }).then((workSession) => {
+    models.DailyTask.find({
+      where: { id: 14 }
+    }).then((dailyTask) => {
+      console.log("in daily task!!");
+      console.log(dailyTask);
+      workSession.setDailyTasks([dailyTask.id]);
+    });
+  });
+  
+}
+
   models.SlackUser.findAll({
   	include: [models.User]
   }).then((slackUsers) => {
-    console.log(slackUsers);
     res.json(slackUsers);
   });
-
+  // seedDatabaseWithExistingSlackUsers(bot);
+  
 });
 
 // create
@@ -59,9 +103,6 @@ router.put('/:slack_user_id', (req, res) => {
 
 // delete
 router.delete('/:slack_user_id', (req, res) => {
-
-
-
-});;
+});
 
 export default router;

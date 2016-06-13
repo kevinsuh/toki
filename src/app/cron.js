@@ -27,7 +27,7 @@ var checkForReminders = () => {
 		var remindersArray = [];
 		reminders.forEach((reminder) => {
 			
-			const { UserId, type, open } = reminder;
+			const { UserId, open } = reminder;
 
 			// for each open reminder:
 			// 1. close the reminder

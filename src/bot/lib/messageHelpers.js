@@ -43,6 +43,12 @@ export function convertResponseObjectsToTaskArray(tasks) {
 export function convertArrayToTaskListMessage(taskArray) {
 	var taskListMessage = '';
 	var count = 1;
+
+	if (taskArray.length  == 0) {
+		console.log("array passed in is empty at convertArrayToTaskListMessage");
+		return;
+	}
+
 	taskArray.forEach((task) => {
 
 		// for when you get task from DB

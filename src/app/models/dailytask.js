@@ -8,6 +8,7 @@ module.exports = function(sequelize, DataTypes) {
     classMethods: {
       associate: function(models) {
         DailyTask.belongsTo(models.Task);
+        DailyTask.belongsToMany(models.WorkSession, { through: "WorkSessionTask" });
       }
     }
   });
