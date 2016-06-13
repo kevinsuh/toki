@@ -18,6 +18,7 @@ import models from '../../models';
 // index
 router.get('/', (req, res) => {
 
+// this shows how to use moment-timezone to create timezone specific dates
 if (false) {
   // 2016-06-13T13:55:00.000-04:00
   var timeEST = moment.tz("2016-06-13T14:55:00.000", "America/New_York");
@@ -40,16 +41,24 @@ if (false) {
   var minutesDuration = moment.duration(timeEST.diff(now)).asMinutes();
   console.log(`this many minutes difference for 1:55 EST: ${minutesDuration}`);
 }
-  
-  const id = 1;
+
+if (false) {
+
+  // this shows how you can ORM inserts w/ associations
+  const id = 2;
   models.WorkSession.find({
     where: { id }
   }).then((workSession) => {
-    workSession.getDailyTasks().then((dailyTasks) => {
-      console.log("here are work session daily tasks!");
-      console.log(dailyTasks);
-    })
+    models.DailyTask.find({
+      where: { id: 14 }
+    }).then((dailyTask) => {
+      console.log("in daily task!!");
+      console.log(dailyTask);
+      workSession.setDailyTasks([dailyTask.id]);
+    });
   });
+  
+}
 
   models.SlackUser.findAll({
   	include: [models.User]

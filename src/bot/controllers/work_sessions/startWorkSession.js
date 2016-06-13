@@ -113,7 +113,7 @@ export default function(controller) {
 									taskObjectsToWorkOnArray.push(dailyTask);
 							});
 
-							// user wants a reminder
+							// if user wanted a reminder
 							if (checkinTimeObject) {
 								var checkInTimeStamp = checkinTimeObject.format("YYYY-MM-DD HH:mm:ss");
 								models.Reminder.create({
@@ -123,9 +123,22 @@ export default function(controller) {
 								});
 							}
 
-							// save session and which tasks are assigned to it
-							console.log("taskObjectsToWorkOnArray:");
-							console.log(taskObjectsToWorkOnArray);
+							// 1. create work session 
+							// 2. attach the daily tasks to work on during that work session
+							var startTime = moment().format("YYYY-MM-DD HH:mm:ss");
+							var endTime   = calculatedTimeObject.format("YYYY-MM-DD HH:mm:ss");
+							models.WorkSession.create({
+								startTime,
+								endTime,
+								UserId
+							}).then((workSession) => {
+
+								var dailyTaskIds = taskObjectsToWorkOnArray.map((dailyTask) => {
+									return dailyTask.dataValues.id;
+								})
+								workSession.setDailyTasks(dailyTaskIds
+									);
+							});
 
 							var taskListMessage = convertArrayToTaskListMessage(taskObjectsToWorkOnArray);
 
@@ -137,7 +150,6 @@ export default function(controller) {
 
 							// ending convo prematurely
 							console.log("ending convo early: \n\n\n\n");
-
 							console.log("controller:");
 							console.log(controller);
 							console.log("\n\n\n\n\nbot:");
