@@ -8,8 +8,8 @@ import models from '../../../app/models';
 import { randomInt } from '../../lib/botResponses';
 import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes } from '../../lib/messageHelpers';
 
-const FINISH_WORD = 'done';
-const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
+export const FINISH_WORD = 'done';
+export const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
 
 // base controller for tasks
 export default function(controller) {
@@ -66,12 +66,17 @@ export default function(controller) {
 	    				prioritizedTaskArray.forEach((task, index) => {
 	    					const { text, minutes} = task;
 	    					var priority = index + 1;
+
 	    					models.Task.create({
-	    						text,
-	    						minutes,
-	    						priority,
-	    						UserId
-	    					});
+							    text,
+							    UserId
+							  }).then((task) => {
+							    models.DailyTask.create({
+							      TaskId: task.id,
+							      priority,
+							      minutes
+							    });
+							  });
 	    				});
 
 	    				// confirm completion of DAY_START flow
@@ -109,7 +114,7 @@ function askForDayTasks(response, convo){
 				convo.stop();
 		}
 
-		console.log("response is:");
+		console.log(`response is`);
 		console.log(response);
 		if (response.text == FINISH_WORD) {
 			convo.say("Awesome! You can always add more tasks later by telling me, `I'd like to add a task` or something along those lines :grinning:");

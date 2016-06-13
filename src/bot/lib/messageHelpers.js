@@ -2,6 +2,8 @@
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
  */
 
+import { FINISH_WORD, EARLY_EXIT_WORDS } from '../controllers/tasks/startDayFlow';
+
 
 /**
  * takes array of tasks and converts to array of task STRINGS
@@ -37,10 +39,16 @@ export function convertResponseObjectsToTaskArray(tasks) {
 	return taskArray;
 }
 
+// this should be called after you `convertToSingleTaskObjectArray`
 export function convertArrayToTaskListMessage(taskArray) {
 	var taskListMessage = '';
 	var count = 1;
 	taskArray.forEach((task) => {
+
+		// for when you get task from DB
+		if (task.dataValues) {
+			task = task.dataValues;
+		}
 
 		var minutesMessage = task.minutes ? ` (${task.minutes} minutes)` : '';
 		var taskContent = `${count}) ${task.text}${minutesMessage}`;
@@ -94,6 +102,37 @@ export function convertTimeStringToMinutes(timeString) {
 
   
 	return totalMinutes;
+}
+
+// for simplicity, this converts database calls with all the associations
+// into a single JS object for us to decipher as a single task
+// 
+/**
+ * converts this into a single task object for consistency sake
+ * @param  {[taskObject]} can be DailyTaskArray or TaskArray or WeeklyTaskArray...
+ * @param  string type `daily`, `weekly`, etc...
+ * @return {[taskObject]} taskObjectArray will always be BASE task with nested dailyTask, weeklyTask, etc.                
+ */
+export function convertToSingleTaskObjectArray(taskObjectArray, type) {
+
+	switch (type) {
+		case "daily":
+			// if daily task, we need to add content and minutes to userId
+			return taskObjectArray.map((taskObject) => {
+				const { Task: { text, done, UserId } } = taskObject;
+				return {
+					...taskObject,
+					dataValues: {
+						...taskObject.dataValues,
+						text,
+						done,
+						UserId
+					}
+				}
+			})
+		default:
+			break;
+	}
 }
 
 

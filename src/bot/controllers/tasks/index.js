@@ -7,7 +7,7 @@ import moment from 'moment';
 import models from '../../../app/models';
 
 import { randomInt } from '../../lib/botResponses';
-import { convertArrayToTaskListMessage } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
 
 import startDayFlowController from './startDayFlow';
 
@@ -46,13 +46,15 @@ export default function(controller) {
 
 			// temporary fix to get tasks
 			var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
-			user.getTasks({
-				where: [`"createdAt" > ?`, timeAgoForTasks],
-				order: `"priority" ASC`
-			})
-			.then((tasks) => {
+			models.DailyTask.findAll({
+				where: [`"DailyTask"."createdAt" > ? AND "Task"."UserId" = ?`, timeAgoForTasks, user.id],
+				order: `"priority" ASC`,
+				include: [ models.Task ]
+			}).then((dailyTasks) => {
+				
+				dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
 
-				var taskListMessage = convertArrayToTaskListMessage(tasks);
+				var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 				taskListMessage = `Here are your tasks for today! :memo:\n${taskListMessage}`;
 
 				bot.send({
@@ -62,9 +64,9 @@ export default function(controller) {
 		    setTimeout(()=>{
 		    	bot.reply(message, taskListMessage);
 		    }, randomInt(1000, 2000));
-				
+
 			});
-			
+
 		})
 
 

@@ -19,9 +19,38 @@ import models from '../../models';
 // index
 router.get('/', (req, res) => {
 
-  models.Task.findAll({}).then((tasks) => {
-    res.json(tasks);
-  })
+
+  // this lets me test creating daily tasks on server
+
+  // const data = {
+  //   text: "test task name",
+  //   minutes: 50,
+  //   priority: 1,
+  //   UserId: 1
+  // }
+
+  // models.Task.create({
+  //   text: data.text,
+  //   UserId: data.UserId
+  // }).then((task) => {
+  //   models.DailyTask.create({
+  //     TaskId: task.id,
+  //     priority: data.priority,
+  //     minutes: data.minutes
+  //   });
+  // });
+
+  models.DailyTask.findAll({
+    include: [
+      models.Task
+    ]
+  }).then((dailyTasks) => {
+    res.json(dailyTasks);
+  });
+
+  // models.Task.findAll({}).then((tasks) => {
+  //   res.json(tasks);
+  // })
 
 });
 
