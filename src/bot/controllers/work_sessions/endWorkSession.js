@@ -169,7 +169,7 @@ function finishReflection(convo) {
 		console.log(bot);
 		console.log(JSON.stringify(bot.storage));
 		console.log('\n\n\n\n\n\n\n\n\n\n\n');
-		console.log(JSON.stringify(convo));
+		console.log(convo);
 
 	} else {
 		// this happens if the conversation ended prematurely for some reason
