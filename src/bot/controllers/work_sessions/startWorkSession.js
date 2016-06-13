@@ -248,14 +248,19 @@ function confirmTimeForTasks(response, convo) {
   		// SOLUTION IS MOST LIKELY TO ASK USER HERE WHAT THEIR TIMEZONE IS.
   	}
   	console.log(`Your timezone is: ${timeZone}`);
-  	var calculatedTime = moment().tz(timeZone).add(totalMinutes, 'minutes').format("h:mm a");
-  	convo.say(`Nice! That should take until ${calculatedTime} based on your estimate`);
-  	convo.ask(`Would you like to work until ${calculatedTime}?`, [
+  	var calculatedTimeObject = moment().tz(timeZone).add(totalMinutes, 'minutes')
+  	var calculatedTimeString = calculatedTimeObject.format("h:mm a");
+  	convo.say(`Nice! That should take until ${calculatedTimeString} based on your estimate`);
+  	convo.ask(`Would you like to work until ${calculatedTimeString}?`, [
 			{
 				pattern: bot.utterances.yes,
 				callback: (response, convo) => {
-					convo.sessionStart.totalMinutes   = totalMinutes;
-					convo.sessionStart.calculatedTime = calculatedTime;
+
+					// success! now save session time info for the user
+					convo.sessionStart.totalMinutes         = totalMinutes;
+					convo.sessionStart.calculatedTime       = calculatedTimeString;
+					convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
+
 					askForCheckIn(response, convo);
 					convo.next();
 				}
@@ -343,6 +348,7 @@ function confirmCustomTotalMinutes(response, convo) {
 				var now             = moment();
 				var minutesDuration = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
 
+				// success! now save session time info for the user
 				convo.sessionStart.totalMinutes         = minutesDuration;
 				convo.sessionStart.calculatedTime       = customTimeString;
 				convo.sessionStart.calculatedTimeObject = customTimeObject;
@@ -381,14 +387,21 @@ function askForCheckIn(response, convo) {
 				convo.say("Sure thing! Let me know what time you want me to check in with you");
 				convo.ask("I can also check in a certain number of minutes or hours from now, like `40 minutes` or `1 hour`", (response, convo) => {
 
+					var { intentObject: { entities } } = response;
+					// for time to tasks, these wit intents are the only ones that makes sense
+					if (entities.duration || entities.custom_time) {
+						confirmCheckInTime(response, convo);
+					} else {
+						// invalid
+						convo.say("I'm sorry, I didn't catch that :dog:");
+						convo.say("Please put either a time like `2:41pm`, or a number of minutes or hours like `35 minutes`");
+						convo.silentRepeat();
+					}
 
-					// use helper method to get if either minute or hour
-					// create helper method that sees if there is exactly one colon and if so, then will run that specific time in user's timezone
-					// need to figure out how to handle users and their timezones
-					// perhaps have "quit" option then a "configure time zone" option. then we can put it in the DB
-					// OOOH have it in the onboarding flow! we can see if user has tz already or not
 					convo.next();
+
 				}, { 'key' : 'respondTime' });
+				convo.next();
 			}
 		},
 		{
@@ -402,7 +415,170 @@ function askForCheckIn(response, convo) {
 
 }
 
+// confirm check in time with user
+function confirmCheckInTime(response, convo) {
 
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	const SlackUserId = response.user;
+
+	var { timeZone: { tz } } = convo.sessionStart;
+
+	// use Wit to understand the message in natural language!
+	var { intentObject: { entities } } = response;
+	var checkinTimeObject; // moment object of time
+	var checkinTimeString; // format to display (`h:mm a`)
+	var checkinTimeStringForDB; // format to put in DB (`YYYY-MM-DD HH:mm:ss`)
+	if (entities.duration) {
+
+		var durationArray = entities.duration;
+		var durationSeconds = 0;
+		for (var i = 0; i < durationArray.length; i++) {
+			durationSeconds += durationArray[i].normalized.value;
+		}
+		var durationMinutes = Math.floor(durationSeconds / 60);
+
+		// add minutes to now
+		checkinTimeObject = moment().tz(tz).add(durationSeconds, 'seconds');
+		checkinTimeString = checkinTimeObject.format("h:mm a");
+
+	} else if (entities.custom_time) {
+		// get rid of timezone to make it tz-neutral
+		// then create a moment-timezone object with specified timezone
+		var timeStamp = entities.custom_time[0].value;
+
+		// create time object based on user input + timezone
+		checkinTimeObject = createMomentObjectWithSpecificTimeZone(timeStamp, tz);
+		checkinTimeString = checkinTimeObject.format("h:mm a");
+
+	}
+
+	convo.ask(`I'll be checking in with you at ${checkinTimeString}. Is that correct?`, [
+		{
+			pattern: bot.utterances.yes,
+			callback: (response, convo) => {
+
+				var now             = moment();
+				var minutesDuration = Math.round(moment.duration(checkinTimeObject.diff(now)).asMinutes());
+
+				// success! now save checkin time info for the user
+				convo.sessionStart.checkinTimeObject = checkinTimeObject;
+				convo.sessionStart.checkinTimeString = checkinTimeString;
+				
+				askForReminderDuringCheckin(response, convo);
+				convo.next();
+
+			}
+		},
+		{
+			pattern: bot.utterances.no,
+			callback: (response, convo) => {
+				convo.say(`Let's rewind :vhs: :rewind:`);
+				convo.ask("What time would you like me to check in with you? Just tell me a time or a certain number of minutes from the start of your session you'd like me to check in", (response, convo) => {
+					confirmCheckInTime(response, convo);
+					convo.next();
+				});
+				convo.next();
+			}
+		}
+	]);
+
+
+}
+
+function askForReminderDuringCheckin(response, convo) {
+
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	const SlackUserId = response.user;
+
+	convo.say("Last thing - is there anything you'd like me to remind you during the check in?");
+	convo.ask("This could be a note like `call Mary` or `should be on the second section of the proposal by now`", [
+		{
+			pattern: bot.utterances.yes,
+			callback: (response, convo) => {
+				convo.ask(`What note would you like me to remind you about?`, (response, convo) => {
+					getReminderNoteFromUser(response, convo);
+					convo.next();
+				});
+
+				convo.next();
+			}
+		},
+		{
+			pattern: bot.utterances.no,
+			callback: (response, convo) => {
+				finishSessionForUser(response, convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				// we are assuming anything else is the reminderNote
+				getReminderNoteFromUser(response, convo);
+				convo.next();
+			}
+		}
+	], { 'key' : 'reminderNote' });
+
+}
+
+function getReminderNoteFromUser(response, convo) {
+
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	const SlackUserId = response.user;
+
+	console.log("Response!");
+	console.log(response);
+	const note = response.text;
+
+	const { sessionStart: { checkinTimeObject, checkinTimeString } } = convo;
+
+	convo.ask(`Does this look good: \`${note}\`?`, [
+		{
+			pattern: bot.utterances.yes,
+			callback: (response, convo) => {
+
+				// USER HAS FINISHED FLOW!!! FINAL SAVED CONVO RESPOSNES!!
+				console.log("finished response: session start obj: \n\n\n\n\n");
+				console.log(convo.sessionStart);
+				console.log("\n\n\n\n\n **** YOU WANT TO ABSTRACT THIS OUT INTO THE CONVO.ON('end') FUNCTIONALITY **** \n\n\n\n\n");
+
+				finishSessionForUser(response, convo);
+
+				convo.next();
+			}
+		},
+		{
+			pattern: bot.utterances.no,
+			callback: (response, convo) => {
+				convo.ask(`Just tell me a one-line note and I'll remind you about it at ${checkinTimeString}!`, (response, convo) => {
+					getReminderNoteFromUser(response, convo);
+					convo.next();
+				})
+				convo.next();
+			}
+		}
+	]);
+
+}
+
+function finishSessionForUser(response, convo) {
+
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	const SlackUserId = response.user;
+
+	const { sessionStart: {  calculatedTime, checkinTimeObject, checkinTimeString } } = convo;
+
+	// success! save reminder in DB
+	convo.say(`Excellent! See you at ${calculatedTime}! :timer_clock:`);
+	// tasks that user chose
+	convo.say(`Good luck with: ${"TASKLISTMESSAGE"}`);
+	convo.next();
+}
 
 
 
