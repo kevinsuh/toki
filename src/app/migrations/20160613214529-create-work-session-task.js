@@ -13,7 +13,7 @@ module.exports = {
         references: { model: "WorkSessions", key: "id" }
       },
       DailyTaskId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
         references: { model: "DailyTasks", key: "id" }
       },
       createdAt: {

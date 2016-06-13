@@ -18,6 +18,7 @@ import models from '../../models';
 // index
 router.get('/', (req, res) => {
 
+if (false) {
   // 2016-06-13T13:55:00.000-04:00
   var timeEST = moment.tz("2016-06-13T14:55:00.000", "America/New_York");
   console.log("huh\n\n\n\n\n");
@@ -38,6 +39,17 @@ router.get('/', (req, res) => {
 
   var minutesDuration = moment.duration(timeEST.diff(now)).asMinutes();
   console.log(`this many minutes difference for 1:55 EST: ${minutesDuration}`);
+}
+  
+  const id = 1;
+  models.WorkSession.find({
+    where: { id }
+  }).then((workSession) => {
+    workSession.getDailyTasks().then((dailyTasks) => {
+      console.log("here are work session daily tasks!");
+      console.log(dailyTasks);
+    })
+  });
 
   models.SlackUser.findAll({
   	include: [models.User]

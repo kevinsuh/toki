@@ -3,12 +3,12 @@ module.exports = function(sequelize, DataTypes) {
   var WorkSession = sequelize.define('WorkSession', {
     startTime: DataTypes.DATE,
     endTime: DataTypes.DATE,
-    User: DataTypes.REFERENCES,
-    WorkSessionTask: DataTypes.REFERENCES
+    UserId: DataTypes.INTEGER
   }, {
     classMethods: {
       associate: function(models) {
-        // associations can be defined here
+        WorkSession.belongsToMany(models.DailyTask, { through: "WorkSessionTask"} );
+        WorkSession.belongsTo(models.User);
       }
     }
   });

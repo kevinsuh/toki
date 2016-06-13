@@ -17,6 +17,7 @@ module.exports = function(sequelize, DataTypes) {
         User.hasMany(models.Task);
         User.hasOne(models.SlackUser, { foreignKey: 'UserId' });
         User.hasMany(models.Reminder);
+        User.hasMany(models.WorkSession);
       }
     },
 
