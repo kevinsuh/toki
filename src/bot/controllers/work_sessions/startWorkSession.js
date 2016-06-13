@@ -5,6 +5,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 import { randomInt } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
+import { createMomentObjectWithSpecificTimeZone } from '../../lib/miscHelpers';
 
 // START OF A WORK SESSION
 export default function(controller) {
@@ -303,43 +304,62 @@ function confirmCustomTotalMinutes(response, convo) {
 	const { bot, source_message } = task;
 	const SlackUserId = response.user;
 
+	var { timeZone: { tz } } = convo.sessionStart;
+
 	// use Wit to understand the message in natural language!
 	var { intentObject: { entities } } = response;
+	var customTimeObject; // moment object of time
+	var customTimeString; // format to display (`h:mm a`)
+	var customTimeStringForDB; // format to put in DB (`YYYY-MM-DD HH:mm:ss`)
 	if (entities.duration) {
 
+		var durationArray = entities.duration;
+		var durationSeconds = 0;
+		for (var i = 0; i < durationArray.length; i++) {
+			durationSeconds += durationArray[i].normalized.value;
+		}
+		var durationMinutes = Math.floor(durationSeconds / 60);
+
+		// add minutes to now
+		customTimeObject = moment().tz(tz).add(durationSeconds, 'seconds');
+		customTimeString = customTimeObject.format("h:mm a");
+
 	} else if (entities.custom_time) {
+		// get rid of timezone to make it tz-neutral
+		// then create a moment-timezone object with specified timezone
+		var timeStamp = entities.custom_time[0].value;
+
+		// create time object based on user input + timezone
+		customTimeObject = createMomentObjectWithSpecificTimeZone(timeStamp, tz);
+		customTimeString = customTimeObject.format("h:mm a");
 
 	}
-	
-	// use helper method to get if either minute or hour
-	// create helper method that sees if there is exactly one colon and if so, then will run that specific time in user's timezone
-	// need to figure out how to handle users and their timezones
-	// perhaps have "quit" option then a "configure time zone" option. then we can put it in the DB
-	// OOOH have it in the onboarding flow! we can see if user has tz already or not
 
-	convo.ask(`So you'd like to work until ${"CUSTOM END TIME HERE"}?`, [
+	convo.ask(`So you'd like to work until ${customTimeString}?`, [
 		{
 			pattern: bot.utterances.yes,
 			callback: (response, convo) => {
-				// convo.sessionStart.totalMinutes   = totalMinutes;
-				// convo.sessionStart.calculatedTime = calculatedTime;
+
+				var now             = moment();
+				var minutesDuration = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
+
+				convo.sessionStart.totalMinutes         = minutesDuration;
+				convo.sessionStart.calculatedTime       = customTimeString;
+				convo.sessionStart.calculatedTimeObject = customTimeObject;
+
 				askForCheckIn(response, convo);
 				convo.next();
+
 			}
 		},
 		{
 			pattern: bot.utterances.no,
 			callback: (response, convo) => {
-				convo.ask("Yikes, my bad. Let's try this again. Just tell me how many minutes you'd like to work right now", (response, convo) => {
-					var totalMinutes = parseInt(response.text);
-					if (isNaN(totalMinutes)) {
-						convo.say("Ah, don't quite get what you said :dog:");
-						convo.repeat();
-					} else {
-						confirmCustomTotalMinutes(response, convo);
-					}
+				convo.ask("Yikes, my bad. Let's try this again. Just tell me how many minutes (`ex. 45 min`) or until what time (`ex. 3:15pm`) you'd like to work right now", (response, convo) => {
+					confirmCustomTotalMinutes(response, convo);
 					convo.next();
 				});
+				convo.next();
 			}
 		}
 	]);

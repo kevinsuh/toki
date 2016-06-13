@@ -19,7 +19,7 @@ import models from '../../models';
 router.get('/', (req, res) => {
 
   // 2016-06-13T13:55:00.000-04:00
-  var timeEST = moment.tz("2016-06-13T13:55:00.000", "America/New_York");
+  var timeEST = moment.tz("2016-06-13T14:55:00.000", "America/New_York");
   console.log("huh\n\n\n\n\n");
 
   console.log("\n\n\n\nEST:")
@@ -27,11 +27,17 @@ router.get('/', (req, res) => {
   console.log(timeEST.utc().format("YYYY-MM-DD HH:mm:ss"));
 
   console.log("\n\n\n\nPST:")
-  var timePST = moment.tz("2016-06-13T13:55:00.000", "America/Los_Angeles");
+  var timePST = moment.tz("2016-06-13T14:55:00.000", "America/Los_Angeles");
   console.log(timePST.format("YYYY-MM-DD HH:mm:ss"));
   console.log(timePST.utc().format("YYYY-MM-DD HH:mm:ss"));
   console.log("OKAY...\n\n\n\n")
 
+  var now = moment();
+  var minutesDuration = Math.round(moment.duration(timePST.diff(now)).asMinutes());
+  console.log(`this many minutes difference for 1:55 PST: ${minutesDuration}`);
+
+  var minutesDuration = moment.duration(timeEST.diff(now)).asMinutes();
+  console.log(`this many minutes difference for 1:55 EST: ${minutesDuration}`);
 
   models.SlackUser.findAll({
   	include: [models.User]
