@@ -1,6 +1,7 @@
 import request from 'request';
 import express from 'express';
 import pg from 'pg';
+import moment from 'moment-timezone';
 
 var router = express.Router();
 
@@ -17,13 +18,28 @@ import models from '../../models';
 // index
 router.get('/', (req, res) => {
 
+  // 2016-06-13T13:55:00.000-04:00
+  var timeEST = moment.tz("2016-06-13T13:55:00.000", "America/New_York");
+  console.log("huh\n\n\n\n\n");
+
+  console.log("\n\n\n\nEST:")
+  console.log(timeEST.format("YYYY-MM-DD HH:mm:ss"));
+  console.log(timeEST.utc().format("YYYY-MM-DD HH:mm:ss"));
+
+  console.log("\n\n\n\nPST:")
+  var timePST = moment.tz("2016-06-13T13:55:00.000", "America/Los_Angeles");
+  console.log(timePST.format("YYYY-MM-DD HH:mm:ss"));
+  console.log(timePST.utc().format("YYYY-MM-DD HH:mm:ss"));
+  console.log("OKAY...\n\n\n\n")
+
+
   models.SlackUser.findAll({
   	include: [models.User]
   }).then((slackUsers) => {
-    console.log(slackUsers);
     res.json(slackUsers);
   });
-  seedDatabaseWithExistingSlackUsers(bot);
+  // seedDatabaseWithExistingSlackUsers(bot);
+  
 });
 
 // create

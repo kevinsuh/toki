@@ -78,30 +78,6 @@ export default function(controller) {
 
 	});
 
-
-	// EXTEND AN EXISTING WORK SESSION
-	// controller.hears(['extend_session'], 'direct_message', wit.hears, (bot, message) => {
-
-	// 	console.log("starting session!");
-	// 	console.log(JSON.stringify(message.intentObject));
-	// 	console.log("bot here\n\n\n\n\n\n");
-	// 	console.log(bot);
-
-	// 	var oneMinute = 60000; // ms to minutes
-	// 	var sessionMinutes = 1;
-	// 	var sessionTotalTime = sessionMinutes * oneMinute;
-
-	// 	if (typeof bot.timer !== undefined)
-	// 		clearTimeout(bot.timer);
-
-	// 	bot.timer = setTimeout(() => {
-	// 		bot.reply(message, `Time's up! :timer_clock: let me know when you're ready to move on.`);
-	// 	}, sessionTotalTime);
-
-	// 	bot.reply(message, `Okay, :timer_clock: started. See you in ${sessionMinutes} minutes`);
-
-	// });
-
 };
 
 // user just started conversation and is choosing which tasks to work on
@@ -183,15 +159,16 @@ function confirmTasks(response, convo) {
 		}
 	});
 
+	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+
+	// repeat convo if invalid w/ informative context
 	if (isInvalid) {
-		var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 		convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 		convo.say("You can either work on one task by saying `let's work on task 1` or multiple tasks by saying `let's work on tasks 1, 2, and 3`");
 		convo.say(taskListMessage);
 		askWhichTasksToWorkOn(response, convo);
 		return;
 	} else if (invalidTaskNumber) {
-		var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
 		convo.say(taskListMessage);
 		askWhichTasksToWorkOn(response, convo);
@@ -210,7 +187,6 @@ function confirmTasks(response, convo) {
 		{
 			pattern: bot.utterances.no,
 			callback: (response, convo) => {
-				var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 				convo.say("Let's give this another try then :repeat_one:");
 				convo.say(taskListMessage);
 				askWhichTasksToWorkOn(response, convo);
@@ -244,7 +220,8 @@ function confirmTimeForTasks(response, convo) {
 		}
 	});
 
-	// get timezone before continuing
+	// get timezone of user before continuing
+	// we aren't putting this in helper function b/c of this convo's custom CB
 	bot.startTyping(source_message.channel);
 	bot.api.users.list({
   	presence: 1
@@ -267,6 +244,7 @@ function confirmTimeForTasks(response, convo) {
   		timeZone = timeZone.tz;
   	} else {
   		timeZone = "America/New_York"; // THIS IS WRONG AND MUST BE FIXED
+  		// SOLUTION IS MOST LIKELY TO ASK USER HERE WHAT THEIR TIMEZONE IS.
   	}
   	console.log(`Your timezone is: ${timeZone}`);
   	var calculatedTime = moment().tz(timeZone).add(totalMinutes, 'minutes').format("h:mm a");
@@ -304,7 +282,7 @@ function askForCustomTotalMinutes(response, convo) {
 	convo.ask("What time would you like to work until? You can also tell me the duration you'd like to work, like `55 minutes` :upside_down_face:", (response, convo) => {
 
 		var { intentObject: { entities } } = response;
-		// for time to tasks, this is the only one that makes sense
+		// for time to tasks, these wit intents are the only ones that makes sense
 		if (entities.duration || entities.custom_time) {
 			confirmCustomTotalMinutes(response, convo);
 		} else {
@@ -359,8 +337,8 @@ function confirmCustomTotalMinutes(response, convo) {
 						convo.repeat();
 					} else {
 						confirmCustomTotalMinutes(response, convo);
-						convo.next();
 					}
+					convo.next();
 				});
 			}
 		}
