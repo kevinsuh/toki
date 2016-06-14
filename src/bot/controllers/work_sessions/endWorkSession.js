@@ -139,7 +139,8 @@ export default function(controller) {
 			convo.sessionEnd = {
 				SlackUserId,
 				postSessionDecision: false, // what is the user's decision? (break, another session, etc.)
-				reminders: [] // there will be lots of potential reminders
+				reminders: [], // there will be lots of potential reminders
+				tasksCompleted: []
 			};
 
 			models.User.find({
@@ -149,6 +150,9 @@ export default function(controller) {
 				]
 			})
 			.then((user) => {
+
+				convo.sessionEnd.UserId = user.id;
+
 				// temporary fix to get tasks
 				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
 				return user.getTasks({
@@ -159,8 +163,9 @@ export default function(controller) {
 			})
 			.then((tasks) => {
 
-				var taskArray = convertToSingleTaskObjectArray(tasks, "task");
-				var taskListMessage = convertArrayToTaskListMessage(taskArray);
+				var taskArray              = convertToSingleTaskObjectArray(tasks, "task");
+				convo.sessionEnd.taskArray = taskArray;
+				var taskListMessage        = convertArrayToTaskListMessage(taskArray);
 
 				convo.say("Which task(s) did you get done? Just write which number(s) `i.e. 1, 2`");
 				convo.ask(taskListMessage, (response, convo) => {
@@ -197,6 +202,7 @@ export default function(controller) {
 						// no tasks completed
 						convo.say("That's okay! You can keep chipping away and you'll get there :pick:");
 					} else {
+						convo.sessionEnd.tasksCompleted = tasksCompletedArray;
 						convo.say("Great work :punch:");
 					}
 
@@ -214,24 +220,33 @@ export default function(controller) {
 
 				if (convo.status == 'completed') {
 
-					// went according to plan
-					const { SlackUserId, postSessionDecision, reminders } = convo.sessionEnd;
-
-					// not much to do here other than set potential reminders
-					switch (postSessionDecision) {
-						case intentConfig.WANT_BREAK:
-							// taking a break currently handled inside convo
-							break;
-						case intentConfig.END_DAY:
-							convo.say("Let's review the day! :pencil:");
-						case intentConfig.START_SESSION:
-							convo.say(`Love your hustle :muscle:`);
-							convo.say(`Let's do this :thumbsup:`);
-						default: break;
-					}
+					console.log("CONVO SESSION END: ");
 					console.log(convo.sessionEnd);
 
+					// went according to plan
+					const { SlackUserId, UserId, postSessionDecision, reminders, tasksCompleted, taskArray } = convo.sessionEnd;
 					
+					// set reminders and mark done tasks as done
+					reminders.forEach((reminder) => {
+						const { remindTime, customNote } = reminder;
+						models.Reminder.create({
+							UserId,
+							remindTime,
+							customNote
+						})
+					});
+					taskArray.forEach((task) => {
+						if (tasksCompleted.indexOf(task.dataValues.priority) > -1) {
+							models.Task.update({
+								done: true
+							},
+							{
+								where: { id: task.dataValues.id }
+							}
+							);
+						}
+					});
+
 				} else {
 					// ending convo prematurely
 					console.log("ending convo early: \n\n\n\n");
@@ -274,13 +289,13 @@ function askUserPostSessionOptions(response, convo) {
 		 */
 		
 		var { intentObject: { entities } } = response;
-		var { intents }                    = entities;
-		var intent                         = intents[0] ? intents[0].value : null;
+		var { intent }                     = entities;
+		var intentValue                    = intent[0] ? intent[0].value : null;
 		var responseMessage                = response.text;
 
-		if (intent) {
+		if (intentValue) {
 			// there is an intent
-			switch (intent) {
+			switch (intentValue) {
 				case intentConfig.WANT_BREAK:
 					
 					convo.sessionEnd.postSessionDecision = intentConfig.WANT_BREAK;
@@ -304,20 +319,25 @@ function askUserPostSessionOptions(response, convo) {
 
 					convo.sessionEnd.breakDuration = durationMinutes;
 					
-					convo.say(`Great! I'll check in with you after your ${durationMinutes} break`);
+					convo.say(`Great! I'll check in with you after your ${durationMinutes} minute break :smile:`);
 					convo.sessionEnd.postSessionDecision = intentConfig.WANT_BREAK;
 
 					// calculate break time and add reminder
 					var checkinTimeStamp =  moment().add(durationMinutes, 'minutes').format("YYYY-MM-DD HH:mm:ss");
 					convo.sessionEnd.reminders.push({
-						customNote: `Hey! It's been ${durationMinutes} minutes. Let me know when you're ready to \`start a session\``,
+						customNote: `It's been ${durationMinutes} minutes. Let me know when you're ready to start a session`,
 						remindTime: checkinTimeStamp
 					});
-
+					break;
 				case intentConfig.START_SESSION:
+					convo.say(`Love your hustle :muscle:`);
+					convo.say(`Let's do this :thumbsup:`);
 					convo.sessionEnd.postSessionDecision = intentConfig.START_SESSION;
+					break;
 				case intentConfig.END_DAY:
+					convo.say("Let's review the day! :pencil:");
 					convo.sessionEnd.postSessionDecision = intentConfig.END_DAY;
+					break;
 				default:
 					break;
 			}

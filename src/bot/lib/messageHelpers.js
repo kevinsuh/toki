@@ -135,24 +135,26 @@ export function convertToSingleTaskObjectArray(taskObjectArray, type) {
 						UserId
 					}
 				}
-			})
+			});
+			break;
 		case "task":
 			// normal task that has to have all other formats too
 			return taskObjectArray.map((taskObject) => {
 				const { DailyTasks } = taskObject;
-				const { priority, minutes, createdAt } = DailyTasks[0]; // for now just get the first daily task
+				const { priority, minutes, createdAt, id } = DailyTasks[0]; // for now just get the first daily task
 				return {
 					...taskObject,
 					dataValues: {
 						...taskObject.dataValues,
 						priority,
 						minutes,
+						DailyTaskId: id,
 						dailyTaskCreatedAt: createdAt
 					}
 				}
 
 			});
-
+			break;
 		default:
 			break;
 	}
