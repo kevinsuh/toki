@@ -185,23 +185,31 @@ export default function(controller) {
 					var tasksCompletedSplitArray = tasksCompleted.split(/(,|and)/);
 
 					// if we capture 0 valid tasks from string, then we start over
-					var numberRegEx = new RegExp(/[\d]+/);
-					var tasksCompletedArray = [];
+					var numberRegEx              = new RegExp(/[\d]+/);
+					var taskNumberCompletedArray = [];
 					tasksCompletedSplitArray.forEach((taskString) => {
 						console.log(`task string: ${taskString}`);
 						var taskNumber = taskString.match(numberRegEx);
 						if (taskNumber) {
 							taskNumber = parseInt(taskNumber[0]);
 							if (taskNumber <= taskArray.length) {
-								tasksCompletedArray.push(taskNumber);
+								taskNumberCompletedArray.push(taskNumber);
 							}
 						}
 					});
 
-					if (tasksCompletedArray.length == 0) {
+					if (taskNumberCompletedArray.length == 0) {
 						// no tasks completed
 						convo.say("That's okay! You can keep chipping away and you'll get there :pick:");
 					} else {
+						// get the actual ids
+						var tasksCompletedArray = [];
+						taskNumberCompletedArray.forEach((taskNumber) => {
+							var index = taskNumber - 1; // to make 0-index based
+							if (taskArray[index])
+								tasksCompletedArray.push(taskArray[index].dataValues.id);
+						});
+
 						convo.sessionEnd.tasksCompleted = tasksCompletedArray;
 						convo.say("Great work :punch:");
 					}
@@ -235,8 +243,10 @@ export default function(controller) {
 							customNote
 						})
 					});
+
+					// why did i think u could do priorities lol
 					taskArray.forEach((task) => {
-						if (tasksCompleted.indexOf(task.dataValues.priority) > -1) {
+						if (tasksCompleted.indexOf(task.dataValues.id) > -1) {
 							models.Task.update({
 								done: true
 							},
@@ -275,9 +285,9 @@ function askUserPostSessionOptions(response, convo) {
 	const { task }                = convo;
 	const { bot, source_message } = task;
 	
-	convo.say("Would you like to take a break now, or start a new session?");
 	convo.say("I recommend taking a 15 minute break after about 90 minutes of focused work to keep your mind and attention fresh :tangerine:");
-	convo.ask("Breaks are great times to read books and articles, or take a walk outside to get some fresh air :books: :walking:", (response, convo) => {
+	convo.say("Breaks are great times to read books and articles, or take a walk outside to get some fresh air :books: :walking:");
+	convo.ask("Would you like to take a break now, or start a new session?", (response, convo) => {
 
 		/**
 		 * 		Does user want a break?
@@ -290,10 +300,13 @@ function askUserPostSessionOptions(response, convo) {
 		
 		var { intentObject: { entities } } = response;
 		var { intent }                     = entities;
-		var intentValue                    = intent[0] ? intent[0].value : null;
+		var intentValue                    = (intent && intent[0]) ? intent[0].value : null;
 		var responseMessage                = response.text;
 
-		if (intentValue) {
+		console.log("responseMessage: "+responseMessage);
+
+		if (intentValue && (intentValue == intentConfig.WANT_BREAK || intentValue == intentConfig.START_SESSION || intentValue == intentConfig.END_DAY)) {
+			console.log("in here?? wtf");
 			// there is an intent
 			switch (intentValue) {
 				case intentConfig.WANT_BREAK:
@@ -342,14 +355,17 @@ function askUserPostSessionOptions(response, convo) {
 					break;
 			}
 		} else if (responseMessage == "be back later") {
+			console.log("in here as you should be wtf\n\n\n\n");
 			convo.say("I'll be here when you get back!");
 			convo.say("You can also ask for me to check in with you at a specific time later :grin:"); // if user wants reminder, simply input a reminder outside of this convo
 		} else {
 			// let's encourage an intent
 			convo.say("Sorry I didn't get that :dog:. Let me know if you want to `take a break` or `start another session`. If you're leaving for a bit, just say `be back later`");
+			convo.repeat();
 		}
 
 		convo.next();
 	});
+	convo.next();
 }
 
