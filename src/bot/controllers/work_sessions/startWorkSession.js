@@ -227,8 +227,8 @@ export default function(controller) {
 				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
 
 				// FIND DAILY TASKS, THEN START THE CONVERSATION
-				models.DailyTask.findAll({
-					where: [`"DailyTask"."createdAt" > ? AND "Task"."UserId" = ? AND "Task"."done" = ?`, timeAgoForTasks, user.id, false],
+				user.getDailyTasks({
+					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ?`, timeAgoForTasks, false],
 					order: `"priority" ASC`,
 					include: [ models.Task ]
 				}).then((dailyTasks) => {

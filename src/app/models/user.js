@@ -14,7 +14,7 @@ module.exports = function(sequelize, DataTypes) {
     classMethods: {
       associate: function(models) {
         // associations can be defined here
-        User.hasMany(models.Task);
+        User.hasMany(models.DailyTask);
         User.hasOne(models.SlackUser, { foreignKey: 'UserId' });
         User.hasMany(models.Reminder);
         User.hasMany(models.WorkSession);

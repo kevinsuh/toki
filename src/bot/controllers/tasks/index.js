@@ -46,13 +46,14 @@ export default function(controller) {
 
 			// temporary fix to get tasks
 			var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
-			
-			models.DailyTask.findAll({
-				where: [`"DailyTask"."createdAt" > ? AND "Task"."UserId" = ?`, timeAgoForTasks, user.id],
-				order: `"priority" ASC`,
-				include: [ models.Task ]
-			}).then((dailyTasks) => {
-				
+
+			user.getDailyTasks({
+				where: [`"DailyTask"."createdAt" > ?`, timeAgoForTasks],
+				include: [ models.Task ],
+				order: `"DailyTask"."priority" ASC`
+			})
+			.then((dailyTasks) => {
+
 				dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
 
 				var taskListMessage = convertArrayToTaskListMessage(dailyTasks);

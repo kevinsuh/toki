@@ -155,15 +155,15 @@ export default function(controller) {
 
 				// temporary fix to get tasks
 				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
-				return user.getTasks({
-					where: [ `"Task"."done" = ? AND "DailyTasks"."createdAt" > ?`, false, timeAgoForTasks ],
-					order: `"DailyTasks"."priority" ASC`,
-					include: [ models.DailyTask ]
+				return user.getDailyTasks({
+					where: [ `"Task"."done" = ? AND "DailyTask"."createdAt" > ?`, false, timeAgoForTasks ],
+					order: `"DailyTask"."priority" ASC`,
+					include: [ models.Task ]
 				});
 			})
-			.then((tasks) => {
+			.then((dailyTasks) => {
 
-				var taskArray              = convertToSingleTaskObjectArray(tasks, "task");
+				var taskArray              = convertToSingleTaskObjectArray(dailyTasks, "daily");
 				convo.sessionEnd.taskArray = taskArray;
 				var taskListMessage        = convertArrayToTaskListMessage(taskArray);
 
@@ -247,13 +247,18 @@ export default function(controller) {
 					// why did i think u could do priorities lol
 					taskArray.forEach((task) => {
 						if (tasksCompleted.indexOf(task.dataValues.id) > -1) {
-							models.Task.update({
-								done: true
-							},
-							{
-								where: { id: task.dataValues.id }
-							}
-							);
+							// get daily tasks
+							models.DailyTask.find({
+								where: { id: task.dataValues.id },
+								include: [ models.Task] 
+							})
+							.then((dailyTask) => {
+								if (dailyTask) {
+									dailyTask.Task.updateAttributes({
+										{ done: true }
+									})
+								}
+							})
 						}
 					});
 
@@ -343,7 +348,7 @@ function askUserPostSessionOptions(response, convo) {
 
 					convo.sessionEnd.breakDuration = durationMinutes;
 					
-					convo.say(`Great! I'll check in with you after your ${durationMinutes} minute break :smile:`);
+					convo.say(`Great! I'll check in with you in ${durationMinutes} minutes :smile:`);
 					convo.sessionEnd.postSessionDecision = intentConfig.WANT_BREAK;
 
 					// calculate break time and add reminder

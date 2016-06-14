@@ -9,7 +9,6 @@ module.exports = function(sequelize, DataTypes) {
     classMethods: {
       associate: function(models) {
         // associations can be defined here
-        Task.belongsTo(models.User);
         Task.hasMany(models.DailyTask);
       }
     }

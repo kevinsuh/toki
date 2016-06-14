@@ -101,13 +101,13 @@ export default function(controller) {
 	    					var priority = index + 1;
 
 	    					models.Task.create({
-							    text,
-							    UserId
+							    text
 							  }).then((task) => {
 							    models.DailyTask.create({
 							      TaskId: task.id,
 							      priority,
-							      minutes
+							      minutes,
+							      UserId
 							    });
 							  });
 	    				});
