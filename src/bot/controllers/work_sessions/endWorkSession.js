@@ -255,7 +255,7 @@ export default function(controller) {
 							.then((dailyTask) => {
 								if (dailyTask) {
 									dailyTask.Task.updateAttributes({
-										{ done: true }
+										done: true
 									})
 								}
 							})
