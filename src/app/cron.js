@@ -11,16 +11,17 @@ export default function() {
 
 	// check for reminders and sessions every minute!
 	checkForReminders();
-	// checkForSessions();
+	checkForSessions();
 
 }
 
 var checkForSessions = () => {
 
-	var now = moment();
-	var fiveMinutesAgo = now.subtract(5, "minutes").format("YYYY-MM-DD HH:mm:ss");
-	models.WorkSessions.findAll({
-		where: [ `"endTime" < ? AND open = ?`, fiveMinutesAgo, true ]
+	// var now = moment();
+	// var fiveMinutesAgo = now.subtract(5, "minutes").format("YYYY-MM-DD HH:mm:ss");
+	
+	models.WorkSession.findAll({
+		where: [ `"endTime" < ? AND open = ?`, new Date(), true ]
 	}).then((workSessions) => {
 
 		// these are the work sessions that have ended within last 5 minutes
@@ -49,8 +50,13 @@ var checkForSessions = () => {
 			})
 			.then((user) => {
 
-				// start the end session flow!
-				
+				var { SlackUserId } = user.SlackUser;
+				var config = {
+					SlackUserId
+				}
+
+				// alarm is up for session
+				controller.trigger('session_timer_up', [bot, config]);
 				
 			})
 
