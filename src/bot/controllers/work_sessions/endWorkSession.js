@@ -6,6 +6,13 @@ import http from 'http';
 import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
+
+const intentConfig =  {
+	WANT_BREAK: 'want_break',
+	START_SESSION: 'start_session',
+	END_DAY: 'end_day'
+}
 
 // END OF A WORK SESSION
 export default function(controller) {
@@ -128,7 +135,119 @@ export default function(controller) {
 
 		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-			convo.say("Hey! congrats on finishing your session!");
+			// object that contains values important to this conversation
+			convo.sessionEnd = {
+				SlackUserId,
+				postSessionDecision: false // what is the user's decision? (break, another session, etc.)
+				reminders: [] // there will be lots of potential reminders
+			};
+
+			models.User.find({
+				where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+				include: [
+					models.SlackUser
+				]
+			})
+			.then((user) => {
+				// temporary fix to get tasks
+				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
+				return user.getTasks({
+					where: [ `"Task"."done" = ? AND "DailyTasks"."createdAt" > ?`, false, timeAgoForTasks ],
+					order: `"DailyTasks"."priority" ASC`,
+					include: [ models.DailyTask ]
+				});
+			})
+			.then((tasks) => {
+
+				var taskArray = convertToSingleTaskObjectArray(tasks, "task");
+				var taskListMessage = convertArrayToTaskListMessage(taskArray);
+
+				convo.say("Which task(s) did you get done? Just write which number(s) `i.e. 1, 2`");
+				convo.ask(taskListMessage, (response, convo) => {
+
+					/**
+					 * 		4 possible responses:
+					 * 			1. write numbers down
+					 * 			2. says "didn't get one done"
+					 * 			3. "was distracted"
+					 * 			4. "did something else"
+					 * 			will only deal with the top 2 for now
+					 */
+					
+					var { intentObject: { entities } } = response;
+					var tasksCompleted = response.text;
+
+					var tasksCompletedSplitArray = tasksCompleted.split(/(,|and)/);
+
+					// if we capture 0 valid tasks from string, then we start over
+					var numberRegEx = new RegExp(/[\d]+/);
+					var tasksCompletedArray = [];
+					tasksCompletedSplitArray.forEach((taskString) => {
+						console.log(`task string: ${taskString}`);
+						var taskNumber = taskString.match(numberRegEx);
+						if (taskNumber) {
+							taskNumber = parseInt(taskNumber[0]);
+							if (taskNumber <= taskArray.length) {
+								tasksCompletedArray.push(taskNumber);
+							}
+						}
+					});
+
+					if (tasksCompletedArray.length == 0) {
+						// no tasks completed
+						convo.say("That's okay! You can keep chipping away and you'll get there :pick:");
+					} else {
+						convo.say("Great work :punch:");
+					}
+
+					askUserPostSessionOptions(response, convo);
+					convo.next();
+					
+				});
+			});
+
+			convo.on('end', (convo) => {
+				console.log("SESSION END!!!");
+
+				var responses = convo.extractResponses();
+				var {sessionEnd } = convo;
+
+				if (convo.status == 'completed') {
+
+					// went according to plan
+					const { SlackUserId, postSessionDecision, reminders } = convo.sessionEnd;
+
+					// not much to do here other than set potential reminders
+					switch (postSessionDecision) {
+						case intentConfig.WANT_BREAK:
+							// taking a break currently handled inside convo
+							break;
+						case intentConfig.END_DAY:
+							convo.say("Let's review the day! :pencil:");
+						case intentConfig.START_SESSION:
+							convo.say(`Love your hustle :muscle:`);
+							convo.say(`Let's do this :thumbsup:`);
+						default: break;
+					}
+					console.log(convo.sessionEnd);
+
+					
+				} else {
+					// ending convo prematurely
+					console.log("ending convo early: \n\n\n\n");
+					console.log("controller:");
+					console.log(controller);
+					console.log("\n\n\n\n\nbot:");
+					console.log(bot);
+
+					// FIX POTENTIAL PITFALLS HERE
+					if (!sessionEnd.postSessionDecision) {
+						convo.say("I'm not sure went wrong here :dog: Please let my owners know");
+					}
+
+				}
+
+			});
 
 		});
 
@@ -136,158 +255,81 @@ export default function(controller) {
 
 };
 
-
-
-		// when done with session
-		// 1. Great work {name}!
-		// 2. What would you like to remember about this session? This could be something specific about what you got done, or more general notes about how you felt
-		// 3. Awesome :) Which tasks did you complete? I'll update your list
-		// 4. show task list
-		// 5. get numbers to then cross out task list. CROSS TASK LIST BY EDITING MESSAGE
-		// 6. Lastly, how did that session feel? (put the 4 emojis)
-		// 7. Would you like to take a break? Or just respond to what user says
-		
-
-		// this clears the timeout that you set
-	// 	clearTimeout(bot.timer);
-		
-
-	// 	bot.api.reactions.add({
-	// 		timestamp: message.ts,
-	// 		channel: message.channel,
-	// 		name: 'star',
-	// 	}, (err, res) => {
-	// 		console.log("added reaction!");
-	// 		console.log(res);
-	// 		if (err) {
-	// 			bot.botkit.log('Failed to add emoji reaction :(', err);
-	// 		}
-	// 	});
-
-	// 	bot.send({
- //        type: "typing",
- //        channel: message.channel
- //    });
- //    setTimeout(()=>{
- //    	bot.startConversation(message, askForReflection);
- //    }, randomInt(1000, 1750));
-
-	// });
-
-
-/**
- * 		CONVERSATION QUESTIONS
- * 		these are callback functions that take 2 params
- * 		1) response (that specific response)
- * 		2) convo (object of entire convo)
- */
-
-function askForReflection(response, convo) {
-	console.log("asking for reflection");
+function askUserPostSessionOptions(response, convo) {
 
 	const { task }                = convo;
 	const { bot, source_message } = task;
-
-	convo.say("Excellent work!! :sports_medal:");
-
-	convo.ask("What would you like to remember about this session? This could be something specific about what you got done, or more general notes about how you felt", (response, convo) => {
-
-		// reward the reflection!
-		const { task: { bot, convos } }     = convo;
-		const { responses: { reflection } } = convos[0];
-		
-		bot.api.reactions.add({
-			timestamp: reflection.ts,
-			channel: reflection.channel,
-			name: '100',
-		}, (err, res) => {
-			console.log("added reaction!");
-			console.log(res);
-			if (err) {
-				bot.botkit.log('Failed to add emoji reaction :(', err);
-			}
-		});
-		
-		askForTaskUpdate(response, convo);
-		convo.next();
-
-	}, { 'key' : 'reflection' });
-
-	convo.on('end', finishReflection);
-
-}
-
-function askForTaskUpdate(response, convo) {
-
-	const { task }                = convo;
-	const { bot, source_message } = task;
-
-	bot.send({
-		type: "typing",
-		channel: source_message.channel
-	});
-
-	convo.say("Awesome stuff!! Great to hear :smiley:");
-	convo.ask("Which tasks did you complete? I’ll update your list :pencil: (i.e `1, 5, 4`)", (response, convo) => {
-		askForBreak(response, convo);
-		convo.next();
-	}, { 'key': 'tasksDone' });
 	
-}
+	convo.say("Would you like to take a break now, or start a new session?");
+	convo.say("I recommend taking a 15 minute break after about 90 minutes of focused work to keep your mind and attention fresh :tangerine:");
+	convo.ask("Breaks are great times to read books and articles, or take a walk outside to get some fresh air :books: :walking:", (response, convo) => {
 
-function askForBreak(response, convo) {
+		/**
+		 * 		Does user want a break?
+		 * 		possible answers:
+		 * 			- break [intent `want_break`]
+		 * 			- new session [intent `start_session`]
+		 * 			- leaving for a bit
+		 * 			- done for the day [intent `end_day`]
+		 */
+		
+		var { intentObject: { entities } } = response;
+		var { intents }                    = entities;
+		var intent                         = intents[0] ? intents[0].value : null;
+		var responseMessage                = response.text;
 
-	const { task }                = convo;
-	const { bot, source_message } = task;
+		if (intent) {
+			// there is an intent
+			switch (intent) {
+				case intentConfig.WANT_BREAK:
+					
+					convo.sessionEnd.postSessionDecision = intentConfig.WANT_BREAK;
 
-	convo.say("Excellent!");
-	convo.ask("Would you like to take a 15 minute break now before jumping in to your next focused session?", [
-			{
-				pattern: bot.utterances.yes,
-				callback: (response, convo) => {
-					convo.say("Sounds great! I'll ping you in 15 minutes :timer_clock:");
-			  	convo.next();
-				}
-			},
-			{
-				pattern: bot.utterances.no,
-				callback: (response, convo) => {
-				  convo.say("Sounds good. I'll be here when you're ready to jump back in :swimmer:");
-				  convo.next();
-				}
-			},
-			{
-				default: true,
-				callback: function(response, convo) {
-					convo.say("Sorry, I didn't get that :dog:");
-				  convo.repeat();
-				  convo.next();
-				}
+					// calculate break duration through wit
+					var durationSeconds = 0;
+					if (entities.break_duration) {
+						var durationArray = entities.break_duration;
+						for (var i = 0; i < durationArray.length; i++) {
+							durationSeconds += durationArray[i].normalized.value;
+						}
+					} else if (entities.duration) {
+						var durationArray = entities.duration;
+						for (var i = 0; i < durationArray.length; i++) {
+							durationSeconds += durationArray[i].normalized.value;
+						}
+					} else {
+						durationSeconds = 15 * 60; // default to 15 min break
+					}
+					var durationMinutes = Math.floor(durationSeconds / 60);
+
+					convo.sessionEnd.breakDuration = durationMinutes;
+					
+					convo.say(`Great! I'll check in with you after your ${durationMinutes} break`);
+					convo.sessionEnd.postSessionDecision = intentConfig.WANT_BREAK;
+
+					// calculate break time and add reminder
+					var checkinTimeStamp =  moment().add(durationMinutes, 'minutes').format("YYYY-MM-DD HH:mm:ss");
+					convo.sessionEnd.reminders.push({
+						customNote: `Hey! It's been ${durationMinutes} minutes. Let me know when you're ready to \`start a session\``,
+						remindTime: checkinTimeStamp
+					});
+
+				case intentConfig.START_SESSION:
+					convo.sessionEnd.postSessionDecision = intentConfig.START_SESSION;
+				case intentConfig.END_DAY:
+					convo.sessionEnd.postSessionDecision = intentConfig.END_DAY;
+				default:
+					break;
 			}
-	], { 'key' : 'wantsBreak' });
+		} else if (responseMessage == "be back later") {
+			convo.say("I'll be here when you get back!");
+			convo.say("You can also ask for me to check in with you at a specific time later :grin:"); // if user wants reminder, simply input a reminder outside of this convo
+		} else {
+			// let's encourage an intent
+			convo.say("Sorry I didn't get that :dog:. Let me know if you want to `take a break` or `start another session`. If you're leaving for a bit, just say `be back later`");
+		}
+
+		convo.next();
+	});
 }
 
-function finishReflection(convo) {
-
-	const { task }                = convo;
-	const { bot, source_message } = task;
-
-	if (convo.status == 'completed') {
-
-		// all of user responses in object
-		var res = convo.extractResponses();
-
-		var reflection = convo.extractResponse('reflection');
-		convo.say(`Nice. Your reflection was: ${reflection}`);
-
-		console.log("FINISH REFLECTION");
-		console.log(bot);
-		console.log(JSON.stringify(bot.storage));
-		console.log('\n\n\n\n\n\n\n\n\n\n\n');
-		console.log(convo);
-
-	} else {
-		// this happens if the conversation ended prematurely for some reason
-		convo.say(message, 'Okay, nevermind then!');
-	}
-}
