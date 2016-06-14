@@ -9,9 +9,54 @@ import moment from 'moment';
 // the cron file!
 export default function() {
 
-	// check for reminders every minute!
+	// check for reminders and sessions every minute!
 	checkForReminders();
+	// checkForSessions();
 
+}
+
+var checkForSessions = () => {
+
+	var now = moment();
+	var fiveMinutesAgo = now.subtract(5, "minutes").format("YYYY-MM-DD HH:mm:ss");
+	models.WorkSessions.findAll({
+		where: [ `"endTime" < ? AND open = ?`, fiveMinutesAgo, true ]
+	}).then((workSessions) => {
+
+		// these are the work sessions that have ended within last 5 minutes
+		// and have not closed yet
+		
+		var workSessionsArray = [];
+
+		workSessions.forEach((workSession) => {
+
+			const { UserId, open } = workSession;
+
+			/**
+			 * 		For each work session
+			 * 			1. close it
+			 * 			2. find user and start end_work_session flow
+			 */
+			
+			workSession.update({
+				open: false
+			})
+			.then(() => {
+				return models.User.find({
+					where: { id: UserId },
+					include: [ models.SlackUser ]
+				});
+			})
+			.then((user) => {
+
+				// start the end session flow!
+				
+				
+			})
+
+		});
+
+	});
 }
 
 var checkForReminders = () => {

@@ -8,6 +8,15 @@ var env       = process.env.NODE_ENV || 'development';
 var config    = require(__dirname + '/../config.json')[env];
 var db        = {};
 
+// this is to handle PG inserts
+// var pg = require('pg');
+// var timestampOID = 1114;
+// pg.types.setTypeParser(1114, function(stringValue) {
+//   console.log("STRING VALUES!!\n\n\n\n\n");
+//   console.log(stringValue);
+//   return new Date(Date.parse(stringValue + "+0000"));
+// });
+
 if (config.use_env_variable) {
   var sequelize = new Sequelize(process.env[config.use_env_variable]);
 } else {

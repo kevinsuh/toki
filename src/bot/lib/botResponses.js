@@ -9,8 +9,7 @@ export function helloResponse() {
 		"Hola",
 		"Hello!",
 		"Heyya",
-		"Hey there",
-		"Hello sir!"
+		"Hey there"
 	];
 	return randomSelection(helloResponses);
 }

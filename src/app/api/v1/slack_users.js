@@ -57,17 +57,92 @@ if (false) {
       workSession.setDailyTasks([dailyTask.id]);
     });
   });
-  
+
 }
 
+if (false) {
   models.SlackUser.findAll({
   	include: [models.User]
   }).then((slackUsers) => {
     res.json(slackUsers);
   });
+} 
+var remindTime = moment().format("YYYY-MM-DD HH:mm:ss");
+var UserId = 1;
+var customNote = "test note";
+  // models.Reminder.create({
+  //   remindTime,
+  //   UserId,
+  //   customNote
+  // }).then((reminder) => {
+  //   res.json(reminder);
+  // });
+  models.Reminder.find({
+    where: { id: 34 }
+  }).then((reminder) => {
+    var time = reminder.createdAt;
+    var timeMoment = moment(time).tz("America/Los_Angeles").format();
+    var timeMoment = moment(time).tz("America/New_York").format();
+    res.json({time: timeMoment});
+  })
+
   // seedDatabaseWithExistingSlackUsers(bot);
+  console.log("checking session:");
+  // checkForSessions();
   
 });
+
+var checkForSessions = () => {
+
+  var today = new Date();
+  var fiveMinutesAgo = today.setMinutes(-5);
+  console.log(today);
+  console.log(fiveMinutesAgo);
+
+  var fiveMinutesAgo = moment().subtract(5, "minutes");
+  // console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss"));
+  // console.log(fiveMinutesAgo.utc().format("YYYY-MM-DD HH:mm:ss"));
+  // console.log(moment().format("YYYY-MM-DD HH:mm:ss"));
+
+  // models.WorkSession.findAll({
+  //   where: [ `"endTime" < ? AND open = ?`, fiveMinutesAgo, true ]
+  // }).then((workSessions) => {
+
+  //   // these are the work sessions that have ended within last 5 minutes
+  //   // and have not closed yet
+    
+  //   var workSessionsArray = [];
+
+  //   workSessions.forEach((workSession) => {
+
+  //     const { UserId, open } = workSession;
+
+  //     *
+  //      *    For each work session
+  //      *      1. close it
+  //      *      2. find user and start end_work_session flow
+       
+      
+  //     workSession.update({
+  //       open: false
+  //     })
+  //     .then(() => {
+  //       return models.User.find({
+  //         where: { id: UserId },
+  //         include: [ models.SlackUser ]
+  //       });
+  //     })
+  //     .then((user) => {
+
+  //       // start the end session flow!
+        
+        
+  //     })
+
+  //   });
+
+  // });
+}
 
 // create
 router.post('/', (req, res) => {

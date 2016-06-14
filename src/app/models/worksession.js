@@ -3,7 +3,8 @@ module.exports = function(sequelize, DataTypes) {
   var WorkSession = sequelize.define('WorkSession', {
     startTime: DataTypes.DATE,
     endTime: DataTypes.DATE,
-    UserId: DataTypes.INTEGER
+    UserId: DataTypes.INTEGER,
+    open: DataTypes.BOOLEAN
   }, {
     classMethods: {
       associate: function(models) {
