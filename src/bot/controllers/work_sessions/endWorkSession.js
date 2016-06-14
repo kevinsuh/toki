@@ -138,7 +138,7 @@ export default function(controller) {
 			// object that contains values important to this conversation
 			convo.sessionEnd = {
 				SlackUserId,
-				postSessionDecision: false // what is the user's decision? (break, another session, etc.)
+				postSessionDecision: false, // what is the user's decision? (break, another session, etc.)
 				reminders: [] // there will be lots of potential reminders
 			};
 
