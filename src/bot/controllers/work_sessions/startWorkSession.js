@@ -10,6 +10,46 @@ import { createMomentObjectWithSpecificTimeZone } from '../../lib/miscHelpers';
 // START OF A WORK SESSION
 export default function(controller) {
 
+	controller.on('trigger_start_session', (bot, config) => {
+
+		/**
+		 * 		Programatically trigger start session
+		 * 		Confirm this is what user wants before going into start_session flow
+		 */
+		
+		console.log("\n\n\n\n\n\nIN TRIGGER START SESSION\n\n\n\n\n");
+
+		const { SlackUserId } = config;
+
+		// has open work sessions
+		bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+			convo.ask(`Ready to jump into another session?`, [
+				{
+					pattern: bot.utterances.yes,
+					callback: (response, convo) => {
+						convo.say("COOL!");
+						convo.wantsToStartAnotherSession = true;
+						convo.next();
+					}
+				},
+				{
+					pattern: bot.utterances.no,
+					callback: (response, convo) => {
+						convo.say("OH NO!");
+						convo.wantsToStartAnotherSession = false;
+						convo.next();
+					}
+				}
+			]); 
+			convo.on('end', (convo) => {
+				if (convo.wantsToStartAnotherSession) {
+					console.log("\n\n\n\n\n\nUSER WANTS TO START ANOTHER SESSION\n\n\n\n\n");
+				}
+			});
+		});
+
+	});
+
 	/**
 	 * 		STARTING A WORK SESSION
 	 * 		

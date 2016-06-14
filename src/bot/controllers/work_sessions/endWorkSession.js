@@ -257,6 +257,17 @@ export default function(controller) {
 						}
 					});
 
+					switch (postSessionDecision) {
+						case intentConfig.WANT_BREAK:
+							break;
+						case intentConfig.END_DAY:
+							break;
+						case intentConfig.START_SESSION:
+							controller.trigger('trigger_start_session', [bot, { SlackUserId }]);
+							break;
+						default: break;
+					}
+
 				} else {
 					// ending convo prematurely
 					console.log("ending convo early: \n\n\n\n");
