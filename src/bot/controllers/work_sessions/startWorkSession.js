@@ -129,7 +129,7 @@ export default function(controller) {
 							var responseMessage = response.text;
 							var { intentObject: { entities } } = response;
 
-							var newSession = new RegExp(/(((^st[tart]*))|(^ne[ew]*))/); // `start` or `new`
+							var newSession = new RegExp(/(((^st[tart]*))|(^ne[ew]*)|(^se[ession]*))/); // `start` or `new`
 							var keepGoing = new RegExp(/(((^k[ep]*))|(^go[oing]*))/); // `keep` or `going`
 
 							if (newSession.test(responseMessage)) {
