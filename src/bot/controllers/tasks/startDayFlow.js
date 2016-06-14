@@ -14,6 +14,21 @@ export const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
 // base controller for tasks
 export default function(controller) {
 
+	// programattic trigger of day start
+	// will lead to actual day start flow: `begin_day_flow`
+	controller.on('trigger_day_start', (bot, config) => {
+
+		const { SlackUserId } = config;
+
+		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+			convo.say("hi! in trigger of day start flow");
+			convo.next();
+
+		});
+
+	})
+
 	/**
 	* 		START OF YOUR DAY
 	*
@@ -23,7 +38,19 @@ export default function(controller) {
 	* 		enter work session flow
 	* 		
 	*/
+	controller.on('begin_day_flow', (bot, config) => {
 
+		const { SlackUserId } = config;
+		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+		convo.say("hi! this should be the actual start day flow");
+		convo.next();
+
+		});
+
+	});
+
+	// this is wit.ai and should trigger to `begin_day_flow`
 	controller.hears(['start_day'], 'direct_message', wit.hears, (bot, message) => {
 
 		const SlackUserId = message.user;
