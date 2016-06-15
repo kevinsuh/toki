@@ -41,7 +41,7 @@ export default function(controller) {
 				const UserId = user.id;
 
 				user.getDailyTasks({
-					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ?`, timeAgoForTasks, false],
+					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, timeAgoForTasks, false, "live"],
 					include: [ models.Task ],
 					order: `"DailyTask"."priority" ASC`
 				})
@@ -83,17 +83,24 @@ export default function(controller) {
 
 		    			if (convo.status == 'completed') {
 
-		    				console.log("tasks add:");
-		    				console.log(tasksAdd);
-		    				console.log("\n\n\n\n\n");
+		    				// prioritized task array is the one we're ultimately going with
+		    				const { dailyTasks, prioritizedTaskArray } = tasksAdd;
 
-		    				// we're going to archive all daily tasks first by default, then re-update the ones that matter
+		    				// we're going to archive all existing daily tasks first by default, then re-update the ones that matter
+		    				dailyTasks.forEach((dailyTask) => {
+		    					const { id } = dailyTask.dataValues;
+		    					console.log(`\n\n\nupdating daily task id: ${id}\n\n\n`);
+		    					models.DailyTask.update({
+		    						type: "archived"
+		    					},{
+		    						where: { id }
+		    					});
+		    				});
 
 		    				// store the user's tasks
 		    				// existing dailyTasks: update to new obj (esp. `priority`)
 		    				// new dailyTasks: create new obj
-		    				const { allTasksArray } = tasksAdd;
-		    				allTasksArray.forEach((dailyTask, index) => {
+		    				prioritizedTaskArray.forEach((dailyTask, index) => {
 
 		    					const { dataValues } = dailyTask;
 		    					var newPriority = index + 1;
@@ -105,12 +112,15 @@ export default function(controller) {
 			    					console.log(`user id: ${UserId}`);
 			    					console.log("\n\n\n\n")
 
-		    						// existing daily task
-		    						const { id, minutes } = dailyTask;
-		    						dailyTask.update({
+		    						// existing daily task and make it live
+		    						const { id, minutes } = dataValues;
+		    						models.DailyTask.update({
 		    							minutes,
 		    							UserId,
-		    							priority: newPriority
+		    							priority: newPriority,
+		    							type: "live"
+		    						}, {
+		    							where: { id }
 		    						});
 
 		    					} else {
