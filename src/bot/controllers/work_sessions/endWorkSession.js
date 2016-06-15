@@ -277,7 +277,7 @@ export default function(controller) {
 						case intentConfig.END_DAY:
 							break;
 						case intentConfig.START_SESSION:
-							controller.trigger('trigger_start_session', [bot, { SlackUserId }]);
+							controller.trigger('confirm_new_session', [bot, { SlackUserId }]);
 							break;
 						default: break;
 					}

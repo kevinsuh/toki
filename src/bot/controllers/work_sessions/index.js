@@ -21,8 +21,9 @@ export default function(controller) {
 	endWorkSessionController(controller);
 
 	/**
-	 * 		FLOW for when User is back and ready to go
+	 * 		IS_BACK ("READY TO WORK" - Peon WCIII)
 	 */
+	
 	controller.hears(['is_back'], 'direct_message', wit.hears, (bot, message) => {
 
 		const SlackUserId = message.user;

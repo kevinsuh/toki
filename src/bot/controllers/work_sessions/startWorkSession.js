@@ -10,51 +10,10 @@ import { createMomentObjectWithSpecificTimeZone } from '../../lib/miscHelpers';
 // START OF A WORK SESSION
 export default function(controller) {
 
-	controller.on('trigger_start_session', (bot, config) => {
-
-		/**
-		 * 		Programatically trigger start session
-		 * 		Confirm this is what user wants before going into start_session flow
-		 */
-		
-		console.log("\n\n\n\n\n\nIN TRIGGER START SESSION\n\n\n\n\n");
-
-		const { SlackUserId } = config;
-
-		// has open work sessions
-		bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-			convo.ask(`Ready to jump into another session?`, [
-				{
-					pattern: bot.utterances.yes,
-					callback: (response, convo) => {
-						convo.say("COOL!");
-						convo.wantsToStartAnotherSession = true;
-						convo.next();
-					}
-				},
-				{
-					pattern: bot.utterances.no,
-					callback: (response, convo) => {
-						convo.say("OH NO!");
-						convo.wantsToStartAnotherSession = false;
-						convo.next();
-					}
-				}
-			]); 
-			convo.on('end', (convo) => {
-				if (convo.wantsToStartAnotherSession) {
-					console.log("\n\n\n\n\n\nUSER WANTS TO START ANOTHER SESSION\n\n\n\n\n");
-					controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
-				}
-			});
-		});
-
-	});
-
-		/**
+	/**
 	 *
-	 * 		Asking throughout the day to start a session
-	 * 									* via Wit *
+	 * 		User directly asks to start a session
+	 * 							~* via Wit *~
 	 * 		
 	 */
 	controller.hears(['start_session'], 'direct_message', wit.hears, (bot, message) => {
@@ -66,25 +25,46 @@ export default function(controller) {
 			channel: message.channel
 		});
 		setTimeout(() => {
-			controller.trigger(`confirm_new_session`, [bot, { SlackUserId }] );
-		}, 1500);
-
-		console.log("start session trigger...")
+			bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+				convo.startSession = false;
+				convo.ask(`Ready to jump into another session?`, [
+					{
+						pattern: bot.utterances.yes,
+						callback: (response, convo) => {
+							convo.startSession = true;
+							convo.next();
+						}
+					},
+					{
+						pattern: bot.utterances.no,
+						callback: (response, convo) => {
+							convo.say("Okay! Let me know when you want to jump in :swimmer:");
+							convo.next();
+						}
+					}
+				]); 
+				convo.on('end', (convo) => {
+					if (convo.startSession) {
+						controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
+					}
+				});
+			});
+		}, 1000);
 
 	});
 
-	// every new session should go through this first
-	// this will check for existing open sessions
-	// if no open sessions, go to `begin_session`
-	// if there is open session, enter `confirm_new_session` flow
+	/**
+	 * 				EVERY CREATED SESSION GOES THROUGH THIS FIRST
+	 *   		*** this checks if there is an existing open session ***
+	 *   			if no open sessions => `begin_session`
+	 *   			else => go through this flow
+	 */
 	controller.on(`confirm_new_session`, (bot, config) => {
 
 		/**
-		 * 		1. Let user know about existing session and time left
-		 * 		2. User can either:
-		 * 			- Keep going
-		 * 			- Start new session by ending this one early
-		 * 				 ending early will...
+		 * 		User can either:
+		 * 			1. Keep going
+		 * 			2. Start new session by ending this one early
 		 * 					- update endTime in session to now
 		 * 					- mark it as done and re-enter `begin_session`
 		 */
@@ -762,7 +742,6 @@ function askForReminderDuringCheckin(response, convo) {
 		{
 			pattern: bot.utterances.no,
 			callback: (response, convo) => {
-				finishSessionForUser(response, convo);
 				convo.next();
 			}
 		},
