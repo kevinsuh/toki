@@ -53,15 +53,14 @@ export default function(controller) {
 					dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
 
 					var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
-					taskListMessage = `Here are your tasks for today! :memo:\n${taskListMessage}`;
-
+					bot.reply(message, "Got 'em! Here are your incomplete tasks for today:");
 					bot.send({
 			        type: "typing",
 			        channel
 			    });
 			    setTimeout(()=>{
 			    	bot.reply(message, taskListMessage);
-			    }, randomInt(1000, 2000));
+			    }, randomInt(1500, 2000));
 
 				});
 
