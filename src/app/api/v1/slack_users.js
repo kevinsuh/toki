@@ -115,6 +115,11 @@ var customNote = "test note";
     ]
   })
   .then((user) => {
+    console.log("\n\n\n\n\n");
+    console.log(user.nickName);
+    console.log(user.SlackUser.SlackUserId);
+    console.log(user.dataValues.SlackUser.SlackUserId);
+    console.log("\n\n\n\n\n");
     return user.getReminders({
       where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break"] ]
     });

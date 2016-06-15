@@ -9,12 +9,14 @@ import models from '../../../app/models';
 import { randomInt } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
 
-import startDayFlowController from './startDayFlow';
+import addTaskController from './add';
 
 const FINISH_WORD = 'done';
 
 // base controller for tasks
 export default function(controller) {
+
+	addTaskController(controller);
 
 	/**
 	 * 		YOUR DAILY TASKS
