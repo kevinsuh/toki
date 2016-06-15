@@ -731,7 +731,7 @@ function askForReminderDuringCheckin(response, convo) {
 	const SlackUserId = response.user;
 
 	convo.say("Last thing - is there anything you'd like me to remind you during the check in?");
-	convo.ask("This could be a note like `call Mary` or `should be on the second section of the proposal by now`", [
+	convo.ask("This could be a note like `call Eileen` or `should be on the second section of the proposal by now`", [
 		{
 			pattern: bot.utterances.yes,
 			callback: (response, convo) => {

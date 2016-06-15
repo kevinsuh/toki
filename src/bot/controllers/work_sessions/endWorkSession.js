@@ -209,7 +209,7 @@ export default function(controller) {
 
 					if (taskNumberCompletedArray.length == 0) {
 						// no tasks completed
-						convo.say("That's okay! You can keep chipping away and you'll get there :pick:");
+						convo.say("That's okay! No worries");
 					} else {
 						// get the actual ids
 						var tasksCompletedArray = [];
