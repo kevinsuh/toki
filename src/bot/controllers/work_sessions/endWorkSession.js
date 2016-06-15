@@ -7,12 +7,7 @@ import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
-
-const intentConfig =  {
-	WANT_BREAK: 'want_break',
-	START_SESSION: 'start_session',
-	END_DAY: 'end_day'
-}
+import { intentConfig } from '../../lib/intents';
 
 // END OF A WORK SESSION
 export default function(controller) {
@@ -117,6 +112,7 @@ export default function(controller) {
 			});
 			convo.on('end', (convo) => {
 				if (convo.finishedWithSession) {
+					console.log("here???");
 					controller.trigger('end_session', [bot, { SlackUserId }]);
 				}
 			});
