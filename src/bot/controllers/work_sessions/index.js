@@ -7,6 +7,8 @@ import endWorkSessionController from './endWorkSession';
 import middleWorkSessionController from './middleWorkSession';
 import startWorKSessionController from './startWorKSession';
 
+import intentConfig from '../../lib/intents';
+
 // base controller for work sessions
 export default function(controller) {
 
@@ -52,14 +54,42 @@ export default function(controller) {
 						var { intent }                     = entities;
 						var intentValue                    = (intent && intent[0]) ? intent[0].value : null;
 
-						// if (intentValue) {
-						// 	switch(intentValue) {
-						// 		case 
-						// 	}
-						// }
+						if (intentValue) {
+							switch(intentValue) {
+								case intentConfig.START_SESSION:
+									convo.isBackDecision = intentConfig.START_SESSION;
+									convo.say(`Let's do this :thumbsup:`);
+									break;
+								case intentConfig.END_DAY:
+									convo.isBackDecision = intentConfig.END_DAY;
+									convo.say(`Let's review the day! :pencil:`);
+									break;
+								default:
+									convo.say(`Totally cool, just let me know when you're ready to do either of those things! :wave:`);
+									break;
+							}
+						}
+						convo.next();
 
 					});
-				})
+					convo.on(`end`, (convo) => {
+						const { isBackDecision } = convo;
+						if (convo.status == 'completed') {
+							switch (isBackDecision) {
+								case intentConfig.START_SESSION:
+									console.log("\n\n\nSTART_SESSION!\n\n\n");
+									break;
+								case intentConfig.END_DAY:
+									console.log("\n\n\nEND_DAY\n\n\n");
+									break;
+								default:
+									break;
+							}
+						} else {
+							bot.reply(message, "Okay! Let me know when you want to start a session or day");
+						}
+					});
+				});
 			});
 		}, 1000);
 		
