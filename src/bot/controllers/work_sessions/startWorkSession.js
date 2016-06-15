@@ -242,7 +242,7 @@ export default function(controller) {
 
 				// FIND DAILY TASKS, THEN START THE CONVERSATION
 				user.getDailyTasks({
-					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ?`, timeAgoForTasks, false],
+					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, timeAgoForTasks, false, "live"],
 					order: `"priority" ASC`,
 					include: [ models.Task ]
 				}).then((dailyTasks) => {

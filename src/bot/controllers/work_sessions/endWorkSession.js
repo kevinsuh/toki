@@ -151,7 +151,7 @@ export default function(controller) {
 				// temporary fix to get tasks
 				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
 				return user.getDailyTasks({
-					where: [ `"Task"."done" = ? AND "DailyTask"."createdAt" > ?`, false, timeAgoForTasks ],
+					where: [ `"Task"."done" = ? AND "DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?`, false, timeAgoForTasks, "live" ],
 					order: `"DailyTask"."priority" ASC`,
 					include: [ models.Task ]
 				});
@@ -209,7 +209,7 @@ export default function(controller) {
 
 					if (taskNumberCompletedArray.length == 0) {
 						// no tasks completed
-						convo.say("That's okay! No worries :grin:");
+						convo.say("No worries! :smile_cat:");
 					} else {
 						// get the actual ids
 						var tasksCompletedArray = [];
