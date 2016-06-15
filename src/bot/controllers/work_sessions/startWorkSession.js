@@ -147,7 +147,7 @@ export default function(controller) {
 
 					convo.on('end', (convo) => {
 
-						console.log("\n\n\n here in end \n\n\n");
+						console.log("\n\n\n ~~ here in end of confirm_new_session ~~ \n\n\n");
 
 						const { startNewSession, openWorkSession } = convo;
 
@@ -185,7 +185,7 @@ export default function(controller) {
 							})
 							.then((user) => {
 								user.getReminders({
-									where: [ `"open" = ? AND "type" = ?`, true, "break" ]
+									where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break"] ]
 								}).
 								then((reminders) => {
 									reminders.forEach((reminder) => {
@@ -246,9 +246,6 @@ export default function(controller) {
 					order: `"priority" ASC`,
 					include: [ models.Task ]
 				}).then((dailyTasks) => {
-
-						console.log("your tasks for the day!");
-						console.log(dailyTasks);
 
 						// save the daily tasks for reference
 						dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");

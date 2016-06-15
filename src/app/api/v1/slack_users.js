@@ -108,6 +108,20 @@ var customNote = "test note";
   //   });
   //   res.json(workSessions);
   // });
+  models.User.find({
+    where: [`"User"."id" = ?`, UserId ],
+    include: [
+      models.SlackUser
+    ]
+  })
+  .then((user) => {
+    return user.getReminders({
+      where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break"] ]
+    });
+  })
+  .then((reminders) => {
+    res.json(reminders);
+  });
 
   // models.User.find({
   //   where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],

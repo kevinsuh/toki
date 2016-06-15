@@ -266,7 +266,7 @@ export default function(controller) {
 
 						// cancel all checkin reminders (type: `work_session`)
 						user.getReminders({
-							where: [ `"open" = ? AND "type" = ?`, true, "work_session" ]
+							where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break"] ]
 						}).
 						then((reminders) => {
 							reminders.forEach((reminder) => {
