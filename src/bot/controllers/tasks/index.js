@@ -46,7 +46,7 @@ export default function(controller) {
 				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
 
 				user.getDailyTasks({
-					where: [`"DailyTask"."createdAt" > ?`, timeAgoForTasks],
+					where: [`"DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?`, timeAgoForTasks, "live"],
 					include: [ models.Task ],
 					order: `"DailyTask"."priority" ASC`
 				})
@@ -55,7 +55,7 @@ export default function(controller) {
 					dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
 
 					var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
-					bot.reply(message, "Got 'em! Here are your incomplete tasks for today:");
+					bot.reply(message, "Got 'em! Here are your tasks for today:");
 					bot.send({
 			        type: "typing",
 			        channel
