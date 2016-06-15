@@ -29,27 +29,6 @@ export default function(controller) {
 
 	})
 
-	/**
-	* 		START OF YOUR DAY
-	*
-	* 		ask for today's tasks
-	* 		prioritize tasks
-	* 		set time to tasks
-	* 		enter work session flow
-	* 		
-	*/
-	controller.on('begin_day_flow', (bot, config) => {
-
-		const { SlackUserId } = config;
-		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-
-		convo.say("hi! this should be the actual start day flow");
-		convo.next();
-
-		});
-
-	});
-
 	// this is wit.ai and should trigger to `begin_day_flow`
 	controller.hears(['start_day'], 'direct_message', wit.hears, (bot, message) => {
 
@@ -126,6 +105,27 @@ export default function(controller) {
 
 	    	});
 	    }, randomInt(1000, 1750));
+		});
+
+	});
+
+	/**
+	* 		START OF YOUR DAY
+	*
+	* 		ask for today's tasks
+	* 		prioritize tasks
+	* 		set time to tasks
+	* 		enter work session flow
+	* 		
+	*/
+	controller.on('begin_day_flow', (bot, config) => {
+
+		const { SlackUserId } = config;
+		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+		convo.say("hi! this should be the actual start day flow");
+		convo.next();
+
 		});
 
 	});

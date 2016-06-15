@@ -6,6 +6,7 @@ import Wit from 'botkit-middleware-witai';
 import tasksController from './tasks';
 import workSessionsController from './work_sessions';
 import remindersController from './reminders';
+import daysController from './days';
 import setupBot from '../bot';
 import setupReceiveMiddleware from '../middleware/receiveMiddleware';
 import miscellaneousController from './miscellaneousController';
@@ -54,6 +55,7 @@ export function customConfigBot(controller) {
   setupReceiveMiddleware(controller);
 
   // add controller functionalities
+  daysController(controller);
   tasksController(controller);
   workSessionsController(controller);
   miscellaneousController(controller);

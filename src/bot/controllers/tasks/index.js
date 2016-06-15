@@ -17,16 +17,6 @@ const FINISH_WORD = 'done';
 export default function(controller) {
 
 	/**
-	 * 		INDEX functions of tasks
-	 */
-	
-	/**
-	* 	START OF YOUR DAY
-	*/
-
-	startDayFlowController(controller);
-
-	/**
 	 * 		YOUR DAILY TASKS
 	 */
 
@@ -35,42 +25,49 @@ export default function(controller) {
 		const SlackUserId = message.user;
 		var channel       = message.channel;
 
-		// find user then get tasks
-		models.User.find({
-			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-			include: [
-				models.SlackUser
-			]
-		})
-		.then((user) => {
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
 
-			// temporary fix to get tasks
-			var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
-
-			user.getDailyTasks({
-				where: [`"DailyTask"."createdAt" > ?`, timeAgoForTasks],
-				include: [ models.Task ],
-				order: `"DailyTask"."priority" ASC`
+		setTimeout(() => {
+			// find user then get tasks
+			models.User.find({
+				where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+				include: [
+					models.SlackUser
+				]
 			})
-			.then((dailyTasks) => {
+			.then((user) => {
 
-				dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
+				// temporary fix to get tasks
+				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
 
-				var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
-				taskListMessage = `Here are your tasks for today! :memo:\n${taskListMessage}`;
+				user.getDailyTasks({
+					where: [`"DailyTask"."createdAt" > ?`, timeAgoForTasks],
+					include: [ models.Task ],
+					order: `"DailyTask"."priority" ASC`
+				})
+				.then((dailyTasks) => {
 
-				bot.send({
-		        type: "typing",
-		        channel
-		    });
-		    setTimeout(()=>{
-		    	bot.reply(message, taskListMessage);
-		    }, randomInt(1000, 2000));
+					dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
 
-			});
+					var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+					taskListMessage = `Here are your tasks for today! :memo:\n${taskListMessage}`;
 
-		})
+					bot.send({
+			        type: "typing",
+			        channel
+			    });
+			    setTimeout(()=>{
+			    	bot.reply(message, taskListMessage);
+			    }, randomInt(1000, 2000));
 
+				});
+
+			})
+
+		}, 1000);
 
 	});
 
