@@ -209,7 +209,7 @@ export default function(controller) {
 
 					if (taskNumberCompletedArray.length == 0) {
 						// no tasks completed
-						convo.say("That's okay! No worries");
+						convo.say("That's okay! No worries :grin:");
 					} else {
 						// get the actual ids
 						var tasksCompletedArray = [];
@@ -242,18 +242,54 @@ export default function(controller) {
 
 					// went according to plan
 					const { SlackUserId, UserId, postSessionDecision, reminders, tasksCompleted, taskArray } = convo.sessionEnd;
+
+					// end all open sessions and reminder checkins (type `work_session`) the user might have
+					models.User.find({
+						where: [`"User"."id" = ?`, UserId ],
+						include: [ models.SlackUser ]
+					})
+					.then((user) => {
+
+						// end all open work sessions
+						user.getWorkSessions({
+							where: [ `"open" = ?`, true ]
+						})
+						.then((workSessions) => {
+							var endTime = moment().format("YYYY-MM-DD HH:mm:ss");
+							workSessions.forEach((workSession) => {
+								workSession.update({
+									endTime,
+									"open": false
+								});
+							});
+						});
+
+						// cancel all checkin reminders (type: `work_session`)
+						user.getReminders({
+							where: [ `"open" = ? AND "type" = ?`, true, "work_session" ]
+						}).
+						then((reminders) => {
+							reminders.forEach((reminder) => {
+								reminder.update({
+									"open": false
+								})
+							});
+						})
+
+					});
 					
-					// set reminders and mark done tasks as done
+					// set reminders (usually a break)
 					reminders.forEach((reminder) => {
-						const { remindTime, customNote } = reminder;
+						const { remindTime, customNote, type } = reminder;
 						models.Reminder.create({
 							UserId,
 							remindTime,
-							customNote
-						})
+							customNote,
+							type
+						});
 					});
 
-					// why did i think u could do priorities lol
+					// mark appropriate tasks as done
 					taskArray.forEach((task) => {
 						if (tasksCompleted.indexOf(task.dataValues.id) > -1) {
 							// get daily tasks
@@ -364,7 +400,8 @@ function askUserPostSessionOptions(response, convo) {
 					var checkinTimeStamp =  moment().add(durationMinutes, 'minutes').format("YYYY-MM-DD HH:mm:ss");
 					convo.sessionEnd.reminders.push({
 						customNote: `It's been ${durationMinutes} minutes. Let me know when you're ready to start a session`,
-						remindTime: checkinTimeStamp
+						remindTime: checkinTimeStamp,
+						type: "break"
 					});
 					break;
 				case intentConfig.START_SESSION:

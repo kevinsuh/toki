@@ -70,7 +70,7 @@ export default function(controller) {
 		 */
 
 		const { SlackUserId } = config;
-		console.log("in `confirm_new_session` before entering begin_session flow!");
+		console.log("\n\n\n\n\nin `confirm_new_session` before entering begin_session flow!\n\n\n\n\n");
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -85,18 +85,28 @@ export default function(controller) {
 			})
 			.then((workSessions) => {
 
-				// this means you have 1+ open work sessions (should only be 1)
-				if (workSessions.length > 0) {
+				console.log("\n\n\n\n\n");
+				console.log("in work sessions:");
+				console.log(workSessions);
+				console.log("\n\n\n\n\n");
 
-					var openWorkSession = workSessions[0]; // deal with first one as reference point
+				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+					// by default, user wants to start a new session
+					// that's why she is in this flow...
+					// no openWorkSession unless we found one
+					convo.startNewSession = true;
+					convo.openWorkSession = false;
+
+					if (workSessions.length > 0) {
+
+						var openWorkSession = workSessions[0]; // deal with first one as reference point
+						convo.openWorkSession = openWorkSession;
 
 						var endTime       = moment(openWorkSession.endTime);
 						var endTimeString = endTime.format("h:mm a");
 						var now           = moment();
 						var minutesLeft   = Math.round(moment.duration(endTime.diff(now)).asMinutes());
-
 
 						convo.say(`You are already in a session right now! You have ${minutesLeft} minutes left :timer_clock:`);
 						convo.ask(`Do you want to \`keep going\`, or cancel it and start a \`new session\`?`, (response, convo) => {
@@ -111,13 +121,13 @@ export default function(controller) {
 
 								// start new session
 								convo.say("Got it. Let's do a new session :facepunch:");
-								convo.startNewSession = true;
 
 							} else if (keepGoing.test(responseMessage)) {
 
 								// continue current session
 								convo.say("Got it. Let's do it! :weight_lifter:");
 								convo.say(`I'll ping you at ${endTimeString} :alarm_clock:`);
+								convo.startNewSession = false;
 
 							} else {
 
@@ -126,49 +136,73 @@ export default function(controller) {
 								convo.repeat();
 
 							}
-
 							convo.next();
 
 						});
+					} else {
+						// no existing work sessions. user wants to start a new one
+						convo.startNewSession = true;
+						convo.say("Let's do it :weight_lifter:");
+					}
 
-						convo.on('end', (convo) => {
+					convo.on('end', (convo) => {
 
-							if (convo.startNewSession) {
+						console.log("\n\n\n here in end \n\n\n");
 
-								var nowTimeStamp = moment().format("YYYY-MM-DD HH:mm:ss");
+						const { startNewSession, openWorkSession } = convo;
 
-								// end current work session early
+						// if user wants to start new session, then do this flow and enter `begin_session` flow
+						if (startNewSession) {
+
+							/**
+							 * 		~ User has confirmed starting a new session ~
+							 * 			* end current work session early
+							 * 			* cancel all existing open work sessions
+							 * 			* cancel `break` reminders
+							 */
+
+							var nowTimeStamp = moment().format("YYYY-MM-DD HH:mm:ss");
+
+							// if user had an open work session(s), cancel them!
+							if (openWorkSession) {
 								openWorkSession.update({
 									endTime: nowTimeStamp,
 									open: false
 								});
-
-								// cancel all open work sessions since you're starting over
 								workSessions.forEach((workSession) => {
 									workSession.update({
 										open: false
 									})
 								});
+							};
 
-								controller.trigger(`begin_session`, [ bot, { SlackUserId }]);
+							// cancel all user breaks cause user is RDY TO WORK
+							models.User.find({
+								where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+								include: [
+									models.SlackUser
+								]
+							})
+							.then((user) => {
+								user.getReminders({
+									where: [ `"open" = ? AND "type" = ?`, true, "break" ]
+								}).
+								then((reminders) => {
+									reminders.forEach((reminder) => {
+										reminder.update({
+											"open": false
+										})
+									});
+								})
+							});
 
-							}
-						});
-
+							controller.trigger(`begin_session`, [ bot, { SlackUserId }]);
+						}
 					});
 
-					return;
-				}
-				else {
-					// good to go!
-					controller.trigger(`begin_session`, [ bot, { SlackUserId }]);
-					return;
-				}
+				});
 			});
-
 		})
-
-
 	});
 
 	/**
@@ -269,13 +303,14 @@ export default function(controller) {
 
 						var { UserId, SlackUserId, dailyTasks, calculatedTime, calculatedTimeObject, tasksToWorkOnHash, checkinTimeObject, reminderNote } = sessionStart;
 
-						// if user wanted a reminder
+						// if user wanted a checkin reminder
 						if (checkinTimeObject) {
 							var checkInTimeStamp = checkinTimeObject.format("YYYY-MM-DD HH:mm:ss");
 							models.Reminder.create({
 								remindTime: checkInTimeStamp,
 								UserId,
-								customNote: reminderNote
+								customNote: reminderNote,
+								type: "work_session"
 							});
 						}
 
@@ -362,7 +397,6 @@ function startSessionStartConversation(response, convo) {
 
 	convo.say(taskListMessage);
 	convo.say("You can either work on one task by saying `let's work on task 1` or multiple tasks by saying `let's work on tasks 1, 2, and 3`");
-	convo.say("I'll follow up with you when your task should be completed, based on your estimate :wink:");
 
 	askWhichTasksToWorkOn(response, convo);
 	convo.next();

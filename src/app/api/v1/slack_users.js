@@ -77,43 +77,64 @@ var customNote = "test note";
   // }).then((reminder) => {
   //   res.json(reminder);
   // });
-  models.Reminder.find({
-    where: { id: 34 }
-  }).then((reminder) => {
-    var time = reminder.createdAt;
-    var timeMoment = moment(time).tz("America/Los_Angeles").format();
-    var timeMoment = moment(time).tz("America/New_York").format();
-    res.json({time: timeMoment});
-  })
+  // models.Reminder.find({
+  //   where: { id: 34 }
+  // }).then((reminder) => {
+  //   var time = reminder.createdAt;
+  //   var timeMoment = moment(time).tz("America/Los_Angeles").format();
+  //   var timeMoment = moment(time).tz("America/New_York").format();
+  //   res.json({time: timeMoment});
+  // })
 
   var SlackUserId = 'U121ZK15J';
+  var UserId = 1;
+  // end all open sessions the user might have
+  // models.User.find({
+  //   where: [`"User"."id" = ?`, UserId ],
+  //   include: [
+  //     models.SlackUser
+  //   ]
+  // })
+  // .then((user) => {
+  //   return user.getWorkSessions({
+  //     where: [ `"open" = ?`, true ]
+  //   });
+  // })
+  // .then((workSessions) => {
+  //   workSessions.forEach((workSession) => {
+  //     workSession.update({
+  //       "open": false
+  //     })
+  //   });
+  //   res.json(workSessions);
+  // });
 
-  models.User.find({
-    where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-    include: [
-      models.SlackUser
-    ]
-  })
-  .then((user) => {
+  // models.User.find({
+  //   where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+  //   include: [
+  //     models.SlackUser
+  //   ]
+  // })
+  // .then((user) => {
 
-    // cannot start a session if user is already in one!
-    return user.getWorkSessions({
-      where: [`"open" = ?`, true ]
-    })
-    .then((workSessions) => {
-      console.log("work sessions!")
-      console.log(workSessions);
+  //   // cannot start a session if user is already in one!
+  //   return user.getWorkSessions({
+  //     where: [`"open" = ?`, true ]
+  //   })
+  //   .then((workSessions) => {
+  //     console.log("work sessions!")
+  //     console.log(workSessions);
 
-      // if (Object.keys(workSessions).length === 0 && workSessions.constructor === Object) {
-      //   console.log("WORK SESSIONS is empty!");
-      // } else {
-      //   console.log("WORK SESSIONS is not empty...");
-      // }
+  //     // if (Object.keys(workSessions).length === 0 && workSessions.constructor === Object) {
+  //     //   console.log("WORK SESSIONS is empty!");
+  //     // } else {
+  //     //   console.log("WORK SESSIONS is not empty...");
+  //     // }
 
-      console.log("user");
-      console.log(user);
-    })
-  })
+  //     console.log("user");
+  //     console.log(user);
+  //   })
+  // })
   
 
   // seedDatabaseWithExistingSlackUsers(bot);

@@ -4,7 +4,8 @@ module.exports = function(sequelize, DataTypes) {
     remindTime: DataTypes.DATE,
     UserId: DataTypes.INTEGER,
     customNote: DataTypes.STRING,
-    open: DataTypes.BOOLEAN
+    open: DataTypes.BOOLEAN,
+    type: DataTypes.STRING
   }, {
     classMethods: {
       associate: function(models) {
