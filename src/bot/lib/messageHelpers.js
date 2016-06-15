@@ -46,7 +46,7 @@ export function convertArrayToTaskListMessage(taskArray) {
 
 	if (taskArray.length  == 0) {
 		console.log("array passed in is empty at convertArrayToTaskListMessage");
-		return;
+		return taskListMessage;
 	}
 
 	taskArray.forEach((task) => {

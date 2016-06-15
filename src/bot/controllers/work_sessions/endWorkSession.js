@@ -7,7 +7,7 @@ import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
-import { intentConfig } from '../../lib/intents';
+import intentConfig from '../../lib/intents';
 
 // END OF A WORK SESSION
 export default function(controller) {
@@ -112,7 +112,6 @@ export default function(controller) {
 			});
 			convo.on('end', (convo) => {
 				if (convo.finishedWithSession) {
-					console.log("here???");
 					controller.trigger('end_session', [bot, { SlackUserId }]);
 				}
 			});
@@ -163,7 +162,14 @@ export default function(controller) {
 				convo.sessionEnd.taskArray = taskArray;
 				var taskListMessage        = convertArrayToTaskListMessage(taskArray);
 
-				convo.say("Which task(s) did you get done? Just write which number(s) `i.e. 1, 2`");
+				if (taskArray.length == 0) {
+					convo.say("You don't have any tasks on today's list! Great work :punch:");
+					convo.sessionEnd.hasNoTasksToWorkOn = true;
+					taskListMessage = "Say `next` to keep going";
+				} else {
+					convo.say("Which task(s) did you get done? Just write which number(s) `i.e. 1, 2`");
+				}
+
 				convo.ask(taskListMessage, (response, convo) => {
 
 					/**
@@ -179,6 +185,13 @@ export default function(controller) {
 					var tasksCompleted = response.text;
 
 					var tasksCompletedSplitArray = tasksCompleted.split(/(,|and)/);
+
+					// IF THE USER HAS NO TASKS ON DAILY TASK LIST
+					if (convo.sessionEnd.hasNoTasksToWorkOn) {
+						askUserPostSessionOptions(response, convo);
+						convo.next();
+						return;
+					}
 
 					// if we capture 0 valid tasks from string, then we start over
 					var numberRegEx              = new RegExp(/[\d]+/);
