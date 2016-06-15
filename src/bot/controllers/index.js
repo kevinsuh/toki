@@ -174,7 +174,7 @@ controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
   if (!message.selectedIntent) {
     bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
 
-    var options = ['end this session early', 'set a reminder', 'view your task list', 'add a task to your list', 'end your day', 'return to session and forget this interaction ever occured'];
+    var options = ['start a session', 'end session early', 'set a reminder', 'view your task list', 'add a task to your list', 'end your day', 'return to session and forget this interaction ever occured'];
     var optionsList = "```";
     options.forEach((option) => {
       optionsList = `${optionsList}${option}\n`

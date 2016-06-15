@@ -239,6 +239,7 @@ export default function(controller) {
 					var { SlackUserId } = sessionStart;
 
 					// proxy that some odd bug has happened
+					// impossible to have 1+ daily tasks and no time estimate
 					if (sessionStart.dailyTasks.length > 0 && !sessionStart.calculatedTimeObject) {
 
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
@@ -259,20 +260,14 @@ export default function(controller) {
 						 * 		
 						 *		2. save responses to DB:
 						 *			session:
-						 *				- tasks to work on (tasksToWorkOnArray)
+						 *				- tasks to work on (tasksToWorkOnHash)
 						 *				- sessionEndTime (calculated)
 						 *				- reminder (time + possible customNote)
 						 *
 						 * 		3. start session
 						 */
 
-						var { UserId, SlackUserId, dailyTasks, calculatedTime, calculatedTimeObject, tasksToWorkOnArray, checkinTimeObject, reminderNote } = sessionStart;
-
-						var taskObjectsToWorkOnArray = [];
-						dailyTasks.forEach((dailyTask) => {
-							if (tasksToWorkOnArray.indexOf(dailyTask.dataValues.priority) > -1)
-								taskObjectsToWorkOnArray.push(dailyTask);
-						});
+						var { UserId, SlackUserId, dailyTasks, calculatedTime, calculatedTimeObject, tasksToWorkOnHash, checkinTimeObject, reminderNote } = sessionStart;
 
 						// if user wanted a reminder
 						if (checkinTimeObject) {
@@ -288,20 +283,26 @@ export default function(controller) {
 						// 2. attach the daily tasks to work on during that work session
 						var startTime = moment().format("YYYY-MM-DD HH:mm:ss");
 						var endTime   = calculatedTimeObject.format("YYYY-MM-DD HH:mm:ss");
+
+						// create necessary data models:
+						// 	array of Ids for insert, taskObjects to create taskListMessage
+						var dailyTaskIds       = [];
+						var tasksToWorkOnArray = [];
+						for (var key in tasksToWorkOnHash) {
+							var task = tasksToWorkOnHash[key];
+							dailyTaskIds.push(task.dataValues.id);
+							tasksToWorkOnArray.push(task);
+						}
+
 						models.WorkSession.create({
 							startTime,
 							endTime,
 							UserId
 						}).then((workSession) => {
-
-							var dailyTaskIds = taskObjectsToWorkOnArray.map((dailyTask) => {
-								return dailyTask.dataValues.id;
-							})
-							workSession.setDailyTasks(dailyTaskIds
-								);
+							workSession.setDailyTasks(dailyTaskIds);
 						});
 
-						var taskListMessage = convertArrayToTaskListMessage(taskObjectsToWorkOnArray);
+						var taskListMessage = convertArrayToTaskListMessage(tasksToWorkOnArray);
 
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 							convo.say(`Excellent! See you at ${calculatedTime}! :timer_clock:`);
@@ -387,20 +388,20 @@ function confirmTasks(response, convo) {
 
 	// if we capture 0 valid tasks from string, then we start over
 	var numberRegEx = new RegExp(/[\d]+/);
-	var tasksToWorkOnArray = [];
+	var taskNumbersToWorkOnArray = []; // user assigned task numbers
 	tasksToWorkOnSplitArray.forEach((taskString) => {
 		console.log(`task string: ${taskString}`);
 		var taskNumber = taskString.match(numberRegEx);
 		if (taskNumber) {
 			taskNumber = parseInt(taskNumber[0]);
 			if (taskNumber <= dailyTasks.length) {
-				tasksToWorkOnArray.push(taskNumber);
+				taskNumbersToWorkOnArray.push(taskNumber);
 			}
 		}
 	});
 
 	// invalid if we captured no tasks
-	var isInvalid = (tasksToWorkOnArray.length == 0 ? true : false);
+	var isInvalid = (taskNumbersToWorkOnArray.length == 0 ? true : false);
 	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 
 	// repeat convo if invalid w/ informative context
@@ -412,11 +413,19 @@ function confirmTasks(response, convo) {
 		return;
 	}
 
-	convo.ask(`To :heavy_check_mark:, you want to work on tasks: ${tasksToWorkOnArray.join(", ")}?`,[
+	// if not invalid, we can set the tasksToWorkOnArray
+	var tasksToWorkOnHash = {}; // organize by task number assigned from user
+	taskNumbersToWorkOnArray.forEach((taskNumber) => {
+		var index = taskNumber - 1; // make this 0-index based
+		if (dailyTasks[index])
+			tasksToWorkOnHash[taskNumber] = dailyTasks[index];
+	});
+
+	convo.ask(`To :heavy_check_mark:, you want to work on tasks: ${taskNumbersToWorkOnArray.join(", ")}?`,[
 		{
 			pattern: bot.utterances.yes,
 			callback: (response, convo) => {
-				convo.sessionStart.tasksToWorkOnArray = tasksToWorkOnArray;
+				convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
 				confirmTimeForTasks(response,convo);
 				convo.next();
 			}
@@ -439,26 +448,22 @@ function confirmTimeForTasks(response, convo) {
 
 	const { task }                = convo;
 	const { bot, source_message } = task;
-	const { tasksToWorkOnArray, dailyTasks }  = convo.sessionStart;
+	const { tasksToWorkOnHash, dailyTasks }  = convo.sessionStart;
 	const SlackUserId = response.user;
 
 	console.log("convo sessino start:");
 	console.log(convo.sessionStart);
 
 	var totalMinutes = 0;
-	dailyTasks.forEach((dailyTask) => {
-		if (tasksToWorkOnArray.indexOf(dailyTask.dataValues.priority) > -1) {
-			console.log("tasksToWorkOnArray:");
-			console.log(tasksToWorkOnArray);
-			console.log("this specific daily task:");
-			console.log(dailyTask);
-			var { dataValues: { minutes } } = dailyTask;
-			totalMinutes += parseInt(minutes);
-		}
-	});
+	for (var key in tasksToWorkOnHash) {
+		const task = tasksToWorkOnHash[key];
+		console.log("this specific daily task:");
+		console.log(task);
+		var { dataValues: { minutes } } = task;
+		totalMinutes += parseInt(minutes);
+	}
 
 	// get timezone of user before continuing
-	// we aren't putting this in helper function b/c of this convo's custom CB
 	bot.api.users.list({
   	presence: 1
   }, (err, response) => {
@@ -612,7 +617,6 @@ function askForCheckIn(response, convo) {
 
 	const { task }                = convo;
 	const { bot, source_message } = task;
-	const { tasksToWorkOnArray, dailyTasks }  = convo.sessionStart;
 	const SlackUserId = response.user;
 
 	convo.ask("Boom :boom: Would you like me to check in with you during this session to make sure you're on track?", [
