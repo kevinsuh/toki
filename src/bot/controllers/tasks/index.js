@@ -10,6 +10,7 @@ import { randomInt } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
 
 import addTaskController from './add';
+import completeTasksController from './complete';
 
 const FINISH_WORD = 'done';
 
@@ -17,6 +18,7 @@ const FINISH_WORD = 'done';
 export default function(controller) {
 
 	addTaskController(controller);
+	completeTasksController(controller);
 
 	/**
 	 * 		YOUR DAILY TASKS
