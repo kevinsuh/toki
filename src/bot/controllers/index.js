@@ -295,6 +295,7 @@ controller.on(`new_session_group_decision`, (bot, config) => {
                     controller.trigger(`add_task_flow`, [ bot, { SlackUserId }]);
                     break;
                   case intentConfig.START_SESSION:
+                  controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
                     break;
                   default: break;
                 }
@@ -311,6 +312,7 @@ controller.on(`new_session_group_decision`, (bot, config) => {
               controller.trigger(`add_task_flow`, [ bot, { SlackUserId }]);
               break;
             case intentConfig.START_SESSION:
+              controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
               break;
             default: break;
           }

@@ -6,6 +6,7 @@ import models from '../../../app/models';
 import { randomInt } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
 import { createMomentObjectWithSpecificTimeZone } from '../../lib/miscHelpers';
+import intentConfig from '../../lib/intents';
 
 // START OF A WORK SESSION
 export default function(controller) {
@@ -19,36 +20,19 @@ export default function(controller) {
 	controller.hears(['start_session'], 'direct_message', wit.hears, (bot, message) => {
 
 		const SlackUserId = message.user;
+		var intent = intentConfig.START_SESSION;
+
+		var config = {
+			intent,
+			SlackUserId
+		}
 
 		bot.send({
 			type: "typing",
 			channel: message.channel
 		});
 		setTimeout(() => {
-			bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-				convo.startSession = false;
-				convo.ask(`Ready to jump into another session?`, [
-					{
-						pattern: bot.utterances.yes,
-						callback: (response, convo) => {
-							convo.startSession = true;
-							convo.next();
-						}
-					},
-					{
-						pattern: bot.utterances.no,
-						callback: (response, convo) => {
-							convo.say("Okay! Let me know when you want to jump in :swimmer:");
-							convo.next();
-						}
-					}
-				]); 
-				convo.on('end', (convo) => {
-					if (convo.startSession) {
-						controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
-					}
-				});
-			});
+			controller.trigger(`new_session_group_decision`, [ bot, config ]);
 		}, 1000);
 
 	});

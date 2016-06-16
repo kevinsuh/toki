@@ -15,6 +15,31 @@ const FINISH_WORD = 'done';
 export default function(controller) {
 
 	/**
+	 * 		User wants to add task
+	 * 			as interpreted by ~ Wit.ai ~
+	 */
+	controller.hears(['add_daily_task'], 'direct_message', wit.hears, (bot, message) => {
+
+		const SlackUserId = message.user;
+		var intent        = intentConfig.ADD_TASK;
+		var channel       = message.channel;
+
+		var config = {
+			intent,
+			SlackUserId
+		}
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(() => {
+			controller.trigger(`new_session_group_decision`, [ bot, config ]);
+		}, 1000);
+
+	});
+
+	/**
 	 * 			ADD DAILY TASK FLOW
 	 */
 	controller.on(`add_task_flow`, (bot, config) => {
@@ -153,31 +178,6 @@ export default function(controller) {
 				});
 			});
 		});
-	});
-
-	/**
-	 * 		User wants to add task
-	 * 			as interpreted by ~ Wit.ai ~
-	 */
-	controller.hears(['add_daily_task'], 'direct_message', wit.hears, (bot, message) => {
-
-		const SlackUserId = message.user;
-		var intent        = intentConfig.ADD_TASK;
-		var channel       = message.channel;
-
-		var config = {
-			intent,
-			SlackUserId
-		}
-
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(() => {
-			controller.trigger(`new_session_group_decision`, [ bot, config ]);
-		}, 1000);
-
 	});
 
 };
