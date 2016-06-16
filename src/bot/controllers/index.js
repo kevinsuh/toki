@@ -1,6 +1,7 @@
 import Botkit from 'botkit';
 import os from 'os';
 import Wit from 'botkit-middleware-witai';
+import moment from 'moment-timezone';
 
 // config modules
 import tasksController from './tasks';
@@ -10,6 +11,10 @@ import daysController from './days';
 import setupBot from '../bot';
 import setupReceiveMiddleware from '../middleware/receiveMiddleware';
 import miscellaneousController from './miscellaneousController';
+
+import models from '../../app/models';
+import intentConfig from '../lib/intents';
+
 require('dotenv').config();
 
 // actions
@@ -186,4 +191,133 @@ controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
 
 });
 
+/**
+ *      CATCH FOR WHETHER WE SHOULD START
+ *        A NEW SESSION GROUP (AKA A NEW DAY) OR NOT
+ *    1) if have not started day yet, then this will get triggered
+ *    2) if it has been 5 hours, then this will get this trigger
+ */
+controller.on(`new_session_group_decision`, (bot, config) => {
+
+  // type is either `ADD_TASK` or `START_SESSION`
+  const { SlackUserId, intent } = config;
+
+  models.User.find({
+    where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+    include: [ models.SlackUser ]
+  })
+  .then((user) => {
+
+    var name     = user.nickName || user.email;
+    const UserId = user.id;
+
+    // 1. has user started day yet?
+    user.getSessionGroups({
+      order: `"SessionGroup"."createdAt" DESC`,
+      limit: 1
+    })
+    .then((sessionGroups) => {
+
+      // should start day
+      var shouldStartDay = false;
+      if (sessionGroups.length == 0) {
+        shouldStartDay = true;
+      } else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
+        shouldStartDay = true;
+      }
+      if (shouldStartDay) {
+        bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+          convo.say("You have not started a day yet! Let me know when you want to `start a day` together :smile:");
+          convo.next();
+          convo.on('end', (convo) => {
+            controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
+          });
+        });
+        return;
+      }
+
+      // 2. you have started your day, it's been 5 hours since working with me
+      var fiveHoursAgo = new Date(moment().subtract(5, 'hours'));
+      user.getWorkSessions({
+        where: [`"WorkSession"."endTime" > ?`, fiveHoursAgo]
+      })
+      .then((workSessions) => {
+
+        // this means you have not
+        // had a work session in the last 5 hours
+        if (workSessions.length == 0) {
+
+          bot.startPrivateConversation ({ user: SlackUserId }, (err, convo) => {
+
+            convo.name = name;
+            convo.newSessionGroup = {
+              decision: false // for when you want to end early
+            };
+
+            convo.say(`Hey ${name}! It's been a while since we worked together`);
+            convo.ask("If your priorities changed, I recommend that you `start your day` to kick the tires :car:, otherwise let's `continue`", (response, convo) => {
+
+              var responseMessage = response.text;
+
+              // 1. `start your day`
+              // 2. `add a task`
+              // 3. anything else will exit
+              var startDay = new RegExp(/(((^st[tart]*))|(^d[ay]*))/); // `start` or `day`
+              var letsContinue = new RegExp(/((^co[ntinue]*))/); // `add` or `task`
+
+              if (startDay.test(responseMessage)) {
+                // start new day
+                convo.say("Got it. Let's do it! :weight_lifter:");
+                convo.newSessionGroup.decision = intentConfig.START_DAY;
+              } else if (letsContinue.test(responseMessage)) {
+                // continue with add task flow
+                convo.say("Got it. Let's continue on :muscle:");
+                convo.newSessionGroup.decision = intent;
+              } else {
+                // default is to exit this conversation entirely
+                convo.say("Okay! I'll be here for whenever you're ready");
+              }
+              convo.next();
+            });
+
+            
+            convo.on('end', (convo) => {
+
+              console.log("end of start new session group");
+              const { newSessionGroup } = convo;
+
+              if (newSessionGroup.decision == intentConfig.START_DAY) {
+                controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
+                return;
+              } else {
+                switch (intent) {
+                  case intentConfig.ADD_TASK:
+                    controller.trigger(`add_task_flow`, [ bot, { SlackUserId }]);
+                    break;
+                  case intentConfig.START_SESSION:
+                    break;
+                  default: break;
+                }
+              }
+
+            });
+
+          });
+        } else {
+
+          // you have had a recent work session and are ready to just get passed through
+          switch (intent) {
+            case intentConfig.ADD_TASK:
+              controller.trigger(`add_task_flow`, [ bot, { SlackUserId }]);
+              break;
+            case intentConfig.START_SESSION:
+              break;
+            default: break;
+          }
+
+        }
+      });
+    });
+  });
+});
 
