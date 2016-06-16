@@ -12,7 +12,7 @@ import intentConfig from '../../lib/intents';
 export const FINISH_WORD = 'done';
 export const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
 
-// base controller for tasks
+// base controller for start day
 export default function(controller) {
 
 	// programmatic trigger of actual day start flow: `begin_day_flow`
