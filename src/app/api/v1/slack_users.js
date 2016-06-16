@@ -88,7 +88,6 @@ var customNote = "test note";
 
   var SlackUserId = 'U121ZK15J';
   var UserId = 1;
-  // end all open sessions the user might have
   // models.User.find({
   //   where: [`"User"."id" = ?`, UserId ],
   //   include: [
@@ -96,37 +95,42 @@ var customNote = "test note";
   //   ]
   // })
   // .then((user) => {
-  //   return user.getWorkSessions({
-  //     where: [ `"open" = ?`, true ]
+  //   // get the msot start_work session group to measure
+  //   // a day's worth of work
+  //   user.getSessionGroups({
+  //     where: [`"SessionGroup"."type" = ?`, "start_work"],
+  //     order: `"SessionGroup"."createdAt" DESC`,
+  //     limit: 1
+  //   })
+  //   .then((sessionGroups) => {
+
+  //     // uh oh error (first time trying to end day)
+  //     if (sessionGroups.length == 0) {
+  //       console.log("oh no!");
+  //     }
+  //     console.log(sessionGroups);
+  //     res.json(sessionGroups);
+  //   })
+  // });
+  // models.User.find({
+  //   where: [`"User"."id" = ?`, UserId ],
+  //   include: [
+  //     models.SlackUser
+  //   ]
+  // })
+  // .then((user) => {
+  //   console.log("\n\n\n\n\n");
+  //   console.log(user.nickName);
+  //   console.log(user.SlackUser.SlackUserId);
+  //   console.log(user.dataValues.SlackUser.SlackUserId);
+  //   console.log("\n\n\n\n\n");
+  //   return user.getReminders({
+  //     where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break"] ]
   //   });
   // })
-  // .then((workSessions) => {
-  //   workSessions.forEach((workSession) => {
-  //     workSession.update({
-  //       "open": false
-  //     })
-  //   });
-  //   res.json(workSessions);
+  // .then((reminders) => {
+  //   res.json(reminders);
   // });
-  models.User.find({
-    where: [`"User"."id" = ?`, UserId ],
-    include: [
-      models.SlackUser
-    ]
-  })
-  .then((user) => {
-    console.log("\n\n\n\n\n");
-    console.log(user.nickName);
-    console.log(user.SlackUser.SlackUserId);
-    console.log(user.dataValues.SlackUser.SlackUserId);
-    console.log("\n\n\n\n\n");
-    return user.getReminders({
-      where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break"] ]
-    });
-  })
-  .then((reminders) => {
-    res.json(reminders);
-  });
 
   // models.User.find({
   //   where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],

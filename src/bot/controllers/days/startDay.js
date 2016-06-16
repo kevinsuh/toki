@@ -138,23 +138,28 @@ export default function(controller) {
     				models.SessionGroup.create({
     					type: "start_work",
     					UserId
-    				});
+    				})
+    				.then((sessionGroup) => {
+    					// make sure start session has been created before any
+    					// tasks get inserted
+    					// store the user's tasks
+	    				prioritizedTaskArray.forEach((task, index) => {
+	    					const { text, minutes} = task;
+	    					var priority = index + 1;
+	    					models.Task.create({
+							    text
+							  }).then((task) => {
+							    models.DailyTask.create({
+							      TaskId: task.id,
+							      priority,
+							      minutes,
+							      UserId
+							    });
+							  });
+	    				});
+    				})
     				
-    				// store the user's tasks
-    				prioritizedTaskArray.forEach((task, index) => {
-    					const { text, minutes} = task;
-    					var priority = index + 1;
-    					models.Task.create({
-						    text
-						  }).then((task) => {
-						    models.DailyTask.create({
-						      TaskId: task.id,
-						      priority,
-						      minutes,
-						      UserId
-						    });
-						  });
-    				});
+    				
 
     				// TRIGGER SESSION_START HERE
     				if (dayStart.startDayDecision == intentConfig.START_SESSION) {

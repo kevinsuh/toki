@@ -10,6 +10,7 @@ import { randomInt } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
 
 import startDayFlowController from './startDay';
+import endDayFlowController from './endDay';
 
 const FINISH_WORD = 'done';
 
@@ -21,5 +22,6 @@ export default function(controller) {
 	*/
 
 	startDayFlowController(controller);
+	endDayFlowController(controller);
 
 };
