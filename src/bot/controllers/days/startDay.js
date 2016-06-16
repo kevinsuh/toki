@@ -132,8 +132,15 @@ export default function(controller) {
 
     			if (convo.status == 'completed') {
 
-    				// store the user's tasks
     				const { UserId, prioritizedTaskArray } = dayStart;
+
+    				// log `start_work` in SessionGroups
+    				models.SessionGroup.create({
+    					type: "start_work",
+    					UserId
+    				});
+    				
+    				// store the user's tasks
     				prioritizedTaskArray.forEach((task, index) => {
     					const { text, minutes} = task;
     					var priority = index + 1;
@@ -365,7 +372,6 @@ function assignTimeToTasks(response, convo) {
 						{
 							pattern: bot.utterances.yes,
 							callback: (response, convo) => {
-								convo.say("Great! It's time for the first session of the day. Let's get crackin :egg:");
 								convo.dayStart.startDayDecision = intentConfig.START_SESSION;
 								convo.next();
 							}
