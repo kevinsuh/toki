@@ -57,14 +57,27 @@ export default function(controller) {
 					dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
 
 					var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
-					bot.reply(message, "Got 'em! Here are your tasks for today:");
-					bot.send({
-			        type: "typing",
-			        channel
-			    });
-			    setTimeout(()=>{
-			    	bot.reply(message, taskListMessage);
-			    }, randomInt(1500, 2000));
+
+					if (dailyTasks.length == 0) {
+						bot.reply(message, "Looks like you don't have any tasks for today!");
+						bot.send({
+				        type: "typing",
+				        channel
+				    });
+				    setTimeout(()=>{
+				    	bot.reply(message, "Let me know if you want to `start your day` or `add tasks` to an existing day :memo:");
+				    }, randomInt(1200, 1800));
+					} else {
+						bot.reply(message, "Got 'em! Here are your tasks for today:");
+						bot.send({
+				        type: "typing",
+				        channel
+				    });
+				    setTimeout(()=>{
+				    	bot.reply(message, taskListMessage);
+				    }, randomInt(1500, 2000));
+					}
+					
 
 				});
 

@@ -7,6 +7,7 @@ import moment from 'moment';
 import models from '../../../app/models';
 
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
+import intentConfig from '../../lib/intents';
 
 const FINISH_WORD = 'done';
 
@@ -36,7 +37,9 @@ export default function(controller) {
 			})
 			.then((user) => {
 
-				// temporary fix to get tasks
+				// we need:
+				// 1) user's daily task list
+				// 2) user's work sessions
 				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
 				const UserId = user.id;
 
@@ -50,113 +53,120 @@ export default function(controller) {
 					var name   = user.nickName || user.email;
 					var SlackUserId = user.SlackUser.SlackUserId;
 
-					bot.startPrivateConversation ({ user: SlackUserId }, (err, convo) => {
+					var fiveHoursAgo = moment().subtract(5, 'hours').format("YYYY-MM-DD HH:mm:ss");
+					user.getWorkSessions({
+						where: [`"WorkSession"."endTime" > ?`, fiveHoursAgo]
+					})
+					.then((workSessions) => {
+						bot.startPrivateConversation ({ user: SlackUserId }, (err, convo) => {
 
-						convo.name = name;
-						convo.tasksAdd = {};
+							convo.name = name;
+							convo.tasksAdd = {
+								endEarlyDecision: false // for when you want to end early
+							};
 
-						dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
-						convo.tasksAdd.dailyTasks = dailyTasks;
-						var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+							dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
+							convo.tasksAdd.dailyTasks   = dailyTasks;
+							convo.tasksAdd.workSessions = workSessions;
 
-						convo.say(`Hey ${name}! Here are the tasks you outlined so far:`);
-						convo.say(taskListMessage);
-						convo.say(`What task(s) would you like to add to your list? :pencil:`);
-						convo.say(`You can enter everything in one line, separated by commas, or send me each task in a separate line`);
+							// enter into the add task flow
+							// by first making sure it hasn't been 5 hours since last one
+							confirmAddTaskFlow(err, convo);
 
-						convo.ask(`Then just tell me when you're done by saying \`${FINISH_WORD}\`!`, (response, convo) => {
+							// on finish conversation
+			    		convo.on('end', (convo) => {
 
-							if (response.text == FINISH_WORD) {
-								askForTimeToTasks(response, convo);
-								convo.next();
-							}
+			    			console.log("\n\n\n\n ~~ convo ended in add tasks ~~ \n\n\n\n");
 
-						}, { 'key' : 'newTasks', 'multiple': true});
+			  				var responses = convo.extractResponses();
+			  				const { tasksAdd } = convo;
 
-						// on finish conversation
-		    		convo.on('end', (convo) => {
+			    			if (convo.status == 'completed') {
 
-		    			console.log("\n\n\n\n ~~ convo ended in add tasks ~~ \n\n\n\n");
+			    				// prioritized task array is the one we're ultimately going with
+			    				const { dailyTasks, prioritizedTaskArray } = tasksAdd;
 
-		  				var responses = convo.extractResponses();
-		  				const { tasksAdd } = convo;
+			    				// we're going to archive all existing daily tasks first by default, then re-update the ones that matter
+			    				dailyTasks.forEach((dailyTask) => {
+			    					const { id } = dailyTask.dataValues;
+			    					console.log(`\n\n\nupdating daily task id: ${id}\n\n\n`);
+			    					models.DailyTask.update({
+			    						type: "archived"
+			    					},{
+			    						where: { id }
+			    					});
+			    				});
 
-		    			if (convo.status == 'completed') {
+			    				// store the user's tasks
+			    				// existing dailyTasks: update to new obj (esp. `priority`)
+			    				// new dailyTasks: create new obj
+			    				prioritizedTaskArray.forEach((dailyTask, index) => {
 
-		    				// prioritized task array is the one we're ultimately going with
-		    				const { dailyTasks, prioritizedTaskArray } = tasksAdd;
+			    					const { dataValues } = dailyTask;
+			    					var newPriority = index + 1;
+			    					
+			    					if (dataValues) {
 
-		    				// we're going to archive all existing daily tasks first by default, then re-update the ones that matter
-		    				dailyTasks.forEach((dailyTask) => {
-		    					const { id } = dailyTask.dataValues;
-		    					console.log(`\n\n\nupdating daily task id: ${id}\n\n\n`);
-		    					models.DailyTask.update({
-		    						type: "archived"
-		    					},{
-		    						where: { id }
-		    					});
-		    				});
+				    					console.log("\n\nexisting daily task:\n\n\n");
+				    					console.log(dailyTask.dataValues);
+				    					console.log(`user id: ${UserId}`);
+				    					console.log("\n\n\n\n")
 
-		    				// store the user's tasks
-		    				// existing dailyTasks: update to new obj (esp. `priority`)
-		    				// new dailyTasks: create new obj
-		    				prioritizedTaskArray.forEach((dailyTask, index) => {
+			    						// existing daily task and make it live
+			    						const { id, minutes } = dataValues;
+			    						models.DailyTask.update({
+			    							minutes,
+			    							UserId,
+			    							priority: newPriority,
+			    							type: "live"
+			    						}, {
+			    							where: { id }
+			    						});
 
-		    					const { dataValues } = dailyTask;
-		    					var newPriority = index + 1;
-		    					
-		    					if (dataValues) {
+			    					} else {
 
-			    					console.log("\n\nexisting daily task:\n\n\n");
-			    					console.log(dailyTask.dataValues);
-			    					console.log(`user id: ${UserId}`);
-			    					console.log("\n\n\n\n")
+			    						console.log("\n\n new daily task:\n\n\n");
+				    					console.log(dailyTask);
+				    					console.log(`user id: ${UserId}`);
+				    					console.log("\n\n\n\n")
 
-		    						// existing daily task and make it live
-		    						const { id, minutes } = dataValues;
-		    						models.DailyTask.update({
-		    							minutes,
-		    							UserId,
-		    							priority: newPriority,
-		    							type: "live"
-		    						}, {
-		    							where: { id }
-		    						});
+			    						// new task
+			    						const { text, minutes } = dailyTask;
+			    						models.Task.create({
+			    							text
+			    						})
+			    						.then((task) => {
+			    							models.DailyTask.create({
+			    								TaskId: task.id,
+			    								priority: newPriority,
+			    								minutes,
+			    								UserId
+			    							})
+			    						});
+			    					}
 
-		    					} else {
+			    				})
 
-		    						console.log("\n\n new daily task:\n\n\n");
-			    					console.log(dailyTask);
-			    					console.log(`user id: ${UserId}`);
-			    					console.log("\n\n\n\n")
+			    			} else {
+			    				const { endEarlyDecision } = convo.tasksAdd;
 
-		    						// new task
-		    						const { text, minutes } = dailyTask;
-		    						models.Task.create({
-		    							text
-		    						})
-		    						.then((task) => {
-		    							models.DailyTask.create({
-		    								TaskId: task.id,
-		    								priority: newPriority,
-		    								minutes,
-		    								UserId
-		    							})
-		    						});
-		    					}
+			    				if (endEarlyDecision == intentConfig.START_DAY) {
+			    					controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
+			    				} else {
+			    					// default premature end
+										bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+											convo.say("Okay! I'll be here whenever you're ready :smile:");
+											convo.next();
+										});
+			    				}
+				    				
+			    			}
+			    		});
 
-		    				})
-
-		    			} else {
-		    				// default premature end
-								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-									convo.say("Okay! Exiting now. Let me know when you want to start your day!");
-									convo.next();
-								});
-		    			}
-		    		});
-
+						});
 					});
+
+					
 				});
 			})
 		}, 1000);
@@ -164,6 +174,81 @@ export default function(controller) {
 	});
 
 };
+
+// beginning of add task flow
+function confirmAddTaskFlow(response, convo) {
+
+	const { task, name }             = convo;
+	const { bot, source_message }    = task;
+	var { dailyTasks, workSessions } = convo.tasksAdd;
+
+	// this means you have 0 `live` tasks and have not been in
+	// a work session in the last 5 hours
+	if (dailyTasks.length == 0 && workSessions.length == 0) {
+
+		convo.say(`Hey ${name}! You have an empty task list for the day :memo: `);
+		convo.ask("I recommend that you `start your day` to kick the tires :car:, or you can continue to `add a task`", (response, convo) => {
+
+			var responseMessage = response.text;
+
+			// 1. `start your day`
+			// 2. `add a task`
+			// 3. anything else will exit
+			var startDay = new RegExp(/(((^st[tart]*))|(^d[ay]*))/); // `start` or `day`
+			var addTask = new RegExp(/(((^a[d]*))|(^t[ask]*))/); // `add` or `task`
+
+			if (startDay.test(responseMessage)) {
+				// start new day
+				convo.say("Got it. Let's do it! :weight_lifter:");
+				convo.tasksAdd.endEarlyDecision = intentConfig.START_DAY;
+				convo.stop();
+			} else if (addTask.test(responseMessage)) {
+				// continue with add task flow
+				convo.say("Got it. Let's continue on :muscle:");
+				askForNewTasksToAdd(response, convo);
+			} else {
+				// default is to exit this conversation entirely
+				convo.stop();
+			}
+			convo.next();
+		});
+
+	} else {
+		// otherwise keep going w/ the flow
+		askForNewTasksToAdd(response, convo);
+	}
+
+	convo.next();
+
+}
+
+// user adds new tasks here
+function askForNewTasksToAdd(response, convo) {
+
+	const { task, name }          = convo;
+	const { bot, source_message } = task;
+	var { dailyTasks }            = convo.tasksAdd;
+
+	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+
+	if (dailyTasks.length > 0) {
+		convo.say(`Hey ${name}! Here are the tasks you outlined so far:`);
+		convo.say(taskListMessage);
+	}
+	
+	convo.say(`What task(s) would you like to add to your list? :pencil:`);
+	convo.say(`You can enter everything in one line, separated by commas, or send me each task in a separate line`);
+
+	convo.ask(`Then just tell me when you're done by saying \`${FINISH_WORD}\`!`, (response, convo) => {
+
+		if (response.text == FINISH_WORD) {
+			askForTimeToTasks(response, convo);
+			convo.next();
+		}
+
+	}, { 'key' : 'newTasks', 'multiple': true});
+
+}
 
 // ask user to put time to tasks
 function askForTimeToTasks(response, convo) {
