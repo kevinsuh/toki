@@ -5,8 +5,10 @@
   "main": "./build/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel -w src/ -d build/ -s",
-    "build-css": "node-sass -w src/app/scss/ -d -o build/public/css",
+    "build-babel": "babel src/ -d build/ -s",
+    "watch-babel": "babel -w src/ -d build/ -s",
+    "build-css": "node-sass src/app/scss/ -d -o build/public/css",
+    "watch-css": "node-sass -w src/app/scss/ -d -o build/public/css",
     "start": "node ./build/server.js",
     "start-dev": "node ./build/dev_slackbot.js"
   },
@@ -21,6 +23,7 @@
   },
   "homepage": "https://github.com/kevinsuh/navi_bot",
   "dependencies": {
+    "body-parser": "^1.15.1",
     "botkit": "https://github.com/kevinsuh/botkit.git",
     "botkit-middleware-witai": "https://github.com/kevinsuh/botkit-middleware-witai.git",
     "cron": "^1.1.0",
