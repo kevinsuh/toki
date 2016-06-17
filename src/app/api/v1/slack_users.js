@@ -70,6 +70,47 @@ if (false) {
 var remindTime = moment().format("YYYY-MM-DD HH:mm:ss");
 var UserId = 1;
 var customNote = "test note";
+
+// get most recent start session group
+// then make all live tasks below that into pending
+models.User.find({
+  where: { id: UserId }
+})
+.then((user) => {
+  user.getSessionGroups({
+    limit: 1,
+    order: `"SessionGroup"."createdAt" DESC`,
+    where: [ `"SessionGroup"."type" = ?`, "start_work"]
+  })
+  .then((sessionGroups) => {
+    var sessionGroup = sessionGroups[0];
+    var sessionGroupCreatedAt = sessionGroup.createdAt;
+    // safety measure of making all previous live tasks pending
+    user.getDailyTasks({
+      where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?`, sessionGroup.createdAt, "pending"]
+    })
+    .then((dailyTasks) => {
+      dailyTasks.forEach((dailyTask) => {
+        dailyTask.update({
+          type: "archived"
+        });
+      });
+      user.getDailyTasks({
+        where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?`, sessionGroup.createdAt, "live"]
+      })
+      .then((dailyTasks) => {
+        dailyTasks.forEach((dailyTask) => {
+          dailyTask.update({
+            type: "pending"
+          });
+        });
+      });
+    });
+  })
+})
+
+
+
   // models.Reminder.create({
   //   remindTime,
   //   UserId,
@@ -77,14 +118,88 @@ var customNote = "test note";
   // }).then((reminder) => {
   //   res.json(reminder);
   // });
-  models.Reminder.find({
-    where: { id: 34 }
-  }).then((reminder) => {
-    var time = reminder.createdAt;
-    var timeMoment = moment(time).tz("America/Los_Angeles").format();
-    var timeMoment = moment(time).tz("America/New_York").format();
-    res.json({time: timeMoment});
-  })
+  // models.Reminder.find({
+  //   where: { id: 34 }
+  // }).then((reminder) => {
+  //   var time = reminder.createdAt;
+  //   var timeMoment = moment(time).tz("America/Los_Angeles").format();
+  //   var timeMoment = moment(time).tz("America/New_York").format();
+  //   res.json({time: timeMoment});
+  // })
+
+  var SlackUserId = 'U121ZK15J';
+  var UserId = 1;
+  // models.User.find({
+  //   where: [`"User"."id" = ?`, UserId ],
+  //   include: [
+  //     models.SlackUser
+  //   ]
+  // })
+  // .then((user) => {
+  //   // get the msot start_work session group to measure
+  //   // a day's worth of work
+  //   user.getSessionGroups({
+  //     where: [`"SessionGroup"."type" = ?`, "start_work"],
+  //     order: `"SessionGroup"."createdAt" DESC`,
+  //     limit: 1
+  //   })
+  //   .then((sessionGroups) => {
+
+  //     // uh oh error (first time trying to end day)
+  //     if (sessionGroups.length == 0) {
+  //       console.log("oh no!");
+  //     }
+  //     console.log(sessionGroups);
+  //     res.json(sessionGroups);
+  //   })
+  // });
+  // models.User.find({
+  //   where: [`"User"."id" = ?`, UserId ],
+  //   include: [
+  //     models.SlackUser
+  //   ]
+  // })
+  // .then((user) => {
+  //   console.log("\n\n\n\n\n");
+  //   console.log(user.nickName);
+  //   console.log(user.SlackUser.SlackUserId);
+  //   console.log(user.dataValues.SlackUser.SlackUserId);
+  //   console.log("\n\n\n\n\n");
+  //   return user.getReminders({
+  //     where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break"] ]
+  //   });
+  // })
+  // .then((reminders) => {
+  //   res.json(reminders);
+  // });
+
+  // models.User.find({
+  //   where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+  //   include: [
+  //     models.SlackUser
+  //   ]
+  // })
+  // .then((user) => {
+
+  //   // cannot start a session if user is already in one!
+  //   return user.getWorkSessions({
+  //     where: [`"open" = ?`, true ]
+  //   })
+  //   .then((workSessions) => {
+  //     console.log("work sessions!")
+  //     console.log(workSessions);
+
+  //     // if (Object.keys(workSessions).length === 0 && workSessions.constructor === Object) {
+  //     //   console.log("WORK SESSIONS is empty!");
+  //     // } else {
+  //     //   console.log("WORK SESSIONS is not empty...");
+  //     // }
+
+  //     console.log("user");
+  //     console.log(user);
+  //   })
+  // })
+  
 
   // seedDatabaseWithExistingSlackUsers(bot);
   console.log("checking session:");

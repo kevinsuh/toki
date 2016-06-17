@@ -46,7 +46,7 @@ export function convertArrayToTaskListMessage(taskArray) {
 
 	if (taskArray.length  == 0) {
 		console.log("array passed in is empty at convertArrayToTaskListMessage");
-		return;
+		return taskListMessage;
 	}
 
 	taskArray.forEach((task) => {
@@ -131,28 +131,9 @@ export function convertToSingleTaskObjectArray(taskObjectArray, type) {
 					dataValues: {
 						...taskObject.dataValues,
 						text,
-						done,
-						UserId
+						done
 					}
 				}
-			});
-			break;
-		case "task":
-			// normal task that has to have all other formats too
-			return taskObjectArray.map((taskObject) => {
-				const { DailyTasks } = taskObject;
-				const { priority, minutes, createdAt, id } = DailyTasks[0]; // for now just get the first daily task
-				return {
-					...taskObject,
-					dataValues: {
-						...taskObject.dataValues,
-						priority,
-						minutes,
-						DailyTaskId: id,
-						dailyTaskCreatedAt: createdAt
-					}
-				}
-
 			});
 			break;
 		default:

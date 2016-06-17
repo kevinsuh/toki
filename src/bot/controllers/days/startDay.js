@@ -7,99 +7,214 @@ import models from '../../../app/models';
 
 import { randomInt } from '../../lib/botResponses';
 import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes } from '../../lib/messageHelpers';
+import intentConfig from '../../lib/intents';
 
 export const FINISH_WORD = 'done';
 export const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
 
-// base controller for tasks
+// base controller for start day
 export default function(controller) {
 
-	/**
-	* 		START OF YOUR DAY
-	*
-	* 		ask for today's tasks
-	* 		prioritize tasks
-	* 		set time to tasks
-	* 		enter work session flow
-	* 		
-	*/
+	// programmatic trigger of actual day start flow: `begin_day_flow`
+	controller.on('trigger_day_start', (bot, config) => {
 
+		const { SlackUserId } = config;
+		controller.trigger(`user_confirm_new_day`, [ bot, { SlackUserId } ]);
+
+	})
+
+	/**
+	 * 		User directly asks to start day
+	 * 				~* via Wit *~
+	 * 			confirm for `begin_day_flow`
+	 */
 	controller.hears(['start_day'], 'direct_message', wit.hears, (bot, message) => {
 
 		const SlackUserId = message.user;
 
-		// find user then reply
-		models.SlackUser.find({
-			where: { SlackUserId },
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(()=>{
+			controller.trigger(`user_confirm_new_day`, { SlackUserId });
+		}, 1000);
+	});
+
+	/**
+	 * 			User confirms he is wanting to
+	 * 					start his day. confirmation
+	 * 				needed every time b/c this resets everything
+	 */
+
+	controller.on('user_confirm_new_day', (bot, config) => {
+
+		const { SlackUserId } = config;
+
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
 			include: [
-				models.User
+				models.SlackUser
 			]
 		})
-		.then((slackUser) => {
+		.then((user) => {
+
+			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+				var name              = user.nickName || user.email;
+				convo.name            = name;
+				convo.readyToStartDay = false;
+
+				convo.ask(`Hey ${name}! Would you like to start your day?`, [
+					{
+						pattern: bot.utterances.yes,
+						callback: (response, convo) => {
+							convo.readyToStartDay = true;
+							convo.next();
+						}
+					},
+					{
+						pattern: bot.utterances.no,
+						callback: (response, convo) => {
+							convo.say("Okay. Let me know whenever you're ready to start your day :wave:");
+							convo.next();
+						}
+					},
+					{
+						default: true,
+						callback: (response, convo) => {
+							convo.say("Couldn't quite catch that. Let me know whenever you're ready to `start your day` :wave:");
+							convo.next();
+						}
+					}
+				]);
+				convo.on('end', (convo) => {
+					if (convo.readyToStartDay) {
+						controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
+					}
+				})
 			
-			bot.send({
-        type: "typing",
-        channel: message.channel
-	    });
-	    setTimeout(()=>{
-	    	bot.startConversation(message, (err, convo) => {
-	    		var name = slackUser.User.nickName || slackUser.User.email;
+			});
+		});
 
-	    		// configure necessary properties on convo object
-	    		convo.name = name;
+	})
 
-	    		// object with values that are important to me
-	    		convo.dayStart = {
-	    			UserId: slackUser.User.id
-	    		};
+	/**
+	* 	~ ACTUAL START OF YOUR DAY ~
+	* 		* ask for today's tasks
+	* 		* prioritize tasks
+	* 		* set time to tasks
+	* 		* enter work session flow
+	* 		
+	*/
+	controller.on('begin_day_flow', (bot, config) => {
 
-	    		// start the flow
-	    		askForDayTasks(err, convo);
+		const { SlackUserId } = config;
 
-	    		// on finish conversation
-	    		convo.on('end', (convo) => {
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
 
-    				var responses = convo.extractResponses();
-    				console.log('done!')
-    				console.log(responses);
-    				console.log("here is day start object:");
-    				console.log(convo.dayStart);
+			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-	    			if (convo.status == 'completed') {
+				var name   = user.nickName || user.email;
+				convo.name = name;
 
-	    				// store the user's tasks
-	    				var { UserId, prioritizedTaskArray } = convo.dayStart;
-	    				prioritizedTaskArray.forEach((task, index) => {
-	    					const { text, minutes} = task;
-	    					var priority = index + 1;
+				convo.dayStart = {
+					UserId: user.id,
+					startDayDecision: false // what does user want to do with day
+				}
 
-	    					models.Task.create({
-							    text,
-							    UserId
-							  }).then((task) => {
-							    models.DailyTask.create({
-							      TaskId: task.id,
-							      priority,
-							      minutes
-							    });
-							  });
+				// start the flow
+    		askForDayTasks(err, convo);
+
+    		// on finish conversation
+    		convo.on('end', (convo) => {
+
+  				var responses = convo.extractResponses();
+  				const { dayStart } = convo;
+
+  				console.log('done!')
+  				console.log("here is day start object:\n\n\n");
+  				console.log(convo.dayStart);
+  				console.log("\n\n\n");
+
+    			if (convo.status == 'completed') {
+
+    				const { UserId, prioritizedTaskArray } = dayStart;
+
+    				// log `start_work` in SessionGroups
+    				models.SessionGroup.create({
+    					type: "start_work",
+    					UserId
+    				})
+    				.then((sessionGroup) => {
+
+    					// make all pending tasks => archived, then all live tasks => pending
+	    				// BEFORE the newly created start SessionGroup
+	    				user.getDailyTasks({
+	    					where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?`, sessionGroup.createdAt, "pending"]
+	    				})
+	    				.then((dailyTasks) => {
+	    					dailyTasks.forEach((dailyTask) => {
+					        dailyTask.update({
+					          type: "archived"
+					        });
+					      });
+					      user.getDailyTasks({
+		    					where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?`, sessionGroup.createdAt, "live"]
+		    				})
+		    				.then((dailyTasks) => {
+
+		    					dailyTasks.forEach((dailyTask) => {
+						        dailyTask.update({
+						          type: "pending"
+						        });
+						      });
+
+						      // After all of the previous tasks have been put into "pending", choose the select ones and bring them back to "live"
+			    				prioritizedTaskArray.forEach((task, index) => {
+			    					const { text, minutes} = task;
+			    					var priority = index + 1;
+			    					models.Task.create({
+									    text
+									  })
+									  .then((task) => {
+									    models.DailyTask.create({
+									      TaskId: task.id,
+									      priority,
+									      minutes,
+									      UserId
+									    });
+									    // THIS IS WHERE YOU WILL UPDATE THE PREVIOUS DAY'S PENDING TASKS
+									  });
+			    				});
+
+		    				});
 	    				});
 
-	    				// confirm completion of DAY_START flow
-	    				bot.reply(message,"thx for finishing");
+    				// TRIGGER SESSION_START HERE
+    				if (dayStart.startDayDecision == intentConfig.START_SESSION) {
+    					controller.trigger(`confirm_new_session`, [ bot, { SlackUserId }]);
+    					return;
+    				}
 
+    			} else {
+    				// default premature end
+						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+							convo.say("Okay! Exiting now. Let me know when you want to start your day!");
+							convo.next();
+						});
+    			}
+    		});
 
-	    				// NEED TO TRIGGER SESSION_START HERE
+			});
 
-	    			} else {
-	    				// if convo gets ended prematurely
-	    				bot.reply(message,"Okay! Exiting now. Let me know when you want to start your day");
-	    			}
-	    		});
-
-	    	});
-	    }, randomInt(1000, 1750));
-		});
+		})
 
 	});
 
@@ -114,8 +229,7 @@ function askForDayTasks(response, convo){
 	console.log("in ask for day tasks");;
 	console.log(convo.name);
 
-	convo.say(`Hey ${convo.name}! What tasks would you like to work on today? :pencil:`);
-	convo.say(`You can enter everything in one line separated by commas, or send me each task in a separate line`);
+	convo.say(`What tasks would you like to work on today? :pencil: You can enter everything in one line separated by commas, or send me each task in a separate line`);
 	convo.ask(`Then just tell me when you're done by saying \`${FINISH_WORD}\``, (response, convo) => {
 
 		for (var i = 0; i < EXIT_EARLY_WORDS.length; i++) {
@@ -299,8 +413,7 @@ function assignTimeToTasks(response, convo) {
 						{
 							pattern: bot.utterances.yes,
 							callback: (response, convo) => {
-								convo.say("Great! It's time for the first session of the day. Let's get crackin :egg:");
-								convo.dayStart.startFirstSession = true;
+								convo.dayStart.startDayDecision = intentConfig.START_SESSION;
 								convo.next();
 							}
 						},
@@ -308,8 +421,7 @@ function assignTimeToTasks(response, convo) {
 							pattern: bot.utterances.no,
 							callback: (response, convo) => {
 								convo.say("Great! Let me know when you're ready to start");
-								convo.say("Alternatively, you can ask me to remind you to start at a specific time, like `10am` or a relative time like `in 10 minutes`");
-								convo.dayStart.startFirstSession = false;
+								convo.say("Alternatively, you can ask me to `remind` you to start at a specific time, like `remind me to start at 10am` or a relative time like `remind me in 10 minutes`");
 								convo.next();
 							}
 						}

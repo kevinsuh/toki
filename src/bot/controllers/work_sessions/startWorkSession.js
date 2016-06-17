@@ -6,63 +6,202 @@ import models from '../../../app/models';
 import { randomInt } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
 import { createMomentObjectWithSpecificTimeZone } from '../../lib/miscHelpers';
+import intentConfig from '../../lib/intents';
 
 // START OF A WORK SESSION
 export default function(controller) {
 
-	controller.on('trigger_start_session', (bot, config) => {
-
-		/**
-		 * 		Programatically trigger start session
-		 * 		Confirm this is what user wants before going into start_session flow
-		 */
-		
-		console.log("\n\n\n\n\n\nIN TRIGGER START SESSION\n\n\n\n\n");
-
-		const { SlackUserId } = config;
-
-		// has open work sessions
-		bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-			convo.ask(`Ready to jump into another session?`, [
-				{
-					pattern: bot.utterances.yes,
-					callback: (response, convo) => {
-						convo.say("COOL!");
-						convo.wantsToStartAnotherSession = true;
-						convo.next();
-					}
-				},
-				{
-					pattern: bot.utterances.no,
-					callback: (response, convo) => {
-						convo.say("OH NO!");
-						convo.wantsToStartAnotherSession = false;
-						convo.next();
-					}
-				}
-			]); 
-			convo.on('end', (convo) => {
-				if (convo.wantsToStartAnotherSession) {
-					console.log("\n\n\n\n\n\nUSER WANTS TO START ANOTHER SESSION\n\n\n\n\n");
-				}
-			});
-		});
-
-	});
-
 	/**
-	 * 		STARTING A WORK SESSION
-	 * 		
-	 * 		start work session
-	 * 		show tasks
-	 * 		tell what time you will end at
-	 * 		
+	 *
+	 * 		User directly asks to start a session
+	 * 							~* via Wit *~
+	 * 		     this makes sure you are properly in
+	 * 		     				in a "SessionGroup" before
+	 * 		     			working on your session
 	 */
 	controller.hears(['start_session'], 'direct_message', wit.hears, (bot, message) => {
 
 		const SlackUserId = message.user;
+		var intent = intentConfig.START_SESSION;
 
-		// find user then get tasks
+		var config = {
+			intent,
+			SlackUserId
+		}
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(() => {
+			controller.trigger(`new_session_group_decision`, [ bot, config ]);
+		}, 1000);
+
+	});
+
+	/**
+	 * 				EVERY CREATED SESSION GOES THROUGH THIS FIRST
+	 *   		*** this checks if there is an existing open session ***
+	 *   			if no open sessions => `begin_session`
+	 *   			else => go through this flow
+	 */
+	controller.on(`confirm_new_session`, (bot, config) => {
+
+		/**
+		 * 		User can either:
+		 * 			1. Keep going
+		 * 			2. Start new session by ending this one early
+		 * 					- update endTime in session to now
+		 * 					- mark it as done and re-enter `begin_session`
+		 */
+
+		const { SlackUserId } = config;
+		console.log("\n\n\n\n\nin `confirm_new_session` before entering begin_session flow!\n\n\n\n\n");
+
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			user.getWorkSessions({
+				where: [`"open" = ?`, true ]
+			})
+			.then((workSessions) => {
+
+				console.log("\n\n\n\n\n");
+				console.log("in work sessions:");
+				console.log(workSessions);
+				console.log("\n\n\n\n\n");
+
+				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+					// by default, user wants to start a new session
+					// that's why she is in this flow...
+					// no openWorkSession unless we found one
+					convo.startNewSession = true;
+					convo.openWorkSession = false;
+
+					if (workSessions.length > 0) {
+
+						var openWorkSession = workSessions[0]; // deal with first one as reference point
+						convo.openWorkSession = openWorkSession;
+
+						var endTime       = moment(openWorkSession.endTime);
+						var endTimeString = endTime.format("h:mm a");
+						var now           = moment();
+						var minutesLeft   = Math.round(moment.duration(endTime.diff(now)).asMinutes());
+
+						convo.say(`You are already in a session right now! You have ${minutesLeft} minutes left :timer_clock:`);
+						convo.ask(`Do you want to \`keep going\`, or cancel it and start a \`new session\`?`, (response, convo) => {
+
+							var responseMessage = response.text;
+							var { intentObject: { entities } } = response;
+
+							var newSession = new RegExp(/(((^st[tart]*))|(^ne[ew]*)|(^se[ession]*))/); // `start` or `new`
+							var keepGoing = new RegExp(/(((^k[ep]*))|(^go[oing]*))/); // `keep` or `going`
+
+							if (newSession.test(responseMessage)) {
+
+								// start new session
+								convo.say("Got it. Let's do a new session :facepunch:");
+
+							} else if (keepGoing.test(responseMessage)) {
+
+								// continue current session
+								convo.say("Got it. Let's do it! :weight_lifter:");
+								convo.say(`I'll ping you at ${endTimeString} :alarm_clock:`);
+								convo.startNewSession = false;
+
+							} else {
+
+								// invalid
+								convo.say("I'm sorry, I didn't catch that :dog:");
+								convo.repeat();
+
+							}
+							convo.next();
+
+						});
+					} else {
+						// no existing work sessions. user wants to start a new one
+						convo.startNewSession = true;
+					}
+
+					convo.on('end', (convo) => {
+
+						console.log("\n\n\n ~~ here in end of confirm_new_session ~~ \n\n\n");
+
+						const { startNewSession, openWorkSession } = convo;
+
+						// if user wants to start new session, then do this flow and enter `begin_session` flow
+						if (startNewSession) {
+
+							/**
+							 * 		~ User has confirmed starting a new session ~
+							 * 			* end current work session early
+							 * 			* cancel all existing open work sessions
+							 * 			* cancel `break` reminders
+							 */
+
+							var nowTimeStamp = moment().format("YYYY-MM-DD HH:mm:ss");
+
+							// if user had an open work session(s), cancel them!
+							if (openWorkSession) {
+								openWorkSession.update({
+									endTime: nowTimeStamp,
+									open: false
+								});
+								workSessions.forEach((workSession) => {
+									workSession.update({
+										open: false
+									})
+								});
+							};
+
+							// cancel all user breaks cause user is RDY TO WORK
+							models.User.find({
+								where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+								include: [
+									models.SlackUser
+								]
+							})
+							.then((user) => {
+								user.getReminders({
+									where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break"] ]
+								}).
+								then((reminders) => {
+									reminders.forEach((reminder) => {
+										reminder.update({
+											"open": false
+										})
+									});
+								})
+							});
+
+							controller.trigger(`begin_session`, [ bot, { SlackUserId }]);
+						}
+					});
+
+				});
+			});
+		})
+	});
+
+	/**
+	 * 		ACTUAL START SESSION FLOW
+	 * 		this will begin the start_session flow with user
+	 *
+	 * 			- start work session
+	 * 			- show and decide tasks to work on
+	 * 			- decide session duration
+	 */
+	controller.on('begin_session', (bot, config) => {
+
+		const { SlackUserId } = config;
+
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
 			include: [
@@ -70,170 +209,162 @@ export default function(controller) {
 			]
 		}).then((user) => {
 
-			bot.send({
-				type: "typing",
-				channel: message.channel
-			});
-			setTimeout(() => {
+			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-				bot.startConversation(message, (err, convo) => {
+				var name = user.nickName || user.email;
 
-					var name = user.nickName || user.email;
+				// configure necessary properties on convo object
+				convo.name = name;
 
-					// configure necessary properties on convo object
-					convo.name = name;
+				// object that contains values important to this conversation
+				convo.sessionStart = {
+					UserId: user.id,
+					SlackUserId
+				};
 
-					// object that contains values important to this conversation
-					convo.sessionStart = {
-						UserId: user.id,
-						SlackUserId
-					};
+				// temporary fix to get tasks
+				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
 
-					// temporary fix to get tasks
-					var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
+				// FIND DAILY TASKS, THEN START THE CONVERSATION
+				user.getDailyTasks({
+					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, timeAgoForTasks, false, "live"],
+					order: `"priority" ASC`,
+					include: [ models.Task ]
+				}).then((dailyTasks) => {
 
-					// FIND DAILY TASKS, THEN START THE CONVERSATION
-					models.DailyTask.findAll({
-						where: [`"DailyTask"."createdAt" > ? AND "Task"."UserId" = ?`, timeAgoForTasks, user.id],
-						order: `"priority" ASC`,
-						include: [ models.Task ]
-					}).then((dailyTasks) => {
+						// save the daily tasks for reference
+						dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
+						convo.sessionStart.dailyTasks = dailyTasks;
 
-							console.log("your tasks for the day!");
-							console.log(dailyTasks);
-
-							// user needs to enter daily tasks
-							if (dailyTasks.length == 0) {
-								convo.sessionStart.noDailyTasks = true;
-								convo.stop();
-							}
-
-							// save the daily tasks for reference
-							dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
-							convo.sessionStart.dailyTasks = dailyTasks;
-
+						// user needs to enter daily tasks
+						if (dailyTasks.length == 0) {
+							convo.sessionStart.noDailyTasks = true;
+							convo.stop();
+						} else {
 							// entry point of thy conversation
 							startSessionStartConversation(err, convo);
-					});
-
-					// on finish convo
-					convo.on('end', (convo) => {
-
-						var responses        = convo.extractResponses();
-						var { sessionStart } = convo;
-
-						// proxy that we have not gone through right flow
-						if (!sessionStart.calculatedTimeObject) {
-							bot.reply(message, "Sorry but something went wrong :dog:. Let me know if you want to `start a session` again");
-							return;
 						}
-
-						if (convo.status == 'completed') {
-
-							console.log("finished and this is the data:");
-							console.log(sessionStart);
-
-							/**
-							 * 		1. tell user time and tasks to work on
-							 * 		
-							 *		2. save responses to DB:
-							 *			session:
-							 *				- tasks to work on (tasksToWorkOnArray)
-							 *				- sessionEndTime (calculated)
-							 *				- reminder (time + possible customNote)
-							 *
-							 * 		3. start session
-							 */
-
-							var { UserId, SlackUserId, dailyTasks, calculatedTime, calculatedTimeObject, tasksToWorkOnArray, checkinTimeObject, reminderNote } = sessionStart;
-
-							var taskObjectsToWorkOnArray = [];
-							dailyTasks.forEach((dailyTask) => {
-								if (tasksToWorkOnArray.indexOf(dailyTask.dataValues.priority) > -1)
-									taskObjectsToWorkOnArray.push(dailyTask);
-							});
-
-							// if user wanted a reminder
-							if (checkinTimeObject) {
-								var checkInTimeStamp = checkinTimeObject.format("YYYY-MM-DD HH:mm:ss");
-								models.Reminder.create({
-									remindTime: checkInTimeStamp,
-									UserId,
-									customNote: reminderNote
-								});
-							}
-
-							// 1. create work session 
-							// 2. attach the daily tasks to work on during that work session
-							var startTime = moment().format("YYYY-MM-DD HH:mm:ss");
-							var endTime   = calculatedTimeObject.format("YYYY-MM-DD HH:mm:ss");
-							models.WorkSession.create({
-								startTime,
-								endTime,
-								UserId
-							}).then((workSession) => {
-
-								var dailyTaskIds = taskObjectsToWorkOnArray.map((dailyTask) => {
-									return dailyTask.dataValues.id;
-								})
-								workSession.setDailyTasks(dailyTaskIds
-									);
-							});
-
-							var taskListMessage = convertArrayToTaskListMessage(taskObjectsToWorkOnArray);
-
-							// success! end convo with user and save items to DB
-							bot.reply(message, `Excellent! See you at ${calculatedTime}! :timer_clock:`);
-							bot.reply(message, `Good luck with: \n${taskListMessage}`);
-
-						} else {
-
-							// ending convo prematurely
-							console.log("ending convo early: \n\n\n\n");
-							console.log("controller:");
-							console.log(controller);
-							console.log("\n\n\n\n\nbot:");
-							console.log(bot);
-
-							// no tasks saved for the day
-							if (sessionStart.noDailyTasks) {
-
-								const { task }                = convo;
-								const { bot, source_message } = task;
-
-								bot.reply(message, "Hey! You haven't entered any tasks yet today. Let's `start the day` before doing a session");
-
-								// should go to start a day... NOT CONFIGURED YET.
-								// var config = {
-								// 	message: source_message
-								// }
-								// error: `cannot set property 'channel' of undefined`
-								// controller.trigger('start_day', [bot, config]);
-
-								// console.log("controller:");
-								// console.log(controller);
-								// console.log("\n\n\n\n\nbot:");
-								// console.log(bot);
-
-								
-							} else {
-								// default premature end
-								bot.reply(message, "Okay! Exiting now. Let me know when you want to start on a session");
-							}
-
-						}
-					});
-
+						
 				});
 
-			}, randomInt(1000,1750));
+				// on finish convo
+				convo.on('end', (convo) => {
+
+					var responses        = convo.extractResponses();
+					var { sessionStart } = convo;
+					var { SlackUserId } = sessionStart;
+
+					// proxy that some odd bug has happened
+					// impossible to have 1+ daily tasks and no time estimate
+					if (sessionStart.dailyTasks.length > 0 && !sessionStart.calculatedTimeObject) {
+
+						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+							convo.say("Sorry but something went wrong :dog:. Let me know if you want to `start a session` again");
+							convo.next();
+						});
+						
+						return;
+					}
+
+					if (convo.status == 'completed') {
+
+						console.log("finished and this is the data:");
+						console.log(sessionStart);
+
+						/**
+						 * 		1. tell user time and tasks to work on
+						 * 		
+						 *		2. save responses to DB:
+						 *			session:
+						 *				- tasks to work on (tasksToWorkOnHash)
+						 *				- sessionEndTime (calculated)
+						 *				- reminder (time + possible customNote)
+						 *
+						 * 		3. start session
+						 */
+
+						var { UserId, SlackUserId, dailyTasks, calculatedTime, calculatedTimeObject, tasksToWorkOnHash, checkinTimeObject, reminderNote } = sessionStart;
+
+						// if user wanted a checkin reminder
+						if (checkinTimeObject) {
+							var checkInTimeStamp = checkinTimeObject.format("YYYY-MM-DD HH:mm:ss");
+							models.Reminder.create({
+								remindTime: checkInTimeStamp,
+								UserId,
+								customNote: reminderNote,
+								type: "work_session"
+							});
+						}
+
+						// 1. create work session 
+						// 2. attach the daily tasks to work on during that work session
+						var startTime = moment().format("YYYY-MM-DD HH:mm:ss");
+						var endTime   = calculatedTimeObject.format("YYYY-MM-DD HH:mm:ss");
+
+						// create necessary data models:
+						// 	array of Ids for insert, taskObjects to create taskListMessage
+						var dailyTaskIds       = [];
+						var tasksToWorkOnArray = [];
+						for (var key in tasksToWorkOnHash) {
+							var task = tasksToWorkOnHash[key];
+							dailyTaskIds.push(task.dataValues.id);
+							tasksToWorkOnArray.push(task);
+						}
+
+						models.WorkSession.create({
+							startTime,
+							endTime,
+							UserId
+						}).then((workSession) => {
+							workSession.setDailyTasks(dailyTaskIds);
+						});
+
+						var taskListMessage = convertArrayToTaskListMessage(tasksToWorkOnArray);
+
+						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+							convo.say(`Excellent! See you at ${calculatedTime}! :timer_clock:`);
+							convo.say(`Good luck with: \n${taskListMessage}`);
+							convo.next();
+						});
+
+					} else {
+
+						// ending convo prematurely
+
+						if (sessionStart.noDailyTasks) {
+
+							const { task }                = convo;
+							const { bot, source_message } = task;
+
+							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+								convo.say("Hey! You haven't entered any tasks yet today. Let's start the day before doing a session :muscle:");
+								convo.next();
+								convo.on('end', (convo) => {
+									// go to start your day from here
+									var config = { SlackUserId };
+									controller.trigger('begin_day_flow', [bot, config]);
+								})
+							});
+							
+						} else {
+							// default premature end
+							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+								convo.say("Okay! Exiting now. Let me know when you want to start on a session");
+								convo.next();
+							});
+						}
+
+					}
+				});
+
+			});
+
 
 		});
 
-
 	});
 
-};
+}
 
 // user just started conversation and is choosing which tasks to work on
 function startSessionStartConversation(response, convo) {
@@ -242,13 +373,13 @@ function startSessionStartConversation(response, convo) {
 	const { bot, source_message } = task;
 	const { UserId, dailyTasks }  = convo.sessionStart;
 
+	convo.say("Let's do it :weight_lifter:");
 	convo.say(`Which tasks would you like to work on?`);
 
 	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 
 	convo.say(taskListMessage);
 	convo.say("You can either work on one task by saying `let's work on task 1` or multiple tasks by saying `let's work on tasks 1, 2, and 3`");
-	convo.say("I'll follow up with you when your task should be completed, based on your estimate :wink:");
 
 	askWhichTasksToWorkOn(response, convo);
 	convo.next();
@@ -274,20 +405,20 @@ function confirmTasks(response, convo) {
 
 	// if we capture 0 valid tasks from string, then we start over
 	var numberRegEx = new RegExp(/[\d]+/);
-	var tasksToWorkOnArray = [];
+	var taskNumbersToWorkOnArray = []; // user assigned task numbers
 	tasksToWorkOnSplitArray.forEach((taskString) => {
 		console.log(`task string: ${taskString}`);
 		var taskNumber = taskString.match(numberRegEx);
 		if (taskNumber) {
 			taskNumber = parseInt(taskNumber[0]);
 			if (taskNumber <= dailyTasks.length) {
-				tasksToWorkOnArray.push(taskNumber);
+				taskNumbersToWorkOnArray.push(taskNumber);
 			}
 		}
 	});
 
 	// invalid if we captured no tasks
-	var isInvalid = (tasksToWorkOnArray.length == 0 ? true : false);
+	var isInvalid = (taskNumbersToWorkOnArray.length == 0 ? true : false);
 	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 
 	// repeat convo if invalid w/ informative context
@@ -299,11 +430,19 @@ function confirmTasks(response, convo) {
 		return;
 	}
 
-	convo.ask(`To :heavy_check_mark:, you want to work on tasks: ${tasksToWorkOnArray.join(", ")}?`,[
+	// if not invalid, we can set the tasksToWorkOnArray
+	var tasksToWorkOnHash = {}; // organize by task number assigned from user
+	taskNumbersToWorkOnArray.forEach((taskNumber) => {
+		var index = taskNumber - 1; // make this 0-index based
+		if (dailyTasks[index])
+			tasksToWorkOnHash[taskNumber] = dailyTasks[index];
+	});
+
+	convo.ask(`To :heavy_check_mark:, you want to work on tasks: ${taskNumbersToWorkOnArray.join(", ")}?`,[
 		{
 			pattern: bot.utterances.yes,
 			callback: (response, convo) => {
-				convo.sessionStart.tasksToWorkOnArray = tasksToWorkOnArray;
+				convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
 				confirmTimeForTasks(response,convo);
 				convo.next();
 			}
@@ -326,27 +465,22 @@ function confirmTimeForTasks(response, convo) {
 
 	const { task }                = convo;
 	const { bot, source_message } = task;
-	const { tasksToWorkOnArray, dailyTasks }  = convo.sessionStart;
+	const { tasksToWorkOnHash, dailyTasks }  = convo.sessionStart;
 	const SlackUserId = response.user;
 
 	console.log("convo sessino start:");
 	console.log(convo.sessionStart);
 
 	var totalMinutes = 0;
-	dailyTasks.forEach((dailyTask) => {
-		if (tasksToWorkOnArray.indexOf(dailyTask.dataValues.priority) > -1) {
-			console.log("tasksToWorkOnArray:");
-			console.log(tasksToWorkOnArray);
-			console.log("this specific daily task:");
-			console.log(dailyTask);
-			var { dataValues: { minutes } } = dailyTask;
-			totalMinutes += parseInt(minutes);
-		}
-	});
+	for (var key in tasksToWorkOnHash) {
+		const task = tasksToWorkOnHash[key];
+		console.log("this specific daily task:");
+		console.log(task);
+		var { dataValues: { minutes } } = task;
+		totalMinutes += parseInt(minutes);
+	}
 
 	// get timezone of user before continuing
-	// we aren't putting this in helper function b/c of this convo's custom CB
-	bot.startTyping(source_message.channel);
 	bot.api.users.list({
   	presence: 1
   }, (err, response) => {
@@ -500,7 +634,6 @@ function askForCheckIn(response, convo) {
 
 	const { task }                = convo;
 	const { bot, source_message } = task;
-	const { tasksToWorkOnArray, dailyTasks }  = convo.sessionStart;
 	const SlackUserId = response.user;
 
 	convo.ask("Boom :boom: Would you like me to check in with you during this session to make sure you're on track?", [
@@ -530,7 +663,6 @@ function askForCheckIn(response, convo) {
 		{
 			pattern: bot.utterances.no,
 			callback: (response, convo) => {
-				convo.say("Last thing - is there anything you'd like me to remind you during the check in?");
 				convo.next();
 			}
 		}
@@ -616,7 +748,7 @@ function askForReminderDuringCheckin(response, convo) {
 	const SlackUserId = response.user;
 
 	convo.say("Last thing - is there anything you'd like me to remind you during the check in?");
-	convo.ask("This could be a note like `call Mary` or `should be on the second section of the proposal by now`", [
+	convo.ask("This could be a note like `call Eileen` or `should be on the second section of the proposal by now`", [
 		{
 			pattern: bot.utterances.yes,
 			callback: (response, convo) => {
@@ -631,7 +763,6 @@ function askForReminderDuringCheckin(response, convo) {
 		{
 			pattern: bot.utterances.no,
 			callback: (response, convo) => {
-				finishSessionForUser(response, convo);
 				convo.next();
 			}
 		},

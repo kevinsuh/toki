@@ -2,6 +2,8 @@ import os from 'os';
 import { wit } from '../index';
 import moment from 'moment-timezone';
 
+import models from '../../../app/models';
+
 // MIDDLE OF A WORK SESSION
 export default function(controller) {
 

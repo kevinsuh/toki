@@ -7,12 +7,7 @@ import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
-
-const intentConfig =  {
-	WANT_BREAK: 'want_break',
-	START_SESSION: 'start_session',
-	END_DAY: 'end_day'
-}
+import intentConfig from '../../lib/intents';
 
 // END OF A WORK SESSION
 export default function(controller) {
@@ -155,19 +150,26 @@ export default function(controller) {
 
 				// temporary fix to get tasks
 				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
-				return user.getTasks({
-					where: [ `"Task"."done" = ? AND "DailyTasks"."createdAt" > ?`, false, timeAgoForTasks ],
-					order: `"DailyTasks"."priority" ASC`,
-					include: [ models.DailyTask ]
+				return user.getDailyTasks({
+					where: [ `"Task"."done" = ? AND "DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?`, false, timeAgoForTasks, "live" ],
+					order: `"DailyTask"."priority" ASC`,
+					include: [ models.Task ]
 				});
 			})
-			.then((tasks) => {
+			.then((dailyTasks) => {
 
-				var taskArray              = convertToSingleTaskObjectArray(tasks, "task");
+				var taskArray              = convertToSingleTaskObjectArray(dailyTasks, "daily");
 				convo.sessionEnd.taskArray = taskArray;
 				var taskListMessage        = convertArrayToTaskListMessage(taskArray);
 
-				convo.say("Which task(s) did you get done? Just write which number(s) `i.e. 1, 2`");
+				if (taskArray.length == 0) {
+					convo.say("You don't have any tasks on today's list! Great work :punch:");
+					convo.sessionEnd.hasNoTasksToWorkOn = true;
+					taskListMessage = "Say `next` to keep going";
+				} else {
+					convo.say("Which task(s) did you get done? Just write which number(s) `i.e. 1, 2`");
+				}
+
 				convo.ask(taskListMessage, (response, convo) => {
 
 					/**
@@ -183,6 +185,13 @@ export default function(controller) {
 					var tasksCompleted = response.text;
 
 					var tasksCompletedSplitArray = tasksCompleted.split(/(,|and)/);
+
+					// IF THE USER HAS NO TASKS ON DAILY TASK LIST
+					if (convo.sessionEnd.hasNoTasksToWorkOn) {
+						askUserPostSessionOptions(response, convo);
+						convo.next();
+						return;
+					}
 
 					// if we capture 0 valid tasks from string, then we start over
 					var numberRegEx              = new RegExp(/[\d]+/);
@@ -200,7 +209,7 @@ export default function(controller) {
 
 					if (taskNumberCompletedArray.length == 0) {
 						// no tasks completed
-						convo.say("That's okay! You can keep chipping away and you'll get there :pick:");
+						convo.say("No worries! :smile_cat:");
 					} else {
 						// get the actual ids
 						var tasksCompletedArray = [];
@@ -233,27 +242,68 @@ export default function(controller) {
 
 					// went according to plan
 					const { SlackUserId, UserId, postSessionDecision, reminders, tasksCompleted, taskArray } = convo.sessionEnd;
+
+					// end all open sessions and reminder checkins (type `work_session`) the user might have
+					models.User.find({
+						where: [`"User"."id" = ?`, UserId ],
+						include: [ models.SlackUser ]
+					})
+					.then((user) => {
+
+						// end all open work sessions
+						user.getWorkSessions({
+							where: [ `"open" = ?`, true ]
+						})
+						.then((workSessions) => {
+							var endTime = moment().format("YYYY-MM-DD HH:mm:ss");
+							workSessions.forEach((workSession) => {
+								workSession.update({
+									endTime,
+									"open": false
+								});
+							});
+						});
+
+						// cancel all checkin reminders (type: `work_session`)
+						user.getReminders({
+							where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break"] ]
+						}).
+						then((reminders) => {
+							reminders.forEach((reminder) => {
+								reminder.update({
+									"open": false
+								})
+							});
+						})
+
+					});
 					
-					// set reminders and mark done tasks as done
+					// set reminders (usually a break)
 					reminders.forEach((reminder) => {
-						const { remindTime, customNote } = reminder;
+						const { remindTime, customNote, type } = reminder;
 						models.Reminder.create({
 							UserId,
 							remindTime,
-							customNote
-						})
+							customNote,
+							type
+						});
 					});
 
-					// why did i think u could do priorities lol
+					// mark appropriate tasks as done
 					taskArray.forEach((task) => {
 						if (tasksCompleted.indexOf(task.dataValues.id) > -1) {
-							models.Task.update({
-								done: true
-							},
-							{
-								where: { id: task.dataValues.id }
-							}
-							);
+							// get daily tasks
+							models.DailyTask.find({
+								where: { id: task.dataValues.id },
+								include: [ models.Task] 
+							})
+							.then((dailyTask) => {
+								if (dailyTask) {
+									dailyTask.Task.updateAttributes({
+										done: true
+									})
+								}
+							})
 						}
 					});
 
@@ -263,7 +313,7 @@ export default function(controller) {
 						case intentConfig.END_DAY:
 							break;
 						case intentConfig.START_SESSION:
-							controller.trigger('trigger_start_session', [bot, { SlackUserId }]);
+							controller.trigger('confirm_new_session', [bot, { SlackUserId }]);
 							break;
 						default: break;
 					}
@@ -343,14 +393,15 @@ function askUserPostSessionOptions(response, convo) {
 
 					convo.sessionEnd.breakDuration = durationMinutes;
 					
-					convo.say(`Great! I'll check in with you after your ${durationMinutes} minute break :smile:`);
+					convo.say(`Great! I'll check in with you in ${durationMinutes} minutes :smile:`);
 					convo.sessionEnd.postSessionDecision = intentConfig.WANT_BREAK;
 
 					// calculate break time and add reminder
 					var checkinTimeStamp =  moment().add(durationMinutes, 'minutes').format("YYYY-MM-DD HH:mm:ss");
 					convo.sessionEnd.reminders.push({
 						customNote: `It's been ${durationMinutes} minutes. Let me know when you're ready to start a session`,
-						remindTime: checkinTimeStamp
+						remindTime: checkinTimeStamp,
+						type: "break"
 					});
 					break;
 				case intentConfig.START_SESSION:
