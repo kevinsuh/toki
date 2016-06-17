@@ -6,7 +6,7 @@ import moment from 'moment-timezone';
 
 import endWorkSessionController from './endWorkSession';
 import middleWorkSessionController from './middleWorkSession';
-import startWorKSessionController from './startWorKSession';
+import startWorKSessionController from './startWorkSession';
 
 import intentConfig from '../../lib/intents';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
