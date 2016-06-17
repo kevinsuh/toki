@@ -70,6 +70,47 @@ if (false) {
 var remindTime = moment().format("YYYY-MM-DD HH:mm:ss");
 var UserId = 1;
 var customNote = "test note";
+
+// get most recent start session group
+// then make all live tasks below that into pending
+models.User.find({
+  where: { id: UserId }
+})
+.then((user) => {
+  user.getSessionGroups({
+    limit: 1,
+    order: `"SessionGroup"."createdAt" DESC`,
+    where: [ `"SessionGroup"."type" = ?`, "start_work"]
+  })
+  .then((sessionGroups) => {
+    var sessionGroup = sessionGroups[0];
+    var sessionGroupCreatedAt = sessionGroup.createdAt;
+    // safety measure of making all previous live tasks pending
+    user.getDailyTasks({
+      where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?`, sessionGroup.createdAt, "pending"]
+    })
+    .then((dailyTasks) => {
+      dailyTasks.forEach((dailyTask) => {
+        dailyTask.update({
+          type: "archived"
+        });
+      });
+      user.getDailyTasks({
+        where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?`, sessionGroup.createdAt, "live"]
+      })
+      .then((dailyTasks) => {
+        dailyTasks.forEach((dailyTask) => {
+          dailyTask.update({
+            type: "pending"
+          });
+        });
+      });
+    });
+  })
+})
+
+
+
   // models.Reminder.create({
   //   remindTime,
   //   UserId,

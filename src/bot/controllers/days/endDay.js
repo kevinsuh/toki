@@ -220,16 +220,27 @@ export default function(controller) {
 								})
 
 								// put all of user's `live` tasks to pending
-								user.getDailyTasks({
-									where: [ `"DailyTask"."type" = ?`, "live"]
-								})
-								.then((dailyTasks) => {
-									dailyTasks.forEach((dailyTask) => {
-										dailyTask.update({
-											type: "pending"
-										})
-									});
-								})
+								// make all pending tasks => archived, then all live tasks => pending
+		    				user.getDailyTasks({
+		    					where: [`"DailyTask"."type" = ?`, "pending"]
+		    				})
+		    				.then((dailyTasks) => {
+		    					dailyTasks.forEach((dailyTask) => {
+						        dailyTask.update({
+						          type: "archived"
+						        });
+						      });
+						      user.getDailyTasks({
+			    					where: [`"DailyTask"."type" = ?`, "live"]
+			    				})
+			    				.then((dailyTasks) => {
+			    					dailyTasks.forEach((dailyTask) => {
+							        dailyTask.update({
+							          type: "pending"
+							        });
+							      });
+			    				});
+		    				});
 
 		    			} else {
 		    				// default premature end

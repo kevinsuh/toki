@@ -104,10 +104,10 @@ export default function(controller) {
 							if (convo.status == 'completed') {
 								switch (isBackDecision) {
 									case intentConfig.START_SESSION:
-										console.log("\n\n\nSTART_SESSION!\n\n\n");
+										controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
 										break;
 									case intentConfig.END_DAY:
-										console.log("\n\n\nEND_DAY\n\n\n");
+										controller.trigger(`trigger_day_end`, [ bot, { SlackUserId } ]);
 										break;
 									case intentConfig.VIEW_TASKS:
 									console.log("\n\n\nVIEW_TASKS\n\n\n");

@@ -19,7 +19,7 @@ export default function(controller) {
 	controller.on('trigger_day_start', (bot, config) => {
 
 		const { SlackUserId } = config;
-		controller.trigger(`begin_day_flow`, [ bot, { SlackUserId } ]);
+		controller.trigger(`user_confirm_new_day`, [ bot, { SlackUserId } ]);
 
 	})
 
@@ -37,54 +37,67 @@ export default function(controller) {
 			channel: message.channel
 		});
 		setTimeout(()=>{
-
-			models.User.find({
-				where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-				include: [
-					models.SlackUser
-				]
-			})
-			.then((user) => {
-
-				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-
-					var name              = user.nickName || user.email;
-					convo.name            = name;
-					convo.readyToStartDay = false;
-
-					convo.ask(`Hey ${name}! Would you like to start your day?`, [
-						{
-							pattern: bot.utterances.yes,
-							callback: (response, convo) => {
-								convo.readyToStartDay = true;
-								convo.next();
-							}
-						},
-						{
-							pattern: bot.utterances.no,
-							callback: (response, convo) => {
-								convo.say("Okay. Let me know whenever you're ready to start your day :wave:");
-								convo.next();
-							}
-						},
-						{
-							default: true,
-							callback: (response, convo) => {
-								convo.say("Couldn't quite catch that. Let me know whenever you're ready to `start your day` :wave:");
-								convo.next();
-							}
-						}
-					]);
-					convo.on('end', (convo) => {
-						if (convo.readyToStartDay) {
-							controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
-						}
-					})
-				
-				});
-			});
+			controller.trigger(`user_confirm_new_day`, { SlackUserId });
 		}, 1000);
 	});
+
+	/**
+	 * 			User confirms he is wanting to
+	 * 					start his day. confirmation
+	 * 				needed every time b/c this resets everything
+	 */
+
+	controller.on('user_confirm_new_day', (bot, config) => {
+
+		const { SlackUserId } = config;
+
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+				var name              = user.nickName || user.email;
+				convo.name            = name;
+				convo.readyToStartDay = false;
+
+				convo.ask(`Hey ${name}! Would you like to start your day?`, [
+					{
+						pattern: bot.utterances.yes,
+						callback: (response, convo) => {
+							convo.readyToStartDay = true;
+							convo.next();
+						}
+					},
+					{
+						pattern: bot.utterances.no,
+						callback: (response, convo) => {
+							convo.say("Okay. Let me know whenever you're ready to start your day :wave:");
+							convo.next();
+						}
+					},
+					{
+						default: true,
+						callback: (response, convo) => {
+							convo.say("Couldn't quite catch that. Let me know whenever you're ready to `start your day` :wave:");
+							convo.next();
+						}
+					}
+				]);
+				convo.on('end', (convo) => {
+					if (convo.readyToStartDay) {
+						controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
+					}
+				})
+			
+			});
+		});
+
+	})
 
 	/**
 	* 	~ ACTUAL START OF YOUR DAY ~
@@ -140,26 +153,49 @@ export default function(controller) {
     					UserId
     				})
     				.then((sessionGroup) => {
-    					// make sure start session has been created before any
-    					// tasks get inserted
-    					// store the user's tasks
-	    				prioritizedTaskArray.forEach((task, index) => {
-	    					const { text, minutes} = task;
-	    					var priority = index + 1;
-	    					models.Task.create({
-							    text
-							  }).then((task) => {
-							    models.DailyTask.create({
-							      TaskId: task.id,
-							      priority,
-							      minutes,
-							      UserId
-							    });
-							  });
+
+    					// make all pending tasks => archived, then all live tasks => pending
+	    				// BEFORE the newly created start SessionGroup
+	    				user.getDailyTasks({
+	    					where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?`, sessionGroup.createdAt, "pending"]
+	    				})
+	    				.then((dailyTasks) => {
+	    					dailyTasks.forEach((dailyTask) => {
+					        dailyTask.update({
+					          type: "archived"
+					        });
+					      });
+					      user.getDailyTasks({
+		    					where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?`, sessionGroup.createdAt, "live"]
+		    				})
+		    				.then((dailyTasks) => {
+
+		    					dailyTasks.forEach((dailyTask) => {
+						        dailyTask.update({
+						          type: "pending"
+						        });
+						      });
+
+						      // After all of the previous tasks have been put into "pending", choose the select ones and bring them back to "live"
+			    				prioritizedTaskArray.forEach((task, index) => {
+			    					const { text, minutes} = task;
+			    					var priority = index + 1;
+			    					models.Task.create({
+									    text
+									  })
+									  .then((task) => {
+									    models.DailyTask.create({
+									      TaskId: task.id,
+									      priority,
+									      minutes,
+									      UserId
+									    });
+									    // THIS IS WHERE YOU WILL UPDATE THE PREVIOUS DAY'S PENDING TASKS
+									  });
+			    				});
+
+		    				});
 	    				});
-    				})
-    				
-    				
 
     				// TRIGGER SESSION_START HERE
     				if (dayStart.startDayDecision == intentConfig.START_SESSION) {

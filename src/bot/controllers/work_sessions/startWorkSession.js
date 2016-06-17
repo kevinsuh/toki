@@ -15,7 +15,9 @@ export default function(controller) {
 	 *
 	 * 		User directly asks to start a session
 	 * 							~* via Wit *~
-	 * 		
+	 * 		     this makes sure you are properly in
+	 * 		     				in a "SessionGroup" before
+	 * 		     			working on your session
 	 */
 	controller.hears(['start_session'], 'direct_message', wit.hears, (bot, message) => {
 
@@ -126,7 +128,6 @@ export default function(controller) {
 					} else {
 						// no existing work sessions. user wants to start a new one
 						convo.startNewSession = true;
-						convo.say("Let's do it :weight_lifter:");
 					}
 
 					convo.on('end', (convo) => {
@@ -372,6 +373,7 @@ function startSessionStartConversation(response, convo) {
 	const { bot, source_message } = task;
 	const { UserId, dailyTasks }  = convo.sessionStart;
 
+	convo.say("Let's do it :weight_lifter:");
 	convo.say(`Which tasks would you like to work on?`);
 
 	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
