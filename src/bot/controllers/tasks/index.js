@@ -80,7 +80,7 @@ export default function(controller) {
 		});
 
 		setTimeout(() => {
-			controller.trigger(`view_daily_tasks_flow`, { SlackUserId });
+			controller.trigger(`view_daily_tasks_flow`, [ bot, { SlackUserId } ]);
 		}, 1000);
 
 	});

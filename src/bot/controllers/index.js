@@ -175,6 +175,9 @@ controller.storage.teams.all(function(err,teams) {
 // this will send message if no other intent gets picked up
 controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
 
+  console.log("\n\n\n ~~ in back up area ~~ \n\n\n");
+  console.log(message);
+
   // this means that user said something that we cannot handle yet
   if (!message.selectedIntent) {
     bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");

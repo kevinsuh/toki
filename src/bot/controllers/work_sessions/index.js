@@ -105,6 +105,19 @@ export default function(controller) {
 
 						});
 						convo.on(`end`, (convo) => {
+
+							// cancel all `break` and `work_session` type reminders
+							user.getReminders({
+								where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break"] ]
+							}).
+							then((reminders) => {
+								reminders.forEach((reminder) => {
+									reminder.update({
+										"open": false
+									})
+								});
+							})
+
 							const { isBackDecision } = convo;
 							var config = {
 								SlackUserId
