@@ -218,7 +218,13 @@ controller.on(`new_session_group_decision`, (bot, config) => {
     })
     .then((sessionGroups) => {
 
-      // should start day
+      console.log("\n\n\n ~~ IN NEW SESSION GROUP DECISION ~~ \n\n\n");
+      console.log("\n\n\n ~~ this is the dispatch center for many decisions ~~ \n\n\n");
+      console.log("\n\n\n config object: \n\n\n");
+      console.log(config);
+      console.log("\n\n\n\n");
+
+      // should start day and everything past this is irrelevant
       var shouldStartDay = false;
       if (sessionGroups.length == 0) {
         shouldStartDay = true;
@@ -227,16 +233,16 @@ controller.on(`new_session_group_decision`, (bot, config) => {
       }
       if (shouldStartDay) {
         bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-          convo.say("You have not started a day yet! Let me know when you want to `start a day` together :smile:");
+          convo.say("Wait, you have not started a day yet!");
           convo.next();
           convo.on('end', (convo) => {
-            controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
+            controller.trigger(`user_confirm_new_day`, [ bot, { SlackUserId }]);
           });
         });
         return;
       }
 
-      // 2. you have started your day, it's been 5 hours since working with me
+      // 2. you have already `started your day`, but it's been 5 hours since working with me
       var fiveHoursAgo = new Date(moment().subtract(5, 'hours'));
       user.getWorkSessions({
         where: [`"WorkSession"."endTime" > ?`, fiveHoursAgo]
@@ -295,7 +301,13 @@ controller.on(`new_session_group_decision`, (bot, config) => {
                     controller.trigger(`add_task_flow`, [ bot, { SlackUserId }]);
                     break;
                   case intentConfig.START_SESSION:
-                  controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
+                    controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
+                    break;
+                  case intentConfig.VIEW_TASKS:
+                    controller.trigger(`view_daily_tasks_flow`, [ bot, { SlackUserId } ]);
+                    break;
+                  case intentConfig.END_DAY:
+                    controller.trigger(`trigger_day_end`, [ bot, { SlackUserId } ]);
                     break;
                   default: break;
                 }
@@ -313,6 +325,12 @@ controller.on(`new_session_group_decision`, (bot, config) => {
               break;
             case intentConfig.START_SESSION:
               controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
+              break;
+            case intentConfig.VIEW_TASKS:
+              controller.trigger(`view_daily_tasks_flow`, [ bot, { SlackUserId } ]);
+              break;
+            case intentConfig.END_DAY:
+              controller.trigger(`trigger_day_end`, [ bot, { SlackUserId } ]);
               break;
             default: break;
           }

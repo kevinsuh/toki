@@ -67,7 +67,7 @@ export default function(controller) {
 						if (dailyTasks.length > 0) {
 						 convo.say(`Here are your priorities from our last time together:\n${taskListMessage}`);
 						}
-						var options = ["• start a work session with your most recent priorities", "• set new priorities for today - and we can move any of your most recent priorities into this new list, too!", "• end our day together"];
+						var options = ["• start a work session with your most recent priorities", "• view your tasks", "• add task(s)", "• end our day together"];
 						var optionsList = "";
 						options.forEach((option) => {
 							optionsList = `${optionsList}> ${option}\n`;
@@ -89,7 +89,12 @@ export default function(controller) {
 										convo.say(`It's about that time, isn't it?`);
 										break;
 									case intentConfig.VIEW_TASKS:
-										convo.say(`I agree - a fresh start seems like a great idea. Let's do it! :tangerine:`);
+										convo.isBackDecision = intentConfig.VIEW_TASKS;
+										convo.say(`That sounds great. Let's decide what to do today! :tangerine:`);
+										break;
+									case intentConfig.ADD_TASK:
+										convo.isBackDecision = intentConfig.ADD_TASK;
+										convo.say(`Awesome. Let's add some tasks :muscle:`);
 										break;
 									default:
 										convo.say(`Totally cool, just let me know when you're ready to do either of those things! :wave:`);
@@ -101,17 +106,26 @@ export default function(controller) {
 						});
 						convo.on(`end`, (convo) => {
 							const { isBackDecision } = convo;
+							var config = {
+								SlackUserId
+							};
 							if (convo.status == 'completed') {
 								switch (isBackDecision) {
 									case intentConfig.START_SESSION:
-										controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
+										convo.intent = intentConfig.START_SESSION;
+										controller.trigger(`new_session_group_decision`, [ bot, config ]);
 										break;
 									case intentConfig.END_DAY:
-										controller.trigger(`trigger_day_end`, [ bot, { SlackUserId } ]);
+										convo.intent = intentConfig.END_DAY;
+										controller.trigger(`new_session_group_decision`, [ bot, config ]);
 										break;
 									case intentConfig.VIEW_TASKS:
-									console.log("\n\n\nVIEW_TASKS\n\n\n");
+										convo.intent = intentConfig.VIEW_TASKS;
+										controller.trigger(`new_session_group_decision`, [ bot, config ]);
 										break;
+									case intentConfig.ADD_TASK:
+										convo.intent = intentConfig.ADD_TASK;
+										controller.trigger(`new_session_group_decision`, [ bot, config ]);
 									default:
 										break;
 								}

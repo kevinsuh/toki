@@ -37,7 +37,13 @@ export default function(controller) {
 			channel: message.channel
 		});
 		setTimeout(()=>{
-			controller.trigger(`user_confirm_new_day`, { SlackUserId });
+			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+				var name = user.nickName || user.email;
+				convo.say(`Hey, ${name}!`);
+				convo.on('end', (convo) => {
+					controller.trigger(`user_confirm_new_day`, { SlackUserId });
+				})
+			});
 		}, 1000);
 	});
 
@@ -65,10 +71,11 @@ export default function(controller) {
 				convo.name            = name;
 				convo.readyToStartDay = false;
 
-				convo.ask(`Hey ${name}! Would you like to start your day?`, [
+				convo.ask(`Would you like to start your day?`, [
 					{
 						pattern: bot.utterances.yes,
 						callback: (response, convo) => {
+							convo.say("Let's do it! :car: :dash:");
 							convo.readyToStartDay = true;
 							convo.next();
 						}
@@ -92,7 +99,7 @@ export default function(controller) {
 					if (convo.readyToStartDay) {
 						controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
 					}
-				})
+				});
 			
 			});
 		});
@@ -148,6 +155,7 @@ export default function(controller) {
     				const { UserId, prioritizedTaskArray } = dayStart;
 
     				// log `start_work` in SessionGroups
+    				// and all other relevant DB inserts
     				models.SessionGroup.create({
     					type: "start_work",
     					UserId
@@ -196,6 +204,8 @@ export default function(controller) {
 
 		    				});
 	    				});
+
+	    			});
 
     				// TRIGGER SESSION_START HERE
     				if (dayStart.startDayDecision == intentConfig.START_SESSION) {
