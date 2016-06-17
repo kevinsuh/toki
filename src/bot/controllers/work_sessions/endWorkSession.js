@@ -408,8 +408,6 @@ function askUserPostSessionOptions(response, convo) {
 					});
 					break;
 				case intentConfig.START_SESSION:
-					convo.say(`Love your hustle :muscle:`);
-					convo.say(`Let's do this :thumbsup:`);
 					convo.sessionEnd.postSessionDecision = intentConfig.START_SESSION;
 					break;
 				case intentConfig.END_DAY:
