@@ -2,7 +2,8 @@
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
  */
 
-import { FINISH_WORD, EARLY_EXIT_WORDS } from '../controllers/tasks/startDayFlow';
+const FINISH_WORD = 'done';
+const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
 
 
 /**
