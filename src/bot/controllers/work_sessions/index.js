@@ -82,7 +82,6 @@ export default function(controller) {
 								switch(intentValue) {
 									case intentConfig.START_SESSION:
 										convo.isBackDecision = intentConfig.START_SESSION;
-										convo.say(`Love it. Let's kick off a new session :soccer:`);
 										break;
 									case intentConfig.END_DAY:
 										convo.isBackDecision = intentConfig.END_DAY;
@@ -119,25 +118,23 @@ export default function(controller) {
 							})
 
 							const { isBackDecision } = convo;
-							var config = {
-								SlackUserId
-							};
+							var config = { SlackUserId };
 							if (convo.status == 'completed') {
 								switch (isBackDecision) {
 									case intentConfig.START_SESSION:
-										convo.intent = intentConfig.START_SESSION;
+										config.intent = intentConfig.START_SESSION;
 										controller.trigger(`new_session_group_decision`, [ bot, config ]);
 										break;
 									case intentConfig.END_DAY:
-										convo.intent = intentConfig.END_DAY;
+										config.intent = intentConfig.END_DAY;
 										controller.trigger(`new_session_group_decision`, [ bot, config ]);
 										break;
 									case intentConfig.VIEW_TASKS:
-										convo.intent = intentConfig.VIEW_TASKS;
+										config.intent = intentConfig.VIEW_TASKS;
 										controller.trigger(`new_session_group_decision`, [ bot, config ]);
 										break;
 									case intentConfig.ADD_TASK:
-										convo.intent = intentConfig.ADD_TASK;
+										config.intent = intentConfig.ADD_TASK;
 										controller.trigger(`new_session_group_decision`, [ bot, config ]);
 									default:
 										break;
