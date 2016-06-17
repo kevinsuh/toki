@@ -264,30 +264,33 @@ export default function(controller) {
 							});
 						});
 
-						// cancel all checkin reminders (type: `work_session`)
+						// cancel all checkin reminders (type: `work_session` or `break`)
+						// AFTER this is done, put in new break
 						user.getReminders({
 							where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break"] ]
 						}).
-						then((reminders) => {
-							reminders.forEach((reminder) => {
+						then((oldReminders) => {
+							oldReminders.forEach((reminder) => {
 								reminder.update({
 									"open": false
 								})
 							});
-						})
+						});
+
+						// set reminders (usually a break)
+						reminders.forEach((reminder) => {
+							const { remindTime, customNote, type } = reminder;
+							models.Reminder.create({
+								UserId,
+								remindTime,
+								customNote,
+								type
+							});
+						});
 
 					});
 					
-					// set reminders (usually a break)
-					reminders.forEach((reminder) => {
-						const { remindTime, customNote, type } = reminder;
-						models.Reminder.create({
-							UserId,
-							remindTime,
-							customNote,
-							type
-						});
-					});
+						
 
 					// mark appropriate tasks as done
 					taskArray.forEach((task) => {

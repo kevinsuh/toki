@@ -71,10 +71,13 @@ export default function(controller) {
 			})
 			.then((workSessions) => {
 
-				console.log("\n\n\n\n\n");
-				console.log("in work sessions:");
-				console.log(workSessions);
-				console.log("\n\n\n\n\n");
+				// no open work sessions => you're good to go!
+				if (workSessions.length == 0) {
+					controller.trigger(`begin_session`, [ bot, { SlackUserId }]);
+					return;
+				}
+
+				// otherwise, we gotta confirm user wants to cancel current work session
 
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
@@ -84,51 +87,45 @@ export default function(controller) {
 					convo.startNewSession = true;
 					convo.openWorkSession = false;
 
-					if (workSessions.length > 0) {
+					var openWorkSession = workSessions[0]; // deal with first one as reference point
+					convo.openWorkSession = openWorkSession;
 
-						var openWorkSession = workSessions[0]; // deal with first one as reference point
-						convo.openWorkSession = openWorkSession;
+					var endTime       = moment(openWorkSession.endTime);
+					var endTimeString = endTime.format("h:mm a");
+					var now           = moment();
+					var minutesLeft   = Math.round(moment.duration(endTime.diff(now)).asMinutes());
 
-						var endTime       = moment(openWorkSession.endTime);
-						var endTimeString = endTime.format("h:mm a");
-						var now           = moment();
-						var minutesLeft   = Math.round(moment.duration(endTime.diff(now)).asMinutes());
+					convo.say(`You are already in a session right now! You have ${minutesLeft} minutes left :timer_clock:`);
+					convo.ask(`Do you want to \`keep going\`, or cancel it and start a \`new session\`?`, (response, convo) => {
 
-						convo.say(`You are already in a session right now! You have ${minutesLeft} minutes left :timer_clock:`);
-						convo.ask(`Do you want to \`keep going\`, or cancel it and start a \`new session\`?`, (response, convo) => {
+						var responseMessage = response.text;
+						var { intentObject: { entities } } = response;
 
-							var responseMessage = response.text;
-							var { intentObject: { entities } } = response;
+						var newSession = new RegExp(/(((^st[tart]*))|(^ne[ew]*)|(^se[ession]*))/); // `start` or `new`
+						var keepGoing = new RegExp(/(((^k[ep]*))|(^go[oing]*))/); // `keep` or `going`
 
-							var newSession = new RegExp(/(((^st[tart]*))|(^ne[ew]*)|(^se[ession]*))/); // `start` or `new`
-							var keepGoing = new RegExp(/(((^k[ep]*))|(^go[oing]*))/); // `keep` or `going`
+						if (newSession.test(responseMessage)) {
 
-							if (newSession.test(responseMessage)) {
+							// start new session
+							convo.say("Got it. Let's do a new session :facepunch:");
 
-								// start new session
-								convo.say("Got it. Let's do a new session :facepunch:");
+						} else if (keepGoing.test(responseMessage)) {
 
-							} else if (keepGoing.test(responseMessage)) {
+							// continue current session
+							convo.say("Got it. Let's do it! :weight_lifter:");
+							convo.say(`I'll ping you at ${endTimeString} :alarm_clock:`);
+							convo.startNewSession = false;
 
-								// continue current session
-								convo.say("Got it. Let's do it! :weight_lifter:");
-								convo.say(`I'll ping you at ${endTimeString} :alarm_clock:`);
-								convo.startNewSession = false;
+						} else {
 
-							} else {
+							// invalid
+							convo.say("I'm sorry, I didn't catch that :dog:");
+							convo.repeat();
 
-								// invalid
-								convo.say("I'm sorry, I didn't catch that :dog:");
-								convo.repeat();
+						}
+						convo.next();
 
-							}
-							convo.next();
-
-						});
-					} else {
-						// no existing work sessions. user wants to start a new one
-						convo.startNewSession = true;
-					}
+					});
 
 					convo.on('end', (convo) => {
 
@@ -184,7 +181,6 @@ export default function(controller) {
 							controller.trigger(`begin_session`, [ bot, { SlackUserId }]);
 						}
 					});
-
 				});
 			});
 		})
