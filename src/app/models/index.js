@@ -27,6 +27,10 @@ var db        = {};
 
 console.log("using sequelize here");
 console.log(config);
+console.log("ok...");
+console.log(env);
+
+return;
 if (config.use_env_variable) {
   var sequelize = new Sequelize(process.env[config.use_env_variable]);
 } else {
