@@ -241,18 +241,13 @@ exports.default = function (controller) {
 							include: [_models2.default.SlackUser]
 						}).then(function (user) {
 
-							// end all open work sessions
-							user.getWorkSessions({
-								where: ['"open" = ?', true]
-							}).then(function (workSessions) {
-								var endTime = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss");
-								workSessions.forEach(function (workSession) {
-									workSession.update({
-										endTime: endTime,
-										"open": false
-									});
-								});
-							});
+							/**
+        * 		~~ END OF WORK SESSION ~~
+        * 			1. cancel all `break` and `checkin` reminders
+        * 			2. mark said `tasks` as done
+        * 			3. set new `reminders` (i.e break)
+        * 			4. close open worksessions and start new one if requested
+        */
 
 							// cancel all checkin reminders (type: `work_session` or `break`)
 							// AFTER this is done, put in new break
@@ -279,36 +274,50 @@ exports.default = function (controller) {
 									type: type
 								});
 							});
-						});
 
-						// mark appropriate tasks as done
-						taskArray.forEach(function (task) {
-							if (tasksCompleted.indexOf(task.dataValues.id) > -1) {
-								// get daily tasks
-								_models2.default.DailyTask.find({
-									where: { id: task.dataValues.id },
-									include: [_models2.default.Task]
-								}).then(function (dailyTask) {
-									if (dailyTask) {
-										dailyTask.Task.updateAttributes({
-											done: true
-										});
-									}
+							// mark appropriate tasks as done
+							taskArray.forEach(function (task) {
+								if (tasksCompleted.indexOf(task.dataValues.id) > -1) {
+									// get daily tasks
+									_models2.default.DailyTask.find({
+										where: { id: task.dataValues.id },
+										include: [_models2.default.Task]
+									}).then(function (dailyTask) {
+										if (dailyTask) {
+											dailyTask.Task.updateAttributes({
+												done: true
+											});
+										}
+									});
+								}
+							});
+
+							// end all open work sessions
+							// make decision afterwards (to ensure you have no sessions open if u want to start a new one)
+							user.getWorkSessions({
+								where: ['"open" = ?', true]
+							}).then(function (workSessions) {
+								var endTime = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss");
+								workSessions.forEach(function (workSession) {
+									workSession.update({
+										endTime: endTime,
+										"open": false
+									});
 								});
-							}
-						});
 
-						switch (postSessionDecision) {
-							case _intents2.default.WANT_BREAK:
-								break;
-							case _intents2.default.END_DAY:
-								break;
-							case _intents2.default.START_SESSION:
-								controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
-								break;
-							default:
-								break;
-						}
+								switch (postSessionDecision) {
+									case _intents2.default.WANT_BREAK:
+										break;
+									case _intents2.default.END_DAY:
+										break;
+									case _intents2.default.START_SESSION:
+										controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+										break;
+									default:
+										break;
+								}
+							});
+						});
 					})();
 				} else {
 					// ending convo prematurely

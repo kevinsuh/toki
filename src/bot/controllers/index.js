@@ -260,8 +260,8 @@ controller.on(`new_session_group_decision`, (bot, config) => {
       .then((workSessions) => {
 
         // you have had at least one work session in the last 5 hours
+        // so we will pass you through and not have you start a new day
         if (workSessions.length > 0) {
-          // you have had a recent work session and are ready to just get passed through
           switch (intent) {
             case intentConfig.ADD_TASK:
               controller.trigger(`add_task_flow`, [ bot, { SlackUserId }]);

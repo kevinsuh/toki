@@ -332,15 +332,40 @@ export default function(controller) {
 							const { task }                = convo;
 							const { bot, source_message } = task;
 
-							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-								convo.say("Hey! You haven't entered any tasks yet today. Let's start the day before doing a session :muscle:");
-								convo.next();
-								convo.on('end', (convo) => {
-									// go to start your day from here
-									var config = { SlackUserId };
-									controller.trigger('begin_day_flow', [bot, config]);
-								})
-							});
+							var fiveHoursAgo = new Date(moment().subtract(5, 'hours'));
+				      user.getWorkSessions({
+				        where: [`"WorkSession"."endTime" > ?`, fiveHoursAgo]
+				      })
+				      .then((workSessions) => {
+
+				      	// start a new day if you have not had a work session in 5 hours
+				      	const startNewDay = (workSessions.length == 0 ? true : false);
+				      	bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+				      		convo.startNewDay = startNewDay;
+
+				      		if (startNewDay) {
+				      			convo.say("Hey! You haven't entered any tasks yet today. Let's start the day before doing a session :muscle:");
+				      		} else {
+				      			convo.say("Hey! You don't have any tasks right now. Let's get things to work on first");
+				      		}
+									
+									convo.next();
+									convo.on('end', (convo) => {
+										// go to start your day from here
+										var config          = { SlackUserId };
+										var { startNewDay } = convo;
+
+										if (startNewDay) {
+											controller.trigger('begin_day_flow', [bot, config]);
+										} else {
+											controller.trigger('add_task_flow', [ bot, config ]);
+										}
+
+									})
+								});
+
+				      });
 							
 						} else {
 							// default premature end!

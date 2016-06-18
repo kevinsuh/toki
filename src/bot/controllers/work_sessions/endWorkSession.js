@@ -250,19 +250,13 @@ export default function(controller) {
 					})
 					.then((user) => {
 
-						// end all open work sessions
-						user.getWorkSessions({
-							where: [ `"open" = ?`, true ]
-						})
-						.then((workSessions) => {
-							var endTime = moment().format("YYYY-MM-DD HH:mm:ss");
-							workSessions.forEach((workSession) => {
-								workSession.update({
-									endTime,
-									"open": false
-								});
-							});
-						});
+						/**
+						 * 		~~ END OF WORK SESSION ~~
+						 * 			1. cancel all `break` and `checkin` reminders
+						 * 			2. mark said `tasks` as done
+						 * 			3. set new `reminders` (i.e break)
+						 * 			4. close open worksessions and start new one if requested
+						 */
 
 						// cancel all checkin reminders (type: `work_session` or `break`)
 						// AFTER this is done, put in new break
@@ -288,38 +282,53 @@ export default function(controller) {
 							});
 						});
 
-					});
-					
-						
+						// mark appropriate tasks as done
+						taskArray.forEach((task) => {
+							if (tasksCompleted.indexOf(task.dataValues.id) > -1) {
+								// get daily tasks
+								models.DailyTask.find({
+									where: { id: task.dataValues.id },
+									include: [ models.Task] 
+								})
+								.then((dailyTask) => {
+									if (dailyTask) {
+										dailyTask.Task.updateAttributes({
+											done: true
+										})
+									}
+								})
+							}
+						});
 
-					// mark appropriate tasks as done
-					taskArray.forEach((task) => {
-						if (tasksCompleted.indexOf(task.dataValues.id) > -1) {
-							// get daily tasks
-							models.DailyTask.find({
-								where: { id: task.dataValues.id },
-								include: [ models.Task] 
-							})
-							.then((dailyTask) => {
-								if (dailyTask) {
-									dailyTask.Task.updateAttributes({
-										done: true
-									})
-								}
-							})
-						}
-					});
+						// end all open work sessions
+						// make decision afterwards (to ensure you have no sessions open if u want to start a new one)
+						user.getWorkSessions({
+							where: [ `"open" = ?`, true ]
+						})
+						.then((workSessions) => {
+							var endTime = moment().format("YYYY-MM-DD HH:mm:ss");
+							workSessions.forEach((workSession) => {
+								workSession.update({
+									endTime,
+									"open": false
+								});
+							});
 
-					switch (postSessionDecision) {
-						case intentConfig.WANT_BREAK:
-							break;
-						case intentConfig.END_DAY:
-							break;
-						case intentConfig.START_SESSION:
-							controller.trigger('confirm_new_session', [bot, { SlackUserId }]);
-							break;
-						default: break;
-					}
+							switch (postSessionDecision) {
+								case intentConfig.WANT_BREAK:
+									break;
+								case intentConfig.END_DAY:
+									break;
+								case intentConfig.START_SESSION:
+									controller.trigger('confirm_new_session', [bot, { SlackUserId }]);
+									break;
+								default: break;
+							}
+
+						});
+
+					});
+				
 
 				} else {
 					// ending convo prematurely
