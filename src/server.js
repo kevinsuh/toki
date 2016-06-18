@@ -38,6 +38,11 @@ app.use(function(err, req, res, next) {
 //port for Heroku
 app.set('port', (process.env.PORT));
 
+var env = process.env.NODE_ENV || 'development';
+if (env == 'development') {
+  console.log("\n\n ~~ In development server of Navi ~~ \n\n");
+  process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
+}
 
 /**
  * 			START THE SERVER + BOT
@@ -65,6 +70,10 @@ app.listen(app.get('port'), () => {
 			 * @param  timezone of the job
 			 */
 			new CronJob('*/5 * * * * *', cronFunction, null, true, "America/New_York");
+
+	    bot.startPrivateConversation({user: "U121ZK15J"}, (err, convo) => {
+				convo.say(`Hey Kevin! I am live and ready for you :robot_face:`);
+			});
 	  } else {
 	    console.log("RTM failed")
 	  }

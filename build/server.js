@@ -1,7 +1,7 @@
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-	value: true
+		value: true
 });
 exports.bot = undefined;
 
@@ -61,11 +61,17 @@ require('./app/router').default(app);
 
 // Error Handling
 app.use(function (err, req, res, next) {
-	res.status(err.status || 500);
+		res.status(err.status || 500);
 });
 
 //port for Heroku
 app.set('port', process.env.PORT);
+
+var env = process.env.NODE_ENV || 'development';
+if (env == 'development') {
+		console.log("\n\n ~~ In development server of Navi ~~ \n\n");
+		process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
+}
 
 /**
  * 			START THE SERVER + BOT
@@ -74,29 +80,33 @@ app.set('port', process.env.PORT);
 
 (0, _controllers.customConfigBot)(_controllers.controller);
 var bot = _controllers.controller.spawn({
-	token: process.env.BOT_TOKEN
+		token: process.env.BOT_TOKEN
 });
 exports.bot = bot;
 
 
 app.listen(app.get('port'), function () {
-	console.log('listening on port ' + app.get('port'));
+		console.log('listening on port ' + app.get('port'));
 
-	bot.startRTM(function (err) {
-		if (!err) {
-			console.log("RTM on and listening");
+		bot.startRTM(function (err) {
+				if (!err) {
+						console.log("RTM on and listening");
 
-			/**
-   * 						*** CRON JOB ***
-   * @param  time increment in cron format
-   * @param  function to run each increment
-   * @param  function to run at end of cron job
-   * @param  timezone of the job
-   */
-			new CronJob('*/5 * * * * *', _cron4.default, null, true, "America/New_York");
-		} else {
-			console.log("RTM failed");
-		}
-	});
+						/**
+      * 						*** CRON JOB ***
+      * @param  time increment in cron format
+      * @param  function to run each increment
+      * @param  function to run at end of cron job
+      * @param  timezone of the job
+      */
+						new CronJob('*/5 * * * * *', _cron4.default, null, true, "America/New_York");
+
+						bot.startPrivateConversation({ user: "U121ZK15J" }, function (err, convo) {
+								convo.say('Hey Kevin! I am live and ready for you :robot_face:');
+						});
+				} else {
+						console.log("RTM failed");
+				}
+		});
 });
 //# sourceMappingURL=server.js.map

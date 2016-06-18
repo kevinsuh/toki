@@ -70,6 +70,9 @@ var registerTeam = (auth, res) => {
           url: identity.url,
           name: identity.team
         }
+
+        console.log("\n\n\n ~~ bot has been installed ~~ \n\n\n");
+        console.log(team);
         // start the bot!
         startBot(team, "create");
 

@@ -17,6 +17,13 @@ import intentConfig from '../lib/intents';
 
 require('dotenv').config();
 
+var env = process.env.NODE_ENV || 'development';
+if (env == 'development') {
+  console.log("\n\n ~~ In development controller of Navi ~~ \n\n");
+  process.env.SLACK_ID = process.env.DEV_SLACK_ID;
+  process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
+}
+
 // actions
 import { firstInstallInitiateConversation, loginInitiateConversation } from '../actions/initiation';
 
@@ -182,7 +189,7 @@ controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
   if (!message.selectedIntent) {
     bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
 
-    var options = ['start a session', 'end session early', 'set a reminder', 'view your task list', 'add a task to your list', 'end your day', 'return to session and forget this interaction ever occured'];
+    var options = ['start a day', 'start a session', 'end session early', 'set a reminder', 'view your task list', 'add a task to your list', 'end your day', 'return to session and forget this interaction ever occured'];
     var optionsList = "```";
     options.forEach((option) => {
       optionsList = `${optionsList}${option}\n`
