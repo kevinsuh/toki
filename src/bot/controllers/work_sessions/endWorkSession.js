@@ -318,6 +318,7 @@ export default function(controller) {
 								case intentConfig.WANT_BREAK:
 									break;
 								case intentConfig.END_DAY:
+									controller.trigger('trigger_day_end', [bot, { SlackUserId }]);
 									break;
 								case intentConfig.START_SESSION:
 									controller.trigger('confirm_new_session', [bot, { SlackUserId }]);
@@ -420,7 +421,6 @@ function askUserPostSessionOptions(response, convo) {
 					convo.sessionEnd.postSessionDecision = intentConfig.START_SESSION;
 					break;
 				case intentConfig.END_DAY:
-					convo.say("Let's review the day! :pencil:");
 					convo.sessionEnd.postSessionDecision = intentConfig.END_DAY;
 					break;
 				default:
