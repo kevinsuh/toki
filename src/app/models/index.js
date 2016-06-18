@@ -1,5 +1,9 @@
 'use strict';
 
+// env configuration 
+import dotenv from 'dotenv';
+dotenv.load();
+
 var fs        = require('fs');
 var path      = require('path');
 var Sequelize = require('sequelize');
