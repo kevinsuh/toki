@@ -4,7 +4,6 @@ import pg from 'pg';
 
 var router = express.Router();
 
-import { dbConnectionString } from '../../config';
 import { bot } from '../../../server';
 import { controller } from '../../../bot/controllers';
 

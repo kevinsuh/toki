@@ -14,10 +14,6 @@
     "dialect": "postgres"
   },
   "production": {
-    "username": "navi",
-    "password": null,
-    "database": "navi",
-    "host": "127.0.0.1",
-    "dialect": "postgres"
+    "use_env_variable": "DB_HOST"
   }
 }
