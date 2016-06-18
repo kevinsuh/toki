@@ -37,13 +37,26 @@ export default function(controller) {
 			channel: message.channel
 		});
 		setTimeout(()=>{
-			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-				var name = user.nickName || user.email;
-				convo.say(`Hey, ${name}!`);
-				convo.on('end', (convo) => {
-					controller.trigger(`user_confirm_new_day`, { SlackUserId });
-				})
-			});
+			models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+				include: [
+					models.SlackUser
+				]
+			})
+			.then((user) => {
+				controller.trigger(`user_confirm_new_day`, [ bot, { SlackUserId }]);
+
+				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+					convo.config = { SlackUserId };
+					var name = user.nickName || user.email;
+					convo.say(`Hey, ${name}!`);
+					convo.on('end', (convo) => {
+						console.log(convo);
+						const { SlackUserId } = convo.config;
+						
+					})
+				});
+			})
 		}, 1000);
 	});
 
