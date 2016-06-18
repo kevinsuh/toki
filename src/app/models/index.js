@@ -1,8 +1,12 @@
 'use strict';
+console.log("in index of sequelize models");
 
 // env configuration 
 import dotenv from 'dotenv';
 dotenv.load();
+
+console.log("enviroment vaariables:");
+console.log(process.env);
 
 var fs        = require('fs');
 var path      = require('path');
