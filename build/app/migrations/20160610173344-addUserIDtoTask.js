@@ -1,0 +1,27 @@
+'use strict';
+
+module.exports = {
+  up: function up(queryInterface, Sequelize) {
+
+    // add userID
+    queryInterface.addColumn('Tasks', 'userID', {
+      type: Sequelize.INTEGER,
+      references: 'Users',
+      referencesKey: 'id',
+      allowNull: false
+    });
+
+    // make email unique
+    return queryInterface.changeColumn('Users', 'email', {
+      type: Sequelize.STRING,
+      allowNull: false,
+      unique: true
+    });
+  },
+
+  down: function down(queryInterface, Sequelize) {
+
+    return queryInterface.removeColumn('Tasks', 'userID');
+  }
+};
+//# sourceMappingURL=20160610173344-addUserIDtoTask.js.map
