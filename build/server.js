@@ -94,19 +94,9 @@ app.listen(app.get('port'), function () {
    * @param  timezone of the job
    */
 			new CronJob('*/5 * * * * *', _cron4.default, null, true, "America/New_York");
-
-			bot.startPrivateConversation({ user: "U121ZK15J" }, function (err, convo) {
-				convo.say('Hello! I am live and ready for you :robot_face:');
-			});
-			// channels that start with "D" are direct message channels
-			// bot.send({
-			//      type: "message",
-			//      channel: "D1F93BHM3",
-			//      text: "hello world?"
-			//  	});
 		} else {
-				console.log("RTM failed");
-			}
+			console.log("RTM failed");
+		}
 	});
 });
 //# sourceMappingURL=server.js.map

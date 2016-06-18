@@ -65,16 +65,6 @@ app.listen(app.get('port'), () => {
 			 * @param  timezone of the job
 			 */
 			new CronJob('*/5 * * * * *', cronFunction, null, true, "America/New_York");
-
-	    bot.startPrivateConversation({user: "U121ZK15J"}, (err, convo) => {
-				convo.say(`Hello! I am live and ready for you :robot_face:`);
-			});
-			// channels that start with "D" are direct message channels
-			// bot.send({
-   //      type: "message",
-   //      channel: "D1F93BHM3",
-   //      text: "hello world?"
-   //  	});
 	  } else {
 	    console.log("RTM failed")
 	  }
