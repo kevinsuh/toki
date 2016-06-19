@@ -501,58 +501,67 @@ function confirmTimeForTasks(response, convo) {
 		totalMinutes += parseInt(minutes);
 	}
 
-	// get timezone of user before continuing
-	bot.api.users.list({
-  	presence: 1
-  }, (err, response) => {
-  	const { members } = response; // members are all users registered to your bot
+	var now = moment();
+	var calculatedTimeObject = now.add(totalMinutes, 'minutes');
+	var calculatedTimeString = calculatedTimeObject.format("h:mm a");
+	convo.say(`Nice! That should take until ${calculatedTimeString} based on your estimate`);
+	convo.ask(`Would you like to work until ${calculatedTimeString}?`, [
+		{
+			pattern: bot.utterances.yes,
+			callback: (response, convo) => {
 
-  	for (var i = 0; i < members.length; i++) {
-  		if (members[i].id == SlackUserId) {
-  			var timeZoneObject = {};
-  			timeZoneObject.tz = members[i].tz;
-  			timeZoneObject.tz_label = members[i].tz_label;
-  			timeZoneObject.tz_offset = members[i].tz_offset;
-  			convo.sessionStart.timeZone = timeZoneObject;
-  			break;
-  		}
-  	}
+				// success! now save session time info for the user
+				convo.sessionStart.totalMinutes         = totalMinutes;
+				convo.sessionStart.calculatedTime       = calculatedTimeString;
+				convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
 
-  	var { timeZone } = convo.sessionStart;
-  	if (timeZone && timeZone.tz) {
-  		timeZone = timeZone.tz;
-  	} else {
-  		timeZone = "America/New_York"; // THIS IS WRONG AND MUST BE FIXED
-  		// SOLUTION IS MOST LIKELY TO ASK USER HERE WHAT THEIR TIMEZONE IS.
-  	}
-  	console.log(`Your timezone is: ${timeZone}`);
-  	var calculatedTimeObject = moment().tz(timeZone).add(totalMinutes, 'minutes')
-  	var calculatedTimeString = calculatedTimeObject.format("h:mm a");
-  	convo.say(`Nice! That should take until ${calculatedTimeString} based on your estimate`);
-  	convo.ask(`Would you like to work until ${calculatedTimeString}?`, [
-			{
-				pattern: bot.utterances.yes,
-				callback: (response, convo) => {
-
-					// success! now save session time info for the user
-					convo.sessionStart.totalMinutes         = totalMinutes;
-					convo.sessionStart.calculatedTime       = calculatedTimeString;
-					convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
-
-					askForCheckIn(response, convo);
-					convo.next();
-				}
-			},
-			{
-				pattern: bot.utterances.no,
-				callback: (response, convo) => {
-					askForCustomTotalMinutes(response, convo);
-					convo.next();
-				}
+				askForCheckIn(response, convo);
+				convo.next();
 			}
-		]);
+		},
+		{
+			pattern: bot.utterances.no,
+			callback: (response, convo) => {
+				askForCustomTotalMinutes(response, convo);
+				convo.next();
+			}
+		}
+	]);
 
-  });
+
+	if (false) {
+		/**
+		 * 		We may need to do something like this if Node / Sequelize
+		 * 		does not handle west coast as I idealistically hope for
+		 */
+		
+		// get timezone of user before continuing
+		bot.api.users.list({
+	  	presence: 1
+	  }, (err, response) => {
+	  	const { members } = response; // members are all users registered to your bot
+
+	  	for (var i = 0; i < members.length; i++) {
+	  		if (members[i].id == SlackUserId) {
+	  			var timeZoneObject = {};
+	  			timeZoneObject.tz = members[i].tz;
+	  			timeZoneObject.tz_label = members[i].tz_label;
+	  			timeZoneObject.tz_offset = members[i].tz_offset;
+	  			convo.sessionStart.timeZone = timeZoneObject;
+	  			break;
+	  		}
+	  	}
+
+	  	var { timeZone } = convo.sessionStart;
+	  	if (timeZone && timeZone.tz) {
+	  		timeZone = timeZone.tz;
+	  	} else {
+	  		timeZone = "America/New_York"; // THIS IS WRONG AND MUST BE FIXED
+	  		// SOLUTION IS MOST LIKELY TO ASK USER HERE WHAT THEIR TIMEZONE IS.
+	  	}
+	  });
+
+	}
 
 }
 
@@ -696,9 +705,8 @@ function confirmCheckInTime(response, convo) {
 
 	const { task }                = convo;
 	const { bot, source_message } = task;
-	const SlackUserId = response.user;
-
-	var { timeZone: { tz } } = convo.sessionStart;
+	const SlackUserId             = response.user;
+	var now                       = moment();
 
 	// use Wit to understand the message in natural language!
 	var { intentObject: { entities } } = response;
@@ -715,16 +723,19 @@ function confirmCheckInTime(response, convo) {
 		var durationMinutes = Math.floor(durationSeconds / 60);
 
 		// add minutes to now
-		checkinTimeObject = moment().tz(tz).add(durationSeconds, 'seconds');
+		checkinTimeObject = moment().add(durationSeconds, 'seconds');
 		checkinTimeString = checkinTimeObject.format("h:mm a");
 
 	} else if (entities.custom_time) {
 		// get rid of timezone to make it tz-neutral
 		// then create a moment-timezone object with specified timezone
 		var timeStamp = entities.custom_time[0].value;
+		timeStamp = moment(timeStamp); // in PST because of Wit default settings
 
+		timeStamp.add(timeStamp._tzm - now.utcOffset(), 'minutes');
 		// create time object based on user input + timezone
-		checkinTimeObject = createMomentObjectWithSpecificTimeZone(timeStamp, tz);
+		
+		checkinTimeObject = timeStamp;
 		checkinTimeString = checkinTimeObject.format("h:mm a");
 
 	}
