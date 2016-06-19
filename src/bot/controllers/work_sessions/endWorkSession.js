@@ -82,7 +82,7 @@ export default function(controller) {
 						controller.trigger('end_session', [bot, { SlackUserId }]);
 					} else {
 						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-							convo.say(`I'm not absolutely sure what you mean :thinking_face:. If you're ending a session, reply \`done\``);
+							convo.say(`I'm not absolutely sure what you mean :thinking_face:. If you're finished with a session, reply \`done\``);
 							convo.next();
 						});
 					}

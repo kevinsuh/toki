@@ -606,11 +606,9 @@ function confirmCustomTotalMinutes(response, convo) {
 	var source_message = task.source_message;
 
 	var SlackUserId = response.user;
-
-	var tz = convo.sessionStart.timeZone.tz;
+	var now = (0, _momentTimezone2.default)();
 
 	// use Wit to understand the message in natural language!
-
 	var entities = response.intentObject.entities;
 
 	var customTimeObject; // moment object of time
@@ -626,7 +624,7 @@ function confirmCustomTotalMinutes(response, convo) {
 		var durationMinutes = Math.floor(durationSeconds / 60);
 
 		// add minutes to now
-		customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(durationSeconds, 'seconds');
+		customTimeObject = (0, _momentTimezone2.default)().add(durationSeconds, 'seconds');
 		customTimeString = customTimeObject.format("h:mm a");
 	} else if (entities.custom_time) {
 		// get rid of timezone to make it tz-neutral
@@ -634,7 +632,8 @@ function confirmCustomTotalMinutes(response, convo) {
 		var timeStamp = entities.custom_time[0].value;
 
 		// create time object based on user input + timezone
-		customTimeObject = (0, _miscHelpers.createMomentObjectWithSpecificTimeZone)(timeStamp, tz);
+		customTimeObject = (0, _momentTimezone2.default)(timeStamp);
+		customTimeObject.add(customTimeObject._tzm - now.utcOffset(), 'minutes');
 		customTimeString = customTimeObject.format("h:mm a");
 	}
 
