@@ -239,7 +239,7 @@ exports.default = function (controller) {
 					if (sessionStart.dailyTasks.length > 0 && !sessionStart.calculatedTimeObject) {
 
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-							convo.say("Sorry but something went wrong :dog:. Let me know if you want to `start a session` again");
+							convo.say("Sorry but something went wrong :dog:. Please try `start a session` again");
 							convo.next();
 						});
 
