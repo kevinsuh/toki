@@ -11,7 +11,7 @@ import startWorKSessionController from './startWorkSession';
 import intentConfig from '../../lib/intents';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
 
-// base controller for work sessions
+// base controller for work sessions!
 export default function(controller) {
 
 	/**
