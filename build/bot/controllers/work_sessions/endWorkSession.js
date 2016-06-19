@@ -22,48 +22,60 @@ exports.default = function (controller) {
    */
 
 		var SlackUserId = message.user;
+		console.log("done message:");
+		console.log(message);
 
-		_models2.default.User.find({
-			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
-			include: [_models2.default.SlackUser]
-		}).then(function (user) {
-			return user.getWorkSessions({
-				where: ['"open" = ?', true]
-			});
-		}).then(function (workSessions) {
-			if (workSessions.length > 0) {
-				// has open work sessions
-				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-					convo.ask('Are you finished with your session?', [{
-						pattern: bot.utterances.yes,
-						callback: function callback(response, convo) {
-							convo.finishedWithSession = true;
-							convo.next();
-						}
-					}, {
-						pattern: bot.utterances.no,
-						callback: function callback(response, convo) {
-							convo.say('Oh, never mind then! Keep up the work :weight_lifter:');
-							convo.next();
-						}
-					}]);
-					convo.on('end', function (convo) {
-						if (convo.finishedWithSession) {
-							controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
-						}
-					});
-				});
-			} else {
-				// no open sessions
-				bot.send({
-					type: "typing",
-					channel: message.channel
-				});
-				setTimeout(function () {
-					bot.reply(message, "You don't have any open sessions right now :thinking_face:. Let me know when you want to `start a session`");
-				}, (0, _botResponses.randomInt)(1250, 1750));
-			}
+		// no open sessions
+		bot.send({
+			type: "typing",
+			channel: message.channel
 		});
+
+		setTimeout(function () {
+
+			_models2.default.User.find({
+				where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+				include: [_models2.default.SlackUser]
+			}).then(function (user) {
+				return user.getWorkSessions({
+					where: ['"open" = ?', true]
+				});
+			}).then(function (workSessions) {
+				// if open work session, confirm end early
+				// else, user MUST say `done` to trigger end (this properly simulates user is done with that session)
+				if (workSessions.length > 0) {
+					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+						convo.ask('Are you finished with your session?', [{
+							pattern: bot.utterances.yes,
+							callback: function callback(response, convo) {
+								convo.finishedWithSession = true;
+								convo.next();
+							}
+						}, {
+							pattern: bot.utterances.no,
+							callback: function callback(response, convo) {
+								convo.say('Oh, never mind then! Keep up the work :weight_lifter:');
+								convo.next();
+							}
+						}]);
+						convo.on('end', function (convo) {
+							if (convo.finishedWithSession) {
+								controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
+							}
+						});
+					});
+				} else {
+					if (message.text == 'done') {
+						controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
+					} else {
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+							convo.say('I\'m not absolutely sure what you mean :thinking_face:. If you\'re ending a session, reply `done`');
+							convo.next();
+						});
+					}
+				}
+			});
+		}, 1250);
 	});
 
 	// session timer is up
@@ -75,34 +87,12 @@ exports.default = function (controller) {
 
 		var SlackUserId = config.SlackUserId;
 
-		// has open work sessions
+		// making this just a reminder now so that user can end his own session as he pleases
 
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-			convo.ask(':timer_clock: time\'s up. Reply `done` when you\'re ready to end the session', function (response, convo) {
 
-				var responseMessage = response.text;
-				var entities = response.intentObject.entities;
-
-				var done = new RegExp(/[d]/);
-
-				if (entities.duration || entities.custom_time) {
-					convo.say("Got it, you want more time :D");
-					// addSnoozeToSession(response, convo)
-				} else if (done.test(responseMessage)) {
-						convo.finishedWithSession = true;
-					} else {
-						// invalid
-						convo.say("I'm sorry, I didn't catch that :dog:");
-						convo.repeat();
-					}
-
-				convo.next();
-			});
-			convo.on('end', function (convo) {
-				if (convo.finishedWithSession) {
-					controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
-				}
-			});
+			convo.say(':timer_clock: time\'s up. Reply `done` when you\'re ready to end the session');
+			convo.next();
 		});
 	});
 

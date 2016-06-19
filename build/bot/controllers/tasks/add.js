@@ -417,10 +417,29 @@ function prioritizeTaskList(response, convo) {
 		callback: function callback(response, convo) {
 
 			convo.tasksAdd.prioritizedTaskArray = prioritizedTaskArray;
+			var SlackUserId = convo.tasksAdd.SlackUserId;
+
 
 			convo.say("Boom! This looks great");
-			convo.say("Let's get back to it");
-			convo.next();
+
+			// if user has no work sessions started, encourage user to start a session
+			_models2.default.User.find({
+				where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+				include: [_models2.default.SlackUser]
+			}).then(function (user) {
+				user.getWorkSessions({
+					where: ['"open" = ?', true]
+				}).then(function (workSessions) {
+					// user should start a session!
+					if (workSessions.length == 0) {
+						convo.say("Let me know when you're ready to `start a session` :smile_cat:");
+					} else {
+						// user was just adding tasks in the middle of a session
+						convo.say("Let’s get back to it. Good luck finishing the session :fist:");
+					}
+					convo.next();
+				});
+			});
 		}
 	}, {
 		pattern: bot.utterances.no,

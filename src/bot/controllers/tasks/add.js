@@ -387,10 +387,32 @@ function prioritizeTaskList(response, convo) {
 			callback: (response, convo) => {
 
 				convo.tasksAdd.prioritizedTaskArray = prioritizedTaskArray;
+				const { SlackUserId }               = convo.tasksAdd;
 
 				convo.say("Boom! This looks great");
-				convo.say("Let's get back to it");
-				convo.next();
+
+				// if user has no work sessions started, encourage user to start a session
+				models.User.find({
+					where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+					include: [
+						models.SlackUser
+					]
+				})
+				.then((user) => {
+					user.getWorkSessions({
+						where: [`"open" = ?`, true ]
+					})
+					.then((workSessions) => {
+						// user should start a session!
+						if (workSessions.length == 0) {
+							convo.say("Let me know when you're ready to `start a session` :smile_cat:");
+						} else {
+						// user was just adding tasks in the middle of a session
+							convo.say("Let’s get back to it. Good luck finishing the session :fist:");
+						}
+						convo.next();
+					})
+				})
 			}
 		},
 		{
