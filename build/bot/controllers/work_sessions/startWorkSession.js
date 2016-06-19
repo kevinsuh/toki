@@ -517,55 +517,63 @@ function confirmTimeForTasks(response, convo) {
 		totalMinutes += parseInt(minutes);
 	}
 
-	// get timezone of user before continuing
-	bot.api.users.list({
-		presence: 1
-	}, function (err, response) {
-		var members = response.members; // members are all users registered to your bot
+	var now = (0, _momentTimezone2.default)();
+	var calculatedTimeObject = now.add(totalMinutes, 'minutes');
+	var calculatedTimeString = calculatedTimeObject.format("h:mm a");
+	convo.say('Nice! That should take until ' + calculatedTimeString + ' based on your estimate');
+	convo.ask('Would you like to work until ' + calculatedTimeString + '?', [{
+		pattern: bot.utterances.yes,
+		callback: function callback(response, convo) {
 
-		for (var i = 0; i < members.length; i++) {
-			if (members[i].id == SlackUserId) {
-				var timeZoneObject = {};
-				timeZoneObject.tz = members[i].tz;
-				timeZoneObject.tz_label = members[i].tz_label;
-				timeZoneObject.tz_offset = members[i].tz_offset;
-				convo.sessionStart.timeZone = timeZoneObject;
-				break;
-			}
+			// success! now save session time info for the user
+			convo.sessionStart.totalMinutes = totalMinutes;
+			convo.sessionStart.calculatedTime = calculatedTimeString;
+			convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
+
+			askForCheckIn(response, convo);
+			convo.next();
 		}
-
-		var timeZone = convo.sessionStart.timeZone;
-
-		if (timeZone && timeZone.tz) {
-			timeZone = timeZone.tz;
-		} else {
-			timeZone = "America/New_York"; // THIS IS WRONG AND MUST BE FIXED
-			// SOLUTION IS MOST LIKELY TO ASK USER HERE WHAT THEIR TIMEZONE IS.
+	}, {
+		pattern: bot.utterances.no,
+		callback: function callback(response, convo) {
+			askForCustomTotalMinutes(response, convo);
+			convo.next();
 		}
-		console.log('Your timezone is: ' + timeZone);
-		var calculatedTimeObject = (0, _momentTimezone2.default)().tz(timeZone).add(totalMinutes, 'minutes');
-		var calculatedTimeString = calculatedTimeObject.format("h:mm a");
-		convo.say('Nice! That should take until ' + calculatedTimeString + ' based on your estimate');
-		convo.ask('Would you like to work until ' + calculatedTimeString + '?', [{
-			pattern: bot.utterances.yes,
-			callback: function callback(response, convo) {
+	}]);
 
-				// success! now save session time info for the user
-				convo.sessionStart.totalMinutes = totalMinutes;
-				convo.sessionStart.calculatedTime = calculatedTimeString;
-				convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
+	if (false) {
+		/**
+   * 		We may need to do something like this if Node / Sequelize
+   * 		does not handle west coast as I idealistically hope for
+   */
 
-				askForCheckIn(response, convo);
-				convo.next();
+		// get timezone of user before continuing
+		bot.api.users.list({
+			presence: 1
+		}, function (err, response) {
+			var members = response.members; // members are all users registered to your bot
+
+			for (var i = 0; i < members.length; i++) {
+				if (members[i].id == SlackUserId) {
+					var timeZoneObject = {};
+					timeZoneObject.tz = members[i].tz;
+					timeZoneObject.tz_label = members[i].tz_label;
+					timeZoneObject.tz_offset = members[i].tz_offset;
+					convo.sessionStart.timeZone = timeZoneObject;
+					break;
+				}
 			}
-		}, {
-			pattern: bot.utterances.no,
-			callback: function callback(response, convo) {
-				askForCustomTotalMinutes(response, convo);
-				convo.next();
+
+			var timeZone = convo.sessionStart.timeZone;
+
+			if (timeZone && timeZone.tz) {
+				timeZone = timeZone.tz;
+			} else {
+				timeZone = "America/New_York"; // THIS IS WRONG AND MUST BE FIXED
+				// SOLUTION IS MOST LIKELY TO ASK USER HERE WHAT THEIR TIMEZONE IS.
 			}
-		}]);
-	});
+		});
+	}
 }
 
 // ask for custom amount of time to work on
@@ -702,10 +710,7 @@ function confirmCheckInTime(response, convo) {
 
 	var SlackUserId = response.user;
 
-	var tz = convo.sessionStart.timeZone.tz;
-
 	// use Wit to understand the message in natural language!
-
 	var entities = response.intentObject.entities;
 
 	var checkinTimeObject; // moment object of time
