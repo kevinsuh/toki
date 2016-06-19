@@ -709,6 +709,7 @@ function confirmCheckInTime(response, convo) {
 	var source_message = task.source_message;
 
 	var SlackUserId = response.user;
+	var now = (0, _momentTimezone2.default)();
 
 	// use Wit to understand the message in natural language!
 	var entities = response.intentObject.entities;
@@ -726,15 +727,18 @@ function confirmCheckInTime(response, convo) {
 		var durationMinutes = Math.floor(durationSeconds / 60);
 
 		// add minutes to now
-		checkinTimeObject = (0, _momentTimezone2.default)().tz(tz).add(durationSeconds, 'seconds');
+		checkinTimeObject = (0, _momentTimezone2.default)().add(durationSeconds, 'seconds');
 		checkinTimeString = checkinTimeObject.format("h:mm a");
 	} else if (entities.custom_time) {
 		// get rid of timezone to make it tz-neutral
 		// then create a moment-timezone object with specified timezone
 		var timeStamp = entities.custom_time[0].value;
+		timeStamp = (0, _momentTimezone2.default)(timeStamp); // in PST because of Wit default settings
 
+		timeStamp.add(timeStamp._tzm - now.utcOffset(), 'minutes');
 		// create time object based on user input + timezone
-		checkinTimeObject = (0, _miscHelpers.createMomentObjectWithSpecificTimeZone)(timeStamp, tz);
+
+		checkinTimeObject = timeStamp;
 		checkinTimeString = checkinTimeObject.format("h:mm a");
 	}
 

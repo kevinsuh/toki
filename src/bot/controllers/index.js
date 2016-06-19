@@ -304,7 +304,6 @@ controller.on(`new_session_group_decision`, (bot, config) => {
               convo.newSessionGroup.decision = intentConfig.START_DAY;
             } else if (letsContinue.test(responseMessage)) {
               // continue with add task flow
-              convo.say("Got it. Let's continue on :muscle:");
               convo.newSessionGroup.decision = intent;
             } else {
               // default is to exit this conversation entirely
