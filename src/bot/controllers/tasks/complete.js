@@ -9,8 +9,6 @@ import models from '../../../app/models';
 import { randomInt } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
 
-const FINISH_WORD = 'done';
-
 // completed task controller
 export default function(controller) {
 
@@ -128,7 +126,7 @@ export default function(controller) {
 
 													});
 												});
-												
+
 											})
 										}
 									});

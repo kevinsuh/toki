@@ -6,6 +6,9 @@ Object.defineProperty(exports, "__esModule", {
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
+// base controller for tasks
+
+
 exports.default = function (controller) {
 
 	/**
@@ -202,11 +205,10 @@ var _intents = require('../../lib/intents');
 
 var _intents2 = _interopRequireDefault(_intents);
 
+var _constants = require('../../lib/constants');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var FINISH_WORD = 'done';
-
-// base controller for tasks
 ;
 
 // user adds new tasks here
@@ -228,9 +230,9 @@ function askForNewTasksToAdd(response, convo) {
 	convo.say('What task(s) would you like to add to your list? :pencil:');
 	convo.say('You can enter everything in one line, separated by commas, or send me each task in a separate line');
 
-	convo.ask('Then just tell me when you\'re done by saying `' + FINISH_WORD + '`!', function (response, convo) {
+	convo.ask('Then just tell me when you\'re done by saying `' + _constants.FINISH_WORD.word + '`!', function (response, convo) {
 
-		if (response.text == FINISH_WORD) {
+		if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
 			askForTimeToTasks(response, convo);
 			convo.next();
 		}

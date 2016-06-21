@@ -50,8 +50,7 @@ var _endDay2 = _interopRequireDefault(_endDay);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var FINISH_WORD = 'done';
+;
 
 // base controller for "day" flow
-;
 //# sourceMappingURL=index.js.map

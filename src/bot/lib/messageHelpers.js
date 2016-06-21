@@ -2,7 +2,7 @@
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
  */
 
-const FINISH_WORD = 'done';
+import { FINISH_WORD } from './constants';
 const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
 
 
@@ -17,8 +17,9 @@ export function convertResponseObjectsToTaskArray(tasks) {
 	var taskString = '';
 	tasks.forEach((task, index) => {
 		// ignore the last one (`done` command)
-		if (task.text == FINISH_WORD)
+		if (FINISH_WORD.reg_exp.test(task.text)) {
 			return;
+		}
 
 		taskString += task.text;
 		taskString += '\n';

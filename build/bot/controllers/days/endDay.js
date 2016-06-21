@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.EXIT_EARLY_WORDS = exports.FINISH_WORD = undefined;
+exports.EXIT_EARLY_WORDS = undefined;
 
 exports.default = function (controller) {
 
@@ -262,7 +262,6 @@ var _intents2 = _interopRequireDefault(_intents);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var FINISH_WORD = exports.FINISH_WORD = 'done';
 var EXIT_EARLY_WORDS = exports.EXIT_EARLY_WORDS = ['exit', 'stop', 'never mind', 'quit'];
 
 // base controller for end day

@@ -9,7 +9,7 @@ import models from '../../../app/models';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 
-const FINISH_WORD = 'done';
+import { FINISH_WORD } from '../../lib/constants';
 
 // base controller for tasks
 export default function(controller) {
@@ -199,9 +199,9 @@ function askForNewTasksToAdd(response, convo) {
 	convo.say(`What task(s) would you like to add to your list? :pencil:`);
 	convo.say(`You can enter everything in one line, separated by commas, or send me each task in a separate line`);
 
-	convo.ask(`Then just tell me when you're done by saying \`${FINISH_WORD}\`!`, (response, convo) => {
+	convo.ask(`Then just tell me when you're done by saying \`${FINISH_WORD.word}\`!`, (response, convo) => {
 
-		if (response.text == FINISH_WORD) {
+		if (FINISH_WORD.reg_exp.test(response.text)) {
 			askForTimeToTasks(response, convo);
 			convo.next();
 		}
