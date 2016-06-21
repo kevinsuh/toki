@@ -373,7 +373,7 @@ function prioritizeTaskList(response, convo) {
 		}
 	});
 
-	var prioritizedTaskArray = [];
+	var prioritizedTaskArray = []; 
 	priorityOrder.forEach((order) => {
 		prioritizedTaskArray.push(allTasksArray[order]);
 	});
