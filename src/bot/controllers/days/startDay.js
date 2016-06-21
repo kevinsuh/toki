@@ -150,7 +150,7 @@ export default function(controller) {
 
 				// check if user has pending tasks or not!
 				user.getDailyTasks({
-					where: [`"DailyTask"."type" = ?`, "pending"],
+					where: [`"DailyTask"."type" in (?)`, ["pending", "live"]],
 					include: [ models.Task ]
 				})
 				.then((dailyTasks) => {
@@ -221,15 +221,21 @@ export default function(controller) {
 			    					const { text, minutes} = task;
 
 			    					if (dataValues) { // only existing tasks have data values
-			    						
+
+			    						// for these, we'll still be making NEW `daily_tasks`, using OLD `tasks`
 			    						const { id } = dataValues;
-			    						models.DailyTask.update({
-			    							minutes,
-			    							UserId,
-			    							priority,
-			    							type: "live"
-			    						}, {
-			    							where: { id }
+			    						models.DailyTask.find({
+			    							where: { id },
+			    							include: [ models.Task ]
+			    						})
+			    						.then((dailyTask) => {
+			    							const TaskId = dailyTask.TaskId;
+			    							models.DailyTask.create({
+			    								TaskId,
+			    								minutes,
+			    								priority,
+			    								UserId
+			    							});
 			    						});
 
 			    					} else { // new task
@@ -283,7 +289,10 @@ function showPendingTasks(response, convo) {
 	const { bot, source_message } = task;
 	var { pendingTasks }          = convo.dayStart;
 
-	var taskListMessage = convertArrayToTaskListMessage(pendingTasks);
+	var options = {
+		dontShowMinutes: true
+	}
+	var taskListMessage = convertArrayToTaskListMessage(pendingTasks, options);
 	convo.say(taskListMessage);
 	convo.ask(`Which of these tasks would you like to work on today? Just tell me which numbers, or say \`${NONE.word}\` :1234:`, (response, convo) => {
 		savePendingTasksToWorkOn(response, convo);
@@ -316,7 +325,10 @@ function savePendingTasksToWorkOn(response, convo) {
 			return;
 		}
 
-		var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray);
+		var options = {
+			dontShowMinutes: true
+		}
+		var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray, options);
 
 		convo.say("Are these the ones you'd like to add to today's task list?");
 		convo.ask(taskListMessage, [
@@ -401,7 +413,8 @@ function displayTaskList(response, convo) {
 	// taskArray is now attached to convo
 	convo.dayStart.taskArray = taskArray;
 
-	var taskListMessage = convertArrayToTaskListMessage(taskArray);
+	var options = { dontShowMinutes: true };
+	var taskListMessage = convertArrayToTaskListMessage(taskArray, options);
 
 	// we need to prioritize the task list here to display to user
 	convo.say(`Now, please rank your tasks in order of your priorities today`);
@@ -434,7 +447,8 @@ function prioritizeTaskList(response, convo) {
 	}
 
 	convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
-	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray);
+	var options = { dontShowMinutes: true };
+	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray, options);
 
 	convo.say("Is this the right priority?");
 	convo.ask(taskListMessage, [
@@ -496,14 +510,27 @@ function assignTimeToTasks(response, convo) {
 	});
 
 	prioritizedTaskArray = prioritizedTaskArray.map((task, index) => {
+		if (task.dataValues) {
+			return {
+				...task,
+				minutes: timeToTask[index],
+				text: task.dataValues.text
+			}
+		}
 		return {
 			...task,
 			minutes: timeToTask[index]
 		}
 	});
 
+	console.log("\n\n ~~ time to tasks ~~ \n\n");
+
+	var options = {
+		dontUseDataValues: true
+	}
+
 	convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
-	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray);
+	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray, options);
 
 	// INVALID tester
 	if (isInvalid) {

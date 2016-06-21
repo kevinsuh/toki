@@ -133,7 +133,7 @@ exports.default = function (controller) {
 
 				// check if user has pending tasks or not!
 				user.getDailyTasks({
-					where: ['"DailyTask"."type" = ?', "pending"],
+					where: ['"DailyTask"."type" in (?)', ["pending", "live"]],
 					include: [_models2.default.Task]
 				}).then(function (dailyTasks) {
 
@@ -206,15 +206,20 @@ exports.default = function (controller) {
 											if (dataValues) {
 												// only existing tasks have data values
 
+												// for these, we'll still be making NEW `daily_tasks`, using OLD `tasks`
 												var id = dataValues.id;
 
-												_models2.default.DailyTask.update({
-													minutes: minutes,
-													UserId: UserId,
-													priority: priority,
-													type: "live"
-												}, {
-													where: { id: id }
+												_models2.default.DailyTask.find({
+													where: { id: id },
+													include: [_models2.default.Task]
+												}).then(function (dailyTask) {
+													var TaskId = dailyTask.TaskId;
+													_models2.default.DailyTask.create({
+														TaskId: TaskId,
+														minutes: minutes,
+														priority: priority,
+														UserId: UserId
+													});
 												});
 											} else {
 												// new task
@@ -298,7 +303,10 @@ function showPendingTasks(response, convo) {
 	var pendingTasks = convo.dayStart.pendingTasks;
 
 
-	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(pendingTasks);
+	var options = {
+		dontShowMinutes: true
+	};
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(pendingTasks, options);
 	convo.say(taskListMessage);
 	convo.ask('Which of these tasks would you like to work on today? Just tell me which numbers, or say `' + _constants.NONE.word + '` :1234:', function (response, convo) {
 		savePendingTasksToWorkOn(response, convo);
@@ -331,7 +339,10 @@ function savePendingTasksToWorkOn(response, convo) {
 			return;
 		}
 
-		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTaskArray);
+		var options = {
+			dontShowMinutes: true
+		};
+		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTaskArray, options);
 
 		convo.say("Are these the ones you'd like to add to today's task list?");
 		convo.ask(taskListMessage, [{
@@ -410,7 +421,8 @@ function displayTaskList(response, convo) {
 	// taskArray is now attached to convo
 	convo.dayStart.taskArray = taskArray;
 
-	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray);
+	var options = { dontShowMinutes: true };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 
 	// we need to prioritize the task list here to display to user
 	convo.say('Now, please rank your tasks in order of your priorities today');
@@ -444,7 +456,8 @@ function prioritizeTaskList(response, convo) {
 	}
 
 	convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
-	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTaskArray);
+	var options = { dontShowMinutes: true };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTaskArray, options);
 
 	convo.say("Is this the right priority?");
 	convo.ask(taskListMessage, [{
@@ -502,13 +515,25 @@ function assignTimeToTasks(response, convo) {
 	});
 
 	prioritizedTaskArray = prioritizedTaskArray.map(function (task, index) {
+		if (task.dataValues) {
+			return _extends({}, task, {
+				minutes: timeToTask[index],
+				text: task.dataValues.text
+			});
+		}
 		return _extends({}, task, {
 			minutes: timeToTask[index]
 		});
 	});
 
+	console.log("\n\n ~~ time to tasks ~~ \n\n");
+
+	var options = {
+		dontUseDataValues: true
+	};
+
 	convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
-	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTaskArray);
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTaskArray, options);
 
 	// INVALID tester
 	if (isInvalid) {

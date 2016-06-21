@@ -53,6 +53,8 @@ function convertResponseObjectsToTaskArray(tasks) {
 
 // this should be called after you `convertToSingleTaskObjectArray`
 function convertArrayToTaskListMessage(taskArray) {
+	var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
 	var taskListMessage = '';
 	var count = 1;
 
@@ -61,14 +63,18 @@ function convertArrayToTaskListMessage(taskArray) {
 		return taskListMessage;
 	}
 
+	console.log("\n\n ~~ options passed in to convertArrayToTaskListMessage ~~ \n\n");
+	console.log(options);
+	console.log("\n\n");
+
 	taskArray.forEach(function (task) {
 
 		// for when you get task from DB
-		if (task.dataValues) {
+		if (!options.dontUseDataValues && task.dataValues) {
 			task = task.dataValues;
-		}
+		};
 
-		var minutesMessage = task.minutes ? ' (' + task.minutes + ' minutes)' : '';
+		var minutesMessage = !options.dontShowMinutes && task.minutes ? ' (' + task.minutes + ' minutes)' : '';
 		var taskContent = count + ') ' + task.text + minutesMessage;
 
 		taskContent = task.done ? '> ~' + taskContent + '~\n' : '> ' + taskContent + '\n';
