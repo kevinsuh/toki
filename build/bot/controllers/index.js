@@ -60,14 +60,16 @@ var _intents = require('../lib/intents');
 
 var _intents2 = _interopRequireDefault(_intents);
 
+var _constants = require('../lib/constants');
+
 var _initiation = require('../actions/initiation');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-require('dotenv').config();
-
 // config modules
 
+
+require('dotenv').config();
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
@@ -234,18 +236,38 @@ controller.hears([''], 'direct_message', wit.hears, function (bot, message) {
   console.log("\n\n\n ~~ in back up area ~~ \n\n\n");
   console.log(message);
 
-  // this means that user said something that we cannot handle yet
+  // user said something outside of wit's scope
   if (!message.selectedIntent) {
-    bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
 
-    var options = ['start a day', 'start a session', 'end session early', 'set a reminder', 'view your task list', 'add a task to your list', 'end your day', 'return to session and forget this interaction ever occured'];
-    var optionsList = "```";
-    options.forEach(function (option) {
-      optionsList = '' + optionsList + option + '\n';
-    });
-    optionsList = optionsList + '```';
+    // different fallbacks based on reg exp
+    var text = message.text;
 
-    bot.reply(message, optionsList);
+
+    console.log(_constants.THANK_YOU.reg_exp);
+    console.log(text);
+
+    if (_constants.THANK_YOU.reg_exp.test(text)) {
+      bot.reply(message, "You're welcome!! :smile:");
+    } else {
+      // end-all fallback
+      var options = [{ title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
+      var colorsArrayLength = _constants.colorsArray.length;
+      var optionsAttachment = options.map(function (option, index) {
+        var colorsArrayIndex = index % colorsArrayLength;
+        return {
+          fields: [{
+            title: option.title,
+            value: option.description
+          }],
+          color: _constants.colorsArray[colorsArrayIndex].hex
+        };
+      });
+
+      bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
+      bot.reply(message, {
+        attachments: optionsAttachment
+      });
+    }
   }
 });
 
