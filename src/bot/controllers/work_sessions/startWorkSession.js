@@ -218,12 +218,9 @@ export default function(controller) {
 					SlackUserId
 				};
 
-				// temporary fix to get tasks
-				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
-
 				// FIND DAILY TASKS, THEN START THE CONVERSATION
 				user.getDailyTasks({
-					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, timeAgoForTasks, false, "live"],
+					where: [`"Task"."done" = ? AND "DailyTask"."type" = ?`, false, "live"],
 					order: `"priority" ASC`,
 					include: [ models.Task ]
 				}).then((dailyTasks) => {

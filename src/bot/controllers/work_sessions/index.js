@@ -42,10 +42,8 @@ export default function(controller) {
 			})
 			.then((user) => {
 
-				// temporary fix to get tasks
-				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
 				user.getDailyTasks({
-					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, timeAgoForTasks, false, "live"],
+					where: [`"Task"."done" = ? AND "DailyTask"."type" = ?`, false, "live"],
 					include: [ models.Task ],
 					order: `"DailyTask"."priority" ASC`
 				})

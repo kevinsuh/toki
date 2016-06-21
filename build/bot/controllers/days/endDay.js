@@ -107,7 +107,7 @@ exports.default = function (controller) {
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 
-			// get the msot start_work session group to measure
+			// get the most recent start_work session group to measure
 			// a day's worth of work
 			user.getSessionGroups({
 				order: '"SessionGroup"."createdAt" DESC',
