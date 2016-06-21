@@ -8,9 +8,7 @@ import models from '../../../app/models';
 import { randomInt } from '../../lib/botResponses';
 import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
-
-export const FINISH_WORD = 'done';
-export const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
+import { FINISH_WORD, EXIT_EARLY_WORDS } from '../../lib/constants';
 
 // base controller for start day
 export default function(controller) {
@@ -253,17 +251,17 @@ function askForDayTasks(response, convo){
 	console.log(convo.name);
 
 	convo.say(`What tasks would you like to work on today? :pencil: You can enter everything in one line separated by commas, or send me each task in a separate line`);
-	convo.ask(`Then just tell me when you're done by saying \`${FINISH_WORD}\``, (response, convo) => {
+	convo.ask(`Then just tell me when you're done by saying \`${FINISH_WORD.word}\``, (response, convo) => {
 
 		for (var i = 0; i < EXIT_EARLY_WORDS.length; i++) {
-			console.log(`in exit early words loop! ${EXIT_EARLY_WORDS[i]}`);
 			if (response.text == EXIT_EARLY_WORDS[i])
 				convo.stop();
 		}
 
 		console.log(`response is`);
 		console.log(response);
-		if (response.text == FINISH_WORD) {
+
+		if (FINISH_WORD.reg_exp.test(response.text)) {
 			convo.say("Awesome! You can always add more tasks later by telling me, `I'd like to add a task` or something along those lines :grinning:");
 			displayTaskList(response, convo);
 			convo.next();

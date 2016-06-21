@@ -4,18 +4,16 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; /**
+                                                                                                                                                                                                                                                                   * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
+                                                                                                                                                                                                                                                                   */
 
 exports.convertResponseObjectsToTaskArray = convertResponseObjectsToTaskArray;
 exports.convertArrayToTaskListMessage = convertArrayToTaskListMessage;
 exports.convertTimeStringToMinutes = convertTimeStringToMinutes;
 exports.convertToSingleTaskObjectArray = convertToSingleTaskObjectArray;
-/**
- * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
- */
 
-var FINISH_WORD = 'done';
-var EXIT_EARLY_WORDS = ['exit', 'stop', 'never mind', 'quit'];
+var _constants = require('./constants');
 
 /**
  * takes array of tasks and converts to array of task STRINGS
@@ -28,7 +26,9 @@ function convertResponseObjectsToTaskArray(tasks) {
 	var taskString = '';
 	tasks.forEach(function (task, index) {
 		// ignore the last one (`done` command)
-		if (task.text == FINISH_WORD) return;
+		if (_constants.FINISH_WORD.reg_exp.test(task.text)) {
+			return;
+		}
 
 		taskString += task.text;
 		taskString += '\n';

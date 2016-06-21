@@ -103,8 +103,7 @@ var _complete2 = _interopRequireDefault(_complete);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var FINISH_WORD = 'done';
+;
 
 // base controller for tasks
-;
 //# sourceMappingURL=index.js.map

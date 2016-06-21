@@ -3,11 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.EXIT_EARLY_WORDS = exports.FINISH_WORD = undefined;
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+// base controller for start day
+
 
 exports.default = function (controller) {
 
@@ -247,12 +249,10 @@ var _intents = require('../../lib/intents');
 
 var _intents2 = _interopRequireDefault(_intents);
 
+var _constants = require('../../lib/constants');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var FINISH_WORD = exports.FINISH_WORD = 'done';
-var EXIT_EARLY_WORDS = exports.EXIT_EARLY_WORDS = ['exit', 'stop', 'never mind', 'quit'];
-
-// base controller for start day
 ;
 
 // user just started conersation and is entering tasks
@@ -266,16 +266,16 @@ function askForDayTasks(response, convo) {
 	console.log(convo.name);
 
 	convo.say('What tasks would you like to work on today? :pencil: You can enter everything in one line separated by commas, or send me each task in a separate line');
-	convo.ask('Then just tell me when you\'re done by saying `' + FINISH_WORD + '`', function (response, convo) {
+	convo.ask('Then just tell me when you\'re done by saying `' + _constants.FINISH_WORD.word + '`', function (response, convo) {
 
-		for (var i = 0; i < EXIT_EARLY_WORDS.length; i++) {
-			console.log('in exit early words loop! ' + EXIT_EARLY_WORDS[i]);
-			if (response.text == EXIT_EARLY_WORDS[i]) convo.stop();
+		for (var i = 0; i < _constants.EXIT_EARLY_WORDS.length; i++) {
+			if (response.text == _constants.EXIT_EARLY_WORDS[i]) convo.stop();
 		}
 
 		console.log('response is');
 		console.log(response);
-		if (response.text == FINISH_WORD) {
+
+		if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
 			convo.say("Awesome! You can always add more tasks later by telling me, `I'd like to add a task` or something along those lines :grinning:");
 			displayTaskList(response, convo);
 			convo.next();

@@ -158,12 +158,12 @@ var _messageHelpers = require('../../lib/messageHelpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var FINISH_WORD = 'done';
-
-// completed task controller
 ;
 
 // ask which tasks to complete
+
+
+// completed task controller
 function askWhichTasksToComplete(response, convo) {
 	var dailyTasks = convo.tasksComplete.dailyTasks;
 

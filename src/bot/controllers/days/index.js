@@ -12,8 +12,6 @@ import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '.
 import startDayFlowController from './startDay';
 import endDayFlowController from './endDay';
 
-const FINISH_WORD = 'done';
-
 // base controller for "day" flow
 export default function(controller) {
 	

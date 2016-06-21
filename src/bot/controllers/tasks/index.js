@@ -12,8 +12,6 @@ import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '.
 import addTaskController from './add';
 import completeTasksController from './complete';
 
-const FINISH_WORD = 'done';
-
 // base controller for tasks
 export default function(controller) {
 
