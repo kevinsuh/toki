@@ -380,36 +380,16 @@ function prioritizeTaskList(response, convo) {
 		allTasksArray.push(newTask);
 	});
 
-	var initialPriorityOrder = response.text;
+	// get tasks from array
+	var userInput = response.text; // i.e. `1, 3, 4, 2`
+	var prioritizedTaskArray = (0, _messageHelpers.prioritizeTaskArrayFromUserInput)(allTasksArray, userInput);
 
-	// either a non-number, or number > length of tasks
-	var isInvalid = false;
-	var nonNumberTest = new RegExp(/\D/);
-	initialPriorityOrder = initialPriorityOrder.split(",").map(function (order) {
-		order = order.trim();
-		var orderNumber = parseInt(order);
-		if (nonNumberTest.test(order) || orderNumber > allTasksArray.length) isInvalid = true;
-		return orderNumber;
-	});
-
-	if (isInvalid) {
+	// means user input is invalid
+	if (!prioritizedTaskArray) {
 		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
 		askToPrioritizeList(response, convo);
 		return;
 	}
-
-	var priorityOrder = [];
-	initialPriorityOrder.forEach(function (order) {
-		if (order > 0) {
-			order--; // make user-entered numbers 0-index based
-			priorityOrder.push(order);
-		}
-	});
-
-	var prioritizedTaskArray = [];
-	priorityOrder.forEach(function (order) {
-		prioritizedTaskArray.push(allTasksArray[order]);
-	});
 
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTaskArray);
 

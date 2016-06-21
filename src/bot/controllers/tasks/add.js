@@ -6,7 +6,7 @@ import moment from 'moment-timezone';
 
 import models from '../../../app/models';
 
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, prioritizeTaskArrayFromUserInput, convertTimeStringToMinutes } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 
 import { FINISH_WORD } from '../../lib/constants';
@@ -346,37 +346,16 @@ function prioritizeTaskList(response, convo) {
 		allTasksArray.push(newTask);
 	});
 
-	var initialPriorityOrder = response.text;
+	// get tasks from array
+	var userInput = response.text; // i.e. `1, 3, 4, 2`
+	var prioritizedTaskArray = prioritizeTaskArrayFromUserInput(allTasksArray, userInput)
 
-	// either a non-number, or number > length of tasks
-	var isInvalid = false;
-	var nonNumberTest = new RegExp(/\D/);
-	initialPriorityOrder = initialPriorityOrder.split(",").map((order) => {
-		order = order.trim();
-		var orderNumber = parseInt(order);
-		if (nonNumberTest.test(order) || orderNumber > allTasksArray.length)
-			isInvalid = true;
-		return orderNumber;
-	});
-
-	if (isInvalid) {
+	// means user input is invalid
+	if (!prioritizedTaskArray) {
 		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
 		askToPrioritizeList(response, convo);
 		return;
 	}
-
-	var priorityOrder = [];
-	initialPriorityOrder.forEach(function(order) {
-		if ( order > 0) {
-			order--; // make user-entered numbers 0-index based
-			priorityOrder.push(order);
-		}
-	});
-
-	var prioritizedTaskArray = []; 
-	priorityOrder.forEach((order) => {
-		prioritizedTaskArray.push(allTasksArray[order]);
-	});
 
 	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray);
 
