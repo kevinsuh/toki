@@ -3,7 +3,6 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.EXIT_EARLY_WORDS = undefined;
 
 exports.default = function (controller) {
 
@@ -262,12 +261,12 @@ var _intents2 = _interopRequireDefault(_intents);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var EXIT_EARLY_WORDS = exports.EXIT_EARLY_WORDS = ['exit', 'stop', 'never mind', 'quit'];
-
-// base controller for end day
 ;
 
 // start of end day flow
+
+
+// base controller for end day
 function startEndDayFlow(response, convo) {
 	var task = convo.task;
 	var name = convo.name;

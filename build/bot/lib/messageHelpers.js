@@ -15,8 +15,6 @@ exports.convertToSingleTaskObjectArray = convertToSingleTaskObjectArray;
 
 var _constants = require('./constants');
 
-var EXIT_EARLY_WORDS = ['exit', 'stop', 'never mind', 'quit'];
-
 /**
  * takes array of tasks and converts to array of task STRINGS
  * these "response objects" are botkit MESSAGE response

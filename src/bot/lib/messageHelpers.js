@@ -3,7 +3,7 @@
  */
 
 import { FINISH_WORD } from './constants';
-const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
+
 
 
 /**

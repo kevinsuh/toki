@@ -10,8 +10,6 @@ import { randomInt } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 
-export const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
-
 // base controller for end day
 export default function(controller) {
 
