@@ -34,11 +34,10 @@ export default function(controller) {
 			})
 			.then((user) => {
 
-				// temporary fix to get tasks
-				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
-
+				// get only live tasks from start day session group
+				// start and end SessionGroup will refresh user's "live" tasks
 				user.getDailyTasks({
-					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, timeAgoForTasks, false, "live"],
+					where: [`"Task"."done" = ? AND "DailyTask"."type" = ?`, false, "live"],
 					include: [ models.Task ],
 					order: `"DailyTask"."priority" ASC`
 				})
@@ -111,7 +110,7 @@ export default function(controller) {
 											.then((task) => {
 
 												models.DailyTask.findAll({
-													where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ? AND "DailyTask"."UserId" = ?`, timeAgoForTasks, false, "live", UserId],
+													where: [`"Task"."done" = ? AND "DailyTask"."type" = ? AND "DailyTask"."UserId" = ?`, false, "live", UserId],
 													include: [ models.Task ]
 												})
 												.then((dailyTasks) => {

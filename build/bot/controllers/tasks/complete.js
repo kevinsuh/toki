@@ -25,11 +25,10 @@ exports.default = function (controller) {
 				include: [_models2.default.SlackUser]
 			}).then(function (user) {
 
-				// temporary fix to get tasks
-				var timeAgoForTasks = (0, _moment2.default)().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
-
+				// get only live tasks from start day session group
+				// start and end SessionGroup will refresh user's "live" tasks
 				user.getDailyTasks({
-					where: ['"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?', timeAgoForTasks, false, "live"],
+					where: ['"Task"."done" = ? AND "DailyTask"."type" = ?', false, "live"],
 					include: [_models2.default.Task],
 					order: '"DailyTask"."priority" ASC'
 				}).then(function (dailyTasks) {
@@ -98,7 +97,7 @@ exports.default = function (controller) {
 											}).then(function (task) {
 
 												_models2.default.DailyTask.findAll({
-													where: ['"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ? AND "DailyTask"."UserId" = ?', timeAgoForTasks, false, "live", UserId],
+													where: ['"Task"."done" = ? AND "DailyTask"."type" = ? AND "DailyTask"."UserId" = ?', false, "live", UserId],
 													include: [_models2.default.Task]
 												}).then(function (dailyTasks) {
 													bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {

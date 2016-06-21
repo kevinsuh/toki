@@ -142,10 +142,8 @@ export default function(controller) {
 
 				convo.sessionEnd.UserId = user.id;
 
-				// temporary fix to get tasks
-				var timeAgoForTasks = moment().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
 				return user.getDailyTasks({
-					where: [ `"Task"."done" = ? AND "DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?`, false, timeAgoForTasks, "live" ],
+					where: [ `"Task"."done" = ? AND "DailyTask"."type" = ?`, false, "live" ],
 					order: `"DailyTask"."priority" ASC`,
 					include: [ models.Task ]
 				});

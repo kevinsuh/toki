@@ -33,10 +33,8 @@ exports.default = function (controller) {
 				include: [_models2.default.SlackUser]
 			}).then(function (user) {
 
-				// temporary fix to get tasks
-				var timeAgoForTasks = (0, _momentTimezone2.default)().subtract(14, 'hours').format("YYYY-MM-DD HH:mm:ss");
 				user.getDailyTasks({
-					where: ['"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?', timeAgoForTasks, false, "live"],
+					where: ['"Task"."done" = ? AND "DailyTask"."type" = ?', false, "live"],
 					include: [_models2.default.Task],
 					order: '"DailyTask"."priority" ASC'
 				}).then(function (dailyTasks) {

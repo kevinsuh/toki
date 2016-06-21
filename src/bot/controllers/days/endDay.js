@@ -130,7 +130,7 @@ export default function(controller) {
 		})
 		.then((user) => {
 
-			// get the msot start_work session group to measure
+			// get the most recent start_work session group to measure
 			// a day's worth of work
 			user.getSessionGroups({
 		    order: `"SessionGroup"."createdAt" DESC`,
