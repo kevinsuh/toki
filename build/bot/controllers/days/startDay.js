@@ -174,8 +174,8 @@ exports.default = function (controller) {
 								UserId: UserId
 							}).then(function (sessionGroup) {
 
-								// make all pending tasks => archived, then all live tasks => pending
-								// BEFORE the newly created start SessionGroup
+								// make all tasks into archived at end of `start_day` flow
+								// because you explicitly decided to not work on them anymore
 								user.getDailyTasks({
 									where: ['"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?', sessionGroup.createdAt, "pending"]
 								}).then(function (dailyTasks) {
@@ -190,7 +190,7 @@ exports.default = function (controller) {
 
 										dailyTasks.forEach(function (dailyTask) {
 											dailyTask.update({
-												type: "pending"
+												type: "archived"
 											});
 										});
 
