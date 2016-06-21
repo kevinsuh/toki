@@ -194,7 +194,7 @@ export default function(controller) {
     					// make all tasks into archived at end of `start_day` flow
     					// because you explicitly decided to not work on them anymore
 	    				user.getDailyTasks({
-	    					where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?`, sessionGroup.createdAt, "pending"]
+	    					where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" IN (?)`, sessionGroup.createdAt, ["pending", "live"] ]
 	    				})
 	    				.then((dailyTasks) => {
 	    					dailyTasks.forEach((dailyTask) => {
@@ -202,58 +202,47 @@ export default function(controller) {
 					          type: "archived"
 					        });
 					      });
-					      user.getDailyTasks({
-		    					where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?`, sessionGroup.createdAt, "live"]
-		    				})
-		    				.then((dailyTasks) => {
+		    				
+					      // After all of the previous tasks have been put into "pending", choose the select ones and bring them back to "live"
+		    				prioritizedTaskArray.forEach((task, index) => {
 
-		    					dailyTasks.forEach((dailyTask) => {
-						        dailyTask.update({
-						          type: "archived"
-						        });
-						      });
+		    					const { dataValues } = task;
+		    					var priority = index + 1;
+		    					const { text, minutes} = task;
 
-						      // After all of the previous tasks have been put into "pending", choose the select ones and bring them back to "live"
-			    				prioritizedTaskArray.forEach((task, index) => {
+		    					if (dataValues) { // only existing tasks have data values
 
-			    					const { dataValues } = task;
-			    					var priority = index + 1;
-			    					const { text, minutes} = task;
+		    						// for these, we'll still be making NEW `daily_tasks`, using OLD `tasks`
+		    						const { id } = dataValues;
+		    						models.DailyTask.find({
+		    							where: { id },
+		    							include: [ models.Task ]
+		    						})
+		    						.then((dailyTask) => {
+		    							const TaskId = dailyTask.TaskId;
+		    							models.DailyTask.create({
+		    								TaskId,
+		    								minutes,
+		    								priority,
+		    								UserId
+		    							});
+		    						});
 
-			    					if (dataValues) { // only existing tasks have data values
+		    					} else { // new task
+		    						
+		    						models.Task.create({
+									    text
+									  })
+									  .then((task) => {
+									    models.DailyTask.create({
+									      TaskId: task.id,
+									      priority,
+									      minutes,
+									      UserId
+									    });
+									  });
+		    					}
 
-			    						// for these, we'll still be making NEW `daily_tasks`, using OLD `tasks`
-			    						const { id } = dataValues;
-			    						models.DailyTask.find({
-			    							where: { id },
-			    							include: [ models.Task ]
-			    						})
-			    						.then((dailyTask) => {
-			    							const TaskId = dailyTask.TaskId;
-			    							models.DailyTask.create({
-			    								TaskId,
-			    								minutes,
-			    								priority,
-			    								UserId
-			    							});
-			    						});
-
-			    					} else { // new task
-			    						
-			    						models.Task.create({
-										    text
-										  })
-										  .then((task) => {
-										    models.DailyTask.create({
-										      TaskId: task.id,
-										      priority,
-										      minutes,
-										      UserId
-										    });
-										  });
-			    					}
-
-			    				});
 		    				});
 	    				});
 

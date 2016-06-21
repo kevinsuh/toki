@@ -177,65 +177,55 @@ exports.default = function (controller) {
 								// make all tasks into archived at end of `start_day` flow
 								// because you explicitly decided to not work on them anymore
 								user.getDailyTasks({
-									where: ['"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?', sessionGroup.createdAt, "pending"]
+									where: ['"DailyTask"."createdAt" < ? AND "DailyTask"."type" IN (?)', sessionGroup.createdAt, ["pending", "live"]]
 								}).then(function (dailyTasks) {
 									dailyTasks.forEach(function (dailyTask) {
 										dailyTask.update({
 											type: "archived"
 										});
 									});
-									user.getDailyTasks({
-										where: ['"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?', sessionGroup.createdAt, "live"]
-									}).then(function (dailyTasks) {
 
-										dailyTasks.forEach(function (dailyTask) {
-											dailyTask.update({
-												type: "archived"
+									// After all of the previous tasks have been put into "pending", choose the select ones and bring them back to "live"
+									prioritizedTaskArray.forEach(function (task, index) {
+										var dataValues = task.dataValues;
+
+										var priority = index + 1;
+										var text = task.text;
+										var minutes = task.minutes;
+
+
+										if (dataValues) {
+											// only existing tasks have data values
+
+											// for these, we'll still be making NEW `daily_tasks`, using OLD `tasks`
+											var id = dataValues.id;
+
+											_models2.default.DailyTask.find({
+												where: { id: id },
+												include: [_models2.default.Task]
+											}).then(function (dailyTask) {
+												var TaskId = dailyTask.TaskId;
+												_models2.default.DailyTask.create({
+													TaskId: TaskId,
+													minutes: minutes,
+													priority: priority,
+													UserId: UserId
+												});
 											});
-										});
+										} else {
+											// new task
 
-										// After all of the previous tasks have been put into "pending", choose the select ones and bring them back to "live"
-										prioritizedTaskArray.forEach(function (task, index) {
-											var dataValues = task.dataValues;
-
-											var priority = index + 1;
-											var text = task.text;
-											var minutes = task.minutes;
-
-
-											if (dataValues) {
-												// only existing tasks have data values
-
-												// for these, we'll still be making NEW `daily_tasks`, using OLD `tasks`
-												var id = dataValues.id;
-
-												_models2.default.DailyTask.find({
-													where: { id: id },
-													include: [_models2.default.Task]
-												}).then(function (dailyTask) {
-													var TaskId = dailyTask.TaskId;
-													_models2.default.DailyTask.create({
-														TaskId: TaskId,
-														minutes: minutes,
-														priority: priority,
-														UserId: UserId
-													});
+											_models2.default.Task.create({
+												text: text
+											}).then(function (task) {
+												_models2.default.DailyTask.create({
+													TaskId: task.id,
+													priority: priority,
+													minutes: minutes,
+													UserId: UserId
 												});
-											} else {
-												// new task
-
-												_models2.default.Task.create({
-													text: text
-												}).then(function (task) {
-													_models2.default.DailyTask.create({
-														TaskId: task.id,
-														priority: priority,
-														minutes: minutes,
-														UserId: UserId
-													});
-												});
-											}
-										});
+											});
+										}
 									});
 								});
 							});
