@@ -14,6 +14,7 @@ import miscellaneousController from './miscellaneousController';
 
 import models from '../../app/models';
 import intentConfig from '../lib/intents';
+import { colorsArray, THANK_YOU } from '../lib/constants';
 
 require('dotenv').config();
 
@@ -185,18 +186,39 @@ controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
   console.log("\n\n\n ~~ in back up area ~~ \n\n\n");
   console.log(message);
 
-  // this means that user said something that we cannot handle yet
+  // user said something outside of wit's scope
   if (!message.selectedIntent) {
-    bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
 
-    var options = ['start a day', 'start a session', 'end session early', 'set a reminder', 'view your task list', 'add a task to your list', 'end your day', 'return to session and forget this interaction ever occured'];
-    var optionsList = "```";
-    options.forEach((option) => {
-      optionsList = `${optionsList}${option}\n`
-    })
-    optionsList = `${optionsList}\`\`\``
+    // different fallbacks based on reg exp
+    const { text } = message;
 
-    bot.reply(message, optionsList);
+    console.log(THANK_YOU.reg_exp);
+    console.log(text);
+
+    if (THANK_YOU.reg_exp.test(text)) {
+      bot.reply(message, "You're welcome!! :smile:");
+    } else {
+      // end-all fallback
+      var options = [ { title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
+      var colorsArrayLength = colorsArray.length;
+      var optionsAttachment = options.map((option, index) => {
+        var colorsArrayIndex = index % colorsArrayLength;
+        return {
+          fields: [
+            {
+              title: option.title,
+              value: option.description
+            }
+          ],
+          color: colorsArray[colorsArrayIndex].hex
+        };
+      })
+
+      bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
+      bot.reply(message, {
+        attachments: optionsAttachment
+      });
+    }
   }
 
 });
