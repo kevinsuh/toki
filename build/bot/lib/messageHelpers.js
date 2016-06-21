@@ -12,6 +12,7 @@ exports.convertResponseObjectsToTaskArray = convertResponseObjectsToTaskArray;
 exports.convertArrayToTaskListMessage = convertArrayToTaskListMessage;
 exports.convertTimeStringToMinutes = convertTimeStringToMinutes;
 exports.convertToSingleTaskObjectArray = convertToSingleTaskObjectArray;
+exports.prioritizeTaskArrayFromUserInput = prioritizeTaskArrayFromUserInput;
 
 var _constants = require('./constants');
 
@@ -52,6 +53,8 @@ function convertResponseObjectsToTaskArray(tasks) {
 
 // this should be called after you `convertToSingleTaskObjectArray`
 function convertArrayToTaskListMessage(taskArray) {
+	var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
 	var taskListMessage = '';
 	var count = 1;
 
@@ -60,14 +63,18 @@ function convertArrayToTaskListMessage(taskArray) {
 		return taskListMessage;
 	}
 
+	console.log("\n\n ~~ options passed in to convertArrayToTaskListMessage ~~ \n\n");
+	console.log(options);
+	console.log("\n\n");
+
 	taskArray.forEach(function (task) {
 
 		// for when you get task from DB
-		if (task.dataValues) {
+		if (!options.dontUseDataValues && task.dataValues) {
 			task = task.dataValues;
-		}
+		};
 
-		var minutesMessage = task.minutes ? ' (' + task.minutes + ' minutes)' : '';
+		var minutesMessage = !options.dontShowMinutes && task.minutes ? ' (' + task.minutes + ' minutes)' : '';
 		var taskContent = count + ') ' + task.text + minutesMessage;
 
 		taskContent = task.done ? '> ~' + taskContent + '~\n' : '> ' + taskContent + '\n';
@@ -149,5 +156,54 @@ function convertToSingleTaskObjectArray(taskObjectArray, type) {
 		default:
 			break;
 	}
+}
+
+/**
+ * return array of tasks mapped to the task numbers that user inputed
+ * @param  {array[taskObject]} taskObjectArray 
+ * @param  {string} input           i.e. `1, 4, 3, 2`
+ * @return {array[TaskObject]}                 
+ */
+function prioritizeTaskArrayFromUserInput(taskObjectArray, input) {
+
+	// get user priority order (`1,4,3,2`), convert it to an array of ints, and use that to prioritize your array
+	var initialPriorityOrder = input;
+
+	// either a non-number, or number > length of tasks
+	var isInvalid = false;
+	var nonNumberTest = new RegExp(/\D/);
+	initialPriorityOrder = initialPriorityOrder.split(",").map(function (order) {
+		order = order.trim();
+		var orderNumber = parseInt(order);
+		if (nonNumberTest.test(order) || orderNumber > taskObjectArray.length) isInvalid = true;
+		return orderNumber;
+	});
+
+	if (isInvalid) {
+		console.log("\n\n\n ~~ User input is invalid ~~ \n\n\n");
+		return false;
+	}
+
+	var priorityOrder = [];
+	var countedNumbers = [];
+	initialPriorityOrder.forEach(function (order) {
+		if (order > 0) {
+			order--; // make user-entered numbers 0-index based
+
+			// let's avoid double-counting
+			// only if the order is not already in array (if user says `2,2,2,3` for example)
+			if (countedNumbers.indexOf(order) < 0) {
+				countedNumbers.push(order);
+				priorityOrder.push(order);
+			}
+		}
+	});
+
+	var prioritizedTaskArray = [];
+	priorityOrder.forEach(function (order) {
+		prioritizedTaskArray.push(taskObjectArray[order]);
+	});
+
+	return prioritizedTaskArray;
 }
 //# sourceMappingURL=messageHelpers.js.map

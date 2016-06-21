@@ -6,9 +6,9 @@ import bodyParser from 'body-parser';
 import models from '../../../app/models';
 
 import { randomInt } from '../../lib/botResponses';
-import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes } from '../../lib/messageHelpers';
+import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
-import { FINISH_WORD, EXIT_EARLY_WORDS } from '../../lib/constants';
+import { FINISH_WORD, EXIT_EARLY_WORDS, NONE } from '../../lib/constants';
 
 // base controller for start day
 export default function(controller) {
@@ -144,11 +144,29 @@ export default function(controller) {
 
 				convo.dayStart = {
 					UserId: user.id,
-					startDayDecision: false // what does user want to do with day
+					startDayDecision: false, // what does user want to do with day
+					prioritizedTaskArray: [] // the final tasks to do for the day
 				}
 
-				// start the flow
-    		askForDayTasks(err, convo);
+				// check if user has pending tasks or not!
+				user.getDailyTasks({
+					where: [`"DailyTask"."type" in (?)`, ["pending", "live"]],
+					include: [ models.Task ]
+				})
+				.then((dailyTasks) => {
+
+					if (dailyTasks.length == 0) {
+						// no pending tasks -- it's a new day
+						askForDayTasks(err, convo);
+					} else {
+						// has pending tasks
+						dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
+						convo.say("Here are your outstanding tasks from the last time we worked together:");
+						convo.dayStart.pendingTasks = dailyTasks;
+						showPendingTasks(err, convo);
+					}
+
+				});
 
     		// on finish conversation
     		convo.on('end', (convo) => {
@@ -173,8 +191,8 @@ export default function(controller) {
     				})
     				.then((sessionGroup) => {
 
-    					// make all pending tasks => archived, then all live tasks => pending
-	    				// BEFORE the newly created start SessionGroup
+    					// make all tasks into archived at end of `start_day` flow
+    					// because you explicitly decided to not work on them anymore
 	    				user.getDailyTasks({
 	    					where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" = ?`, sessionGroup.createdAt, "pending"]
 	    				})
@@ -191,28 +209,51 @@ export default function(controller) {
 
 		    					dailyTasks.forEach((dailyTask) => {
 						        dailyTask.update({
-						          type: "pending"
+						          type: "archived"
 						        });
 						      });
 
 						      // After all of the previous tasks have been put into "pending", choose the select ones and bring them back to "live"
 			    				prioritizedTaskArray.forEach((task, index) => {
-			    					const { text, minutes} = task;
-			    					var priority = index + 1;
-			    					models.Task.create({
-									    text
-									  })
-									  .then((task) => {
-									    models.DailyTask.create({
-									      TaskId: task.id,
-									      priority,
-									      minutes,
-									      UserId
-									    });
-									    // THIS IS WHERE YOU WILL UPDATE THE PREVIOUS DAY'S PENDING TASKS
-									  });
-			    				});
 
+			    					const { dataValues } = task;
+			    					var priority = index + 1;
+			    					const { text, minutes} = task;
+
+			    					if (dataValues) { // only existing tasks have data values
+
+			    						// for these, we'll still be making NEW `daily_tasks`, using OLD `tasks`
+			    						const { id } = dataValues;
+			    						models.DailyTask.find({
+			    							where: { id },
+			    							include: [ models.Task ]
+			    						})
+			    						.then((dailyTask) => {
+			    							const TaskId = dailyTask.TaskId;
+			    							models.DailyTask.create({
+			    								TaskId,
+			    								minutes,
+			    								priority,
+			    								UserId
+			    							});
+			    						});
+
+			    					} else { // new task
+			    						
+			    						models.Task.create({
+										    text
+										  })
+										  .then((task) => {
+										    models.DailyTask.create({
+										      TaskId: task.id,
+										      priority,
+										      minutes,
+										      UserId
+										    });
+										  });
+			    					}
+
+			    				});
 		    				});
 	    				});
 
@@ -241,6 +282,91 @@ export default function(controller) {
 
 };
 
+// show user previous pending tasks to decide on them
+function showPendingTasks(response, convo) {
+
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	var { pendingTasks }          = convo.dayStart;
+
+	var options = {
+		dontShowMinutes: true
+	}
+	var taskListMessage = convertArrayToTaskListMessage(pendingTasks, options);
+	convo.say(taskListMessage);
+	convo.ask(`Which of these tasks would you like to work on today? Just tell me which numbers, or say \`${NONE.word}\` :1234:`, (response, convo) => {
+		savePendingTasksToWorkOn(response, convo);
+		convo.next();
+	});
+
+}
+
+function savePendingTasksToWorkOn(response, convo) {
+
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	var { pendingTasks }          = convo.dayStart;
+
+	if (NONE.reg_exp.test(response.text)) {
+		// SKIP
+		convo.say("I like a fresh start each day, too :tangerine:");
+		askForDayTasks(response, convo);
+		convo.next();
+	} else {
+
+		// get tasks from array
+		var userInput = response.text; // i.e. `1, 3, 4, 2`
+		var prioritizedTaskArray = prioritizeTaskArrayFromUserInput(pendingTasks, userInput)
+
+		// means user input is invalid
+		if (!prioritizedTaskArray) {
+			convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
+			showPendingTasks(response, convo);
+			return;
+		}
+
+		var options = {
+			dontShowMinutes: true
+		}
+		var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray, options);
+
+		convo.say("Are these the ones you'd like to add to today's task list?");
+		convo.ask(taskListMessage, [
+			{
+				pattern: bot.utterances.yes,
+				callback: (response, convo) => {
+
+					convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
+					const { SlackUserId }               = convo.dayStart;
+
+					convo.say("This is starting to look good :sunglasses:");
+					convo.say("Which additional tasks would you like to work on with me today?");
+					convo.say("You can enter everything in one line, separated by commas, or send me each task in a separate line");
+					convo.ask(`When you're ready to continue, just say \`${FINISH_WORD.word}\``, (response, convo) => {
+						if (FINISH_WORD.reg_exp.test(response.text)) {
+							convo.say("Awesome! You can always add more tasks later by telling me, `I'd like to add a task` or something along those lines :grinning:");
+							displayTaskList(response, convo);
+							convo.next();
+						}
+					}, { 'key' : 'tasks', 'multiple': true});
+					convo.next();
+				}
+			},
+			{
+				pattern: bot.utterances.no,
+				callback: (response, convo) => {
+					convo.say("I'm glad I checked :sweat:");
+					convo.say("Just tell me which numbers correspond to the tasks you'd like to work on today. You can also say `none` if you want to start a task list from scratch");
+					showPendingTasks(response, convo);
+					convo.next();
+				}
+			}
+		])
+
+	}
+
+}
+
 // user just started conersation and is entering tasks
 function askForDayTasks(response, convo){
 
@@ -258,9 +384,6 @@ function askForDayTasks(response, convo){
 				convo.stop();
 		}
 
-		console.log(`response is`);
-		console.log(response);
-
 		if (FINISH_WORD.reg_exp.test(response.text)) {
 			convo.say("Awesome! You can always add more tasks later by telling me, `I'd like to add a task` or something along those lines :grinning:");
 			displayTaskList(response, convo);
@@ -276,18 +399,22 @@ function displayTaskList(response, convo) {
 	const { task }                = convo;
 	const { bot, source_message } = task;
 
-	var { tasks } = convo.responses;
+	var { tasks }                = convo.responses;
+	var { prioritizedTaskArray } = convo.dayStart; // this can be filled if user is passing over pending tasks
 
 	var tasks = convo.responses.tasks;
 	var taskArray = convertResponseObjectsToTaskArray(tasks);
 
+	// push pending tasks onto user inputed daily tasks
+	prioritizedTaskArray.forEach((task) => {
+		taskArray.push(task);
+	});
+
 	// taskArray is now attached to convo
 	convo.dayStart.taskArray = taskArray;
 
-	console.log("TASKS:")
-	console.log(taskArray);
-
-	var taskListMessage = convertArrayToTaskListMessage(taskArray);
+	var options = { dontShowMinutes: true };
+	var taskListMessage = convertArrayToTaskListMessage(taskArray, options);
 
 	// we need to prioritize the task list here to display to user
 	convo.say(`Now, please rank your tasks in order of your priorities today`);
@@ -308,42 +435,20 @@ function prioritizeTaskList(response, convo) {
 	// organize the task list!
 	var { taskArray } = convo.dayStart;
 
-	// get user priority order (`1,4,3,2`), convert it to an array of ints, and use that to prioritize your array
-	var initialPriorityOrder = response.text;
-	
-	// either a non-number, or number > length of tasks
-	var isInvalid = false;
-	var nonNumberTest = new RegExp(/\D/);
-	initialPriorityOrder = initialPriorityOrder.split(",").map((order) => {
-		order = order.trim();
-		var orderNumber = parseInt(order);
-		if (nonNumberTest.test(order) || orderNumber > taskArray.length)
-			isInvalid = true;
-		return orderNumber;
-	});
+	// get tasks from array
+	var userInput = response.text; // i.e. `1, 3, 4, 2`
+	var prioritizedTaskArray = prioritizeTaskArrayFromUserInput(taskArray, userInput)
 
-	if (isInvalid) {
+	// means user input is invalid
+	if (!prioritizedTaskArray) {
 		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
 		displayTaskList(response, convo);
 		return;
 	}
 
-	var priorityOrder = [];
-	initialPriorityOrder.forEach(function(order) {
-		if ( order > 0) {
-			order--; // make user-entered numbers 0-index based
-			priorityOrder.push(order);
-		}
-	});
-
-	var prioritizedTaskArray = [];
-	priorityOrder.forEach((order) => {
-		prioritizedTaskArray.push(taskArray[order]);
-	})
-
 	convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
-
-	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray);
+	var options = { dontShowMinutes: true };
+	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray, options);
 
 	convo.say("Is this the right priority?");
 	convo.ask(taskListMessage, [
@@ -405,14 +510,27 @@ function assignTimeToTasks(response, convo) {
 	});
 
 	prioritizedTaskArray = prioritizedTaskArray.map((task, index) => {
+		if (task.dataValues) {
+			return {
+				...task,
+				minutes: timeToTask[index],
+				text: task.dataValues.text
+			}
+		}
 		return {
 			...task,
 			minutes: timeToTask[index]
 		}
 	});
 
+	console.log("\n\n ~~ time to tasks ~~ \n\n");
+
+	var options = {
+		dontUseDataValues: true
+	}
+
 	convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
-	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray);
+	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray, options);
 
 	// INVALID tester
 	if (isInvalid) {
