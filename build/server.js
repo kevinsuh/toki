@@ -38,9 +38,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var CronJob = _cron2.default.CronJob;
 
-// botkit
-
-
 var app = (0, _express2.default)();
 
 // configuration
@@ -100,6 +97,16 @@ _controllers.controller.createOauthEndpoints(app, function (err, req, res) {
 				res.send('Success!');
 		}
 });
+
+// bot.api.bots.info({
+// 	token: process.env.BOT_TOKEN
+// }, (err, res) => {
+// 	console.log("got bot info!");
+// 	console.log(res);
+// })
+
+// botkit
+
 
 app.listen(app.get('port'), function () {
 		console.log('listening on port ' + app.get('port'));

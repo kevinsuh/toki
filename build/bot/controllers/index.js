@@ -66,14 +66,18 @@ var _intents2 = _interopRequireDefault(_intents);
 
 var _constants = require('../lib/constants');
 
+var _storage = require('../lib/storage');
+
+var _storage2 = _interopRequireDefault(_storage);
+
 var _initiation = require('../actions/initiation');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-require('dotenv').config();
-
 // config modules
 
+
+require('dotenv').config();
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
@@ -104,7 +108,12 @@ exports.wit = wit;
  *      ***  CONFIG  ****
  */
 
-var controller = _botkit2.default.slackbot({ interactive_replies: true });
+var config = {};
+var storage = (0, _storage2.default)(config);
+var controller = _botkit2.default.slackbot({
+  interactive_replies: true,
+  storage: storage
+});
 exports.controller = controller;
 
 // simple way to keep track of bots
@@ -204,29 +213,6 @@ controller.on('login_bot', function (bot, team) {
         console.log(err);
       }
     });
-  }
-});
-
-//DIALOG
-controller.storage.teams.all(function (err, teams) {
-
-  console.log(teams);
-
-  if (err) {
-    throw new Error(err);
-  }
-
-  // connect all teams with bots up to slack!
-  for (var t in teams) {
-    if (teams[t].bot) {
-      var bot = controller.spawn(teams[t]).startRTM(function (err) {
-        if (err) {
-          console.log('Error connecting bot to Slack:', err);
-        } else {
-          trackBot(bot);
-        }
-      });
-    }
   }
 });
 

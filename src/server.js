@@ -9,9 +9,6 @@ import cron from 'cron';
 import cronFunction from './app/cron';
 var CronJob = cron.CronJob;
 
-// botkit
-import { controller, customConfigBot } from './bot/controllers';
-
 var app = express();
 
 // configuration 
@@ -70,6 +67,16 @@ controller.createOauthEndpoints(app,function(err,req,res) {
     res.send('Success!');
   }
 });
+
+// bot.api.bots.info({
+// 	token: process.env.BOT_TOKEN
+// }, (err, res) => {
+// 	console.log("got bot info!");
+// 	console.log(res);
+// })
+
+// botkit
+import { controller, customConfigBot } from './bot/controllers';
 
 app.listen(app.get('port'), () => {
   console.log('listening on port ' + app.get('port'));

@@ -19,8 +19,8 @@ check(<your_storage_module>.teams);
 
 var test = require('unit.js');
 
-testObj0 = { id: 'TEST0', foo: 'bar0' };
-testObj1 = { id: 'TEST1', foo: 'bar1' };
+var testObj0 = { id: 'TEST0', foo: 'bar0' };
+var testObj1 = { id: 'TEST1', foo: 'bar1' };
 
 var testStorageMethod = function testStorageMethod(storageMethod) {
     storageMethod.save(testObj0, function (err) {
