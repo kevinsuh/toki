@@ -54,13 +54,13 @@ exports.default = function (controller) {
 						convo.tasksComplete.dailyTasks = dailyTasks;
 
 						convo.ask("Did you want to check off some tasks? :heavy_check_mark:", [{
-							pattern: bot.utterances.yes,
+							pattern: _botResponses.utterances.yes,
 							callback: function callback(response, convo) {
 								askWhichTasksToComplete(response, convo);
 								convo.next();
 							}
 						}, {
-							pattern: bot.utterances.no,
+							pattern: _botResponses.utterances.no,
 							callback: function callback(response, convo) {
 								convo.say("Oh, never mind then!");
 								convo.next();

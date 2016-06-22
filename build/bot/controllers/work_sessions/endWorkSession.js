@@ -46,13 +46,13 @@ exports.default = function (controller) {
 				if (workSessions.length > 0) {
 					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 						convo.ask('Are you finished with your session?', [{
-							pattern: bot.utterances.yes,
+							pattern: _botResponses.utterances.yes,
 							callback: function callback(response, convo) {
 								convo.finishedWithSession = true;
 								convo.next();
 							}
 						}, {
-							pattern: bot.utterances.no,
+							pattern: _botResponses.utterances.no,
 							callback: function callback(response, convo) {
 								convo.say('Oh, never mind then! Keep up the work :weight_lifter:');
 								convo.next();

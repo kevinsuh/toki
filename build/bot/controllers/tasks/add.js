@@ -207,6 +207,8 @@ var _intents2 = _interopRequireDefault(_intents);
 
 var _constants = require('../../lib/constants');
 
+var _botResponses = require('../../lib/botResponses');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 ;
@@ -313,14 +315,14 @@ function assignTimeToTasks(response, convo) {
 
 	convo.say("Are these times right?");
 	convo.ask(taskListMessage, [{
-		pattern: bot.utterances.yes,
+		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.say('This looks great. Let\'s add these to your existing list now');
 			askToPrioritizeList(response, convo);
 			convo.next();
 		}
 	}, {
-		pattern: bot.utterances.no,
+		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
 			convo.say('Let\'s give this another try :repeat_one:');
 			convo.say(taskListMessage);
@@ -395,7 +397,7 @@ function prioritizeTaskList(response, convo) {
 
 	convo.say("Is this the right priority?");
 	convo.ask(taskListMessage, [{
-		pattern: bot.utterances.yes,
+		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 
 			convo.tasksAdd.prioritizedTaskArray = prioritizedTaskArray;
@@ -424,7 +426,7 @@ function prioritizeTaskList(response, convo) {
 			});
 		}
 	}, {
-		pattern: bot.utterances.no,
+		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
 			convo.say("Whoops :banana: Let's try to do this again");
 			askToPrioritizeList(response, convo);

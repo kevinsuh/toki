@@ -31,6 +31,6 @@ export function randomInt(min, max) {
 }
 
 export const utterances = {
-	yes: new RegExp(/(^(yes|yea|yup|yep|ya|sure|ok|y|yeah|yah)|\by[esah]{2,}\b|\bs[ure]{2,}\b)/i),
+	yes: new RegExp(/(^(yes|yea|yup|yep|ya|sure|ok|y|yeah|yah)|\by[esahp]{2,}\b|\bs[ure]{2,}\b)/i),
 	no: new RegExp(/(^(no|nah|nope|n)|\bn[oahpe]+\b)/i)
 }

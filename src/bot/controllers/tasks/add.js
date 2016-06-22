@@ -10,6 +10,7 @@ import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertR
 import intentConfig from '../../lib/intents';
 
 import { FINISH_WORD } from '../../lib/constants';
+import { utterances } from '../../lib/botResponses';
 
 // base controller for tasks
 export default function(controller) {
@@ -284,7 +285,7 @@ function assignTimeToTasks(response, convo) {
 	convo.say("Are these times right?");
 	convo.ask(taskListMessage, [
 		{
-			pattern: bot.utterances.yes,
+			pattern: utterances.yes,
 			callback: (response, convo) => {
 				convo.say(`This looks great. Let's add these to your existing list now`);
 				askToPrioritizeList(response, convo);
@@ -292,7 +293,7 @@ function assignTimeToTasks(response, convo) {
 			}
 		},
 		{
-			pattern: bot.utterances.no,
+			pattern: utterances.no,
 			callback: (response, convo) => {
 				convo.say(`Let's give this another try :repeat_one:`);
 				convo.say(taskListMessage);
@@ -362,7 +363,7 @@ function prioritizeTaskList(response, convo) {
 	convo.say("Is this the right priority?");
 	convo.ask(taskListMessage, [
 		{
-			pattern: bot.utterances.yes,
+			pattern: utterances.yes,
 			callback: (response, convo) => {
 
 				convo.tasksAdd.prioritizedTaskArray = prioritizedTaskArray;
@@ -395,7 +396,7 @@ function prioritizeTaskList(response, convo) {
 			}
 		},
 		{
-			pattern: bot.utterances.no,
+			pattern: utterances.no,
 			callback: (response, convo) => {
 				convo.say("Whoops :banana: Let's try to do this again");
 				askToPrioritizeList(response, convo);
