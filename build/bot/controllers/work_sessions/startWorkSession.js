@@ -473,14 +473,14 @@ function confirmTasks(response, convo) {
 	});
 
 	convo.ask('To :heavy_check_mark:, you want to work on tasks: ' + taskNumbersToWorkOnArray.join(", ") + '?', [{
-		pattern: bot.utterances.yes,
+		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
 			confirmTimeForTasks(response, convo);
 			convo.next();
 		}
 	}, {
-		pattern: bot.utterances.no,
+		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
 			convo.say("Let's give this another try then :repeat_one:");
 			convo.say(taskListMessage);
@@ -519,7 +519,7 @@ function confirmTimeForTasks(response, convo) {
 	var calculatedTimeString = calculatedTimeObject.format("h:mm a");
 	convo.say('Nice! That should take until ' + calculatedTimeString + ' based on your estimate');
 	convo.ask('Would you like to work until ' + calculatedTimeString + '?', [{
-		pattern: bot.utterances.yes,
+		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 
 			// success! now save session time info for the user
@@ -531,7 +531,7 @@ function confirmTimeForTasks(response, convo) {
 			convo.next();
 		}
 	}, {
-		pattern: bot.utterances.no,
+		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
 			askForCustomTotalMinutes(response, convo);
 			convo.next();
@@ -635,7 +635,7 @@ function confirmCustomTotalMinutes(response, convo) {
 	}
 
 	convo.ask('So you\'d like to work until ' + customTimeString + '?', [{
-		pattern: bot.utterances.yes,
+		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 
 			var now = (0, _momentTimezone2.default)();
@@ -650,7 +650,7 @@ function confirmCustomTotalMinutes(response, convo) {
 			convo.next();
 		}
 	}, {
-		pattern: bot.utterances.no,
+		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
 			convo.ask("Yikes, my bad. Let's try this again. Just tell me how many minutes (`ex. 45 min`) or until what time (`ex. 3:15pm`) you'd like to work right now", function (response, convo) {
 				confirmCustomTotalMinutes(response, convo);
@@ -670,7 +670,7 @@ function askForCheckIn(response, convo) {
 	var SlackUserId = response.user;
 
 	convo.ask("Boom :boom: Would you like me to check in with you during this session to make sure you're on track?", [{
-		pattern: bot.utterances.yes,
+		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.say("Sure thing! Let me know what time you want me to check in with you");
 			convo.ask("I can also check in a certain number of minutes or hours from now, like `40 minutes` or `1 hour`", function (response, convo) {
@@ -691,7 +691,7 @@ function askForCheckIn(response, convo) {
 			convo.next();
 		}
 	}, {
-		pattern: bot.utterances.no,
+		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
 			convo.next();
 		}
@@ -739,7 +739,7 @@ function confirmCheckInTime(response, convo) {
 	}
 
 	convo.ask('I\'ll be checking in with you at ' + checkinTimeString + '. Is that correct?', [{
-		pattern: bot.utterances.yes,
+		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 
 			var now = (0, _momentTimezone2.default)();
@@ -753,7 +753,7 @@ function confirmCheckInTime(response, convo) {
 			convo.next();
 		}
 	}, {
-		pattern: bot.utterances.no,
+		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
 			convo.say('Let\'s rewind :vhs: :rewind:');
 			convo.ask("What time would you like me to check in with you? Just tell me a time or a certain number of minutes from the start of your session you'd like me to check in", function (response, convo) {
@@ -774,7 +774,7 @@ function askForReminderDuringCheckin(response, convo) {
 
 	convo.say("Last thing - is there anything you'd like me to remind you during the check in?");
 	convo.ask("This could be a note like `call Eileen` or `should be on the second section of the proposal by now`", [{
-		pattern: bot.utterances.yes,
+		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.ask('What note would you like me to remind you about?', function (response, convo) {
 				getReminderNoteFromUser(response, convo);
@@ -784,7 +784,7 @@ function askForReminderDuringCheckin(response, convo) {
 			convo.next();
 		}
 	}, {
-		pattern: bot.utterances.no,
+		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
 			convo.next();
 		}
@@ -813,14 +813,14 @@ function getReminderNoteFromUser(response, convo) {
 
 
 	convo.ask('Does this look good: `' + note + '`?', [{
-		pattern: bot.utterances.yes,
+		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 
 			convo.sessionStart.reminderNote = note;
 			convo.next();
 		}
 	}, {
-		pattern: bot.utterances.no,
+		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
 			convo.ask('Just tell me a one-line note and I\'ll remind you about it at ' + checkinTimeString + '!', function (response, convo) {
 				getReminderNoteFromUser(response, convo);

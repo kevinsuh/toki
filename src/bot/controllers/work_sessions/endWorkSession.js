@@ -1,7 +1,7 @@
 import os from 'os';
 import { wit } from '../index';
 import moment from 'moment-timezone';
-import { randomInt } from '../../lib/botResponses';
+import { randomInt, utterances } from '../../lib/botResponses';
 import http from 'http';
 import bodyParser from 'body-parser';
 
@@ -57,14 +57,14 @@ export default function(controller) {
 					bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 						convo.ask(`Are you finished with your session?`, [
 							{
-								pattern: bot.utterances.yes,
+								pattern: utterances.yes,
 								callback: (response, convo) => {
 									convo.finishedWithSession = true;
 									convo.next();
 								}
 							},
 							{
-								pattern: bot.utterances.no,
+								pattern: utterances.no,
 								callback: (response, convo) => {
 									convo.say(`Oh, never mind then! Keep up the work :weight_lifter:`);
 									convo.next();

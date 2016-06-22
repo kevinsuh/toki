@@ -6,7 +6,7 @@ import moment from 'moment';
 
 import models from '../../../app/models';
 
-import { randomInt } from '../../lib/botResponses';
+import { randomInt, utterances } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
 
 // completed task controller
@@ -65,14 +65,14 @@ export default function(controller) {
 
 						convo.ask("Did you want to check off some tasks? :heavy_check_mark:", [
 							{
-								pattern: bot.utterances.yes,
+								pattern: utterances.yes,
 								callback: (response, convo) => {
 									askWhichTasksToComplete(response, convo);
 									convo.next();
 								}
 							},
 							{
-								pattern: bot.utterances.no,
+								pattern: utterances.no,
 								callback: (response, convo) => {
 									convo.say("Oh, never mind then!");
 									convo.next();
