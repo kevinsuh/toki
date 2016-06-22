@@ -49,7 +49,7 @@ export { wit };
  *      ***  CONFIG  ****
  */
 
-var controller = Botkit.slackbot();
+var controller = Botkit.slackbot({interactive_replies: true});
 
 export { controller };
 
@@ -172,81 +172,6 @@ controller.storage.teams.all(function(err,teams) {
         } else {
           trackBot(bot);
         }
-      });
-    }
-  }
-
-});
-
-/**
- *      CATCH ALL BUCKET FOR WIT INTENTS
- */
-
-// this will send message if no other intent gets picked up
-controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
-
-  console.log("\n\n\n ~~ in back up area ~~ \n\n\n");
-  console.log(message);
-
-  // user said something outside of wit's scope
-  if (!message.selectedIntent) {
-
-    // different fallbacks based on reg exp
-    const { text } = message;
-
-    console.log(THANK_YOU.reg_exp);
-    console.log(text);
-
-    if (THANK_YOU.reg_exp.test(text)) {
-      bot.reply(message, "You're welcome!! :smile:");
-    } else if (true) {
-      
-      // TESTING FOR INTERACTIVE BUTTONS HERE
-      bot.reply(message, {
-        attachments: [
-          {
-            title: "Interact with my buttons!",
-            callback_id: "123",
-            attachment_type: "default",
-            actions: [
-              {
-                name: "Yes",
-                text: "okay!",
-                value: "what!",
-                type: "button"
-              },
-              {
-                name: "No",
-                text: "oh no!",
-                value: "eh!?",
-                type: "button"
-              }
-            ]
-          }
-        ]
-      })
-
-
-    } else {
-      // end-all fallback
-      var options = [ { title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
-      var colorsArrayLength = colorsArray.length;
-      var optionsAttachment = options.map((option, index) => {
-        var colorsArrayIndex = index % colorsArrayLength;
-        return {
-          fields: [
-            {
-              title: option.title,
-              value: option.description
-            }
-          ],
-          color: colorsArray[colorsArrayIndex].hex
-        };
-      })
-
-      bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
-      bot.reply(message, {
-        attachments: optionsAttachment
       });
     }
   }
@@ -397,5 +322,80 @@ controller.on(`new_session_group_decision`, (bot, config) => {
       });
     });
   });
+});
+
+/**
+ *      CATCH ALL BUCKET FOR WIT INTENTS
+ */
+
+// this will send message if no other intent gets picked up
+controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
+
+  console.log("\n\n\n ~~ in back up area ~~ \n\n\n");
+  console.log(message);
+
+  // user said something outside of wit's scope
+  if (!message.selectedIntent) {
+
+    // different fallbacks based on reg exp
+    const { text } = message;
+
+    console.log(THANK_YOU.reg_exp);
+    console.log(text);
+
+    if (THANK_YOU.reg_exp.test(text)) {
+      bot.reply(message, "You're welcome!! :smile:");
+    } else if (true) {
+      
+      // TESTING FOR INTERACTIVE BUTTONS HERE
+      bot.reply(message, {
+        attachments: [
+          {
+            title: "Interact with my buttons!",
+            callback_id: "123",
+            attachment_type: "default",
+            actions: [
+              {
+                name: "Yes",
+                text: "okay!",
+                value: "what!",
+                type: "button"
+              },
+              {
+                name: "No",
+                text: "oh no!",
+                value: "eh!?",
+                type: "button"
+              }
+            ]
+          }
+        ]
+      })
+
+
+    } else {
+      // end-all fallback
+      var options = [ { title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
+      var colorsArrayLength = colorsArray.length;
+      var optionsAttachment = options.map((option, index) => {
+        var colorsArrayIndex = index % colorsArrayLength;
+        return {
+          fields: [
+            {
+              title: option.title,
+              value: option.description
+            }
+          ],
+          color: colorsArray[colorsArrayIndex].hex
+        };
+      })
+
+      bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
+      bot.reply(message, {
+        attachments: optionsAttachment
+      });
+    }
+  }
+
 });
 
