@@ -3,6 +3,7 @@ import { wit } from '../index';
 import moment from 'moment';
 
 import models from '../../../app/models';
+import { utterances } from '../../lib/botResponses';
 
 // base controller for reminders
 export default function(controller) {
@@ -92,7 +93,7 @@ export default function(controller) {
 				convo.say("Excellent! Would you like me to remind you about anything when I check in?");
 				convo.ask("You can leave any kind of one-line note, like `call Kevin` or `follow up with Taylor about design feedback`", [
 					{
-						pattern: bot.utterances.yes,
+						pattern: utterances.yes,
 						callback: (response, convo) => {
 							convo.ask(`What note would you like me to remind you about?`, (response, convo) => {
 								console.log("RESPONSE TEXTT");
@@ -105,7 +106,7 @@ export default function(controller) {
 						}
 					},
 					{
-						pattern: bot.utterances.no,
+						pattern: utterances.no,
 						callback: (response, convo) => {
 							convo.next();
 						}

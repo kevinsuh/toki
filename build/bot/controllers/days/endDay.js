@@ -61,13 +61,13 @@ exports.default = function (controller) {
 						convo.readyToEndDay = false;
 
 						convo.ask('Hey ' + name + '! Would you like to end your day?', [{
-							pattern: bot.utterances.yes,
+							pattern: _botResponses.utterances.yes,
 							callback: function callback(response, convo) {
 								convo.readyToEndDay = true;
 								convo.next();
 							}
 						}, {
-							pattern: bot.utterances.no,
+							pattern: _botResponses.utterances.no,
 							callback: function callback(response, convo) {
 								convo.say("Okay. I'm here whenever you're ready to end your day :wave:");
 								convo.next();
@@ -340,7 +340,7 @@ function askForReflection(response, convo) {
 	convo.say('Is there anything specific you\'d like to remember about your work day? :pencil:');
 	convo.say('I\'ll remember this for you and be able to present it back to you soon :bulb:');
 	convo.ask('This could be how you felt about your time, focus, or anything else!', [{
-		pattern: bot.utterances.yes,
+		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.ask('Awesome! What would you like to remember about today?', function (response, convo) {
 				getReflectionText(response, convo);
@@ -349,7 +349,7 @@ function askForReflection(response, convo) {
 			convo.next();
 		}
 	}, {
-		pattern: bot.utterances.no,
+		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
 			convo.say("Totally cool! :thumbsup:");
 			convo.say("See you tomorrow! :wave:");

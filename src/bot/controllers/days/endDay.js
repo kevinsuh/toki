@@ -6,7 +6,7 @@ import moment from 'moment-timezone';
 
 import models from '../../../app/models';
 
-import { randomInt } from '../../lib/botResponses';
+import { randomInt, utterances } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 
@@ -74,14 +74,14 @@ export default function(controller) {
 
 						convo.ask(`Hey ${name}! Would you like to end your day?`, [
 							{
-								pattern: bot.utterances.yes,
+								pattern: utterances.yes,
 								callback: (response, convo) => {
 									convo.readyToEndDay = true;
 									convo.next();
 								}
 							},
 							{
-								pattern: bot.utterances.no,
+								pattern: utterances.no,
 								callback: (response, convo) => {
 									convo.say("Okay. I'm here whenever you're ready to end your day :wave:");
 									convo.next();
@@ -323,7 +323,7 @@ function askForReflection(response, convo) {
 	convo.say(`I'll remember this for you and be able to present it back to you soon :bulb:`);
 	convo.ask(`This could be how you felt about your time, focus, or anything else!`, [
 		{
-			pattern: bot.utterances.yes,
+			pattern: utterances.yes,
 			callback: (response, convo) => {
 				convo.ask(`Awesome! What would you like to remember about today?`, (response, convo) => {
 					getReflectionText(response, convo);
@@ -333,7 +333,7 @@ function askForReflection(response, convo) {
 			}
 		},
 		{
-			pattern: bot.utterances.no,
+			pattern: utterances.no,
 			callback: (response, convo) => {
 				convo.say("Totally cool! :thumbsup:");
 				convo.say("See you tomorrow! :wave:");

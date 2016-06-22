@@ -29,3 +29,8 @@ export function randomInt(min, max) {
 	var randomIndex = Math.floor(Math.random() * (max - min)) + min;
 	return randomIndex;
 }
+
+export const utterances = {
+	yes: new RegExp(/(^(yes|yea|yup|yep|ya|sure|ok|y|yeah|yah)|\by[esah]{2,}\b|\bs[ure]{2,}\b)/i),
+	no: new RegExp(/(^(no|nah|nope|n)|\bn[oahpe]+\b)/i)
+}

@@ -102,7 +102,7 @@ exports.default = function (controller) {
 
 				convo.say("Excellent! Would you like me to remind you about anything when I check in?");
 				convo.ask("You can leave any kind of one-line note, like `call Kevin` or `follow up with Taylor about design feedback`", [{
-					pattern: bot.utterances.yes,
+					pattern: _botResponses.utterances.yes,
 					callback: function callback(response, convo) {
 						convo.ask('What note would you like me to remind you about?', function (response, convo) {
 							console.log("RESPONSE TEXTT");
@@ -114,7 +114,7 @@ exports.default = function (controller) {
 						convo.next();
 					}
 				}, {
-					pattern: bot.utterances.no,
+					pattern: _botResponses.utterances.no,
 					callback: function callback(response, convo) {
 						convo.next();
 					}
@@ -274,6 +274,8 @@ var _moment2 = _interopRequireDefault(_moment);
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
+
+var _botResponses = require('../../lib/botResponses');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 //# sourceMappingURL=index.js.map
