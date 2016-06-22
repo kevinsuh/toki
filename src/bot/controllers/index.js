@@ -8,6 +8,7 @@ import tasksController from './tasks';
 import workSessionsController from './work_sessions';
 import remindersController from './reminders';
 import daysController from './days';
+import buttonsController from './buttons';
 import setupBot from '../bot';
 import setupReceiveMiddleware from '../middleware/receiveMiddleware';
 import miscellaneousController from './miscellaneousController';
@@ -73,6 +74,7 @@ export function customConfigBot(controller) {
   workSessionsController(controller);
   miscellaneousController(controller);
   remindersController(controller);
+  buttonsController(controller);
 }
 
 // try to avoid repeat RTM's
@@ -197,6 +199,34 @@ controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
 
     if (THANK_YOU.reg_exp.test(text)) {
       bot.reply(message, "You're welcome!! :smile:");
+    } else if (true) {
+      
+      // TESTING FOR INTERACTIVE BUTTONS HERE
+      bot.reply(message, {
+        attachments: [
+          {
+            title: "Interact with my buttons!",
+            callback_id: "123",
+            attachment_type: "default",
+            actions: [
+              {
+                name: "Yes",
+                text: "okay!",
+                value: "what!",
+                type: "button"
+              },
+              {
+                name: "No",
+                text: "oh no!",
+                value: "eh!?",
+                type: "button"
+              }
+            ]
+          }
+        ]
+      })
+
+
     } else {
       // end-all fallback
       var options = [ { title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];

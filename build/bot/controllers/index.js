@@ -40,6 +40,10 @@ var _days = require('./days');
 
 var _days2 = _interopRequireDefault(_days);
 
+var _buttons = require('./buttons');
+
+var _buttons2 = _interopRequireDefault(_buttons);
+
 var _bot = require('../bot');
 
 var _bot2 = _interopRequireDefault(_bot);
@@ -66,10 +70,10 @@ var _initiation = require('../actions/initiation');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+require('dotenv').config();
+
 // config modules
 
-
-require('dotenv').config();
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
@@ -126,6 +130,7 @@ function customConfigBot(controller) {
   (0, _work_sessions2.default)(controller);
   (0, _miscellaneousController2.default)(controller);
   (0, _reminders2.default)(controller);
+  (0, _buttons2.default)(controller);
 }
 
 // try to avoid repeat RTM's
@@ -248,6 +253,27 @@ controller.hears([''], 'direct_message', wit.hears, function (bot, message) {
 
     if (_constants.THANK_YOU.reg_exp.test(text)) {
       bot.reply(message, "You're welcome!! :smile:");
+    } else if (true) {
+
+      // TESTING FOR INTERACTIVE BUTTONS HERE
+      bot.reply(message, {
+        attachments: [{
+          title: "Interact with my buttons!",
+          callback_id: "123",
+          attachment_type: "default",
+          actions: [{
+            name: "Yes",
+            text: "okay!",
+            value: "what!",
+            type: "button"
+          }, {
+            name: "No",
+            text: "oh no!",
+            value: "eh!?",
+            type: "button"
+          }]
+        }]
+      });
     } else {
       // end-all fallback
       var options = [{ title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
