@@ -28,15 +28,16 @@ var _slack_users = require('../api/v1/slack_users');
 
 var _slack_users2 = _interopRequireDefault(_slack_users);
 
-var _slack_receive = require('../api/v1/slack_receive');
-
-var _slack_receive2 = _interopRequireDefault(_slack_receive);
-
 var _models = require('../models');
 
 var _models2 = _interopRequireDefault(_models);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// api calls
+
+
+// our various routes
 
 exports.default = function (app) {
 
@@ -53,15 +54,7 @@ exports.default = function (app) {
   app.use('/api/v1/tasks', _tasks2.default);
   app.use('/api/v1/users', _users2.default);
   app.use('/api/v1/slack_users', _slack_users2.default);
-
-  // app.use('/slack/receive', api_slack_receive)
 };
 
 // sequelize models
-
-
-// api calls
-
-
-// our various routes
 //# sourceMappingURL=index.js.map
