@@ -11,11 +11,5 @@ import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '.
 // base controller for "day" flow
 export default function(controller) {
 	
-	/**
-	* 	START OF YOUR DAY
-	*/
-
-	startDayFlowController(controller);
-	endDayFlowController(controller);
 
 };

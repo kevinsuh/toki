@@ -4,15 +4,7 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
-exports.default = function (controller) {
-
-	/**
- * 	START OF YOUR DAY
- */
-
-	startDayFlowController(controller);
-	endDayFlowController(controller);
-};
+exports.default = function (controller) {};
 
 var _os = require('os');
 
