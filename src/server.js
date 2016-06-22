@@ -55,6 +55,8 @@ var bot = controller.spawn(({
 }));
 export { bot };
 
+controller.createWebhookEndpoints(app);
+
 app.listen(app.get('port'), () => {
   console.log('listening on port ' + app.get('port'));
 

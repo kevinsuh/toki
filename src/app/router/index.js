@@ -8,6 +8,7 @@ import login from './routes/login';
 import api_tasks from '../api/v1/tasks';
 import api_users from '../api/v1/users';
 import api_slack_users from '../api/v1/slack_users';
+import api_slack_receive from '../api/v1/slack_receive';
 
 // sequelize models
 import models from '../models';
@@ -27,6 +28,8 @@ export default (app) => {
   app.use('/api/v1/tasks', api_tasks);
   app.use('/api/v1/users', api_users);
   app.use('/api/v1/slack_users', api_slack_users);
+
+  app.use('/slack/receive', api_slack_receive)
 
 }
 
