@@ -5,7 +5,7 @@ import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
 
-import { randomInt } from '../../lib/botResponses';
+import { randomInt, utterances } from '../../lib/botResponses';
 import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 import { FINISH_WORD, EXIT_EARLY_WORDS, NONE } from '../../lib/constants';
@@ -84,7 +84,7 @@ export default function(controller) {
 
 				convo.ask(`Would you like to start your day?`, [
 					{
-						pattern: bot.utterances.yes,
+						pattern: utterances.yes,
 						callback: (response, convo) => {
 							convo.say("Let's do it! :car: :dash:");
 							convo.readyToStartDay = true;
@@ -92,7 +92,7 @@ export default function(controller) {
 						}
 					},
 					{
-						pattern: bot.utterances.no,
+						pattern: utterances.no,
 						callback: (response, convo) => {
 							convo.say("Okay. Let me know whenever you're ready to start your day :wave:");
 							convo.next();
@@ -322,7 +322,7 @@ function savePendingTasksToWorkOn(response, convo) {
 		convo.say("Are these the ones you'd like to add to today's task list?");
 		convo.ask(taskListMessage, [
 			{
-				pattern: bot.utterances.yes,
+				pattern: utterances.yes,
 				callback: (response, convo) => {
 
 					convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
@@ -342,7 +342,7 @@ function savePendingTasksToWorkOn(response, convo) {
 				}
 			},
 			{
-				pattern: bot.utterances.no,
+				pattern: utterances.no,
 				callback: (response, convo) => {
 					convo.say("I'm glad I checked :sweat:");
 					convo.say("Just tell me which numbers correspond to the tasks you'd like to work on today. You can also say `none` if you want to start a task list from scratch");
@@ -442,7 +442,7 @@ function prioritizeTaskList(response, convo) {
 	convo.say("Is this the right priority?");
 	convo.ask(taskListMessage, [
 		{
-			pattern: bot.utterances.yes,
+			pattern: utterances.yes,
 			callback: (response, convo) => {
 				convo.say("Excellent! Last thing: how much time would you like to allocate to each task today?");
 				convo.say(taskListMessage);
@@ -451,7 +451,7 @@ function prioritizeTaskList(response, convo) {
 			}
 		},
 		{
-			pattern: bot.utterances.no,
+			pattern: utterances.no,
 			callback: (response, convo) => {
 
 				convo.say("Whoops :banana: Let's try to do this again");
@@ -534,19 +534,19 @@ function assignTimeToTasks(response, convo) {
 	convo.say("Are these times right?");
 	convo.ask(taskListMessage, [
 		{
-			pattern: bot.utterances.yes,
+			pattern: utterances.yes,
 			callback: (response, convo) => {
 				convo.say("Boom! This looks great");
 				convo.ask("Ready to start your first focused work session today?", [
 						{
-							pattern: bot.utterances.yes,
+							pattern: utterances.yes,
 							callback: (response, convo) => {
 								convo.dayStart.startDayDecision = intentConfig.START_SESSION;
 								convo.next();
 							}
 						},
 						{
-							pattern: bot.utterances.no,
+							pattern: utterances.no,
 							callback: (response, convo) => {
 								convo.say("Great! Let me know when you're ready to start");
 								convo.say("Alternatively, you can ask me to `remind` you to start at a specific time, like `remind me to start at 10am` or a relative time like `remind me in 10 minutes`");
@@ -558,7 +558,7 @@ function assignTimeToTasks(response, convo) {
 			}
 		},
 		{
-			pattern: bot.utterances.no,
+			pattern: utterances.no,
 			callback: (response, convo) => {
 				convo.say("Let's give this another try :repeat_one:");
 				convo.say("Send me the amount of time you'd like to work on each task above, separated by commas. The first time you list will represent the first task above, the second time you list will represent the second task, and on and on");
