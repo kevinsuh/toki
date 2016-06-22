@@ -71,6 +71,8 @@ var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
 		console.log("\n\n ~~ In development server of Navi ~~ \n\n");
 		process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
+		process.env.SLACK_ID = process.env.DEV_SLACK_ID;
+		process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 }
 
 /**
@@ -85,7 +87,19 @@ var bot = _controllers.controller.spawn({
 exports.bot = bot;
 
 
+_controllers.controller.configureSlackApp({
+		clientId: process.env.SLACK_ID,
+		clientSecret: process.env.SLACK_SECRET,
+		scopes: ['bot']
+});
 _controllers.controller.createWebhookEndpoints(app);
+_controllers.controller.createOauthEndpoints(app, function (err, req, res) {
+		if (err) {
+				res.status(500).send('ERROR: ' + err);
+		} else {
+				res.send('Success!');
+		}
+});
 
 app.listen(app.get('port'), function () {
 		console.log('listening on port ' + app.get('port'));

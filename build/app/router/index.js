@@ -54,7 +54,7 @@ exports.default = function (app) {
   app.use('/api/v1/users', _users2.default);
   app.use('/api/v1/slack_users', _slack_users2.default);
 
-  app.use('/slack/receive', _slack_receive2.default);
+  // app.use('/slack/receive', api_slack_receive)
 };
 
 // sequelize models

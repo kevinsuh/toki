@@ -29,7 +29,7 @@ export default (app) => {
   app.use('/api/v1/users', api_users);
   app.use('/api/v1/slack_users', api_slack_users);
 
-  app.use('/slack/receive', api_slack_receive)
+  // app.use('/slack/receive', api_slack_receive)
 
 }
 
