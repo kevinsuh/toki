@@ -27,14 +27,14 @@ exports.default = function (controller) {
 					bot.replyInteractive(message, "Boom! :boom:");
 					break;
 				case _constants.buttonValues.checkIn.value:
-					bot.replyInteractive(message, "Sure thing! Leave a note in the same line if you want me to remind you about something specific");
+					bot.replyInteractive(message, "I'd love to check in with you! Leave a note in the same line if you want me to remember a specific note");
 					break;
 				case _constants.buttonValues.changeTask.value:
 					bot.replyInteractive(message, "Let's give this another try then :repeat_one:");
 					break;
 				case _constants.buttonValues.changeSessionTime.value:
 					// this is when you want to have a custom time
-					bot.replyInteractive(message, "Sure thing! I understand minutes (`ex. 45 min`) or specific times (`ex. 3:15pm`)");
+					bot.replyInteractive(message, "Let's choose how long to work! I understand minutes (`ex. 45 min`) or specific times (`ex. 3:15pm`)");
 					break;
 				case _constants.buttonValues.changeCheckinTime.value:
 					bot.replyInteractive(message, "I'm glad we caught this - when would you like me to check in with you?");

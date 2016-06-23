@@ -66,6 +66,10 @@ var buttonValues = exports.buttonValues = {
 	changeCheckinTime: {
 		name: "CHANGE_CHECKIN_TIME",
 		value: "CHANGE_CHECKIN_TIME"
+	},
+	addCheckinNote: {
+		name: "ADD_CHECKIN_NOTE",
+		value: "ADD_CHECKIN_NOTE"
 	}
 };
 //# sourceMappingURL=constants.js.map

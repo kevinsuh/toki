@@ -285,8 +285,7 @@ function askWhichTasksToWorkOn(response, convo) {
   const { UserId, dailyTasks }  = convo.sessionStart;
   convo.say(`Which tasks would you like to work on?`);
   var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
-  convo.say(taskListMessage);
-  convo.ask("Pick a task from the list `i.e. tasks 1, 3`", (response, convo) => {
+  convo.ask(taskListMessage, (response, convo) => {
     confirmTasks(response, convo);
     convo.next();
   }, { 'key' : 'tasksToWorkOn' });
@@ -321,8 +320,7 @@ function confirmTasks(response, convo) {
   // repeat convo if invalid w/ informative context
   if (isInvalid) {
     convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-    convo.say("You can either work on one task by saying `let's work on task 1` or multiple tasks by saying `let's work on tasks 1, 2, and 3`");
-    convo.say(taskListMessage);
+    convo.say("You can pick a task from your list `i.e. tasks 1, 3` or create a new task");
     askWhichTasksToWorkOn(response, convo);
     return;
   }
@@ -421,10 +419,9 @@ function finalizeTimeAndTasksToStart(response, convo) {
   var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
 
   convo.ask({
-    text: `Great! Working on tasks ${tasksToWorkOnString} will take you to *${calculatedTime}* based on your estimate`,
+    text: `Ready to work on ${tasksToWorkOnString} until *${calculatedTime}*?`,
     attachments:[
       {
-        text: 'Ready to begin?',
         attachment_type: 'default',
         callback_id: "START_SESSION",
         color: colorsHash.turquoise.hex,
@@ -506,18 +503,30 @@ function finalizeTimeAndTasksToStart(response, convo) {
 // option add note or start session immediately
 function finalizeCheckinTimeToStart(response, convo) {
 
-  const { sessionStart: { checkInTimeString, checkinTimeObject, reminderNote } } = convo;
+  const { sessionStart: { checkinTimeString, checkinTimeObject, reminderNote, tasksToWorkOnHash, calculatedTime } } = convo;
 
-  var confirmCheckinMessage = '';
-  if (checkInTimeString) {
+  var confirmCheckinMessage = '!';
+  if (checkinTimeString) {
     confirmCheckinMessage = `Excellent, I'll check in with you at *${checkinTimeString}*!`;
     if (reminderNote) {
-      confirmCheckinMessage = `Excellent, I'll check in with you at *${checkinTimeString}* about ${reminderNote}!`;
+      confirmCheckinMessage = `Excellent, I'll check in with you at *${checkinTimeString}* about \`${reminderNote}\`!`;
     }
   }
 
+  // convert hash to array
+  var tasksToWorkOnArray = [];
+  for (var key in tasksToWorkOnHash) {
+    tasksToWorkOnArray.push(tasksToWorkOnHash[key]);
+  }
+  var taskTextsToWorkOnArray = tasksToWorkOnArray.map((task) => {
+    const { dataValues: { text } } = task;
+    return text;
+  });
+  var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
+
+  convo.say(confirmCheckinMessage);
   convo.ask({
-    text: confirmCheckinMessage,
+    text: `Ready to work on ${tasksToWorkOnString} until *${calculatedTime}*?`,
     attachments:[
       {
         text: 'Ready to begin the session?',
@@ -569,13 +578,6 @@ function finalizeCheckinTimeToStart(response, convo) {
       pattern: buttonValues.addCheckinNote.value,
       callback: function(response, convo) {
         askForReminderDuringCheckin(response, convo);
-        convo.next();
-      }
-    },
-    {
-      pattern: buttonValues.changeSessionTime.value,
-      callback: function(response, convo) {
-        askForCustomTotalMinutes(response, convo);
         convo.next();
       }
     },
@@ -642,6 +644,8 @@ function confirmCustomTotalMinutes(response, convo) {
     customTimeObject = moment().add(durationSeconds, 'seconds');
     customTimeString = customTimeObject.format("h:mm a");
 
+    convo.sessionStart.totalMinutes = durationMinutes;
+
   } else if (entities.custom_time) {
     // get rid of timezone to make it tz-neutral
     // then create a moment-timezone object with specified timezone
@@ -654,7 +658,6 @@ function confirmCustomTotalMinutes(response, convo) {
 
   }
 
-  convo.sessionStart.totalMinutes         = minutesDuration;
   convo.sessionStart.calculatedTime       = customTimeString;
   convo.sessionStart.calculatedTimeObject = customTimeObject;
 
@@ -706,49 +709,55 @@ function confirmCheckInTime(response, convo) {
   var checkinTimeStringForDB; // format to put in DB (`YYYY-MM-DD HH:mm:ss`)
 
   // user has only put in a time. need to get a note next
-  if (entities.duration || entities.custom_time) {
-    if (entities.duration) {
+  if (entities.duration) {
 
-      var durationArray = entities.duration;
-      var durationSeconds = 0;
-      for (var i = 0; i < durationArray.length; i++) {
-        durationSeconds += durationArray[i].normalized.value;
-      }
-      var durationMinutes = Math.floor(durationSeconds / 60);
-
-      // add minutes to now
-      checkinTimeObject = moment().add(durationSeconds, 'seconds');
-      checkinTimeString = checkinTimeObject.format("h:mm a");
-
-    } else if (entities.custom_time) {
-      // get rid of timezone to make it tz-neutral
-      // then create a moment-timezone object with specified timezone
-      var timeStamp = entities.custom_time[0].value;
-      timeStamp = moment(timeStamp); // in PST because of Wit default settings
-
-      timeStamp.add(timeStamp._tzm - now.utcOffset(), 'minutes');
-      // create time object based on user input + timezone
-      
-      checkinTimeObject = timeStamp;
-      checkinTimeString = checkinTimeObject.format("h:mm a");
-
+    var durationArray = entities.duration;
+    var durationSeconds = 0;
+    for (var i = 0; i < durationArray.length; i++) {
+      durationSeconds += durationArray[i].normalized.value;
     }
-    convo.sessionStart.checkinTimeObject = checkinTimeObject;
-    convo.sessionStart.checkinTimeString = checkinTimeString;
-    askForReminderDuringCheckin(response, convo);
-  } else if (entities.reminder) {
+    var durationMinutes = Math.floor(durationSeconds / 60);
 
+    // add minutes to now
+    checkinTimeObject = moment().add(durationSeconds, 'seconds');
+    checkinTimeString = checkinTimeObject.format("h:mm a");
 
+  } else if (entities.custom_time) {
 
+    var customTimeObject = entities.custom_time[0];
+    var timeStamp;
+    if (customTimeObject.type == "interval") {
+      timeStamp = customTimeObject.to.value;
+    } else {
+      // type will be "value"
+      timeStamp = customTimeObject.value;
+    }
+    timeStamp = moment(timeStamp); // in PST because of Wit default settings
+
+    timeStamp.add(timeStamp._tzm - now.utcOffset(), 'minutes');
+    // create time object based on user input + timezone
+    
+    checkinTimeObject = timeStamp;
+    checkinTimeString = checkinTimeObject.format("h:mm a");
+
+  }
+
+  convo.sessionStart.checkinTimeObject = checkinTimeObject;
+  convo.sessionStart.checkinTimeString = checkinTimeString;
+
+  console.log("check in time string:\n\n");
+  console.log(checkinTimeObject);
+  console.log(checkinTimeString);
+
+  console.log("convo session start:");
+  console.log(convo.sessionStart);
+
+  // skip the step if reminder exists
+  if (entities.reminder) {
+    convo.sessionStart.reminderNote = entities.reminder[0].value;
     finalizeCheckinTimeToStart(response, convo);
-
   } else {
-    // CURRENT WE ARE NOT HANDLING THIS
-    console.log("\n\n ~~ failure in confirmCheckInTime ~~ \n\n");
-    console.log(response);
-    console.log("\n\n");
-    convo.repeat();
-    convo.next();
+    askForReminderDuringCheckin(response, convo);
   }
 
 }
@@ -759,7 +768,7 @@ function askForReminderDuringCheckin(response, convo) {
   const { bot, source_message } = task;
   const SlackUserId = response.user;
 
-  convo.say("Last thing - is there anything you'd like me to remind you during the check in?");
+  convo.say("Is there anything you'd like me to remind you during the check in?");
   convo.ask("This could be a note like `call Eileen` or `should be on the second section of the proposal by now`", [
     {
       pattern: utterances.yes,
