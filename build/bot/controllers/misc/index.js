@@ -305,15 +305,15 @@ function startSessionStartConversation(response, convo) {
   var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
 
   convo.say(taskListMessage);
-  convo.say("You can either work on one task by saying `let's work on task 1` or multiple tasks by saying `let's work on tasks 1, 2, and 3`");
-
   askWhichTasksToWorkOn(response, convo);
   convo.next();
 }
 
 // confirm user for the tasks and
 function askWhichTasksToWorkOn(response, convo) {
-  convo.ask("I recommend working for at least 30 minutes at a time, so if you want to work on shorter tasks, try to pick several to get over that 30 minute threshold :smiley:", function (response, convo) {
+  // this should only be said FIRST_TIME_USER
+  // convo.say("I recommend working for at least 30 minutes at a time, so if you want to work on shorter tasks, try to pick several to get over that 30 minute threshold :smiley:");
+  convo.ask("You can either work on one task by saying `let's work on task 1` or multiple tasks by saying `let's work on tasks 1, 2, and 3`", function (response, convo) {
     confirmTasks(response, convo);
     convo.next();
   }, { 'key': 'tasksToWorkOn' });
@@ -379,91 +379,23 @@ function confirmTimeForTasks(response, convo) {
   var SlackUserId = response.user;
 
   var totalMinutes = 0;
-  var tasksToWorkOnArray = [];
   for (var key in tasksToWorkOnHash) {
     var _task = tasksToWorkOnHash[key];
-    console.log("this specific daily task:");
-    console.log(_task);
-    tasksToWorkOnArray.push(_task);
     var minutes = _task.dataValues.minutes;
 
     totalMinutes += parseInt(minutes);
   }
-  convo.sessionStart.tasksToWorkOnArray = tasksToWorkOnArray;
-
-  var tasksToWorkOnStringArray = tasksToWorkOnArray.map(function (task) {
-    return task.text;
-  });
-  var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(tasksToWorkOnStringArray);
 
   var now = (0, _moment2.default)();
   var calculatedTimeObject = now.add(totalMinutes, 'minutes');
   var calculatedTimeString = calculatedTimeObject.format("h:mm a");
-  convo.ask({
-    text: 'Great! Working on tasks ' + tasksToWorkOnString + ' will take you to *' + calculatedTimeString + '* based on your estimate',
-    attachments: [{
-      text: 'Ready to begin?',
-      attachment_type: 'default',
-      color: _constants.colorsHash.turquoise.hex,
-      fallback: "I was unable to process your decision",
-      actions: [{
-        name: _constants.buttonValues.startNow.name,
-        text: "Start now",
-        value: _constants.buttonValues.startNow.value,
-        type: "button",
-        style: "primary"
-      }, {
-        name: _constants.buttonValues.checkIn.name,
-        text: "Check in :alarm_clock:",
-        value: _constants.buttonValues.checkIn.value,
-        type: "button"
-      }, {
-        name: _constants.buttonValues.changeTask.name,
-        text: "Change Task",
-        value: _constants.buttonValues.changeTask.value,
-        type: "button",
-        style: "danger"
-      }, {
-        name: _constants.buttonValues.changeTime.name,
-        text: "Change Time",
-        value: _constants.buttonValues.changeTime.value,
-        type: "button",
-        style: "danger"
-      }]
-    }]
-  }, [{
-    pattern: _constants.buttonValues.startNow.value,
-    callback: function callback(reply, convo) {
-      convo.say("Let's start now!");
-      convo.next();
-      // do something awesome here.
-    }
-  }, {
-    pattern: _constants.buttonValues.checkIn.value,
-    callback: function callback(reply, convo) {
-      convo.say("Let's check in!");
-      convo.next();
-    }
-  }, {
-    pattern: _constants.buttonValues.changeTask.value,
-    callback: function callback(reply, convo) {
-      convo.say("Let's change tasks!");
-      convo.next();
-    }
-  }, {
-    pattern: _constants.buttonValues.changeTime.value,
-    callback: function callback(reply, convo) {
-      convo.say("Let's change times!");
-      convo.next();
-    }
-  }, {
-    default: true,
-    callback: function callback(reply, convo) {
-      // this is failure point.
-      convo.stop();
-      convo.next();
-    }
-  }]);
+
+  // these are the final values used to determine work session info
+  convo.sessionStart.totalMinutes = totalMinutes;
+  convo.sessionStart.calculatedTime = calculatedTimeString;
+  convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
+
+  finalizeWorkSessionStart(response, convo);
 
   if (false) {
     /**
@@ -498,6 +430,98 @@ function confirmTimeForTasks(response, convo) {
       }
     });
   }
+}
+
+// the final place to start a work session
+function finalizeWorkSessionStart(response, convo) {
+  var _convo$sessionStart3 = convo.sessionStart;
+  var totalMinutes = _convo$sessionStart3.totalMinutes;
+  var calculatedTimeObject = _convo$sessionStart3.calculatedTimeObject;
+  var calculatedTime = _convo$sessionStart3.calculatedTime;
+  var tasksToWorkOnHash = _convo$sessionStart3.tasksToWorkOnHash;
+  var dailyTasks = _convo$sessionStart3.dailyTasks;
+
+  // convert hash to array
+
+  var tasksToWorkOnArray = [];
+  for (var key in tasksToWorkOnHash) {
+    tasksToWorkOnArray.push(tasksToWorkOnHash[key]);
+  }
+  var taskTextsToWorkOnArray = tasksToWorkOnArray.map(function (task) {
+    var text = task.dataValues.text;
+
+    return text;
+  });
+  var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
+
+  convo.ask({
+    text: 'Great! Working on tasks ' + tasksToWorkOnString + ' will take you to *' + calculatedTime + '* based on your estimate',
+    attachments: [{
+      text: 'Ready to begin?',
+      attachment_type: 'default',
+      callback_id: "START_SESSION",
+      color: _constants.colorsHash.turquoise.hex,
+      fallback: "I was unable to process your decision",
+      actions: [{
+        name: _constants.buttonValues.startNow.name,
+        text: "Start :punch:",
+        value: _constants.buttonValues.startNow.value,
+        type: "button",
+        style: "primary"
+      }, {
+        name: _constants.buttonValues.checkIn.name,
+        text: "Check in :alarm_clock:",
+        value: _constants.buttonValues.checkIn.value,
+        type: "button"
+      }, {
+        name: _constants.buttonValues.changeTask.name,
+        text: "Change Task",
+        value: _constants.buttonValues.changeTask.value,
+        type: "button",
+        style: "danger"
+      }, {
+        name: _constants.buttonValues.changeTime.name,
+        text: "Change Time",
+        value: _constants.buttonValues.changeTime.value,
+        type: "button",
+        style: "danger"
+      }]
+    }]
+  }, [{
+    pattern: _constants.buttonValues.startNow.value,
+    callback: function callback(response, convo) {
+      convo.say("Let's start now!");
+      convo.next();
+      // do something awesome here.
+    }
+  }, {
+    pattern: _constants.buttonValues.checkIn.value,
+    callback: function callback(response, convo) {
+      convo.say("Let's check in!");
+      convo.next();
+    }
+  }, {
+    pattern: _constants.buttonValues.changeTask.value,
+    callback: function callback(response, convo) {
+      var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
+      convo.say(taskListMessage);
+      askWhichTasksToWorkOn(response, convo);
+      convo.next();
+    }
+  }, {
+    pattern: _constants.buttonValues.changeTime.value,
+    callback: function callback(response, convo) {
+      askForCustomTotalMinutes(response, convo);
+      convo.next();
+    }
+  }, {
+    default: true,
+    callback: function callback(response, convo) {
+      // this is failure point.
+      convo.stop();
+      convo.next();
+    }
+  }]);
 }
 
 // ask for custom amount of time to work on
@@ -734,9 +758,9 @@ function getReminderNoteFromUser(response, convo) {
 
   var note = response.text;
 
-  var _convo$sessionStart3 = convo.sessionStart;
-  var checkinTimeObject = _convo$sessionStart3.checkinTimeObject;
-  var checkinTimeString = _convo$sessionStart3.checkinTimeString;
+  var _convo$sessionStart4 = convo.sessionStart;
+  var checkinTimeObject = _convo$sessionStart4.checkinTimeObject;
+  var checkinTimeString = _convo$sessionStart4.checkinTimeString;
 
 
   convo.ask('Does this look good: `' + note + '`?', [{

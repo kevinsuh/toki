@@ -279,8 +279,6 @@ function startSessionStartConversation(response, convo) {
   var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 
   convo.say(taskListMessage);
-  convo.say("You can either work on one task by saying `let's work on task 1` or multiple tasks by saying `let's work on tasks 1, 2, and 3`");
-
   askWhichTasksToWorkOn(response, convo);
   convo.next();
 
@@ -288,7 +286,9 @@ function startSessionStartConversation(response, convo) {
 
 // confirm user for the tasks and 
 function askWhichTasksToWorkOn(response, convo) {
-  convo.ask("I recommend working for at least 30 minutes at a time, so if you want to work on shorter tasks, try to pick several to get over that 30 minute threshold :smiley:", (response, convo) => {
+  // this should only be said FIRST_TIME_USER
+  // convo.say("I recommend working for at least 30 minutes at a time, so if you want to work on shorter tasks, try to pick several to get over that 30 minute threshold :smiley:");
+  convo.ask("You can either work on one task by saying `let's work on task 1` or multiple tasks by saying `let's work on tasks 1, 2, and 3`", (response, convo) => {
     confirmTasks(response, convo);
     convo.next();
   }, { 'key' : 'tasksToWorkOn' });
@@ -352,103 +352,22 @@ function confirmTimeForTasks(response, convo) {
   const SlackUserId = response.user;
 
   var totalMinutes = 0;
-  var tasksToWorkOnArray = [];
   for (var key in tasksToWorkOnHash) {
     const task = tasksToWorkOnHash[key];
-    console.log("this specific daily task:");
-    console.log(task);
-    tasksToWorkOnArray.push(task);
     var { dataValues: { minutes } } = task;
     totalMinutes += parseInt(minutes);
   }
-  convo.sessionStart.tasksToWorkOnArray = tasksToWorkOnArray;
-
-  var tasksToWorkOnStringArray = tasksToWorkOnArray.map((task) => {
-    return task.text;
-  });
-  var tasksToWorkOnString = commaSeparateOutTaskArray(tasksToWorkOnStringArray);
 
   var now = moment();
   var calculatedTimeObject = now.add(totalMinutes, 'minutes');
   var calculatedTimeString = calculatedTimeObject.format("h:mm a");
-  convo.ask({
-    text: `Great! Working on tasks ${tasksToWorkOnString} will take you to *${calculatedTimeString}* based on your estimate`,
-    attachments:[
-      {
-        text: 'Ready to begin?',
-        attachment_type: 'default',
-        color: colorsHash.turquoise.hex,
-        fallback: "I was unable to process your decision",
-        actions: [
-          {
-              name: buttonValues.startNow.name,
-              text: "Start now",
-              value: buttonValues.startNow.value,
-              type: "button",
-              style: "primary"
-          },
-          {
-              name: buttonValues.checkIn.name,
-              text: "Check in :alarm_clock:",
-              value: buttonValues.checkIn.value,
-              type: "button"
-          },
-          {
-              name: buttonValues.changeTask.name,
-              text: "Change Task",
-              value: buttonValues.changeTask.value,
-              type: "button",
-              style: "danger"
-          },
-          {
-              name: buttonValues.changeTime.name,
-              text: "Change Time",
-              value: buttonValues.changeTime.value,
-              type: "button",
-              style: "danger"
-          }
-        ]
-      }
-    ]
-  },[
-      {
-        pattern: buttonValues.startNow.value,
-        callback: function(reply, convo) {
-          convo.say("Let's start now!");
-          convo.next();
-          // do something awesome here.
-      }
-    },
-    {
-      pattern: buttonValues.checkIn.value,
-      callback: function(reply, convo) {
-        convo.say("Let's check in!");
-        convo.next();
-      }
-    },
-    {
-      pattern: buttonValues.changeTask.value,
-      callback: function(reply, convo) {
-        convo.say("Let's change tasks!");
-        convo.next();
-      }
-    },
-    {
-      pattern: buttonValues.changeTime.value,
-      callback: function(reply, convo) {
-        convo.say("Let's change times!")
-        convo.next();
-      }
-    },
-    {
-      default: true,
-      callback: function(reply, convo) {
-        // this is failure point.
-        convo.stop();
-        convo.next();
-      }
-    }
-  ]);
+
+  // these are the final values used to determine work session info
+  convo.sessionStart.totalMinutes         = totalMinutes;
+  convo.sessionStart.calculatedTime       = calculatedTimeString;
+  convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
+
+  finalizeWorkSessionStart(response, convo);
 
 
   if (false) {
@@ -485,6 +404,106 @@ function confirmTimeForTasks(response, convo) {
 
   }
 
+}
+
+// the final place to start a work session
+function finalizeWorkSessionStart(response, convo) {
+
+  const { sessionStart: { totalMinutes, calculatedTimeObject, calculatedTime, tasksToWorkOnHash, dailyTasks } } = convo;
+
+  // convert hash to array
+  var tasksToWorkOnArray = [];
+  for (var key in tasksToWorkOnHash) {
+    tasksToWorkOnArray.push(tasksToWorkOnHash[key]);
+  }
+  var taskTextsToWorkOnArray = tasksToWorkOnArray.map((task) => {
+    const { dataValues: { text } } = task;
+    return text;
+  });
+  var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
+
+  convo.ask({
+    text: `Great! Working on tasks ${tasksToWorkOnString} will take you to *${calculatedTime}* based on your estimate`,
+    attachments:[
+      {
+        text: 'Ready to begin?',
+        attachment_type: 'default',
+        callback_id: "START_SESSION",
+        color: colorsHash.turquoise.hex,
+        fallback: "I was unable to process your decision",
+        actions: [
+          {
+              name: buttonValues.startNow.name,
+              text: "Start :punch:",
+              value: buttonValues.startNow.value,
+              type: "button",
+              style: "primary"
+          },
+          {
+              name: buttonValues.checkIn.name,
+              text: "Check in :alarm_clock:",
+              value: buttonValues.checkIn.value,
+              type: "button"
+          },
+          {
+              name: buttonValues.changeTask.name,
+              text: "Change Task",
+              value: buttonValues.changeTask.value,
+              type: "button",
+              style: "danger"
+          },
+          {
+              name: buttonValues.changeTime.name,
+              text: "Change Time",
+              value: buttonValues.changeTime.value,
+              type: "button",
+              style: "danger"
+          }
+        ]
+      }
+    ]
+  },
+  [
+    {
+      pattern: buttonValues.startNow.value,
+      callback: function(response, convo) {
+        convo.say("Let's start now!");
+        convo.next();
+        // do something awesome here.
+      }
+    },
+    {
+      pattern: buttonValues.checkIn.value,
+      callback: function(response, convo) {
+        convo.say("Let's check in!");
+        convo.next();
+      }
+    },
+    {
+      pattern: buttonValues.changeTask.value,
+      callback: function(response, convo) {
+        var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+        convo.say(taskListMessage);
+        askWhichTasksToWorkOn(response, convo);
+        convo.next();
+      }
+    },
+    {
+      pattern: buttonValues.changeTime.value,
+      callback: function(response, convo) {
+        askForCustomTotalMinutes(response, convo);
+        convo.next();
+      }
+    },
+    {
+      default: true,
+      callback: function(response, convo) {
+        // this is failure point.
+        convo.stop();
+        convo.next();
+      }
+    }
+  ]);
 }
 
 // ask for custom amount of time to work on
@@ -548,6 +567,8 @@ function confirmCustomTotalMinutes(response, convo) {
     customTimeString = customTimeObject.format("h:mm a");
 
   }
+
+
 
   convo.ask(`So you'd like to work until ${customTimeString}?`, [
     {

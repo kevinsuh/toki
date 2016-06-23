@@ -50,7 +50,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		return taskListMessage;
 	}
 
-	console.log("\n\n ~~ options passed in to convertArrayToTaskListMessage ~~ \n\n");
+	console.log("\n\n options passed in to convertArrayToTaskListMessage:");
 	console.log(options);
 	console.log("\n\n");
 
