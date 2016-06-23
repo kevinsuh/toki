@@ -24,15 +24,22 @@ export default function(controller) {
 
 		// need to replace buttons so user cannot reclick it
 		if (actions && actions.length > 0) {
-			switch (actions[0].name) {
-				case buttonValues.startNow.name:
+			switch (actions[0].value) {
+				case buttonValues.startNow.value:
+					bot.replyInteractive(message, "Boom! :boom:");
 					break;
-				case buttonValues.checkIn.name:
+				case buttonValues.checkIn.value:
+					bot.replyInteractive(message, "Sure thing! Leave a note in the same line if you want me to remind you about something specific");
 					break;
-				case buttonValues.changeTask.name:
+				case buttonValues.changeTask.value:
 					bot.replyInteractive(message, "Let's give this another try then :repeat_one:");
 					break;
-				case buttonValues.changeTime.name:
+				case buttonValues.changeSessionTime.value:
+					// this is when you want to have a custom time
+					bot.replyInteractive(message, "Sure thing! I understand minutes (`ex. 45 min`) or specific times (`ex. 3:15pm`)");
+					break;
+				case buttonValues.changeCheckinTime.value:
+					bot.replyInteractive(message, "I'm glad we caught this - when would you like me to check in with you?");
 					break;
 				default:
 					// some default to replace button no matter what

@@ -59,9 +59,13 @@ var buttonValues = exports.buttonValues = {
 		name: "CHANGE_TASK",
 		value: "CHANGE_TASK"
 	},
-	changeTime: {
-		name: "CHANGE_TIME",
-		value: "CHANGE_TIME"
+	changeSessionTime: {
+		name: "CHANGE_SESSION_TIME",
+		value: "CHANGE_SESSION_TIME"
+	},
+	changeCheckinTime: {
+		name: "CHANGE_CHECKIN_TIME",
+		value: "CHANGE_CHECKIN_TIME"
 	}
 };
 //# sourceMappingURL=constants.js.map
