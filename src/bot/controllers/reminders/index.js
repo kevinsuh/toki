@@ -13,13 +13,11 @@ export default function(controller) {
 	controller.hears(['custom_reminder'], 'direct_message', wit.hears, (bot, message) => {
 
 		// these are array of objects
-		const { reminder, reminder_text, reminder_time, reminder_duration, custom_time, duration } = message.intentObject.entities;
+		const { reminder, reminder_duration, custom_time, duration } = message.intentObject.entities;
 		const SlackUserId = message.user;
 
 		var config = {
 			reminder,
-			reminder_text,
-			reminder_time,
 			reminder_duration,
 			custom_time,
 			duration,
@@ -27,7 +25,7 @@ export default function(controller) {
 		};
 
 		// if reminder without a specific time, set to `wants_reminder`
-		if (!reminder_duration && !reminder_time && !custom_time && !duration) {
+		if (!reminder_duration && !custom_time && !duration) {
 			console.log("about to ask for reminder...");
 			console.log(config);
 			controller.trigger(`ask_for_reminder`, [ bot, config ]);
@@ -67,7 +65,7 @@ export default function(controller) {
 				}
 
 				var { intentObject: { entities } } = response;
-				const { reminder, reminder_text, reminder_time, reminder_duration, duration, custom_time } = entities;
+				const { reminder, reminder_duration, duration, custom_time } = entities;
 
 				console.log("huhh");
 				console.log("response:");
@@ -84,11 +82,7 @@ export default function(controller) {
 				}
 
 				// if user enters a time
-				if (reminder_time) {
-					convo.reminderConfig.reminder_time = reminder_time;
-				} else if (custom_time) {
-					convo.reminderConfig.reminder_time = custom_time;
-				}
+				convo.reminderConfig.reminder_time = custom_time;
 
 				convo.say("Excellent! Would you like me to remind you about anything when I check in?");
 				convo.ask("You can leave any kind of one-line note, like `call Kevin` or `follow up with Taylor about design feedback`", [
@@ -138,7 +132,7 @@ export default function(controller) {
 	// the actual setting of reminder
 	controller.on(`set_reminder`, (bot, config) => {
 
-		const { SlackUserId, reminder, reminder_text, reminder_time, reminder_duration, custom_time, duration } = config;
+		const { SlackUserId, reminder, reminder_duration, custom_time, duration } = config;
 
 		var now = moment();
 
@@ -163,9 +157,9 @@ export default function(controller) {
 
 			remindTimeStamp = now.add(durationSeconds, 'seconds');
 			
-		} else if (reminder_time || custom_time) { // i.e. `at 3pm`
+		} else if (custom_time) { // i.e. `at 3pm`
 			console.log("inside of reminder_time\n\n\n\n");
-			remindTimeStamp = reminder_time ? reminder_time[0].value : custom_time[0].value;
+			remindTimeStamp = custom_time[0].value;
 			remindTimeStamp = moment(remindTimeStamp); // in PST because of Wit default settings
 
 			remindTimeStamp.add(remindTimeStamp._tzm - now.utcOffset(), 'minutes'); // convert from PST to local TZ
@@ -208,15 +202,9 @@ export default function(controller) {
 				convo.ask("Sorry, still learning :dog:. Please let me know the time that you want a reminder `i.e. 4:51pm`", (response, convo) => {
 
 					var { intentObject: { entities } } = response;
-					const { reminder, reminder_text, reminder_time, reminder_duration, duration, custom_time } = entities;
+					const { reminder, reminder_duration, duration, custom_time } = entities;
 
-					var remindTime = '';
-					// if user enters a time
-					if (reminder_time) {
-						remindTime = reminder_time;
-					} else if (custom_time) {
-						remindTime = custom_time;
-					}
+					var remindTime = custom_time;
 
 					remindTimeStamp = remindTime[0].value;
 					remindTimeStamp = moment(remindTimeStamp); // in PST because of Wit default settings

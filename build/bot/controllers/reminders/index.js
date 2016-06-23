@@ -13,8 +13,6 @@ exports.default = function (controller) {
 		// these are array of objects
 		var _message$intentObject = message.intentObject.entities;
 		var reminder = _message$intentObject.reminder;
-		var reminder_text = _message$intentObject.reminder_text;
-		var reminder_time = _message$intentObject.reminder_time;
 		var reminder_duration = _message$intentObject.reminder_duration;
 		var custom_time = _message$intentObject.custom_time;
 		var duration = _message$intentObject.duration;
@@ -23,8 +21,6 @@ exports.default = function (controller) {
 
 		var config = {
 			reminder: reminder,
-			reminder_text: reminder_text,
-			reminder_time: reminder_time,
 			reminder_duration: reminder_duration,
 			custom_time: custom_time,
 			duration: duration,
@@ -32,7 +28,7 @@ exports.default = function (controller) {
 		};
 
 		// if reminder without a specific time, set to `wants_reminder`
-		if (!reminder_duration && !reminder_time && !custom_time && !duration) {
+		if (!reminder_duration && !custom_time && !duration) {
 			console.log("about to ask for reminder...");
 			console.log(config);
 			controller.trigger('ask_for_reminder', [bot, config]);
@@ -72,8 +68,6 @@ exports.default = function (controller) {
 
 				var entities = response.intentObject.entities;
 				var reminder = entities.reminder;
-				var reminder_text = entities.reminder_text;
-				var reminder_time = entities.reminder_time;
 				var reminder_duration = entities.reminder_duration;
 				var duration = entities.duration;
 				var custom_time = entities.custom_time;
@@ -94,11 +88,7 @@ exports.default = function (controller) {
 				}
 
 				// if user enters a time
-				if (reminder_time) {
-					convo.reminderConfig.reminder_time = reminder_time;
-				} else if (custom_time) {
-					convo.reminderConfig.reminder_time = custom_time;
-				}
+				convo.reminderConfig.reminder_time = custom_time;
 
 				convo.say("Excellent! Would you like me to remind you about anything when I check in?");
 				convo.ask("You can leave any kind of one-line note, like `call Kevin` or `follow up with Taylor about design feedback`", [{
@@ -144,8 +134,6 @@ exports.default = function (controller) {
 	controller.on('set_reminder', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
 		var reminder = config.reminder;
-		var reminder_text = config.reminder_text;
-		var reminder_time = config.reminder_time;
 		var reminder_duration = config.reminder_duration;
 		var custom_time = config.custom_time;
 		var duration = config.duration;
@@ -174,10 +162,10 @@ exports.default = function (controller) {
 			var durationMinutes = Math.floor(durationSeconds / 60);
 
 			remindTimeStamp = now.add(durationSeconds, 'seconds');
-		} else if (reminder_time || custom_time) {
+		} else if (custom_time) {
 			// i.e. `at 3pm`
 			console.log("inside of reminder_time\n\n\n\n");
-			remindTimeStamp = reminder_time ? reminder_time[0].value : custom_time[0].value;
+			remindTimeStamp = custom_time[0].value;
 			remindTimeStamp = (0, _moment2.default)(remindTimeStamp); // in PST because of Wit default settings
 
 			remindTimeStamp.add(remindTimeStamp._tzm - now.utcOffset(), 'minutes'); // convert from PST to local TZ
@@ -217,20 +205,12 @@ exports.default = function (controller) {
 				convo.ask("Sorry, still learning :dog:. Please let me know the time that you want a reminder `i.e. 4:51pm`", function (response, convo) {
 					var entities = response.intentObject.entities;
 					var reminder = entities.reminder;
-					var reminder_text = entities.reminder_text;
-					var reminder_time = entities.reminder_time;
 					var reminder_duration = entities.reminder_duration;
 					var duration = entities.duration;
 					var custom_time = entities.custom_time;
 
 
-					var remindTime = '';
-					// if user enters a time
-					if (reminder_time) {
-						remindTime = reminder_time;
-					} else if (custom_time) {
-						remindTime = custom_time;
-					}
+					var remindTime = custom_time;
 
 					remindTimeStamp = remindTime[0].value;
 					remindTimeStamp = (0, _moment2.default)(remindTimeStamp); // in PST because of Wit default settings
