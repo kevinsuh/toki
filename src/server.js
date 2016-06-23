@@ -48,6 +48,9 @@ if (env == 'development') {
  */
 // ===================================================
 
+// botkit
+import { controller, customConfigBot } from './bot/controllers';
+
 customConfigBot(controller);
 var bot = controller.spawn(({
 	token: process.env.BOT_TOKEN
@@ -74,9 +77,6 @@ controller.createOauthEndpoints(app,function(err,req,res) {
 // 	console.log("got bot info!");
 // 	console.log(res);
 // })
-
-// botkit
-import { controller, customConfigBot } from './bot/controllers';
 
 app.listen(app.get('port'), () => {
   console.log('listening on port ' + app.get('port'));

@@ -6,38 +6,29 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
-	console.log("\n\n ~~ buttons controller initiated .. ~~ \n\n");
-
 	// receive an interactive message via button click
 	// check message.actions and message.callback_id to see the action to take
-	// controller.on(`interactive_message_callback`, (bot, message) => {
+	controller.on('interactive_message_callback', function (bot, message) {
 
-	// 	console.log("\n\n\n ~~ inside interactive_message_callback ~~ \n\n\n");
-	// 	console.log(message);
-	// 	console.log("\n\n\n");
+		console.log("\n\n\n ~~ inside interactive_message_callback ~~ \n\n\n");
+		console.log("this is message:");
+		console.log(message);
+		console.log("\n\n\n");
 
-	// 	bot.replyInteractive(message, {
-	// 		text: "...!?!?...",
-	// 		callback_id: "123",
-	// 		attachment_type: "default",
-	// 		actions: [
-	// 			{
-	// 				name: "another button!",
-	// 				text: "yay button",
-	// 				value: "yes ok",
-	// 				type: "button",
-	// 				style: "danger",
-	// 				confirm: {
-	// 					title: "You sure?",
-	// 					text: "This will do something!",
-	// 					ok_text: "Yesss",
-	// 					dismiss_text: "NAH!"
-	// 				}
-	// 			}
-	// 		]
-	// 	});
+		// const SlackUserId = message.user;
 
-	// })
+		// const { actions, callback_id } = message;
+		// if (callback_id == "test" && actions.length > 0) {
+		// 	const { name, value } = actions[0];
+		// 	console.log("callback!");
+		// 	console.log(actions);
+
+		// 	if (value == "QUIT_START_DAY") {
+		// 		bot.replyInteractive(message, "restarting start day!");
+		// 		controller.trigger('trigger_day_start', [bot, { SlackUserId }]);
+		// 	}
+		// }
+	});
 };
 
 var _os = require('os');
