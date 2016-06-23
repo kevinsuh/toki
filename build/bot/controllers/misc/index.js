@@ -82,7 +82,8 @@ exports.default = function (controller) {
         // object that contains values important to this conversation
         convo.sessionStart = {
           UserId: user.id,
-          SlackUserId: SlackUserId
+          SlackUserId: SlackUserId,
+          tasksToWorkOnHash: {}
         };
 
         // FIND DAILY TASKS, THEN START THE CONVERSATION
@@ -152,6 +153,7 @@ exports.default = function (controller) {
             var tasksToWorkOnHash = sessionStart.tasksToWorkOnHash;
             var checkinTimeObject = sessionStart.checkinTimeObject;
             var reminderNote = sessionStart.reminderNote;
+            var newTask = sessionStart.newTask;
 
             // if user wanted a checkin reminder
 
@@ -176,7 +178,10 @@ exports.default = function (controller) {
             var tasksToWorkOnArray = [];
             for (var key in tasksToWorkOnHash) {
               var task = tasksToWorkOnHash[key];
-              dailyTaskIds.push(task.dataValues.id);
+              if (task.dataValues) {
+                // existing tasks
+                dailyTaskIds.push(task.dataValues.id);
+              }
               tasksToWorkOnArray.push(task);
             }
 
@@ -186,6 +191,28 @@ exports.default = function (controller) {
               UserId: UserId
             }).then(function (workSession) {
               workSession.setDailyTasks(dailyTaskIds);
+
+              // if new task, insert that into DB and attach to work session
+              if (newTask) {
+                (function () {
+                  var priority = dailyTasks.length;
+                  var text = newTask.text;
+                  var minutes = newTask.minutes;
+
+                  _models2.default.Task.create({
+                    text: text
+                  }).then(function (task) {
+                    _models2.default.DailyTask.create({
+                      TaskId: task.id,
+                      priority: priority,
+                      minutes: minutes,
+                      UserId: UserId
+                    }).then(function (dailyTask) {
+                      workSession.setDailyTasks([dailyTask.id]);
+                    });
+                  });
+                })();
+              }
             });
 
             var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(tasksToWorkOnArray);
@@ -310,22 +337,246 @@ function askWhichTasksToWorkOn(response, convo) {
   var UserId = _convo$sessionStart.UserId;
   var dailyTasks = _convo$sessionStart.dailyTasks;
 
-  convo.say('Which tasks would you like to work on?');
   var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
-  convo.ask(taskListMessage, function (response, convo) {
-    confirmTasks(response, convo);
+  var message = 'Which tasks would you like to work on?\n' + taskListMessage;
+  convo.ask({
+    text: message,
+    attachments: [{
+      attachment_type: 'default',
+      callback_id: "START_SESSION",
+      fallback: "I was unable to process your decision",
+      actions: [{
+        name: _constants.buttonValues.newTask.name,
+        text: "New Task",
+        value: _constants.buttonValues.newTask.value,
+        type: "button"
+      }]
+    }]
+  }, [{
+    pattern: _constants.buttonValues.newTask.value,
+    callback: function callback(response, convo) {
+      convo.ask('What is it? `i.e. clean up market report for 45 minutes` ', function (response, convo) {
+        addNewTask(response, convo);
+        convo.next();
+      });
+      convo.next();
+    }
+  }, {
+    pattern: new RegExp(/./),
+    callback: function callback(response, convo) {
+      // user inputed task #'s, not new task button
+      confirmTasks(response, convo);
+      convo.next();
+    }
+  }]);
+}
+
+function addNewTask(response, convo) {
+  var task = convo.task;
+  var bot = task.bot;
+  var source_message = task.source_message;
+
+  var SlackUserId = response.user;
+  var newTask = {};
+
+  var entities = response.intentObject.entities;
+
+  if ((entities.duration || entities.custom_time) && entities.reminder) {
+    // if they have necessary info from Wit (time + text), we can streamline the task adding process
+    var customTimeObject;
+    var customTimeString;
+    var now = (0, _moment2.default)();
+    if (entities.duration) {
+
+      var durationArray = entities.duration;
+      var durationSeconds = 0;
+      for (var i = 0; i < durationArray.length; i++) {
+        durationSeconds += durationArray[i].normalized.value;
+      }
+      var durationMinutes = Math.floor(durationSeconds / 60);
+
+      // add minutes to now
+      customTimeObject = (0, _moment2.default)().add(durationSeconds, 'seconds');
+      customTimeString = customTimeObject.format("h:mm a");
+    } else if (entities.custom_time) {
+      // get rid of timezone to make it tz-neutral
+      // then create a moment-timezone object with specified timezone
+
+      var customTime = entities.custom_time[0];
+      var timeStamp;
+      if (customTime.type == "interval") {
+        timeStamp = customTime.to.value;
+      } else {
+        timeStamp = customTime.value;
+      }
+
+      // create time object based on user input + timezone
+      customTimeObject = (0, _moment2.default)(timeStamp);
+      customTimeObject.add(customTimeObject._tzm - now.utcOffset(), 'minutes');
+      customTimeString = customTimeObject.format("h:mm a");
+
+      var durationMinutes = Math.round(_moment2.default.duration(customTimeObject.diff(now)).asMinutes());
+    }
+
+    newTask.text = entities.reminder[0].value;
+    newTask.minutes = durationMinutes;
+    // this is how long user wants to work on session for as well
+    convo.sessionStart.calculatedTime = customTimeString;
+    convo.sessionStart.calculatedTimeObject = customTimeObject;
+    convo.sessionStart.newTask = newTask;
+
+    finalizeNewTaskToStart(response, convo);
+  } else {
+    // user did nto specify a time
+    newTask.text = response.text;
+    convo.sessionStart.newTask = newTask;
+    addTimeToNewTask(response, convo);
+  }
+
+  convo.next();
+}
+
+function addTimeToNewTask(response, convo) {
+  var task = convo.task;
+  var bot = task.bot;
+  var source_message = task.source_message;
+  var newTask = convo.sessionStart.newTask;
+
+
+  convo.ask('How long would you like to work on `' + newTask.text + '`?', function (response, convo) {
+
+    var timeToTask = response.text;
+
+    var validMinutesTester = new RegExp(/[\dh]/);
+    var isInvalid = false;
+    if (!validMinutesTester.test(timeToTask)) {
+      isInvalid = true;
+    } else {
+      var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(timeToTask);
+      newTask.minutes = minutes;
+    }
+
+    // INVALID tester
+    if (isInvalid) {
+      convo.say("Oops, looks like you didn't put in valid minutes :thinking_face:. Let's try this again");
+      convo.say("I'll assume you mean minutes - like `30` would be 30 minutes - unless you specify hours - like `1 hour 15 min`");
+      convo.repeat();
+    } else {
+
+      var customTimeObject = (0, _moment2.default)().add(minutes, 'minutes');
+      var customTimeString = customTimeObject.format("h:mm a");
+
+      convo.sessionStart.newTask = newTask;
+      convo.sessionStart.calculatedTime = customTimeString;
+      convo.sessionStart.calculatedTimeObject = customTimeObject;
+
+      finalizeNewTaskToStart(response, convo);
+    }
     convo.next();
-  }, { 'key': 'tasksToWorkOn' });
+  });
+}
+
+function finalizeNewTaskToStart(response, convo) {
+
+  // here we add this task to dailyTasks
+  var _convo$sessionStart2 = convo.sessionStart;
+  var totalMinutes = _convo$sessionStart2.totalMinutes;
+  var calculatedTimeObject = _convo$sessionStart2.calculatedTimeObject;
+  var calculatedTime = _convo$sessionStart2.calculatedTime;
+  var tasksToWorkOnHash = _convo$sessionStart2.tasksToWorkOnHash;
+  var dailyTasks = _convo$sessionStart2.dailyTasks;
+  var newTask = _convo$sessionStart2.newTask;
+
+
+  convo.ask({
+    text: 'Ready to work on `' + newTask.text + '` until *' + calculatedTime + '*?',
+    attachments: [{
+      attachment_type: 'default',
+      callback_id: "START_SESSION",
+      color: _constants.colorsHash.turquoise.hex,
+      fallback: "I was unable to process your decision",
+      actions: [{
+        name: _constants.buttonValues.startNow.name,
+        text: "Start :punch:",
+        value: _constants.buttonValues.startNow.value,
+        type: "button",
+        style: "primary"
+      }, {
+        name: _constants.buttonValues.checkIn.name,
+        text: "Check in :alarm_clock:",
+        value: _constants.buttonValues.checkIn.value,
+        type: "button"
+      }, {
+        name: _constants.buttonValues.changeTask.name,
+        text: "Change Task",
+        value: _constants.buttonValues.changeTask.value,
+        type: "button",
+        style: "danger"
+      }, {
+        name: _constants.buttonValues.changeSessionTime.name,
+        text: "Change Time",
+        value: _constants.buttonValues.changeSessionTime.value,
+        type: "button",
+        style: "danger"
+      }]
+    }]
+  }, [{
+    pattern: _constants.buttonValues.startNow.value,
+    callback: function callback(response, convo) {
+
+      tasksToWorkOnHash[1] = newTask;
+      convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+      convo.sessionStart.confirmStart = true;
+
+      convo.stop();
+      convo.next();
+    }
+  }, {
+    pattern: _constants.buttonValues.checkIn.value,
+    callback: function callback(response, convo) {
+
+      console.log("new task:");
+      console.log(newTask);
+
+      tasksToWorkOnHash[1] = newTask;
+      convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+      convo.sessionStart.confirmStart = true;
+
+      askForCheckIn(response, convo);
+      convo.next();
+    }
+  }, {
+    pattern: _constants.buttonValues.changeTask.value,
+    callback: function callback(response, convo) {
+      askWhichTasksToWorkOn(response, convo);
+      convo.next();
+    }
+  }, {
+    pattern: _constants.buttonValues.changeSessionTime.value,
+    callback: function callback(response, convo) {
+      askForCustomTotalMinutes(response, convo);
+      convo.next();
+    }
+  }, {
+    default: true,
+    callback: function callback(response, convo) {
+      // this is failure point.
+      convo.stop();
+      convo.next();
+    }
+  }]);
 }
 
 function confirmTasks(response, convo) {
   var task = convo.task;
   var bot = task.bot;
   var source_message = task.source_message;
-  var dailyTasks = convo.sessionStart.dailyTasks;
-  var tasksToWorkOn = convo.responses.tasksToWorkOn;
+  var _convo$sessionStart3 = convo.sessionStart;
+  var dailyTasks = _convo$sessionStart3.dailyTasks;
+  var tasksToWorkOnHash = _convo$sessionStart3.tasksToWorkOnHash;
 
-  var tasksToWorkOnSplitArray = tasksToWorkOn.text.split(/(,|and)/);
+  var tasksToWorkOn = response.text;
+  var tasksToWorkOnSplitArray = tasksToWorkOn.split(/(,|and)/);
 
   // if we capture 0 valid tasks from string, then we start over
   var numberRegEx = new RegExp(/[\d]+/);
@@ -354,7 +605,6 @@ function confirmTasks(response, convo) {
   }
 
   // if not invalid, we can set the tasksToWorkOnArray
-  var tasksToWorkOnHash = {}; // organize by task number assigned from user
   taskNumbersToWorkOnArray.forEach(function (taskNumber) {
     var index = taskNumber - 1; // make this 0-index based
     if (dailyTasks[index]) tasksToWorkOnHash[taskNumber] = dailyTasks[index];
@@ -370,9 +620,9 @@ function confirmTimeForTasks(response, convo) {
   var task = convo.task;
   var bot = task.bot;
   var source_message = task.source_message;
-  var _convo$sessionStart2 = convo.sessionStart;
-  var tasksToWorkOnHash = _convo$sessionStart2.tasksToWorkOnHash;
-  var dailyTasks = _convo$sessionStart2.dailyTasks;
+  var _convo$sessionStart4 = convo.sessionStart;
+  var tasksToWorkOnHash = _convo$sessionStart4.tasksToWorkOnHash;
+  var dailyTasks = _convo$sessionStart4.dailyTasks;
 
   var SlackUserId = response.user;
 
@@ -432,12 +682,12 @@ function confirmTimeForTasks(response, convo) {
 
 // confirm task and time in one place and start if it's good
 function finalizeTimeAndTasksToStart(response, convo) {
-  var _convo$sessionStart3 = convo.sessionStart;
-  var totalMinutes = _convo$sessionStart3.totalMinutes;
-  var calculatedTimeObject = _convo$sessionStart3.calculatedTimeObject;
-  var calculatedTime = _convo$sessionStart3.calculatedTime;
-  var tasksToWorkOnHash = _convo$sessionStart3.tasksToWorkOnHash;
-  var dailyTasks = _convo$sessionStart3.dailyTasks;
+  var _convo$sessionStart5 = convo.sessionStart;
+  var totalMinutes = _convo$sessionStart5.totalMinutes;
+  var calculatedTimeObject = _convo$sessionStart5.calculatedTimeObject;
+  var calculatedTime = _convo$sessionStart5.calculatedTime;
+  var tasksToWorkOnHash = _convo$sessionStart5.tasksToWorkOnHash;
+  var dailyTasks = _convo$sessionStart5.dailyTasks;
 
   // convert hash to array
 
@@ -522,15 +772,18 @@ function finalizeTimeAndTasksToStart(response, convo) {
 // this is if you want a checkin after approving of task + times
 // option add note or start session immediately
 function finalizeCheckinTimeToStart(response, convo) {
-  var _convo$sessionStart4 = convo.sessionStart;
-  var checkinTimeString = _convo$sessionStart4.checkinTimeString;
-  var checkinTimeObject = _convo$sessionStart4.checkinTimeObject;
-  var reminderNote = _convo$sessionStart4.reminderNote;
-  var tasksToWorkOnHash = _convo$sessionStart4.tasksToWorkOnHash;
-  var calculatedTime = _convo$sessionStart4.calculatedTime;
+
+  console.log("\n\n ~~ in finalizeCheckinTimeToStart ~~ \n\n");
+
+  var _convo$sessionStart6 = convo.sessionStart;
+  var checkinTimeString = _convo$sessionStart6.checkinTimeString;
+  var checkinTimeObject = _convo$sessionStart6.checkinTimeObject;
+  var reminderNote = _convo$sessionStart6.reminderNote;
+  var tasksToWorkOnHash = _convo$sessionStart6.tasksToWorkOnHash;
+  var calculatedTime = _convo$sessionStart6.calculatedTime;
 
 
-  var confirmCheckinMessage = '!';
+  var confirmCheckinMessage = '';
   if (checkinTimeString) {
     confirmCheckinMessage = 'Excellent, I\'ll check in with you at *' + checkinTimeString + '*!';
     if (reminderNote) {
@@ -544,8 +797,7 @@ function finalizeCheckinTimeToStart(response, convo) {
     tasksToWorkOnArray.push(tasksToWorkOnHash[key]);
   }
   var taskTextsToWorkOnArray = tasksToWorkOnArray.map(function (task) {
-    var text = task.dataValues.text;
-
+    var text = task.dataValues ? task.dataValues.text : task.text;
     return text;
   });
   var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
@@ -554,7 +806,6 @@ function finalizeCheckinTimeToStart(response, convo) {
   convo.ask({
     text: 'Ready to work on ' + tasksToWorkOnString + ' until *' + calculatedTime + '*?',
     attachments: [{
-      text: 'Ready to begin the session?',
       attachment_type: 'default',
       callback_id: "START_SESSION",
       color: _constants.colorsHash.turquoise.hex,
@@ -643,7 +894,6 @@ function confirmCustomTotalMinutes(response, convo) {
 
   var customTimeObject; // moment object of time
   var customTimeString; // format to display (`h:mm a`)
-  var customTimeStringForDB; // format to put in DB (`YYYY-MM-DD HH:mm:ss`)
   if (entities.duration) {
 
     var durationArray = entities.duration;
@@ -692,14 +942,13 @@ function askForCheckIn(response, convo) {
       confirmCheckInTime(response, convo);
     } else {
       // invalid
-      convo.say("I'm sorry, I didn't catch that :dog:");
-      convo.say("Please put either a time like `2:41pm`, or a number of minutes or hours like `35 minutes`");
-      convo.silentRepeat();
+      convo.say("I'm sorry, I'm still learning :dog:");
+      convo.say("For this one, put only the time first (i.e. `2:41pm` or `35 minutes`) and then let's figure out your note)");
+      convo.repeat();
     }
 
     convo.next();
   }, { 'key': 'respondTime' });
-  convo.next();
 }
 
 // confirm check in time with user
@@ -783,7 +1032,8 @@ function askForReminderDuringCheckin(response, convo) {
     pattern: _botResponses.utterances.yes,
     callback: function callback(response, convo) {
       convo.ask('What note would you like me to remind you about?', function (response, convo) {
-        getReminderNoteFromUser(response, convo);
+        convo.sessionStart.reminderNote = response.text;
+        finalizeCheckinTimeToStart(response, convo);
         convo.next();
       });
 
@@ -798,42 +1048,10 @@ function askForReminderDuringCheckin(response, convo) {
     default: true,
     callback: function callback(response, convo) {
       // we are assuming anything else is the reminderNote
-      getReminderNoteFromUser(response, convo);
+      convo.sessionStart.reminderNote = response.text;
+      finalizeCheckinTimeToStart(response, convo);
       convo.next();
     }
   }], { 'key': 'reminderNote' });
-}
-
-function getReminderNoteFromUser(response, convo) {
-  var task = convo.task;
-  var bot = task.bot;
-  var source_message = task.source_message;
-
-  var SlackUserId = response.user;
-
-  var note = response.text;
-
-  var _convo$sessionStart5 = convo.sessionStart;
-  var checkinTimeObject = _convo$sessionStart5.checkinTimeObject;
-  var checkinTimeString = _convo$sessionStart5.checkinTimeString;
-
-
-  convo.ask('Does this look good: `' + note + '`?', [{
-    pattern: _botResponses.utterances.yes,
-    callback: function callback(response, convo) {
-
-      convo.sessionStart.reminderNote = note;
-      convo.next();
-    }
-  }, {
-    pattern: _botResponses.utterances.no,
-    callback: function callback(response, convo) {
-      convo.ask('Just tell me a one-line note and I\'ll remind you about it at ' + checkinTimeString + '!', function (response, convo) {
-        getReminderNoteFromUser(response, convo);
-        convo.next();
-      });
-      convo.next();
-    }
-  }]);
 }
 //# sourceMappingURL=index.js.map

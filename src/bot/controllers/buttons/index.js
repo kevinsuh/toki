@@ -29,7 +29,7 @@ export default function(controller) {
 					bot.replyInteractive(message, "Boom! :boom:");
 					break;
 				case buttonValues.checkIn.value:
-					bot.replyInteractive(message, "I'd love to check in with you! Leave a note in the same line if you want me to remember a specific note");
+					bot.replyInteractive(message, "I'd love to check in with you! Leave a note in the same line if you want me to remember it (`i.e. halfway done by 4pm`)");
 					break;
 				case buttonValues.changeTask.value:
 					bot.replyInteractive(message, "Let's give this another try then :repeat_one:");
@@ -40,6 +40,9 @@ export default function(controller) {
 					break;
 				case buttonValues.changeCheckinTime.value:
 					bot.replyInteractive(message, "I'm glad we caught this - when would you like me to check in with you?");
+					break;
+				case buttonValues.newTask.value:
+					bot.replyInteractive(message, "Sweet! Let's work on a new task");
 					break;
 				default:
 					// some default to replace button no matter what

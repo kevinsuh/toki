@@ -66,6 +66,10 @@ export const buttonValues ={
 	addCheckinNote: {
 		name: "ADD_CHECKIN_NOTE",
 		value: "ADD_CHECKIN_NOTE"
+	},
+	newTask: {
+		name: "NEW_TASK",
+		value: "NEW_TASK"
 	}
 }
 
