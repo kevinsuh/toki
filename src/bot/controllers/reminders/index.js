@@ -13,19 +13,18 @@ export default function(controller) {
 	controller.hears(['custom_reminder'], 'direct_message', wit.hears, (bot, message) => {
 
 		// these are array of objects
-		const { reminder, reminder_duration, custom_time, duration } = message.intentObject.entities;
+		const { reminder, custom_time, duration } = message.intentObject.entities;
 		const SlackUserId = message.user;
 
 		var config = {
 			reminder,
-			reminder_duration,
 			custom_time,
 			duration,
 			SlackUserId
 		};
 
 		// if reminder without a specific time, set to `wants_reminder`
-		if (!reminder_duration && !custom_time && !duration) {
+		if (!custom_time && !duration) {
 			console.log("about to ask for reminder...");
 			console.log(config);
 			controller.trigger(`ask_for_reminder`, [ bot, config ]);
@@ -65,7 +64,7 @@ export default function(controller) {
 				}
 
 				var { intentObject: { entities } } = response;
-				const { reminder, reminder_duration, duration, custom_time } = entities;
+				const { reminder, duration, custom_time } = entities;
 
 				console.log("huhh");
 				console.log("response:");
@@ -75,11 +74,7 @@ export default function(controller) {
 				console.log(JSON.stringify(response));
 
 				// if user enters duration
-				if (reminder_duration) {
-					convo.reminderConfig.reminder_duration = reminder_duration;
-				} else if (duration){
-					convo.reminderConfig.reminder_duration = duration;
-				}
+				convo.reminderConfig.reminder_duration = duration;
 
 				// if user enters a time
 				convo.reminderConfig.reminder_time = custom_time;
@@ -132,7 +127,7 @@ export default function(controller) {
 	// the actual setting of reminder
 	controller.on(`set_reminder`, (bot, config) => {
 
-		const { SlackUserId, reminder, reminder_duration, custom_time, duration } = config;
+		const { SlackUserId, reminder, custom_time, duration } = config;
 
 		var now = moment();
 
@@ -146,9 +141,9 @@ export default function(controller) {
 
 		var remindTimeStamp; // for the message (`h:mm a`)
 		var remindTimeStampForDB; // for DB (`YYYY-MM-DD HH:mm:ss`)
-		if (reminder_duration || duration) { // i.e. ten more minutes
+		if (duration) { // i.e. ten more minutes
 			console.log("inside of reminder_duration\n\n\n\n");
-			var reminderDuration = reminder_duration ? reminder_duration : duration;
+			var reminderDuration = duration;
 			var durationSeconds = 0;
 			for (var i = 0; i < reminderDuration.length; i++) {
 				durationSeconds += reminderDuration[i].normalized.value;
@@ -202,7 +197,7 @@ export default function(controller) {
 				convo.ask("Sorry, still learning :dog:. Please let me know the time that you want a reminder `i.e. 4:51pm`", (response, convo) => {
 
 					var { intentObject: { entities } } = response;
-					const { reminder, reminder_duration, duration, custom_time } = entities;
+					const { reminder, duration, custom_time } = entities;
 
 					var remindTime = custom_time;
 

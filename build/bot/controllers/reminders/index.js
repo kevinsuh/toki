@@ -13,7 +13,6 @@ exports.default = function (controller) {
 		// these are array of objects
 		var _message$intentObject = message.intentObject.entities;
 		var reminder = _message$intentObject.reminder;
-		var reminder_duration = _message$intentObject.reminder_duration;
 		var custom_time = _message$intentObject.custom_time;
 		var duration = _message$intentObject.duration;
 
@@ -21,14 +20,13 @@ exports.default = function (controller) {
 
 		var config = {
 			reminder: reminder,
-			reminder_duration: reminder_duration,
 			custom_time: custom_time,
 			duration: duration,
 			SlackUserId: SlackUserId
 		};
 
 		// if reminder without a specific time, set to `wants_reminder`
-		if (!reminder_duration && !custom_time && !duration) {
+		if (!custom_time && !duration) {
 			console.log("about to ask for reminder...");
 			console.log(config);
 			controller.trigger('ask_for_reminder', [bot, config]);
@@ -68,7 +66,6 @@ exports.default = function (controller) {
 
 				var entities = response.intentObject.entities;
 				var reminder = entities.reminder;
-				var reminder_duration = entities.reminder_duration;
 				var duration = entities.duration;
 				var custom_time = entities.custom_time;
 
@@ -81,11 +78,7 @@ exports.default = function (controller) {
 				console.log(JSON.stringify(response));
 
 				// if user enters duration
-				if (reminder_duration) {
-					convo.reminderConfig.reminder_duration = reminder_duration;
-				} else if (duration) {
-					convo.reminderConfig.reminder_duration = duration;
-				}
+				convo.reminderConfig.reminder_duration = duration;
 
 				// if user enters a time
 				convo.reminderConfig.reminder_time = custom_time;
@@ -134,7 +127,6 @@ exports.default = function (controller) {
 	controller.on('set_reminder', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
 		var reminder = config.reminder;
-		var reminder_duration = config.reminder_duration;
 		var custom_time = config.custom_time;
 		var duration = config.duration;
 
@@ -151,10 +143,10 @@ exports.default = function (controller) {
 
 		var remindTimeStamp; // for the message (`h:mm a`)
 		var remindTimeStampForDB; // for DB (`YYYY-MM-DD HH:mm:ss`)
-		if (reminder_duration || duration) {
+		if (duration) {
 			// i.e. ten more minutes
 			console.log("inside of reminder_duration\n\n\n\n");
-			var reminderDuration = reminder_duration ? reminder_duration : duration;
+			var reminderDuration = duration;
 			var durationSeconds = 0;
 			for (var i = 0; i < reminderDuration.length; i++) {
 				durationSeconds += reminderDuration[i].normalized.value;
@@ -205,7 +197,6 @@ exports.default = function (controller) {
 				convo.ask("Sorry, still learning :dog:. Please let me know the time that you want a reminder `i.e. 4:51pm`", function (response, convo) {
 					var entities = response.intentObject.entities;
 					var reminder = entities.reminder;
-					var reminder_duration = entities.reminder_duration;
 					var duration = entities.duration;
 					var custom_time = entities.custom_time;
 
