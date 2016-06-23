@@ -52,9 +52,9 @@ var _receiveMiddleware = require('../middleware/receiveMiddleware');
 
 var _receiveMiddleware2 = _interopRequireDefault(_receiveMiddleware);
 
-var _miscellaneousController = require('./miscellaneousController');
+var _misc = require('./misc');
 
-var _miscellaneousController2 = _interopRequireDefault(_miscellaneousController);
+var _misc2 = _interopRequireDefault(_misc);
 
 var _models = require('../../app/models');
 
@@ -132,11 +132,10 @@ function customConfigBot(controller) {
   (0, _bot2.default)(controller);
   (0, _receiveMiddleware2.default)(controller);
 
-  // add controller functionalities
+  (0, _misc2.default)(controller);
   (0, _days2.default)(controller);
   (0, _tasks2.default)(controller);
   (0, _work_sessions2.default)(controller);
-  (0, _miscellaneousController2.default)(controller);
   (0, _reminders2.default)(controller);
   (0, _buttons2.default)(controller);
 }

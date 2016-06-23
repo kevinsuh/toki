@@ -11,7 +11,7 @@ import daysController from './days';
 import buttonsController from './buttons';
 import setupBot from '../bot';
 import setupReceiveMiddleware from '../middleware/receiveMiddleware';
-import miscellaneousController from './miscellaneousController';
+import miscController from './misc';
 
 import models from '../../app/models';
 import intentConfig from '../lib/intents';
@@ -74,11 +74,10 @@ export function customConfigBot(controller) {
   setupBot(controller);
   setupReceiveMiddleware(controller);
 
-  // add controller functionalities
+  miscController(controller);
   daysController(controller);
   tasksController(controller);
   workSessionsController(controller);
-  miscellaneousController(controller);
   remindersController(controller);
   buttonsController(controller);
 }
@@ -306,6 +305,5 @@ controller.on(`new_session_group_decision`, (bot, config) => {
     });
   });
 });
-
 
 

@@ -1,83 +1,86 @@
+import os from 'os';
 import { wit } from '../index';
+import http from 'http';
+import bodyParser from 'body-parser';
 import moment from 'moment';
 
 import models from '../../../app/models';
-import intentConfig from '../lib/intents';
-import { colorsArray, THANK_YOU } from '../lib/constants';
 
-/**
- *      CATCH ALL BUCKET FOR WIT INTENTS
- */
+import { randomInt, utterances } from '../../lib/botResponses';
+import { colorsArray, THANK_YOU, buttonValues, colorsHash } from '../../lib/constants';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray } from '../../lib/messageHelpers';
+import { createMomentObjectWithSpecificTimeZone } from '../../lib/miscHelpers';
+import intentConfig from '../../lib/intents';
 
-// this will send message if no other intent gets picked up
-controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
+export default function(controller) {
+  // this will send message if no other intent gets picked up
+  controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
 
-  const SlackUserId = message.user;
+    const SlackUserId = message.user;
 
-  console.log("\n\n\n ~~ in back up area ~~ \n\n\n");
-  console.log(message);
+    console.log("\n\n\n ~~ in back up area!!! ~~ \n\n\n");
+    console.log(message);
 
-  startWorkSessionTest(bot, message);
-   
+    startWorkSessionTest(bot, message);
+     
 
-if (false) {
+  if (false) {
 
-  // user said something outside of wit's scope
-  if (!message.selectedIntent) {
+    // user said something outside of wit's scope
+    if (!message.selectedIntent) {
 
-    bot.send({
-      type: "typing",
-      channel: message.channel
-    });
-    setTimeout(() => {
+      bot.send({
+        type: "typing",
+        channel: message.channel
+      });
+      setTimeout(() => {
 
-      // different fallbacks based on reg exp
-      const { text } = message;
+        // different fallbacks based on reg exp
+        const { text } = message;
 
-      console.log(THANK_YOU.reg_exp);
-      console.log(text);
+        console.log(THANK_YOU.reg_exp);
+        console.log(text);
 
-      if (THANK_YOU.reg_exp.test(text)) {
-        bot.reply(message, "You're welcome!! :smile:");
-      } else if (true) {
+        if (THANK_YOU.reg_exp.test(text)) {
+          bot.reply(message, "You're welcome!! :smile:");
+        } else if (true) {
 
-       bot.reply("OKIE!");
+         bot.reply("OKIE!");
 
 
-      } else {
-        // end-all fallback
-        var options = [ { title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
-        var colorsArrayLength = colorsArray.length;
-        var optionsAttachment = options.map((option, index) => {
-          var colorsArrayIndex = index % colorsArrayLength;
-          return {
-            fields: [
-              {
-                title: option.title,
-                value: option.description
-              }
-            ],
-            color: colorsArray[colorsArrayIndex].hex
-          };
-        })
+        } else {
+          // end-all fallback
+          var options = [ { title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
+          var colorsArrayLength = colorsArray.length;
+          var optionsAttachment = options.map((option, index) => {
+            var colorsArrayIndex = index % colorsArrayLength;
+            return {
+              fields: [
+                {
+                  title: option.title,
+                  value: option.description
+                }
+              ],
+              color: colorsArray[colorsArrayIndex].hex
+            };
+          })
 
-        bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
-        bot.reply(message, {
-          attachments: optionsAttachment
-        });
-      }
+          bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
+          bot.reply(message, {
+            attachments: optionsAttachment
+          });
+        }
 
-    }, 1000);
+      }, 1000);
 
+    }
   }
-}  
 
-});
-
+  });
 
 function startWorkSessionTest(bot, message) {
 
-  const { SlackUserId } = config;
+    const SlackUserId = message.user;
 
     models.User.find({
       where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -255,15 +258,12 @@ function startWorkSessionTest(bot, message) {
 
           }
         });
-
       });
-
-
     });
 
-  });
+  };
+}
 
-};
 
 
 // user just started conversation and is choosing which tasks to work on
@@ -283,7 +283,6 @@ function startSessionStartConversation(response, convo) {
 
   askWhichTasksToWorkOn(response, convo);
   convo.next();
-
 
 }
 
@@ -338,25 +337,9 @@ function confirmTasks(response, convo) {
       tasksToWorkOnHash[taskNumber] = dailyTasks[index];
   });
 
-  convo.ask(`To :heavy_check_mark:, you want to work on tasks: ${taskNumbersToWorkOnArray.join(", ")}?`,[
-    {
-      pattern: utterances.yes,
-      callback: (response, convo) => {
-        convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
-        confirmTimeForTasks(response,convo);
-        convo.next();
-      }
-    },
-    {
-      pattern: utterances.no,
-      callback: (response, convo) => {
-        convo.say("Let's give this another try then :repeat_one:");
-        convo.say(taskListMessage);
-        askWhichTasksToWorkOn(response, convo);
-        convo.next();
-      }
-    }
-  ]);
+  convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+  confirmTimeForTasks(response,convo);
+  convo.next();
 
 }
 
@@ -368,40 +351,100 @@ function confirmTimeForTasks(response, convo) {
   const { tasksToWorkOnHash, dailyTasks }  = convo.sessionStart;
   const SlackUserId = response.user;
 
-  console.log("convo sessino start:");
-  console.log(convo.sessionStart);
-
   var totalMinutes = 0;
+  var tasksToWorkOnArray = [];
   for (var key in tasksToWorkOnHash) {
     const task = tasksToWorkOnHash[key];
     console.log("this specific daily task:");
     console.log(task);
+    tasksToWorkOnArray.push(task);
     var { dataValues: { minutes } } = task;
     totalMinutes += parseInt(minutes);
   }
+  convo.sessionStart.tasksToWorkOnArray = tasksToWorkOnArray;
+
+  var tasksToWorkOnStringArray = tasksToWorkOnArray.map((task) => {
+    return task.text;
+  });
+  var tasksToWorkOnString = commaSeparateOutTaskArray(tasksToWorkOnStringArray);
 
   var now = moment();
   var calculatedTimeObject = now.add(totalMinutes, 'minutes');
   var calculatedTimeString = calculatedTimeObject.format("h:mm a");
-  convo.say(`Nice! That should take until ${calculatedTimeString} based on your estimate`);
-  convo.ask(`Would you like to work until ${calculatedTimeString}?`, [
+  convo.ask({
+    text: `Great! Working on tasks ${tasksToWorkOnString} will take you to *${calculatedTimeString}* based on your estimate`,
+    attachments:[
+      {
+        text: 'Ready to begin?',
+        attachment_type: 'default',
+        color: colorsHash.turquoise.hex,
+        fallback: "I was unable to process your decision",
+        actions: [
+          {
+              name: buttonValues.startNow.name,
+              text: "Start now",
+              value: buttonValues.startNow.value,
+              type: "button",
+              style: "primary"
+          },
+          {
+              name: buttonValues.checkIn.name,
+              text: "Check in :alarm_clock:",
+              value: buttonValues.checkIn.value,
+              type: "button"
+          },
+          {
+              name: buttonValues.changeTask.name,
+              text: "Change Task",
+              value: buttonValues.changeTask.value,
+              type: "button",
+              style: "danger"
+          },
+          {
+              name: buttonValues.changeTime.name,
+              text: "Change Time",
+              value: buttonValues.changeTime.value,
+              type: "button",
+              style: "danger"
+          }
+        ]
+      }
+    ]
+  },[
+      {
+        pattern: buttonValues.startNow.value,
+        callback: function(reply, convo) {
+          convo.say("Let's start now!");
+          convo.next();
+          // do something awesome here.
+      }
+    },
     {
-      pattern: utterances.yes,
-      callback: (response, convo) => {
-
-        // success! now save session time info for the user
-        convo.sessionStart.totalMinutes         = totalMinutes;
-        convo.sessionStart.calculatedTime       = calculatedTimeString;
-        convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
-
-        askForCheckIn(response, convo);
+      pattern: buttonValues.checkIn.value,
+      callback: function(reply, convo) {
+        convo.say("Let's check in!");
         convo.next();
       }
     },
     {
-      pattern: utterances.no,
-      callback: (response, convo) => {
-        askForCustomTotalMinutes(response, convo);
+      pattern: buttonValues.changeTask.value,
+      callback: function(reply, convo) {
+        convo.say("Let's change tasks!");
+        convo.next();
+      }
+    },
+    {
+      pattern: buttonValues.changeTime.value,
+      callback: function(reply, convo) {
+        convo.say("Let's change times!")
+        convo.next();
+      }
+    },
+    {
+      default: true,
+      callback: function(reply, convo) {
+        // this is failure point.
+        convo.stop();
         convo.next();
       }
     }
@@ -722,3 +765,5 @@ function getReminderNoteFromUser(response, convo) {
   ]);
 
 }
+
+

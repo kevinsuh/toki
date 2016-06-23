@@ -42,3 +42,22 @@ for (var key in colorsHash) {
 }
 export { colorsArray };
 
+export const buttonValues ={
+	startNow: {
+		name: "START_NOW",
+		value: "START_NOW"
+	},
+	checkIn: {
+		name: "CHECK_IN",
+		value: "CHECK_IN"
+	},
+	changeTask: {
+		name: "CHANGE_TASK",
+		value: "CHANGE_TASK"
+	},
+	changeTime: {
+		name: "CHANGE_TIME",
+		value: "CHANGE_TIME"
+	}
+}
+
