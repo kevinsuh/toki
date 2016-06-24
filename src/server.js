@@ -2,7 +2,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import http from 'http';
-import https from 'https';
 import dotenv from 'dotenv';
 import fs from 'fs';
 
@@ -96,13 +95,4 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 	});
 });
 
-// create HTTPS service identical to HTTP service on prod
-if (env == 'production') {
-	// options for HTTPS service
-	var options = {
-		key: fs.readFileSync('/etc/letsencrypt/live/tokibot.com/privkey.pem'),
-		cert: fs.readFileSync('/etc/letsencrypt/live/tokibot.com/fullchain.pem')
-	};
-	https.createServer(options, app).listen(process.env.HTTPS_PORT);
-}
 
