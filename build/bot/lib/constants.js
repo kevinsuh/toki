@@ -31,7 +31,7 @@ var colorsHash = exports.colorsHash = {
 		hex: "#bb4444"
 	},
 	lavendar: {
-		hex: "6e4474"
+		hex: "#6e4474"
 	},
 	turquoise: {
 		hex: "#44bbbb"
