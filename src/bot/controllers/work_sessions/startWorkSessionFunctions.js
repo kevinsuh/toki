@@ -101,7 +101,6 @@ function finalizeTimeAndTasksToStart(response, convo) {
         convo.sessionStart.confirmStart = true;
         convo.stop();
         convo.next();
-
       }
     },
     {
