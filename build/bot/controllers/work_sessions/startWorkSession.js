@@ -311,7 +311,8 @@ exports.default = function (controller) {
 							// if new task, insert that into DB and attach to work session
 							if (newTask) {
 								(function () {
-									var priority = dailyTasks.length;
+
+									var priority = dailyTasks.length + 1;
 									var text = newTask.text;
 									var minutes = newTask.minutes;
 

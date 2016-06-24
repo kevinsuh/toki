@@ -317,7 +317,8 @@ export default function(controller) {
 
 							// if new task, insert that into DB and attach to work session
 							if (newTask) {
-								const priority          = dailyTasks.length;
+
+								const priority          = (dailyTasks.length+1);
 								const { text, minutes } = newTask;
 								models.Task.create({
 									text
