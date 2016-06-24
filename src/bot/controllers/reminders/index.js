@@ -127,7 +127,7 @@ export default function(controller) {
 	// the actual setting of reminder
 	controller.on(`set_reminder`, (bot, config) => {
 
-		const { SlackUserId, reminder, custom_time, duration } = config;
+		const { SlackUserId, reminder, reminder_text, reminder_duration, custom_time, duration } = config;
 
 		var now = moment();
 
@@ -139,11 +139,16 @@ export default function(controller) {
 			customNote = reminder[0].value;
 		}
 
+		var reminderDuration = duration;
+		if (reminder_duration) {
+			reminderDuration = reminder_duration;
+		}
+
+
 		var remindTimeStamp; // for the message (`h:mm a`)
 		var remindTimeStampForDB; // for DB (`YYYY-MM-DD HH:mm:ss`)
-		if (duration) { // i.e. ten more minutes
+		if (reminderDuration) { // i.e. ten more minutes
 			console.log("inside of reminder_duration\n\n\n\n");
-			var reminderDuration = duration;
 			var durationSeconds = 0;
 			for (var i = 0; i < reminderDuration.length; i++) {
 				durationSeconds += reminderDuration[i].normalized.value;
