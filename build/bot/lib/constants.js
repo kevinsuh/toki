@@ -90,6 +90,10 @@ var buttonValues = exports.buttonValues = {
 	backLater: {
 		name: "BACK_LATER",
 		value: "BACK_LATER"
+	},
+	noTasks: {
+		name: "NO_TASKS",
+		value: "NO_TASKS"
 	}
 };
 //# sourceMappingURL=constants.js.map

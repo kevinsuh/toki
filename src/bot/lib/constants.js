@@ -86,6 +86,10 @@ export const buttonValues ={
 	backLater: {
 		name: "BACK_LATER",
 		value: "BACK_LATER"
+	},
+	noTasks: {
+		name: "NO_TASKS",
+		value: "NO_TASKS"
 	}
 }
 

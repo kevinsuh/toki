@@ -50,6 +50,12 @@ export default function(controller) {
 				case buttonValues.takeBreak.value:
 					bot.replyInteractive(message, "Let's take a break!");
 					break;
+				case buttonValues.noTasks.value:
+					bot.replyInteractive(message, "No worries! :smile_cat:");
+					break;
+				case buttonValues.backLater.value:
+					bot.replyInteractive(message, "I'll be here when you get back!");
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");

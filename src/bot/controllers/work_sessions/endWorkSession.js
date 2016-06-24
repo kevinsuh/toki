@@ -159,68 +159,89 @@ export default function(controller) {
 				if (taskArray.length == 0) {
 					convo.say("You don't have any tasks on today's list! Great work :punch:");
 					convo.sessionEnd.hasNoTasksToWorkOn = true;
-					taskListMessage = "Say `next` to keep going";
+					askUserPostSessionOptions(err, convo);
+					convo.next();
 				} else {
 					convo.say("Which task(s) did you get done? `i.e. tasks 1, 2`");
-				}
+					convo.ask({
+						text: taskListMessage,
+						attachments:[
+							{
+								attachment_type: 'default',
+								callback_id: "FINISH_TASKS_ON_END_SESSION",
+								fallback: "I was unable to process your decision",
+								actions: [
+									{
+									name: buttonValues.noTasks.name,
+									text: "None",
+									value: buttonValues.noTasks.value,
+									type: "button"
+									}
+								]
+							}
+						]
+					},[
+						{
+							pattern: buttonValues.noTasks.value,
+							callback: (response, convo) => {
+								askUserPostSessionOptions(response, convo);
+								convo.next();
+							}
+						},
+						{ // same as clicking buttonValues.noTasks.value
+							pattern: utterances.containsNone,
+							callback: (response, convo) => {
+								convo.say("No worries! :smile_cat:");
+								askUserPostSessionOptions(response, convo);
+								convo.next();
+							}
+						},
+						{
+							default: true,
+							callback: (response, convo) => {
+								// user inputed task #'s, not new task button
+								var { intentObject: { entities } } = response;
+								var tasksCompleted = response.text;
+								var tasksCompletedSplitArray = tasksCompleted.split(/(,|and)/);
 
-				convo.ask(taskListMessage, (response, convo) => {
+								// if we capture 0 valid tasks from string, then we start over
+								var numberRegEx              = new RegExp(/[\d]+/);
+								var taskNumberCompletedArray = [];
+								tasksCompletedSplitArray.forEach((taskString) => {
+									console.log(`task string: ${taskString}`);
+									var taskNumber = taskString.match(numberRegEx);
+									if (taskNumber) {
+										taskNumber = parseInt(taskNumber[0]);
+										if (taskNumber <= taskArray.length) {
+											taskNumberCompletedArray.push(taskNumber);
+										}
+									}
+								});
 
-					/**
-					 * 		4 possible responses:
-					 * 			1. write numbers down
-					 * 			2. says "didn't get one done"
-					 * 			3. "was distracted"
-					 * 			4. "did something else"
-					 * 			will only deal with the top 2 for now
-					 */
-					
-					var { intentObject: { entities } } = response;
-					var tasksCompleted = response.text;
+								// invalid if we captured no tasks
+  							var isInvalid = (taskNumberCompletedArray.length == 0 ? true : false);
+  							// repeat convo if invalid w/ informative context
+							  if (isInvalid) {
+							    convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+							    convo.say("You can pick a task from your list `i.e. tasks 1, 3` or say `none`");
+							    convo.repeat();
+							  } else {
+							  	// get the actual ids
+									var tasksCompletedArray = [];
+									taskNumberCompletedArray.forEach((taskNumber) => {
+										var index = taskNumber - 1; // to make 0-index based
+										if (taskArray[index])
+											tasksCompletedArray.push(taskArray[index].dataValues.id);
+									});
 
-					var tasksCompletedSplitArray = tasksCompleted.split(/(,|and)/);
-
-					// IF THE USER HAS NO TASKS ON DAILY TASK LIST
-					if (convo.sessionEnd.hasNoTasksToWorkOn) {
-						askUserPostSessionOptions(response, convo);
-						convo.next();
-						return;
-					}
-
-					// if we capture 0 valid tasks from string, then we start over
-					var numberRegEx              = new RegExp(/[\d]+/);
-					var taskNumberCompletedArray = [];
-					tasksCompletedSplitArray.forEach((taskString) => {
-						console.log(`task string: ${taskString}`);
-						var taskNumber = taskString.match(numberRegEx);
-						if (taskNumber) {
-							taskNumber = parseInt(taskNumber[0]);
-							if (taskNumber <= taskArray.length) {
-								taskNumberCompletedArray.push(taskNumber);
+									convo.sessionEnd.tasksCompleted = tasksCompletedArray;
+									convo.say("Great work :punch:");
+							  }
+							  convo.next();
 							}
 						}
-					});
-
-					if (taskNumberCompletedArray.length == 0) {
-						// no tasks completed
-						convo.say("No worries! :smile_cat:");
-					} else {
-						// get the actual ids
-						var tasksCompletedArray = [];
-						taskNumberCompletedArray.forEach((taskNumber) => {
-							var index = taskNumber - 1; // to make 0-index based
-							if (taskArray[index])
-								tasksCompletedArray.push(taskArray[index].dataValues.id);
-						});
-
-						convo.sessionEnd.tasksCompleted = tasksCompletedArray;
-						convo.say("Great work :punch:");
-					}
-
-					askUserPostSessionOptions(response, convo);
-					convo.next();
-					
-				});
+					]);
+				}
 			});
 
 			convo.on('end', (convo) => {
@@ -348,6 +369,7 @@ export default function(controller) {
 
 };
 
+// ask user for options after finishing session
 function askUserPostSessionOptions(response, convo) {
 
 	const { task }                = convo;
@@ -465,7 +487,6 @@ function askUserPostSessionOptions(response, convo) {
 
 // simple way to handle be back later
 function handleBeBackLater(response, convo) {
-	convo.say("I'll be here when you get back!");
 	convo.say("You can also ask for me to check in with you at a specific time later :grin:");
 }
 
