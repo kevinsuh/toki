@@ -400,12 +400,7 @@ function askUserPostSessionOptions(response, convo) {
 
 					// calculate break duration through wit
 					var durationSeconds = 0;
-					if (entities.break_duration) {
-						var durationArray = entities.break_duration;
-						for (var i = 0; i < durationArray.length; i++) {
-							durationSeconds += durationArray[i].normalized.value;
-						}
-					} else if (entities.duration) {
+					if (entities.duration) {
 						var durationArray = entities.duration;
 						for (var i = 0; i < durationArray.length; i++) {
 							durationSeconds += durationArray[i].normalized.value;

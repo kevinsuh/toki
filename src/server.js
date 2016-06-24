@@ -11,9 +11,6 @@ import cron from 'cron';
 import cronFunction from './app/cron';
 var CronJob = cron.CronJob;
 
-// botkit
-import { controller, customConfigBot } from './bot/controllers';
-
 var app = express();
 
 // configuration 
@@ -41,6 +38,8 @@ var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
   console.log("\n\n ~~ In development server of Navi ~~ \n\n");
   process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
+  process.env.SLACK_ID = process.env.DEV_SLACK_ID;
+	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 }
 
 /**
@@ -48,12 +47,28 @@ if (env == 'development') {
  */
 // ===================================================
 
+// botkit
+import { controller, customConfigBot } from './bot/controllers';
+
 customConfigBot(controller);
 var bot = controller.spawn(({
 	token: process.env.BOT_TOKEN
 }));
 export { bot };
 
+controller.configureSlackApp({
+	clientId: process.env.SLACK_ID,
+	clientSecret: process.env.SLACK_SECRET,
+	scopes: ['bot']
+})
+controller.createWebhookEndpoints(app);
+controller.createOauthEndpoints(app,function(err,req,res) {
+  if (err) {
+    res.status(500).send('ERROR: ' + err);
+  } else {
+    res.send('Success!');
+  }
+});
 
 // create HTTP service
 http.createServer(app).listen(process.env.HTTP_PORT, () => {

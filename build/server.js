@@ -46,9 +46,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var CronJob = _cron2.default.CronJob;
 
-// botkit
-
-
 var app = (0, _express2.default)();
 
 // configuration
@@ -76,6 +73,8 @@ var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
 	console.log("\n\n ~~ In development server of Navi ~~ \n\n");
 	process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
+	process.env.SLACK_ID = process.env.DEV_SLACK_ID;
+	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 }
 
 /**
@@ -83,14 +82,31 @@ if (env == 'development') {
  */
 // ===================================================
 
+// botkit
+
+
 (0, _controllers.customConfigBot)(_controllers.controller);
 var bot = _controllers.controller.spawn({
 	token: process.env.BOT_TOKEN
 });
 exports.bot = bot;
 
-// create HTTP service
 
+_controllers.controller.configureSlackApp({
+	clientId: process.env.SLACK_ID,
+	clientSecret: process.env.SLACK_SECRET,
+	scopes: ['bot']
+});
+_controllers.controller.createWebhookEndpoints(app);
+_controllers.controller.createOauthEndpoints(app, function (err, req, res) {
+	if (err) {
+		res.status(500).send('ERROR: ' + err);
+	} else {
+		res.send('Success!');
+	}
+});
+
+// create HTTP service
 _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
 	console.log('listening on port ' + app.get('port'));
 

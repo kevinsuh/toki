@@ -5,184 +5,66 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 exports.default = function (controller) {
-
-  /**
-   *
-   * 		User directly asks to start a session
-   * 							~* via Wit *~
-   * 		     this makes sure you are properly in
-   * 		     				in a "SessionGroup" before
-   * 		     			working on your session
-   */
-  controller.hears(['start_session'], 'direct_message', _index.wit.hears, function (bot, message) {
+  // this will send message if no other intent gets picked up
+  controller.hears([''], 'direct_message', _index.wit.hears, function (bot, message) {
 
     var SlackUserId = message.user;
-    var intent = _intents2.default.START_SESSION;
 
-    var config = {
-      intent: intent,
-      SlackUserId: SlackUserId
-    };
+    console.log("\n\n\n ~~ in back up area!!! ~~ \n\n\n");
+    console.log(message);
 
-    bot.send({
-      type: "typing",
-      channel: message.channel
-    });
-    setTimeout(function () {
-      controller.trigger('new_session_group_decision', [bot, config]);
-    }, 1000);
-  });
+    // user said something outside of wit's scope
+    if (!message.selectedIntent) {
 
-  /**
-   * 				EVERY CREATED SESSION GOES THROUGH THIS FIRST
-   *   		*** this checks if there is an existing open session ***
-   *   			if no open sessions => `begin_session`
-   *   			else => go through this flow
-   */
-  controller.on('confirm_new_session', function (bot, config) {
-
-    /**
-     * 		User can either:
-     * 			1. Keep going
-     * 			2. Start new session by ending this one early
-     * 					- update endTime in session to now
-     * 					- mark it as done and re-enter `begin_session`
-     */
-
-    var SlackUserId = config.SlackUserId;
-
-    console.log("\n\n\n\n\nin `confirm_new_session` before entering begin_session flow!\n\n\n\n\n");
-
-    _models2.default.User.find({
-      where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
-      include: [_models2.default.SlackUser]
-    }).then(function (user) {
-
-      user.getWorkSessions({
-        where: ['"open" = ?', true]
-      }).then(function (workSessions) {
-
-        // no open work sessions => you're good to go!
-        if (workSessions.length == 0) {
-          controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
-          return;
-        }
-
-        // otherwise, we gotta confirm user wants to cancel current work session
-
-        bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-
-          // by default, user wants to start a new session
-          // that's why she is in this flow...
-          // no openWorkSession unless we found one
-          convo.startNewSession = true;
-          convo.openWorkSession = false;
-
-          var openWorkSession = workSessions[0]; // deal with first one as reference point
-          convo.openWorkSession = openWorkSession;
-
-          var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime);
-          var endTimeString = endTime.format("h:mm a");
-          var now = (0, _momentTimezone2.default)();
-          var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
-
-          convo.say('You are already in a session right now! You have ' + minutesLeft + ' minutes left :timer_clock:');
-          convo.ask('Do you want to `keep going`, or cancel it and start a `new session`?', function (response, convo) {
-
-            var responseMessage = response.text;
-            var entities = response.intentObject.entities;
-
-
-            var newSession = new RegExp(/(((^st[tart]*))|(^ne[ew]*)|(^se[ession]*))/); // `start` or `new`
-            var keepGoing = new RegExp(/(((^k[ep]*))|(^go[oing]*))/); // `keep` or `going`
-
-            if (newSession.test(responseMessage)) {
-
-              // start new session
-              convo.say("Got it. Let's do a new session :facepunch:");
-            } else if (keepGoing.test(responseMessage)) {
-
-              // continue current session
-              convo.say("Got it. Let's do it! :weight_lifter:");
-              convo.say('I\'ll ping you at ' + endTimeString + ' :alarm_clock:');
-              convo.startNewSession = false;
-            } else {
-
-              // invalid
-              convo.say("I'm sorry, I didn't catch that :dog:");
-              convo.repeat();
-            }
-            convo.next();
-          });
-
-          convo.on('end', function (convo) {
-
-            console.log("\n\n\n ~~ here in end of confirm_new_session ~~ \n\n\n");
-
-            var startNewSession = convo.startNewSession;
-            var openWorkSession = convo.openWorkSession;
-
-            // if user wants to start new session, then do this flow and enter `begin_session` flow
-
-            if (startNewSession) {
-
-              /**
-               * 		~ User has confirmed starting a new session ~
-               * 			* end current work session early
-               * 			* cancel all existing open work sessions
-               * 			* cancel `break` reminders
-               */
-
-              var nowTimeStamp = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss");
-
-              // if user had an open work session(s), cancel them!
-              if (openWorkSession) {
-                openWorkSession.update({
-                  endTime: nowTimeStamp,
-                  open: false
-                });
-                workSessions.forEach(function (workSession) {
-                  workSession.update({
-                    open: false
-                  });
-                });
-              };
-
-              // cancel all user breaks cause user is RDY TO WORK
-              _models2.default.User.find({
-                where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
-                include: [_models2.default.SlackUser]
-              }).then(function (user) {
-                user.getReminders({
-                  where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break"]]
-                }).then(function (reminders) {
-                  reminders.forEach(function (reminder) {
-                    reminder.update({
-                      "open": false
-                    });
-                  });
-                });
-              });
-
-              controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
-            }
-          });
-        });
+      bot.send({
+        type: "typing",
+        channel: message.channel
       });
-    });
+      setTimeout(function () {
+
+        // different fallbacks based on reg exp
+        var text = message.text;
+
+
+        if (_constants.THANK_YOU.reg_exp.test(text)) {
+          // user says thank you
+          bot.reply(message, "You're welcome!! :smile:");
+        } else if (text == 'TOKI_T1ME') {
+
+          /*
+              
+          *** ~~ TOP SECRET PASSWORD FOR TESTING FLOWS ~~ ***
+              
+           */
+
+          startWorkSessionTest(bot, message);
+        } else {
+          // end-all fallback
+          var options = [{ title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
+          var colorsArrayLength = _constants.colorsArray.length;
+          var optionsAttachment = options.map(function (option, index) {
+            var colorsArrayIndex = index % colorsArrayLength;
+            return {
+              fields: [{
+                title: option.title,
+                value: option.description
+              }],
+              color: _constants.colorsArray[colorsArrayIndex].hex
+            };
+          });
+
+          bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
+          bot.reply(message, {
+            attachments: optionsAttachment
+          });
+        }
+      }, 1000);
+    }
   });
 
-  /**
-   * 		ACTUAL START SESSION FLOW
-   * 		this will begin the start_session flow with user
-   *
-   * 			- start work session
-   * 			- show and decide tasks to work on
-   * 			- decide session duration
-   */
-  controller.on('begin_session', function (bot, config) {
-    var SlackUserId = config.SlackUserId;
+  function startWorkSessionTest(bot, message) {
 
+    var SlackUserId = message.user;
 
     _models2.default.User.find({
       where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
@@ -241,6 +123,7 @@ exports.default = function (controller) {
               convo.say("Sorry but something went wrong :dog:. Please try `start a session` again");
               convo.next();
             });
+
             return;
           }
 
@@ -250,16 +133,16 @@ exports.default = function (controller) {
             console.log(sessionStart);
 
             /**
-            *    1. tell user time and tasks to work on
-            *    
-            *    2. save responses to DB:
-            *      session:
-            *        - tasks to work on (tasksToWorkOnHash)
-            *        - sessionEndTime (calculated)
-            *        - reminder (time + possible customNote)
-            *
-            *    3. start session
-            */
+             *    1. tell user time and tasks to work on
+             *    
+             *    2. save responses to DB:
+             *      session:
+             *        - tasks to work on (tasksToWorkOnHash)
+             *        - sessionEndTime (calculated)
+             *        - reminder (time + possible customNote)
+             *
+             *    3. start session
+             */
 
             var UserId = sessionStart.UserId;
             var SlackUserId = sessionStart.SlackUserId;
@@ -285,7 +168,7 @@ exports.default = function (controller) {
 
             // 1. create work session
             // 2. attach the daily tasks to work on during that work session
-            var startTime = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss");
+            var startTime = (0, _moment2.default)().format("YYYY-MM-DD HH:mm:ss");
             var endTime = calculatedTimeObject.format("YYYY-MM-DD HH:mm:ss");
 
             // create necessary data models:
@@ -348,7 +231,7 @@ exports.default = function (controller) {
                 var task = convo.task;
                 var bot = task.bot;
                 var source_message = task.source_message;
-                fiveHoursAgo = new Date((0, _momentTimezone2.default)().subtract(5, 'hours'));
+                fiveHoursAgo = new Date((0, _moment2.default)().subtract(5, 'hours'));
 
                 user.getWorkSessions({
                   where: ['"WorkSession"."endTime" > ?', fiveHoursAgo]
@@ -367,7 +250,6 @@ exports.default = function (controller) {
                     }
 
                     convo.next();
-
                     convo.on('end', function (convo) {
                       // go to start your day from here
                       var config = { SlackUserId: SlackUserId };
@@ -394,7 +276,7 @@ exports.default = function (controller) {
         });
       });
     });
-  });
+  };
 };
 
 var _os = require('os');
@@ -403,13 +285,25 @@ var _os2 = _interopRequireDefault(_os);
 
 var _index = require('../index');
 
-var _momentTimezone = require('moment-timezone');
+var _http = require('http');
 
-var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
+var _http2 = _interopRequireDefault(_http);
+
+var _bodyParser = require('body-parser');
+
+var _bodyParser2 = _interopRequireDefault(_bodyParser);
+
+var _moment = require('moment');
+
+var _moment2 = _interopRequireDefault(_moment);
 
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
+
+var _botResponses = require('../../lib/botResponses');
+
+var _constants = require('../../lib/constants');
 
 var _messageHelpers = require('../../lib/messageHelpers');
 
@@ -419,15 +313,7 @@ var _intents = require('../../lib/intents');
 
 var _intents2 = _interopRequireDefault(_intents);
 
-var _botResponses = require('../../lib/botResponses');
-
-var _constants = require('../../lib/constants');
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-/**
- * 		START WORK SESSION CONVERSATION FLOW FUNCTIONS
- */
 
 // user just started conversation and is choosing which tasks to work on
 function startSessionStartConversation(response, convo) {
@@ -442,9 +328,6 @@ function startSessionStartConversation(response, convo) {
 }
 
 // confirm user for the tasks and
-
-
-// START OF A WORK SESSION
 function askWhichTasksToWorkOn(response, convo) {
   // this should only be said FIRST_TIME_USER
   // convo.say("I recommend working for at least 30 minutes at a time, so if you want to work on shorter tasks, try to pick several to get over that 30 minute threshold :smiley:");
@@ -501,7 +384,7 @@ function addNewTask(response, convo) {
     // if they have necessary info from Wit (time + text), we can streamline the task adding process
     var customTimeObject;
     var customTimeString;
-    var now = (0, _momentTimezone2.default)();
+    var now = (0, _moment2.default)();
     if (entities.duration) {
 
       var durationArray = entities.duration;
@@ -512,7 +395,7 @@ function addNewTask(response, convo) {
       var durationMinutes = Math.floor(durationSeconds / 60);
 
       // add minutes to now
-      customTimeObject = (0, _momentTimezone2.default)().add(durationSeconds, 'seconds');
+      customTimeObject = (0, _moment2.default)().add(durationSeconds, 'seconds');
       customTimeString = customTimeObject.format("h:mm a");
     } else if (entities.custom_time) {
       // get rid of timezone to make it tz-neutral
@@ -527,11 +410,11 @@ function addNewTask(response, convo) {
       }
 
       // create time object based on user input + timezone
-      customTimeObject = (0, _momentTimezone2.default)(timeStamp);
+      customTimeObject = (0, _moment2.default)(timeStamp);
       customTimeObject.add(customTimeObject._tzm - now.utcOffset(), 'minutes');
       customTimeString = customTimeObject.format("h:mm a");
 
-      var durationMinutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+      var durationMinutes = Math.round(_moment2.default.duration(customTimeObject.diff(now)).asMinutes());
     }
 
     newTask.text = entities.reminder[0].value;
@@ -577,7 +460,7 @@ function addTimeToNewTask(response, convo) {
     } else {
 
       var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(timeToTask);
-      var customTimeObject = (0, _momentTimezone2.default)().add(minutes, 'minutes');
+      var customTimeObject = (0, _moment2.default)().add(minutes, 'minutes');
       var customTimeString = customTimeObject.format("h:mm a");
 
       newTask.minutes = minutes;
@@ -751,7 +634,7 @@ function confirmTimeForTasks(response, convo) {
     totalMinutes += parseInt(minutes);
   }
 
-  var now = (0, _momentTimezone2.default)();
+  var now = (0, _moment2.default)();
   var calculatedTimeObject = now.add(totalMinutes, 'minutes');
   var calculatedTimeString = calculatedTimeObject.format("h:mm a");
 
@@ -767,6 +650,7 @@ function confirmTimeForTasks(response, convo) {
      *    We may need to do something like this if Node / Sequelize
      *    does not handle west coast as I idealistically hope for
      */
+
     // get timezone of user before continuing
     bot.api.users.list({
       presence: 1
@@ -1002,7 +886,7 @@ function confirmCustomTotalMinutes(response, convo) {
   var source_message = task.source_message;
 
   var SlackUserId = response.user;
-  var now = (0, _momentTimezone2.default)();
+  var now = (0, _moment2.default)();
 
   // use Wit to understand the message in natural language!
   var entities = response.intentObject.entities;
@@ -1019,7 +903,7 @@ function confirmCustomTotalMinutes(response, convo) {
     var durationMinutes = Math.floor(durationSeconds / 60);
 
     // add minutes to now
-    customTimeObject = (0, _momentTimezone2.default)().add(durationSeconds, 'seconds');
+    customTimeObject = (0, _moment2.default)().add(durationSeconds, 'seconds');
     customTimeString = customTimeObject.format("h:mm a");
 
     convo.sessionStart.totalMinutes = durationMinutes;
@@ -1029,7 +913,7 @@ function confirmCustomTotalMinutes(response, convo) {
     var timeStamp = entities.custom_time[0].value;
 
     // create time object based on user input + timezone
-    customTimeObject = (0, _momentTimezone2.default)(timeStamp);
+    customTimeObject = (0, _moment2.default)(timeStamp);
     customTimeObject.add(customTimeObject._tzm - now.utcOffset(), 'minutes');
     customTimeString = customTimeObject.format("h:mm a");
   }
@@ -1073,7 +957,7 @@ function confirmCheckInTime(response, convo) {
   var source_message = task.source_message;
 
   var SlackUserId = response.user;
-  var now = (0, _momentTimezone2.default)();
+  var now = (0, _moment2.default)();
 
   console.log("\n\n ~~ message in confirmCheckInTime ~~ \n\n");
 
@@ -1095,7 +979,7 @@ function confirmCheckInTime(response, convo) {
     var durationMinutes = Math.floor(durationSeconds / 60);
 
     // add minutes to now
-    checkinTimeObject = (0, _momentTimezone2.default)().add(durationSeconds, 'seconds');
+    checkinTimeObject = (0, _moment2.default)().add(durationSeconds, 'seconds');
     checkinTimeString = checkinTimeObject.format("h:mm a");
   } else if (entities.custom_time) {
 
@@ -1107,7 +991,7 @@ function confirmCheckInTime(response, convo) {
       // type will be "value"
       timeStamp = customTimeObject.value;
     }
-    timeStamp = (0, _momentTimezone2.default)(timeStamp); // in PST because of Wit default settings
+    timeStamp = (0, _moment2.default)(timeStamp); // in PST because of Wit default settings
 
     timeStamp.add(timeStamp._tzm - now.utcOffset(), 'minutes');
     // create time object based on user input + timezone
@@ -1169,4 +1053,4 @@ function askForReminderDuringCheckin(response, convo) {
     }
   }], { 'key': 'reminderNote' });
 }
-//# sourceMappingURL=startWorkSession.js.map
+//# sourceMappingURL=index.js.map

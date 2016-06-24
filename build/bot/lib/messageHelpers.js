@@ -13,6 +13,7 @@ exports.convertArrayToTaskListMessage = convertArrayToTaskListMessage;
 exports.convertTimeStringToMinutes = convertTimeStringToMinutes;
 exports.convertToSingleTaskObjectArray = convertToSingleTaskObjectArray;
 exports.prioritizeTaskArrayFromUserInput = prioritizeTaskArrayFromUserInput;
+exports.commaSeparateOutTaskArray = commaSeparateOutTaskArray;
 
 var _constants = require('./constants');
 
@@ -63,7 +64,7 @@ function convertArrayToTaskListMessage(taskArray) {
 		return taskListMessage;
 	}
 
-	console.log("\n\n ~~ options passed in to convertArrayToTaskListMessage ~~ \n\n");
+	console.log("\n\n options passed in to convertArrayToTaskListMessage:");
 	console.log(options);
 	console.log("\n\n");
 
@@ -205,5 +206,18 @@ function prioritizeTaskArrayFromUserInput(taskObjectArray, input) {
 	});
 
 	return prioritizedTaskArray;
+}
+
+// returns tasks separated into red blocks
+function commaSeparateOutTaskArray(a) {
+
+	// put into red blocks
+	a = a.map(function (a) {
+		return '`' + a + '`';
+	});
+
+	// make into string
+	var string = [a.slice(0, -1).join(', '), a.slice(-1)[0]].join(a.length < 2 ? '' : ' and ');
+	return string;
 }
 //# sourceMappingURL=messageHelpers.js.map

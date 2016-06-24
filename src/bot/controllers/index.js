@@ -8,13 +8,16 @@ import tasksController from './tasks';
 import workSessionsController from './work_sessions';
 import remindersController from './reminders';
 import daysController from './days';
+import buttonsController from './buttons';
 import setupBot from '../bot';
 import setupReceiveMiddleware from '../middleware/receiveMiddleware';
-import miscellaneousController from './miscellaneousController';
+import miscController from './misc';
 
 import models from '../../app/models';
 import intentConfig from '../lib/intents';
 import { colorsArray, THANK_YOU } from '../lib/constants';
+
+import storageCreator from '../lib/storage';
 
 require('dotenv').config();
 
@@ -48,8 +51,12 @@ export { wit };
  *      ***  CONFIG  ****
  */
 
-var controller = Botkit.slackbot();
-
+var config = {};
+const storage = storageCreator(config);
+var controller = Botkit.slackbot({
+  interactive_replies: true,
+  storage
+});
 export { controller };
 
 // simple way to keep track of bots
@@ -67,12 +74,12 @@ export function customConfigBot(controller) {
   setupBot(controller);
   setupReceiveMiddleware(controller);
 
-  // add controller functionalities
+  miscController(controller);
   daysController(controller);
   tasksController(controller);
   workSessionsController(controller);
-  miscellaneousController(controller);
   remindersController(controller);
+  buttonsController(controller);
 }
 
 // try to avoid repeat RTM's
@@ -152,76 +159,6 @@ controller.on('login_bot', (bot,team) => {
   }
 });
 
-//DIALOG
-controller.storage.teams.all(function(err,teams) {
-
-  console.log(teams)
-
-  if (err) {
-    throw new Error(err);
-  }
-
-  // connect all teams with bots up to slack!
-  for (var t  in teams) {
-    if (teams[t].bot) {
-      var bot = controller.spawn(teams[t]).startRTM(function(err) {
-        if (err) {
-          console.log('Error connecting bot to Slack:',err);
-        } else {
-          trackBot(bot);
-        }
-      });
-    }
-  }
-
-});
-
-/**
- *      CATCH ALL BUCKET FOR WIT INTENTS
- */
-
-// this will send message if no other intent gets picked up
-controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
-
-  console.log("\n\n\n ~~ in back up area ~~ \n\n\n");
-  console.log(message);
-
-  // user said something outside of wit's scope
-  if (!message.selectedIntent) {
-
-    // different fallbacks based on reg exp
-    const { text } = message;
-
-    console.log(THANK_YOU.reg_exp);
-    console.log(text);
-
-    if (THANK_YOU.reg_exp.test(text)) {
-      bot.reply(message, "You're welcome!! :smile:");
-    } else {
-      // end-all fallback
-      var options = [ { title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
-      var colorsArrayLength = colorsArray.length;
-      var optionsAttachment = options.map((option, index) => {
-        var colorsArrayIndex = index % colorsArrayLength;
-        return {
-          fields: [
-            {
-              title: option.title,
-              value: option.description
-            }
-          ],
-          color: colorsArray[colorsArrayIndex].hex
-        };
-      })
-
-      bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
-      bot.reply(message, {
-        attachments: optionsAttachment
-      });
-    }
-  }
-
-});
 
 /**
  *      CATCH FOR WHETHER WE SHOULD START
@@ -368,4 +305,5 @@ controller.on(`new_session_group_decision`, (bot, config) => {
     });
   });
 });
+
 

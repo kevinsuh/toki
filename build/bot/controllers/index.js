@@ -40,6 +40,10 @@ var _days = require('./days');
 
 var _days2 = _interopRequireDefault(_days);
 
+var _buttons = require('./buttons');
+
+var _buttons2 = _interopRequireDefault(_buttons);
+
 var _bot = require('../bot');
 
 var _bot2 = _interopRequireDefault(_bot);
@@ -48,9 +52,9 @@ var _receiveMiddleware = require('../middleware/receiveMiddleware');
 
 var _receiveMiddleware2 = _interopRequireDefault(_receiveMiddleware);
 
-var _miscellaneousController = require('./miscellaneousController');
+var _misc = require('./misc');
 
-var _miscellaneousController2 = _interopRequireDefault(_miscellaneousController);
+var _misc2 = _interopRequireDefault(_misc);
 
 var _models = require('../../app/models');
 
@@ -61,6 +65,10 @@ var _intents = require('../lib/intents');
 var _intents2 = _interopRequireDefault(_intents);
 
 var _constants = require('../lib/constants');
+
+var _storage = require('../lib/storage');
+
+var _storage2 = _interopRequireDefault(_storage);
 
 var _initiation = require('../actions/initiation');
 
@@ -100,8 +108,12 @@ exports.wit = wit;
  *      ***  CONFIG  ****
  */
 
-var controller = _botkit2.default.slackbot();
-
+var config = {};
+var storage = (0, _storage2.default)(config);
+var controller = _botkit2.default.slackbot({
+  interactive_replies: true,
+  storage: storage
+});
 exports.controller = controller;
 
 // simple way to keep track of bots
@@ -120,12 +132,12 @@ function customConfigBot(controller) {
   (0, _bot2.default)(controller);
   (0, _receiveMiddleware2.default)(controller);
 
-  // add controller functionalities
+  (0, _misc2.default)(controller);
   (0, _days2.default)(controller);
   (0, _tasks2.default)(controller);
   (0, _work_sessions2.default)(controller);
-  (0, _miscellaneousController2.default)(controller);
   (0, _reminders2.default)(controller);
+  (0, _buttons2.default)(controller);
 }
 
 // try to avoid repeat RTM's
@@ -200,74 +212,6 @@ controller.on('login_bot', function (bot, team) {
         console.log(err);
       }
     });
-  }
-});
-
-//DIALOG
-controller.storage.teams.all(function (err, teams) {
-
-  console.log(teams);
-
-  if (err) {
-    throw new Error(err);
-  }
-
-  // connect all teams with bots up to slack!
-  for (var t in teams) {
-    if (teams[t].bot) {
-      var bot = controller.spawn(teams[t]).startRTM(function (err) {
-        if (err) {
-          console.log('Error connecting bot to Slack:', err);
-        } else {
-          trackBot(bot);
-        }
-      });
-    }
-  }
-});
-
-/**
- *      CATCH ALL BUCKET FOR WIT INTENTS
- */
-
-// this will send message if no other intent gets picked up
-controller.hears([''], 'direct_message', wit.hears, function (bot, message) {
-
-  console.log("\n\n\n ~~ in back up area ~~ \n\n\n");
-  console.log(message);
-
-  // user said something outside of wit's scope
-  if (!message.selectedIntent) {
-
-    // different fallbacks based on reg exp
-    var text = message.text;
-
-
-    console.log(_constants.THANK_YOU.reg_exp);
-    console.log(text);
-
-    if (_constants.THANK_YOU.reg_exp.test(text)) {
-      bot.reply(message, "You're welcome!! :smile:");
-    } else {
-      // end-all fallback
-      var options = [{ title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
-      var colorsArrayLength = _constants.colorsArray.length;
-      var optionsAttachment = options.map(function (option, index) {
-        var colorsArrayIndex = index % colorsArrayLength;
-        return {
-          fields: [{
-            title: option.title,
-            value: option.description
-          }],
-          color: _constants.colorsArray[colorsArrayIndex].hex
-        };
-      });
-
-      bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
-      bot.reply(message, {
-        attachments: optionsAttachment
-      });
-    }
   }
 });
 
