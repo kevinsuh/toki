@@ -21,11 +21,6 @@ export default function(controller) {
     console.log("\n\n\n ~~ in back up area!!! ~~ \n\n\n");
     console.log(message);
 
-    startWorkSessionTest(bot, message);
-     
-
-  if (false) {
-
     // user said something outside of wit's scope
     if (!message.selectedIntent) {
 
@@ -38,15 +33,18 @@ export default function(controller) {
         // different fallbacks based on reg exp
         const { text } = message;
 
-        console.log(THANK_YOU.reg_exp);
-        console.log(text);
-
         if (THANK_YOU.reg_exp.test(text)) {
+          // user says thank you
           bot.reply(message, "You're welcome!! :smile:");
-        } else if (true) {
+        } else if (text == `TOKI_T1ME`) {
 
-         bot.reply("OKIE!");
-
+          /*
+              
+      *** ~~ TOP SECRET PASSWORD FOR TESTING FLOWS ~~ ***
+              
+           */
+          
+          startWorkSessionTest(bot, message);
 
         } else {
           // end-all fallback
@@ -74,7 +72,6 @@ export default function(controller) {
       }, 1000);
 
     }
-  }
 
   });
 
@@ -431,9 +428,6 @@ function addTimeToNewTask(response, convo) {
     var isInvalid = false;
     if (!validMinutesTester.test(timeToTask)) {
       isInvalid = true;
-    } else {
-      var minutes     = convertTimeStringToMinutes(timeToTask);
-      newTask.minutes = minutes;
     }
 
     // INVALID tester
@@ -443,9 +437,11 @@ function addTimeToNewTask(response, convo) {
       convo.repeat();
     } else {
 
+      var minutes          = convertTimeStringToMinutes(timeToTask);
       var customTimeObject = moment().add(minutes, 'minutes');
       var customTimeString = customTimeObject.format("h:mm a");
 
+      newTask.minutes                         = minutes;
       convo.sessionStart.newTask              = newTask;
       convo.sessionStart.calculatedTime       = customTimeString;
       convo.sessionStart.calculatedTimeObject = customTimeObject;
@@ -519,9 +515,6 @@ function finalizeNewTaskToStart(response, convo) {
       pattern: buttonValues.checkIn.value,
       callback: function(response, convo) {
 
-        console.log("new task:");
-        console.log(newTask);
-
         tasksToWorkOnHash[1]                 = newTask;
         convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
         convo.sessionStart.confirmStart      = true;
@@ -540,6 +533,11 @@ function finalizeNewTaskToStart(response, convo) {
     {
       pattern: buttonValues.changeSessionTime.value,
       callback: function(response, convo) {
+
+        tasksToWorkOnHash[1]                 = newTask;
+        convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+        convo.sessionStart.confirmStart      = true;
+
         askForCustomTotalMinutes(response, convo);
         convo.next();
       }
@@ -677,7 +675,7 @@ function finalizeTimeAndTasksToStart(response, convo) {
     tasksToWorkOnArray.push(tasksToWorkOnHash[key]);
   }
   var taskTextsToWorkOnArray = tasksToWorkOnArray.map((task) => {
-    const { dataValues: { text } } = task;
+    var text = task.dataValues ? task.dataValues.text : task.text;
     return text;
   });
   var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
@@ -866,7 +864,7 @@ function askForCustomTotalMinutes(response, convo) {
   const { bot, source_message } = task;
   const SlackUserId = response.user;
 
-  convo.ask("What time would you like to work until?", (response, convo) => {
+  convo.ask("How long would you like to work?", (response, convo) => {
 
     var { intentObject: { entities } } = response;
     // for time to tasks, these wit intents are the only ones that makes sense

@@ -42,9 +42,12 @@ exports.default = function (controller) {
 				case _constants.buttonValues.newTask.value:
 					bot.replyInteractive(message, "Sweet! Let's work on a new task");
 					break;
+				case _constants.buttonValues.addCheckinNote.value:
+					bot.replyInteractive(message, "Let's add a note to your checkin!");
+					break;
 				default:
 					// some default to replace button no matter what
-					bot.replyInteractive(message, "Awesome, thanks!");
+					bot.replyInteractive(message, "Awesome!");
 			}
 		}
 

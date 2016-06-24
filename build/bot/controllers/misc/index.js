@@ -13,53 +13,52 @@ exports.default = function (controller) {
     console.log("\n\n\n ~~ in back up area!!! ~~ \n\n\n");
     console.log(message);
 
-    startWorkSessionTest(bot, message);
+    // user said something outside of wit's scope
+    if (!message.selectedIntent) {
 
-    if (false) {
+      bot.send({
+        type: "typing",
+        channel: message.channel
+      });
+      setTimeout(function () {
 
-      // user said something outside of wit's scope
-      if (!message.selectedIntent) {
-
-        bot.send({
-          type: "typing",
-          channel: message.channel
-        });
-        setTimeout(function () {
-
-          // different fallbacks based on reg exp
-          var text = message.text;
+        // different fallbacks based on reg exp
+        var text = message.text;
 
 
-          console.log(_constants.THANK_YOU.reg_exp);
-          console.log(text);
+        if (_constants.THANK_YOU.reg_exp.test(text)) {
+          // user says thank you
+          bot.reply(message, "You're welcome!! :smile:");
+        } else if (text == 'TOKI_T1ME') {
 
-          if (_constants.THANK_YOU.reg_exp.test(text)) {
-            bot.reply(message, "You're welcome!! :smile:");
-          } else if (true) {
+          /*
+              
+          *** ~~ TOP SECRET PASSWORD FOR TESTING FLOWS ~~ ***
+              
+           */
 
-            bot.reply("OKIE!");
-          } else {
-            // end-all fallback
-            var options = [{ title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
-            var colorsArrayLength = _constants.colorsArray.length;
-            var optionsAttachment = options.map(function (option, index) {
-              var colorsArrayIndex = index % colorsArrayLength;
-              return {
-                fields: [{
-                  title: option.title,
-                  value: option.description
-                }],
-                color: _constants.colorsArray[colorsArrayIndex].hex
-              };
-            });
+          startWorkSessionTest(bot, message);
+        } else {
+          // end-all fallback
+          var options = [{ title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
+          var colorsArrayLength = _constants.colorsArray.length;
+          var optionsAttachment = options.map(function (option, index) {
+            var colorsArrayIndex = index % colorsArrayLength;
+            return {
+              fields: [{
+                title: option.title,
+                value: option.description
+              }],
+              color: _constants.colorsArray[colorsArrayIndex].hex
+            };
+          });
 
-            bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
-            bot.reply(message, {
-              attachments: optionsAttachment
-            });
-          }
-        }, 1000);
-      }
+          bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
+          bot.reply(message, {
+            attachments: optionsAttachment
+          });
+        }
+      }, 1000);
     }
   });
 
@@ -451,9 +450,6 @@ function addTimeToNewTask(response, convo) {
     var isInvalid = false;
     if (!validMinutesTester.test(timeToTask)) {
       isInvalid = true;
-    } else {
-      var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(timeToTask);
-      newTask.minutes = minutes;
     }
 
     // INVALID tester
@@ -463,9 +459,11 @@ function addTimeToNewTask(response, convo) {
       convo.repeat();
     } else {
 
+      var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(timeToTask);
       var customTimeObject = (0, _moment2.default)().add(minutes, 'minutes');
       var customTimeString = customTimeObject.format("h:mm a");
 
+      newTask.minutes = minutes;
       convo.sessionStart.newTask = newTask;
       convo.sessionStart.calculatedTime = customTimeString;
       convo.sessionStart.calculatedTimeObject = customTimeObject;
@@ -535,9 +533,6 @@ function finalizeNewTaskToStart(response, convo) {
     pattern: _constants.buttonValues.checkIn.value,
     callback: function callback(response, convo) {
 
-      console.log("new task:");
-      console.log(newTask);
-
       tasksToWorkOnHash[1] = newTask;
       convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
       convo.sessionStart.confirmStart = true;
@@ -554,6 +549,11 @@ function finalizeNewTaskToStart(response, convo) {
   }, {
     pattern: _constants.buttonValues.changeSessionTime.value,
     callback: function callback(response, convo) {
+
+      tasksToWorkOnHash[1] = newTask;
+      convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+      convo.sessionStart.confirmStart = true;
+
       askForCustomTotalMinutes(response, convo);
       convo.next();
     }
@@ -696,8 +696,7 @@ function finalizeTimeAndTasksToStart(response, convo) {
     tasksToWorkOnArray.push(tasksToWorkOnHash[key]);
   }
   var taskTextsToWorkOnArray = tasksToWorkOnArray.map(function (task) {
-    var text = task.dataValues.text;
-
+    var text = task.dataValues ? task.dataValues.text : task.text;
     return text;
   });
   var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
@@ -865,7 +864,7 @@ function askForCustomTotalMinutes(response, convo) {
 
   var SlackUserId = response.user;
 
-  convo.ask("What time would you like to work until?", function (response, convo) {
+  convo.ask("How long would you like to work?", function (response, convo) {
     var entities = response.intentObject.entities;
     // for time to tasks, these wit intents are the only ones that makes sense
 
