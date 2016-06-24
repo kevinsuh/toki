@@ -67,9 +67,25 @@ export const buttonValues ={
 		name: "ADD_CHECKIN_NOTE",
 		value: "ADD_CHECKIN_NOTE"
 	},
+	startSession: {
+		name: "START_SESSION",
+		value: "START_SESSION"
+	},
 	newTask: {
 		name: "NEW_TASK",
 		value: "NEW_TASK"
+	},
+	takeBreak: {
+		name: "TAKE_BREAK",
+		value: "TAKE_BREAK"
+	},
+	endDay: {
+		name: "END_DAY",
+		value: "END_DAY"
+	},
+	backLater: {
+		name: "BACK_LATER",
+		value: "BACK_LATER"
 	}
 }
 

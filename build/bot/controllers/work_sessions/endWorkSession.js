@@ -356,6 +356,8 @@ var _intents = require('../../lib/intents');
 
 var _intents2 = _interopRequireDefault(_intents);
 
+var _constants = require('../../lib/constants');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 ;
@@ -372,79 +374,160 @@ function askUserPostSessionOptions(response, convo) {
 	// convo.say("I recommend taking a 15 minute break after about 90 minutes of focused work to keep your mind and attention fresh :tangerine:");
 	// convo.say("Breaks are great times to read books and articles, or take a walk outside to get some fresh air :books: :walking:");
 
-	convo.ask("Would you like to take a break now, or start a new session?", function (response, convo) {
+	convo.ask({
+		text: 'Would you like to take a break now, or start a new session?',
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "END_SESSION",
+			color: _constants.colorsHash.turquoise.hex,
+			fallback: "I was unable to process your decision",
+			actions: [{
+				name: _constants.buttonValues.takeBreak.name,
+				text: "Take a break",
+				value: _constants.buttonValues.takeBreak.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.startSession.name,
+				text: "Another session :muscle:",
+				value: _constants.buttonValues.startSession.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.backLater.name,
+				text: "Be Back Later",
+				value: _constants.buttonValues.backLater.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.endDay.name,
+				text: "End my day :sleeping:",
+				value: _constants.buttonValues.endDay.value,
+				type: "button",
+				style: "danger"
+			}]
+		}]
+	}, [{
+		pattern: _constants.buttonValues.takeBreak.value,
+		callback: function callback(response, convo) {
+			getBreakTime(response, convo);
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.takeBreak.value
+		pattern: _botResponses.utterances.containsBreak,
+		callback: function callback(response, convo) {
+			getBreakTime(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.startSession.value,
+		callback: function callback(response, convo) {
+			convo.sessionEnd.postSessionDecision = _intents2.default.START_SESSION;
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.startSession.value
+		pattern: _botResponses.utterances.startSession,
+		callback: function callback(response, convo) {
+			convo.sessionEnd.postSessionDecision = _intents2.default.START_SESSION;
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.endDay.value,
+		callback: function callback(response, convo) {
+			convo.sessionEnd.postSessionDecision = _intents2.default.END_DAY;
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.endDay.value
+		pattern: _botResponses.utterances.containsEnd,
+		callback: function callback(response, convo) {
+			convo.sessionEnd.postSessionDecision = _intents2.default.END_DAY;
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.backLater.value,
+		callback: function callback(response, convo) {
+			handleBeBackLater(response, convo);
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.backLater.value
+		pattern: _botResponses.utterances.containsBackLater,
+		callback: function callback(response, convo) {
+			handleBeBackLater(response, convo);
+			convo.next();
+		}
+	}, { // this is failure point. restart with question
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say("I didn't quite get that :dog:. Let me know if you want to `take a break` or `start another session`. If you're leaving for a bit, just say `be back later`");
+			convo.repeat();
+			convo.next();
+		}
+	}]);
+}
 
-		/**
-   * 		Does user want a break?
-   * 		possible answers:
-   * 			- break [intent `want_break`]
-   * 			- new session [intent `start_session`]
-   * 			- leaving for a bit
-   * 			- done for the day [intent `end_day`]
-   */
+// simple way to handle be back later
+function handleBeBackLater(response, convo) {
+	convo.say("I'll be here when you get back!");
+	convo.say("You can also ask for me to check in with you at a specific time later :grin:");
+}
 
-		var entities = response.intentObject.entities;
-		var intent = entities.intent;
+// handle break time
+// if button click: ask for time, recommend 15 min
+// if NL break w/ no time: ask for time, recommend 15 min
+// if NL break w/ time: streamline break w/ time
+function getBreakTime(response, convo) {
+	var entities = response.intentObject.entities;
 
-		var intentValue = intent && intent[0] ? intent[0].value : null;
-		var responseMessage = response.text;
+	convo.sessionEnd.postSessionDecision = _intents2.default.WANT_BREAK; // user wants a break!
 
-		console.log("responseMessage: " + responseMessage);
+	var durationSeconds = 0;
+	if (entities.duration) {
+		var durationArray = entities.duration;
+		for (var i = 0; i < durationArray.length; i++) {
+			durationSeconds += durationArray[i].normalized.value;
+		}
+		var durationMinutes = Math.floor(durationSeconds / 60);
+		convo.sessionEnd.breakDuration = durationMinutes;
+		convo.say('Great! I\'ll check in with you in ' + durationMinutes + ' minutes :smile:');
+		// calculate break time and add reminder
+		var checkinTimeStamp = (0, _momentTimezone2.default)().add(durationMinutes, 'minutes').format("YYYY-MM-DD HH:mm:ss");
+		convo.sessionEnd.reminders.push({
+			customNote: 'It\'s been ' + durationMinutes + ' minutes. Let me know when you\'re ready to start a session',
+			remindTime: checkinTimeStamp,
+			type: "break"
+		});
+	} else {
 
-		if (intentValue && (intentValue == _intents2.default.WANT_BREAK || intentValue == _intents2.default.START_SESSION || intentValue == _intents2.default.END_DAY)) {
-			console.log("in here?? wtf");
-			// there is an intent
-			switch (intentValue) {
-				case _intents2.default.WANT_BREAK:
+		convo.ask("How long do you want to take a break? I recommend 15 minutes for every 90 minutes of work :grin:", function (response, convo) {
 
-					convo.sessionEnd.postSessionDecision = _intents2.default.WANT_BREAK;
+			var timeToTask = response.text;
 
-					// calculate break duration through wit
-					var durationSeconds = 0;
-					if (entities.duration) {
-						var durationArray = entities.duration;
-						for (var i = 0; i < durationArray.length; i++) {
-							durationSeconds += durationArray[i].normalized.value;
-						}
-					} else {
-						durationSeconds = 15 * 60; // default to 15 min break
-					}
-					var durationMinutes = Math.floor(durationSeconds / 60);
-
-					convo.sessionEnd.breakDuration = durationMinutes;
-
-					convo.say('Great! I\'ll check in with you in ' + durationMinutes + ' minutes :smile:');
-					convo.sessionEnd.postSessionDecision = _intents2.default.WANT_BREAK;
-
-					// calculate break time and add reminder
-					var checkinTimeStamp = (0, _momentTimezone2.default)().add(durationMinutes, 'minutes').format("YYYY-MM-DD HH:mm:ss");
-					convo.sessionEnd.reminders.push({
-						customNote: 'It\'s been ' + durationMinutes + ' minutes. Let me know when you\'re ready to start a session',
-						remindTime: checkinTimeStamp,
-						type: "break"
-					});
-					break;
-				case _intents2.default.START_SESSION:
-					convo.sessionEnd.postSessionDecision = _intents2.default.START_SESSION;
-					break;
-				case _intents2.default.END_DAY:
-					convo.sessionEnd.postSessionDecision = _intents2.default.END_DAY;
-					break;
-				default:
-					break;
+			var validMinutesTester = new RegExp(/[\dh]/);
+			var isInvalid = false;
+			if (!validMinutesTester.test(timeToTask)) {
+				isInvalid = true;
 			}
-		} else if (responseMessage == "be back later") {
-			console.log("in here as you should be wtf\n\n\n\n");
-			convo.say("I'll be here when you get back!");
-			convo.say("You can also ask for me to check in with you at a specific time later :grin:"); // if user wants reminder, simply input a reminder outside of this convo
-		} else {
-				// let's encourage an intent
-				convo.say("Sorry I didn't get that :dog:. Let me know if you want to `take a break` or `start another session`. If you're leaving for a bit, just say `be back later`");
+
+			// INVALID tester
+			if (isInvalid) {
+				convo.say("Oops, looks like you didn't put in valid minutes :thinking_face:. Let's try this again");
+				convo.say("I'll assume you mean minutes - like `30` would be 30 minutes - unless you specify hours - like `1 hour 15 min`");
 				convo.repeat();
-			}
+			} else {
 
-		convo.next();
-	});
-	convo.next();
+				var durationMinutes = (0, _messageHelpers.convertTimeStringToMinutes)(timeToTask);
+				var customTimeObject = (0, _momentTimezone2.default)().add(durationMinutes, 'minutes');
+				var customTimeString = customTimeObject.format("h:mm a");
+
+				convo.sessionEnd.breakDuration = durationMinutes;
+				convo.say('Great! I\'ll check in with you in ' + durationMinutes + ' minutes :smile:');
+				// calculate break time and add reminder
+				var checkinTimeStamp = (0, _momentTimezone2.default)().add(durationMinutes, 'minutes').format("YYYY-MM-DD HH:mm:ss");
+				convo.sessionEnd.reminders.push({
+					customNote: 'It\'s been ' + durationMinutes + ' minutes. Let me know when you\'re ready to start a session',
+					remindTime: checkinTimeStamp,
+					type: "break"
+				});
+			}
+			convo.next();
+		});
+	}
 }
 //# sourceMappingURL=endWorkSession.js.map

@@ -38,4 +38,8 @@ export const utterances = {
 	containsChangeTask: new RegExp(/(ch[change ]{3,}t[task ]{2,})/i),
 	containsChangeTime: new RegExp(/(ch[change ]{3,}t[time ]{2,})/i),
 	containsAddNote: new RegExp(/(a[add ]{1,}n[note ]{2,})/i),
+	containsBreak: new RegExp(/(b[break ]{3,})/i),
+	containsBackLater: new RegExp(/(b[back ]{2,}l[later ]{2,})/i),
+	startSession:  new RegExp(/((s[start ]{2,}|n[new ]{2,}|w[work ]{2,})|s[session]{2,})/i),
+	containsEnd: new RegExp(/(e[end]{2,})/i)
 }
