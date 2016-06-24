@@ -64,7 +64,9 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		var minutesMessage = (!options.dontShowMinutes && task.minutes) ? ` (${task.minutes} minutes)` : '';
 		var taskContent = `${count}) ${task.text}${minutesMessage}`;
 
-		taskContent = (task.done ? `> ~${taskContent}~\n` : `> ${taskContent}\n`);
+		taskContent = (task.done ? `~${taskContent}~\n` : `${taskContent}\n`);
+		taskContent = (options.noKarets ? taskContent : `> ${taskContent}`);
+
 		taskListMessage += taskContent;
 		
 		count++;

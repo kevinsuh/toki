@@ -16,6 +16,10 @@ var _pg = require('pg');
 
 var _pg2 = _interopRequireDefault(_pg);
 
+var _moment = require('moment');
+
+var _moment2 = _interopRequireDefault(_moment);
+
 var _server = require('../../../server');
 
 var _controllers = require('../../../bot/controllers');
@@ -39,6 +43,28 @@ var router = _express2.default.Router();
 // index
 router.get('/', function (req, res) {
 
+  // models.DailyTask.create({
+  //   TaskId:98,
+  //   priority: 1,
+  //   minutes: 99,
+  //   UserId: 1
+  // }).then((dailyTask) => {
+
+  //   res.json(dailyTask);
+  // })
+
+  _models2.default.DailyTask.find({
+    where: { id: 115 }
+  }).then(function (dailyTask) {
+    console.log("daily task time from DB... should be in UTC w/ offset");
+    var time = (0, _moment2.default)(dailyTask.createdAt).toString();
+    console.log(time);
+
+    console.log("UTC TIME:");
+    console.log(_moment2.default.utc("2016-06-24 22:34:55.935").tz("America/Indiana/Indianapolis").toString());
+    res.json(dailyTask);
+  });
+
   // this lets me test creating daily tasks on server
 
   // const data = {
@@ -59,11 +85,13 @@ router.get('/', function (req, res) {
   //   });
   // });
 
-  _models2.default.DailyTask.findAll({
-    include: [_models2.default.Task]
-  }).then(function (dailyTasks) {
-    res.json(dailyTasks);
-  });
+  // models.DailyTask.findAll({
+  //   include: [
+  //     models.Task
+  //   ]
+  // }).then((dailyTasks) => {
+  //   res.json(dailyTasks);
+  // });
 
   // models.Task.findAll({}).then((tasks) => {
   //   res.json(tasks);

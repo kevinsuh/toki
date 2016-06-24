@@ -149,7 +149,6 @@ exports.default = function (controller) {
 		}
 
 		var remindTimeStamp; // for the message (`h:mm a`)
-		var remindTimeStampForDB; // for DB (`YYYY-MM-DD HH:mm:ss`)
 		if (reminderDuration) {
 			// i.e. ten more minutes
 			console.log("inside of reminder_duration\n\n\n\n");
@@ -163,28 +162,26 @@ exports.default = function (controller) {
 		} else if (custom_time) {
 			// i.e. `at 3pm`
 			console.log("inside of reminder_time\n\n\n\n");
-			remindTimeStamp = custom_time[0].value;
-			remindTimeStamp = (0, _moment2.default)(remindTimeStamp); // in PST because of Wit default settings
-
-			remindTimeStamp.add(remindTimeStamp._tzm - now.utcOffset(), 'minutes'); // convert from PST to local TZ
+			remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
+			remindTimeStamp = (0, _miscHelpers.dateStringWithoutTimeZone)(remindTimeStamp); // 2016-06-24T16:24:00.000 (no timezone attached)
+			remindTimeStamp = (0, _moment2.default)(remindTimeStamp);
 		}
 
 		if (remindTimeStamp) {
-			// insert into DB and send message
-			remindTimeStampForDB = remindTimeStamp.format('YYYY-MM-DD HH:mm:ss');
-			remindTimeStamp = remindTimeStamp.format('h:mm a');
+
+			var remindTimeStampString = remindTimeStamp.format('h:mm a');
 
 			// find user then reply
 			_models2.default.SlackUser.find({
 				where: { SlackUserId: SlackUserId }
 			}).then(function (slackUser) {
 				_models2.default.Reminder.create({
-					remindTime: remindTimeStampForDB,
+					remindTime: remindTimeStamp,
 					UserId: slackUser.UserId,
 					customNote: customNote
 				}).then(function (reminder) {
 					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-						convo.say('Okay, :alarm_clock: set. See you at ' + remindTimeStamp + '!');
+						convo.say('Okay, :alarm_clock: set. See you at ' + remindTimeStampString + '!');
 						convo.next();
 					});
 				});
@@ -253,6 +250,8 @@ var _models = require('../../../app/models');
 var _models2 = _interopRequireDefault(_models);
 
 var _botResponses = require('../../lib/botResponses');
+
+var _miscHelpers = require('../../lib/miscHelpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 //# sourceMappingURL=index.js.map

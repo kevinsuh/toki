@@ -4,6 +4,7 @@ import moment from 'moment';
 
 import models from '../../../app/models';
 import { utterances } from '../../lib/botResponses';
+import { dateStringWithoutTimeZone } from '../../lib/miscHelpers';
 
 // base controller for reminders
 export default function(controller) {
@@ -146,7 +147,6 @@ export default function(controller) {
 
 
 		var remindTimeStamp; // for the message (`h:mm a`)
-		var remindTimeStampForDB; // for DB (`YYYY-MM-DD HH:mm:ss`)
 		if (reminderDuration) { // i.e. ten more minutes
 			console.log("inside of reminder_duration\n\n\n\n");
 			var durationSeconds = 0;
@@ -159,16 +159,14 @@ export default function(controller) {
 			
 		} else if (custom_time) { // i.e. `at 3pm`
 			console.log("inside of reminder_time\n\n\n\n");
-			remindTimeStamp = custom_time[0].value;
-			remindTimeStamp = moment(remindTimeStamp); // in PST because of Wit default settings
-
-			remindTimeStamp.add(remindTimeStamp._tzm - now.utcOffset(), 'minutes'); // convert from PST to local TZ
+			remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
+			remindTimeStamp = dateStringWithoutTimeZone(remindTimeStamp); // 2016-06-24T16:24:00.000 (no timezone attached)
+			remindTimeStamp = moment(remindTimeStamp);
 		}
 
 		if (remindTimeStamp) {
-			// insert into DB and send message
-			remindTimeStampForDB = remindTimeStamp.format('YYYY-MM-DD HH:mm:ss');
-			remindTimeStamp      = remindTimeStamp.format('h:mm a');
+
+			var remindTimeStampString = remindTimeStamp.format('h:mm a');
 
 			// find user then reply
 			models.SlackUser.find({
@@ -176,13 +174,13 @@ export default function(controller) {
 			})
 			.then((slackUser) => {
 				models.Reminder.create({
-					remindTime: remindTimeStampForDB,
+					remindTime: remindTimeStamp,
 					UserId: slackUser.UserId,
 					customNote
 				})
 				.then((reminder) => {
 					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-						convo.say( `Okay, :alarm_clock: set. See you at ${remindTimeStamp}!`);
+						convo.say( `Okay, :alarm_clock: set. See you at ${remindTimeStampString}!`);
 						convo.next();
 					});
 				});
