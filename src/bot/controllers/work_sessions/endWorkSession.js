@@ -159,7 +159,7 @@ export default function(controller) {
 					convo.sessionEnd.hasNoTasksToWorkOn = true;
 					taskListMessage = "Say `next` to keep going";
 				} else {
-					convo.say("Which task(s) did you get done? Just write which number(s) `i.e. 1, 2`");
+					convo.say("Which task(s) did you get done? `i.e. tasks 1, 2`");
 				}
 
 				convo.ask(taskListMessage, (response, convo) => {
@@ -351,8 +351,10 @@ function askUserPostSessionOptions(response, convo) {
 	const { task }                = convo;
 	const { bot, source_message } = task;
 	
-	convo.say("I recommend taking a 15 minute break after about 90 minutes of focused work to keep your mind and attention fresh :tangerine:");
-	convo.say("Breaks are great times to read books and articles, or take a walk outside to get some fresh air :books: :walking:");
+	// only if first time!
+	// convo.say("I recommend taking a 15 minute break after about 90 minutes of focused work to keep your mind and attention fresh :tangerine:");
+	// convo.say("Breaks are great times to read books and articles, or take a walk outside to get some fresh air :books: :walking:");
+	
 	convo.ask("Would you like to take a break now, or start a new session?", (response, convo) => {
 
 		/**
