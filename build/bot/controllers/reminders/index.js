@@ -171,7 +171,7 @@ exports.default = function (controller) {
 			console.log("without time zone: ");
 			console.log(remindTimeStamp);
 
-			remindTimeStamp = _momentTimezone2.default.tz(remindTimeStamp, "America/Los_Angeles");
+			remindTimeStamp = (0, _momentTimezone2.default)(remindTimeStamp);
 
 			console.log("remind time stamp to go in db:");
 			console.log(remindTimeStamp.toString());
