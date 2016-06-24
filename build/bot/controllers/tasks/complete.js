@@ -40,6 +40,13 @@ exports.default = function (controller) {
 					var SlackUserId = user.SlackUser.SlackUserId;
 					var UserId = user.id;
 
+					if (dailyTasks.length == 0) {
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+							convo.say("Your list is clear! :dancer: Let me know when you're ready to `add a task`");
+						});
+						return;
+					}
+
 					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
 						convo.name = name;
@@ -105,8 +112,13 @@ exports.default = function (controller) {
 														dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
 														var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
 
-														convo.say("Here's what your outstanding tasks look like:");
-														convo.say(taskListMessage);
+														if (dailyTasks.length == 0) {
+															convo.say("You're list is clear :dancer:! Let me know when you're to `add a task`");
+														} else {
+															convo.say("Here's what your outstanding tasks look like:");
+															convo.say(taskListMessage);
+														}
+
 														convo.next();
 													});
 												});
