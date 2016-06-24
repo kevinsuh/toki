@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.createMomentObjectWithSpecificTimeZone = createMomentObjectWithSpecificTimeZone;
+exports.dateStringWithoutTimeZone = dateStringWithoutTimeZone;
 
 var _momentTimezone = require("moment-timezone");
 
@@ -26,4 +27,10 @@ function createMomentObjectWithSpecificTimeZone(timeStamp, timeZone) {
   var momentTimezone = _momentTimezone2.default.tz(timeStamp, timeZone);
   return momentTimezone;
 }
+
+function dateStringWithoutTimeZone(dateString) {
+  var dateArray = dateString.split("-");
+  dateArray.pop();
+  return dateArray.join("-");
+};
 //# sourceMappingURL=miscHelpers.js.map

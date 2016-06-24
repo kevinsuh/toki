@@ -173,7 +173,7 @@ export default function(controller) {
 								actions: [
 									{
 									name: buttonValues.noTasks.name,
-									text: "None",
+									text: "None yet!",
 									value: buttonValues.noTasks.value,
 									type: "button"
 									}

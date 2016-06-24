@@ -15,3 +15,9 @@ export function createMomentObjectWithSpecificTimeZone(timeStamp, timeZone) {
 	var momentTimezone = moment.tz(timeStamp, timeZone);
 	return momentTimezone;
 }
+
+export function dateStringWithoutTimeZone(dateString) {
+	var dateArray = dateString.split("-");
+  dateArray.pop();
+  return dateArray.join("-");
+};

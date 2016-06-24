@@ -2,6 +2,8 @@ import request from 'request';
 import express from 'express';
 import pg from 'pg';
 
+import moment from 'moment';
+
 var router = express.Router();
 
 import { bot } from '../../../server';
@@ -17,6 +19,32 @@ import models from '../../models';
 
 // index
 router.get('/', (req, res) => {
+
+  // models.DailyTask.create({
+  //   TaskId:98,
+  //   priority: 1,
+  //   minutes: 99,
+  //   UserId: 1
+  // }).then((dailyTask) => {
+
+    
+
+  //   res.json(dailyTask);
+  // })
+
+  models.DailyTask.find({
+    where: { id: 115 }
+  }).then((dailyTask) => {
+    console.log("daily task time from DB... should be in UTC w/ offset");
+    var time = moment(dailyTask.createdAt).toString();
+    console.log(time);
+
+    
+
+    console.log("UTC TIME:");
+    console.log(moment.utc("2016-06-24 22:34:55.935").tz("America/Indiana/Indianapolis").toString())
+    res.json(dailyTask);
+  })
 
 
   // this lets me test creating daily tasks on server
@@ -39,13 +67,13 @@ router.get('/', (req, res) => {
   //   });
   // });
 
-  models.DailyTask.findAll({
-    include: [
-      models.Task
-    ]
-  }).then((dailyTasks) => {
-    res.json(dailyTasks);
-  });
+  // models.DailyTask.findAll({
+  //   include: [
+  //     models.Task
+  //   ]
+  // }).then((dailyTasks) => {
+  //   res.json(dailyTasks);
+  // });
 
   // models.Task.findAll({}).then((tasks) => {
   //   res.json(tasks);

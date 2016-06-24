@@ -149,7 +149,7 @@ exports.default = function (controller) {
 							fallback: "I was unable to process your decision",
 							actions: [{
 								name: _constants.buttonValues.noTasks.name,
-								text: "None",
+								text: "None yet!",
 								value: _constants.buttonValues.noTasks.value,
 								type: "button"
 							}]
