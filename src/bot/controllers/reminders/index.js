@@ -160,8 +160,18 @@ export default function(controller) {
 		} else if (custom_time) { // i.e. `at 3pm`
 			console.log("inside of reminder_time\n\n\n\n");
 			remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
+			console.log("wit remind timestamp:");
+			console.log(remindTimeStamp);
+			console.log("\n\n");
+
 			remindTimeStamp = dateStringWithoutTimeZone(remindTimeStamp); // 2016-06-24T16:24:00.000 (no timezone attached)
+			console.log("without time zone: ");
+			console.log(remindTimeStamp);
+
 			remindTimeStamp = moment(remindTimeStamp);
+
+			console.log("remind time stamp to go in db:");
+			console.log(remindTimeStamp.toString());
 		}
 
 		if (remindTimeStamp) {

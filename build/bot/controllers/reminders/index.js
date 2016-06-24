@@ -163,8 +163,18 @@ exports.default = function (controller) {
 			// i.e. `at 3pm`
 			console.log("inside of reminder_time\n\n\n\n");
 			remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
+			console.log("wit remind timestamp:");
+			console.log(remindTimeStamp);
+			console.log("\n\n");
+
 			remindTimeStamp = (0, _miscHelpers.dateStringWithoutTimeZone)(remindTimeStamp); // 2016-06-24T16:24:00.000 (no timezone attached)
+			console.log("without time zone: ");
+			console.log(remindTimeStamp);
+
 			remindTimeStamp = (0, _moment2.default)(remindTimeStamp);
+
+			console.log("remind time stamp to go in db:");
+			console.log(remindTimeStamp.toString());
 		}
 
 		if (remindTimeStamp) {
