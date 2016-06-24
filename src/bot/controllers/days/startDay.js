@@ -148,9 +148,9 @@ export default function(controller) {
 					prioritizedTaskArray: [] // the final tasks to do for the day
 				}
 
-				// check if user has pending tasks or not!
+				// live or pending tasks, that are not completed yet
 				user.getDailyTasks({
-					where: [`"DailyTask"."type" in (?)`, ["pending", "live"]],
+					where: [`"DailyTask"."type" in (?) AND "Task"."done" = ?`, ["pending", "live"], false ],
 					include: [ models.Task ]
 				})
 				.then((dailyTasks) => {

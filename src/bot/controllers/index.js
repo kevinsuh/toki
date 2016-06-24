@@ -62,8 +62,8 @@ export { controller };
 // simple way to keep track of bots
 var bots = {};
 
-if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.PORT) {
-  console.log('Error: Specify SLACK_ID SLACK_SECRET and PORT in environment');
+if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT) {
+  console.log('Error: Specify SLACK_ID SLACK_SECRET and HTTP_PORT in environment');
   process.exit(1);
 }
 

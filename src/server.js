@@ -2,7 +2,9 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import http from 'http';
+import https from 'https';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 // CronJob
 import cron from 'cron';
@@ -31,9 +33,6 @@ require('./app/router').default((app));
 app.use(function(err, req, res, next) {
     res.status(err.status || 500);
 });
-
-//port for Heroku
-app.set('port', (process.env.PORT));
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
@@ -71,15 +70,9 @@ controller.createOauthEndpoints(app,function(err,req,res) {
   }
 });
 
-// bot.api.bots.info({
-// 	token: process.env.BOT_TOKEN
-// }, (err, res) => {
-// 	console.log("got bot info!");
-// 	console.log(res);
-// })
-
-app.listen(app.get('port'), () => {
-  console.log('listening on port ' + app.get('port'));
+// create HTTP service
+http.createServer(app).listen(process.env.HTTP_PORT, () => {
+	console.log('listening on port ' + app.get('port'));
 
 	bot.startRTM((err) => {
 	  if (!err) {
@@ -101,5 +94,15 @@ app.listen(app.get('port'), () => {
 	    console.log("RTM failed")
 	  }
 	});
-  
 });
+
+// create HTTPS service identical to HTTP service on prod
+if (env == 'production') {
+	// options for HTTPS service
+	var options = {
+		key: fs.readFileSync('/etc/letsencrypt/live/tokibot.com/privkey.pem'),
+		cert: fs.readFileSync('/etc/letsencrypt/live/tokibot.com/fullchain.pem')
+	};
+	https.createServer(options, app).listen(process.env.HTTPS_PORT);
+}
+
