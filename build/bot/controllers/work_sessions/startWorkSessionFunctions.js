@@ -108,11 +108,9 @@ function finalizeTimeAndTasksToStart(response, convo) {
       convo.stop();
       convo.next();
     }
-  }, {
+  }, { // NL equivalent to buttonValues.startNow.value
     pattern: _botResponses.utterances.yes,
     callback: function callback(response, convo) {
-
-      // YES! Same as buttonValues.startNow.value
       convo.sessionStart.confirmStart = true;
       convo.stop();
       convo.next();
@@ -123,8 +121,20 @@ function finalizeTimeAndTasksToStart(response, convo) {
       askForCheckIn(response, convo);
       convo.next();
     }
+  }, { // NL equivalent to buttonValues.checkIn.value
+    pattern: _botResponses.utterances.containsCheckin,
+    callback: function callback(response, convo) {
+      askForCheckIn(response, convo);
+      convo.next();
+    }
   }, {
     pattern: _constants.buttonValues.changeTask.value,
+    callback: function callback(response, convo) {
+      askWhichTasksToWorkOn(response, convo);
+      convo.next();
+    }
+  }, { // NL equivalent to buttonValues.changeTask.value
+    pattern: _botResponses.utterances.containsChangeTask,
     callback: function callback(response, convo) {
       askWhichTasksToWorkOn(response, convo);
       convo.next();
@@ -135,10 +145,15 @@ function finalizeTimeAndTasksToStart(response, convo) {
       askForCustomTotalMinutes(response, convo);
       convo.next();
     }
-  }, {
+  }, { // NL equivalent to buttonValues.changeSessionTime.value
+    pattern: _botResponses.utterances.containsChangeTime,
+    callback: function callback(response, convo) {
+      askForCustomTotalMinutes(response, convo);
+      convo.next();
+    }
+  }, { // this is failure point. restart with question
     default: true,
     callback: function callback(response, convo) {
-      // this is failure point. restart with question
       convo.say("I didn't quite get that :thinking_face:");
       convo.repeat();
       convo.next();
@@ -202,11 +217,10 @@ function finalizeNewTaskToStart(response, convo) {
       convo.stop();
       convo.next();
     }
-  }, {
+  }, { // NL equivalent to buttonValues.startNow.value
     pattern: _botResponses.utterances.yes,
     callback: function callback(response, convo) {
 
-      // YES! Same as buttonValues.startNow.value
       tasksToWorkOnHash[1] = newTask;
       convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
       convo.sessionStart.confirmStart = true;
@@ -225,8 +239,25 @@ function finalizeNewTaskToStart(response, convo) {
       askForCheckIn(response, convo);
       convo.next();
     }
+  }, { // NL equivalent to buttonValues.checkIn.value
+    pattern: _botResponses.utterances.containsCheckin,
+    callback: function callback(response, convo) {
+
+      tasksToWorkOnHash[1] = newTask;
+      convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+      convo.sessionStart.confirmStart = true;
+
+      askForCheckIn(response, convo);
+      convo.next();
+    }
   }, {
     pattern: _constants.buttonValues.changeTask.value,
+    callback: function callback(response, convo) {
+      askWhichTasksToWorkOn(response, convo);
+      convo.next();
+    }
+  }, { // NL equivalent to buttonValues.changeTask.value
+    pattern: _botResponses.utterances.containsChangeTask,
     callback: function callback(response, convo) {
       askWhichTasksToWorkOn(response, convo);
       convo.next();
@@ -242,10 +273,20 @@ function finalizeNewTaskToStart(response, convo) {
       askForCustomTotalMinutes(response, convo);
       convo.next();
     }
-  }, {
+  }, { // NL equivalent to buttonValues.changeSessionTime.value
+    pattern: _botResponses.utterances.containsChangeTime,
+    callback: function callback(response, convo) {
+
+      tasksToWorkOnHash[1] = newTask;
+      convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+      convo.sessionStart.confirmStart = true;
+
+      askForCustomTotalMinutes(response, convo);
+      convo.next();
+    }
+  }, { // this is failure point. restart with question
     default: true,
     callback: function callback(response, convo) {
-      // this is failure point. restart with question
       convo.say("I didn't quite get that :thinking_face:");
       convo.repeat();
       convo.next();
@@ -319,20 +360,21 @@ function finalizeCheckinTimeToStart(response, convo) {
       convo.stop();
       convo.next();
     }
-  }, {
+  }, { // NL equivalent to buttonValues.startNow.value
     pattern: _botResponses.utterances.yes,
     callback: function callback(response, convo) {
-
-      // YES! Same as buttonValues.startNow.value
-      tasksToWorkOnHash[1] = newTask;
-      convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
       convo.sessionStart.confirmStart = true;
-
       convo.stop();
       convo.next();
     }
   }, {
     pattern: _constants.buttonValues.changeCheckinTime.value,
+    callback: function callback(response, convo) {
+      askForCheckIn(response, convo);
+      convo.next();
+    }
+  }, { // NL equivalent to buttonValues.changeCheckinTime.value
+    pattern: _botResponses.utterances.containsChangeTime,
     callback: function callback(response, convo) {
       askForCheckIn(response, convo);
       convo.next();
@@ -343,10 +385,15 @@ function finalizeCheckinTimeToStart(response, convo) {
       askForReminderDuringCheckin(response, convo);
       convo.next();
     }
-  }, {
+  }, { // NL equivalent to buttonValues.addCheckinNote.value
+    pattern: _botResponses.utterances.containsAddNote,
+    callback: function callback(response, convo) {
+      askForReminderDuringCheckin(response, convo);
+      convo.next();
+    }
+  }, { // this is failure point. restart with question
     default: true,
     callback: function callback(response, convo) {
-      // this is failure point. restart with question
       convo.say("I didn't quite get that :thinking_face:");
       convo.repeat();
       convo.next();

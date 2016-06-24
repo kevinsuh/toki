@@ -35,6 +35,7 @@ var utterances = exports.utterances = {
 	containsNew: new RegExp(/(\bn[new]{2,}\b)/i),
 	containsCheckin: new RegExp(/(\bch[check in]{3,}\b)/i),
 	containsChangeTask: new RegExp(/(ch[change ]{3,}t[task ]{2,})/i),
-	containsChangeTime: new RegExp(/(ch[change ]{3,}t[time ]{2,})/i)
+	containsChangeTime: new RegExp(/(ch[change ]{3,}t[time ]{2,})/i),
+	containsAddNote: new RegExp(/(a[add ]{1,}n[note ]{2,})/i)
 };
 //# sourceMappingURL=botResponses.js.map
