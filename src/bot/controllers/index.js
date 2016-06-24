@@ -193,7 +193,8 @@ controller.on(`new_session_group_decision`, (bot, config) => {
       console.log(config);
       console.log("\n\n\n\n");
 
-      // should start day and everything past this is irrelevant
+      // 1. you have not started your day
+      // you should start day and everything past this is irrelevant
       var shouldStartDay = false;
       if (sessionGroups.length == 0) {
         shouldStartDay = true;
@@ -239,6 +240,8 @@ controller.on(`new_session_group_decision`, (bot, config) => {
           return;
         }
 
+        // you have not had a work session in a while
+        // so we will confirm this is what you want to do
         bot.startPrivateConversation ({ user: SlackUserId }, (err, convo) => {
 
           convo.name = name;
