@@ -361,7 +361,7 @@ function askWhichTasksToWorkOn(response, convo) {
       convo.next();
     }
   }, {
-    pattern: new RegExp(/./),
+    default: true,
     callback: function callback(response, convo) {
       // user inputed task #'s, not new task button
       confirmTasks(response, convo);
