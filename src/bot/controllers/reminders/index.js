@@ -1,6 +1,6 @@
 import os from 'os';
 import { wit } from '../index';
-import moment from 'moment';
+import moment from 'moment-timezone';
 
 import models from '../../../app/models';
 import { utterances } from '../../lib/botResponses';
@@ -168,7 +168,7 @@ export default function(controller) {
 			console.log("without time zone: ");
 			console.log(remindTimeStamp);
 
-			remindTimeStamp = moment(remindTimeStamp);
+			remindTimeStamp = moment.tz(remindTimeStamp, "America/Los_Angeles");
 
 			console.log("remind time stamp to go in db:");
 			console.log(remindTimeStamp.toString());

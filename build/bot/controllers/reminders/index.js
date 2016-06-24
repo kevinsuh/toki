@@ -133,7 +133,7 @@ exports.default = function (controller) {
 		var duration = config.duration;
 
 
-		var now = (0, _moment2.default)();
+		var now = (0, _momentTimezone2.default)();
 
 		// get custom note
 		var customNote = null;
@@ -171,7 +171,7 @@ exports.default = function (controller) {
 			console.log("without time zone: ");
 			console.log(remindTimeStamp);
 
-			remindTimeStamp = (0, _moment2.default)(remindTimeStamp);
+			remindTimeStamp = _momentTimezone2.default.tz(remindTimeStamp, "America/Los_Angeles");
 
 			console.log("remind time stamp to go in db:");
 			console.log(remindTimeStamp.toString());
@@ -217,7 +217,7 @@ exports.default = function (controller) {
 					var remindTime = custom_time;
 
 					remindTimeStamp = remindTime[0].value;
-					remindTimeStamp = (0, _moment2.default)(remindTimeStamp); // in PST because of Wit default settings
+					remindTimeStamp = (0, _momentTimezone2.default)(remindTimeStamp); // in PST because of Wit default settings
 
 					remindTimeStamp.add(remindTimeStamp._tzm - now.utcOffset(), 'minutes'); // convert from PST to local TZ
 					// insert into DB and send message
@@ -251,9 +251,9 @@ var _os2 = _interopRequireDefault(_os);
 
 var _index = require('../index');
 
-var _moment = require('moment');
+var _momentTimezone = require('moment-timezone');
 
-var _moment2 = _interopRequireDefault(_moment);
+var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 
 var _models = require('../../../app/models');
 
