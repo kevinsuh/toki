@@ -167,7 +167,7 @@ export default function(controller) {
 						attachments:[
 							{
 								text: `${taskListMessage}`,
-								color: colorsHash.blue.hex
+								color: colorsHash.darkBlue.hex
 							},
 							{
 								attachment_type: 'default',
@@ -432,6 +432,7 @@ function askUserPostSessionOptions(response, convo) {
     { // NL equivalent to buttonValues.takeBreak.value
       pattern: utterances.containsBreak,
       callback: function(response, convo) {
+      	console.log(utterances.containsBreak);
         getBreakTime(response, convo);
         convo.next();
       }
@@ -474,6 +475,7 @@ function askUserPostSessionOptions(response, convo) {
     { // NL equivalent to buttonValues.backLater.value
       pattern: utterances.containsBackLater,
       callback: function(response, convo) {
+      	convo.say("Okay! I'll be here when you get back");
       	handleBeBackLater(response, convo)
         convo.next();
       }

@@ -54,7 +54,7 @@ export default function(controller) {
 					bot.replyInteractive(message, "No worries! :smile_cat:");
 					break;
 				case buttonValues.backLater.value:
-					bot.replyInteractive(message, "I'll be here when you get back!");
+					bot.replyInteractive(message, "Okay! I'll be here when you get back");
 					break;
 				default:
 					// some default to replace button no matter what

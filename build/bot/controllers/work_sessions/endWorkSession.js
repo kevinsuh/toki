@@ -144,7 +144,7 @@ exports.default = function (controller) {
 					convo.ask({
 						attachments: [{
 							text: '' + taskListMessage,
-							color: _constants.colorsHash.blue.hex
+							color: _constants.colorsHash.darkBlue.hex
 						}, {
 							attachment_type: 'default',
 							callback_id: "FINISH_TASKS_ON_END_SESSION",
@@ -432,6 +432,7 @@ function askUserPostSessionOptions(response, convo) {
 	}, { // NL equivalent to buttonValues.takeBreak.value
 		pattern: _botResponses.utterances.containsBreak,
 		callback: function callback(response, convo) {
+			console.log(_botResponses.utterances.containsBreak);
 			getBreakTime(response, convo);
 			convo.next();
 		}
@@ -468,6 +469,7 @@ function askUserPostSessionOptions(response, convo) {
 	}, { // NL equivalent to buttonValues.backLater.value
 		pattern: _botResponses.utterances.containsBackLater,
 		callback: function callback(response, convo) {
+			convo.say("Okay! I'll be here when you get back");
 			handleBeBackLater(response, convo);
 			convo.next();
 		}
