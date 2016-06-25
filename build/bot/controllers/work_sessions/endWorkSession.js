@@ -323,22 +323,25 @@ exports.default = function (controller) {
 								order: '"createdAt" DESC'
 							}).then(function (workSessions) {
 
-								var minutes;
-								if (workSessions.length > 0) {
-									// use this to get how long the
-									// custom added task took
-									var startSession = workSessions[0];
-									var startTime = (0, _momentTimezone2.default)(startSession.startTime);
-									var endTime = (0, _momentTimezone2.default)(startSession.endTime);
+								console.log("all work sessions:");
+								console.log(workSessions);
 
-									minutes = _momentTimezone2.default.duration(endTime.diff(startTime)).asMinutes();
-								} else {
-									// this should never happen.
-									minutes = 30; // but if it does... default minutes duration
-								}
-
-								// IF completedTask is
+								var endTime = (0, _momentTimezone2.default)();
+								// IF you chose a new task not on your list to have completed
 								if (differentCompletedTask) {
+
+									var minutes; // calculate time worked on that task
+									if (workSessions.length > 0) {
+
+										// use this to get how long the
+										// custom added task took
+										var startSession = workSessions[0];
+										var startTime = (0, _momentTimezone2.default)(startSession.startTime);
+										minutes = _momentTimezone2.default.duration(endTime.diff(startTime)).asMinutes();
+									} else {
+										// this should never happen.
+										minutes = 30; // but if it does... default minutes duration
+									}
 
 									user.getDailyTasks({
 										where: ['"DailyTask"."type" = ?', "live"]
@@ -361,7 +364,6 @@ exports.default = function (controller) {
 									});
 								}
 
-								var endTime = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss");
 								workSessions.forEach(function (workSession) {
 									workSession.update({
 										endTime: endTime,
