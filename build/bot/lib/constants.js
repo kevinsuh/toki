@@ -42,8 +42,11 @@ var colorsHash = exports.colorsHash = {
 	turquoise: {
 		hex: "#44bbbb"
 	},
+	blue: {
+		hex: "#3E589D"
+	},
 	grey: {
-		hex: "#EEEFEF"
+		hex: "#C1C1C3"
 	}
 };
 
