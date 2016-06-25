@@ -154,7 +154,7 @@ export default function(controller) {
 
 				var taskArray              = convertToSingleTaskObjectArray(dailyTasks, "daily");
 				convo.sessionEnd.taskArray = taskArray;
-				var taskListMessage        = convertArrayToTaskListMessage(taskArray, { noKarets: true });
+				var taskListMessage        = convertArrayToTaskListMessage(taskArray);
 
 				if (taskArray.length == 0) {
 					convo.say("You don't have any tasks on today's list! Great work :punch:");
@@ -164,11 +164,8 @@ export default function(controller) {
 				} else {
 					convo.say("Which task(s) did you get done? `i.e. tasks 1, 2`");
 					convo.ask({
+						text: `${taskListMessage}`,
 						attachments:[
-							{
-								text: `${taskListMessage}`,
-								color: colorsHash.darkBlue.hex
-							},
 							{
 								attachment_type: 'default',
 								callback_id: "FINISH_TASKS_ON_END_SESSION",
