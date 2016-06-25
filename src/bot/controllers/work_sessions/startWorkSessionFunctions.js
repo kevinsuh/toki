@@ -431,7 +431,7 @@ function askWhichTasksToWorkOn(response, convo) {
 
 	const { UserId, dailyTasks }  = convo.sessionStart;
 	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
-	var message = `Which tasks would you like to work on?\n${taskListMessage}`;
+	var message = `Which task(s) would you like to work on?\n${taskListMessage}`;
 	convo.ask({
 		text: message,
 		attachments:[
@@ -439,6 +439,7 @@ function askWhichTasksToWorkOn(response, convo) {
 				attachment_type: 'default',
 				callback_id: "START_SESSION",
 				fallback: "I was unable to process your decision",
+        color: colorsHash.grey.hex,
 				actions: [
 					{
 					name: buttonValues.newTask.name,

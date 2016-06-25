@@ -24,17 +24,26 @@ var colorsHash = exports.colorsHash = {
 	green: {
 		hex: "#36a64f"
 	},
+	lightGreen: {
+		hex: "#95B66C"
+	},
 	darkBlue: {
 		hex: "#000057"
 	},
 	salmon: {
 		hex: "#bb4444"
 	},
+	lightSalmon: {
+		hex: "#F1D8DB"
+	},
 	lavendar: {
 		hex: "#6e4474"
 	},
 	turquoise: {
 		hex: "#44bbbb"
+	},
+	grey: {
+		hex: "#EEEFEF"
 	}
 };
 

@@ -132,7 +132,7 @@ exports.default = function (controller) {
 
 				var taskArray = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
 				convo.sessionEnd.taskArray = taskArray;
-				var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { noKarets: true });
+				var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray);
 
 				if (taskArray.length == 0) {
 					convo.say("You don't have any tasks on today's list! Great work :punch:");
@@ -142,11 +142,12 @@ exports.default = function (controller) {
 				} else {
 					convo.say("Which task(s) did you get done? `i.e. tasks 1, 2`");
 					convo.ask({
+						text: taskListMessage,
 						attachments: [{
-							text: taskListMessage,
 							attachment_type: 'default',
 							callback_id: "FINISH_TASKS_ON_END_SESSION",
 							fallback: "I was unable to process your decision",
+							color: _constants.colorsHash.grey.hex,
 							actions: [{
 								name: _constants.buttonValues.noTasks.name,
 								text: "None yet!",
@@ -207,6 +208,7 @@ exports.default = function (controller) {
 
 								convo.sessionEnd.tasksCompleted = tasksCompletedArray;
 								convo.say("Great work :punch:");
+								askUserPostSessionOptions(response, convo);
 							}
 							convo.next();
 						}
@@ -470,7 +472,7 @@ function askUserPostSessionOptions(response, convo) {
 	}, { // this is failure point. restart with question
 		default: true,
 		callback: function callback(response, convo) {
-			convo.say("I didn't quite get that :dog:. Let me know if you want to `take a break` or `start another session`. If you're leaving for a bit, just say `be back later`");
+			convo.say("I didn't quite get that :dog:. Let's choose an option from the buttons for now");
 			convo.repeat();
 			convo.next();
 		}

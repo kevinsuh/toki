@@ -345,7 +345,7 @@ function savePendingTasksToWorkOn(response, convo) {
 
 				convo.say("This is starting to look good :sunglasses:");
 				convo.say("Which additional tasks would you like to work on with me today?");
-				convo.say("You can enter everything in one line, separated by commas, or send me each task in a separate line");
+				// convo.say("You can enter everything in one line, separated by commas, or send me each task in a separate line");
 				convo.ask('When you\'re ready to continue, just say `' + _constants.FINISH_WORD.word + '`', function (response, convo) {
 					if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
 						convo.say("Awesome! You can always add more tasks later by telling me, `I'd like to add a task` or something along those lines :grinning:");
