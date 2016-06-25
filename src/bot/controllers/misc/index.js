@@ -9,7 +9,7 @@ import models from '../../../app/models';
 import { randomInt, utterances } from '../../lib/botResponses';
 import { colorsArray, THANK_YOU, buttonValues, colorsHash } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
-import { createMomentObjectWithSpecificTimeZone, dateStringWithoutTimeZone } from '../../lib/miscHelpers';
+import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
 export default function(controller) {
@@ -53,7 +53,16 @@ export default function(controller) {
            */
           
           // startWorkSessionTest(bot, message);
-          allTimeZonesTest(bot, message);
+          models.User.find({
+            where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+            include: [
+              models.SlackUser
+            ]
+          })
+          .then((user) => {
+            var config = { user };
+            allTimeZonesTest(bot, message, config);
+          });
 
         } else {
           // end-all fallback
@@ -85,24 +94,19 @@ export default function(controller) {
   });
 }
 
-function allTimeZonesTest(bot, message) {
+function allTimeZonesTest(bot, message, config) {
 
   // these are array of objects
   const { reminder, custom_time, duration, reminder_text, reminder_duration } = message.intentObject.entities;
+  console.log("wut:");
+  console.log(message.intentObject.entities);
+  console.log("\n\n");
   const SlackUserId = message.user;
 
+  const { user } = config;
+  const { dataValues: { SlackUser: { dataValues: { tz } } } } = user;
+
   var { text } = message;
-
-  var pacificTime = "America/Los_Angeles";
-  var centralTime = "America/Chicago";
-  var testPacific = false;
-  var testCentral = false;
-
-  if (text.includes("PACIFIC")) {
-    testPacific = true;
-  } else if (text.includes("CENTRAL")) {
-    testCentral = true;
-  }
 
   var now = moment();
 
@@ -134,28 +138,15 @@ function allTimeZonesTest(bot, message) {
   } else if (custom_time) { // i.e. `at 3pm`
     console.log("inside of reminder_time\n\n\n\n");
     remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
-    console.log("wit remind timestamp:");
-    console.log(remindTimeStamp);
-    console.log("\n\n");
-
-    remindTimeStamp = dateStringWithoutTimeZone(remindTimeStamp); // 2016-06-24T16:24:00.000 (no timezone attached)
-    console.log("without time zone: ");
-    console.log(remindTimeStamp);
-
-
-    if (testPacific) {
-      console.log("\n\n ~~ Testing Pacific time: ~~ \n\n");
-      remindTimeStamp = moment.tz(remindTimeStamp, pacificTime);
-    } else if (testCentral) {
-      console.log("\n\n ~~ Testing Central time: ~~ \n\n");
-      remindTimeStamp = moment.tz(remindTimeStamp, centralTime);
-    }
+    remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
     
-    console.log("remind time stamp to go in db:");
-    console.log(remindTimeStamp.toString());
   }
 
   if (remindTimeStamp) {
+
+    console.log("final moment value:");
+    console.log(remindTimeStamp.toString());
+    console.log('\n\n\n');
 
     var remindTimeStampString = remindTimeStamp.format('h:mm a');
 
@@ -178,8 +169,7 @@ function allTimeZonesTest(bot, message) {
     });
   } else {
 
-
-    /**
+     /**
      *      TERRIBLE CODE BELOW
      *        THIS MEANS A BUG HAPPENED
      *  ~~  HOPEFULLY THIS NEVER COMES UP EVER ~~
@@ -192,33 +182,22 @@ function allTimeZonesTest(bot, message) {
 
         var { intentObject: { entities } } = response;
         const { reminder, duration, custom_time } = entities;
-
-        console.log("inside of reminder_time\n\n\n\n");
-        var remindTime = custom_time;
-        if (!remindTime) {
+        
+        if (!custom_time) {
+          // ugh
           convo.say("Ah I'm sorry. Still not getting you :thinking_face:");
           convo.repeat();
           convo.next();
         } else {
-          remindTimeStamp = remindTime[0].value;
-          console.log("wit remind timestamp:");
-          console.log(remindTimeStamp);
-          console.log("\n\n");
+          // finally got what they meant...
+          console.log("inside of reminder_time\n\n");
+          var remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
+          console.log(`wit passed in: ${remindTimeStamp} and our timezone is: ${tz}\n\n`);
+          remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
 
-          remindTimeStamp = dateStringWithoutTimeZone(remindTimeStamp); // 2016-06-24T16:24:00.000 (no timezone attached)
-          console.log("without time zone: ");
-          console.log(remindTimeStamp);
-
-          if (testPacific) {
-            console.log("\n\n ~~ Testing Pacific time: ~~ \n\n");
-            remindTimeStamp = moment.tz(remindTimeStamp, pacificTime);
-          } else if (testCentral) {
-            console.log("\n\n ~~ Testing Central time: ~~ \n\n");
-            remindTimeStamp = moment.tz(remindTimeStamp, centralTime);
-          }
-          
-          console.log("remind time stamp to go in db:");
+          console.log("final moment value:");
           console.log(remindTimeStamp.toString());
+          console.log("\n\n\n");
 
           var remindTimeStampString = remindTimeStamp.format('h:mm a');
 
@@ -238,11 +217,10 @@ function allTimeZonesTest(bot, message) {
             });
           });
         }
+
       });
     });
-
   }
-
 }
 
 function TEMPLATE_FOR_TEST(bot, message) {
