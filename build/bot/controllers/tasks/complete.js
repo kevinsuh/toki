@@ -84,46 +84,59 @@ exports.default = function (controller) {
 								if (completedTasks.length > 0) {
 
 									// put logic here
+									var completedDailyTaskIds = [];
 									completedTasks.forEach(function (dailyTask) {
-										console.log("\n\nCompleted Task!:\n\n\n");
-										console.log(dailyTask);
-										console.log("\n\n\n\n");
 										var dataValues = dailyTask.dataValues;
 
 										if (dataValues) {
 											var id = dataValues.id;
 
-											_models2.default.DailyTask.find({
-												where: { id: id },
-												include: [_models2.default.Task]
-											}).then(function (dailyTask) {
-												var task = dailyTask.Task;
-												return task.update({
-													done: true
-												});
-											}).then(function (task) {
-
-												_models2.default.DailyTask.findAll({
-													where: ['"Task"."done" = ? AND "DailyTask"."type" = ? AND "DailyTask"."UserId" = ?', false, "live", UserId],
-													include: [_models2.default.Task]
-												}).then(function (dailyTasks) {
-													bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-
-														dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
-														var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
-
-														if (dailyTasks.length == 0) {
-															convo.say("You're list is clear :dancer:! Let me know when you're to `add a task`");
-														} else {
-															convo.say("Here's what your outstanding tasks look like:");
-															convo.say(taskListMessage);
-														}
-
-														convo.next();
-													});
-												});
-											});
+											completedDailyTaskIds.push(id);
 										}
+									});
+
+									console.log("completed task ids");
+									console.log(completedDailyTaskIds);
+
+									_models2.default.DailyTask.findAll({
+										where: ['"DailyTask"."id" in (?)', completedDailyTaskIds]
+									}).then(function (dailyTasks) {
+
+										console.log("daily tasks: ");
+										console.log(dailyTasks);
+
+										var completedTaskIds = dailyTasks.map(function (dailyTask) {
+											return dailyTask.TaskId;
+										});
+
+										console.log("hi here is the completed task ids");
+										console.log(completedTaskIds);
+
+										return _models2.default.Task.update({
+											done: true
+										}, {
+											where: ['"Tasks"."id" in (?)', completedTaskIds]
+										});
+									}).then(function (tasks) {
+										_models2.default.DailyTask.findAll({
+											where: ['"Task"."done" = ? AND "DailyTask"."type" = ? AND "DailyTask"."UserId" = ?', false, "live", UserId],
+											include: [_models2.default.Task]
+										}).then(function (dailyTasks) {
+											bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+												dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
+												var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
+
+												if (dailyTasks.length == 0) {
+													convo.say("You're list is clear :dancer:! Let me know when you're to `add a task`");
+												} else {
+													convo.say("Here's what your outstanding tasks look like:");
+													convo.say(taskListMessage);
+												}
+
+												convo.next();
+											});
+										});
 									});
 								}
 							} else {

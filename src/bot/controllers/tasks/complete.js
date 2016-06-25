@@ -97,53 +97,63 @@ export default function(controller) {
 		    				if (completedTasks.length > 0) {
 
 		    					// put logic here
-									completedTasks.forEach((dailyTask) => {
-										console.log("\n\nCompleted Task!:\n\n\n");
-										console.log(dailyTask);
-										console.log("\n\n\n\n");
-										const { dataValues } = dailyTask;
+		    					var completedDailyTaskIds = [];
+		    					completedTasks.forEach((dailyTask) => {
+		    						const { dataValues } = dailyTask;
 										if (dataValues) {
 											const { id } = dataValues;
-											models.DailyTask.find({
-												where: { id },
-												include: [ models.Task ]
-											})
-											.then((dailyTask) => {
-												var task = dailyTask.Task;
-												return task.update({
-													done: true
-												})
-											})
-											.then((task) => {
-
-												models.DailyTask.findAll({
-													where: [`"Task"."done" = ? AND "DailyTask"."type" = ? AND "DailyTask"."UserId" = ?`, false, "live", UserId],
-													include: [ models.Task ]
-												})
-												.then((dailyTasks) => {
-													bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-
-														dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
-														var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
-
-														if (dailyTasks.length == 0) {
-															convo.say("You're list is clear :dancer:! Let me know when you're to `add a task`");
-														} else {
-															convo.say("Here's what your outstanding tasks look like:");
-															convo.say(taskListMessage);
-														}
-														
-														convo.next();
-
-													});
-												});
-
-											})
+											completedDailyTaskIds.push(id);
 										}
-									});
+		    					})
 
-									
-									
+		    					console.log("completed task ids");
+		    					console.log(completedDailyTaskIds);
+
+		    					models.DailyTask.findAll({
+		    						where: [`"DailyTask"."id" in (?)`, completedDailyTaskIds]
+		    					})
+		    					.then((dailyTasks) => {
+
+		    						console.log("daily tasks: ");
+		    						console.log(dailyTasks);
+
+		    						var completedTaskIds = dailyTasks.map((dailyTask) => {
+		    							return dailyTask.TaskId;
+		    						});
+		    						
+
+		    						console.log("hi here is the completed task ids");
+		    						console.log(completedTaskIds);
+
+		    						return models.Task.update({
+		    							done: true
+		    						}, {
+		    							where: [`"Tasks"."id" in (?)`, completedTaskIds]
+		    						})
+		    					})
+		    					.then((tasks) => {
+		    						models.DailyTask.findAll({
+											where: [`"Task"."done" = ? AND "DailyTask"."type" = ? AND "DailyTask"."UserId" = ?`, false, "live", UserId],
+											include: [ models.Task ]
+										})
+										.then((dailyTasks) => {
+											bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+												dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
+												var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+
+												if (dailyTasks.length == 0) {
+													convo.say("You're list is clear :dancer:! Let me know when you're to `add a task`");
+												} else {
+													convo.say("Here's what your outstanding tasks look like:");
+													convo.say(taskListMessage);
+												}
+												
+												convo.next();
+
+											});
+										});
+		    					});
 		    				}
 
 		    			} else {
