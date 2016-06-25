@@ -102,6 +102,10 @@ export const buttonValues ={
 	noTasks: {
 		name: "NO_TASKS",
 		value: "NO_TASKS"
+	},
+	differentTask: {
+		name: "DIFFERENT_TASK",
+		value: "DIFFERENT_TASK"
 	}
 }
 

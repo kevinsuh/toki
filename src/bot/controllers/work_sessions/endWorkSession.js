@@ -173,10 +173,16 @@ export default function(controller) {
 								color: colorsHash.grey.hex,
 								actions: [
 									{
-									name: buttonValues.noTasks.name,
-									text: "None yet!",
-									value: buttonValues.noTasks.value,
-									type: "button"
+										name: buttonValues.differentTask.name,
+										text: "Something Else",
+										value: buttonValues.differentTask.value,
+										type: "button"
+									},
+									{
+										name: buttonValues.noTasks.name,
+										text: "None yet!",
+										value: buttonValues.noTasks.value,
+										type: "button"
 									}
 								]
 							}
@@ -198,6 +204,20 @@ export default function(controller) {
 							}
 						},
 						{
+							pattern: buttonValues.differentTask.value,
+							callback: (response, convo) => {
+								askForDifferentCompletedTask(response, convo);
+								convo.next();
+							}
+						},
+						{ // same as clicking buttonValues.differentTask.value
+							pattern: utterances.containsDifferent,
+							callback: (response, convo) => {
+								askForDifferentCompletedTask(response, convo);
+								convo.next();
+							}
+						},
+						{ // user has listed task numbers here
 							default: true,
 							callback: (response, convo) => {
 								// user inputed task #'s, not new task button
@@ -258,7 +278,7 @@ export default function(controller) {
 					console.log(convo.sessionEnd);
 
 					// went according to plan
-					const { SlackUserId, UserId, postSessionDecision, reminders, tasksCompleted, taskArray } = convo.sessionEnd;
+					const { SlackUserId, UserId, postSessionDecision, reminders, tasksCompleted, taskArray, differentCompletedTask } = convo.sessionEnd;
 
 					// end all open sessions and reminder checkins (type `work_session`) the user might have
 					models.User.find({
@@ -271,8 +291,9 @@ export default function(controller) {
 						 * 		~~ END OF WORK SESSION ~~
 						 * 			1. cancel all `break` and `checkin` reminders
 						 * 			2. mark said `tasks` as done
-						 * 			3. set new `reminders` (i.e break)
-						 * 			4. close open worksessions and start new one if requested
+						 * 			3. handle postSession decision (set `break` reminder, start new session, etc.)
+						 * 			4. close all open worksessions
+						 * 			5. if completed diff task, store that for user
 						 */
 
 						// cancel all checkin reminders (type: `work_session` or `break`)
@@ -320,9 +341,51 @@ export default function(controller) {
 						// end all open work sessions
 						// make decision afterwards (to ensure you have no sessions open if u want to start a new one)
 						user.getWorkSessions({
-							where: [ `"open" = ?`, true ]
+							where: [ `"open" = ?`, true ],
+							order: `"createdAt" DESC`
 						})
 						.then((workSessions) => {
+
+							var minutes;
+							if (workSessions.length > 0) {
+								// use this to get how long the
+								// custom added task took
+								var startSession = workSessions[0];
+								var startTime    = moment(startSession.startTime);
+								var endTime      = moment(startSession.endTime);
+								minutes          = moment.duration(endTime.diff(startTime)).asMinutes();
+
+							} else {
+								// this should never happen.
+								minutes = 30; // but if it does... default minutes duration
+							}
+
+							// IF completedTask is 
+							if (differentCompletedTask) {
+
+								user.getDailyTasks({
+									where: [ `"DailyTask"."type" = ?`, "live" ]
+								})
+								.then((dailyTasks) => {
+									const priority = dailyTasks.length+1;
+									const text     = differentCompletedTask;
+									// record the different completed task
+									models.Task.create({
+										text,
+										done: true
+									})
+									.then((task) => {
+										const TaskId = task.id;
+										models.DailyTask.create({
+											TaskId,
+											priority,
+											minutes,
+											UserId
+										})
+									})
+								});
+							}
+
 							var endTime = moment().format("YYYY-MM-DD HH:mm:ss");
 							workSessions.forEach((workSession) => {
 								workSession.update({
@@ -487,6 +550,16 @@ function askUserPostSessionOptions(response, convo) {
     }
   ]);
 	
+}
+
+// user has completed a different task and we'll take note
+function askForDifferentCompletedTask(response, convo) {
+	convo.ask("What did you get done instead?", (response, convo) => {
+		convo.sessionEnd.differentCompletedTask = response.text;
+		convo.say("Nice! I added that as a completed task");
+		askUserPostSessionOptions(response, convo);
+		convo.next();
+	})
 }
 
 // simple way to handle be back later

@@ -42,5 +42,6 @@ export const utterances = {
 	containsBackLater: new RegExp(/(b[back ]{2,}l[later ]{2,})/i),
 	startSession:  new RegExp(/((s[start ]{2,}|n[new ]{2,}|w[work ]{2,})|s[session]{2,})/i),
 	containsEnd: new RegExp(/(e[end]{2,})/i),
-	containsNone: new RegExp(/((no|none|didnt|didn't)|\bn[otahpe]+\b)/i)
+	containsNone: new RegExp(/((no|none|didnt|didn't)|\bn[otahpe]+\b)/i),
+	containsDifferent: new RegExp(/((\bdi[different]{4,}\b)|(\b[else ]{3,}\b))/i)
 }

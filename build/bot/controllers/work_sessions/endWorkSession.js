@@ -149,6 +149,11 @@ exports.default = function (controller) {
 							fallback: "I was unable to process your decision",
 							color: _constants.colorsHash.grey.hex,
 							actions: [{
+								name: _constants.buttonValues.differentTask.name,
+								text: "Something Else",
+								value: _constants.buttonValues.differentTask.value,
+								type: "button"
+							}, {
 								name: _constants.buttonValues.noTasks.name,
 								text: "None yet!",
 								value: _constants.buttonValues.noTasks.value,
@@ -169,6 +174,18 @@ exports.default = function (controller) {
 							convo.next();
 						}
 					}, {
+						pattern: _constants.buttonValues.differentTask.value,
+						callback: function callback(response, convo) {
+							askForDifferentCompletedTask(response, convo);
+							convo.next();
+						}
+					}, { // same as clicking buttonValues.differentTask.value
+						pattern: _botResponses.utterances.containsDifferent,
+						callback: function callback(response, convo) {
+							askForDifferentCompletedTask(response, convo);
+							convo.next();
+						}
+					}, { // user has listed task numbers here
 						default: true,
 						callback: function callback(response, convo) {
 							// user inputed task #'s, not new task button
@@ -237,6 +254,7 @@ exports.default = function (controller) {
 						var reminders = _convo$sessionEnd.reminders;
 						var tasksCompleted = _convo$sessionEnd.tasksCompleted;
 						var taskArray = _convo$sessionEnd.taskArray;
+						var differentCompletedTask = _convo$sessionEnd.differentCompletedTask;
 
 						// end all open sessions and reminder checkins (type `work_session`) the user might have
 
@@ -249,8 +267,9 @@ exports.default = function (controller) {
         * 		~~ END OF WORK SESSION ~~
         * 			1. cancel all `break` and `checkin` reminders
         * 			2. mark said `tasks` as done
-        * 			3. set new `reminders` (i.e break)
-        * 			4. close open worksessions and start new one if requested
+        * 			3. handle postSession decision (set `break` reminder, start new session, etc.)
+        * 			4. close all open worksessions
+        * 			5. if completed diff task, store that for user
         */
 
 							// cancel all checkin reminders (type: `work_session` or `break`)
@@ -299,8 +318,47 @@ exports.default = function (controller) {
 							// end all open work sessions
 							// make decision afterwards (to ensure you have no sessions open if u want to start a new one)
 							user.getWorkSessions({
-								where: ['"open" = ?', true]
+								where: ['"open" = ?', true],
+								order: '"createdAt" DESC'
 							}).then(function (workSessions) {
+
+								var minutes;
+								if (workSessions.length > 0) {
+									// use this to get how long the
+									// custom added task took
+									var startSession = workSessions[0];
+									var startTime = (0, _momentTimezone2.default)(startSession.startTime);
+									var endTime = (0, _momentTimezone2.default)(startSession.endTime);
+									minutes = _momentTimezone2.default.duration(endTime.diff(startTime)).asMinutes();
+								} else {
+									// this should never happen.
+									minutes = 30; // but if it does... default minutes duration
+								}
+
+								// IF completedTask is
+								if (differentCompletedTask) {
+
+									user.getDailyTasks({
+										where: ['"DailyTask"."type" = ?', "live"]
+									}).then(function (dailyTasks) {
+										var priority = dailyTasks.length + 1;
+										var text = differentCompletedTask;
+										// record the different completed task
+										_models2.default.Task.create({
+											text: text,
+											done: true
+										}).then(function (task) {
+											var TaskId = task.id;
+											_models2.default.DailyTask.create({
+												TaskId: TaskId,
+												priority: priority,
+												minutes: minutes,
+												UserId: UserId
+											});
+										});
+									});
+								}
+
 								var endTime = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss");
 								workSessions.forEach(function (workSession) {
 									workSession.update({
@@ -479,6 +537,16 @@ function askUserPostSessionOptions(response, convo) {
 			convo.next();
 		}
 	}]);
+}
+
+// user has completed a different task and we'll take note
+function askForDifferentCompletedTask(response, convo) {
+	convo.ask("What did you get done instead?", function (response, convo) {
+		convo.sessionEnd.differentCompletedTask = response.text;
+		convo.say("Nice! I added that as a completed task");
+		askUserPostSessionOptions(response, convo);
+		convo.next();
+	});
 }
 
 // simple way to handle be back later
