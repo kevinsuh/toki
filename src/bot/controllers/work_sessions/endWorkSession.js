@@ -162,7 +162,7 @@ export default function(controller) {
 					askUserPostSessionOptions(err, convo);
 					convo.next();
 				} else {
-					convo.say("Which task(s) did you get done? `i.e. tasks 1, 2`");
+					convo.say("Woo! Which task(s) did you get done? `i.e. tasks 1, 2`");
 					convo.ask({
 						text: `${taskListMessage}`,
 						attachments:[
@@ -213,6 +213,7 @@ export default function(controller) {
 						{ // same as clicking buttonValues.differentTask.value
 							pattern: utterances.containsDifferent,
 							callback: (response, convo) => {
+								convo.say("What did you get done instead?")
 								askForDifferentCompletedTask(response, convo);
 								convo.next();
 							}
@@ -353,6 +354,7 @@ export default function(controller) {
 								var startSession = workSessions[0];
 								var startTime    = moment(startSession.startTime);
 								var endTime      = moment(startSession.endTime);
+
 								minutes          = moment.duration(endTime.diff(startTime)).asMinutes();
 
 							} else {
@@ -554,9 +556,9 @@ function askUserPostSessionOptions(response, convo) {
 
 // user has completed a different task and we'll take note
 function askForDifferentCompletedTask(response, convo) {
-	convo.ask("What did you get done instead?", (response, convo) => {
+	convo.ask("I'll add it as a completed task for you :memo:", (response, convo) => {
 		convo.sessionEnd.differentCompletedTask = response.text;
-		convo.say("Nice! I added that as a completed task");
+		convo.say("Noted!");
 		askUserPostSessionOptions(response, convo);
 		convo.next();
 	})

@@ -140,7 +140,7 @@ exports.default = function (controller) {
 					askUserPostSessionOptions(err, convo);
 					convo.next();
 				} else {
-					convo.say("Which task(s) did you get done? `i.e. tasks 1, 2`");
+					convo.say("Woo! Which task(s) did you get done? `i.e. tasks 1, 2`");
 					convo.ask({
 						text: '' + taskListMessage,
 						attachments: [{
@@ -182,6 +182,7 @@ exports.default = function (controller) {
 					}, { // same as clicking buttonValues.differentTask.value
 						pattern: _botResponses.utterances.containsDifferent,
 						callback: function callback(response, convo) {
+							convo.say("What did you get done instead?");
 							askForDifferentCompletedTask(response, convo);
 							convo.next();
 						}
@@ -329,6 +330,7 @@ exports.default = function (controller) {
 									var startSession = workSessions[0];
 									var startTime = (0, _momentTimezone2.default)(startSession.startTime);
 									var endTime = (0, _momentTimezone2.default)(startSession.endTime);
+
 									minutes = _momentTimezone2.default.duration(endTime.diff(startTime)).asMinutes();
 								} else {
 									// this should never happen.
@@ -541,9 +543,9 @@ function askUserPostSessionOptions(response, convo) {
 
 // user has completed a different task and we'll take note
 function askForDifferentCompletedTask(response, convo) {
-	convo.ask("What did you get done instead?", function (response, convo) {
+	convo.ask("I'll add it as a completed task for you :memo:", function (response, convo) {
 		convo.sessionEnd.differentCompletedTask = response.text;
-		convo.say("Nice! I added that as a completed task");
+		convo.say("Noted!");
 		askUserPostSessionOptions(response, convo);
 		convo.next();
 	});

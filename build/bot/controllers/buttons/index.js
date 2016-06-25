@@ -54,6 +54,9 @@ exports.default = function (controller) {
 				case _constants.buttonValues.backLater.value:
 					bot.replyInteractive(message, "Okay! I'll be here when you get back");
 					break;
+				case _constants.buttonValues.differentTask.value:
+					bot.replyInteractive(message, "What did you get done instead?");
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");
