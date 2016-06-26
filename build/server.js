@@ -86,34 +86,6 @@ if (env == 'development') {
 
 (0, _controllers.customConfigBot)(_controllers.controller);
 
-// add bot to each team
-var teamTokens = [];
-_controllers.controller.storage.teams.all(function (err, teams) {
-	if (err) {
-		throw new Error(err);
-	}
-
-	// connect all the teams with bots up to slack
-	for (var t in teams) {
-		if (teams[t]) {
-			teamTokens.push(teams[t].token);
-		}
-	}
-
-	/**
-  * 		~~ START UP ZE BOTS ~~
-  */
-	teamTokens.forEach(function (token) {
-		var bot = _controllers.controller.spawn({ token: token }).startRTM(function (err) {
-			if (err) {
-				console.log('Error connecting to slack... :', err);
-			} else {
-				(0, _controllers.trackBot)(bot); // this is where we store all ze bots
-			}
-		});
-	});
-});
-
 _controllers.controller.configureSlackApp({
 	clientId: process.env.SLACK_ID,
 	clientSecret: process.env.SLACK_SECRET,
@@ -140,5 +112,38 @@ _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
  * @param  timezone of the job
  */
 	new CronJob('*/5 * * * * *', _cron4.default, null, true, "America/New_York");
+
+	// add bot to each team
+	var teamTokens = [];
+	_controllers.controller.storage.teams.all(function (err, teams) {
+		if (err) {
+			throw new Error(err);
+		}
+
+		// connect all the teams with bots up to slack
+		for (var t in teams) {
+			if (teams[t]) {
+				teamTokens.push(teams[t].token);
+			}
+		}
+
+		/**
+   * 		~~ START UP ZE BOTS ~~
+   */
+		teamTokens.forEach(function (token) {
+			var bot = _controllers.controller.spawn({ token: token }).startRTM(function (err) {
+				if (err) {
+					console.log('Error connecting to slack... :', err);
+				} else {
+					if (token == process.env.BOT_TOKEN) {
+						bot.startPrivateConversation({ user: "U121ZK15J" }, function (err, convo) {
+							convo.say("Good morning Kevin, I'm ready for you :robot_face:");
+						});
+					}
+					(0, _controllers.trackBot)(bot); // this is where we store all ze bots
+				}
+			});
+		});
+	});
 });
 //# sourceMappingURL=server.js.map

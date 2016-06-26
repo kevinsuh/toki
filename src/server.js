@@ -58,34 +58,6 @@ import { controller, customConfigBot, trackBot } from './bot/controllers';
 
 customConfigBot(controller);
 
-// add bot to each team
-var teamTokens = [];
-controller.storage.teams.all((err, teams) => {
-	if (err) {
-		throw new Error(err);
-	}
-
-	// connect all the teams with bots up to slack
-	for (var t in teams) {
-		if (teams[t]) {
-			teamTokens.push(teams[t].token);
-		}
-	}
-
-	/**
-	 * 		~~ START UP ZE BOTS ~~
-	 */
-	teamTokens.forEach((token) => {
-		var bot = controller.spawn({ token }).startRTM((err) => {
-			if (err) {
-				console.log('Error connecting to slack... :', err);
-			} else {
-				trackBot(bot); // this is where we store all ze bots
-			}
-		})
-	});
-});
-
 controller.configureSlackApp({
 	clientId: process.env.SLACK_ID,
 	clientSecret: process.env.SLACK_SECRET,
@@ -112,6 +84,39 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 	 * @param  timezone of the job
 	 */
 	new CronJob('*/5 * * * * *', cronFunction, null, true, "America/New_York");
+
+	// add bot to each team
+	var teamTokens = [];
+	controller.storage.teams.all((err, teams) => {
+		if (err) {
+			throw new Error(err);
+		}
+
+		// connect all the teams with bots up to slack
+		for (var t in teams) {
+			if (teams[t]) {
+				teamTokens.push(teams[t].token);
+			}
+		}
+
+		/**
+		 * 		~~ START UP ZE BOTS ~~
+		 */
+		teamTokens.forEach((token) => {
+			var bot = controller.spawn({ token }).startRTM((err) => {
+				if (err) {
+					console.log('Error connecting to slack... :', err);
+				} else {
+					if (token == process.env.BOT_TOKEN) {
+						bot.startPrivateConversation({user: "U121ZK15J"}, (err, convo) => {
+							convo.say("Good morning Kevin, I'm ready for you :robot_face:");
+						})
+					}
+					trackBot(bot); // this is where we store all ze bots
+				}
+			})
+		});
+	});
 });
 
 
