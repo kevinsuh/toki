@@ -9,7 +9,6 @@ import moment from 'moment-timezone';
 
 export function updateUsers() {
 
-	var allUsers = [];
 	for (var token in bots) {
 		bots[token].api.users.list({
 			presence: 1
@@ -19,12 +18,6 @@ export function updateUsers() {
 			members.forEach((member) => {
 
 				const { id, team_id, name, tz } = member;
-				// var data = {
-				// 	SlackUserId: id,
-				// 	TeamId: team_id,
-				// 	nickName: name,
-				// 	tz
-				// };
 
 				models.SlackUser.find({
 					where: { SlackUserId: id }

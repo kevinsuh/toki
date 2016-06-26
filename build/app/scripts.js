@@ -22,7 +22,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // for one-off thingz
 function updateUsers() {
 
-	var allUsers = [];
 	for (var token in _controllers.bots) {
 		_controllers.bots[token].api.users.list({
 			presence: 1
@@ -34,12 +33,7 @@ function updateUsers() {
 				var team_id = member.team_id;
 				var name = member.name;
 				var tz = member.tz;
-				// var data = {
-				// 	SlackUserId: id,
-				// 	TeamId: team_id,
-				// 	nickName: name,
-				// 	tz
-				// };
+
 
 				_models2.default.SlackUser.find({
 					where: { SlackUserId: id }
