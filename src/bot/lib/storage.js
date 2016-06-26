@@ -28,11 +28,13 @@ export default function(config) {
 
   var userObjectToBotkitObject = (slackUser) => {
     if (slackUser) {
-      const { SlackUserId, tz, TeamId } = slackUser.dataValues;
+      const { SlackUserId, tz, TeamId, scopes, accessToken } = slackUser.dataValues;
       return {
         id: SlackUserId,
         team_id: TeamId,
-        tz
+        tz,
+        scopes,
+        access_token: accessToken
       }
     } else {
       return {};
@@ -122,14 +124,15 @@ export default function(config) {
         });
       },
       save: (userData, cb) => {
+        
         console.log("\n\n ~~ calling storage.users.save ~~ \n\n");
+        console.log(userData);
 
         const SlackUserId = userData.id;
-        const TeamId      = userData.team_id;
-        const tz          = userData.tz;
-        const nickName    = userData.user;
         const accessToken = userData.access_token;
         const scopes      = userData.scopes;
+        const TeamId      = userData.team_id;
+        const nickName    = userData.user;
 
         models.SlackUser.find({
           where: { SlackUserId }
@@ -152,16 +155,18 @@ export default function(config) {
               return models.SlackUser.create({
                 SlackUserId,
                 UserId,
-                tz,
-                TeamId
+                TeamId,
+                accessToken,
+                scopes
               });
             });
 
           } else {
             console.log("found slack user... updating now");
             return slackUser.update({
-              SlackUserId,
-              TeamId
+              TeamId,
+              accessToken,
+              scopes
             });
           }
 

@@ -4,7 +4,7 @@ import express from 'express';
 var router = express.Router();
 
 // bring in helpers
-import { getAuthAddress, startBot, saveUser } from '../helpers';
+import { getAuthAddress, startBot, saveUserOnRegistration } from '../helpers';
 
 // new user creation - redirect from Slack
 // 1. use returned OAuth Code and send back w/ client_id and secret
@@ -75,7 +75,7 @@ var registerTeam = (auth, res) => {
         startBot(team, "create");
 
         // user has signed up
-        console.log(`User has logged in. Now we must store that session on our server. Authenticate and Authorize the following user properly:`);
+        console.log(`User has signed up. Now we must store that session on our server. Authenticate and Authorize the following user properly:`);
         console.log("User identity:");
         console.log(identity);
         console.log("Auth:");
@@ -86,7 +86,7 @@ var registerTeam = (auth, res) => {
         res.send("Your bot has been installed");
 
         // this isnt working for some reason
-        saveUser(auth, identity);
+        saveUserOnRegistration(auth, identity);
       } catch(e){
         console.log(e);
       }

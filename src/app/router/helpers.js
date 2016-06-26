@@ -1,5 +1,5 @@
 import { connectOnLogin, connectOnInstall } from '../../bot/controllers';
-import { controller as slack } from '../../bot/controllers';
+import { controller } from '../../bot/controllers';
 
 export function getAuthAddress(authCode, uri_path) {
   //post code, app ID, and app secret, to get token
@@ -21,28 +21,25 @@ export function startBot(team, type) {
   }
 }
 
-export function saveUser(auth, identity) {
+// on register team
+export function saveUserOnRegistration(auth, identity) {
 
-  // what scopes did we get approved for?
-  var scopes = auth.scope.split(/\,/);
+  controller.storage.users.get(identity.user_id, function(err, user) {
 
-  slack.controller.storage.users.get(identity.user_id, function(err, user) {
-    isnew = false;
-    if (!user) {
-        isnew = true;
-        user = {
-            id: identity.user_id,
-            access_token: auth.access_token,
-            scopes: auth.scope,
-            team_id: identity.team_id,
-            user: identity.user,
-            tz: identity.tz
-        };
-    }
-    slack.controller.storage.users.save(user, function(err, id) {
+    var isnew = user ? false : true;
+    // data from slack API to create or update our DB with
+    user = {
+      id: identity.user_id,
+      access_token: auth.access_token,
+      scopes: auth.scope,
+      team_id: identity.team_id,
+      user: identity.user
+    };
+    
+    controller.storage.users.save(user, function(err, id) {
       if (err) {
         console.log('An error occurred while saving a user: ', err);
-        slack.controller.trigger('error', [err]);
+        controller.trigger('error', [err]);
       }
       else {
         if (isnew) {
@@ -56,3 +53,40 @@ export function saveUser(auth, identity) {
     });
   });
 }
+
+// on login
+export function saveUserOnLogin(auth, identity) {
+
+  controller.storage.users.get(identity.user.id, function(err, user) {
+
+    var isnew = user ? false : true;
+    // data from slack API to create or update our DB with
+    user = {
+      id: identity.user.id,
+      access_token: auth.access_token,
+      scopes: auth.scope,
+      team_id: identity.team.id,
+      user: identity.user.name
+    };
+
+    controller.storage.users.save(user, function(err, id) {
+      if (err) {
+        console.log('An error occurred while saving a user: ', err);
+        controller.trigger('error', [err]);
+      }
+      else {
+        if (isnew) {
+          console.log("New user " + id.toString() + " saved");
+        }
+        else {
+          console.log("User " + id.toString() + " updated");
+        }
+        console.log("================== END TEAM REGISTRATION ==================")
+      }
+    });
+  });
+
+}
+
+
+

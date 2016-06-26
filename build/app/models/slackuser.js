@@ -5,7 +5,9 @@ module.exports = function (sequelize, DataTypes) {
     UserId: DataTypes.INTEGER,
     SlackUserId: DataTypes.STRING,
     tz: DataTypes.STRING,
-    TeamId: DataTypes.STRING
+    TeamId: DataTypes.STRING,
+    scopes: DataTypes.STRING,
+    accessToken: DataTypes.STRING
   }, {
     classMethods: {
       associate: function associate(models) {

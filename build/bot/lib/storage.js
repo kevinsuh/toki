@@ -39,11 +39,15 @@ exports.default = function (config) {
       var SlackUserId = _slackUser$dataValues.SlackUserId;
       var tz = _slackUser$dataValues.tz;
       var TeamId = _slackUser$dataValues.TeamId;
+      var scopes = _slackUser$dataValues.scopes;
+      var accessToken = _slackUser$dataValues.accessToken;
 
       return {
         id: SlackUserId,
         team_id: TeamId,
-        tz: tz
+        tz: tz,
+        scopes: scopes,
+        access_token: accessToken
       };
     } else {
       return {};
@@ -133,14 +137,15 @@ exports.default = function (config) {
         });
       },
       save: function save(userData, cb) {
+
         console.log("\n\n ~~ calling storage.users.save ~~ \n\n");
+        console.log(userData);
 
         var SlackUserId = userData.id;
-        var TeamId = userData.team_id;
-        var tz = userData.tz;
-        var nickName = userData.user;
         var accessToken = userData.access_token;
         var scopes = userData.scopes;
+        var TeamId = userData.team_id;
+        var nickName = userData.user;
 
         _models2.default.SlackUser.find({
           where: { SlackUserId: SlackUserId }
@@ -161,15 +166,17 @@ exports.default = function (config) {
               return _models2.default.SlackUser.create({
                 SlackUserId: SlackUserId,
                 UserId: UserId,
-                tz: tz,
-                TeamId: TeamId
+                TeamId: TeamId,
+                accessToken: accessToken,
+                scopes: scopes
               });
             });
           } else {
             console.log("found slack user... updating now");
             return slackUser.update({
-              SlackUserId: SlackUserId,
-              TeamId: TeamId
+              TeamId: TeamId,
+              accessToken: accessToken,
+              scopes: scopes
             });
           }
         }).then(function (user) {
