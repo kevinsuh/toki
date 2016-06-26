@@ -82,7 +82,7 @@ var authenticateTeam = (auth, res) => {
           saveUserOnLogin(auth, identity);
 
           // this is the message you send to user!!
-          res.send("You have logged in!");
+          res.send("Thank you! You are now friends with Toki");
 
         } else {
 

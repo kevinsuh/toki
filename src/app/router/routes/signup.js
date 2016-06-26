@@ -83,7 +83,7 @@ var registerTeam = (auth, res) => {
         console.log("Team:");
         console.log(team);
 
-        res.send("Your bot has been installed");
+        res.send("Thank you! You have just registered Toki");
 
         // this isnt working for some reason
         saveUserOnRegistration(auth, identity);

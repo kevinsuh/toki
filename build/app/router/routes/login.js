@@ -96,7 +96,7 @@ var authenticateTeam = function authenticateTeam(auth, res) {
           (0, _helpers.saveUserOnLogin)(auth, identity);
 
           // this is the message you send to user!!
-          res.send("You have logged in!");
+          res.send("Thank you! You are now friends with Toki");
         } else {
 
           res.send("Sorry! Please try again");
