@@ -28,6 +28,8 @@ var _cron3 = require('./app/cron');
 
 var _cron4 = _interopRequireDefault(_cron3);
 
+var _scripts = require('./app/scripts');
+
 var _controllers = require('./bot/controllers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -36,6 +38,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var CronJob = _cron2.default.CronJob; // modules
 
+
+setTimeout(function () {
+	console.log("\n\n\n ~~ updating and seeding users ~~ \n\n\n");
+	(0, _scripts.updateUsers)(); // to fill in all users who are not in DB yet
+	(0, _scripts.seedUsers)();
+}, 5000);
 
 var app = (0, _express2.default)();
 
@@ -93,14 +101,14 @@ _controllers.controller.storage.teams.all(function (err, teams) {
 	}
 
 	/**
-  * 		~~ start up DA BOTS ~~
+  * 		~~ START UP ZE BOTS ~~
   */
 	teamTokens.forEach(function (token) {
 		var bot = _controllers.controller.spawn({ token: token }).startRTM(function (err) {
 			if (err) {
 				console.log('Error connecting to slack... :', err);
 			} else {
-				(0, _controllers.trackBot)(bot); // avoid repeats
+				(0, _controllers.trackBot)(bot); // this is where we store all ze bots
 			}
 		});
 	});

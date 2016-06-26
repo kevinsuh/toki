@@ -6,11 +6,6 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function () {
 
-	console.log("BOTS!");
-	for (var token in _controllers.bots) {
-		console.log('token: ' + token);
-	}
-
 	// check for reminders and sessions every minute!
 	checkForReminders();
 	checkForSessions();

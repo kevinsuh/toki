@@ -10,6 +10,13 @@ import cron from 'cron';
 import cronFunction from './app/cron';
 var CronJob = cron.CronJob;
 
+import { seedUsers, updateUsers } from './app/scripts';
+setTimeout(() => {
+	console.log("\n\n\n ~~ updating and seeding users ~~ \n\n\n");
+	updateUsers(); // to fill in all users who are not in DB yet
+	seedUsers();
+}, 5000)
+
 var app = express();
 
 // configuration 
@@ -66,19 +73,18 @@ controller.storage.teams.all((err, teams) => {
 	}
 
 	/**
-	 * 		~~ start up DA BOTS ~~
+	 * 		~~ START UP ZE BOTS ~~
 	 */
 	teamTokens.forEach((token) => {
 		var bot = controller.spawn({ token }).startRTM((err) => {
 			if (err) {
 				console.log('Error connecting to slack... :', err);
 			} else {
-				trackBot(bot); // avoid repeats
+				trackBot(bot); // this is where we store all ze bots
 			}
 		})
-	})
+	});
 });
-
 
 controller.configureSlackApp({
 	clientId: process.env.SLACK_ID,
