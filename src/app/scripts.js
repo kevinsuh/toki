@@ -55,8 +55,9 @@ export function updateUsers() {
 
 export function seedUsers() {
 
-	var allUsers = [];
+	var slackUserIds = []; // make sure only unique slack user ids are put in!
 	for (var token in bots) {
+		
 		bots[token].api.users.list({
 			presence: 1
 		}, (err, response) => {
@@ -64,39 +65,33 @@ export function seedUsers() {
 
 			members.forEach((member) => {
 				const { id, team_id, name, tz } = member;
-				var data = {
-					SlackUserId: id,
-					TeamId: team_id,
-					nickName: name,
-					tz
-				};
-				allUsers.push(data);
-			});
 
-			allUsers.forEach((user) => {
-				const { SlackUserId, TeamId, nickName, tz } = user;
-				models.SlackUser.find({
-					where: { SlackUserId }
-				})
-				.then((slackUser) => {
-					// only create uniques
-					if (!slackUser) {
-						var uniqueEmail = makeid();
-						models.User.create({
-							email: `TEMPEMAILHOLDER${uniqueEmail}@gmail.com`,
-							nickName
-						})
-						.then((user) => {
-							models.SlackUser.create({
-								SlackUserId,
-								UserId: user.id,
-								tz,
-								TeamId
+				// this helps us stay unique with SlackUserId
+				if (slackUserIds.indexOf(id) < 0) {
+					slackUserIds.push(id); 
+					models.SlackUser.find({
+						where: { SlackUserId: id }
+					})
+					.then((slackUser) => {
+						if (!slackUser) {
+							console.log("\n\n ~~ Unique SlackUserId found... creating now ~~ \n\n");
+							var uniqueEmail = makeid();
+							models.User.create({
+								email: `TEMPEMAILHOLDER${uniqueEmail}@gmail.com`,
+								nickName: name
+							})
+							.then((user) => {
+								models.SlackUser.create({
+									SlackUserId: id,
+									UserId: user.id,
+									tz,
+									TeamId: team_id
+								});
 							});
-						});
-					}
-				});
-			})
+						}
+					})
+				}
+			});
 		})
 	}
 
