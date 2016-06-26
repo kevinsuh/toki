@@ -1,10 +1,5 @@
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-		value: true
-});
-exports.bot = undefined;
-
 var _express = require('express');
 
 var _express2 = _interopRequireDefault(_express);
@@ -62,15 +57,15 @@ require('./app/router').default(app);
 
 // Error Handling
 app.use(function (err, req, res, next) {
-		res.status(err.status || 500);
+	res.status(err.status || 500);
 });
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
-		console.log("\n\n ~~ In development server of Navi ~~ \n\n");
-		process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
-		process.env.SLACK_ID = process.env.DEV_SLACK_ID;
-		process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
+	console.log("\n\n ~~ In development server of Navi ~~ \n\n");
+	process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
+	process.env.SLACK_ID = process.env.DEV_SLACK_ID;
+	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 }
 
 /**
@@ -82,49 +77,58 @@ if (env == 'development') {
 
 
 (0, _controllers.customConfigBot)(_controllers.controller);
-var bot = _controllers.controller.spawn({
-		token: process.env.BOT_TOKEN
-});
-exports.bot = bot;
 
+// add bot to each team
+_controllers.controller.storage.teams.all(function (err, teams) {
+	console.log("all teams:");
+	console.log(teams);
+
+	if (err) {
+		throw new Error(err);
+	}
+
+	// connect all the teams with bots up to slack
+	for (var t in teams) {
+		var token = teams[t].token;
+
+		if (token) {
+			var bot = _controllers.controller.spawn({ token: token });
+			bot.startRTM(function (err) {
+				if (err) {
+					console.log('error connecting to slack... :', err);
+				} else {
+					(0, _controllers.trackBot)(bot); // avoid repeats
+				}
+			});
+		}
+	}
+});
 
 _controllers.controller.configureSlackApp({
-		clientId: process.env.SLACK_ID,
-		clientSecret: process.env.SLACK_SECRET,
-		scopes: ['bot']
+	clientId: process.env.SLACK_ID,
+	clientSecret: process.env.SLACK_SECRET,
+	scopes: ['bot']
 });
 _controllers.controller.createWebhookEndpoints(app);
 _controllers.controller.createOauthEndpoints(app, function (err, req, res) {
-		if (err) {
-				res.status(500).send('ERROR: ' + err);
-		} else {
-				res.send('Success!');
-		}
+	if (err) {
+		res.status(500).send('ERROR: ' + err);
+	} else {
+		res.send('Success!');
+	}
 });
 
 // create HTTP service
 _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
-		console.log('listening on port ' + app.get('port'));
+	console.log('listening on port ' + app.get('port'));
 
-		bot.startRTM(function (err) {
-				if (!err) {
-						console.log("RTM on and listening");
-
-						/**
-      * 						*** CRON JOB ***
-      * @param  time increment in cron format
-      * @param  function to run each increment
-      * @param  function to run at end of cron job
-      * @param  timezone of the job
-      */
-						new CronJob('*/5 * * * * *', _cron4.default, null, true, "America/New_York");
-
-						bot.startPrivateConversation({ user: "U121ZK15J" }, function (err, convo) {
-								convo.say('Hey Kevin! I am live and ready for you :robot_face:');
-						});
-				} else {
-						console.log("RTM failed");
-				}
-		});
+	/**
+ * 						*** CRON JOB ***
+ * @param  time increment in cron format
+ * @param  function to run each increment
+ * @param  function to run at end of cron job
+ * @param  timezone of the job
+ */
+	new CronJob('*/5 * * * * *', _cron4.default, null, true, "America/New_York");
 });
 //# sourceMappingURL=server.js.map

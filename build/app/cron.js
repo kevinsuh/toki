@@ -6,12 +6,12 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function () {
 
-	// check for reminders and sessions every minute!
-	checkForReminders();
-	checkForSessions();
-};
+	console.log(_controllers.bots);
 
-var _server = require('../server');
+	// check for reminders and sessions every minute!
+	// checkForReminders();
+	// checkForSessions();
+};
 
 var _controllers = require('../bot/controllers');
 
@@ -64,7 +64,7 @@ var checkForSessions = function checkForSessions() {
 				};
 
 				// alarm is up for session
-				_controllers.controller.trigger('session_timer_up', [_server.bot, config]);
+				_controllers.controller.trigger('session_timer_up', [bot, config]);
 			});
 		});
 	});
@@ -106,7 +106,7 @@ var checkForReminders = function checkForReminders() {
 			}).then(function (user) {
 
 				// send the message!
-				_server.bot.startPrivateConversation({
+				bot.startPrivateConversation({
 					user: user.SlackUser.SlackUserId
 				}, function (err, convo) {
 

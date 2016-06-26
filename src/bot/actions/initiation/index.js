@@ -14,6 +14,14 @@ export function firstInstallInitiateConversation(bot, team) {
 		
 		convo.say(`Hey! I'm Toki!`);
 		convo.say(`This is your first time installing me`);
+
+		convo.on('end', (convo) => {
+			// let's save team info to DB
+			console.log("\n\nteam info:\n\n")
+			console.log(team);
+			
+		});
+
 	});
 
 }

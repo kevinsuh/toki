@@ -47,13 +47,36 @@ if (env == 'development') {
 // ===================================================
 
 // botkit
-import { controller, customConfigBot } from './bot/controllers';
+import { controller, customConfigBot, trackBot } from './bot/controllers';
 
 customConfigBot(controller);
-var bot = controller.spawn(({
-	token: process.env.BOT_TOKEN
-}));
-export { bot };
+
+// add bot to each team
+controller.storage.teams.all((err, teams) => {
+	console.log("all teams:");
+	console.log(teams);
+
+	if (err) {
+		throw new Error(err);
+	}
+
+	// connect all the teams with bots up to slack
+	for (var t in teams) {
+		const { token } = teams[t];
+		if (token) {
+			var bot = controller.spawn(({ token }));
+			bot.startRTM((err) => {
+				if (err) {
+					console.log('error connecting to slack... :', err);
+				} else {
+					trackBot(bot); // avoid repeats
+				}
+
+			})
+		}
+	}
+
+});
 
 controller.configureSlackApp({
 	clientId: process.env.SLACK_ID,
@@ -73,26 +96,14 @@ controller.createOauthEndpoints(app,function(err,req,res) {
 http.createServer(app).listen(process.env.HTTP_PORT, () => {
 	console.log('listening on port ' + app.get('port'));
 
-	bot.startRTM((err) => {
-	  if (!err) {
-	    console.log("RTM on and listening");
-
-	    /**
-			 * 						*** CRON JOB ***
-			 * @param  time increment in cron format
-			 * @param  function to run each increment
-			 * @param  function to run at end of cron job
-			 * @param  timezone of the job
-			 */
-			new CronJob('*/5 * * * * *', cronFunction, null, true, "America/New_York");
-
-	    bot.startPrivateConversation({user: "U121ZK15J"}, (err, convo) => {
-				convo.say(`Hey Kevin! I am live and ready for you :robot_face:`);
-			});
-	  } else {
-	    console.log("RTM failed")
-	  }
-	});
+	 /**
+	 * 						*** CRON JOB ***
+	 * @param  time increment in cron format
+	 * @param  function to run each increment
+	 * @param  function to run at end of cron job
+	 * @param  timezone of the job
+	 */
+	new CronJob('*/5 * * * * *', cronFunction, null, true, "America/New_York");
 });
 
 

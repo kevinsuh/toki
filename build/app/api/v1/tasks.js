@@ -20,8 +20,6 @@ var _momentTimezone = require('moment-timezone');
 
 var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 
-var _server = require('../../../server');
-
 var _controllers = require('../../../bot/controllers');
 
 var _models = require('../../models');

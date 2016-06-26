@@ -1,4 +1,4 @@
-import { bot } from '../server';
+import { bots } from '../bot/controllers';
 import { controller } from '../bot/controllers';
 
 // sequelize models
@@ -9,9 +9,11 @@ import moment from 'moment';
 // the cron file!
 export default function() {
 
+	console.log(bots);
+
 	// check for reminders and sessions every minute!
-	checkForReminders();
-	checkForSessions();
+	// checkForReminders();
+	// checkForSessions();
 
 }
 
