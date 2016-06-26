@@ -73,31 +73,23 @@ export function seedUsers() {
 				allUsers.push(data);
 			});
 
-			// all members are stored now... for the users who do not exist, seed them
-			models.SlackUser.findAll({})
-			.then((slackUsers) => {
-
-				var totalSlackUsers = slackUsers.length;
-
-				// do not create these ones
-				var existingSlackUserIds = slackUsers.map((slackUser) => {
-					return slackUser.SlackUserId;
-				});
-
-				allUsers.forEach((user) => {
-					// create the ones that do not exist yet
-					const { SlackUserId, TeamId, nickName, tz } = user;
-					if (existingSlackUserIds.indexOf(SlackUserId) < 0) {
+			allUsers.forEach((user) => {
+				const { SlackUserId, TeamId, nickName, tz } = user;
+				models.SlackUser.find({
+					where: { SlackUserId }
+				})
+				.then((slackUser) => {
+					// only create uniques
+					if (!slackUser) {
 						var uniqueEmail = makeid();
-						// this means not in array... lets create
 						models.User.create({
 							email: `TEMPEMAILHOLDER${uniqueEmail}@gmail.com`,
 							nickName
 						})
 						.then((user) => {
 							models.SlackUser.create({
-								UserId: user.id,
 								SlackUserId,
+								UserId: user.id,
 								tz,
 								TeamId
 							});
@@ -105,7 +97,6 @@ export function seedUsers() {
 					}
 				});
 			})
-
 		})
 	}
 

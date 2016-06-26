@@ -88,33 +88,25 @@ function seedUsers() {
 				allUsers.push(data);
 			});
 
-			// all members are stored now... for the users who do not exist, seed them
-			_models2.default.SlackUser.findAll({}).then(function (slackUsers) {
+			allUsers.forEach(function (user) {
+				var SlackUserId = user.SlackUserId;
+				var TeamId = user.TeamId;
+				var nickName = user.nickName;
+				var tz = user.tz;
 
-				var totalSlackUsers = slackUsers.length;
-
-				// do not create these ones
-				var existingSlackUserIds = slackUsers.map(function (slackUser) {
-					return slackUser.SlackUserId;
-				});
-
-				allUsers.forEach(function (user) {
-					// create the ones that do not exist yet
-					var SlackUserId = user.SlackUserId;
-					var TeamId = user.TeamId;
-					var nickName = user.nickName;
-					var tz = user.tz;
-
-					if (existingSlackUserIds.indexOf(SlackUserId) < 0) {
+				_models2.default.SlackUser.find({
+					where: { SlackUserId: SlackUserId }
+				}).then(function (slackUser) {
+					// only create uniques
+					if (!slackUser) {
 						var uniqueEmail = makeid();
-						// this means not in array... lets create
 						_models2.default.User.create({
 							email: 'TEMPEMAILHOLDER' + uniqueEmail + '@gmail.com',
 							nickName: nickName
 						}).then(function (user) {
 							_models2.default.SlackUser.create({
-								UserId: user.id,
 								SlackUserId: SlackUserId,
+								UserId: user.id,
 								tz: tz,
 								TeamId: TeamId
 							});
