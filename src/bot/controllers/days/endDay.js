@@ -154,7 +154,7 @@ export default function(controller) {
 	      }
 	      
 				const startSessionGroup   = sessionGroups[0]; // the start day
-				var startSessionGroupTime = startSessionGroup.dataValues.createdAt;
+				var startSessionGroupTime = moment(startSessionGroup.dataValues.createdAt);
 
 	      user.getDailyTasks({
 					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, startSessionGroupTime, true, "live"],
@@ -192,9 +192,9 @@ export default function(controller) {
 		    			if (convo.status == 'completed') {
 
 		    				const { UserId, reflection, dailyTasks, startSessionGroup } = convo.dayEnd;
-		  					const startSessionGroupTime = moment(startSessionGroup.dataValues.createdAt).format("YYYY-MM-DD HH:mm:ss");
+		  					const startSessionGroupTime = moment(startSessionGroup.dataValues.createdAt);
 
-		    				var now = moment().format("YYYY-MM-DD HH:mm:ss");
+		    				var now = moment();
 
 		    				// log `end_work` and reflection
 		    				models.SessionGroup.create({
@@ -288,7 +288,7 @@ function getTotalWorkSessionTime(response, convo) {
 		where: { id: UserId }
 	}).then((user) => {
 		return user.getWorkSessions({
-			where: [`"WorkSession"."startTime" > ?`, startSessionGroupTime.format("YYYY-MM-DD HH:mm:ss")]
+			where: [`"WorkSession"."startTime" > ?`, startSessionGroupTime]
 		})
 	})
 	.then((workSessions) => {
