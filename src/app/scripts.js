@@ -1,4 +1,7 @@
-// for one-off thingz
+/**
+ * 		For fun one-off thingz
+ */
+
 import { bots } from '../bot/controllers';
 import { controller } from '../bot/controllers';
 

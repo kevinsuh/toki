@@ -19,7 +19,10 @@ var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // sequelize models
-// for one-off thingz
+/**
+ * 		For fun one-off thingz
+ */
+
 function updateUsers() {
 
 	for (var token in _controllers.bots) {
