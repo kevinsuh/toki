@@ -35,10 +35,15 @@ exports.default = function (config) {
 
   var userObjectToBotkitObject = function userObjectToBotkitObject(slackUser) {
     if (slackUser) {
-      var SlackUserId = slackUser.dataValues.SlackUserId;
+      var _slackUser$dataValues = slackUser.dataValues;
+      var SlackUserId = _slackUser$dataValues.SlackUserId;
+      var tz = _slackUser$dataValues.tz;
+      var TeamId = _slackUser$dataValues.TeamId;
 
       return {
-        id: SlackUserId
+        id: SlackUserId,
+        team_id: TeamId,
+        tz: tz
       };
     } else {
       return {};
@@ -129,24 +134,42 @@ exports.default = function (config) {
       },
       save: function save(userData, cb) {
         console.log("\n\n ~~ calling storage.users.save ~~ \n\n");
-        var SlackUserId = userData.id;
 
-        _objectDestructuringEmpty(userData);
+        var SlackUserId = userData.id;
+        var TeamId = userData.team_id;
+        var tz = userData.tz;
+        var nickName = userData.user;
+        var accessToken = userData.access_token;
+        var scopes = userData.scopes;
 
         _models2.default.SlackUser.find({
           where: { SlackUserId: SlackUserId }
         }).then(function (slackUser) {
-          console.log("\n alsfmkalskmf huh?");
-          console.log(slackUser);
+
           if (!slackUser) {
             console.log("could not find slack user... creating now");
-            return _models2.default.SlackUser.create({
-              SlackUserId: SlackUserId
+            /**
+             *    NEED TO MAKE AN EMAIL IN THE FUTURE.
+             */
+
+            var uniqueEmail = makeid();
+            _models2.default.User.create({
+              email: 'TEMPEMAILHOLDER' + uniqueEmail + '@gmail.com',
+              nickName: nickName
+            }).then(function (user) {
+              var UserId = user.id;
+              return _models2.default.SlackUser.create({
+                SlackUserId: SlackUserId,
+                UserId: UserId,
+                tz: tz,
+                TeamId: TeamId
+              });
             });
           } else {
             console.log("found slack user... updating now");
             return slackUser.update({
-              SlackUserId: SlackUserId
+              SlackUserId: SlackUserId,
+              TeamId: TeamId
             });
           }
         }).then(function (user) {
@@ -230,4 +253,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _objectDestructuringEmpty(obj) { if (obj == null) throw new TypeError("Cannot destructure undefined"); } // custom storage system to use Sequelize
 // and have it integrated properly with botkit
+
+function makeid() {
+  var text = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  for (var i = 0; i < 10; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }return text;
+}
 //# sourceMappingURL=storage.js.map

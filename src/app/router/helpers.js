@@ -33,9 +33,10 @@ export function saveUser(auth, identity) {
         user = {
             id: identity.user_id,
             access_token: auth.access_token,
-            scopes: scopes,
+            scopes: auth.scope,
             team_id: identity.team_id,
             user: identity.user,
+            tz: identity.tz
         };
     }
     slack.controller.storage.users.save(user, function(err, id) {

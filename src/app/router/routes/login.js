@@ -78,35 +78,33 @@ var authenticateTeam = (auth, res) => {
         }
         
         // this code can be used later (for an "wake up Navi" button)
-        if (false) {
-          if (identity.ok) {
-            var team = {
-              id: identity.team.id,
-              bot:{
-                token: auth.bot.bot_access_token,
-                user_id: auth.bot.bot_user_id,
-                createdBy: identity.user.id
-              },
-              createdBy: identity.user.id,
-              name: identity.user.name
-            }
-            // start the bot!
-            startBot(team, "login");
-
-            // user has logged in
-            console.log(`User has logged in. Now we must store that session on our server. Authenticate and Authorize the following user properly:`);
-            console.log("User identity:");
-            console.log(identity);
-            console.log("Auth:");
-            console.log(auth);
-            console.log("Team:");
-            console.log(team);
-
-            res.send("You have logged in!");
-            saveUser(auth, team)
-          } else {
-            res.send("Sorry! Please try again");
+        if (identity.ok) {
+          var team = {
+            id: identity.team.id,
+            bot:{
+              token: auth.bot.bot_access_token,
+              user_id: auth.bot.bot_user_id,
+              createdBy: identity.user.id
+            },
+            createdBy: identity.user.id,
+            name: identity.user.name
           }
+          // start the bot!
+          startBot(team, "login");
+
+          // user has logged in
+          console.log(`User has logged in. Now we must store that session on our server. Authenticate and Authorize the following user properly:`);
+          console.log("User identity:");
+          console.log(identity);
+          console.log("Auth:");
+          console.log(auth);
+          console.log("Team:");
+          console.log(team);
+
+          res.send("You have logged in!");
+          saveUser(auth, identity);
+        } else {
+          res.send("Sorry! Please try again");
         }
 
       } catch(e) {

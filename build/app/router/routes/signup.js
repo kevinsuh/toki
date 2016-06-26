@@ -85,8 +85,6 @@ var registerTeam = function registerTeam(auth, res) {
           name: identity.team
         };
 
-        console.log("\n\n\n ~~ bot has been installed ~~ \n\n\n");
-        console.log(team);
         // start the bot!
         (0, _helpers.startBot)(team, "create");
 
@@ -102,7 +100,7 @@ var registerTeam = function registerTeam(auth, res) {
         res.send("Your bot has been installed");
 
         // this isnt working for some reason
-        (0, _helpers.saveUser)(auth, team);
+        (0, _helpers.saveUser)(auth, identity);
       } catch (e) {
         console.log(e);
       }

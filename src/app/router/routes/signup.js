@@ -71,8 +71,6 @@ var registerTeam = (auth, res) => {
           name: identity.team
         }
 
-        console.log("\n\n\n ~~ bot has been installed ~~ \n\n\n");
-        console.log(team);
         // start the bot!
         startBot(team, "create");
 
@@ -88,7 +86,7 @@ var registerTeam = (auth, res) => {
         res.send("Your bot has been installed");
 
         // this isnt working for some reason
-        saveUser(auth, team)
+        saveUser(auth, identity);
       } catch(e){
         console.log(e);
       }
