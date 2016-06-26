@@ -57,9 +57,8 @@ exports.default = function (controller) {
 			}).then(function (sessionGroups) {
 
 				// should start day
-
 				var startSessionGroup = sessionGroups[0]; // the start day
-				var startSessionGroupTime = startSessionGroup.dataValues.createdAt;
+				var startSessionGroupTime = (0, _momentTimezone2.default)(startSessionGroup.dataValues.createdAt);
 
 				user.getDailyTasks({
 					where: ['"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?', startSessionGroupTime, false, "live"],
