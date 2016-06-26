@@ -52,31 +52,33 @@ import { controller, customConfigBot, trackBot } from './bot/controllers';
 customConfigBot(controller);
 
 // add bot to each team
+var teamTokens = [];
 controller.storage.teams.all((err, teams) => {
-	console.log("all teams:");
-	console.log(teams);
-
 	if (err) {
 		throw new Error(err);
 	}
 
 	// connect all the teams with bots up to slack
 	for (var t in teams) {
-		const { token } = teams[t];
-		if (token) {
-			var bot = controller.spawn(({ token }));
-			bot.startRTM((err) => {
-				if (err) {
-					console.log('error connecting to slack... :', err);
-				} else {
-					trackBot(bot); // avoid repeats
-				}
-
-			})
+		if (teams[t]) {
+			teamTokens.push(teams[t].token);
 		}
 	}
 
+	/**
+	 * 		~~ start up DA BOTS ~~
+	 */
+	teamTokens.forEach((token) => {
+		var bot = controller.spawn({ token }).startRTM((err) => {
+			if (err) {
+				console.log('Error connecting to slack... :', err);
+			} else {
+				trackBot(bot); // avoid repeats
+			}
+		})
+	})
 });
+
 
 controller.configureSlackApp({
 	clientId: process.env.SLACK_ID,

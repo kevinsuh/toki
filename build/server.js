@@ -79,29 +79,31 @@ if (env == 'development') {
 (0, _controllers.customConfigBot)(_controllers.controller);
 
 // add bot to each team
+var teamTokens = [];
 _controllers.controller.storage.teams.all(function (err, teams) {
-	console.log("all teams:");
-	console.log(teams);
-
 	if (err) {
 		throw new Error(err);
 	}
 
 	// connect all the teams with bots up to slack
 	for (var t in teams) {
-		var token = teams[t].token;
-
-		if (token) {
-			var bot = _controllers.controller.spawn({ token: token });
-			bot.startRTM(function (err) {
-				if (err) {
-					console.log('error connecting to slack... :', err);
-				} else {
-					(0, _controllers.trackBot)(bot); // avoid repeats
-				}
-			});
+		if (teams[t]) {
+			teamTokens.push(teams[t].token);
 		}
 	}
+
+	/**
+  * 		~~ start up DA BOTS ~~
+  */
+	teamTokens.forEach(function (token) {
+		var bot = _controllers.controller.spawn({ token: token }).startRTM(function (err) {
+			if (err) {
+				console.log('Error connecting to slack... :', err);
+			} else {
+				(0, _controllers.trackBot)(bot); // avoid repeats
+			}
+		});
+	});
 });
 
 _controllers.controller.configureSlackApp({

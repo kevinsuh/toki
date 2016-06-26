@@ -137,7 +137,7 @@ function customConfigBot(controller) {
 }
 
 // try to avoid repeat RTM's
-function trackBot(bot) {
+function trackBot(bot, token) {
   bots[bot.config.token] = bot;
 }
 

@@ -81,7 +81,7 @@ export function customConfigBot(controller) {
 }
 
 // try to avoid repeat RTM's
-export function trackBot(bot) {
+export function trackBot(bot, token) {
   bots[bot.config.token] = bot;
 }
 

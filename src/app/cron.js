@@ -9,11 +9,14 @@ import moment from 'moment';
 // the cron file!
 export default function() {
 
-	console.log(bots);
+	console.log("BOTS!");
+	for (var token in bots) {
+		console.log(`token: ${token}`);
+	}
 
 	// check for reminders and sessions every minute!
-	// checkForReminders();
-	// checkForSessions();
+	checkForReminders();
+	checkForSessions();
 
 }
 

@@ -6,11 +6,14 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function () {
 
-	console.log(_controllers.bots);
+	console.log("BOTS!");
+	for (var token in _controllers.bots) {
+		console.log('token: ' + token);
+	}
 
 	// check for reminders and sessions every minute!
-	// checkForReminders();
-	// checkForSessions();
+	checkForReminders();
+	checkForSessions();
 };
 
 var _controllers = require('../bot/controllers');
