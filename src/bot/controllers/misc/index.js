@@ -77,12 +77,15 @@ export default function(controller) {
                   value: option.description
                 }
               ],
-              color: colorsArray[colorsArrayIndex].hex
+              color: colorsArray[colorsArrayIndex].hex,
+              attachment_type: 'default',
+              callback_id: "SHOW OPTIONS",
+              fallback: option.description
             };
-          })
+          });
 
-          bot.reply(message, "Hey! I can only help you with a few things. Here's the list of things I can help you with:");
           bot.reply(message, {
+            text: "Hey! I can only help you with a few things. Here's the list of things I can help you with:",
             attachments: optionsAttachment
           });
         }
