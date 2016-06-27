@@ -58,6 +58,9 @@ var colorsHash = exports.colorsHash = {
 	},
 	grey: {
 		hex: "#C1C1C3"
+	},
+	yellow: {
+		hex: "#F0D003"
 	}
 };
 
@@ -121,6 +124,93 @@ var buttonValues = exports.buttonValues = {
 	differentTask: {
 		name: "DIFFERENT_TASK",
 		value: "DIFFERENT_TASK"
+	},
+	keepName: {
+		name: "KEEP_NAME",
+		value: "KEEP_NAME"
+	},
+	differentName: {
+		name: "DIFFERENT_NAME",
+		value: "DIFFERENT_NAME"
+	},
+	timeZones: {
+		eastern: {
+			name: "EASTERN_TIME",
+			value: "EASTERN_TIME"
+		},
+		central: {
+			name: "CENTRAL_TIME",
+			value: "CENTRAL_TIME"
+		},
+		mountain: {
+			name: "MOUNTAIN_TIME",
+			value: "MOUNTAIN_TIME"
+		},
+		pacific: {
+			name: "PACIFIC_TIME",
+			value: "PACIFIC_TIME"
+		},
+		other: {
+			name: "OTHER_TIMEZONE",
+			value: "OTHER_TIMEZONE"
+		}
 	}
 };
+
+var timeZones = exports.timeZones = {
+	eastern: {
+		tz: "America/Indiana/Indianapolis",
+		name: "Eastern"
+	},
+	central: {
+		tz: "America/Chicago",
+		name: "Central"
+	},
+	mountain: {
+		tz: "America/Denver",
+		name: "Mountain"
+	},
+	pacific: {
+		tz: "America/Los_Angeles",
+		name: "Pacific"
+	}
+};
+
+var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
+	fields: [{
+		title: "Starting your day",
+		value: "Say \"start my day\" to plan the tasks you intend to accomplish each day and estimate how long each will take you"
+	}],
+	color: colorsHash.blue.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Starting your day"
+}, {
+	fields: [{
+		title: "Launching work sessions",
+		value: "Say \"start a session\" to kick off a focused work session to accomplish specific tasks"
+	}],
+	color: colorsHash.green.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Launching work sessions"
+}, {
+	fields: [{
+		title: "Setting reminders",
+		value: "Say \"I'd like a reminder\" to prompt me to remind you about whatever you'd like at any time or duration"
+	}],
+	color: colorsHash.yellow.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Setting reminders"
+}, {
+	fields: [{
+		title: "Viewing and adjusting priorities on the fly",
+		value: "Say \"view tasks\" to view your unfinished tasks each day and change your priorities by adding tasks or adjusting time estimates"
+	}],
+	color: colorsHash.salmon.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Starting your day"
+}];
 //# sourceMappingURL=constants.js.map

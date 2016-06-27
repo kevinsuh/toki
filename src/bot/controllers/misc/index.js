@@ -7,7 +7,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsArray, THANK_YOU, buttonValues, colorsHash } from '../../lib/constants';
+import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
 import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
@@ -51,18 +51,7 @@ export default function(controller) {
 			*** ~~ TOP SECRET PASSWORD FOR TESTING FLOWS ~~ ***
 							
 					 */
-					
-					// startWorkSessionTest(bot, message);
-					models.User.find({
-						where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-						include: [
-							models.SlackUser
-						]
-					})
-					.then((user) => {
-						var config = { user };
-						allTimeZonesTest(bot, message, config);
-					});
+					controller.trigger(`begin_onboard_flow`, [ bot, { SlackUserId } ]);
 
 				} else {
 					// end-all fallback
@@ -114,11 +103,40 @@ export default function(controller) {
 
 			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-				var name = user.nickName || user.email;
+				var name   = user.nickName || user.email;
 				convo.name = name;
+
 				convo.onBoard = {
 					SlackUserId
 				}
+
+				startOnBoardConversation(err, convo);
+
+				convo.on('end', (convo) => {
+
+					console.log("\n\n ~~ at end of convo onboard! ~~ \n\n");
+					console.log(convo.onBoard);
+
+					const { SlackUserId, nickName, timeZone } = convo.onBoard;
+
+					if (timeZone) {
+						const { tz } = timeZone;
+
+						user.SlackUser.update({
+							tz
+						});
+
+					}
+
+					if (nickName) {
+
+						user.update({
+							nickName
+						});
+
+					}
+
+				});
 
 			})
 
@@ -128,134 +146,252 @@ export default function(controller) {
 
 }
 
-function allTimeZonesTest(bot, message, config) {
+function startOnBoardConversation(err, convo) {
+	
+	const { name } = convo;
 
-	// these are array of objects
-	const { reminder, custom_time, duration, reminder_text, reminder_duration } = message.intentObject.entities;
-	console.log("wut:");
-	console.log(message.intentObject.entities);
-	console.log("\n\n");
-	const SlackUserId = message.user;
-
-	const { user } = config;
-	const { dataValues: { SlackUser: { dataValues: { tz } } } } = user;
-
-	var { text } = message;
-
-	var now = moment();
-
-	// get custom note
-	var customNote = null;
-	if (reminder_text) {
-		customNote = reminder_text[0].value;
-	} else if (reminder) {
-		customNote = reminder[0].value;
-	}
-
-	var reminderDuration = duration;
-	if (reminder_duration) {
-		reminderDuration = reminder_duration;
-	}
-
-
-	var remindTimeStamp; // for the message (`h:mm a`)
-	if (reminderDuration) { // i.e. ten more minutes
-		console.log("inside of reminder_duration\n\n\n\n");
-		var durationSeconds = 0;
-		for (var i = 0; i < reminderDuration.length; i++) {
-			durationSeconds += reminderDuration[i].normalized.value;
-		}
-		var durationMinutes = Math.floor(durationSeconds / 60);
-
-		remindTimeStamp = now.add(durationSeconds, 'seconds');
-		
-	} else if (custom_time) { // i.e. `at 3pm`
-		console.log("inside of reminder_time\n\n\n\n");
-		remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
-		remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
-		
-	}
-
-	if (remindTimeStamp) {
-
-		console.log("final moment value:");
-		console.log(remindTimeStamp.toString());
-		console.log('\n\n\n');
-
-		var remindTimeStampString = remindTimeStamp.format('h:mm a');
-
-		// find user then reply
-		models.SlackUser.find({
-			where: { SlackUserId }
-		})
-		.then((slackUser) => {
-			models.Reminder.create({
-				remindTime: remindTimeStamp,
-				UserId: slackUser.UserId,
-				customNote
-			})
-			.then((reminder) => {
-				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-					convo.say( `Okay, :alarm_clock: set. See you at ${remindTimeStampString}!`);
-					convo.next();
-				});
-			});
-		});
-	} else {
-
-		 /**
-		 *      TERRIBLE CODE BELOW
-		 *        THIS MEANS A BUG HAPPENED
-		 *  ~~  HOPEFULLY THIS NEVER COMES UP EVER ~~
-		 */
-
-		// this means bug happened
-		// hopefully this never comes up
-		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-			convo.ask("Sorry, still learning :dog:. Please let me know the time that you want a reminder `i.e. 4:51pm`", (response, convo) => {
-
-				var { intentObject: { entities } } = response;
-				const { reminder, duration, custom_time } = entities;
-				
-				if (!custom_time) {
-					// ugh
-					convo.say("Ah I'm sorry. Still not getting you :thinking_face:");
-					convo.repeat();
-					convo.next();
-				} else {
-					// finally got what they meant...
-					console.log("inside of reminder_time\n\n");
-					var remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
-					console.log(`wit passed in: ${remindTimeStamp} and our timezone is: ${tz}\n\n`);
-					remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
-
-					console.log("final moment value:");
-					console.log(remindTimeStamp.toString());
-					console.log("\n\n\n");
-
-					var remindTimeStampString = remindTimeStamp.format('h:mm a');
-
-					// find user then reply
-					models.SlackUser.find({
-						where: { SlackUserId }
-					})
-					.then((slackUser) => {
-						models.Reminder.create({
-							remindTime: remindTimeStamp,
-							UserId: slackUser.UserId,
-							customNote
-						})
-						.then((reminder) => {
-							convo.say( `Okay, :alarm_clock: set. See you at ${remindTimeStampString}!`);
-							convo.next();
-						});
-					});
-				}
-
-			});
-		});
-	}
+	convo.say(`Hey ${name}! Thanks for inviting me to help you make the most of your time each day`);
+	convo.say("Before I explain how I work, let's make sure I have two crucial details: your name and your timezone!");
+	askForUserName(err, convo);
 }
+
+function askForUserName(err, convo) {
+
+	const { name } = convo;
+
+	convo.ask({
+		text: `Would you like me to call you ${name} or another name?`,
+		attachments: [
+			{
+				attachment_type: 'default',
+				callback_id: "ONBOARD",
+				fallback: "What's your name?",
+				color: colorsHash.blue.hex,
+				actions: [
+					{
+						name: buttonValues.keepName.name,
+						text: `Call me ${name}!`,
+						value: buttonValues.keepName.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.differentName.name,
+						text: `Another name`,
+						value: buttonValues.differentName.value,
+						type: "button"
+					}
+				]
+			}
+		]
+	}, [
+		{
+			pattern: buttonValues.keepName.value,
+			callback: (response, convo) => {
+				confirmUserName(name, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.differentName.value,
+			callback: (response, convo) => {
+				askCustomUserName(response, convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				confirmUserName(response.text, convo);
+				convo.next();
+			}
+		}
+	]);
+
+
+}
+
+function confirmUserName(name, convo) {
+
+	convo.ask(`So you'd like me to call you *${name}*?`, [
+		{
+			pattern: utterances.yes,
+			callback: (response, convo) => {
+				convo.onBoard.nickName = name;
+				askForTimeZone(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				askCustomUserName(response, convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				convo.say("Sorry, I didn't get that :thinking_face:");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
+
+}
+
+function askCustomUserName(response, convo) {
+
+	convo.ask("What would you like me to call you?", (response, convo) => {
+		confirmUserName(response.text, convo);
+		convo.next();
+	});
+
+}
+
+function askForTimeZone(response, convo) {
+
+	const { nickName } = convo.onBoard;
+
+	convo.say(`I really like the name *${nickName}*!`);
+	convo.ask({
+		text: `Now which *timezone* are you in?`,
+		attachments: [
+			{
+				attachment_type: 'default',
+				callback_id: "ONBOARD",
+				fallback: "What's your timezone?",
+				color: colorsHash.blue.hex,
+				actions: [
+					{
+						name: buttonValues.timeZones.eastern.name,
+						text: `Eastern`,
+						value: buttonValues.timeZones.eastern.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.timeZones.central.name,
+						text: `Central`,
+						value: buttonValues.timeZones.central.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.timeZones.mountain.name,
+						text: `Mountain`,
+						value: buttonValues.timeZones.mountain.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.timeZones.pacific.name,
+						text: `Pacific`,
+						value: buttonValues.timeZones.pacific.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.timeZones.other.name,
+						text: `Other`,
+						value: buttonValues.timeZones.other.value,
+						type: "button"
+					}
+				]
+			}
+		]
+	}, [
+		{
+			pattern: buttonValues.timeZones.eastern.value,
+			callback: (response, convo) => {
+				convo.onBoard.timeZone = timeZones.eastern;
+				displayTokiOptions(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.timeZones.central.value,
+			callback: (response, convo) => {
+				convo.onBoard.timeZone = timeZones.central;
+				displayTokiOptions(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.timeZones.mountain.value,
+			callback: (response, convo) => {
+				convo.onBoard.timeZone = timeZones.mountain;
+				displayTokiOptions(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.timeZones.pacific.value,
+			callback: (response, convo) => {
+				convo.onBoard.timeZone = timeZones.pacific;
+				displayTokiOptions(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.timeZones.other.value,
+			callback: (response, convo) => {
+				askOtherTimeZoneOptions(response, convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				convo.say("I didn't get that :thinking_face");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
+
+}
+
+// for now we do not provide this
+function askOtherTimeZoneOptions(response, convo) {
+
+	convo.say("As Toki the Time Fairy, I need to get this right :grin:");
+	convo.ask("What is your timezone?", (response, convo) => {
+
+		var timezone = response.text;
+		if (false) {
+			// functionality to try and get timezone here
+			
+		} else {
+			convo.say("I'm so sorry, but I don't support your timezone yet for this beta phase, but I'll reach out when I'm ready to help you work");
+			convo.stop();
+		}
+
+		convo.next();
+
+	});
+
+	convo.next();
+
+}
+
+function confirmTimeZone(response, convo) {
+
+}
+
+function displayTokiOptions(response, convo) {
+
+	const { timeZone: { tz, name } } = convo.onBoard;
+
+	convo.say(`I now have you in *${name}* timezone. You can change settings like your current timezone and name by telling me to \`show settings\``);
+	convo.say({
+		text: "As your personal sidekick, I can help you with your time by:",
+		attachments: tokiOptionsAttachment
+	});
+	convo.say("The specific commands above, like `start my day` are guidelines - I'm able to understand other related commands");
+	convo.say("Tell me `let's start the day, Toki!` or something like that to see this in action :grin:");
+	convo.next();
+
+	// END OF CONVERSATION
+
+}
+
 
 function TEMPLATE_FOR_TEST(bot, message) {
 

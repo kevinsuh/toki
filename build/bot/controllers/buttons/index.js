@@ -57,22 +57,15 @@ exports.default = function (controller) {
 				case _constants.buttonValues.differentTask.value:
 					bot.replyInteractive(message, "What did you get done instead?");
 					break;
+				case _constants.buttonValues.keepName.value:
+					bot.replyInteractive(message, "Cool!");
+				case _constants.buttonValues.differentName.value:
+					bot.replyInteractive(message, "Let's do another name then!");
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");
 			}
 		}
-
-		// if (callback_id == "test" && actions.length > 0) {
-		// 	const { name, value } = actions[0];
-		// 	console.log("callback!");
-		// 	console.log(actions);
-
-		// 	if (value == "QUIT_START_DAY") {
-		// 		bot.replyInteractive(message, "restarting start day!");
-		// 		controller.trigger('trigger_day_start', [bot, { SlackUserId }]);
-		// 	}
-		// }
 	});
 };
 
