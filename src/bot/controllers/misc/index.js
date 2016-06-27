@@ -51,18 +51,7 @@ export default function(controller) {
 			*** ~~ TOP SECRET PASSWORD FOR TESTING FLOWS ~~ ***
 							
 					 */
-					
-					// startWorkSessionTest(bot, message);
-					models.User.find({
-						where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-						include: [
-							models.SlackUser
-						]
-					})
-					.then((user) => {
-						var config = { user };
-						allTimeZonesTest(bot, message, config);
-					});
+					controller.trigger(`begin_onboard_flow`, [ bot, { SlackUserId } ]);
 
 				} else {
 					// end-all fallback
@@ -120,6 +109,14 @@ export default function(controller) {
 					SlackUserId
 				}
 
+				startOnBoardConversation(err, convo);
+
+				convo.on('end', (convo) => {
+
+					const { SlackUserId } = convo.onBoard;
+
+				});
+
 			})
 
 		});
@@ -128,133 +125,9 @@ export default function(controller) {
 
 }
 
-function allTimeZonesTest(bot, message, config) {
-
-	// these are array of objects
-	const { reminder, custom_time, duration, reminder_text, reminder_duration } = message.intentObject.entities;
-	console.log("wut:");
-	console.log(message.intentObject.entities);
-	console.log("\n\n");
-	const SlackUserId = message.user;
-
-	const { user } = config;
-	const { dataValues: { SlackUser: { dataValues: { tz } } } } = user;
-
-	var { text } = message;
-
-	var now = moment();
-
-	// get custom note
-	var customNote = null;
-	if (reminder_text) {
-		customNote = reminder_text[0].value;
-	} else if (reminder) {
-		customNote = reminder[0].value;
-	}
-
-	var reminderDuration = duration;
-	if (reminder_duration) {
-		reminderDuration = reminder_duration;
-	}
-
-
-	var remindTimeStamp; // for the message (`h:mm a`)
-	if (reminderDuration) { // i.e. ten more minutes
-		console.log("inside of reminder_duration\n\n\n\n");
-		var durationSeconds = 0;
-		for (var i = 0; i < reminderDuration.length; i++) {
-			durationSeconds += reminderDuration[i].normalized.value;
-		}
-		var durationMinutes = Math.floor(durationSeconds / 60);
-
-		remindTimeStamp = now.add(durationSeconds, 'seconds');
-		
-	} else if (custom_time) { // i.e. `at 3pm`
-		console.log("inside of reminder_time\n\n\n\n");
-		remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
-		remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
-		
-	}
-
-	if (remindTimeStamp) {
-
-		console.log("final moment value:");
-		console.log(remindTimeStamp.toString());
-		console.log('\n\n\n');
-
-		var remindTimeStampString = remindTimeStamp.format('h:mm a');
-
-		// find user then reply
-		models.SlackUser.find({
-			where: { SlackUserId }
-		})
-		.then((slackUser) => {
-			models.Reminder.create({
-				remindTime: remindTimeStamp,
-				UserId: slackUser.UserId,
-				customNote
-			})
-			.then((reminder) => {
-				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-					convo.say( `Okay, :alarm_clock: set. See you at ${remindTimeStampString}!`);
-					convo.next();
-				});
-			});
-		});
-	} else {
-
-		 /**
-		 *      TERRIBLE CODE BELOW
-		 *        THIS MEANS A BUG HAPPENED
-		 *  ~~  HOPEFULLY THIS NEVER COMES UP EVER ~~
-		 */
-
-		// this means bug happened
-		// hopefully this never comes up
-		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-			convo.ask("Sorry, still learning :dog:. Please let me know the time that you want a reminder `i.e. 4:51pm`", (response, convo) => {
-
-				var { intentObject: { entities } } = response;
-				const { reminder, duration, custom_time } = entities;
-				
-				if (!custom_time) {
-					// ugh
-					convo.say("Ah I'm sorry. Still not getting you :thinking_face:");
-					convo.repeat();
-					convo.next();
-				} else {
-					// finally got what they meant...
-					console.log("inside of reminder_time\n\n");
-					var remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
-					console.log(`wit passed in: ${remindTimeStamp} and our timezone is: ${tz}\n\n`);
-					remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
-
-					console.log("final moment value:");
-					console.log(remindTimeStamp.toString());
-					console.log("\n\n\n");
-
-					var remindTimeStampString = remindTimeStamp.format('h:mm a');
-
-					// find user then reply
-					models.SlackUser.find({
-						where: { SlackUserId }
-					})
-					.then((slackUser) => {
-						models.Reminder.create({
-							remindTime: remindTimeStamp,
-							UserId: slackUser.UserId,
-							customNote
-						})
-						.then((reminder) => {
-							convo.say( `Okay, :alarm_clock: set. See you at ${remindTimeStampString}!`);
-							convo.next();
-						});
-					});
-				}
-
-			});
-		});
-	}
+function startOnBoardConversation(err, convo) {
+	convo.say("HEY!!!");
+	convo.next();
 }
 
 function TEMPLATE_FOR_TEST(bot, message) {
