@@ -103,8 +103,9 @@ export default function(controller) {
 
 			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-				var name = user.nickName || user.email;
+				var name   = user.nickName || user.email;
 				convo.name = name;
+
 				convo.onBoard = {
 					SlackUserId
 				}
@@ -113,7 +114,10 @@ export default function(controller) {
 
 				convo.on('end', (convo) => {
 
-					const { SlackUserId } = convo.onBoard;
+					const { SlackUserId, nickName } = convo.onBoard;
+
+					console.log("\n\n ~~ at end of convo onboard! ~~ \n\n");
+					console.log(convo.onBoard);
 
 				});
 
@@ -126,9 +130,201 @@ export default function(controller) {
 }
 
 function startOnBoardConversation(err, convo) {
-	convo.say("HEY!!!");
-	convo.next();
+	
+	const { name } = convo;
+
+	convo.say(`Hey ${name}! Thanks for inviting me to work with you to make the most of your time each day`);
+	convo.say("Before I explain how I can help you work, let's make sure I have two crucial details: your name and your timezone!");
+	askForUserName(err, convo);
 }
+
+function askForUserName(err, convo) {
+
+	const { name } = convo;
+
+	convo.ask({
+		text: `Would you like me to call you ${name} or another name?`,
+		attachments: [
+			{
+				attachment_type: 'default',
+				callback_id: "ONBOARD",
+				fallback: "What's your name?",
+				color: colorsHash.blue.hex,
+				actions: [
+					{
+						name: buttonValues.keepName.name,
+						text: `Call me ${name}!`,
+						value: buttonValues.keepName.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.differentName.name,
+						text: `Another name!`,
+						value: buttonValues.differentName.value,
+						type: "button"
+					}
+				]
+			}
+		]
+	}, [
+		{
+			pattern: buttonValues.keepName.value,
+			callback: (response, convo) => {
+				confirmUserName(name, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.differentName.value,
+			callback: (response, convo) => {
+				askCustomUserName(response, convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				confirmUserName(response.text, convo);
+				convo.next();
+			}
+		}
+	]);
+
+
+}
+
+function confirmUserName(name, convo) {
+
+	convo.ask(`So you'd like me to call you *${name}*?`, [
+		{
+			pattern: utterances.yes,
+			callback: (response, convo) => {
+				convo.onBoard.nickName = name;
+				askForTimeZone(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				askCustomUserName(response, convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				convo.say("Sorry, I didn't get that :thinking_face:");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
+
+}
+
+function askCustomUserName(response, convo) {
+
+	convo.ask("What would you like me to call you?", (response, convo) => {
+		confirmUserName(response.text, convo);
+		convo.next();
+	});
+
+}
+
+function askForTimeZone(response, convo) {
+
+	const { nickName } = convo.onBoard;
+
+	convo.ask({
+		text: `I really like the name ${nickName}! Now which timezone are you in?`,
+		attachments: [
+			{
+				attachment_type: 'default',
+				callback_id: "ONBOARD",
+				fallback: "What's your timezone?",
+				color: colorsHash.blue.hex,
+				actions: [
+					{
+						name: buttonValues.timeZones.eastern.name,
+						text: `Eastern`,
+						value: buttonValues.timeZones.eastern.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.timeZones.central.name,
+						text: `Central`,
+						value: buttonValues.timeZones.central.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.timeZones.mountain.name,
+						text: `Mountain`,
+						value: buttonValues.timeZones.mountain.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.timeZones.pacific.name,
+						text: `Pacific`,
+						value: buttonValues.timeZones.pacific.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.timeZones.other.name,
+						text: `Other`,
+						value: buttonValues.timeZones.other.value,
+						type: "button"
+					}
+				]
+			}
+		]
+	}, [
+		{
+			pattern: buttonValues.timeZones.eastern.value,
+			callback: (response, convo) => {
+				
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.timeZones.central.value,
+			callback: (response, convo) => {
+				
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.timeZones.mountain.value,
+			callback: (response, convo) => {
+				
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.timeZones.pacific.value,
+			callback: (response, convo) => {
+				
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.timeZones.other.value,
+			callback: (response, convo) => {
+				
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				
+				convo.next();
+			}
+		}
+	]);
+
+}
+
 
 function TEMPLATE_FOR_TEST(bot, message) {
 

@@ -117,6 +117,36 @@ export const buttonValues ={
 	differentTask: {
 		name: "DIFFERENT_TASK",
 		value: "DIFFERENT_TASK"
+	},
+	keepName: {
+		name: "KEEP_NAME",
+		value: "KEEP_NAME"
+	},
+	differentName: {
+		name: "DIFFERENT_NAME",
+		value: "DIFFERENT_NAME"
+	},
+	timeZones: {
+		eastern: {
+			name: "EASTERN_TIME",
+			value: "EASTERN_TIME"
+		},
+		central: {
+			name: "CENTRAL_TIME",
+			value: "CENTRAL_TIME"
+		},
+		mountain: {
+			name: "MOUNTAIN_TIME",
+			value: "MOUNTAIN_TIME"
+		},
+		pacific: {
+			name: "PACIFIC_TIME",
+			value: "PACIFIC_TIME"
+		},
+		other: {
+			name: "OTHER_TIMEZONE",
+			value: "OTHER_TIMEZONE"
+		}
 	}
 }
 
