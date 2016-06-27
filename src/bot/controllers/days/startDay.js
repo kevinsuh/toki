@@ -246,6 +246,18 @@ export default function(controller) {
 		    				});
 	    				});
 
+	    				// cancel all user breaks cause user is RDY TO START DAY
+							user.getReminders({
+								where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break"] ]
+							}).
+							then((reminders) => {
+								reminders.forEach((reminder) => {
+									reminder.update({
+										"open": false
+									})
+								});
+							})
+
 	    			});
 
     				// TRIGGER SESSION_START HERE
