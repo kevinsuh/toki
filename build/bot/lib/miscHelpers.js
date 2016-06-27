@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
@@ -7,9 +7,11 @@ exports.createMomentObjectWithSpecificTimeZone = createMomentObjectWithSpecificT
 exports.dateStringToMomentTimeZone = dateStringToMomentTimeZone;
 exports.witTimeResponseToTimeZoneObject = witTimeResponseToTimeZoneObject;
 
-var _momentTimezone = require("moment-timezone");
+var _momentTimezone = require('moment-timezone');
 
 var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
+
+var _constants = require('./constants');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -51,7 +53,7 @@ function dateStringToMomentTimeZone(timeString, timeZone) {
 	}
 
 	var time = dateArray[3]; // ex. "16:24:00.000"
-	console.log("\n\n ~~ working with time: " + time + " in timezone: " + timeZone + " ~~ \n\n");
+	console.log('\n\n ~~ working with time: ' + time + ' in timezone: ' + timeZone + ' ~~ \n\n');
 
 	// we must interpret based on user's timezone
 	var now = _momentTimezone2.default.tz(timeZone);
@@ -67,7 +69,7 @@ function dateStringToMomentTimeZone(timeString, timeZone) {
 		date = nextDay.format("YYYY-MM-DD");
 	}
 
-	var dateTimeFormat = date + " " + time; // string to create our moment obj.
+	var dateTimeFormat = date + ' ' + time; // string to create our moment obj.
 	var userMomentTimezone = _momentTimezone2.default.tz(dateTimeFormat, timeZone);
 
 	return userMomentTimezone;
@@ -79,6 +81,9 @@ function dateStringToMomentTimeZone(timeString, timeZone) {
  * @return {moment-tz object}
  */
 function witTimeResponseToTimeZoneObject(response, tz) {
+
+	console.log("\n\n response obj in witTimeResponseToTimeZoneObject \n\n");
+
 	var entities = response.intentObject.entities;
 	var duration = entities.duration;
 	var custom_time = entities.custom_time;
@@ -98,8 +103,21 @@ function witTimeResponseToTimeZoneObject(response, tz) {
 				remindTimeStamp = now.tz(tz).add(durationSeconds, 'seconds');
 			}
 			if (custom_time) {
+
 				remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
-				remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
+
+				// handle if it is a duration configured intent
+				if (_constants.DURATION_INTENT.reg_exp.test(response.text) && !_constants.TIME_INTENT.reg_exp.test(response.text)) {
+
+					console.log("\n\n ~~ interpreted custom_time as duration ~~ \n");
+					console.log(response.text);
+					console.log(remindTimeStamp);
+					console.log("\n\n");
+
+					remindTimeStamp = (0, _momentTimezone2.default)(remindTimeStamp).tz(tz);
+				} else {
+					remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
+				}
 			}
 		}
 

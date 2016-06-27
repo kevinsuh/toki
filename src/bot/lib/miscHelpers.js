@@ -1,4 +1,5 @@
 import moment from 'moment-timezone';
+import { DURATION_INTENT, TIME_INTENT } from './constants';
 
 /**
  * this creates a moment object that takes in a timestamp
@@ -68,6 +69,8 @@ export function dateStringToMomentTimeZone(timeString, timeZone) {
  */
 export function witTimeResponseToTimeZoneObject(response, tz) {
 
+	console.log("\n\n response obj in witTimeResponseToTimeZoneObject \n\n")
+
 	var { intentObject: { entities } } = response;
 	const { duration, custom_time } = entities;
 
@@ -85,8 +88,22 @@ export function witTimeResponseToTimeZoneObject(response, tz) {
 			remindTimeStamp = now.tz(tz).add(durationSeconds, 'seconds');
 		}
 		if (custom_time) {
+
 			remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
-			remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
+			
+			// handle if it is a duration configured intent
+			if (DURATION_INTENT.reg_exp.test(response.text) && !TIME_INTENT.reg_exp.test(response.text)) {
+
+				console.log("\n\n ~~ interpreted custom_time as duration ~~ \n");
+				console.log(response.text);
+				console.log(remindTimeStamp);
+				console.log("\n\n");
+
+				remindTimeStamp = moment(remindTimeStamp).tz(tz);
+			} else {
+				remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
+			}
+			
 		}
 	}
 

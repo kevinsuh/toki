@@ -11,6 +11,7 @@ exports.default = function (controller) {
 	controller.hears(['custom_reminder'], 'direct_message', _index.wit.hears, function (bot, message) {
 
 		// these are array of objects
+		var text = message.text;
 		var _message$intentObject = message.intentObject.entities;
 		var reminder = _message$intentObject.reminder;
 		var custom_time = _message$intentObject.custom_time;
@@ -19,6 +20,7 @@ exports.default = function (controller) {
 		var SlackUserId = message.user;
 
 		var config = {
+			text: text,
 			reminder: reminder,
 			custom_time: custom_time,
 			duration: duration,
@@ -66,6 +68,7 @@ exports.default = function (controller) {
 				};
 
 				convo.ask("What time would you like me to check in with you? :bellhop_bell:", function (response, convo) {
+					var text = response.text;
 					var entities = response.intentObject.entities;
 					var reminder = entities.reminder;
 					var duration = entities.duration;
@@ -77,6 +80,7 @@ exports.default = function (controller) {
 						convo.repeat();
 					} else {
 
+						convo.reminderConfig.text = text;
 						convo.reminderConfig.duration = duration;
 						convo.reminderConfig.custom_time = custom_time;
 
@@ -123,6 +127,7 @@ exports.default = function (controller) {
 		var reminder = config.reminder;
 		var custom_time = config.custom_time;
 		var duration = config.duration;
+		var text = config.text;
 
 
 		_models2.default.User.find({
@@ -154,6 +159,7 @@ exports.default = function (controller) {
 
 				// this is passed in response objects, need to format it
 				var responseObject = {
+					text: text,
 					intentObject: {
 						entities: {
 							duration: duration,

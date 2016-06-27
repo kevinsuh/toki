@@ -19,7 +19,7 @@ export const DURATION_INTENT = {
 	reg_exp: new RegExp((/((\b[\d]+( [hoursminutes]+\b|[hoursminutes]+\b))|([forin]{2,}[ ]?[\d]+\b)|(\bh[our]{2,}|\bm[inutes]{2,}))/i))
 }
 
-export TIME_INTENT = {
+export const TIME_INTENT = {
 	word: "time",
 	reg_exp: new RegExp((/(:|[at]{2,}[ ]?[\d]+\b)/i))
 }

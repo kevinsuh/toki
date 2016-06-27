@@ -19,9 +19,14 @@ var THANK_YOU = exports.THANK_YOU = {
 };
 
 // contains an intent for duration and not custom_time
-var DURATION_INtzeT = exports.DURATION_INtzeT = {
+var DURATION_INTENT = exports.DURATION_INTENT = {
 	word: "duration",
-	reg_exp: new RegExp(/((\b[\d]+( [hoursminutes]+\b|[hoursminutes]+\b))|([rn]+[ \d]+\b))/i)
+	reg_exp: new RegExp(/((\b[\d]+( [hoursminutes]+\b|[hoursminutes]+\b))|([forin]{2,}[ ]?[\d]+\b)|(\bh[our]{2,}|\bm[inutes]{2,}))/i)
+};
+
+var TIME_INTENT = exports.TIME_INTENT = {
+	word: "time",
+	reg_exp: new RegExp(/(:|[at]{2,}[ ]?[\d]+\b)/i)
 };
 
 var EXIT_EARLY_WORDS = exports.EXIT_EARLY_WORDS = ['exit', 'stop', 'never mind', 'quit'];

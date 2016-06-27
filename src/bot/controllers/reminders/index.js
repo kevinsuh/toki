@@ -14,10 +14,11 @@ export default function(controller) {
 	controller.hears(['custom_reminder'], 'direct_message', wit.hears, (bot, message) => {
 
 		// these are array of objects
-		const { reminder, custom_time, duration } = message.intentObject.entities;
+		const { text, intentObject: { entities: { reminder, custom_time, duration } } } = message;
 		const SlackUserId = message.user;
 
 		var config = {
+			text,
 			reminder,
 			custom_time,
 			duration,
@@ -69,7 +70,7 @@ export default function(controller) {
 
 				convo.ask("What time would you like me to check in with you? :bellhop_bell:", (response, convo) => {
 
-					var { intentObject: { entities } } = response;
+					var { text, intentObject: { entities } } = response;
 					const { reminder, duration, custom_time } = entities;
 
 					if (!duration && !custom_time) {
@@ -77,6 +78,7 @@ export default function(controller) {
 						convo.repeat();
 					} else {
 
+						convo.reminderConfig.text        = text;
 						convo.reminderConfig.duration    = duration;
 						convo.reminderConfig.custom_time = custom_time;
 
@@ -130,7 +132,7 @@ export default function(controller) {
 	// the actual setting of reminder
 	controller.on(`set_reminder`, (bot, config) => {
 
-		const { SlackUserId, reminder, custom_time, duration } = config;
+		const { SlackUserId, reminder, custom_time, duration, text } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -163,6 +165,7 @@ export default function(controller) {
 
 				// this is passed in response objects, need to format it
 				var responseObject = {
+					text,
 					intentObject: {
 						entities: {
 							duration,
