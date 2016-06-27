@@ -27,11 +27,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var checkForSessions = function checkForSessions() {
 
-	// var now = moment();
-	// var fiveMinutesAgo = now.subtract(5, "minutes").format("YYYY-MM-DD HH:mm:ss");
+	// sequelize is in EST by default
+	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
 
 	_models2.default.WorkSession.findAll({
-		where: ['"endTime" < ? AND open = ?', new Date(), true]
+		where: ['"endTime" < ? AND open = ?', now, true]
 	}).then(function (workSessions) {
 
 		// these are the work sessions that have ended within last 5 minutes
@@ -80,9 +80,16 @@ var checkForReminders = function checkForReminders() {
 	// this is for testing
 	// var oneMinute = moment().add(5,'minutes').format("YYYY-MM-DD HH:mm:ss");
 
+	// sequelize is in EST by default
+	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
+
 	_models2.default.Reminder.findAll({
-		where: ['"remindTime" < ? AND open = ?', new Date(), true]
+		where: ['"remindTime" < ? AND open = ?', now, true]
 	}).then(function (reminders) {
+
+		console.log("\n\n\n found reminders \n\n\n");
+		console.log(reminders);
+		console.log("\n\n\n");
 
 		// these are all reminders that have passed expiration date
 		// yet have not been closed yet
@@ -104,6 +111,8 @@ var checkForReminders = function checkForReminders() {
 					include: [_models2.default.SlackUser]
 				});
 			}).then(function (user) {
+
+				// find the right bot for the right user!
 
 				// send the message!
 				_server.bot.startPrivateConversation({
