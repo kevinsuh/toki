@@ -69,7 +69,8 @@ var checkForSessions = function checkForSessions() {
 				// 2. get token of that team
 				// 3. get that bot by token
 
-				var TeamId = user.dataValues.SlackUser.dataValues.TeamId;
+				var TeamId = user.SlackUser.TeamId;
+
 
 				_models2.default.Team.find({
 					TeamId: TeamId
@@ -128,7 +129,7 @@ var checkForReminders = function checkForReminders() {
 					include: [_models2.default.SlackUser]
 				});
 			}).then(function (user) {
-				var TeamId = user.dataValues.SlackUser.dataValues.TeamId;
+				var TeamId = user.SlackUser.TeamId;
 
 				_models2.default.Team.find({
 					TeamId: TeamId

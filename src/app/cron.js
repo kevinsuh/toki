@@ -63,7 +63,8 @@ var checkForSessions = () => {
 				// 2. get token of that team
 				// 3. get that bot by token
 				
-				const { dataValues: { SlackUser: { dataValues: { TeamId } } } } = user;
+				const { SlackUser: { TeamId } } = user;
+
 				models.Team.find({
 					TeamId
 				})
@@ -124,7 +125,7 @@ var checkForReminders = () => {
 			})
 			.then((user) => {
 
-				const { dataValues: { SlackUser: { dataValues: { TeamId } } } } = user;
+				const { SlackUser: { TeamId } } = user;
 				models.Team.find({
 					TeamId
 				})
