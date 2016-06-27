@@ -59,8 +59,10 @@ exports.default = function (controller) {
 					break;
 				case _constants.buttonValues.keepName.value:
 					bot.replyInteractive(message, "Cool!");
+					break;
 				case _constants.buttonValues.differentName.value:
 					bot.replyInteractive(message, "Let's do another name then!");
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");
