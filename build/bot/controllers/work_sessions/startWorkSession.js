@@ -364,8 +364,8 @@ exports.default = function (controller) {
 								var task = convo.task;
 								var bot = task.bot;
 								var source_message = task.source_message;
-								fiveHoursAgo = (0, _momentTimezone2.default)().subtract(5, 'hours').tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
-								;
+								fiveHoursAgo = (0, _momentTimezone2.default)().subtract(5, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
+
 
 								user.getWorkSessions({
 									where: ['"WorkSession"."endTime" > ?', fiveHoursAgo]
