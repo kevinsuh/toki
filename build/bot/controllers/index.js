@@ -3,8 +3,9 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.controller = exports.wit = undefined;
+exports.bots = exports.controller = exports.wit = undefined;
 exports.customConfigBot = customConfigBot;
+exports.trackBot = trackBot;
 exports.connectOnInstall = connectOnInstall;
 exports.connectOnLogin = connectOnLogin;
 
@@ -44,10 +45,6 @@ var _buttons = require('./buttons');
 
 var _buttons2 = _interopRequireDefault(_buttons);
 
-var _bot = require('../bot');
-
-var _bot2 = _interopRequireDefault(_bot);
-
 var _receiveMiddleware = require('../middleware/receiveMiddleware');
 
 var _receiveMiddleware2 = _interopRequireDefault(_receiveMiddleware);
@@ -74,10 +71,10 @@ var _initiation = require('../actions/initiation');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+require('dotenv').config();
+
 // config modules
 
-
-require('dotenv').config();
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
@@ -118,7 +115,7 @@ exports.controller = controller;
 
 // simple way to keep track of bots
 
-var bots = {};
+var bots = exports.bots = {};
 
 if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT) {
   console.log('Error: Specify SLACK_ID SLACK_SECRET and HTTP_PORT in environment');
@@ -129,7 +126,6 @@ if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT
 function customConfigBot(controller) {
 
   // beef up the bot
-  (0, _bot2.default)(controller);
   (0, _receiveMiddleware2.default)(controller);
 
   (0, _misc2.default)(controller);
@@ -141,7 +137,7 @@ function customConfigBot(controller) {
 }
 
 // try to avoid repeat RTM's
-function trackBot(bot) {
+function trackBot(bot, token) {
   bots[bot.config.token] = bot;
 }
 

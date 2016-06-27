@@ -12,8 +12,16 @@ export function firstInstallInitiateConversation(bot, team) {
 		 * 		INITIATE CONVERSATION WITH INSTALLER
 		 */
 		
-		convo.say(`Hey! I'm Navi`);
+		convo.say(`Hey! I'm Toki!`);
 		convo.say(`This is your first time installing me`);
+
+		convo.on('end', (convo) => {
+			// let's save team info to DB
+			console.log("\n\nteam info:\n\n")
+			console.log(team);
+			
+		});
+
 	});
 
 }
@@ -25,7 +33,7 @@ export function loginInitiateConversation(bot, team) {
 
 	bot.startPrivateConversation({user: team.createdBy}, (err, convo) => {
 		
-		convo.say(`Hey! I'm Navi`);
+		convo.say(`Hey! I'm Toki!`);
 		convo.say(`I'm logged in and ready to go`);
 	});
 

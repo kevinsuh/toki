@@ -28,9 +28,13 @@ export default function(config) {
 
   var userObjectToBotkitObject = (slackUser) => {
     if (slackUser) {
-      const { SlackUserId } = slackUser.dataValues;
+      const { SlackUserId, tz, TeamId, scopes, accessToken } = slackUser.dataValues;
       return {
-        id: SlackUserId
+        id: SlackUserId,
+        team_id: TeamId,
+        tz,
+        scopes,
+        access_token: accessToken
       }
     } else {
       return {};
@@ -120,26 +124,52 @@ export default function(config) {
         });
       },
       save: (userData, cb) => {
+        
         console.log("\n\n ~~ calling storage.users.save ~~ \n\n");
+        console.log(userData);
+
         const SlackUserId = userData.id;
-        const { } = userData;
+        const accessToken = userData.access_token;
+        const scopes      = userData.scopes;
+        const TeamId      = userData.team_id;
+        const nickName    = userData.user;
+
         models.SlackUser.find({
           where: { SlackUserId }
         })
         .then((slackUser) => {
-          console.log("\n alsfmkalskmf huh?");
-          console.log(slackUser);
+
           if (!slackUser) {
             console.log("could not find slack user... creating now");
-            return models.SlackUser.create({
-              SlackUserId
+            /**
+             *    NEED TO MAKE AN EMAIL IN THE FUTURE.
+             */
+
+            var uniqueEmail = makeid();
+            models.User.create({
+              email: `TEMPEMAILHOLDER${uniqueEmail}@gmail.com`,
+              nickName
+            })
+            .then((user) => {
+              const UserId = user.id;
+              return models.SlackUser.create({
+                SlackUserId,
+                UserId,
+                TeamId,
+                accessToken,
+                scopes
+              });
             });
+
           } else {
             console.log("found slack user... updating now");
             return slackUser.update({
-              SlackUserId
+              TeamId,
+              accessToken,
+              scopes
             });
           }
+
         })
         .then((user) => {
           var err = null; // errors in future
@@ -218,3 +248,13 @@ export default function(config) {
 
 }
 
+function makeid()
+{
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < 10; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
+}

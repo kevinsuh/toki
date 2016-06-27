@@ -10,6 +10,13 @@ import cron from 'cron';
 import cronFunction from './app/cron';
 var CronJob = cron.CronJob;
 
+import { seedUsers, updateUsers } from './app/scripts';
+setTimeout(() => {
+	console.log("\n\n\n ~~ updating and seeding users ~~ \n\n\n");
+	// updateUsers(); // to fill in all users who are not in DB yet
+	// seedUsers();
+}, 5000)
+
 var app = express();
 
 // configuration 
@@ -47,13 +54,9 @@ if (env == 'development') {
 // ===================================================
 
 // botkit
-import { controller, customConfigBot } from './bot/controllers';
+import { controller, customConfigBot, trackBot } from './bot/controllers';
 
 customConfigBot(controller);
-var bot = controller.spawn(({
-	token: process.env.BOT_TOKEN
-}));
-export { bot };
 
 controller.configureSlackApp({
 	clientId: process.env.SLACK_ID,
@@ -73,25 +76,46 @@ controller.createOauthEndpoints(app,function(err,req,res) {
 http.createServer(app).listen(process.env.HTTP_PORT, () => {
 	console.log('listening on port ' + app.get('port'));
 
-	bot.startRTM((err) => {
-	  if (!err) {
-	    console.log("RTM on and listening");
+	 /**
+	 * 						*** CRON JOB ***
+	 * @param  time increment in cron format
+	 * @param  function to run each increment
+	 * @param  function to run at end of cron job
+	 * @param  timezone of the job
+	 */
+	new CronJob('*/5 * * * * *', cronFunction, null, true, "America/New_York");
 
-	    /**
-			 * 						*** CRON JOB ***
-			 * @param  time increment in cron format
-			 * @param  function to run each increment
-			 * @param  function to run at end of cron job
-			 * @param  timezone of the job
-			 */
-			new CronJob('*/5 * * * * *', cronFunction, null, true, "America/New_York");
+	// add bot to each team
+	var teamTokens = [];
+	controller.storage.teams.all((err, teams) => {
+		if (err) {
+			throw new Error(err);
+		}
 
-	    bot.startPrivateConversation({user: "U121ZK15J"}, (err, convo) => {
-				convo.say(`Hey Kevin! I am live and ready for you :robot_face:`);
-			});
-	  } else {
-	    console.log("RTM failed")
-	  }
+		// connect all the teams with bots up to slack
+		for (var t in teams) {
+			if (teams[t]) {
+				teamTokens.push(teams[t].token);
+			}
+		}
+
+		/**
+		 * 		~~ START UP ZE BOTS ~~
+		 */
+		teamTokens.forEach((token) => {
+			var bot = controller.spawn({ token }).startRTM((err) => {
+				if (err) {
+					console.log('Error connecting to slack... :', err);
+				} else {
+					if (token == process.env.BOT_TOKEN) {
+						bot.startPrivateConversation({user: "U121ZK15J"}, (err, convo) => {
+							convo.say("Good morning Kevin, I'm ready for you :robot_face:");
+						})
+					}
+					trackBot(bot); // this is where we store all ze bots
+				}
+			})
+		});
 	});
 });
 

@@ -1,4 +1,4 @@
-import { bot } from '../server';
+import { bots } from '../bot/controllers';
 import { controller } from '../bot/controllers';
 
 // sequelize models
@@ -10,8 +10,11 @@ import moment from 'moment';
 export default function() {
 
 	// check for reminders and sessions every minute!
-	checkForReminders();
-	checkForSessions();
+	
+	if (bots) {
+		checkForReminders();
+		checkForSessions();
+	}
 
 }
 
@@ -55,9 +58,24 @@ var checkForSessions = () => {
 					SlackUserId
 				}
 
-				// alarm is up for session
-				controller.trigger('session_timer_up', [bot, config]);
+				// we need to find the bot that contains this user
+				// 1. find team of slack user
+				// 2. get token of that team
+				// 3. get that bot by token
 				
+				const { dataValues: { SlackUser: { dataValues: { TeamId } } } } = user;
+				models.Team.find({
+					TeamId
+				})
+				.then((team) => {
+					const { token } = team;
+					var bot = bots[token];
+					if (bot) {
+						// alarm is up for session
+						controller.trigger('session_timer_up', [bot, config]);
+					}
+				});
+
 			})
 
 		});
@@ -106,21 +124,33 @@ var checkForReminders = () => {
 			})
 			.then((user) => {
 
-				// find the right bot for the right user!
+				const { dataValues: { SlackUser: { dataValues: { TeamId } } } } = user;
+				models.Team.find({
+					TeamId
+				})
+				.then((team) => {
+					const { token } = team;
+					var bot = bots[token];
 
-		  	// send the message!
-		    bot.startPrivateConversation({
-		      user: user.SlackUser.SlackUserId 
-		    }, (err, convo) => {
+					if (bot) {
 
-		    	if (convo) {
-		    		var customNote = reminder.customNote ? `(\`${reminder.customNote}\`)` : '';
-			    	var message = `Hey! You wanted a reminder ${customNote} :smiley: :alarm_clock: `;
+						// alarm is up for reminder
+						// send the message!
+				    bot.startPrivateConversation({
+				      user: user.SlackUser.SlackUserId 
+				    }, (err, convo) => {
 
-			    	convo.say(message);
-		    	}
-		    	
-		    });
+				    	if (convo) {
+				    		var customNote = reminder.customNote ? `(\`${reminder.customNote}\`)` : '';
+					    	var message = `Hey! You wanted a reminder ${customNote} :smiley: :alarm_clock: `;
+
+					    	convo.say(message);
+				    	}
+				    	
+				    });
+
+					}
+				});
 
 		  });
 

@@ -85,13 +85,11 @@ var registerTeam = function registerTeam(auth, res) {
           name: identity.team
         };
 
-        console.log("\n\n\n ~~ bot has been installed ~~ \n\n\n");
-        console.log(team);
         // start the bot!
         (0, _helpers.startBot)(team, "create");
 
         // user has signed up
-        console.log('User has logged in. Now we must store that session on our server. Authenticate and Authorize the following user properly:');
+        console.log('User has signed up. Now we must store that session on our server. Authenticate and Authorize the following user properly:');
         console.log("User identity:");
         console.log(identity);
         console.log("Auth:");
@@ -99,10 +97,10 @@ var registerTeam = function registerTeam(auth, res) {
         console.log("Team:");
         console.log(team);
 
-        res.send("Your bot has been installed");
+        res.send("Thank you! You have just registered Toki");
 
         // this isnt working for some reason
-        (0, _helpers.saveUser)(auth, team);
+        (0, _helpers.saveUserOnRegistration)(auth, identity);
       } catch (e) {
         console.log(e);
       }

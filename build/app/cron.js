@@ -7,11 +7,12 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = function () {
 
 	// check for reminders and sessions every minute!
-	checkForReminders();
-	checkForSessions();
-};
 
-var _server = require('../server');
+	if (_controllers.bots) {
+		checkForReminders();
+		checkForSessions();
+	}
+};
 
 var _controllers = require('../bot/controllers');
 
@@ -63,8 +64,24 @@ var checkForSessions = function checkForSessions() {
 					SlackUserId: SlackUserId
 				};
 
-				// alarm is up for session
-				_controllers.controller.trigger('session_timer_up', [_server.bot, config]);
+				// we need to find the bot that contains this user
+				// 1. find team of slack user
+				// 2. get token of that team
+				// 3. get that bot by token
+
+				var TeamId = user.dataValues.SlackUser.dataValues.TeamId;
+
+				_models2.default.Team.find({
+					TeamId: TeamId
+				}).then(function (team) {
+					var token = team.token;
+
+					var bot = _controllers.bots[token];
+					if (bot) {
+						// alarm is up for session
+						_controllers.controller.trigger('session_timer_up', [bot, config]);
+					}
+				});
 			});
 		});
 	});
@@ -111,19 +128,30 @@ var checkForReminders = function checkForReminders() {
 					include: [_models2.default.SlackUser]
 				});
 			}).then(function (user) {
+				var TeamId = user.dataValues.SlackUser.dataValues.TeamId;
 
-				// find the right bot for the right user!
+				_models2.default.Team.find({
+					TeamId: TeamId
+				}).then(function (team) {
+					var token = team.token;
 
-				// send the message!
-				_server.bot.startPrivateConversation({
-					user: user.SlackUser.SlackUserId
-				}, function (err, convo) {
+					var bot = _controllers.bots[token];
 
-					if (convo) {
-						var customNote = reminder.customNote ? '(`' + reminder.customNote + '`)' : '';
-						var message = 'Hey! You wanted a reminder ' + customNote + ' :smiley: :alarm_clock: ';
+					if (bot) {
 
-						convo.say(message);
+						// alarm is up for reminder
+						// send the message!
+						bot.startPrivateConversation({
+							user: user.SlackUser.SlackUserId
+						}, function (err, convo) {
+
+							if (convo) {
+								var customNote = reminder.customNote ? '(`' + reminder.customNote + '`)' : '';
+								var message = 'Hey! You wanted a reminder ' + customNote + ' :smiley: :alarm_clock: ';
+
+								convo.say(message);
+							}
+						});
 					}
 				});
 			});

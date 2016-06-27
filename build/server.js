@@ -1,10 +1,5 @@
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-		value: true
-});
-exports.bot = undefined;
-
 var _express = require('express');
 
 var _express2 = _interopRequireDefault(_express);
@@ -33,6 +28,8 @@ var _cron3 = require('./app/cron');
 
 var _cron4 = _interopRequireDefault(_cron3);
 
+var _scripts = require('./app/scripts');
+
 var _controllers = require('./bot/controllers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -41,6 +38,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var CronJob = _cron2.default.CronJob; // modules
 
+
+setTimeout(function () {
+	console.log("\n\n\n ~~ updating and seeding users ~~ \n\n\n");
+	// updateUsers(); // to fill in all users who are not in DB yet
+	// seedUsers();
+}, 5000);
 
 var app = (0, _express2.default)();
 
@@ -62,15 +65,15 @@ require('./app/router').default(app);
 
 // Error Handling
 app.use(function (err, req, res, next) {
-		res.status(err.status || 500);
+	res.status(err.status || 500);
 });
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
-		console.log("\n\n ~~ In development server of Navi ~~ \n\n");
-		process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
-		process.env.SLACK_ID = process.env.DEV_SLACK_ID;
-		process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
+	console.log("\n\n ~~ In development server of Navi ~~ \n\n");
+	process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
+	process.env.SLACK_ID = process.env.DEV_SLACK_ID;
+	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 }
 
 /**
@@ -82,49 +85,65 @@ if (env == 'development') {
 
 
 (0, _controllers.customConfigBot)(_controllers.controller);
-var bot = _controllers.controller.spawn({
-		token: process.env.BOT_TOKEN
-});
-exports.bot = bot;
-
 
 _controllers.controller.configureSlackApp({
-		clientId: process.env.SLACK_ID,
-		clientSecret: process.env.SLACK_SECRET,
-		scopes: ['bot']
+	clientId: process.env.SLACK_ID,
+	clientSecret: process.env.SLACK_SECRET,
+	scopes: ['bot']
 });
 _controllers.controller.createWebhookEndpoints(app);
 _controllers.controller.createOauthEndpoints(app, function (err, req, res) {
-		if (err) {
-				res.status(500).send('ERROR: ' + err);
-		} else {
-				res.send('Success!');
-		}
+	if (err) {
+		res.status(500).send('ERROR: ' + err);
+	} else {
+		res.send('Success!');
+	}
 });
 
 // create HTTP service
 _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
-		console.log('listening on port ' + app.get('port'));
+	console.log('listening on port ' + app.get('port'));
 
-		bot.startRTM(function (err) {
-				if (!err) {
-						console.log("RTM on and listening");
+	/**
+ * 						*** CRON JOB ***
+ * @param  time increment in cron format
+ * @param  function to run each increment
+ * @param  function to run at end of cron job
+ * @param  timezone of the job
+ */
+	new CronJob('*/5 * * * * *', _cron4.default, null, true, "America/New_York");
 
-						/**
-      * 						*** CRON JOB ***
-      * @param  time increment in cron format
-      * @param  function to run each increment
-      * @param  function to run at end of cron job
-      * @param  timezone of the job
-      */
-						new CronJob('*/5 * * * * *', _cron4.default, null, true, "America/New_York");
+	// add bot to each team
+	var teamTokens = [];
+	_controllers.controller.storage.teams.all(function (err, teams) {
+		if (err) {
+			throw new Error(err);
+		}
 
-						bot.startPrivateConversation({ user: "U121ZK15J" }, function (err, convo) {
-								convo.say('Hey Kevin! I am live and ready for you :robot_face:');
-						});
+		// connect all the teams with bots up to slack
+		for (var t in teams) {
+			if (teams[t]) {
+				teamTokens.push(teams[t].token);
+			}
+		}
+
+		/**
+   * 		~~ START UP ZE BOTS ~~
+   */
+		teamTokens.forEach(function (token) {
+			var bot = _controllers.controller.spawn({ token: token }).startRTM(function (err) {
+				if (err) {
+					console.log('Error connecting to slack... :', err);
 				} else {
-						console.log("RTM failed");
+					if (token == process.env.BOT_TOKEN) {
+						bot.startPrivateConversation({ user: "U121ZK15J" }, function (err, convo) {
+							convo.say("Good morning Kevin, I'm ready for you :robot_face:");
+						});
+					}
+					(0, _controllers.trackBot)(bot); // this is where we store all ze bots
 				}
+			});
 		});
+	});
 });
 //# sourceMappingURL=server.js.map

@@ -9,7 +9,6 @@ import workSessionsController from './work_sessions';
 import remindersController from './reminders';
 import daysController from './days';
 import buttonsController from './buttons';
-import setupBot from '../bot';
 import setupReceiveMiddleware from '../middleware/receiveMiddleware';
 import miscController from './misc';
 
@@ -60,7 +59,7 @@ var controller = Botkit.slackbot({
 export { controller };
 
 // simple way to keep track of bots
-var bots = {};
+export var bots = {};
 
 if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT) {
   console.log('Error: Specify SLACK_ID SLACK_SECRET and HTTP_PORT in environment');
@@ -71,7 +70,6 @@ if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT
 export function customConfigBot(controller) {
 
   // beef up the bot
-  setupBot(controller);
   setupReceiveMiddleware(controller);
 
   miscController(controller);
@@ -83,7 +81,7 @@ export function customConfigBot(controller) {
 }
 
 // try to avoid repeat RTM's
-function trackBot(bot) {
+export function trackBot(bot, token) {
   bots[bot.config.token] = bot;
 }
 

@@ -6,7 +6,6 @@ import moment from 'moment-timezone';
 
 var router = express.Router();
 
-import { bot } from '../../../server';
 import { controller } from '../../../bot/controllers';
 
 // sequelize models

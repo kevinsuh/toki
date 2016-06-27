@@ -16,8 +16,6 @@ var _pg = require('pg');
 
 var _pg2 = _interopRequireDefault(_pg);
 
-var _server = require('../../../server');
-
 var _controllers = require('../../../bot/controllers');
 
 var _models = require('../../models');
@@ -44,33 +42,11 @@ router.get('/', function (req, res) {
   });
 });
 
-// post to user's slack
-router.post('/message_user', function (req, res) {
-  var _req$body = req.body;
-  var email = _req$body.email;
-  var message = _req$body.message;
-
-
-  _models2.default.User.find({
-    where: { email: email },
-    include: [_models2.default.SlackUser]
-  }).then(function (user) {
-
-    _server.bot.startPrivateConversation({
-      user: user.SlackUser.SlackUserId
-    }, function (err, convo) {
-      convo.say('' + message);
-    });
-
-    res.json(user);
-  });
-});
-
 // create
 router.post('/', function (req, res) {
-  var _req$body2 = req.body;
-  var email = _req$body2.email;
-  var SlackUserId = _req$body2.SlackUserId;
+  var _req$body = req.body;
+  var email = _req$body.email;
+  var SlackUserId = _req$body.SlackUserId;
 
 
   _models2.default.User.create({
