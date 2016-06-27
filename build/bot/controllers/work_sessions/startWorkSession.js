@@ -83,11 +83,10 @@ exports.default = function (controller) {
 					var openWorkSession = workSessions[0]; // deal with first one as reference point
 					convo.openWorkSession = openWorkSession;
 
-					var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime);
+					var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime).tz(tz);
+					var endTimeString = endTime.format("h:mm a");
 					var now = (0, _momentTimezone2.default)();
 					var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
-
-					var endTimeString = endTime.format("h:mm a");
 
 					convo.say('You are already in a session until *' + endTimeString + '*! You have ' + minutesLeft + ' minutes left :timer_clock:');
 					convo.ask('Do you want to `keep going`, or cancel it and start a `new session`?', function (response, convo) {
@@ -192,6 +191,17 @@ exports.default = function (controller) {
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 
+			// need user's timezone for this flow!
+			var tz = user.SlackUser.tz;
+
+
+			if (!tz) {
+				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+					convo.say("Ah! I need your timezone to continue. Let me know when you're ready to `configure timezone` together");
+				});
+				return;
+			}
+
 			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
 				var name = user.nickName || user.email;
@@ -200,10 +210,12 @@ exports.default = function (controller) {
 				convo.name = name;
 
 				// object that contains values important to this conversation
+				// tz will be important as time goes on
 				convo.sessionStart = {
 					UserId: user.id,
 					SlackUserId: SlackUserId,
-					tasksToWorkOnHash: {}
+					tasksToWorkOnHash: {},
+					tz: tz
 				};
 
 				// FIND DAILY TASKS, THEN START THE CONVERSATION
@@ -249,9 +261,6 @@ exports.default = function (controller) {
 
 					if (confirmStart) {
 
-						console.log("finished and this is the data:");
-						console.log(sessionStart);
-
 						/**
       *    1. tell user time and tasks to work on
       *    
@@ -273,13 +282,13 @@ exports.default = function (controller) {
 						var checkinTimeObject = sessionStart.checkinTimeObject;
 						var reminderNote = sessionStart.reminderNote;
 						var newTask = sessionStart.newTask;
+						var tz = sessionStart.tz;
 
 						// if user wanted a checkin reminder
 
 						if (checkinTimeObject) {
-							var checkInTimeStamp = checkinTimeObject.format("YYYY-MM-DD HH:mm:ss");
 							_models2.default.Reminder.create({
-								remindTime: checkInTimeStamp,
+								remindTime: checkinTimeObject,
 								UserId: UserId,
 								customNote: reminderNote,
 								type: "work_session"
@@ -288,8 +297,8 @@ exports.default = function (controller) {
 
 						// 1. create work session
 						// 2. attach the daily tasks to work on during that work session
-						var startTime = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss");
-						var endTime = calculatedTimeObject.format("YYYY-MM-DD HH:mm:ss");
+						var startTime = (0, _momentTimezone2.default)();
+						var endTime = calculatedTimeObject;
 
 						// create necessary data models:
 						//  array of Ids for insert, taskObjects to create taskListMessage
@@ -349,10 +358,14 @@ exports.default = function (controller) {
 							var fiveHoursAgo;
 
 							(function () {
+
+								console.log("\n\n ~~ NO DAILY TASKS ~~ \n\n");
+
 								var task = convo.task;
 								var bot = task.bot;
 								var source_message = task.source_message;
-								fiveHoursAgo = new Date((0, _momentTimezone2.default)().subtract(5, 'hours'));
+								fiveHoursAgo = (0, _momentTimezone2.default)().subtract(5, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
+
 
 								user.getWorkSessions({
 									where: ['"WorkSession"."endTime" > ?', fiveHoursAgo]

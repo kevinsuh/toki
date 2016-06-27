@@ -264,7 +264,7 @@ controller.on('new_session_group_decision', function (bot, config) {
       }
 
       // 2. you have already `started your day`, but it's been 5 hours since working with me
-      var fiveHoursAgo = new Date((0, _momentTimezone2.default)().subtract(5, 'hours'));
+      var fiveHoursAgo = (0, _momentTimezone2.default)().subtract(5, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
       user.getWorkSessions({
         where: ['"WorkSession"."endTime" > ?', fiveHoursAgo]
       }).then(function (workSessions) {

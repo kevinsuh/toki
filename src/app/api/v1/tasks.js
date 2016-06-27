@@ -72,56 +72,6 @@ router.get('/', (req, res) => {
   res.json(user);
  })
 
-  //   res.json(dailyTask);
-  // })
-
-  // models.DailyTask.find({
-  //   where: { id: 115 }
-  // }).then((dailyTask) => {
-  //   console.log("daily task time from DB... should be in UTC w/ offset");
-  //   var time = moment(dailyTask.createdAt).toString();
-  //   console.log(time);
-
-    
-
-  //   console.log("UTC TIME:");
-  //   console.log(moment.utc("2016-06-24 22:34:55.935").tz("America/Indiana/Indianapolis").toString())
-  //   res.json(dailyTask);
-  // })
-
-
-  // this lets me test creating daily tasks on server
-
-  // const data = {
-  //   text: "test task name",
-  //   minutes: 50,
-  //   priority: 1,
-  //   UserId: 1
-  // }
-
-  // models.Task.create({
-  //   text: data.text,
-  //   UserId: data.UserId
-  // }).then((task) => {
-  //   models.DailyTask.create({
-  //     TaskId: task.id,
-  //     priority: data.priority,
-  //     minutes: data.minutes
-  //   });
-  // });
-
-  // models.DailyTask.findAll({
-  //   include: [
-  //     models.Task
-  //   ]
-  // }).then((dailyTasks) => {
-  //   res.json(dailyTasks);
-  // });
-
-  // models.Task.findAll({}).then((tasks) => {
-  //   res.json(tasks);
-  // })
-
 });
 
 // create

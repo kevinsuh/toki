@@ -211,7 +211,7 @@ controller.on(`new_session_group_decision`, (bot, config) => {
       }
 
       // 2. you have already `started your day`, but it's been 5 hours since working with me
-      var fiveHoursAgo = new Date(moment().subtract(5, 'hours'));
+      var fiveHoursAgo = moment().subtract(5, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
       user.getWorkSessions({
         where: [`"WorkSession"."endTime" > ?`, fiveHoursAgo]
       })

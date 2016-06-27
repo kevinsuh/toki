@@ -20,8 +20,8 @@ export default function() {
 
 var checkForSessions = () => {
 
-	// sequelize is in EST by default
-	var now = moment.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
+	// sequelize is in EST by default. include date offset to make it correct UTC wise
+	var now = moment.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 
 	models.WorkSession.findAll({
 		where: [ `"endTime" < ? AND open = ?`, now, true ]
@@ -63,7 +63,8 @@ var checkForSessions = () => {
 				// 2. get token of that team
 				// 3. get that bot by token
 				
-				const { dataValues: { SlackUser: { dataValues: { TeamId } } } } = user;
+				const { SlackUser: { TeamId } } = user;
+
 				models.Team.find({
 					TeamId
 				})
@@ -84,19 +85,13 @@ var checkForSessions = () => {
 }
 
 var checkForReminders = () => {
-	// this is for testing
-	// var oneMinute = moment().add(5,'minutes').format("YYYY-MM-DD HH:mm:ss");
 
-	// sequelize is in EST by default
-	var now = moment.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
+	// sequelize is in EST by default. include date offset to make it correct UTC wise
+	var now = moment.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 
 	models.Reminder.findAll({
 		where: [`"remindTime" < ? AND open = ?`, now, true]
 	}).then((reminders) => {
-
-		console.log("\n\n\n found reminders \n\n\n");
-		console.log(reminders);
-		console.log("\n\n\n");
 
 		// these are all reminders that have passed expiration date
 		// yet have not been closed yet
@@ -124,7 +119,7 @@ var checkForReminders = () => {
 			})
 			.then((user) => {
 
-				const { dataValues: { SlackUser: { dataValues: { TeamId } } } } = user;
+				const { SlackUser: { TeamId } } = user;
 				models.Team.find({
 					TeamId
 				})

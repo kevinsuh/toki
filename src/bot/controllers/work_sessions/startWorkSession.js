@@ -96,11 +96,10 @@ export default function(controller) {
 					var openWorkSession = workSessions[0]; // deal with first one as reference point
 					convo.openWorkSession = openWorkSession;
 
-					var endTime       = moment(openWorkSession.endTime);
+					var endTime       = moment(openWorkSession.endTime).tz(tz);
+					var endTimeString = endTime.format("h:mm a");
 					var now           = moment();
 					var minutesLeft   = Math.round(moment.duration(endTime.diff(now)).asMinutes());
-
-					var endTimeString = endTime.format("h:mm a");
 
 					convo.say(`You are already in a session until *${endTimeString}*! You have ${minutesLeft} minutes left :timer_clock:`);
 					convo.ask(`Do you want to \`keep going\`, or cancel it and start a \`new session\`?`, (response, convo) => {
@@ -210,6 +209,16 @@ export default function(controller) {
 			include: [ models.SlackUser ]
 		}).then((user) => {
 
+			// need user's timezone for this flow!
+			const { SlackUser: { tz } } = user;
+
+			if (!tz) {
+				bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
+					convo.say("Ah! I need your timezone to continue. Let me know when you're ready to `configure timezone` together");
+				});
+				return;
+			}
+
 			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
 				var name = user.nickName || user.email;
@@ -218,10 +227,12 @@ export default function(controller) {
 				convo.name = name;
 
 				// object that contains values important to this conversation
+				// tz will be important as time goes on
 				convo.sessionStart = {
 					UserId: user.id,
 					SlackUserId,
-					tasksToWorkOnHash: {}
+					tasksToWorkOnHash: {},
+					tz
 				};
 
 				// FIND DAILY TASKS, THEN START THE CONVERSATION
@@ -266,9 +277,6 @@ export default function(controller) {
 
 					if (confirmStart) {
 
-						console.log("finished and this is the data:");
-						console.log(sessionStart);
-
 						/**
 						*    1. tell user time and tasks to work on
 						*    
@@ -281,13 +289,12 @@ export default function(controller) {
 						*    3. start session
 						*/
 
-						var { UserId, SlackUserId, dailyTasks, calculatedTime, calculatedTimeObject, tasksToWorkOnHash, checkinTimeObject, reminderNote, newTask } = sessionStart;
+						var { UserId, SlackUserId, dailyTasks, calculatedTime, calculatedTimeObject, tasksToWorkOnHash, checkinTimeObject, reminderNote, newTask, tz } = sessionStart;
 
 						// if user wanted a checkin reminder
 						if (checkinTimeObject) {
-							var checkInTimeStamp = checkinTimeObject.format("YYYY-MM-DD HH:mm:ss");
 							models.Reminder.create({
-								remindTime: checkInTimeStamp,
+								remindTime: checkinTimeObject,
 								UserId,
 								customNote: reminderNote,
 								type: "work_session"
@@ -296,8 +303,8 @@ export default function(controller) {
 
 						// 1. create work session 
 						// 2. attach the daily tasks to work on during that work session
-						var startTime = moment().format("YYYY-MM-DD HH:mm:ss");
-						var endTime   = calculatedTimeObject.format("YYYY-MM-DD HH:mm:ss");
+						var startTime = moment();
+						var endTime   = calculatedTimeObject;
 
 						// create necessary data models:
 						//  array of Ids for insert, taskObjects to create taskListMessage
@@ -353,10 +360,13 @@ export default function(controller) {
 						// ending convo prematurely 
 						if (sessionStart.noDailyTasks) {
 
+							console.log("\n\n ~~ NO DAILY TASKS ~~ \n\n");
+
 							const { task }                = convo;
 							const { bot, source_message } = task;
 
-							var fiveHoursAgo = new Date(moment().subtract(5, 'hours'));
+							var fiveHoursAgo = moment().subtract(5, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
+
 							user.getWorkSessions({
 								where: [`"WorkSession"."endTime" > ?`, fiveHoursAgo]
 							})

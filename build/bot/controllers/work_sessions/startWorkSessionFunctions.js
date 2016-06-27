@@ -459,14 +459,47 @@ function askWhichTasksToWorkOn(response, convo) {
   }]);
 }
 
+// if user decides to work on existing tasks
+function confirmTasks(response, convo) {
+  var task = convo.task;
+  var bot = task.bot;
+  var source_message = task.source_message;
+  var _convo$sessionStart5 = convo.sessionStart;
+  var dailyTasks = _convo$sessionStart5.dailyTasks;
+  var tasksToWorkOnHash = _convo$sessionStart5.tasksToWorkOnHash;
+
+  var tasksToWorkOnString = response.text;
+
+  // if we capture 0 valid tasks from string, then we start over
+  var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(tasksToWorkOnString, dailyTasks);
+
+  if (!taskNumbersToWorkOnArray) {
+    convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+    convo.say("You can pick a task from your list `i.e. tasks 1, 3` or create a new task");
+    askWhichTasksToWorkOn(response, convo);
+    return;
+  }
+
+  // if not invalid, we can set the tasksToWorkOnArray
+  taskNumbersToWorkOnArray.forEach(function (taskNumber) {
+    var index = taskNumber - 1; // make this 0-index based
+    if (dailyTasks[index]) tasksToWorkOnHash[taskNumber] = dailyTasks[index];
+  });
+
+  convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+  confirmTimeForTasks(response, convo);
+  convo.next();
+}
+
 // calculate ask about the time to the existing tasks user chose
 function confirmTimeForTasks(response, convo) {
   var task = convo.task;
   var bot = task.bot;
   var source_message = task.source_message;
-  var _convo$sessionStart5 = convo.sessionStart;
-  var tasksToWorkOnHash = _convo$sessionStart5.tasksToWorkOnHash;
-  var dailyTasks = _convo$sessionStart5.dailyTasks;
+  var _convo$sessionStart6 = convo.sessionStart;
+  var tasksToWorkOnHash = _convo$sessionStart6.tasksToWorkOnHash;
+  var dailyTasks = _convo$sessionStart6.dailyTasks;
+  var tz = _convo$sessionStart6.tz;
 
   var SlackUserId = response.user;
 
@@ -478,7 +511,7 @@ function confirmTimeForTasks(response, convo) {
     totalMinutes += parseInt(minutes);
   }
 
-  var now = (0, _momentTimezone2.default)();
+  var now = (0, _momentTimezone2.default)().tz(tz);
   var calculatedTimeObject = now.add(totalMinutes, 'minutes');
   var calculatedTimeString = calculatedTimeObject.format("h:mm a");
 
@@ -488,39 +521,6 @@ function confirmTimeForTasks(response, convo) {
   convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
 
   finalizeTimeAndTasksToStart(response, convo);
-
-  if (false) {
-    /**
-     *    We may need to do something like this if Node / Sequelize
-     *    does not handle west coast as I idealistically hope for
-     */
-    // get timezone of user before continuing
-    bot.api.users.list({
-      presence: 1
-    }, function (err, response) {
-      var members = response.members; // members are all users registered to your bot
-
-      for (var i = 0; i < members.length; i++) {
-        if (members[i].id == SlackUserId) {
-          var timeZoneObject = {};
-          timeZoneObject.tz = members[i].tz;
-          timeZoneObject.tz_label = members[i].tz_label;
-          timeZoneObject.tz_offset = members[i].tz_offset;
-          convo.sessionStart.timeZone = timeZoneObject;
-          break;
-        }
-      }
-
-      var timeZone = convo.sessionStart.timeZone;
-
-      if (timeZone && timeZone.tz) {
-        timeZone = timeZone.tz;
-      } else {
-        timeZone = "America/New_York"; // THIS IS WRONG AND MUST BE FIXED
-        // SOLUTION IS MOST LIKELY TO ASK USER HERE WHAT THEIR TIMEZONE IS.
-      }
-    });
-  }
 }
 
 /**
@@ -535,14 +535,16 @@ function addNewTask(response, convo) {
 
   var SlackUserId = response.user;
   var newTask = {};
-
+  var tz = convo.sessionStart.tz;
   var entities = response.intentObject.entities;
 
   if ((entities.duration || entities.custom_time) && entities.reminder) {
-    // if they have necessary info from Wit (time + text), we can streamline the task adding process
+
+    // if necessary info from Wit, we can streamline process
     var customTimeObject;
     var customTimeString;
-    var now = (0, _momentTimezone2.default)();
+    var now = (0, _momentTimezone2.default)().tz(tz);
+
     if (entities.duration) {
 
       var durationArray = entities.duration;
@@ -553,7 +555,7 @@ function addNewTask(response, convo) {
       var durationMinutes = Math.floor(durationSeconds / 60);
 
       // add minutes to now
-      customTimeObject = (0, _momentTimezone2.default)().add(durationSeconds, 'seconds');
+      customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(durationSeconds, 'seconds');
       customTimeString = customTimeObject.format("h:mm a");
     } else if (entities.custom_time) {
       // get rid of timezone to make it tz-neutral
@@ -568,8 +570,7 @@ function addNewTask(response, convo) {
       }
 
       // create time object based on user input + timezone
-      customTimeObject = (0, _momentTimezone2.default)(timeStamp);
-      customTimeObject.add(customTimeObject._tzm - now.utcOffset(), 'minutes');
+      customTimeObject = (0, _miscHelpers.dateStringToMomentTimeZone)(timeStamp, tz);
       customTimeString = customTimeObject.format("h:mm a");
 
       var durationMinutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
@@ -593,61 +594,14 @@ function addNewTask(response, convo) {
   convo.next();
 }
 
-// if user decides to work on existing tasks
-function confirmTasks(response, convo) {
-  var task = convo.task;
-  var bot = task.bot;
-  var source_message = task.source_message;
-  var _convo$sessionStart6 = convo.sessionStart;
-  var dailyTasks = _convo$sessionStart6.dailyTasks;
-  var tasksToWorkOnHash = _convo$sessionStart6.tasksToWorkOnHash;
-
-  var tasksToWorkOn = response.text;
-  var tasksToWorkOnSplitArray = tasksToWorkOn.split(/(,|and)/);
-
-  // if we capture 0 valid tasks from string, then we start over
-  var numberRegEx = new RegExp(/[\d]+/);
-  var taskNumbersToWorkOnArray = []; // user assigned task numbers
-  tasksToWorkOnSplitArray.forEach(function (taskString) {
-    console.log('task string: ' + taskString);
-    var taskNumber = taskString.match(numberRegEx);
-    if (taskNumber) {
-      taskNumber = parseInt(taskNumber[0]);
-      if (taskNumber <= dailyTasks.length) {
-        taskNumbersToWorkOnArray.push(taskNumber);
-      }
-    }
-  });
-
-  // invalid if we captured no tasks
-  var isInvalid = taskNumbersToWorkOnArray.length == 0 ? true : false;
-  var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
-
-  // repeat convo if invalid w/ informative context
-  if (isInvalid) {
-    convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-    convo.say("You can pick a task from your list `i.e. tasks 1, 3` or create a new task");
-    askWhichTasksToWorkOn(response, convo);
-    return;
-  }
-
-  // if not invalid, we can set the tasksToWorkOnArray
-  taskNumbersToWorkOnArray.forEach(function (taskNumber) {
-    var index = taskNumber - 1; // make this 0-index based
-    if (dailyTasks[index]) tasksToWorkOnHash[taskNumber] = dailyTasks[index];
-  });
-
-  convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
-  confirmTimeForTasks(response, convo);
-  convo.next();
-}
-
 // get the time desired for new task
 function addTimeToNewTask(response, convo) {
   var task = convo.task;
   var bot = task.bot;
   var source_message = task.source_message;
-  var newTask = convo.sessionStart.newTask;
+  var _convo$sessionStart7 = convo.sessionStart;
+  var newTask = _convo$sessionStart7.newTask;
+  var tz = _convo$sessionStart7.tz;
 
 
   convo.ask('How long would you like to work on `' + newTask.text + '`?', function (response, convo) {
@@ -668,7 +622,7 @@ function addTimeToNewTask(response, convo) {
     } else {
 
       var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(timeToTask);
-      var customTimeObject = (0, _momentTimezone2.default)().add(minutes, 'minutes');
+      var customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(minutes, 'minutes');
       var customTimeString = customTimeObject.format("h:mm a");
 
       newTask.minutes = minutes;
@@ -694,7 +648,7 @@ function askForCustomTotalMinutes(response, convo) {
 
   var SlackUserId = response.user;
 
-  convo.ask("How long would you like to work?", function (response, convo) {
+  convo.ask("How long, or until what time, would you like to work?", function (response, convo) {
     var entities = response.intentObject.entities;
     // for time to tasks, these wit intents are the only ones that makes sense
 
@@ -716,7 +670,9 @@ function confirmCustomTotalMinutes(response, convo) {
   var source_message = task.source_message;
 
   var SlackUserId = response.user;
-  var now = (0, _momentTimezone2.default)();
+  var tz = convo.sessionStart.tz;
+
+  var now = (0, _momentTimezone2.default)().tz(tz);
 
   // use Wit to understand the message in natural language!
   var entities = response.intentObject.entities;
@@ -733,7 +689,7 @@ function confirmCustomTotalMinutes(response, convo) {
     var durationMinutes = Math.floor(durationSeconds / 60);
 
     // add minutes to now
-    customTimeObject = (0, _momentTimezone2.default)().add(durationSeconds, 'seconds');
+    customTimeObject = now.add(durationSeconds, 'seconds');
     customTimeString = customTimeObject.format("h:mm a");
 
     convo.sessionStart.totalMinutes = durationMinutes;
@@ -743,8 +699,7 @@ function confirmCustomTotalMinutes(response, convo) {
     var timeStamp = entities.custom_time[0].value;
 
     // create time object based on user input + timezone
-    customTimeObject = (0, _momentTimezone2.default)(timeStamp);
-    customTimeObject.add(customTimeObject._tzm - now.utcOffset(), 'minutes');
+    customTimeObject = (0, _miscHelpers.dateStringToMomentTimeZone)(timeStamp, tz);
     customTimeString = customTimeObject.format("h:mm a");
   }
 
@@ -792,6 +747,8 @@ function confirmCheckInTime(response, convo) {
 
   var SlackUserId = response.user;
   var now = (0, _momentTimezone2.default)();
+  var tz = convo.sessionStart.tz;
+
 
   console.log("\n\n ~~ message in confirmCheckInTime ~~ \n\n");
 
@@ -813,7 +770,7 @@ function confirmCheckInTime(response, convo) {
     var durationMinutes = Math.floor(durationSeconds / 60);
 
     // add minutes to now
-    checkinTimeObject = (0, _momentTimezone2.default)().add(durationSeconds, 'seconds');
+    checkinTimeObject = (0, _momentTimezone2.default)().tz(tz).add(durationSeconds, 'seconds');
     checkinTimeString = checkinTimeObject.format("h:mm a");
   } else if (entities.custom_time) {
 
@@ -825,12 +782,9 @@ function confirmCheckInTime(response, convo) {
       // type will be "value"
       timeStamp = customTimeObject.value;
     }
-    timeStamp = (0, _momentTimezone2.default)(timeStamp); // in PST because of Wit default settings
 
-    timeStamp.add(timeStamp._tzm - now.utcOffset(), 'minutes');
-    // create time object based on user input + timezone
-
-    checkinTimeObject = timeStamp;
+    // timeStamp is the Wit timestamp -- neutralize and configure according to user's timezone
+    checkinTimeObject = (0, _miscHelpers.dateStringToMomentTimeZone)(timeStamp, tz);;
     checkinTimeString = checkinTimeObject.format("h:mm a");
   }
 
