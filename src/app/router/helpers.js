@@ -1,5 +1,6 @@
 import { connectOnLogin, connectOnInstall } from '../../bot/controllers';
-import { controller } from '../../bot/controllers';
+import { controller, bots } from '../../bot/controllers';
+import models from '../../app/models';
 
 export function getAuthAddress(authCode, uri_path) {
   //post code, app ID, and app secret, to get token
@@ -12,10 +13,11 @@ export function getAuthAddress(authCode, uri_path) {
 }
 
 export function startBot(team, type) {
-  console.log(team.name + " start bot")
+  console.log("starting bot.... ");
   console.log(team);
   if (type == 'login') {
-    connectOnLogin(team)
+    var identity = team;
+    connectOnLogin(identity);
   } else if (type == 'create') {
     connectOnInstall(team)
   }
@@ -69,18 +71,46 @@ export function saveUserOnLogin(auth, identity) {
       user: identity.user.name
     };
 
-    controller.storage.users.save(user, function(err, id) {
+    controller.storage.users.save(user, function(err, user) {
       if (err) {
         console.log('An error occurred while saving a user: ', err);
         controller.trigger('error', [err]);
       }
       else {
         if (isnew) {
-          console.log("New user " + id.toString() + " saved");
+          console.log("New user " + user.id + " saved");
         }
         else {
-          console.log("User " + id.toString() + " updated");
+          console.log("User " + user.id + " updated");
         }
+
+        // get the right bot, and trigger onboard flow here
+        var SlackUserId = user.id;
+        var TeamId = user.team_id;
+
+        models.Team.find({
+          where: { TeamId }
+        })
+        .then((team) => {
+          const { token } = team;
+          var bot = bots[token];
+          if (bot) {
+            // alarm is up for reminder
+            // send the message!
+            bot.startPrivateConversation({
+              user: SlackUserId 
+            }, (err, convo) => {
+
+              console.log("inside convo!");
+              console.log(convo);
+              if (convo) {
+                convo.say("hey! you're logged in.");
+              }
+              
+            });
+          }
+        });
+
         console.log("================== END TEAM REGISTRATION ==================")
       }
     });

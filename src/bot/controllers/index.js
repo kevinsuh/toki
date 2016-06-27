@@ -95,9 +95,23 @@ export function connectOnInstall(team_config) {
   controller.trigger('create_bot', [bot, team_config]);
 }
 
-export function connectOnLogin(team_config) {
-  var bot = controller.spawn(team_config);
-  controller.trigger('login_bot', [bot, team_config]);
+export function connectOnLogin(identity) {
+
+  // bot already exists, get bot token for this users team
+  var SlackUserId = identity.user.id;
+  var TeamId      = identity.team.id;
+  models.Team.find({
+    where: { TeamId }
+  })
+  .then((team) => {
+    const { token } = team;
+
+    if (token) {
+      var bot = controller.spawn({ token });
+      controller.trigger('login_bot', [bot, identity]);
+    }
+
+  })
 }
 
 // upon install
@@ -129,26 +143,36 @@ controller.on('create_bot', (bot,team) => {
 });
 
 // subsequent logins
-controller.on('login_bot', (bot,team) => {
+controller.on('login_bot', (bot,identity) => {
+
+  // identity is the specific identiy of the logged in user
+  /**
+      { 
+        ok: true,
+        user: { name: 'Kevin Suh', id: 'U1LANQKHB' },
+        team: { id: 'T1LAWRR34' } 
+      }
+   */
 
   if (bots[bot.config.token]) {
     // already online! do nothing.
-    console.log("already online! do nothing.")
+    console.log("already online! do nothing.");
+    loginInitiateConversation(bot, identity);
   } else {
     bot.startRTM((err) => {
       if (!err) {
+
         console.log("RTM on and listening");
-        customConfigBot(bot);
         trackBot(bot);
-        controller.saveTeam(team, (err, id) => {
+        controller.saveTeam(team, (err, team) => {
           if (err) {
             console.log("Error saving team")
           }
           else {
             console.log("Team " + team.name + " saved")
           }
-        })
-        loginInitiateConversation(bot, team);
+        });
+        loginInitiateConversation(bot, identity);
       } else {
         console.log("RTM failed")
         console.log(err);

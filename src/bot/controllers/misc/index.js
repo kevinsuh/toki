@@ -95,6 +95,7 @@ export default function(controller) {
     }
 
   });
+
 }
 
 function allTimeZonesTest(bot, message, config) {

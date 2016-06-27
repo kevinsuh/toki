@@ -6,6 +6,10 @@ import bodyParser from 'body-parser';
 // initiate conversation on first install
 export function firstInstallInitiateConversation(bot, team) {
 
+	var config = {
+		SlackUserId: team.createdBy
+	}
+
 	bot.startPrivateConversation({user: team.createdBy}, (err, convo) => {
 
 		/**
@@ -27,14 +31,9 @@ export function firstInstallInitiateConversation(bot, team) {
 }
 
 // initiate conversation on login
-export function loginInitiateConversation(bot, team) {
-	console.log("in login initiate convo")
-	console.log(team);
+export function loginInitiateConversation(bot, identity) {
 
-	bot.startPrivateConversation({user: team.createdBy}, (err, convo) => {
-		
-		convo.say(`Hey! I'm Toki!`);
-		convo.say(`I'm logged in and ready to go`);
-	});
+	console.log("initiating convo with user who just logged in");
+	console.log(identity);
 
 }

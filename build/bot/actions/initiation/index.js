@@ -23,6 +23,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // initiate conversation on first install
 function firstInstallInitiateConversation(bot, team) {
 
+	var config = {
+		SlackUserId: team.createdBy
+	};
+
 	bot.startPrivateConversation({ user: team.createdBy }, function (err, convo) {
 
 		/**
@@ -41,14 +45,9 @@ function firstInstallInitiateConversation(bot, team) {
 }
 
 // initiate conversation on login
-function loginInitiateConversation(bot, team) {
-	console.log("in login initiate convo");
-	console.log(team);
+function loginInitiateConversation(bot, identity) {
 
-	bot.startPrivateConversation({ user: team.createdBy }, function (err, convo) {
-
-		convo.say('Hey! I\'m Toki!');
-		convo.say('I\'m logged in and ready to go');
-	});
+	console.log("initiating convo with user who just logged in");
+	console.log(identity);
 }
 //# sourceMappingURL=index.js.map
