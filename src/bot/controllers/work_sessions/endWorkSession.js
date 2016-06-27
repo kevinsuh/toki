@@ -6,7 +6,7 @@ import http from 'http';
 import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 
 import { colorsArray, buttonValues, colorsHash } from '../../lib/constants';
@@ -80,11 +80,13 @@ export default function(controller) {
 						});
 					});
 				} else {
-					if (message.text == `done`) {
+					// this is a bad solution right now
+					// we need another column in WorkSessions to be `done`, which is different from `open` (`open` is for cronjob reminder, `done` is for when user explicitly ends the session.)
+					if (message.text == `done` || message.text == `Done`) {
 						controller.trigger('end_session', [bot, { SlackUserId }]);
 					} else {
 						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-							convo.say(`I'm not absolutely sure what you mean :thinking_face:. If you're finished with a session, reply \`done\``);
+							convo.say(`I'm not sure what you mean :thinking_face:. If you're finished with a session, reply \`done\``);
 							convo.next();
 						});
 					}
@@ -142,7 +144,17 @@ export default function(controller) {
 			})
 			.then((user) => {
 
+				// need user's timezone for this flow!
+				const { SlackUser: { tz } } = user;
+				if (!tz) {
+					bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
+						convo.say("Ah! I need your timezone to continue. Let me know when you're ready to `configure timezone` together");
+					});
+					return;
+				}
+
 				convo.sessionEnd.UserId = user.id;
+				convo.sessionEnd.tz     = tz;
 
 				return user.getDailyTasks({
 					where: [ `"Task"."done" = ? AND "DailyTask"."type" = ?`, false, "live" ],
@@ -221,34 +233,17 @@ export default function(controller) {
 						{ // user has listed task numbers here
 							default: true,
 							callback: (response, convo) => {
-								// user inputed task #'s, not new task button
+
+								// user inputed task #'s (`2,4,1`), not new task button
 								var { intentObject: { entities } } = response;
-								var tasksCompleted = response.text;
-								var tasksCompletedSplitArray = tasksCompleted.split(/(,|and)/);
+								var tasksCompletedString = response.text;
 
-								// if we capture 0 valid tasks from string, then we start over
-								var numberRegEx              = new RegExp(/[\d]+/);
-								var taskNumberCompletedArray = [];
-								tasksCompletedSplitArray.forEach((taskString) => {
-									console.log(`task string: ${taskString}`);
-									var taskNumber = taskString.match(numberRegEx);
-									if (taskNumber) {
-										taskNumber = parseInt(taskNumber[0]);
-										if (taskNumber <= taskArray.length) {
-											taskNumberCompletedArray.push(taskNumber);
-										}
-									}
-								});
+								var taskNumberCompletedArray = convertTaskNumberStringToArray(tasksCompletedString, taskArray);
 
-								// invalid if we captured no tasks
-  							var isInvalid = (taskNumberCompletedArray.length == 0 ? true : false);
   							// repeat convo if invalid w/ informative context
-							  if (isInvalid) {
-							    convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-							    convo.say("You can pick a task from your list `i.e. tasks 1, 3` or say `none`");
-							    convo.repeat();
-							  } else {
-							  	// get the actual ids
+							  if (taskNumberCompletedArray) {
+							    
+							    // get the actual ids
 									var tasksCompletedArray = [];
 									taskNumberCompletedArray.forEach((taskNumber) => {
 										var index = taskNumber - 1; // to make 0-index based
@@ -259,6 +254,13 @@ export default function(controller) {
 									convo.sessionEnd.tasksCompleted = tasksCompletedArray;
 									convo.say("Great work :punch:");
 									askUserPostSessionOptions(response, convo);
+
+							  } else {
+
+							  	convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+							    convo.say("You can pick a task from your list `i.e. tasks 1, 3` or say `none`");
+							    convo.repeat();
+
 							  }
 							  convo.next();
 							}
@@ -279,7 +281,7 @@ export default function(controller) {
 					console.log(convo.sessionEnd);
 
 					// went according to plan
-					const { SlackUserId, UserId, postSessionDecision, reminders, tasksCompleted, taskArray, differentCompletedTask } = convo.sessionEnd;
+					const { SlackUserId, UserId, postSessionDecision, reminders, tasksCompleted, taskArray, differentCompletedTask, tz } = convo.sessionEnd;
 
 					// end all open sessions and reminder checkins (type `work_session`) the user might have
 					models.User.find({
@@ -322,21 +324,18 @@ export default function(controller) {
 						});
 
 						// mark appropriate tasks as done
-						taskArray.forEach((task) => {
-							if (tasksCompleted.indexOf(task.dataValues.id) > -1) {
-								// get daily tasks
-								models.DailyTask.find({
-									where: { id: task.dataValues.id },
-									include: [ models.Task] 
-								})
-								.then((dailyTask) => {
-									if (dailyTask) {
-										dailyTask.Task.updateAttributes({
-											done: true
-										})
-									}
-								})
-							}
+						tasksCompleted.forEach((TaskId) => {
+							models.DailyTask.find({
+								where: { id: TaskId },
+								include: [ models.Task] 
+							})
+							.then((dailyTask) => {
+								if (dailyTask) {
+									dailyTask.Task.updateAttributes({
+										done: true
+									})
+								}
+							})
 						});
 
 						// end all open work sessions
@@ -368,6 +367,7 @@ export default function(controller) {
 									minutes = 30; // but if it does... default minutes duration
 								}
 
+								// create new task that the user just got done
 								user.getDailyTasks({
 									where: [ `"DailyTask"."type" = ?`, "live" ]
 								})
@@ -416,20 +416,11 @@ export default function(controller) {
 				
 
 				} else {
-					// ending convo prematurely
-					console.log("ending convo early: \n\n\n\n");
-					console.log("controller:");
-					console.log(controller);
-					console.log("\n\n\n\n\nbot:");
-					console.log(bot);
-
 					// FIX POTENTIAL PITFALLS HERE
 					if (!sessionEnd.postSessionDecision) {
 						convo.say("I'm not sure went wrong here :dog: Please let my owners know");
 					}
-
 				}
-
 			});
 
 		});
@@ -578,6 +569,8 @@ function handleBeBackLater(response, convo) {
 function getBreakTime(response, convo) {
 
 	var { intentObject: { entities } } = response;
+	const { sessionEnd: { tz } }       = convo;
+
 	convo.sessionEnd.postSessionDecision = intentConfig.WANT_BREAK; // user wants a break!
 
 	var durationSeconds = 0;
@@ -588,12 +581,15 @@ function getBreakTime(response, convo) {
 		}
 		var durationMinutes = Math.floor(durationSeconds / 60);
 		convo.sessionEnd.breakDuration = durationMinutes;
-		convo.say(`Great! I'll check in with you in ${durationMinutes} minutes :smile:`);
+		
 		// calculate break time and add reminder
-		var checkinTimeStamp =  moment().add(durationMinutes, 'minutes').format("YYYY-MM-DD HH:mm:ss");
+		var customTimeObject =  moment().tz(tz).add(durationMinutes, 'minutes');
+		var customTimeString = customTimeObject.format("h:mm a");
+
+		convo.say(`Great! I'll check in with you in ${durationMinutes} minutes at *${customTimeString}* :smile:`);
 		convo.sessionEnd.reminders.push({
 			customNote: `It's been ${durationMinutes} minutes. Let me know when you're ready to start a session`,
-			remindTime: checkinTimeStamp,
+			remindTime: customTimeObject,
 			type: "break"
 		});
 	} else {
@@ -616,16 +612,17 @@ function getBreakTime(response, convo) {
 	    } else {
 
 				var durationMinutes  = convertTimeStringToMinutes(timeToTask);
-				var customTimeObject = moment().add(durationMinutes, 'minutes');
+				var customTimeObject = moment().tz(tz).add(durationMinutes, 'minutes');
 				var customTimeString = customTimeObject.format("h:mm a");
 
 	      convo.sessionEnd.breakDuration = durationMinutes;
-				convo.say(`Great! I'll check in with you in ${durationMinutes} minutes :smile:`);
+
+				convo.say(`Great! I'll check in with you in ${durationMinutes} minutes at *${customTimeString}* :smile:`);
+
 				// calculate break time and add reminder
-				var checkinTimeStamp =  moment().add(durationMinutes, 'minutes').format("YYYY-MM-DD HH:mm:ss");
 				convo.sessionEnd.reminders.push({
 					customNote: `It's been ${durationMinutes} minutes. Let me know when you're ready to start a session`,
-					remindTime: checkinTimeStamp,
+					remindTime: customTimeObject,
 					type: "break"
 				});
 

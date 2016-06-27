@@ -67,10 +67,9 @@ export default function(controller) {
 
 				// should start day
 	      const startSessionGroup   = sessionGroups[0]; // the start day
-				var startSessionGroupTime = moment(startSessionGroup.dataValues.createdAt);
 
 				user.getDailyTasks({
-					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, startSessionGroupTime, false, "live"],
+					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, startSessionGroup.dataValues.createdAt, false, "live"],
 					include: [ models.Task ],
 					order: `"DailyTask"."priority" ASC`
 				})
@@ -168,7 +167,7 @@ export default function(controller) {
 		    			} else {
 
 		    				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-									convo.say("Okay! I'll be here whenever you're ready :smile:");
+									convo.say("Okay! I didn't add any tasks. I'll be here whenever you want to do that :smile:");
 									convo.next();
 								});
 			    				
@@ -218,6 +217,14 @@ function askForTimeToTasks(response, convo) {
 	var { newTasks }              = convo.responses;
 
 	var newTasksArray            = convertResponseObjectsToTaskArray(newTasks);
+
+	// if no tasks added, quit!
+	if (newTasksArray.length == 0) {
+		convo.stop();
+		convo.next();
+		return;
+	}
+
 	convo.tasksAdd.newTasksArray = newTasksArray;
 
 	var taskListMessage = convertArrayToTaskListMessage(newTasksArray);

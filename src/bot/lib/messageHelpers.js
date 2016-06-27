@@ -40,6 +40,42 @@ export function convertResponseObjectsToTaskArray(tasks) {
 	return taskArray;
 }
 
+/**
+ * takes in user input for tasks done `4, 1, 3` and converts it to an array of tasks done. makes sure the task numbers are valid
+ * @param  {string} taskCompletedString `4, 1, 3`
+ * @param  {[taskObject]} taskArray           the tasks passed in
+ * @return {[integer]}                     [4, 1, 3] * if valid *
+ */
+export function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
+
+	var taskNumbersSplitArray = taskNumbersString.split(/(,|and)/);
+
+	// if we capture 0 valid tasks from string, then we start over
+	var numberRegEx          = new RegExp(/[\d]+/);
+	var validTaskNumberArray = [];
+	
+	taskNumbersSplitArray.forEach((taskString) => {
+		console.log(`task string: ${taskString}`);
+		var taskNumber = taskString.match(numberRegEx);
+
+		// if it's a valid number and within the taskArray length
+		if (taskNumber) {
+			taskNumber = parseInt(taskNumber[0]);
+			if (taskNumber <= taskArray.length) {
+				validTaskNumberArray.push(taskNumber);
+			}
+		}
+
+	});
+
+	if (validTaskNumberArray.length == 0) {
+		return false;
+	} else {
+		return validTaskNumberArray;
+	}
+
+}
+
 // this should be called after you `convertToSingleTaskObjectArray`
 export function convertArrayToTaskListMessage(taskArray, options = {}) {
 	var taskListMessage = '';

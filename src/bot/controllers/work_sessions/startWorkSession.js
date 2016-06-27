@@ -360,10 +360,13 @@ export default function(controller) {
 						// ending convo prematurely 
 						if (sessionStart.noDailyTasks) {
 
+							console.log("\n\n ~~ NO DAILY TASKS ~~ \n\n");
+
 							const { task }                = convo;
 							const { bot, source_message } = task;
 
-							var fiveHoursAgo = moment().tz("America/New_York").subtract(5, 'hours').format("YYYY-MM-DD HH:mm:ss Z");;
+							var fiveHoursAgo = moment().subtract(5, 'hours').tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");;
+
 							user.getWorkSessions({
 								where: [`"WorkSession"."endTime" > ?`, fiveHoursAgo]
 							})

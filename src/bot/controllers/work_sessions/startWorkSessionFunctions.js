@@ -1,7 +1,7 @@
 import moment from 'moment-timezone';
 
 import models from '../../../app/models';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray } from '../../lib/messageHelpers';
 import { dateStringToMomentTimeZone } from '../../lib/miscHelpers';
 
 import intentConfig from '../../lib/intents';
@@ -489,29 +489,12 @@ function confirmTasks(response, convo) {
   const { task }                          = convo;
   const { bot, source_message }           = task;
   const { dailyTasks, tasksToWorkOnHash } = convo.sessionStart;
-  var tasksToWorkOn                       = response.text;
-  var tasksToWorkOnSplitArray             = tasksToWorkOn.split(/(,|and)/);
+  var tasksToWorkOnString                 = response.text;
 
   // if we capture 0 valid tasks from string, then we start over
-  var numberRegEx = new RegExp(/[\d]+/);
-  var taskNumbersToWorkOnArray = []; // user assigned task numbers
-  tasksToWorkOnSplitArray.forEach((taskString) => {
-    console.log(`task string: ${taskString}`);
-    var taskNumber = taskString.match(numberRegEx);
-    if (taskNumber) {
-      taskNumber = parseInt(taskNumber[0]);
-      if (taskNumber <= dailyTasks.length) {
-        taskNumbersToWorkOnArray.push(taskNumber);
-      }
-    }
-  });
+  var taskNumbersToWorkOnArray = convertTaskNumberStringToArray(tasksToWorkOnString, dailyTasks);
 
-  // invalid if we captured no tasks
-  var isInvalid = (taskNumbersToWorkOnArray.length == 0 ? true : false);
-  var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
-
-  // repeat convo if invalid w/ informative context
-  if (isInvalid) {
+  if (!taskNumbersToWorkOnArray) {
     convo.say("Oops, I don't totally understand :dog:. Let's try this again");
     convo.say("You can pick a task from your list `i.e. tasks 1, 3` or create a new task");
     askWhichTasksToWorkOn(response, convo);

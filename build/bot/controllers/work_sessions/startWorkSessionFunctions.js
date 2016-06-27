@@ -468,29 +468,12 @@ function confirmTasks(response, convo) {
   var dailyTasks = _convo$sessionStart5.dailyTasks;
   var tasksToWorkOnHash = _convo$sessionStart5.tasksToWorkOnHash;
 
-  var tasksToWorkOn = response.text;
-  var tasksToWorkOnSplitArray = tasksToWorkOn.split(/(,|and)/);
+  var tasksToWorkOnString = response.text;
 
   // if we capture 0 valid tasks from string, then we start over
-  var numberRegEx = new RegExp(/[\d]+/);
-  var taskNumbersToWorkOnArray = []; // user assigned task numbers
-  tasksToWorkOnSplitArray.forEach(function (taskString) {
-    console.log('task string: ' + taskString);
-    var taskNumber = taskString.match(numberRegEx);
-    if (taskNumber) {
-      taskNumber = parseInt(taskNumber[0]);
-      if (taskNumber <= dailyTasks.length) {
-        taskNumbersToWorkOnArray.push(taskNumber);
-      }
-    }
-  });
+  var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(tasksToWorkOnString, dailyTasks);
 
-  // invalid if we captured no tasks
-  var isInvalid = taskNumbersToWorkOnArray.length == 0 ? true : false;
-  var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
-
-  // repeat convo if invalid w/ informative context
-  if (isInvalid) {
+  if (!taskNumbersToWorkOnArray) {
     convo.say("Oops, I don't totally understand :dog:. Let's try this again");
     convo.say("You can pick a task from your list `i.e. tasks 1, 3` or create a new task");
     askWhichTasksToWorkOn(response, convo);

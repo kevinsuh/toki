@@ -358,11 +358,15 @@ exports.default = function (controller) {
 							var fiveHoursAgo;
 
 							(function () {
+
+								console.log("\n\n ~~ NO DAILY TASKS ~~ \n\n");
+
 								var task = convo.task;
 								var bot = task.bot;
 								var source_message = task.source_message;
-								fiveHoursAgo = (0, _momentTimezone2.default)().tz("America/New_York").subtract(5, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
+								fiveHoursAgo = (0, _momentTimezone2.default)().subtract(5, 'hours').tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 								;
+
 								user.getWorkSessions({
 									where: ['"WorkSession"."endTime" > ?', fiveHoursAgo]
 								}).then(function (workSessions) {

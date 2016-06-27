@@ -105,10 +105,6 @@ var checkForReminders = function checkForReminders() {
 		where: ['"remindTime" < ? AND open = ?', now, true]
 	}).then(function (reminders) {
 
-		console.log("\n\n\n found reminders \n\n\n");
-		console.log(reminders);
-		console.log("\n\n\n");
-
 		// these are all reminders that have passed expiration date
 		// yet have not been closed yet
 		var remindersArray = [];
