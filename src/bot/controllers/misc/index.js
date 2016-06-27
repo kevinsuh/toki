@@ -7,7 +7,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsArray, THANK_YOU, buttonValues, colorsHash } from '../../lib/constants';
+import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
 import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
@@ -114,10 +114,27 @@ export default function(controller) {
 
 				convo.on('end', (convo) => {
 
-					const { SlackUserId, nickName } = convo.onBoard;
-
 					console.log("\n\n ~~ at end of convo onboard! ~~ \n\n");
 					console.log(convo.onBoard);
+
+					const { SlackUserId, nickName, timeZone } = convo.onBoard;
+
+					if (timeZone) {
+						const { tz } = timeZone;
+
+						user.SlackUser.update({
+							tz
+						});
+
+					}
+
+					if (nickName) {
+
+						user.update({
+							nickName
+						});
+
+					}
 
 				});
 
@@ -133,8 +150,8 @@ function startOnBoardConversation(err, convo) {
 	
 	const { name } = convo;
 
-	convo.say(`Hey ${name}! Thanks for inviting me to work with you to make the most of your time each day`);
-	convo.say("Before I explain how I can help you work, let's make sure I have two crucial details: your name and your timezone!");
+	convo.say(`Hey ${name}! Thanks for inviting me to help you make the most of your time each day`);
+	convo.say("Before I explain how I work, let's make sure I have two crucial details: your name and your timezone!");
 	askForUserName(err, convo);
 }
 
@@ -159,7 +176,7 @@ function askForUserName(err, convo) {
 					},
 					{
 						name: buttonValues.differentName.name,
-						text: `Another name!`,
+						text: `Another name`,
 						value: buttonValues.differentName.value,
 						type: "button"
 					}
@@ -236,8 +253,9 @@ function askForTimeZone(response, convo) {
 
 	const { nickName } = convo.onBoard;
 
+	convo.say(`I really like the name *${nickName}*!`);
 	convo.ask({
-		text: `I really like the name ${nickName}! Now which timezone are you in?`,
+		text: `Now which *timezone* are you in?`,
 		attachments: [
 			{
 				attachment_type: 'default',
@@ -282,46 +300,95 @@ function askForTimeZone(response, convo) {
 		{
 			pattern: buttonValues.timeZones.eastern.value,
 			callback: (response, convo) => {
-				
+				convo.onBoard.timeZone = timeZones.eastern;
+				displayTokiOptions(response, convo);
 				convo.next();
 			}
 		},
 		{
 			pattern: buttonValues.timeZones.central.value,
 			callback: (response, convo) => {
-				
+				convo.onBoard.timeZone = timeZones.central;
+				displayTokiOptions(response, convo);
 				convo.next();
 			}
 		},
 		{
 			pattern: buttonValues.timeZones.mountain.value,
 			callback: (response, convo) => {
-				
+				convo.onBoard.timeZone = timeZones.mountain;
+				displayTokiOptions(response, convo);
 				convo.next();
 			}
 		},
 		{
 			pattern: buttonValues.timeZones.pacific.value,
 			callback: (response, convo) => {
-				
+				convo.onBoard.timeZone = timeZones.pacific;
+				displayTokiOptions(response, convo);
 				convo.next();
 			}
 		},
 		{
 			pattern: buttonValues.timeZones.other.value,
 			callback: (response, convo) => {
-				
+				askOtherTimeZoneOptions(response, convo);
 				convo.next();
 			}
 		},
 		{
 			default: true,
 			callback: (response, convo) => {
-				
+				convo.say("I didn't get that :thinking_face");
+				convo.repeat();
 				convo.next();
 			}
 		}
 	]);
+
+}
+
+// for now we do not provide this
+function askOtherTimeZoneOptions(response, convo) {
+
+	convo.say("As Toki the Time Fairy, I need to get this right :grin:");
+	convo.ask("What is your timezone?", (response, convo) => {
+
+		var timezone = response.text;
+		if (false) {
+			// functionality to try and get timezone here
+			
+		} else {
+			convo.say("I'm so sorry, but I don't support your timezone yet for this beta phase, but I'll reach out when I'm ready to help you work");
+			convo.stop();
+		}
+
+		convo.next();
+
+	});
+
+	convo.next();
+
+}
+
+function confirmTimeZone(response, convo) {
+
+}
+
+function displayTokiOptions(response, convo) {
+
+	const { timeZone: { tz, name } } = convo.onBoard;
+
+	convo.say(`I now have you in *${name}* timezone. You can change settings like your current timezone and name by telling me to \`show settings\``);
+	convo.say({
+		text: "As your personal sidekick, I can help you with your time by:",
+		attachments: tokiOptionsAttachment
+	});
+	convo.say("The specific commands above, like `start my day` are guidelines - I'm able to understand other related commands");
+	convo.say("Tell me `let's start the day, Toki!` or something like that to see this in action :grin:");
+	convo.next();
+
+	// END OF CONVERSATION
 
 }
 
