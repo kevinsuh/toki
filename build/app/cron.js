@@ -28,8 +28,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var checkForSessions = function checkForSessions() {
 
-	// sequelize is in EST by default
-	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
+	// sequelize is in EST by default. include date offset to make it correct UTC wise
+	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 
 	_models2.default.WorkSession.findAll({
 		where: ['"endTime" < ? AND open = ?', now, true]
@@ -97,8 +97,8 @@ var checkForReminders = function checkForReminders() {
 	// this is for testing
 	// var oneMinute = moment().add(5,'minutes').format("YYYY-MM-DD HH:mm:ss");
 
-	// sequelize is in EST by default
-	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
+	// sequelize is in EST by default. include date offset to make it correct UTC wise
+	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 
 	_models2.default.Reminder.findAll({
 		where: ['"remindTime" < ? AND open = ?', now, true]
