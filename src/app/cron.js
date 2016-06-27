@@ -129,6 +129,11 @@ var checkForReminders = () => {
 
 					if (bot) {
 
+						console.log(`token: ${token}`);
+						console.log('\n\n bot:');
+						console.log(bot);
+						console.log("\n\n");
+
 						// alarm is up for reminder
 						// send the message!
 				    bot.startPrivateConversation({
