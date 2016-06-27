@@ -37,9 +37,6 @@ function updateUsers() {
 				var name = member.name;
 				var tz = member.tz;
 
-				console.log('\n\n ~~ member for bot: ' + token + ' ~~ \n\n');
-				console.log(member);
-				console.log("\n\n");
 
 				_models2.default.SlackUser.find({
 					where: { SlackUserId: id }

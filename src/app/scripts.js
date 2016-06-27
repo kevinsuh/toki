@@ -21,9 +21,6 @@ export function updateUsers() {
 			members.forEach((member) => {
 
 				const { id, team_id, name, tz } = member;
-				console.log(`\n\n ~~ member for bot: ${token} ~~ \n\n`);
-				console.log(member);
-				console.log("\n\n")
 
 				models.SlackUser.find({
 					where: { SlackUserId: id }

@@ -13,8 +13,8 @@ var CronJob = cron.CronJob;
 import { seedUsers, updateUsers } from './app/scripts';
 setTimeout(() => {
 	console.log("\n\n\n ~~ updating and seeding users ~~ \n\n\n");
-	updateUsers(); // to fill in all users who are not in DB yet
-	seedUsers();
+	// updateUsers(); // to fill in all users who are not in DB yet
+	// seedUsers();
 }, 5000)
 
 var app = express();

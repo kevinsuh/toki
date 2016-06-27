@@ -73,7 +73,7 @@ var checkForSessions = function checkForSessions() {
 
 
 				_models2.default.Team.find({
-					TeamId: TeamId
+					where: { TeamId: TeamId }
 				}).then(function (team) {
 					var token = team.token;
 
@@ -126,18 +126,13 @@ var checkForReminders = function checkForReminders() {
 				var TeamId = user.SlackUser.TeamId;
 
 				_models2.default.Team.find({
-					TeamId: TeamId
+					where: { TeamId: TeamId }
 				}).then(function (team) {
 					var token = team.token;
 
 					var bot = _controllers.bots[token];
 
 					if (bot) {
-
-						console.log('token: ' + token);
-						console.log('\n\n bot:');
-						console.log(bot);
-						console.log("\n\n");
 
 						// alarm is up for reminder
 						// send the message!

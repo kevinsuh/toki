@@ -41,8 +41,8 @@ var CronJob = _cron2.default.CronJob; // modules
 
 setTimeout(function () {
 	console.log("\n\n\n ~~ updating and seeding users ~~ \n\n\n");
-	(0, _scripts.updateUsers)(); // to fill in all users who are not in DB yet
-	(0, _scripts.seedUsers)();
+	// updateUsers(); // to fill in all users who are not in DB yet
+	// seedUsers();
 }, 5000);
 
 var app = (0, _express2.default)();
