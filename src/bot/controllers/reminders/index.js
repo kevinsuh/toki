@@ -4,7 +4,7 @@ import moment from 'moment-timezone';
 
 import models from '../../../app/models';
 import { utterances } from '../../lib/botResponses';
-import { dateStringWithoutTimeZone } from '../../lib/miscHelpers';
+import { dateStringToMomentTimeZone } from '../../lib/miscHelpers';
 
 // base controller for reminders
 export default function(controller) {
@@ -24,7 +24,7 @@ export default function(controller) {
 			SlackUserId
 		};
 
-		// if reminder without a specific time, set to `wants_reminder`
+		// if they want a reminder, just tell them how to structure it
 		if (!custom_time && !duration) {
 			console.log("about to ask for reminder...");
 			console.log(config);
@@ -55,64 +55,50 @@ export default function(controller) {
 				SlackUserId
 			};
 
-			convo.say("When would you like me to check in with you? :bellhop_bell: ");
-			convo.say("I can check in at a specific time, like `2:35pm`");
-			convo.ask("I can also check in a certain number of minutes or hours from now, like `40 minutes` or `1 hour`", (response, convo) => {
-
-				// need some way to have a global quit functionality
-				if (response.text == "quit" | response.text == "cancel") {
-					return;
-				}
+			convo.ask("What time would you like me to check in with you? :bellhop_bell:", (response, convo) => {
 
 				var { intentObject: { entities } } = response;
 				const { reminder, duration, custom_time } = entities;
 
-				console.log("huhh");
-				console.log("response:");
-				console.log(response);
+				if (!duration && !custom_time) {
+					convo.say("Sorry, still learning :dog:. Please let me know the time that you want a reminder `i.e. at 4:51pm`");
+					convo.repeat();
+				} else {
+					// if user enters duration
+					convo.reminderConfig.reminder_duration = duration;
+					// if user enters a time
+					convo.reminderConfig.custom_time = custom_time;
 
-				console.log("\n\n\n");
-				console.log(JSON.stringify(response));
-
-				// if user enters duration
-				convo.reminderConfig.reminder_duration = duration;
-
-				// if user enters a time
-				convo.reminderConfig.reminder_time = custom_time;
-
-				convo.say("Excellent! Would you like me to remind you about anything when I check in?");
-				convo.ask("You can leave any kind of one-line note, like `call Kevin` or `follow up with Taylor about design feedback`", [
-					{
-						pattern: utterances.yes,
-						callback: (response, convo) => {
-							convo.ask(`What note would you like me to remind you about?`, (response, convo) => {
-								console.log("RESPONSE TEXTT");
-								console.log(response);
-								console.log("\n\n\n\n\n");
+					convo.say("Excellent! Would you like me to remind you about anything when I check in?");
+					convo.ask("You can leave any kind of one-line note, like `call Kevin` or `follow up with Taylor about design feedback`", [
+						{
+							pattern: utterances.yes,
+							callback: (response, convo) => {
+								convo.ask(`What note would you like me to remind you about?`, (response, convo) => {
+									convo.reminderConfig.reminder_text = [{value:response.text}];
+									convo.next();
+								});
+								convo.next();
+							}
+						},
+						{
+							pattern: utterances.no,
+							callback: (response, convo) => {
+								convo.next();
+							}
+						},
+						{
+							default: true,
+							callback: (response, convo) => {
 								convo.reminderConfig.reminder_text = [{value:response.text}];
 								convo.next();
-							});
-							convo.next();
+							}
 						}
-					},
-					{
-						pattern: utterances.no,
-						callback: (response, convo) => {
-							convo.next();
-						}
-					},
-					{
-						default: true,
-						callback: (response, convo) => {
-							console.log("RESPONSE TEXTT");
-								console.log(response);
-								console.log("\n\n\n\n\n");
-							convo.reminderConfig.reminder_text = [{value:response.text}];
-							convo.next();
-						}
-					}
-				]);
+					]);
+				}
+
 				convo.next();
+
 			});
 			convo.on('end', (convo) => {
 				var config = convo.reminderConfig;
@@ -130,124 +116,116 @@ export default function(controller) {
 
 		const { SlackUserId, reminder, reminder_text, reminder_duration, custom_time, duration } = config;
 
-		var now = moment();
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
 
-		// get custom note
-		var customNote = null;
-		if (reminder_text) {
-			customNote = reminder_text[0].value;
-		} else if (reminder) {
-			customNote = reminder[0].value;
-		}
+			// get timezone of user
+			const { dataValues: { SlackUser: { dataValues: { tz } } } } = user;
+			const UserId = user.id;
 
-		var reminderDuration = duration;
-		if (reminder_duration) {
-			reminderDuration = reminder_duration;
-		}
-
-
-		var remindTimeStamp; // for the message (`h:mm a`)
-		if (reminderDuration) { // i.e. ten more minutes
-			console.log("inside of reminder_duration\n\n\n\n");
-			var durationSeconds = 0;
-			for (var i = 0; i < reminderDuration.length; i++) {
-				durationSeconds += reminderDuration[i].normalized.value;
-			}
-			var durationMinutes = Math.floor(durationSeconds / 60);
-
-			remindTimeStamp = now.add(durationSeconds, 'seconds');
-			
-		} else if (custom_time) { // i.e. `at 3pm`
-			console.log("inside of reminder_time\n\n\n\n");
-			remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
-			console.log("wit remind timestamp:");
-			console.log(remindTimeStamp);
-			console.log("\n\n");
-
-			remindTimeStamp = dateStringWithoutTimeZone(remindTimeStamp); // 2016-06-24T16:24:00.000 (no timezone attached)
-			console.log("without time zone: ");
-			console.log(remindTimeStamp);
-
-			remindTimeStamp = moment(remindTimeStamp);
-
-			console.log("remind time stamp to go in db:");
-			console.log(remindTimeStamp.toString());
-		}
-
-		if (remindTimeStamp) {
-
-			var remindTimeStampString = remindTimeStamp.format('h:mm a');
-
-			// find user then reply
-			models.SlackUser.find({
-				where: { SlackUserId }
-			})
-			.then((slackUser) => {
-				models.Reminder.create({
-					remindTime: remindTimeStamp,
-					UserId: slackUser.UserId,
-					customNote
-				})
-				.then((reminder) => {
-					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-						convo.say( `Okay, :alarm_clock: set. See you at ${remindTimeStampString}!`);
-						convo.next();
-					});
-				});
-			});
-		} else {
-
-
-			/**
-			 * 			TERRIBLE CODE BELOW
-			 * 				THIS MEANS A BUG HAPPENED
-			 * 	~~	HOPEFULLY THIS NEVER COMES UP EVER ~~
-			 */
-
-			// this means bug happened
-			// hopefully this never comes up
 			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-				convo.ask("Sorry, still learning :dog:. Please let me know the time that you want a reminder `i.e. 4:51pm`", (response, convo) => {
 
-					var { intentObject: { entities } } = response;
-					const { reminder, duration, custom_time } = entities;
+				convo.reminderObject = {
+					SlackUserId,
+					UserId
+				};
 
-					var remindTime = custom_time;
+				var now = moment();
 
-					remindTimeStamp = remindTime[0].value;
-					remindTimeStamp = moment(remindTimeStamp); // in PST because of Wit default settings
+				// get note for reminder
+				var customNote = null;
+				if (reminder) {
+					customNote = reminder[0].value;
+				}
+				convo.reminderObject.customNote = customNote;
 
-					remindTimeStamp.add(remindTimeStamp._tzm - now.utcOffset(), 'minutes'); // convert from PST to local TZ
-					// insert into DB and send message
-					remindTimeStampForDB = remindTimeStamp.format('YYYY-MM-DD HH:mm:ss');
-					remindTimeStamp      = remindTimeStamp.format('h:mm a');
+				// if user wants duration
+				var reminderDuration = duration;
+				if (reminder_duration){
+					reminderDuration = reminder_duration;
+				} 
 
-					// find user then reply
-					models.SlackUser.find({
-						where: { SlackUserId }
-					})
-					.then((slackUser) => {
+				// this is for single sentence reminders `i.e. "remind me to eat at 2pm`
+				var remindTimeStamp;
+				if (reminderDuration) {
+					var durationSeconds = 0;
+					for (var i = 0; i < reminderDuration.length; i++) {
+						durationSeconds += reminderDuration[i].normalized.value;
+					}
+					var durationMinutes = Math.floor(durationSeconds / 60);
+					remindTimeStamp = now.add(durationSeconds, 'seconds');
+				} else if (custom_time) {
+					remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
+					remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
+				}
+
+				// if we have the time for reminder, we're good to go!
+				if (remindTimeStamp) {
+					
+					convo.reminderObject.remindTimeStamp = remindTimeStamp;
+					var remindTimeStampString = remindTimeStamp.format('h:mm a');
+
+					convo.say( `Okay, :alarm_clock: set. See you at ${remindTimeStampString}!`);
+					convo.next();
+
+				} else {
+					// need to ask user about it
+					askUserForReminder(err, convo);
+
+				}
+
+
+				convo.on('end', (convo) => {
+
+					const { UserId, SlackUserId, remindTimeStamp, customNote } = convo.reminderObject;
+					if (remindTimeStamp) {
 						models.Reminder.create({
-							remindTime: remindTimeStampForDB,
-							UserId: slackUser.UserId,
+							remindTime: remindTimeStamp,
+							UserId,
 							customNote
-						})
-						.then((reminder) => {
-							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-								convo.say( `Okay, :alarm_clock: set. See you at ${remindTimeStamp}!`);
-								convo.next();
-							});
 						});
-					});
+					}
 
 				});
 			});
 
-		}
-
-		
+		});
 
 	});
 
+}
+
+// user did not accurately ask for a reminder and we need to clarify
+function askUserForReminder(response, convo) {
+
+	convo.ask("Sorry, still learning :dog:. Please let me know the time that you want a reminder `i.e. at 4:51pm`", (response, convo) => {
+
+		var { intentObject: { entities } } = response;
+		const { reminder, duration, custom_time } = entities;
+
+		if (!custom_time) {
+			convo.say("Ah I'm sorry. Still not getting you :thinking_face:");
+			convo.repeat();
+		} else {
+			if (duration) {
+				console.log("CURRENTLY NOT DOING ANYTHING WITH DURATION :(")
+			}
+			if (custom_time) {
+
+				var remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
+				remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
+				convo.reminderObject.remindTimeStamp = remindTimeStamp;
+
+				var remindTimeStampString = remindTimeStamp.format('h:mm a');
+				convo.say( `Okay, :alarm_clock: set. See you at ${remindTimeStampString}!`);
+			}
+		}
+		convo.next();
+	});
 
 }

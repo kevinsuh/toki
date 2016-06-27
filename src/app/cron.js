@@ -20,11 +20,11 @@ export default function() {
 
 var checkForSessions = () => {
 
-	// var now = moment();
-	// var fiveMinutesAgo = now.subtract(5, "minutes").format("YYYY-MM-DD HH:mm:ss");
-	
+	// sequelize is in EST by default
+	var now = moment.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
+
 	models.WorkSession.findAll({
-		where: [ `"endTime" < ? AND open = ?`, new Date(), true ]
+		where: [ `"endTime" < ? AND open = ?`, now, true ]
 	}).then((workSessions) => {
 
 		// these are the work sessions that have ended within last 5 minutes
@@ -87,9 +87,16 @@ var checkForReminders = () => {
 	// this is for testing
 	// var oneMinute = moment().add(5,'minutes').format("YYYY-MM-DD HH:mm:ss");
 
+	// sequelize is in EST by default
+	var now = moment.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss");
+
 	models.Reminder.findAll({
-		where: [`"remindTime" < ? AND open = ?`, new Date(), true]
+		where: [`"remindTime" < ? AND open = ?`, now, true]
 	}).then((reminders) => {
+
+		console.log("\n\n\n found reminders \n\n\n");
+		console.log(reminders);
+		console.log("\n\n\n");
 
 		// these are all reminders that have passed expiration date
 		// yet have not been closed yet

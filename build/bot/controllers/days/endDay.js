@@ -130,7 +130,7 @@ exports.default = function (controller) {
 				}
 
 				var startSessionGroup = sessionGroups[0]; // the start day
-				var startSessionGroupTime = startSessionGroup.dataValues.createdAt;
+				var startSessionGroupTime = (0, _momentTimezone2.default)(startSessionGroup.dataValues.createdAt);
 
 				user.getDailyTasks({
 					where: ['"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?', startSessionGroupTime, true, "live"],
@@ -171,9 +171,9 @@ exports.default = function (controller) {
 								var _dailyTasks = _convo$dayEnd.dailyTasks;
 								var _startSessionGroup = _convo$dayEnd.startSessionGroup;
 
-								var _startSessionGroupTime = (0, _momentTimezone2.default)(_startSessionGroup.dataValues.createdAt).format("YYYY-MM-DD HH:mm:ss");
+								var _startSessionGroupTime = (0, _momentTimezone2.default)(_startSessionGroup.dataValues.createdAt);
 
-								var now = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss");
+								var now = (0, _momentTimezone2.default)();
 
 								// log `end_work` and reflection
 								_models2.default.SessionGroup.create({
@@ -306,7 +306,7 @@ function getTotalWorkSessionTime(response, convo) {
 		where: { id: UserId }
 	}).then(function (user) {
 		return user.getWorkSessions({
-			where: ['"WorkSession"."startTime" > ?', startSessionGroupTime.format("YYYY-MM-DD HH:mm:ss")]
+			where: ['"WorkSession"."startTime" > ?', startSessionGroupTime]
 		});
 	}).then(function (workSessions) {
 		var totalFocusedMinutes = 0;

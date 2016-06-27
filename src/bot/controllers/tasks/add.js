@@ -66,9 +66,8 @@ export default function(controller) {
 			.then((sessionGroups) => {
 
 				// should start day
-
 	      const startSessionGroup   = sessionGroups[0]; // the start day
-				var startSessionGroupTime = startSessionGroup.dataValues.createdAt;
+				var startSessionGroupTime = moment(startSessionGroup.dataValues.createdAt);
 
 				user.getDailyTasks({
 					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, startSessionGroupTime, false, "live"],

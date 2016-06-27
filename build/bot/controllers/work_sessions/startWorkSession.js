@@ -61,8 +61,10 @@ exports.default = function (controller) {
 			user.getWorkSessions({
 				where: ['"open" = ?', true]
 			}).then(function (workSessions) {
+				var tz = user.SlackUser.tz;
 
 				// no open work sessions => you're good to go!
+
 				if (workSessions.length == 0) {
 					controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
 					return;
@@ -82,11 +84,12 @@ exports.default = function (controller) {
 					convo.openWorkSession = openWorkSession;
 
 					var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime);
-					var endTimeString = endTime.format("h:mm a");
 					var now = (0, _momentTimezone2.default)();
 					var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
 
-					convo.say('You are already in a session right now! You have ' + minutesLeft + ' minutes left :timer_clock:');
+					var endTimeString = endTime.format("h:mm a");
+
+					convo.say('You are already in a session until *' + endTimeString + '*! You have ' + minutesLeft + ' minutes left :timer_clock:');
 					convo.ask('Do you want to `keep going`, or cancel it and start a `new session`?', function (response, convo) {
 
 						var responseMessage = response.text;
@@ -133,12 +136,12 @@ exports.default = function (controller) {
         * 			* cancel `break` reminders
         */
 
-							var nowTimeStamp = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss");
+							var now = (0, _momentTimezone2.default)();
 
 							// if user had an open work session(s), cancel them!
 							if (openWorkSession) {
 								openWorkSession.update({
-									endTime: nowTimeStamp,
+									endTime: now,
 									open: false
 								});
 								workSessions.forEach(function (workSession) {
