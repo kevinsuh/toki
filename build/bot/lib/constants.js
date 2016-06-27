@@ -18,6 +18,12 @@ var THANK_YOU = exports.THANK_YOU = {
 	reg_exp: new RegExp(/(^[thanksyou]{5,}\b|^[thx]{3,5}\b|^[ty]{2,3}\b)/i)
 };
 
+// contains an intent for duration and not custom_time
+var DURATION_INtzeT = exports.DURATION_INtzeT = {
+	word: "duration",
+	reg_exp: new RegExp(/((\b[\d]+( [hoursminutes]+\b|[hoursminutes]+\b))|([rn]+[ \d]+\b))/i)
+};
+
 var EXIT_EARLY_WORDS = exports.EXIT_EARLY_WORDS = ['exit', 'stop', 'never mind', 'quit'];
 
 var colorsHash = exports.colorsHash = {

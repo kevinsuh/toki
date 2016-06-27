@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.createMomentObjectWithSpecificTimeZone = createMomentObjectWithSpecificTimeZone;
 exports.dateStringToMomentTimeZone = dateStringToMomentTimeZone;
+exports.witTimeResponseToTimeZoneObject = witTimeResponseToTimeZoneObject;
 
 var _momentTimezone = require("moment-timezone");
 
@@ -70,5 +71,38 @@ function dateStringToMomentTimeZone(timeString, timeZone) {
 	var userMomentTimezone = _momentTimezone2.default.tz(dateTimeFormat, timeZone);
 
 	return userMomentTimezone;
+}
+
+/**
+ * take in time response object and convert it to remindTimeStamp moment obj
+ * @param  {obj} response response object
+ * @return {moment-tz object}
+ */
+function witTimeResponseToTimeZoneObject(response, tz) {
+	var entities = response.intentObject.entities;
+	var duration = entities.duration;
+	var custom_time = entities.custom_time;
+
+
+	var now = (0, _momentTimezone2.default)();
+	var remindTimeStamp;
+	if (!custom_time && !duration) {
+		remindTimeStamp = false; // not valid
+	} else {
+			if (duration) {
+				var durationSeconds = 0;
+				for (var i = 0; i < duration.length; i++) {
+					durationSeconds += duration[i].normalized.value;
+				}
+				var durationMinutes = Math.floor(durationSeconds / 60);
+				remindTimeStamp = now.tz(tz).add(durationSeconds, 'seconds');
+			}
+			if (custom_time) {
+				remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
+				remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
+			}
+		}
+
+	return remindTimeStamp;
 }
 //# sourceMappingURL=miscHelpers.js.map

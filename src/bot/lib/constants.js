@@ -13,6 +13,17 @@ export const THANK_YOU = {
 	reg_exp: new RegExp(/(^[thanksyou]{5,}\b|^[thx]{3,5}\b|^[ty]{2,3}\b)/i)
 }
 
+// contains an intent for duration and not custom_time
+export const DURATION_INTENT = {
+	word: "duration",
+	reg_exp: new RegExp((/((\b[\d]+( [hoursminutes]+\b|[hoursminutes]+\b))|([forin]{2,}[ ]?[\d]+\b)|(\bh[our]{2,}|\bm[inutes]{2,}))/i))
+}
+
+export TIME_INTENT = {
+	word: "time",
+	reg_exp: new RegExp((/(:|[at]{2,}[ ]?[\d]+\b)/i))
+}
+
 export const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
 
 export const colorsHash = {

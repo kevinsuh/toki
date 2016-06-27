@@ -61,3 +61,38 @@ export function dateStringToMomentTimeZone(timeString, timeZone) {
 
 }
 
+/**
+ * take in time response object and convert it to remindTimeStamp moment obj
+ * @param  {obj} response response object
+ * @return {moment-tz object}
+ */
+export function witTimeResponseToTimeZoneObject(response, tz) {
+
+	var { intentObject: { entities } } = response;
+	const { duration, custom_time } = entities;
+
+	var now = moment();
+	var remindTimeStamp;
+	if (!custom_time && !duration) {
+		remindTimeStamp = false; // not valid
+	} else {
+		if (duration) {
+			var durationSeconds = 0;
+			for (var i = 0; i < duration.length; i++) {
+				durationSeconds += duration[i].normalized.value;
+			}
+			var durationMinutes = Math.floor(durationSeconds / 60);
+			remindTimeStamp = now.tz(tz).add(durationSeconds, 'seconds');
+		}
+		if (custom_time) {
+			remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
+			remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
+		}
+	}
+
+	return remindTimeStamp;
+
+}
+
+
+
