@@ -2,7 +2,7 @@ import moment from 'moment-timezone';
 
 import models from '../../../app/models';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray } from '../../lib/messageHelpers';
-import { dateStringToMomentTimeZone } from '../../lib/miscHelpers';
+import { dateStringToMomentTimeZone, witTimeResponseToTimeZoneObject } from '../../lib/miscHelpers';
 
 import intentConfig from '../../lib/intents';
 import { randomInt, utterances } from '../../lib/botResponses';
@@ -556,48 +556,13 @@ function addNewTask(response, convo) {
   const { tz }                  = convo.sessionStart;
   
   var { intentObject: { entities } } = response;
-  if ((entities.duration || entities.custom_time) && entities.reminder) {
 
-    // if necessary info from Wit, we can streamline process
-    var customTimeObject;
-    var customTimeString;
-    var now = moment().tz(tz);
+  var customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+  if (customTimeObject && entities.reminder) {
 
-    if (entities.duration) {
-
-      var durationArray = entities.duration;
-      var durationSeconds = 0;
-      for (var i = 0; i < durationArray.length; i++) {
-        durationSeconds += durationArray[i].normalized.value;
-      }
-      var durationMinutes = Math.floor(durationSeconds / 60);
-
-      // add minutes to now
-      customTimeObject = moment().tz(tz).add(durationSeconds, 'seconds');
-      customTimeString = customTimeObject.format("h:mm a");
-
-    } else if (entities.custom_time) {
-      // get rid of timezone to make it tz-neutral
-      // then create a moment-timezone object with specified timezone
-
-      var customTime = entities.custom_time[0];
-      var timeStamp;
-      if (customTime.type == "interval") {
-        timeStamp = customTime.to.value;
-      } else {
-        timeStamp = customTime.value;
-      }
-
-      // create time object based on user input + timezone
-      customTimeObject = dateStringToMomentTimeZone(timeStamp, tz);
-      customTimeString = customTimeObject.format("h:mm a");
-
-      var durationMinutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
-
-    }
+    var customTimeString = customTimeObject.format("h:mm a");
 
     newTask.text                            = entities.reminder[0].value;
-    newTask.minutes                         = durationMinutes;
     // this is how long user wants to work on session for as well
     convo.sessionStart.calculatedTime       = customTimeString;
     convo.sessionStart.calculatedTimeObject = customTimeObject;
@@ -697,33 +662,9 @@ function confirmCustomTotalMinutes(response, convo) {
 
   // use Wit to understand the message in natural language!
   var { intentObject: { entities } } = response;
-  var customTimeObject; // moment object of time
-  var customTimeString; // format to display (`h:mm a`)
-  if (entities.duration) {
 
-    var durationArray = entities.duration;
-    var durationSeconds = 0;
-    for (var i = 0; i < durationArray.length; i++) {
-      durationSeconds += durationArray[i].normalized.value;
-    }
-    var durationMinutes = Math.floor(durationSeconds / 60);
-
-    // add minutes to now
-    customTimeObject = now.add(durationSeconds, 'seconds');
-    customTimeString = customTimeObject.format("h:mm a");
-
-    convo.sessionStart.totalMinutes = durationMinutes;
-
-  } else if (entities.custom_time) {
-    // get rid of timezone to make it tz-neutral
-    // then create a moment-timezone object with specified timezone
-    var timeStamp    = entities.custom_time[0].value;
-
-    // create time object based on user input + timezone
-    customTimeObject = dateStringToMomentTimeZone(timeStamp, tz);
-    customTimeString = customTimeObject.format("h:mm a");
-
-  }
+  var customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+  var customTimeString = customTimeObject.format("h:mm a");
 
   convo.sessionStart.calculatedTime       = customTimeString;
   convo.sessionStart.calculatedTimeObject = customTimeObject;
@@ -775,50 +716,13 @@ function confirmCheckInTime(response, convo) {
 
   // use Wit to understand the message in natural language!
   var { intentObject: { entities } } = response;
-  var checkinTimeObject; // moment object of time
-  var checkinTimeString; // format to display (`h:mm a`)
-  var checkinTimeStringForDB; // format to put in DB (`YYYY-MM-DD HH:mm:ss`)
 
-  // user has only put in a time. need to get a note next
-  if (entities.duration) {
-
-    var durationArray = entities.duration;
-    var durationSeconds = 0;
-    for (var i = 0; i < durationArray.length; i++) {
-      durationSeconds += durationArray[i].normalized.value;
-    }
-    var durationMinutes = Math.floor(durationSeconds / 60);
-
-    // add minutes to now
-    checkinTimeObject = moment().tz(tz).add(durationSeconds, 'seconds');
-    checkinTimeString = checkinTimeObject.format("h:mm a");
-
-  } else if (entities.custom_time) {
-
-    var customTimeObject = entities.custom_time[0];
-    var timeStamp;
-    if (customTimeObject.type == "interval") {
-      timeStamp = customTimeObject.to.value;
-    } else {
-      // type will be "value"
-      timeStamp = customTimeObject.value;
-    }
-
-    // timeStamp is the Wit timestamp -- neutralize and configure according to user's timezone
-    checkinTimeObject = dateStringToMomentTimeZone(timeStamp, tz);;
-    checkinTimeString = checkinTimeObject.format("h:mm a");
-
-  }
+  // just assuming this will work?
+  var checkinTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+  var checkinTimeString = checkinTimeObject.format("h:mm a");
 
   convo.sessionStart.checkinTimeObject = checkinTimeObject;
   convo.sessionStart.checkinTimeString = checkinTimeString;
-
-  console.log("check in time string:\n\n");
-  console.log(checkinTimeObject);
-  console.log(checkinTimeString);
-
-  console.log("convo session start:");
-  console.log(convo.sessionStart);
 
   // skip the step if reminder exists
   if (entities.reminder) {

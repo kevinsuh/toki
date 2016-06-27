@@ -79,6 +79,7 @@ export function witTimeResponseToTimeZoneObject(response, tz) {
 	if (!custom_time && !duration) {
 		remindTimeStamp = false; // not valid
 	} else {
+
 		if (duration) {
 			var durationSeconds = 0;
 			for (var i = 0; i < duration.length; i++) {
@@ -87,9 +88,17 @@ export function witTimeResponseToTimeZoneObject(response, tz) {
 			var durationMinutes = Math.floor(durationSeconds / 60);
 			remindTimeStamp = now.tz(tz).add(durationSeconds, 'seconds');
 		}
+
 		if (custom_time) {
 
-			remindTimeStamp = custom_time[0].value; // 2016-06-24T16:24:00.000-04:00
+			var customTime = custom_time[0]; // 2016-06-24T16:24:00.000-04:00
+
+			// make it the same timestamp
+			if (customTime.type == "interval") {
+				remindTimeStamp = customTime.to.value;
+			} else {
+				remindTimeStamp = customTime.value;
+			}
 			
 			// handle if it is a duration configured intent
 			if (DURATION_INTENT.reg_exp.test(response.text) && !TIME_INTENT.reg_exp.test(response.text)) {
@@ -103,7 +112,7 @@ export function witTimeResponseToTimeZoneObject(response, tz) {
 			} else {
 				remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
 			}
-			
+
 		}
 	}
 
