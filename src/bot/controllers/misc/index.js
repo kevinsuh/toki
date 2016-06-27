@@ -339,7 +339,7 @@ function askForTimeZone(response, convo) {
 		{
 			default: true,
 			callback: (response, convo) => {
-				convo.say("I didn't get that :thinking_face");
+				convo.say("I didn't get that :thinking_face:");
 				convo.repeat();
 				convo.next();
 			}
