@@ -42,30 +42,6 @@ var router = _express2.default.Router();
 // index
 router.get('/', function (req, res) {
 
-  // this shows how to use moment-timezone to create timezone specific dates
-  if (false) {
-    // 2016-06-13T13:55:00.000-04:00
-    var timeEST = _momentTimezone2.default.tz("2016-06-13T14:55:00.000", "America/New_York");
-    console.log("huh\n\n\n\n\n");
-
-    console.log("\n\n\n\nEST:");
-    console.log(timeEST.format("YYYY-MM-DD HH:mm:ss"));
-    console.log(timeEST.utc().format("YYYY-MM-DD HH:mm:ss"));
-
-    console.log("\n\n\n\nPST:");
-    var timePST = _momentTimezone2.default.tz("2016-06-13T14:55:00.000", "America/Los_Angeles");
-    console.log(timePST.format("YYYY-MM-DD HH:mm:ss"));
-    console.log(timePST.utc().format("YYYY-MM-DD HH:mm:ss"));
-    console.log("OKAY...\n\n\n\n");
-
-    var now = (0, _momentTimezone2.default)();
-    var minutesDuration = Math.round(_momentTimezone2.default.duration(timePST.diff(now)).asMinutes());
-    console.log('this many minutes difference for 1:55 PST: ' + minutesDuration);
-
-    var minutesDuration = _momentTimezone2.default.duration(timeEST.diff(now)).asMinutes();
-    console.log('this many minutes difference for 1:55 EST: ' + minutesDuration);
-  }
-
   if (false) {
 
     // this shows how you can ORM inserts w/ associations
@@ -90,7 +66,7 @@ router.get('/', function (req, res) {
       res.json(slackUsers);
     });
   }
-  var remindTime = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss");
+  var remindTime = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss Z");
   var UserId = 1;
   var customNote = "test note";
 
@@ -181,22 +157,6 @@ router.get('/', function (req, res) {
   // })
   // .then(cb);
 
-  // models.Reminder.create({
-  //   remindTime,
-  //   UserId,
-  //   customNote
-  // }).then((reminder) => {
-  //   res.json(reminder);
-  // });
-  // models.Reminder.find({
-  //   where: { id: 34 }
-  // }).then((reminder) => {
-  //   var time = reminder.createdAt;
-  //   var timeMoment = moment(time).tz("America/Los_Angeles").format();
-  //   var timeMoment = moment(time).tz("America/New_York").format();
-  //   res.json({time: timeMoment});
-  // })
-
   var SlackUserId = 'U121ZK15J';
   var UserId = 1;
   // models.User.find({
@@ -275,58 +235,48 @@ router.get('/', function (req, res) {
   // checkForSessions();
 });
 
-var checkForSessions = function checkForSessions() {
+var checkForSessions = function checkForSessions() {}
 
-  var today = new Date();
-  var fiveMinutesAgo = today.setMinutes(-5);
-  console.log(today);
-  console.log(fiveMinutesAgo);
+// models.WorkSession.findAll({
+//   where: [ `"endTime" < ? AND open = ?`, new Date(), true ]
+// }).then((workSessions) => {
 
-  var fiveMinutesAgo = (0, _momentTimezone2.default)().subtract(5, "minutes");
-  // console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss"));
-  // console.log(fiveMinutesAgo.utc().format("YYYY-MM-DD HH:mm:ss"));
-  // console.log(moment().format("YYYY-MM-DD HH:mm:ss"));
+//   // these are the work sessions that have ended within last 5 minutes
+//   // and have not closed yet
 
-  // models.WorkSession.findAll({
-  //   where: [ `"endTime" < ? AND open = ?`, fiveMinutesAgo, true ]
-  // }).then((workSessions) => {
+//   var workSessionsArray = [];
 
-  //   // these are the work sessions that have ended within last 5 minutes
-  //   // and have not closed yet
+//   workSessions.forEach((workSession) => {
 
-  //   var workSessionsArray = [];
+//     const { UserId, open } = workSession;
 
-  //   workSessions.forEach((workSession) => {
+//     *
+//      *    For each work session
+//      *      1. close it
+//      *      2. find user and start end_work_session flow
 
-  //     const { UserId, open } = workSession;
+//     workSession.update({
+//       open: false
+//     })
+//     .then(() => {
+//       return models.User.find({
+//         where: { id: UserId },
+//         include: [ models.SlackUser ]
+//       });
+//     })
+//     .then((user) => {
 
-  //     *
-  //      *    For each work session
-  //      *      1. close it
-  //      *      2. find user and start end_work_session flow
+//       // start the end session flow!
 
-  //     workSession.update({
-  //       open: false
-  //     })
-  //     .then(() => {
-  //       return models.User.find({
-  //         where: { id: UserId },
-  //         include: [ models.SlackUser ]
-  //       });
-  //     })
-  //     .then((user) => {
+//     })
 
-  //       // start the end session flow!
+//   });
 
-  //     })
+// });
 
-  //   });
-
-  // });
-};
 
 // create
-router.post('/', function (req, res) {
+;router.post('/', function (req, res) {
   var _req$body = req.body;
   var UserId = _req$body.UserId;
   var SlackUserId = _req$body.SlackUserId;

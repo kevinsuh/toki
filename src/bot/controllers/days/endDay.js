@@ -154,10 +154,9 @@ export default function(controller) {
 	      }
 	      
 				const startSessionGroup   = sessionGroups[0]; // the start day
-				var startSessionGroupTime = moment(startSessionGroup.dataValues.createdAt);
 
 	      user.getDailyTasks({
-					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, startSessionGroupTime, true, "live"],
+					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, startSessionGroup.dataValues.createdAt, true, "live"],
 					include: [ models.Task ],
 					order: `"DailyTask"."priority" ASC`
 				})
@@ -184,10 +183,6 @@ export default function(controller) {
 
 		  				var responses = convo.extractResponses();
 
-		  				console.log('done!')
-		  				console.log("here is end day object:\n\n\n");
-		  				console.log(convo.dayEnd);
-		  				console.log("\n\n\n");
 
 		    			if (convo.status == 'completed') {
 
@@ -280,15 +275,14 @@ function getTotalWorkSessionTime(response, convo) {
 	const { bot, source_message }           = task;
 	const { UserId, dailyTasks, startSessionGroup } = convo.dayEnd
 
-	var startSessionGroupTime = moment(startSessionGroup.dataValues.createdAt);
-	var now                   = moment();
+	var now = moment();
 
 	// get all the work sessions started between now and most recent startSessionGroup
 	models.User.find({
 		where: { id: UserId }
 	}).then((user) => {
 		return user.getWorkSessions({
-			where: [`"WorkSession"."startTime" > ?`, startSessionGroupTime]
+			where: [`"WorkSession"."startTime" > ?`, startSessionGroup.dataValues.createdAt]
 		})
 	})
 	.then((workSessions) => {

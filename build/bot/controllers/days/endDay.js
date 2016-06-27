@@ -130,10 +130,9 @@ exports.default = function (controller) {
 				}
 
 				var startSessionGroup = sessionGroups[0]; // the start day
-				var startSessionGroupTime = (0, _momentTimezone2.default)(startSessionGroup.dataValues.createdAt);
 
 				user.getDailyTasks({
-					where: ['"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?', startSessionGroupTime, true, "live"],
+					where: ['"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?', startSessionGroup.dataValues.createdAt, true, "live"],
 					include: [_models2.default.Task],
 					order: '"DailyTask"."priority" ASC'
 				}).then(function (dailyTasks) {
@@ -159,11 +158,6 @@ exports.default = function (controller) {
 
 							var responses = convo.extractResponses();
 
-							console.log('done!');
-							console.log("here is end day object:\n\n\n");
-							console.log(convo.dayEnd);
-							console.log("\n\n\n");
-
 							if (convo.status == 'completed') {
 								var _convo$dayEnd = convo.dayEnd;
 								var UserId = _convo$dayEnd.UserId;
@@ -171,7 +165,7 @@ exports.default = function (controller) {
 								var _dailyTasks = _convo$dayEnd.dailyTasks;
 								var _startSessionGroup = _convo$dayEnd.startSessionGroup;
 
-								var _startSessionGroupTime = (0, _momentTimezone2.default)(_startSessionGroup.dataValues.createdAt);
+								var startSessionGroupTime = (0, _momentTimezone2.default)(_startSessionGroup.dataValues.createdAt);
 
 								var now = (0, _momentTimezone2.default)();
 
@@ -298,7 +292,6 @@ function getTotalWorkSessionTime(response, convo) {
 	var startSessionGroup = _convo$dayEnd2.startSessionGroup;
 
 
-	var startSessionGroupTime = (0, _momentTimezone2.default)(startSessionGroup.dataValues.createdAt);
 	var now = (0, _momentTimezone2.default)();
 
 	// get all the work sessions started between now and most recent startSessionGroup
@@ -306,7 +299,7 @@ function getTotalWorkSessionTime(response, convo) {
 		where: { id: UserId }
 	}).then(function (user) {
 		return user.getWorkSessions({
-			where: ['"WorkSession"."startTime" > ?', startSessionGroupTime]
+			where: ['"WorkSession"."startTime" > ?', startSessionGroup.dataValues.createdAt]
 		});
 	}).then(function (workSessions) {
 		var totalFocusedMinutes = 0;

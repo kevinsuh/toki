@@ -95,8 +95,6 @@ var checkForSessions = function checkForSessions() {
 
 
 var checkForReminders = function checkForReminders() {
-	// this is for testing
-	// var oneMinute = moment().add(5,'minutes').format("YYYY-MM-DD HH:mm:ss");
 
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
 	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");

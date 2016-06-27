@@ -18,30 +18,6 @@ import models from '../../models';
 // index
 router.get('/', (req, res) => {
 
-// this shows how to use moment-timezone to create timezone specific dates
-if (false) {
-  // 2016-06-13T13:55:00.000-04:00
-  var timeEST = moment.tz("2016-06-13T14:55:00.000", "America/New_York");
-  console.log("huh\n\n\n\n\n");
-
-  console.log("\n\n\n\nEST:")
-  console.log(timeEST.format("YYYY-MM-DD HH:mm:ss"));
-  console.log(timeEST.utc().format("YYYY-MM-DD HH:mm:ss"));
-
-  console.log("\n\n\n\nPST:")
-  var timePST = moment.tz("2016-06-13T14:55:00.000", "America/Los_Angeles");
-  console.log(timePST.format("YYYY-MM-DD HH:mm:ss"));
-  console.log(timePST.utc().format("YYYY-MM-DD HH:mm:ss"));
-  console.log("OKAY...\n\n\n\n")
-
-  var now = moment();
-  var minutesDuration = Math.round(moment.duration(timePST.diff(now)).asMinutes());
-  console.log(`this many minutes difference for 1:55 PST: ${minutesDuration}`);
-
-  var minutesDuration = moment.duration(timeEST.diff(now)).asMinutes();
-  console.log(`this many minutes difference for 1:55 EST: ${minutesDuration}`);
-}
-
 if (false) {
 
   // this shows how you can ORM inserts w/ associations
@@ -67,7 +43,7 @@ if (false) {
     res.json(slackUsers);
   });
 } 
-var remindTime = moment().format("YYYY-MM-DD HH:mm:ss");
+var remindTime = moment().format("YYYY-MM-DD HH:mm:ss Z");
 var UserId = 1;
 var customNote = "test note";
 
@@ -163,21 +139,6 @@ res.json({"hello":"world"});
 // })
 // .then(cb);
 
-  // models.Reminder.create({
-  //   remindTime,
-  //   UserId,
-  //   customNote
-  // }).then((reminder) => {
-  //   res.json(reminder);
-  // });
-  // models.Reminder.find({
-  //   where: { id: 34 }
-  // }).then((reminder) => {
-  //   var time = reminder.createdAt;
-  //   var timeMoment = moment(time).tz("America/Los_Angeles").format();
-  //   var timeMoment = moment(time).tz("America/New_York").format();
-  //   res.json({time: timeMoment});
-  // })
 
   var SlackUserId = 'U121ZK15J';
   var UserId = 1;
@@ -261,18 +222,9 @@ res.json({"hello":"world"});
 
 var checkForSessions = () => {
 
-  var today = new Date();
-  var fiveMinutesAgo = today.setMinutes(-5);
-  console.log(today);
-  console.log(fiveMinutesAgo);
-
-  var fiveMinutesAgo = moment().subtract(5, "minutes");
-  // console.log(moment().utc().format("YYYY-MM-DD HH:mm:ss"));
-  // console.log(fiveMinutesAgo.utc().format("YYYY-MM-DD HH:mm:ss"));
-  // console.log(moment().format("YYYY-MM-DD HH:mm:ss"));
 
   // models.WorkSession.findAll({
-  //   where: [ `"endTime" < ? AND open = ?`, fiveMinutesAgo, true ]
+  //   where: [ `"endTime" < ? AND open = ?`, new Date(), true ]
   // }).then((workSessions) => {
 
   //   // these are the work sessions that have ended within last 5 minutes
