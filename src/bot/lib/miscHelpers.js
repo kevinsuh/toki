@@ -120,5 +120,17 @@ export function witTimeResponseToTimeZoneObject(response, tz) {
 
 }
 
-
+// function export our console log functionality
+export function consoleLog() {
+	console.log("\n\n");
+	for (var i = 0; i < arguments.length; i++) {
+		var value = arguments[i];
+		if (typeof value == "object") {
+			console.log(value);
+		} else {
+			console.log(`~~ ${value} ~~\n`);
+		}
+	}
+	console.log("\n\n");
+}
 

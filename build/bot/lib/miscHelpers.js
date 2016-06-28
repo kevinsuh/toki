@@ -3,9 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 exports.createMomentObjectWithSpecificTimeZone = createMomentObjectWithSpecificTimeZone;
 exports.dateStringToMomentTimeZone = dateStringToMomentTimeZone;
 exports.witTimeResponseToTimeZoneObject = witTimeResponseToTimeZoneObject;
+exports.consoleLog = consoleLog;
 
 var _momentTimezone = require('moment-timezone');
 
@@ -131,5 +135,19 @@ function witTimeResponseToTimeZoneObject(response, tz) {
 		}
 
 	return remindTimeStamp;
+}
+
+// function export our console log functionality
+function consoleLog() {
+	console.log("\n\n");
+	for (var i = 0; i < arguments.length; i++) {
+		var value = arguments[i];
+		if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) == "object") {
+			console.log(value);
+		} else {
+			console.log('~~ ' + value + ' ~~\n');
+		}
+	}
+	console.log("\n\n");
 }
 //# sourceMappingURL=miscHelpers.js.map

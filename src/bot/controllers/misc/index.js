@@ -9,7 +9,7 @@ import models from '../../../app/models';
 import { randomInt, utterances } from '../../lib/botResponses';
 import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
-import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone } from '../../lib/miscHelpers';
+import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
 export default function(controller) {
@@ -18,8 +18,7 @@ export default function(controller) {
 
 		const SlackUserId = message.user;
 
-		console.log("\n\n\n ~~ in back up area!!! ~~ \n\n\n");
-		console.log(message);
+		consoleLog("in back up area!!!", message);
 
 		var SECRET_KEY = new RegExp(/^TOKI_T1ME/);
 
@@ -40,12 +39,7 @@ export default function(controller) {
 					bot.reply(message, "You're welcome!! :smile:");
 				} else if (SECRET_KEY.test(text)) {
 
-					console.log("\n\n ~~ UNLOCKED TOKI T1ME ~~ \n\n");
-
-					console.log(" message being passed in:");
-					console.log(message);
-					console.log("\n\n\n");
-
+					consoleLog("UNLOCKED TOKI_T1ME!!!");
 					/*
 							
 			*** ~~ TOP SECRET PASSWORD FOR TESTING FLOWS ~~ ***
@@ -114,8 +108,7 @@ export default function(controller) {
 
 				convo.on('end', (convo) => {
 
-					console.log("\n\n ~~ at end of convo onboard! ~~ \n\n");
-					console.log(convo.onBoard);
+					consoleLog("in back up area!!!", convo.onBoard);
 
 					const { SlackUserId, nickName, timeZone } = convo.onBoard;
 
