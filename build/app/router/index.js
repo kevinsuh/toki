@@ -1,7 +1,7 @@
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+	value: true
 });
 
 var _request = require('request');
@@ -41,19 +41,20 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 exports.default = function (app) {
 
-  // root
-  app.get('/', function (req, res) {
-    res.render('root');
-  });
+	// root
+	app.get('/', function (req, res) {
 
-  // web app
-  app.use('/new', _signup2.default);
-  app.use('/login', _login2.default);
+		res.render('root');
+	});
 
-  // api
-  app.use('/api/v1/tasks', _tasks2.default);
-  app.use('/api/v1/users', _users2.default);
-  app.use('/api/v1/slack_users', _slack_users2.default);
+	// web app
+	app.use('/new', _signup2.default);
+	app.use('/login', _login2.default);
+
+	// api
+	app.use('/api/v1/tasks', _tasks2.default);
+	app.use('/api/v1/users', _users2.default);
+	app.use('/api/v1/slack_users', _slack_users2.default);
 };
 
 // sequelize models

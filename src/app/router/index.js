@@ -14,19 +14,22 @@ import models from '../models';
 
 export default (app) => {
 
-  // root
-  app.get('/', (req, res) => {
-    res.render('root');
-  });
+	// root
+	app.get('/', (req, res) => {
 
-  // web app
-  app.use('/new', signup);
-  app.use('/login', login);
+		
+		
+		res.render('root');
+	});
 
-  // api
-  app.use('/api/v1/tasks', api_tasks);
-  app.use('/api/v1/users', api_users);
-  app.use('/api/v1/slack_users', api_slack_users);
+	// web app
+	app.use('/new', signup);
+	app.use('/login', login);
+
+	// api
+	app.use('/api/v1/tasks', api_tasks);
+	app.use('/api/v1/users', api_users);
+	app.use('/api/v1/slack_users', api_slack_users);
 
 }
 
