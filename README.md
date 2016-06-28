@@ -74,11 +74,11 @@ We use a shell variable to hold our production DB settings, which Sequelize reco
 # Directory Structure
 Since Toki uses a precompiler for both our ES6 and SCSS, we have one directory for our source code `/src`, and one directory for our deployment code `/build`.
 
-Code that does not need to be precompiled is held outside of the `/build` and `/src` directories and and is held at the root-level of our project. Currently, outside of our various config files, that only includes our _EJS views_.
+Code that does not need to be precompiled is held outside of the `/build` and `/src` directories and and is held at the root-level of our project. Currently, outside of our various config files, that only includes our `EJS views`.
 
-Since the `/build` directory is a simple transpiling of our `/src` directory, the structure within each _should be_ the same. 
+Since the `/build` directory is a simple transpiling of our `/src` directory, the structure within each _should be_ the exact same. 
 
-**The following is the structure of the `/build` directory** _(does not include actual files in nested directories)_:
+**The following is the structure of the `/build` directory** _(excluding files in nested directories)_:
 ```
 build/
 ├── app/
@@ -107,19 +107,19 @@ build/
 ```
 
 **Notes:**
-* The directory has two main sub-directores: `app` and `bot`. The `app` directory is for our web server. the `bot` directory is for Toki's existence in slack.
-  * The `app` thus holds our web page routes, the models that link up to our DB, our DB migrations, and our API calls
-  * The `bot` thus holds the functionality needed for our conversation in slack
-    * Controllers are used to take user input and respond appropriately, and to engage users in appropriate contexts
-    * Actions are when we proactively reach out, such as when user first signs in with our slack button
-    * lib holds helper functions
+* There are two main sub-directores: `app` and `bot`. The `app` directory is for our web server. The `bot` directory is for Toki's existence in slack.
+  * `app` holds our web page routes, the models that link up to our DB, our DB migrations, and our API calls
+  * `bot` holds the functionality needed for our conversation in slack
+    * `controllers` are used to take user input and respond appropriately, and to engage users in appropriate contexts
+    * `actions` are when we proactively reach out, such as when user first signs in with our slack button
+    * `lib` holds various helper functions
 * `cron.js` is used for our reminders and work_sessions functionality. It runs a script that checks our DB every 5 seconds.
 * `server.js` is where our ExpressJS app is created, and where our various bots are turned on to listen to [Slack RTM](https://api.slack.com/rtm)
 
 
 <a name="running-development"/>
 ## Running on Development
-Toki makes use of precompilers for ES6 and SCSS code to be translated into ES5 and CSS, respectively. The packages `node-sass` and `babel-present-es2015` are used to make this happen. **_since node-sass and babel both only watch for saves, if you delete files you must delete from both directories_**
+Toki makes use of precompilers for ES6 and SCSS code to be translated into ES5 and CSS, respectively. The packages `node-sass` and `babel-present-es2015` are used for this. **_since node-sass and babel both only watch for saves, if you delete files you must delete from both directories_**
 
 `npm run precompile` is an NPM script that runs babel, node-sass, and sequelize db:migrate to convert changes. **_Make sure all mapping and migration is done successfully before pushing to github__**
 
@@ -134,7 +134,7 @@ For additional features create a branch `feature-*`, and for hotfixes create a b
 
 <a name="running-production"/>
 ## Running on Production
-To run our production server, Toki uses [pm2](https://github.com/Unitech/pm2), which is a production process manager for Node.js applications with a built-in load balancer.
+To run our production server, Toki uses [pm2](https://github.com/Unitech/pm2), which is a production process manager for Node.js applications.
 
 We can use the NPM script `npm run prepare-production` to run a sequelize migrate and reset of our pm2 server. There may be occasions where you want to `npm update` on remote too, if one of our primary libraries goes through a massive update (will happen to botkit, wit, botkit-kit-middleware, etc.).
 
@@ -147,13 +147,13 @@ npm run prepare-production
 Notes:
 * both development and production have environment variables
 * dev_toki is used for development purposes
-* dotenv picks up whether there is `NODE_ENV`. If no `NODE_ENV`, will default to "development"
+* dotenv picks up whether there is `NODE_ENV`. If no `NODE_ENV`, will default to `development`
 * Development environment triggers dev_toki and local postgres DB
 * Production server holds some env variables through SHELL, and some through .env file. DB_HOST is absolutely necessary to be updated on shell
 
 <a name="eventual-features"/>
 ## Eventual Features
-Features are held in our [internal trello board](https://trello.com/b/AYIEVUsN/product-development-roadmap) under the list `Feature Requests (Confirmed)`. These features are prioritized in a queue. Some larger buckets:
+Features are held in our [internal trello board](https://trello.com/b/AYIEVUsN/product-development-roadmap) under the list **Feature Requests (Confirmed)**. These features are prioritized in a queue. Some larger buckets:
 - [ ] Splash page with signup ability
 - [ ] Add button flow to all parts of flow, ex. starting day
 - [ ] Revamp end-day flow
@@ -162,7 +162,7 @@ Features are held in our [internal trello board](https://trello.com/b/AYIEVUsN/p
 
 <a name="authors"/>
 ## Authors
-[Kevin Suh](https://github.com/kevinsuh) ([@kevinsuh34](https://twitter.com/kevinsuh34)) is a co-founder and the primary developer for Toki. For inquiries and opportunities, reach out at [kevinsuh34@gmail.com](https://mail.google.com/a/?view=cm&fs=1&to=kevinsuh34@gmail.com). For issues related specifically to Toki's codebase, please post on our [issues](https://github.com/kevinsuh/toki/issues) page.
+[Kevin Suh](https://github.com/kevinsuh) ([@kevinsuh34](https://twitter.com/kevinsuh34)) is a co-founder and the primary developer for Toki. For inquiries, reach out at [kevinsuh34@gmail.com](https://mail.google.com/a/?view=cm&fs=1&to=kevinsuh34@gmail.com). For issues related specifically to Toki's codebase, please post on our [issues](https://github.com/kevinsuh/toki/issues) page.
 
 
 
