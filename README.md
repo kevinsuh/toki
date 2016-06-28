@@ -1,10 +1,10 @@
 # Toki: your personal time fairy
 
-**Toki is a _slackbot_ that helps you accomplish the things that you intend to each day.** Its goal is to help you make the most of your time and attention each day, so you can do the things that are most important to you.
+**Toki is a slackbot that helps you accomplish the things that you intend to each day.** Its goal is to help you make the most of your time and attention, so you can do the things that are most important to you.
 
-We have personally noticed a growing problem: our attention is being arbitraged by internet companies. As technology grows, our attention does not scale accordingly. This leads to a constantly increasing competition for a limited resource that is most important to each of us: our time and attention. We want to build technology that's on our side; a personal companion that cares about our values and intentions holistically.
+We have personally noticed a growing problem: *our attention is being arbitraged by internet companies.* As technology grows, our attention doesn't scale accordingly. This leads to an unceasing competition for a limited resource that is most important to each of us: our time and attention. We want to build technology that's on our side of this battle. A personal companion that cares about our values and intentions holistically.
 
-Toki is written in Javascript and uses the excellent [botkit](https://github.com/howdyai/botkit) and [wit](https://github.com/wit-ai/node-wit) libraries.
+Toki is written in Javascript and uses the excellent [botkit](https://github.com/howdyai/botkit) and [wit](https://wit.ai) libraries.
 
 
 - [Main Features](#main-features)
@@ -19,43 +19,42 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 
 <a name="main-features"/>
 ## Main Features
-* **Start your day**
+#### Start your day
   * View/add pending tasks
   * Add new tasks
   * Prioritize tasks
   * Add time to tasks
   * Launch into work session
-* **Start Work Session**
+#### Start Work Session
   * Choose tasks to work on
   * Get time estimate
   * Checkin or start through buttons
-* **End Work Session**
+#### End Work Session
   * Cross out finished tasks
   * Take a break
-* **View/edit tasks**
+#### View/edit tasks
   * Add tasks and prioritize
   * Finish ("cross out") tasks
-* **End your day**
+#### End your day
   * Calculate total minutes worked with Toki
   * Add reflection note to be stored for future use
 
 <a name="technology-stack"/>
 ## Technology Stack
-__in general order of backend => frontend__
 
-**Web Server**
+#### Web Server
 * Digital Ocean
 * PostgreSQL
 * Node.js
 * ExpressJS
 * React-Redux
 
-**Slack Bot**
+#### Slack Bot
 * Node.js
 * Botkit
 * Wit.ai
 
-**Libraries/Dependencies**
+#### Libraries/Dependencies
 * Babel
 * SCSS
 * Sequelize
@@ -69,16 +68,17 @@ We use a shell variable to hold our production DB settings, which Sequelize reco
 
 <a name="directory-structure">
 ## Directory Structure
-Since Toki uses a precompiler for both our ES6 and SCSS, we have one directory for our source code (`/src`), and one directory for our deployment code (`/build`).
+Since Toki uses a precompiler for both our ES6 and SCSS, we have one directory for our source code `/src`, and one directory for our deployment code `/build`.
 
-Code that is not reliant on precompiling is not included in either of those directories, and is instead held at the root-level of our project. Currently, outside of our various config files, that only includes our **_EJS views_**.
+Code that does not need to be precompiled is held outside of the `/build` and `/src` directories and and is held at the root-level of our project. Currently, outside of our various config files, that only includes our _EJS views_.
 
-Since the `/build` directory is a simple transpiling of our `/src` directory, the structure within each __should be__ the same. 
+Since the `/build` directory is a simple transpiling of our `/src` directory, the structure within each _should be_ the same. 
 
 **The following is the structure of the `/build` directory**
-__does not include actual files in nested directories__:
+
+_does not include the actual files in nested directories_:
 ```
-_/
+build/
 ├── app/
 │   ├── api/
 │   │   ├── v1/
@@ -121,7 +121,7 @@ Toki makes use of precompilers for ES6 and SCSS code to be translated into ES5 a
 
 `npm run precompile` is an NPM script that runs babel, node-sass, and sequelize db:migrate to convert changes. **_Make sure all mapping and migration is done successfully before pushing to github__**
 
-Common commands:
+**Common commands:**
 ```
 npm run precompile
 git push origin master
@@ -134,9 +134,9 @@ For additional features, create a branch `feature-*`, and for hotfixes create a 
 ## Running on Production
 To run our production server, Toki uses [pm2](https://github.com/Unitech/pm2), which is a production process manager for Node.js applications with a built-in load balancer.
 
-We can use the NPM script `npm run nprepare-production` to run sequelize migrate and a reset of pm2 server. There may be occasions where you want to `npm update` on remote too, if one of our primary libraries goes through a massive update (will happen to botkit, wit, botkit-kit-middleware, etc.).
+We can use the NPM script `npm run prepare-production` to run a sequelize migrate and reset of our pm2 server. There may be occasions where you want to `npm update` on remote too, if one of our primary libraries goes through a massive update (will happen to botkit, wit, botkit-kit-middleware, etc.).
 
-Common commands:
+**Common commands:**
 ```
 git pull origin master
 npm run prepare-production
@@ -154,13 +154,13 @@ Notes:
 Features are held in the internal trello board titled `Product Roadmap`. These features are prioritized in a queue. Some larger buckets:
 - [ ] Splash page with signup ability
 - [ ] Add button flow to all parts of flow, ex. starting day
-- [ ] Robust end-day flow
+- [ ] Revamp end-day flow
 - [ ] Google cal integration
 - [ ] Personal analytics on our web app
 
 <a name="authors"/>
 ## Authors
-[Kevin Suh](https://github.com/kevinsuh) ([@kevinsuh34](https://twitter.com/kevinsuh34)) is the CTO, co-founder, and current sole developer of Toki. For issues related specifically to Toki's codebase, please post on our [issues](https://github.com/kevinsuh/toki/issues) page.
+[Kevin Suh](https://github.com/kevinsuh) ([@kevinsuh34](https://twitter.com/kevinsuh34)) is the CTO and primary developer of Toki. For issues related specifically to Toki's codebase, please post on our [issues](https://github.com/kevinsuh/toki/issues) page.
 
 
 
