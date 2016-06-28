@@ -2,7 +2,7 @@
 
 **Toki is a slackbot that helps you accomplish the things that you intend to each day.** Its goal is to help you make the most of your time and attention, so you can do the things that are most important to you.
 
-We have personally noticed a growing problem: *our attention is being arbitraged by internet companies.* As technology grows, our attention doesn't scale accordingly. This leads to an unceasing competition for a limited resource that is most important to each of us: our time and attention. We want to build technology that's on our side of this battle. A personal companion that cares about our values and intentions holistically.
+We have personally noticed a growing problem: **_our attention is being arbitraged by internet companies._** As technology grows, our attention doesn't scale accordingly. This leads to an unceasing competition for a limited resource that is most important to each of us: our time and attention. We want to build technology that's on our side of this battle, that cares about our values and intentions holistically.
 
 Toki is written in Javascript and uses the excellent [botkit](https://github.com/howdyai/botkit) and [wit](https://wit.ai) libraries.
 
@@ -18,29 +18,33 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 
 
 <a name="main-features"/>
-## Main Features
+# Main Features
 #### Start your day
   * View/add pending tasks
   * Add new tasks
   * Prioritize tasks
   * Add time to tasks
   * Launch into work session
+
 #### Start Work Session
   * Choose tasks to work on
   * Get time estimate
   * Checkin or start through buttons
+
 #### End Work Session
   * Cross out finished tasks
   * Take a break
+
 #### View/edit tasks
   * Add tasks and prioritize
   * Finish ("cross out") tasks
+
 #### End your day
   * Calculate total minutes worked with Toki
   * Add reflection note to be stored for future use
 
 <a name="technology-stack"/>
-## Technology Stack
+# Technology Stack
 
 #### Web Server
 * Digital Ocean
@@ -62,21 +66,19 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 * EmbeddedJS
 
 <a name="config"/>
-## Config
+# Config
 `config.json` holds DB config settings
 We use a shell variable to hold our production DB settings, which Sequelize recognizes.
 
 <a name="directory-structure">
-## Directory Structure
+# Directory Structure
 Since Toki uses a precompiler for both our ES6 and SCSS, we have one directory for our source code `/src`, and one directory for our deployment code `/build`.
 
 Code that does not need to be precompiled is held outside of the `/build` and `/src` directories and and is held at the root-level of our project. Currently, outside of our various config files, that only includes our _EJS views_.
 
 Since the `/build` directory is a simple transpiling of our `/src` directory, the structure within each _should be_ the same. 
 
-**The following is the structure of the `/build` directory**
-
-_does not include the actual files in nested directories_:
+**The following is the structure of the `/build` directory** _(does not include actual files in nested directories)_:
 ```
 build/
 ├── app/
@@ -128,7 +130,7 @@ git push origin master
 ```
 The `master` branch is used to as the single source for production-ready code. Commit to this branch with extreme caution.
 
-For additional features, create a branch `feature-*`, and for hotfixes create a branch `hotfix-*`. These should be then tested thoroughly before submitting a pull request into master.
+For additional features create a branch `feature-*`, and for hotfixes create a branch `hotfix-*`. These should always be tested thoroughly before submitting a pull request into master.
 
 <a name="running-production"/>
 ## Running on Production
@@ -151,7 +153,7 @@ Notes:
 
 <a name="eventual-features"/>
 ## Eventual Features
-Features are held in the internal trello board titled `Product Roadmap`. These features are prioritized in a queue. Some larger buckets:
+Features are held in our [internal trello board](https://trello.com/b/AYIEVUsN/product-development-roadmap) under the list `Feature Requests (Confirmed)`. These features are prioritized in a queue. Some larger buckets:
 - [ ] Splash page with signup ability
 - [ ] Add button flow to all parts of flow, ex. starting day
 - [ ] Revamp end-day flow
@@ -160,7 +162,7 @@ Features are held in the internal trello board titled `Product Roadmap`. These f
 
 <a name="authors"/>
 ## Authors
-[Kevin Suh](https://github.com/kevinsuh) ([@kevinsuh34](https://twitter.com/kevinsuh34)) is the CTO and primary developer of Toki. For issues related specifically to Toki's codebase, please post on our [issues](https://github.com/kevinsuh/toki/issues) page.
+[Kevin Suh](https://github.com/kevinsuh) ([@kevinsuh34](https://twitter.com/kevinsuh34)) is the CTO and primary developer of Toki. For inquiries and opportunities, reach out at [kevinsuh34@gmail.com](https://mail.google.com/a/?view=cm&fs=1&to=kevinsuh34@gmail.com). For issues related specifically to Toki's codebase, please post on our [issues](https://github.com/kevinsuh/toki/issues) page.
 
 
 
