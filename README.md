@@ -10,12 +10,11 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 - [Main Features](#main-features)
 - [Technology Stack](#technology-stack)
 - [Config](#config)
+- [Directory Structure](#directory-structure)
 - [Running on Development](#running-development)
 - [Running on Production](#running-production)
 - [Eventual Features](#eventual-features)
 - [Authors](#authors)
-
-
 
 
 <a name="main-features"/>
@@ -42,29 +41,83 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 
 <a name="technology-stack"/>
 ## Technology Stack
-* Node.js
+__in general order of backend => frontend__
+
+**Web Server**
 * Digital Ocean
 * PostgreSQL
-* Wit.ai
-* Botkit
-* EmbeddedJS
+* Node.js
 * ExpressJS
 * React-Redux
+
+**Slack Bot**
+* Node.js
+* Botkit
+* Wit.ai
+
+**Libraries/Dependencies**
 * Babel
 * SCSS
 * Sequelize
+* Moment-Timezone
+* EmbeddedJS
 
 <a name="config"/>
 ## Config
 `config.json` holds DB config settings
+We use a shell variable to hold our production DB settings, which Sequelize recognizes.
 
 <a name="directory-structure">
 ## Directory Structure
+Since Toki uses a precompiler for both our ES6 and SCSS, we have one directory for our source code (`/src`), and one directory for our deployment code (`/build`).
+
+Code that is not reliant on precompiling is not included in either of those directories, and is instead held at the root-level of our project. Currently, outside of our various config files, that only includes our **_EJS views_**.
+
+Since the `/build` directory is a simple transpiling of our `/src` directory, the structure within each __should be__ the same. 
+
+**The following is the structure of the `/build` directory**
+__does not include actual files in nested directories__:
+```
+_/
+├── app/
+│   ├── api/
+│   │   ├── v1/
+│   ├── migrations/
+│   ├── models/
+│   ├── router/
+│   │   │   ├── routes/
+│   ├── cron.js/
+│   ├── scripts.js/
+├── bot/
+│   ├── actions/
+│   │   ├── initiation/
+│   ├── controllers/
+│   │   │   ├── buttons/
+│   │   │   ├── days/
+│   │   │   ├── misc/
+│   │   │   ├── reminders/
+│   │   │   ├── tasks/
+│   │   │   ├── work_sessions/
+│   ├── lib/
+│   ├── middleware/
+├── dev_slackbot.js/
+├── server.js/
+```
+
+**Notes:**
+* The directory has two main sub-directores: `app` and `bot`. The `app` directory is for our web server. the `bot` directory is for Toki's existence in slack.
+  * The `app` thus holds our web page routes, the models that link up to our DB, our DB migrations, and our API calls
+  * The `bot` thus holds the functionality needed for our conversation in slack
+    * Controllers are used to take user input and respond appropriately, and to engage users in appropriate contexts
+    * Actions are when we proactively reach out, such as when user first signs in with our slack button
+    * lib holds helper functions
+* `cron.js` is used for our reminders and work_sessions functionality. It runs a script that checks our DB every 5 seconds.
+* `server.js` is where our ExpressJS app is created, and where our various bots are turned on to listen to [Slack RTM](https://api.slack.com/rtm)
 
 
 <a name="running-development"/>
 ## Running on Development
-Toki makes use of precompilers for ES6 and SCSS code to be translated into ES5 and CSS, respectively. The packages `node-sass` and `babel-present-es2015` are used to make this happen.
+Toki makes use of precompilers for ES6 and SCSS code to be translated into ES5 and CSS, respectively. The packages `node-sass` and `babel-present-es2015` are used to make this happen. **_since node-sass and babel both only watch for saves, if you delete files you must delete from both directories_**
 
 `npm run precompile` is an NPM script that runs babel, node-sass, and sequelize db:migrate to convert changes. **_Make sure all mapping and migration is done successfully before pushing to github__**
 
@@ -108,15 +161,6 @@ Features are held in the internal trello board titled `Product Roadmap`. These f
 <a name="authors"/>
 ## Authors
 [Kevin Suh](https://github.com/kevinsuh) ([@kevinsuh34](https://twitter.com/kevinsuh34)) is the CTO, co-founder, and current sole developer of Toki. For issues related specifically to Toki's codebase, please post on our [issues](https://github.com/kevinsuh/toki/issues) page.
-
-
-
-
-## This to add to this readme:
-* Directory structure
-* Database tables and columns
-* Primary organization of flow (`convo.on('end')` and going through `confirm_new_session_group` as dispatch center)
-
 
 
 
