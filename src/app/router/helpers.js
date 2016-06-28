@@ -111,7 +111,7 @@ export function saveUserOnLogin(auth, identity) {
 										convo.startOnBoard = true;
 										convo.next();
 									}
-								}
+								},
 								{
 									pattern: utterances.no,
 									callback: (response, convo) => {

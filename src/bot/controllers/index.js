@@ -22,7 +22,7 @@ require('dotenv').config();
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
-	console.log("\n\n ~~ In development controller of Navi ~~ \n\n");
+	console.log("\n\n ~~ In development controller of Toki ~~ \n\n");
 	process.env.SLACK_ID = process.env.DEV_SLACK_ID;
 	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 }
@@ -66,7 +66,7 @@ if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT
 	process.exit(1);
 }
 
-// Custom Navi Config
+// Custom Toki Config
 export function customConfigBot(controller) {
 
 	// beef up the bot

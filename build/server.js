@@ -70,7 +70,7 @@ app.use(function (err, req, res, next) {
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
-	console.log("\n\n ~~ In development server of Navi ~~ \n\n");
+	console.log("\n\n ~~ In development server of Toki ~~ \n\n");
 	process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
 	process.env.SLACK_ID = process.env.DEV_SLACK_ID;
 	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;

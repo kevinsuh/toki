@@ -1,4 +1,4 @@
-# Toki's existence in slack.
+# Toki, your personal time fairy
 
 ### Core functionalities:
 * Take task list
