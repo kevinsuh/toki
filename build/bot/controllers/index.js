@@ -63,6 +63,8 @@ var _intents2 = _interopRequireDefault(_intents);
 
 var _constants = require('../lib/constants');
 
+var _miscHelpers = require('../lib/miscHelpers');
+
 var _storage = require('../lib/storage');
 
 var _storage2 = _interopRequireDefault(_storage);
@@ -71,14 +73,14 @@ var _initiation = require('../actions/initiation');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-require('dotenv').config();
-
 // config modules
 
 
+require('dotenv').config();
+
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
-	console.log("\n\n ~~ In development controller of Toki ~~ \n\n");
+	(0, _miscHelpers.consoleLog)("In development controller of Toki");
 	process.env.SLACK_ID = process.env.DEV_SLACK_ID;
 	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 }
@@ -89,7 +91,7 @@ if (env == 'development') {
 // Wit Brain
 if (process.env.WIT_TOKEN) {
 
-	console.log("Integrate Wit");
+	(0, _miscHelpers.consoleLog)("Integrate Wit");
 	var wit = (0, _botkitMiddlewareWitai2.default)({
 		token: process.env.WIT_TOKEN,
 		minimum_confidence: 0.55
@@ -261,11 +263,7 @@ controller.on('new_session_group_decision', function (bot, config) {
 			limit: 1
 		}).then(function (sessionGroups) {
 
-			console.log("\n\n\n ~~ IN NEW SESSION GROUP DECISION ~~ \n\n\n");
-			console.log("\n\n\n ~~ this is the dispatch center for many decisions ~~ \n\n\n");
-			console.log("\n\n\n config object: \n\n\n");
-			console.log(config);
-			console.log("\n\n\n\n");
+			(0, _miscHelpers.consoleLog)("IN NEW SESSION GROUP DECISION", "this is the dispatch center for many decisions", "config object:", config);
 
 			// 1. you have not started your day
 			// you should start day and everything past this is irrelevant
@@ -350,7 +348,8 @@ controller.on('new_session_group_decision', function (bot, config) {
 
 					convo.on('end', function (convo) {
 
-						console.log("end of start new session group");
+						(0, _miscHelpers.consoleLog)("end of start new session group");
+
 						var newSessionGroup = convo.newSessionGroup;
 
 

@@ -11,8 +11,10 @@ import cronFunction from './app/cron';
 var CronJob = cron.CronJob;
 
 import { seedUsers, updateUsers } from './app/scripts';
+import { consoleLog } from './bot/lib/miscHelpers';
+
 setTimeout(() => {
-	console.log("\n\n\n ~~ updating and seeding users ~~ \n\n\n");
+	consoleLog("updating and seeding users");
 	// updateUsers(); // to fill in all users who are not in DB yet
 	// seedUsers();
 }, 5000)
@@ -42,7 +44,7 @@ app.use(function(err, req, res, next) {
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
-  console.log("\n\n ~~ In development server of Toki ~~ \n\n");
+	consoleLog("In development server of Toki");
   process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
   process.env.SLACK_ID = process.env.DEV_SLACK_ID;
 	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
@@ -74,7 +76,7 @@ controller.createOauthEndpoints(app,function(err,req,res) {
 
 // create HTTP service
 http.createServer(app).listen(process.env.HTTP_PORT, () => {
-	console.log('listening on port ' + app.get('port'));
+	consoleLog(`Listening on port: ${app.get('port')}`);
 
 	 /**
 	 * 						*** CRON JOB ***
@@ -105,7 +107,7 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 		teamTokens.forEach((token) => {
 			var bot = controller.spawn({ token }).startRTM((err) => {
 				if (err) {
-					console.log('Error connecting to slack... :', err);
+					consoleLog(`'Error connecting to slack... :' ${err}`);
 				} else {
 					if (token == process.env.BOT_TOKEN) {
 						bot.startPrivateConversation({user: "U121ZK15J"}, (err, convo) => {

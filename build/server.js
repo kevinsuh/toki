@@ -30,6 +30,8 @@ var _cron4 = _interopRequireDefault(_cron3);
 
 var _scripts = require('./app/scripts');
 
+var _miscHelpers = require('./bot/lib/miscHelpers');
+
 var _controllers = require('./bot/controllers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -40,7 +42,7 @@ var CronJob = _cron2.default.CronJob; // modules
 
 
 setTimeout(function () {
-	console.log("\n\n\n ~~ updating and seeding users ~~ \n\n\n");
+	(0, _miscHelpers.consoleLog)("updating and seeding users");
 	// updateUsers(); // to fill in all users who are not in DB yet
 	// seedUsers();
 }, 5000);
@@ -70,7 +72,7 @@ app.use(function (err, req, res, next) {
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
-	console.log("\n\n ~~ In development server of Toki ~~ \n\n");
+	(0, _miscHelpers.consoleLog)("In development server of Toki");
 	process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
 	process.env.SLACK_ID = process.env.DEV_SLACK_ID;
 	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
@@ -102,7 +104,7 @@ _controllers.controller.createOauthEndpoints(app, function (err, req, res) {
 
 // create HTTP service
 _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
-	console.log('listening on port ' + app.get('port'));
+	(0, _miscHelpers.consoleLog)('Listening on port: ' + app.get('port'));
 
 	/**
  * 						*** CRON JOB ***
@@ -133,7 +135,7 @@ _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
 		teamTokens.forEach(function (token) {
 			var bot = _controllers.controller.spawn({ token: token }).startRTM(function (err) {
 				if (err) {
-					console.log('Error connecting to slack... :', err);
+					(0, _miscHelpers.consoleLog)('\'Error connecting to slack... :\' ' + err);
 				} else {
 					if (token == process.env.BOT_TOKEN) {
 						bot.startPrivateConversation({ user: "U121ZK15J" }, function (err, convo) {

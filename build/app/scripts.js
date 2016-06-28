@@ -8,6 +8,8 @@ exports.seedUsers = seedUsers;
 
 var _controllers = require('../bot/controllers');
 
+var _miscHelpers = require('../bot/lib/miscHelpers');
+
 var _models = require('./models');
 
 var _models2 = _interopRequireDefault(_models);
@@ -19,10 +21,6 @@ var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // sequelize models
-/**
- * 		For fun one-off thingz
- */
-
 function updateUsers() {
 
 	for (var token in _controllers.bots) {
@@ -59,7 +57,9 @@ function updateUsers() {
 			});
 		});
 	}
-}
+} /**
+   * 		For fun one-off thingz
+   */
 
 function seedUsers() {
 
@@ -85,7 +85,7 @@ function seedUsers() {
 						where: { SlackUserId: id }
 					}).then(function (slackUser) {
 						if (!slackUser) {
-							console.log("\n\n ~~ Unique SlackUserId found... creating now ~~ \n\n");
+							(0, _miscHelpers.consoleLog)("Unique SlackUserId found... creating now");
 							var uniqueEmail = makeid();
 							_models2.default.User.create({
 								email: 'TEMPEMAILHOLDER' + uniqueEmail + '@gmail.com',

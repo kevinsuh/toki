@@ -4,6 +4,7 @@
 
 import { bots } from '../bot/controllers';
 import { controller } from '../bot/controllers';
+import { consoleLog } from '../bot/lib/miscHelpers';
 
 // sequelize models
 import models from './models';
@@ -70,7 +71,7 @@ export function seedUsers() {
 					})
 					.then((slackUser) => {
 						if (!slackUser) {
-							console.log("\n\n ~~ Unique SlackUserId found... creating now ~~ \n\n");
+							consoleLog("Unique SlackUserId found... creating now");
 							var uniqueEmail = makeid();
 							models.User.create({
 								email: `TEMPEMAILHOLDER${uniqueEmail}@gmail.com`,

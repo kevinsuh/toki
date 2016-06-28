@@ -15,6 +15,7 @@ import miscController from './misc';
 import models from '../../app/models';
 import intentConfig from '../lib/intents';
 import { colorsArray, THANK_YOU } from '../lib/constants';
+import { consoleLog } from '../lib/miscHelpers';
 
 import storageCreator from '../lib/storage';
 
@@ -22,7 +23,7 @@ require('dotenv').config();
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
-	console.log("\n\n ~~ In development controller of Toki ~~ \n\n");
+	consoleLog("In development controller of Toki");
 	process.env.SLACK_ID = process.env.DEV_SLACK_ID;
 	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 }
@@ -33,7 +34,7 @@ import { firstInstallInitiateConversation, loginInitiateConversation } from '../
 // Wit Brain
 if (process.env.WIT_TOKEN) {
 
-	console.log("Integrate Wit");
+	consoleLog("Integrate Wit");
 	var wit = Wit({
 		token: process.env.WIT_TOKEN,
 		minimum_confidence: 0.55
@@ -209,11 +210,7 @@ controller.on(`new_session_group_decision`, (bot, config) => {
 		})
 		.then((sessionGroups) => {
 
-			console.log("\n\n\n ~~ IN NEW SESSION GROUP DECISION ~~ \n\n\n");
-			console.log("\n\n\n ~~ this is the dispatch center for many decisions ~~ \n\n\n");
-			console.log("\n\n\n config object: \n\n\n");
-			console.log(config);
-			console.log("\n\n\n\n");
+			consoleLog("IN NEW SESSION GROUP DECISION", "this is the dispatch center for many decisions", "config object:", config);
 
 			// 1. you have not started your day
 			// you should start day and everything past this is irrelevant
@@ -299,7 +296,8 @@ controller.on(`new_session_group_decision`, (bot, config) => {
 					
 					convo.on('end', (convo) => {
 
-						console.log("end of start new session group");
+						consoleLog("end of start new session group");
+
 						const { newSessionGroup } = convo;
 
 						if (newSessionGroup.decision == intentConfig.START_DAY) {
