@@ -1,7 +1,7 @@
 {
-  "name": "navi_bot",
+  "name": "toki_bot",
   "version": "1.0.0",
-  "description": "Navi's existence in slack",
+  "description": "Toki, your personal time fairy",
   "main": "./build/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -16,14 +16,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/kevinsuh/navi_bot.git"
+    "url": "https://github.com/kevinsuh/toki.git"
   },
   "author": "Kevin Suh",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/kevinsuh/navi_bot/issues"
+    "url": "https://github.com/kevinsuh/toki/issues"
   },
-  "homepage": "https://github.com/kevinsuh/navi_bot",
+  "homepage": "https://tokibot.com",
   "dependencies": {
     "body-parser": "^1.15.1",
     "botkit": "https://github.com/kevinsuh/botkit.git",

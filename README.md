@@ -30,9 +30,9 @@ On production:
 
 Notes:
 * both development and production have environment variables
-* dev_navi is used for development purposes
+* dev_toki is used for development purposes
 * dotenv picks up whether there is `NODE_ENV`. If no `NODE_ENV`, will default to "development"
-* Development environment triggers dev_navi and local sqlite DB
+* Development environment triggers dev_toki and local sqlite DB
 * Production server holds some env variables through SHELL, and some through .env file. DB_HOST is absolutely necessary to be updated on shell
 
 Flow:
