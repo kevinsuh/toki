@@ -1,4 +1,4 @@
-# Navi's existence in slack.
+# Toki's existence in slack.
 
 ### Core functionalities:
 * Take task list
