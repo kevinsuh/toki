@@ -1,4 +1,65 @@
-# Toki, your personal time fairy
+# Toki: your personal time fairy
+
+Toki is a **slackbot** that helps you accomplish the things that you intend to each day. Its goal is to help you make the most of your time and attention each day, so you can do the things that are most important to you.
+
+The inspiration comes from a growing problem. Our attention is being arbitraged by internet companies. As technology grows, our attention is the only thing that doesn't scale accordingly. We want to build technology that's on our side, that cares about our values and intentions holistically. A personal fairy companion to help guide us through each day's adventure.
+
+Toki is written in Javascript and uses the slackbot framework [botkit](https://github.com/howdyai/botkit) for the bot and [wit](https://github.com/wit-ai/node-wit) for NL parsing.
+
+
+- [Main Features](#main-features)
+- [Technology Stack](#technology-stack)
+- [Config](#config)
+- [Running on Development](#running-development)
+- [Running on Production](#running-production)
+- [Eventual Features](#eventual-features)
+- [Authors](#authors)
+
+
+
+
+<a name="main-features"/>
+# Main Features
+* Start your day
+> View/add pending tasks
+> Add new tasks
+> Prioritize tasks
+> Add time to tasks
+> Launch into work session
+* Start Work Session
+  * Choose tasks to work on
+  * Get time estimate
+  * Checkin or start through buttons
+* End Work Session
+  * Cross out finished tasks
+  * Take a break
+* View/edit tasks
+  * Add tasks and prioritize
+  * Finish ("cross out") tasks
+* End your day
+  * Calculate total minutes worked with Toki
+  * Add reflection note to be stored for future use
+
+<a name="technology-stack"/>
+# Technology Stack
+
+
+<a name="config"/>
+# Config
+
+<a name="running-development"/>
+# Running on Development
+
+<a name="running-production"/>
+# Running on Production
+
+<a name="eventual-features"/>
+# Eventual Features
+
+<a name="authors"/>
+# Authors
+
+
 
 ### Core functionalities:
 * Take task list
