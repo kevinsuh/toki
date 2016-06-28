@@ -121,14 +121,14 @@ build/
 ## Running on Development
 Toki makes use of precompilers for ES6 and SCSS code to be translated into ES5 and CSS, respectively. The packages `node-sass` and `babel-present-es2015` are used for this. **_since node-sass and babel both only watch for saves, if you delete files you must delete from both directories_**
 
-`npm run precompile` is an NPM script that runs babel, node-sass, and sequelize db:migrate to convert changes. **_Make sure all mapping and migration is done successfully before pushing to github__**
+`npm run precompile` is an NPM script that runs babel, node-sass, and sequelize db:migrate to convert changes. **_Make sure all mapping and migration is done successfully before pushing to github_**
 
 **Common commands:**
 ```
 npm run precompile
 git push origin master
 ```
-The `master` branch is used to as the single source for production-ready code. Commit to this branch with extreme caution.
+The `master` branch is used to as the single source for production-ready code. **Commit to `master` with extreme caution**.
 
 For additional features create a branch `feature-*`, and for hotfixes create a branch `hotfix-*`. These should always be tested thoroughly before submitting a pull request into master.
 
