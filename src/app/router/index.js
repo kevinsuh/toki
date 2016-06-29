@@ -17,7 +17,8 @@ export default (app) => {
 
 	// root
 	app.get('/', (req, res) => {
-		res.render('root');
+		var org = "tokibot1";
+		res.render('root', { org });
 	});
 
 	app.use('/invite', invite);

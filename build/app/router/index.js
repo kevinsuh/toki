@@ -44,7 +44,8 @@ exports.default = function (app) {
 
 	// root
 	app.get('/', function (req, res) {
-		res.render('root');
+		var org = "tokibot1";
+		res.render('root', { org: org });
 	});
 
 	app.use('/invite', _invite2.default);
