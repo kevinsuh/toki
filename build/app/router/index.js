@@ -16,6 +16,10 @@ var _login = require('./routes/login');
 
 var _login2 = _interopRequireDefault(_login);
 
+var _invite = require('./routes/invite');
+
+var _invite2 = _interopRequireDefault(_invite);
+
 var _tasks = require('../api/v1/tasks');
 
 var _tasks2 = _interopRequireDefault(_tasks);
@@ -36,16 +40,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 // api calls
 
-
-// our various routes
-
 exports.default = function (app) {
 
 	// root
 	app.get('/', function (req, res) {
-
 		res.render('root');
 	});
+
+	app.use('/invite', _invite2.default);
 
 	// web app
 	app.use('/new', _signup2.default);
@@ -58,4 +60,7 @@ exports.default = function (app) {
 };
 
 // sequelize models
+
+
+// our various routes
 //# sourceMappingURL=index.js.map
