@@ -4,6 +4,17 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+// our various routes
+
+
+// api calls
+
+
+// sequelize models
+
+
 var _request = require('request');
 
 var _request2 = _interopRequireDefault(_request);
@@ -46,11 +57,6 @@ var _slack2 = _interopRequireDefault(_slack);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// sequelize models
-
-
-// our various routes
-
 exports.default = function (app) {
 
 	var org = "tokibot1";
@@ -62,9 +68,6 @@ exports.default = function (app) {
 	slack.setMaxListeners(Infinity);
 
 	app.use(function (req, res, next) {
-		console.log("\n\n ~~ slack is ready ~~ \n\n");
-		console.log(req.body);
-		console.log("\n\n\n");
 		if (slack.ready) return next();
 		slack.once('ready', next);
 	});
@@ -72,7 +75,11 @@ exports.default = function (app) {
 	// root
 	app.get('/', function (req, res) {
 		var org = "tokibot1";
-		res.render('root', { org: org });
+		console.log(req);
+		var variables = _extends({}, req.query, {
+			org: org
+		});
+		res.render('root', variables);
 	});
 
 	app.use('/invite', _invite2.default);
@@ -86,6 +93,4 @@ exports.default = function (app) {
 	app.use('/api/v1/users', _users2.default);
 	app.use('/api/v1/slack_users', _slack_users2.default);
 };
-
-// api calls
 //# sourceMappingURL=index.js.map

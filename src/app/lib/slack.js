@@ -31,14 +31,6 @@ export default class SlackData extends EventEmitter {
     .query({ token: this.token })
     .end((err, res) => {
 
-      console.log(`host: ${this.host}`);
-      console.log(`token: ${this.token}`);
-
-      console.log("\n\n\nWHATT!!!T?\n\n\n");
-
-      console.log(res.body);
-
-
       let team = res.body.team
       this.org.name = team.name
       if (!team.icon.image_default) {

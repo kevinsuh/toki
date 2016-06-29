@@ -4,7 +4,13 @@
   <body>
 	<h1 style="text-align: center; margin-top: 20px;">Hey! I'm toki</h1>
 
-	<div class="splash">
+	<% if (locals.invite && locals.msg) { %>
+	<div class="flash-<%= locals.success ? 'success' : 'error' %>">
+		<%= locals.msg %>
+	</div>
+	<% } %>
+
+	<div class="splash <%= true ? 'helo' : 'goodbye' %>">
 		<p>
 			Join Toki on Slack!
 		</p>

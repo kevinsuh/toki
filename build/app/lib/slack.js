@@ -57,13 +57,6 @@ var SlackData = function (_EventEmitter) {
 
       _superagent2.default.get('https://' + this.host + '.slack.com/api/team.info').query({ token: this.token }).end(function (err, res) {
 
-        console.log('host: ' + _this2.host);
-        console.log('token: ' + _this2.token);
-
-        console.log("\n\n\nWHATT!!!T?\n\n\n");
-
-        console.log(res.body);
-
         var team = res.body.team;
         _this2.org.name = team.name;
         if (!team.icon.image_default) {

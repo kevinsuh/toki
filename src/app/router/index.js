@@ -27,9 +27,6 @@ export default (app) => {
 	slack.setMaxListeners(Infinity);
 
 	app.use((req, res, next) => {
-		console.log("\n\n ~~ slack is ready ~~ \n\n");
-		console.log(req.body);
-		console.log("\n\n\n");
     if (slack.ready) return next()
     slack.once('ready', next)
   });
@@ -37,7 +34,12 @@ export default (app) => {
 	// root
 	app.get('/', (req, res) => {
 		var org = "tokibot1";
-		res.render('root', { org });
+		console.log(req);
+		var variables = {
+			...req.query,
+			org
+		}
+		res.render('root', variables);
 	});
 
 	app.use('/invite', invite);
