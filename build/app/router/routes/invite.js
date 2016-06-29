@@ -22,11 +22,9 @@ var router = _express2.default.Router();
 
 
 // handle the API call after user inputs email
-router.post('/invite', function (req, res) {
+router.post('/', function (req, res) {
+  var email = req.body.email;
 
-  console.log("STARTING INVITE...");
-
-  console.log(req.body);
 
   res.redirect('/');
 });

@@ -7,11 +7,10 @@ var router = express.Router();
 import { getAuthAddress, startBot, saveUserOnLogin } from '../helpers';
 
 // handle the API call after user inputs email
-router.post('/invite', (req, res) => {
+router.post('/', (req, res) => {
 
-  console.log("STARTING INVITE...");
-
-  console.log(req.body);
+  const { email } = req.body;
+  
 
   res.redirect('/');
 

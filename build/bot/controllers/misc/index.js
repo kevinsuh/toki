@@ -337,9 +337,9 @@ function askOtherTimeZoneOptions(response, convo) {
 			// functionality to try and get timezone here
 
 		} else {
-				convo.say("I'm so sorry, but I don't support your timezone yet for this beta phase, but I'll reach out when I'm ready to help you work");
-				convo.stop();
-			}
+			convo.say("I'm so sorry, but I don't support your timezone yet for this beta phase, but I'll reach out when I'm ready to help you work");
+			convo.stop();
+		}
 
 		convo.next();
 	});

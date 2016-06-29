@@ -8,8 +8,8 @@
 		<p>
 			Join Toki on Slack!
 		</p>
-		<form id="invite" action="/invite">
-			<input class="form-item" type="email" name="email" placeholder="you@yourdomain.com" />
+		<form id="invite" method="post" action="/invite">
+			<input class="form-item" type="email" name="email" placeholder="you@yourdomain.com" required />
 			<input type="submit" value="Get my Invite" />
 			<a href=<%= "https://"+org+".slack.com" %> target="_top">
 				Sign In
