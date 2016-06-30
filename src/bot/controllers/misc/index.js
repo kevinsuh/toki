@@ -13,6 +13,7 @@ import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, con
 import intentConfig from '../../lib/intents';
 
 export default function(controller) {
+
 	// this will send message if no other intent gets picked up
 	controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
 

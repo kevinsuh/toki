@@ -115,8 +115,35 @@ var controller = _botkit2.default.slackbot({
 });
 exports.controller = controller;
 
-// simple way to keep track of bots
 
+controller.on('star_added', function (bot, message) {
+	console.log("\n\n\n received a message!!\n\n\n");
+	console.log(message);
+	bot.reply(message, "you added a star!~~!");
+});
+
+controller.on('reaction_added', function (bot, message) {
+	console.log("\n\n\n received a message!!\n\n\n");
+	console.log(message);
+	bot.reply(message, "you added a reaction!~~!");
+});
+
+controller.on('direct_message', function (bot, message) {
+	console.log("\n\n\n received a message!!\n\n\n");
+	console.log(message);
+	bot.reply(message, "you sent a direct message!~~!");
+});
+
+// controller.on('team_join', function (bot, message) {
+//   var SlackUserId = message.user;
+//   bot.api.users.info({ user: SlackUserId }, (err, response) => {
+//     var nickName = response.user.name;
+//     // should create user right here
+//     bot.api.chat.postMessage({channel: SlackUserId, text: 'Hey there ' + nickName + '! Welcome to the team =)', as_user: true});
+//   });
+// });
+
+// simple way to keep track of bots
 var bots = exports.bots = {};
 
 if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT) {

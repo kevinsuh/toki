@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 exports.default = function (controller) {
+
 	// this will send message if no other intent gets picked up
 	controller.hears([''], 'direct_message', _index.wit.hears, function (bot, message) {
 
