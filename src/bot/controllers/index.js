@@ -59,33 +59,58 @@ var controller = Botkit.slackbot({
 });
 export { controller };
 
-controller.on('star_added', (bot, message) => {
-	console.log("\n\n\n received a message!!\n\n\n");
-	console.log(message);
-	bot.reply(message, "you added a star!~~!");
+
+/**
+ * 		User has joined slack channel ==> make connection
+ * 		then onboard!
+ */
+controller.on('team_join', function (bot, message) {
+  const SlackUserId = message.user;
+ 	bot.api.users.info({ user: SlackUserId }, (err, response) => {
+
+		if (response.ok) {
+
+			const nickName = response.user.name;
+			const email    = response.user.profile.email;
+			const TeamId   = response.user.team_id;
+
+			if (email) {
+
+				// create SlackUser to attach to user
+				models.User.find({
+					where: { email: email },
+					include: [ models.SlackUser ]
+				})
+				.then((user) => {
+					
+					if (user) {
+						user.update({
+							nickName
+						});
+						const UserId = user.id;
+						if (user.SlackUser) {
+							return user.SlackUser.update({
+								UserId,
+								SlackUserId,
+								TeamId
+							});
+						} else {
+							return models.SlackUser.create({
+								UserId,
+								SlackUserId,
+								TeamId
+							});
+						}
+					}
+				})
+				.then((slackUser) => {
+					controller.trigger('begin_onboard_flow', [ bot, { SlackUserId } ]);
+				})
+			}
+		}
+
+	});
 });
-
-controller.on('reaction_added', (bot, message) => {
-	console.log("\n\n\n received a message!!\n\n\n");
-	console.log(message);
-	bot.reply(message, "you added a reaction!~~!");
-});
-
-controller.on('direct_message', (bot, message) => {
-	console.log("\n\n\n received a message!!\n\n\n");
-	console.log(message);
-	bot.reply(message, "you sent a direct message!~~!");
-});
-
-
-// controller.on('team_join', function (bot, message) {
-//   var SlackUserId = message.user;
-//   bot.api.users.info({ user: SlackUserId }, (err, response) => {
-//     var nickName = response.user.name;
-//     // should create user right here
-//     bot.api.chat.postMessage({channel: SlackUserId, text: 'Hey there ' + nickName + '! Welcome to the team =)', as_user: true});
-//   });
-// });
 
 // simple way to keep track of bots
 export var bots = {};

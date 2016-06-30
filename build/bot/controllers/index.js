@@ -115,33 +115,57 @@ var controller = _botkit2.default.slackbot({
 });
 exports.controller = controller;
 
+/**
+ * 		User has joined slack channel ==> make connection
+ * 		then onboard!
+ */
 
-controller.on('star_added', function (bot, message) {
-	console.log("\n\n\n received a message!!\n\n\n");
-	console.log(message);
-	bot.reply(message, "you added a star!~~!");
+controller.on('team_join', function (bot, message) {
+	var SlackUserId = message.user;
+	bot.api.users.info({ user: SlackUserId }, function (err, response) {
+
+		if (response.ok) {
+			(function () {
+
+				var nickName = response.user.name;
+				var email = response.user.profile.email;
+				var TeamId = response.user.team_id;
+
+				if (email) {
+
+					// create SlackUser to attach to user
+					_models2.default.User.find({
+						where: { email: email },
+						include: [_models2.default.SlackUser]
+					}).then(function (user) {
+
+						if (user) {
+							user.update({
+								nickName: nickName
+							});
+							var UserId = user.id;
+							if (user.SlackUser) {
+								return user.SlackUser.update({
+									UserId: UserId,
+									SlackUserId: SlackUserId,
+									TeamId: TeamId
+								});
+							} else {
+								return _models2.default.SlackUser.create({
+									UserId: UserId,
+									SlackUserId: SlackUserId,
+									TeamId: TeamId
+								});
+							}
+						}
+					}).then(function (slackUser) {
+						controller.trigger('begin_onboard_flow', [bot, { SlackUserId: SlackUserId }]);
+					});
+				}
+			})();
+		}
+	});
 });
-
-controller.on('reaction_added', function (bot, message) {
-	console.log("\n\n\n received a message!!\n\n\n");
-	console.log(message);
-	bot.reply(message, "you added a reaction!~~!");
-});
-
-controller.on('direct_message', function (bot, message) {
-	console.log("\n\n\n received a message!!\n\n\n");
-	console.log(message);
-	bot.reply(message, "you sent a direct message!~~!");
-});
-
-// controller.on('team_join', function (bot, message) {
-//   var SlackUserId = message.user;
-//   bot.api.users.info({ user: SlackUserId }, (err, response) => {
-//     var nickName = response.user.name;
-//     // should create user right here
-//     bot.api.chat.postMessage({channel: SlackUserId, text: 'Hey there ' + nickName + '! Welcome to the team =)', as_user: true});
-//   });
-// });
 
 // simple way to keep track of bots
 var bots = exports.bots = {};
