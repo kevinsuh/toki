@@ -99,40 +99,40 @@ function witTimeResponseToTimeZoneObject(response, tz) {
 		remindTimeStamp = false; // not valid
 	} else {
 
-			if (duration) {
-				var durationSeconds = 0;
-				for (var i = 0; i < duration.length; i++) {
-					durationSeconds += duration[i].normalized.value;
-				}
-				var durationMinutes = Math.floor(durationSeconds / 60);
-				remindTimeStamp = now.tz(tz).add(durationSeconds, 'seconds');
+		if (duration) {
+			var durationSeconds = 0;
+			for (var i = 0; i < duration.length; i++) {
+				durationSeconds += duration[i].normalized.value;
+			}
+			var durationMinutes = Math.floor(durationSeconds / 60);
+			remindTimeStamp = now.tz(tz).add(durationSeconds, 'seconds');
+		}
+
+		if (custom_time) {
+
+			var customTime = custom_time[0]; // 2016-06-24T16:24:00.000-04:00
+
+			// make it the same timestamp
+			if (customTime.type == "interval") {
+				remindTimeStamp = customTime.to.value;
+			} else {
+				remindTimeStamp = customTime.value;
 			}
 
-			if (custom_time) {
+			// handle if it is a duration configured intent
+			if (_constants.DURATION_INTENT.reg_exp.test(response.text) && !_constants.TIME_INTENT.reg_exp.test(response.text)) {
 
-				var customTime = custom_time[0]; // 2016-06-24T16:24:00.000-04:00
+				console.log("\n\n ~~ interpreted custom_time as duration ~~ \n");
+				console.log(response.text);
+				console.log(remindTimeStamp);
+				console.log("\n\n");
 
-				// make it the same timestamp
-				if (customTime.type == "interval") {
-					remindTimeStamp = customTime.to.value;
-				} else {
-					remindTimeStamp = customTime.value;
-				}
-
-				// handle if it is a duration configured intent
-				if (_constants.DURATION_INTENT.reg_exp.test(response.text) && !_constants.TIME_INTENT.reg_exp.test(response.text)) {
-
-					console.log("\n\n ~~ interpreted custom_time as duration ~~ \n");
-					console.log(response.text);
-					console.log(remindTimeStamp);
-					console.log("\n\n");
-
-					remindTimeStamp = (0, _momentTimezone2.default)(remindTimeStamp).tz(tz);
-				} else {
-					remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
-				}
+				remindTimeStamp = (0, _momentTimezone2.default)(remindTimeStamp).tz(tz);
+			} else {
+				remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
 			}
 		}
+	}
 
 	return remindTimeStamp;
 }
