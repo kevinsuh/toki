@@ -75,7 +75,6 @@ exports.default = function (app) {
 	// root
 	app.get('/', function (req, res) {
 		var org = "tokibot1";
-		console.log(req);
 		var variables = _extends({}, req.query, {
 			org: org
 		});

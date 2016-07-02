@@ -20,6 +20,10 @@ var _slackInvite = require('../../lib/slack-invite');
 
 var _slackInvite2 = _interopRequireDefault(_slackInvite);
 
+var _models = require('../../models');
+
+var _models2 = _interopRequireDefault(_models);
+
 var _helpers = require('../helpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -33,8 +37,15 @@ var router = _express2.default.Router();
 router.post('/', function (req, res) {
 	var email = req.body.email;
 
-	var org = "tokibot1";
-	var token = process.env.TOKI_TOKEN_1;
+
+	var env = process.env.NODE_ENV || 'development';
+	if (env == 'development') {
+		var org = "heynavi";
+		var token = process.env.DEV_TOKI_TOKEN;
+	} else {
+		var org = "tokibot1";
+		var token = process.env.TOKI_TOKEN_1;
+	}
 
 	(0, _slackInvite2.default)({ token: token, org: org, email: email }, function (err) {
 		if (err) {
@@ -44,8 +55,12 @@ router.post('/', function (req, res) {
 				res.redirect('/?invite=true&success=false&msg=' + err.message);
 			}
 			return;
+		} else {
+			_models2.default.User.create({
+				email: email
+			});
+			res.redirect('/?invite=true&success=true&msg=Yay! We sent an invite email to ' + email);
 		}
-		res.redirect('/?invite=true&success=true&msg=Yay! We sent an invite email to ' + email);
 	});
 });
 

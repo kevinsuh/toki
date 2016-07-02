@@ -4,6 +4,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 
 import invite from '../../lib/slack-invite';
+import models from '../../models';
 
 var router = express.Router();
 
@@ -14,8 +15,15 @@ import { getAuthAddress, startBot, saveUserOnLogin } from '../helpers';
 router.post('/', (req, res) => {
 
 	const { email } = req.body;
-	const org       = "tokibot1";
-	const token     = process.env.TOKI_TOKEN_1;
+
+	var env = process.env.NODE_ENV || 'development';
+	if (env == 'development') {
+		var org   = "heynavi";
+		var token = process.env.DEV_TOKI_TOKEN;
+	} else {
+		var org   = "tokibot1";
+		var token = process.env.TOKI_TOKEN_1;
+	}
 
 	invite({ token, org, email }, err => {
 		if (err) {
@@ -25,8 +33,12 @@ router.post('/', (req, res) => {
 				res.redirect(`/?invite=true&success=false&msg=${err.message}`);
 			}
 			return;
+		} else {
+			models.User.create({
+				email
+			});
+			res.redirect(`/?invite=true&success=true&msg=Yay! We sent an invite email to ${email}`);
 		}
-		res.redirect(`/?invite=true&success=true&msg=Yay! We sent an invite email to ${email}`);
 	});
 });
 

@@ -34,7 +34,6 @@ export default (app) => {
 	// root
 	app.get('/', (req, res) => {
 		var org = "tokibot1";
-		console.log(req);
 		var variables = {
 			...req.query,
 			org

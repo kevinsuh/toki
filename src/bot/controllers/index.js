@@ -59,14 +59,15 @@ var controller = Botkit.slackbot({
 });
 export { controller };
 
-
 /**
  * 		User has joined slack channel ==> make connection
  * 		then onboard!
  */
 controller.on('team_join', function (bot, message) {
-  const SlackUserId = message.user;
- 	bot.api.users.info({ user: SlackUserId }, (err, response) => {
+	console.log("\n\n\n ~~ joined the team ~~ \n\n\n");
+	const SlackUserId = message.user.id;
+
+	bot.api.users.info({ user: SlackUserId }, (err, response) => {
 
 		if (response.ok) {
 
