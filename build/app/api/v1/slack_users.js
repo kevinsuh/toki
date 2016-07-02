@@ -114,49 +114,6 @@ router.get('/', function (req, res) {
   // })
   // .then(cb);
 
-  // const teamData = { id: 'T121VLM63 4114',
-  //   bot:
-  //    { token: 'xoxb-52208318340-fwvhQnvbbmRctztpuFxrIxdG',
-  //      user_id: 'U1J649CA0',
-  //      createdBy: 'U121U9CAU' },
-  //   createdBy: 'U121U9CAU',
-  //   url: 'https://heynavi.slack.com/',
-  //   name: 'Navi',
-  //   token: 'xoxb-52208318340-fwvhQnvbbmRctztpuFxrIxdG' };
-  // const TeamId = teamData.id;
-  // const { url, name, token, createdBy } = teamData;
-  // models.Team.find({
-  //   where: { TeamId }
-  // })
-  // .then((team) => {
-  //   console.log("team is!!");
-  //   console.log(team);
-  //   console.log(`url: ${url}`);
-  //   console.log(`token: ${token}`);
-  //   console.log(`name: ${name}`);
-  //   console.log(`createdBy: ${createdBy}`);
-  //   if (!team) {
-  //     console.log("could not find team");
-  //     return models.Team.create({
-  //       TeamId,
-  //       url,
-  //       name,
-  //       token,
-  //       createdBy
-  //     });
-  //   } else {
-  //     console.log("found team");
-  //     return team.update({
-  //       TeamId,
-  //       url,
-  //       name,
-  //       token,
-  //       createdBy
-  //     });
-  //   }
-  // })
-  // .then(cb);
-
   var SlackUserId = 'U121ZK15J';
   var UserId = 1;
   // models.User.find({

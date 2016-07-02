@@ -59,6 +59,60 @@ var controller = Botkit.slackbot({
 });
 export { controller };
 
+/**
+ * 		User has joined slack channel ==> make connection
+ * 		then onboard!
+ */
+controller.on('team_join', function (bot, message) {
+	console.log("\n\n\n ~~ joined the team ~~ \n\n\n");
+	const SlackUserId = message.user.id;
+
+	bot.api.users.info({ user: SlackUserId }, (err, response) => {
+
+		if (response.ok) {
+
+			const nickName = response.user.name;
+			const email    = response.user.profile.email;
+			const TeamId   = response.user.team_id;
+
+			if (email) {
+
+				// create SlackUser to attach to user
+				models.User.find({
+					where: { email: email },
+					include: [ models.SlackUser ]
+				})
+				.then((user) => {
+					
+					if (user) {
+						user.update({
+							nickName
+						});
+						const UserId = user.id;
+						if (user.SlackUser) {
+							return user.SlackUser.update({
+								UserId,
+								SlackUserId,
+								TeamId
+							});
+						} else {
+							return models.SlackUser.create({
+								UserId,
+								SlackUserId,
+								TeamId
+							});
+						}
+					}
+				})
+				.then((slackUser) => {
+					controller.trigger('begin_onboard_flow', [ bot, { SlackUserId } ]);
+				})
+			}
+		}
+
+	});
+});
+
 // simple way to keep track of bots
 export var bots = {};
 
