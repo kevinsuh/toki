@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 var FINISH_WORD = exports.FINISH_WORD = {
 	word: "done",
-	reg_exp: new RegExp(/^[done]{3,}e$/i)
+	reg_exp: new RegExp(/\b[done]{3,}\b/i)
 };
 
 var NONE = exports.NONE = {
@@ -120,6 +120,10 @@ var buttonValues = exports.buttonValues = {
 	noTasks: {
 		name: "NO_TASKS",
 		value: "NO_TASKS"
+	},
+	noPendingTasks: {
+		name: "NO_PENDING_TASKS",
+		value: "NO_PENDING_TASKS"
 	},
 	differentTask: {
 		name: "DIFFERENT_TASK",

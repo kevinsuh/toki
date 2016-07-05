@@ -163,7 +163,6 @@ export default function(controller) {
 					} else {
 						// has pending tasks
 						dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
-						convo.say("Here are your outstanding tasks from the last time we worked together:");
 						convo.dayStart.pendingTasks = dailyTasks;
 						showPendingTasks(err, convo);
 					}

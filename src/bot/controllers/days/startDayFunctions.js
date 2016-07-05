@@ -8,7 +8,7 @@ import models from '../../../app/models';
 import { randomInt, utterances } from '../../lib/botResponses';
 import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
-import { FINISH_WORD, EXIT_EARLY_WORDS, NONE } from '../../lib/constants';
+import { FINISH_WORD, EXIT_EARLY_WORDS, NONE, colorsHash, buttonValues } from '../../lib/constants';
 
 /**
  * 		START DAY CONVERSATION FLOW FUNCTIONS
@@ -26,13 +26,98 @@ export function showPendingTasks(response, convo) {
 		dontShowMinutes: true
 	}
 	var taskListMessage = convertArrayToTaskListMessage(pendingTasks, options);
-	convo.say(taskListMessage);
-	convo.ask(`Which of these tasks would you like to work on today? Just tell me which numbers, or say \`${NONE.word}\` :1234:`, (response, convo) => {
-		savePendingTasksToWorkOn(response, convo);
-		convo.next();
-	});
+	convo.say("These are your outstanding tasks from the last time we worked together");
+	convo.say("Which of these would you like to work on today? Just tell me which numbers :1234:");
+	convo.ask({
+    text: taskListMessage,
+    attachments:[
+      {
+        attachment_type: 'default',
+        callback_id: "START_SESSION",
+        fallback: "Which tasks do you want to work on today?",
+        color: colorsHash.grey.hex,
+        actions: [
+          {
+              name: buttonValues.noPendingTasks.name,
+              text: "None of these",
+              value: buttonValues.noPendingTasks.value,
+              type: "button"
+          }
+        ]
+      }
+    ]
+  },
+  [
+    {
+      pattern: buttonValues.noPendingTasks.value,
+      callback: function(response, convo) {
+        askForDayTasks(response, convo);
+        convo.next();
+      }
+    },
+    { // NL equivalent to buttonValues.noPendingTasks.value
+      pattern: utterances.containsNone,
+      callback: function(response, convo) {
+      	convo.say("I like a fresh start each day, too :tangerine:");
+        askForDayTasks(response, convo);
+        convo.next();
+      }
+    },
+    { // user inserts some task numbers
+      pattern: utterances.containsNumber,
+      callback: function(response, convo) {
+        savePendingTasksToWorkOn(response, convo);
+        convo.next();
+      }
+    },
+    { // this is failure point
+      default: true,
+      callback: function(response, convo) {
+        convo.say("I didn't quite get that :thinking_face:");
+        convo.repeat();
+        convo.next();
+      }
+    }
+  ]);
 
 }
+
+function savePendingTasksToWorkOn(response, convo) {
+
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	var { pendingTasks }          = convo.dayStart; // ported from beginning of convo flow
+
+	// get tasks from array
+	var userInput = response.text; // i.e. `1, 3, 4, 2`
+	var prioritizedTaskArray = prioritizeTaskArrayFromUserInput(pendingTasks, userInput)
+
+	// means user input is invalid
+	if (!prioritizedTaskArray) {
+		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
+		showPendingTasks(response, convo);
+		return;
+	}
+
+	var options = {
+		dontShowMinutes: true
+	}
+	var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray, options);
+
+	convo.say("This is starting to look good :sunglasses:");
+	convo.say("Which additional tasks would you like to work on with me today?");
+	convo.say("You can enter everything in one line, separated by commas, or send me each task in a separate line");
+	convo.ask(`When you're ready to continue, just say \`${FINISH_WORD.word}\``, (response, convo) => {
+		if (FINISH_WORD.reg_exp.test(response.text)) {
+			convo.say("Awesome! You can always add more tasks later by telling me, `I'd like to add a task` or something along those lines :grinning:");
+			displayTaskList(response, convo);
+			convo.next();
+		}
+	}, { 'key' : 'tasks', 'multiple': true});
+	convo.next();
+
+}
+
 
 // user just started conersation and is entering tasks
 export function askForDayTasks(response, convo){
@@ -40,11 +125,8 @@ export function askForDayTasks(response, convo){
 	const { task }                = convo;
 	const { bot, source_message } = task;
 
-	console.log("in ask for day tasks");;
-	console.log(convo.name);
-
-	convo.say(`What tasks would you like to work on today? :pencil: You can enter everything in one line separated by commas, or send me each task in a separate line`);
-	convo.ask(`Then just tell me when you're done by saying \`${FINISH_WORD.word}\``, (response, convo) => {
+	convo.say(`What tasks would you like to work on today? :pencil:`);
+	convo.ask(`Please enter all of the tasks in one line, separated by commas, or just send me each task in a separate line. Then just tell me when you're done by saying \`${FINISH_WORD.word}\``, (response, convo) => {
 
 		for (var i = 0; i < EXIT_EARLY_WORDS.length; i++) {
 			if (response.text == EXIT_EARLY_WORDS[i])
@@ -57,72 +139,6 @@ export function askForDayTasks(response, convo){
 			convo.next();
 		}
 	}, { 'key' : 'tasks', 'multiple': true});
-
-}
-
-function savePendingTasksToWorkOn(response, convo) {
-
-	const { task }                = convo;
-	const { bot, source_message } = task;
-	var { pendingTasks }          = convo.dayStart;
-
-	if (NONE.reg_exp.test(response.text)) {
-		// SKIP
-		convo.say("I like a fresh start each day, too :tangerine:");
-		askForDayTasks(response, convo);
-		convo.next();
-	} else {
-
-		// get tasks from array
-		var userInput = response.text; // i.e. `1, 3, 4, 2`
-		var prioritizedTaskArray = prioritizeTaskArrayFromUserInput(pendingTasks, userInput)
-
-		// means user input is invalid
-		if (!prioritizedTaskArray) {
-			convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
-			showPendingTasks(response, convo);
-			return;
-		}
-
-		var options = {
-			dontShowMinutes: true
-		}
-		var taskListMessage = convertArrayToTaskListMessage(prioritizedTaskArray, options);
-
-		convo.say("Are these the ones you'd like to add to today's task list?");
-		convo.ask(taskListMessage, [
-			{
-				pattern: utterances.yes,
-				callback: (response, convo) => {
-
-					convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
-					const { SlackUserId }               = convo.dayStart;
-
-					convo.say("This is starting to look good :sunglasses:");
-					convo.say("Which additional tasks would you like to work on with me today?");
-					// convo.say("You can enter everything in one line, separated by commas, or send me each task in a separate line");
-					convo.ask(`When you're ready to continue, just say \`${FINISH_WORD.word}\``, (response, convo) => {
-						if (FINISH_WORD.reg_exp.test(response.text)) {
-							convo.say("Awesome! You can always add more tasks later by telling me, `I'd like to add a task` or something along those lines :grinning:");
-							displayTaskList(response, convo);
-							convo.next();
-						}
-					}, { 'key' : 'tasks', 'multiple': true});
-					convo.next();
-				}
-			},
-			{
-				pattern: utterances.no,
-				callback: (response, convo) => {
-					convo.say("I'm glad I checked :sweat:");
-					convo.say("Just tell me which numbers correspond to the tasks you'd like to work on today. You can also say `none` if you want to start a task list from scratch");
-					showPendingTasks(response, convo);
-					convo.next();
-				}
-			}
-		])
-
-	}
 
 }
 
