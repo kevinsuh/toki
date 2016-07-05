@@ -29,56 +29,56 @@ export function showPendingTasks(response, convo) {
 	convo.say("These are your outstanding tasks from the last time we worked together");
 	convo.say("Which of these would you like to work on today? Just tell me which numbers :1234:");
 	convo.ask({
-    text: taskListMessage,
-    attachments:[
-      {
-        attachment_type: 'default',
-        callback_id: "START_SESSION",
-        fallback: "Which tasks do you want to work on today?",
-        color: colorsHash.grey.hex,
-        actions: [
-          {
-              name: buttonValues.noPendingTasks.name,
-              text: "None of these",
-              value: buttonValues.noPendingTasks.value,
-              type: "button"
-          }
-        ]
-      }
-    ]
-  },
-  [
-    {
-      pattern: buttonValues.noPendingTasks.value,
-      callback: function(response, convo) {
-        askForDayTasks(response, convo);
-        convo.next();
-      }
-    },
-    { // NL equivalent to buttonValues.noPendingTasks.value
-      pattern: utterances.containsNone,
-      callback: function(response, convo) {
-      	convo.say("I like a fresh start each day, too :tangerine:");
-        askForDayTasks(response, convo);
-        convo.next();
-      }
-    },
-    { // user inserts some task numbers
-      pattern: utterances.containsNumber,
-      callback: function(response, convo) {
-        savePendingTasksToWorkOn(response, convo);
-        convo.next();
-      }
-    },
-    { // this is failure point
-      default: true,
-      callback: function(response, convo) {
-        convo.say("I didn't quite get that :thinking_face:");
-        convo.repeat();
-        convo.next();
-      }
-    }
-  ]);
+		text: taskListMessage,
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "START_SESSION",
+				fallback: "Which tasks do you want to work on today?",
+				color: colorsHash.grey.hex,
+				actions: [
+					{
+							name: buttonValues.noPendingTasks.name,
+							text: "None of these",
+							value: buttonValues.noPendingTasks.value,
+							type: "button"
+					}
+				]
+			}
+		]
+	},
+	[
+		{
+			pattern: buttonValues.noPendingTasks.value,
+			callback: function(response, convo) {
+				askForDayTasks(response, convo);
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.noPendingTasks.value
+			pattern: utterances.containsNone,
+			callback: function(response, convo) {
+				convo.say("I like a fresh start each day, too :tangerine:");
+				askForDayTasks(response, convo);
+				convo.next();
+			}
+		},
+		{ // user inserts some task numbers
+			pattern: utterances.containsNumber,
+			callback: function(response, convo) {
+				savePendingTasksToWorkOn(response, convo);
+				convo.next();
+			}
+		},
+		{ // this is failure point
+			default: true,
+			callback: function(response, convo) {
+				convo.say("I didn't quite get that :thinking_face:");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
 
 }
 
