@@ -31,7 +31,7 @@ export function randomInt(min, max) {
 }
 
 export const utterances = {
-	yes: new RegExp(/(^(yes|yea|yup|yep|ya|sure|ok|y|yeah|yah)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
+	yes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|(\b[do ]+[this]{2,})|(\b[do ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
 	no: new RegExp(/(^(no|nah|nope|n)|\bn[oahpe]+\b)/i),
 	containsNew: new RegExp(/(\bn[new]{2,}\b)/i),
 	containsCheckin: new RegExp(/(\bch[check in]{3,}\b)/i),
@@ -43,5 +43,9 @@ export const utterances = {
 	startSession:  new RegExp(/((s[start ]{2,}|n[new ]{2,}|w[work ]{2,})|s[session]{2,})/i),
 	containsEnd: new RegExp(/(e[end]{2,})/i),
 	containsNone: new RegExp(/((no|none|didnt|didn't)|\bn[otahpe]+\b)/i),
-	containsDifferent: new RegExp(/((\bdi[different]{4,}\b)|(\b[else ]{3,}\b))/i)
+	containsDifferent: new RegExp(/((\bdi[different]{4,}\b)|(\b[else ]{3,}\b))/i),
+	containsNone: new RegExp(/\b[none]{2,}\b/i),
+	containsNumber: new RegExp(/\d/i),
+	containsAdd: new RegExp(/a[add]{1,}/i),
+	containsTask: new RegExp(/t[task]{2,}/i)
 }

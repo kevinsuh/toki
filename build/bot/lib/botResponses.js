@@ -3,8 +3,14 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
+
+var _utterances;
+
 exports.helloResponse = helloResponse;
 exports.randomInt = randomInt;
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 // this contains responses that is randomized to keep things fresh and funky
 
 // respond to hello
@@ -29,8 +35,8 @@ function randomInt(min, max) {
 	return randomIndex;
 }
 
-var utterances = exports.utterances = {
-	yes: new RegExp(/(^(yes|yea|yup|yep|ya|sure|ok|y|yeah|yah)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
+var utterances = exports.utterances = (_utterances = {
+	yes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|(\b[do ]+[this]{2,})|(\b[do ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
 	no: new RegExp(/(^(no|nah|nope|n)|\bn[oahpe]+\b)/i),
 	containsNew: new RegExp(/(\bn[new]{2,}\b)/i),
 	containsCheckin: new RegExp(/(\bch[check in]{3,}\b)/i),
@@ -43,5 +49,5 @@ var utterances = exports.utterances = {
 	containsEnd: new RegExp(/(e[end]{2,})/i),
 	containsNone: new RegExp(/((no|none|didnt|didn't)|\bn[otahpe]+\b)/i),
 	containsDifferent: new RegExp(/((\bdi[different]{4,}\b)|(\b[else ]{3,}\b))/i)
-};
+}, _defineProperty(_utterances, "containsNone", new RegExp(/\b[none]{2,}\b/i)), _defineProperty(_utterances, "containsNumber", new RegExp(/\d/i)), _defineProperty(_utterances, "containsAdd", new RegExp(/a[add]{1,}/i)), _defineProperty(_utterances, "containsTask", new RegExp(/t[task]{2,}/i)), _utterances);
 //# sourceMappingURL=botResponses.js.map

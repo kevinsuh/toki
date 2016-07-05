@@ -18,6 +18,8 @@ exports.commaSeparateOutTaskArray = commaSeparateOutTaskArray;
 
 var _constants = require('./constants');
 
+var _botResponses = require('./botResponses');
+
 /**
  * takes array of tasks and converts to array of task STRINGS
  * these "response objects" are botkit MESSAGE response
@@ -29,7 +31,8 @@ function convertResponseObjectsToTaskArray(tasks) {
 	var taskString = '';
 	tasks.forEach(function (task, index) {
 		// ignore the last one (`done` command)
-		if (_constants.FINISH_WORD.reg_exp.test(task.text)) {
+		// also ignore if it is an `add a task` NL command
+		if (_constants.FINISH_WORD.reg_exp.test(task.text) || _botResponses.utterances.containsAdd.test(task.text) && _botResponses.utterances.containsTask.test(task.text)) {
 			return;
 		}
 

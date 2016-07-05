@@ -51,8 +51,17 @@ exports.default = function (controller) {
 				case _constants.buttonValues.noTasks.value:
 					bot.replyInteractive(message, "No worries! :smile_cat:");
 					break;
+				case _constants.buttonValues.noPendingTasks.value:
+					bot.replyInteractive(message, "I like a fresh start each day, too :tangerine:");
+					break;
+				case _constants.buttonValues.noAdditionalTasks.value:
+					bot.replyInteractive(message, "Sounds good!");
+					break;
 				case _constants.buttonValues.backLater.value:
 					bot.replyInteractive(message, "Okay! I'll be here when you get back");
+					break;
+				case _constants.buttonValues.actuallyWantToAddATask.value:
+					bot.replyInteractive(message, "Of course - just add another task here and say `done` when you're ready to go");
 					break;
 				case _constants.buttonValues.differentTask.value:
 					bot.replyInteractive(message, "What did you get done instead?");

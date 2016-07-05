@@ -53,9 +53,18 @@ export default function(controller) {
 				case buttonValues.noTasks.value:
 					bot.replyInteractive(message, "No worries! :smile_cat:");
 					break;
+				case buttonValues.noPendingTasks.value:
+					bot.replyInteractive(message, "I like a fresh start each day, too :tangerine:");
+					break;
+				case buttonValues.noAdditionalTasks.value:
+					bot.replyInteractive(message, "Sounds good!");
+					break;
 				case buttonValues.backLater.value:
 					bot.replyInteractive(message, "Okay! I'll be here when you get back");
 					break;
+				case buttonValues.actuallyWantToAddATask.value:
+					bot.replyInteractive(message, "Of course - just add another task here and say `done` when you're ready to go");
+				break;
 				case buttonValues.differentTask.value:
 					bot.replyInteractive(message, "What did you get done instead?");
 					break;

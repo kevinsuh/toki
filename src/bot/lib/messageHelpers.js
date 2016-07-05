@@ -3,7 +3,7 @@
  */
 
 import { FINISH_WORD } from './constants';
-
+import { utterances } from './botResponses';
 
 /**
  * takes array of tasks and converts to array of task STRINGS
@@ -16,7 +16,8 @@ export function convertResponseObjectsToTaskArray(tasks) {
 	var taskString = '';
 	tasks.forEach((task, index) => {
 		// ignore the last one (`done` command)
-		if (FINISH_WORD.reg_exp.test(task.text)) {
+		// also ignore if it is an `add a task` NL command
+		if (FINISH_WORD.reg_exp.test(task.text) || (utterances.containsAdd.test(task.text) && utterances.containsTask.test(task.text))) {
 			return;
 		}
 
