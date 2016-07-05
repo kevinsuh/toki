@@ -125,6 +125,10 @@ export const buttonValues ={
 		name: "NO_ADDITIONAL_TASKS",
 		value: "NO_ADDITIONAL_TASKS"
 	},
+	actuallyWantToAddATask: {
+		name: "ACTUALLY_WANT_TO_ADD_TASK",
+		value: "ACTUALLY_WANT_TO_ADD_TASK"
+	},
 	differentTask: {
 		name: "DIFFERENT_TASK",
 		value: "DIFFERENT_TASK"

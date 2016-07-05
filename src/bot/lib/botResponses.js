@@ -45,5 +45,7 @@ export const utterances = {
 	containsNone: new RegExp(/((no|none|didnt|didn't)|\bn[otahpe]+\b)/i),
 	containsDifferent: new RegExp(/((\bdi[different]{4,}\b)|(\b[else ]{3,}\b))/i),
 	containsNone: new RegExp(/\b[none]{2,}\b/i),
-	containsNumber: new RegExp(/\d/i)
+	containsNumber: new RegExp(/\d/i),
+	containsAdd: new RegExp(/a[add]{1,}/i),
+	containsTask: new RegExp(/t[task]{2,}/i)
 }

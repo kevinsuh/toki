@@ -125,6 +125,7 @@ function savePendingTasksToWorkOn(response, convo) {
 	};
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 
+	var tasks = [];
 	convo.say("This is starting to look good :sunglasses:");
 	convo.say("Which additional tasks would you like to work on with me today?");
 	convo.say("You can enter everything in one line, separated by commas, or send me each task in a separate line");
@@ -157,21 +158,25 @@ function savePendingTasksToWorkOn(response, convo) {
 	}, { // this is additional task added in this case.
 		default: true,
 		callback: function callback(response, convo) {
+			tasks.push(response);
 			if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
-				saveTaskResponsesToTasksObject(convo);
+				saveTaskResponsesToDayStartObject(tasks, convo);
 				getTimeToTasks(response, convo);
 				convo.next();
 			}
 		}
-	}], { 'key': 'tasks', 'multiple': true });
+	}]);
 }
 
 // helper function save convo responses to your taskArray obj
-function saveTaskResponsesToTasksObject(convo) {
+// this will get the new tasks, from whichever part of convo flow
+// that you are getting them, then add them to the existing
+// `convo.dayStart.taskArray` property
+function saveTaskResponsesToDayStartObject(tasks, convo) {
 
 	// add the new tasks to existing pending tasks!
-	var tasks = convo.responses.tasks;
 	var taskArray = convo.dayStart.taskArray;
+
 
 	if (tasks) {
 		var newTasksArray = (0, _messageHelpers.convertResponseObjectsToTaskArray)(tasks);
@@ -192,6 +197,7 @@ function askForDayTasks(response, convo) {
 	var source_message = task.source_message;
 
 
+	var tasks = [];
 	convo.say('What tasks would you like to work on today? :pencil:');
 	convo.ask('Please enter all of the tasks in one line, separated by commas, or just send me each task in a separate line. Then just tell me when you\'re done by saying `' + _constants.FINISH_WORD.word + '`', function (response, convo) {
 
@@ -199,12 +205,39 @@ function askForDayTasks(response, convo) {
 			if (response.text == _constants.EXIT_EARLY_WORDS[i]) convo.stop();
 		}
 
+		tasks.push(response);
 		if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
-			saveTaskResponsesToTasksObject(convo);
+			saveTaskResponsesToDayStartObject(tasks, convo);
 			getTimeToTasks(response, convo);
 			convo.next();
 		}
-	}, { 'key': 'tasks', 'multiple': true });
+	});
+}
+
+// if user wants to add more tasks
+function addMoreTasks(response, convo) {
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
+
+
+	convo.say("Of course - just add another task here and say `done` when you're ready to go");
+	var taskArray = convo.dayStart.taskArray;
+
+	var options = { dontShowMinutes: true };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
+
+	var tasks = [];
+	convo.ask(taskListMessage, function (response, convo) {
+
+		tasks.push(response);
+
+		if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
+			saveTaskResponsesToDayStartObject(tasks, convo);
+			getTimeToTasks(response, convo);
+			convo.next();
+		}
+	});
 }
 
 // ask the question to get time to tasks
@@ -215,11 +248,40 @@ function getTimeToTasks(response, convo) {
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 
 	convo.say("Excellent! How much time would you like to allocate to each task?");
-	convo.say(taskListMessage);
-	convo.ask('Just say, `30, 40, 1 hour, 1hr 10 min, 15m` in order and I\'ll figure it out and assign those times to the tasks above :smiley:', function (response, convo) {
-		assignTimeToTasks(response, convo);
-		convo.next();
-	}, { 'key': 'timeToTasksResponse' });
+	convo.ask({
+		text: taskListMessage,
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "TIME_TO_TASKS",
+			fallback: "How much time would you like to allocate to your tasks?",
+			color: _constants.colorsHash.grey.hex,
+			actions: [{
+				name: _constants.buttonValues.actuallyWantToAddATask.name,
+				text: "Add more tasks!",
+				value: _constants.buttonValues.actuallyWantToAddATask.value,
+				type: "button"
+			}]
+		}]
+	}, [{
+		pattern: _constants.buttonValues.actuallyWantToAddATask.value,
+		callback: function callback(response, convo) {
+			addMoreTasks(response, convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			if (_botResponses.utterances.containsAdd.test(response.text) && _botResponses.utterances.containsTask.test(response.text)) {
+				// NL equivalent to buttonValues.actuallyWantToAddATask.value
+				addMoreTasks(response, convo);
+			} else if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
+				// user is ready to move on w/ conversation
+				saveTaskResponsesToTasksObject(convo);
+				getTimeToTasks(response, convo);
+			}
+			convo.next();
+		}
+	}]);
 }
 
 // this is the work we do to actually assign time to tasks
