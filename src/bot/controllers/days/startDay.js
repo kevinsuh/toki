@@ -169,85 +169,85 @@ export default function(controller) {
 
 				});
 
-    		// on finish conversation
-    		convo.on('end', (convo) => {
+				// on finish conversation
+				convo.on('end', (convo) => {
 
-  				var responses = convo.extractResponses();
-  				const { dayStart } = convo;
+					var responses = convo.extractResponses();
+					const { dayStart } = convo;
 
-  				console.log('done!')
-  				console.log("here is day start object:\n\n\n");
-  				console.log(convo.dayStart);
-  				console.log("\n\n\n");
+					console.log('done!')
+					console.log("here is day start object:\n\n\n");
+					console.log(convo.dayStart);
+					console.log("\n\n\n");
 
-    			if (convo.status == 'completed') {
+					if (convo.status == 'completed') {
 
-    				const { UserId, taskArray } = dayStart;
+						const { UserId, taskArray } = dayStart;
 
-    				// log `start_work` in SessionGroups
-    				// and all other relevant DB inserts
-    				models.SessionGroup.create({
-    					type: "start_work",
-    					UserId
-    				})
-    				.then((sessionGroup) => {
+						// log `start_work` in SessionGroups
+						// and all other relevant DB inserts
+						models.SessionGroup.create({
+							type: "start_work",
+							UserId
+						})
+						.then((sessionGroup) => {
 
-    					// make all tasks into archived at end of `start_day` flow
-    					// because you explicitly decided to not work on them anymore
-	    				user.getDailyTasks({
-	    					where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" IN (?)`, sessionGroup.createdAt, ["pending", "live"] ]
-	    				})
-	    				.then((dailyTasks) => {
-	    					dailyTasks.forEach((dailyTask) => {
-					        dailyTask.update({
-					          type: "archived"
-					        });
-					      });
-		    				
-					      // After all of the previous tasks have been put into "pending", choose the select ones and bring them back to "live"
-		    				taskArray.forEach((task, index) => {
+							// make all tasks into archived at end of `start_day` flow
+							// because you explicitly decided to not work on them anymore
+							user.getDailyTasks({
+								where: [`"DailyTask"."createdAt" < ? AND "DailyTask"."type" IN (?)`, sessionGroup.createdAt, ["pending", "live"] ]
+							})
+							.then((dailyTasks) => {
+								dailyTasks.forEach((dailyTask) => {
+									dailyTask.update({
+										type: "archived"
+									});
+								});
+								
+								// After all of the previous tasks have been put into "pending", choose the select ones and bring them back to "live"
+								taskArray.forEach((task, index) => {
 
-		    					const { dataValues } = task;
-		    					var priority = index + 1;
-		    					const { text, minutes} = task;
+									const { dataValues } = task;
+									var priority = index + 1;
+									const { text, minutes} = task;
 
-		    					if (dataValues) { // only existing tasks have data values
+									if (dataValues) { // only existing tasks have data values
 
-		    						// for these, we'll still be making NEW `daily_tasks`, using OLD `tasks`
-		    						const { id } = dataValues;
-		    						models.DailyTask.find({
-		    							where: { id },
-		    							include: [ models.Task ]
-		    						})
-		    						.then((dailyTask) => {
-		    							const TaskId = dailyTask.TaskId;
-		    							models.DailyTask.create({
-		    								TaskId,
-		    								minutes,
-		    								priority,
-		    								UserId
-		    							});
-		    						});
+										// for these, we'll still be making NEW `daily_tasks`, using OLD `tasks`
+										const { id } = dataValues;
+										models.DailyTask.find({
+											where: { id },
+											include: [ models.Task ]
+										})
+										.then((dailyTask) => {
+											const TaskId = dailyTask.TaskId;
+											models.DailyTask.create({
+												TaskId,
+												minutes,
+												priority,
+												UserId
+											});
+										});
 
-		    					} else { // new task
-		    						
-		    						models.Task.create({
-									    text
-									  })
-									  .then((task) => {
-									    models.DailyTask.create({
-									      TaskId: task.id,
-									      priority,
-									      minutes,
-									      UserId
-									    });
-									  });
-		    					}
+									} else { // new task
+										
+										models.Task.create({
+											text
+										})
+										.then((task) => {
+											models.DailyTask.create({
+												TaskId: task.id,
+												priority,
+												minutes,
+												UserId
+											});
+										});
+									}
 
-		    				});
-	    				});
+								});
+							});
 
-	    				// cancel all user breaks cause user is RDY TO START DAY
+							// cancel all user breaks cause user is RDY TO START DAY
 							user.getReminders({
 								where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break"] ]
 							}).
@@ -259,22 +259,22 @@ export default function(controller) {
 								});
 							})
 
-	    			});
+						});
 
-    				// TRIGGER SESSION_START HERE
-    				if (dayStart.startDayDecision == intentConfig.START_SESSION) {
-    					controller.trigger(`confirm_new_session`, [ bot, { SlackUserId }]);
-    					return;
-    				}
+						// TRIGGER SESSION_START HERE
+						if (dayStart.startDayDecision == intentConfig.START_SESSION) {
+							controller.trigger(`confirm_new_session`, [ bot, { SlackUserId }]);
+							return;
+						}
 
-    			} else {
-    				// default premature end
+					} else {
+						// default premature end
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 							convo.say("Okay! Exiting now. Let me know when you want to start your day!");
 							convo.next();
 						});
-    			}
-    		});
+					}
+				});
 
 			});
 
