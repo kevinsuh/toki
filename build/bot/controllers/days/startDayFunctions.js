@@ -55,13 +55,12 @@ function showPendingTasks(response, convo) {
 		dontShowMinutes: true
 	};
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(pendingTasks, options);
-	convo.say("These are your outstanding tasks from the last time we worked together");
-	convo.say("Which of these would you like to work on today? Just tell me which numbers :1234:");
+	convo.say("Which of these outstanding tasks would you still like to work on? Just tell me the numbers :1234:");
 	convo.ask({
 		text: taskListMessage,
 		attachments: [{
 			attachment_type: 'default',
-			callback_id: "START_SESSION",
+			callback_id: "PENDING_TASKS",
 			fallback: "Which tasks do you want to work on today?",
 			color: _constants.colorsHash.grey.hex,
 			actions: [{
@@ -109,31 +108,81 @@ function savePendingTasksToWorkOn(response, convo) {
 	// get tasks from array
 
 	var userInput = response.text; // i.e. `1, 3, 4, 2`
-	var prioritizedTaskArray = (0, _messageHelpers.prioritizeTaskArrayFromUserInput)(pendingTasks, userInput);
+	var taskArray = (0, _messageHelpers.prioritizeTaskArrayFromUserInput)(pendingTasks, userInput);
 
 	// means user input is invalid
-	if (!prioritizedTaskArray) {
+	if (!taskArray) {
 		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
 		showPendingTasks(response, convo);
 		return;
+	} else {
+		// save this to keep moving on!
+		convo.dayStart.taskArray = taskArray;
 	}
 
 	var options = {
 		dontShowMinutes: true
 	};
-	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTaskArray, options);
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 
 	convo.say("This is starting to look good :sunglasses:");
 	convo.say("Which additional tasks would you like to work on with me today?");
 	convo.say("You can enter everything in one line, separated by commas, or send me each task in a separate line");
-	convo.ask('When you\'re ready to continue, just say `' + _constants.FINISH_WORD.word + '`', function (response, convo) {
-		if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
-			convo.say("Awesome! You can always add more tasks later by telling me, `I'd like to add a task` or something along those lines :grinning:");
-			displayTaskList(response, convo);
+	convo.ask({
+		text: "Then just tell me when you're `done`!",
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "NEW_TASKS",
+			fallback: "Which additional tasks do you want to work on?",
+			color: _constants.colorsHash.grey.hex,
+			actions: [{
+				name: _constants.buttonValues.noAdditionalTasks.name,
+				text: "No additional tasks",
+				value: _constants.buttonValues.noAdditionalTasks.value,
+				type: "button"
+			}]
+		}]
+	}, [{
+		pattern: _constants.buttonValues.noAdditionalTasks.value,
+		callback: function callback(response, convo) {
+			getTimeToTasks(response, convo);
 			convo.next();
 		}
-	}, { 'key': 'tasks', 'multiple': true });
-	convo.next();
+	}, { // NL equivalent to buttonValues.noAdditionalTasks.value
+		pattern: _botResponses.utterances.containsNone,
+		callback: function callback(response, convo) {
+			getTimeToTasks(response, convo);
+			convo.next();
+		}
+	}, { // this is additional task added in this case.
+		default: true,
+		callback: function callback(response, convo) {
+			if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
+				saveTaskResponsesToTasksObject(convo);
+				getTimeToTasks(response, convo);
+				convo.next();
+			}
+		}
+	}], { 'key': 'tasks', 'multiple': true });
+}
+
+// helper function save convo responses to your taskArray obj
+function saveTaskResponsesToTasksObject(convo) {
+
+	// add the new tasks to existing pending tasks!
+	var tasks = convo.responses.tasks;
+	var taskArray = convo.dayStart.taskArray;
+
+	if (tasks) {
+		var newTasksArray = (0, _messageHelpers.convertResponseObjectsToTaskArray)(tasks);
+		if (!taskArray) {
+			taskArray = [];
+		}
+		newTasksArray.forEach(function (task) {
+			taskArray.push(task);
+		});
+		convo.dayStart.taskArray = taskArray;
+	}
 }
 
 // user just started conersation and is entering tasks
@@ -151,92 +200,22 @@ function askForDayTasks(response, convo) {
 		}
 
 		if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
-			convo.say("Awesome! You can always add more tasks later by telling me, `I'd like to add a task` or something along those lines :grinning:");
-			displayTaskList(response, convo);
+			saveTaskResponsesToTasksObject(convo);
+			getTimeToTasks(response, convo);
 			convo.next();
 		}
 	}, { 'key': 'tasks', 'multiple': true });
 }
 
-// user has just entered his tasks for us to display back
-function displayTaskList(response, convo) {
-	var task = convo.task;
-	var bot = task.bot;
-	var source_message = task.source_message;
-	var tasks = convo.responses.tasks;
-	var prioritizedTaskArray = convo.dayStart.prioritizedTaskArray; // this can be filled if user is passing over pending tasks
-
-	var tasks = convo.responses.tasks;
-	var taskArray = (0, _messageHelpers.convertResponseObjectsToTaskArray)(tasks);
-
-	// push pending tasks onto user inputed daily tasks
-	prioritizedTaskArray.forEach(function (task) {
-		taskArray.push(task);
-	});
-
-	// taskArray is now attached to convo
-	convo.dayStart.taskArray = taskArray;
+// ask the question to get time to tasks
+function getTimeToTasks(response, convo) {
+	var taskArray = convo.dayStart.taskArray;
 
 	var options = { dontShowMinutes: true };
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 
-	// we need to prioritize the task list here to display to user
-	convo.say('Now, please rank your tasks in order of your priorities today');
+	convo.say("Excellent! How much time would you like to allocate to each task?");
 	convo.say(taskListMessage);
-	convo.ask('You can just list the numbers, like `3, 4, 1, 2, 5`', function (response, convo) {
-		prioritizeTaskList(response, convo);
-		convo.next();
-	}, { 'key': 'taskPriorities' });
-}
-
-// user has listed `5, 4, 2, 1, 3` for priorities to handle here
-function prioritizeTaskList(response, convo) {
-	var task = convo.task;
-	var bot = task.bot;
-	var source_message = task.source_message;
-
-	// organize the task list!
-
-	var taskArray = convo.dayStart.taskArray;
-
-	// get tasks from array
-
-	var userInput = response.text; // i.e. `1, 3, 4, 2`
-	var prioritizedTaskArray = (0, _messageHelpers.prioritizeTaskArrayFromUserInput)(taskArray, userInput);
-
-	// means user input is invalid
-	if (!prioritizedTaskArray) {
-		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
-		displayTaskList(response, convo);
-		return;
-	}
-
-	convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
-	var options = { dontShowMinutes: true };
-	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTaskArray, options);
-
-	convo.say("Is this the right priority?");
-	convo.ask(taskListMessage, [{
-		pattern: _botResponses.utterances.yes,
-		callback: function callback(response, convo) {
-			convo.say("Excellent! Last thing: how much time would you like to allocate to each task today?");
-			convo.say(taskListMessage);
-			getTimeToTasks(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _botResponses.utterances.no,
-		callback: function callback(response, convo) {
-
-			convo.say("Whoops :banana: Let's try to do this again");
-			displayTaskList(response, convo);
-			convo.next();
-		}
-	}], { 'key': 'confirmedRightPriority' });
-}
-
-// ask the question to get time to tasks
-function getTimeToTasks(response, convo) {
 	convo.ask('Just say, `30, 40, 1 hour, 1hr 10 min, 15m` in order and I\'ll figure it out and assign those times to the tasks above :smiley:', function (response, convo) {
 		assignTimeToTasks(response, convo);
 		convo.next();
@@ -335,5 +314,90 @@ function assignTimeToTasks(response, convo) {
 			convo.next();
 		}
 	}]);
+}
+
+/**
+ * 		DEPRECATED NOW THAT NO PRIORITIZATION
+ * 		~~ if reimplemented will need to re-integrate properly ~~
+ */
+// user has just entered his tasks for us to display back
+function displayTaskList(response, convo) {
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
+	var tasks = convo.responses.tasks;
+	var prioritizedTaskArray = convo.dayStart.prioritizedTaskArray; // this can be filled if user is passing over pending tasks
+
+	var tasks = convo.responses.tasks;
+	var taskArray = (0, _messageHelpers.convertResponseObjectsToTaskArray)(tasks);
+
+	// push pending tasks onto user inputed daily tasks
+	prioritizedTaskArray.forEach(function (task) {
+		taskArray.push(task);
+	});
+
+	// taskArray is now attached to convo
+	convo.dayStart.taskArray = taskArray;
+
+	var options = { dontShowMinutes: true };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
+
+	// we need to prioritize the task list here to display to user
+	convo.say('Now, please rank your tasks in order of your priorities today');
+	convo.say(taskListMessage);
+	convo.ask('You can just list the numbers, like `3, 4, 1, 2, 5`', function (response, convo) {
+		prioritizeTaskList(response, convo);
+		convo.next();
+	}, { 'key': 'taskPriorities' });
+}
+
+/**
+ * 		DEPRECATED NOW THAT NO PRIORITIZATION
+ * 		~~ if reimplemented will need to re-integrate properly ~~
+ */
+// user has listed `5, 4, 2, 1, 3` for priorities to handle here
+function prioritizeTaskList(response, convo) {
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
+
+	// organize the task list!
+
+	var taskArray = convo.dayStart.taskArray;
+
+	// get tasks from array
+
+	var userInput = response.text; // i.e. `1, 3, 4, 2`
+	var prioritizedTaskArray = (0, _messageHelpers.prioritizeTaskArrayFromUserInput)(taskArray, userInput);
+
+	// means user input is invalid
+	if (!prioritizedTaskArray) {
+		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
+		displayTaskList(response, convo);
+		return;
+	}
+
+	convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
+	var options = { dontShowMinutes: true };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTaskArray, options);
+
+	convo.say("Is this the right priority?");
+	convo.ask(taskListMessage, [{
+		pattern: _botResponses.utterances.yes,
+		callback: function callback(response, convo) {
+			convo.say("Excellent! Last thing: how much time would you like to allocate to each task today?");
+			convo.say(taskListMessage);
+			getTimeToTasks(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _botResponses.utterances.no,
+		callback: function callback(response, convo) {
+
+			convo.say("Whoops :banana: Let's try to do this again");
+			displayTaskList(response, convo);
+			convo.next();
+		}
+	}], { 'key': 'confirmedRightPriority' });
 }
 //# sourceMappingURL=startDayFunctions.js.map

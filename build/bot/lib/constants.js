@@ -125,6 +125,10 @@ var buttonValues = exports.buttonValues = {
 		name: "NO_PENDING_TASKS",
 		value: "NO_PENDING_TASKS"
 	},
+	noAdditionalTasks: {
+		name: "NO_ADDITIONAL_TASKS",
+		value: "NO_ADDITIONAL_TASKS"
+	},
 	differentTask: {
 		name: "DIFFERENT_TASK",
 		value: "DIFFERENT_TASK"
