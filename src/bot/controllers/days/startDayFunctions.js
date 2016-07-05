@@ -133,7 +133,6 @@ function savePendingTasksToWorkOn(response, convo) {
 		{
 			pattern: buttonValues.noAdditionalTasks.value,
 			callback: function(response, convo) {
-				convo.say("Excellent!");
 				getTimeToTasks(response, convo);
 				convo.next();
 			}
