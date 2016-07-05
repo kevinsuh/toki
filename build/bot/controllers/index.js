@@ -115,8 +115,61 @@ var controller = _botkit2.default.slackbot({
 });
 exports.controller = controller;
 
-// simple way to keep track of bots
+/**
+ * 		User has joined slack channel ==> make connection
+ * 		then onboard!
+ */
 
+controller.on('team_join', function (bot, message) {
+	console.log("\n\n\n ~~ joined the team ~~ \n\n\n");
+	var SlackUserId = message.user.id;
+
+	bot.api.users.info({ user: SlackUserId }, function (err, response) {
+
+		if (response.ok) {
+			(function () {
+
+				var nickName = response.user.name;
+				var email = response.user.profile.email;
+				var TeamId = response.user.team_id;
+
+				if (email) {
+
+					// create SlackUser to attach to user
+					_models2.default.User.find({
+						where: { email: email },
+						include: [_models2.default.SlackUser]
+					}).then(function (user) {
+
+						if (user) {
+							user.update({
+								nickName: nickName
+							});
+							var UserId = user.id;
+							if (user.SlackUser) {
+								return user.SlackUser.update({
+									UserId: UserId,
+									SlackUserId: SlackUserId,
+									TeamId: TeamId
+								});
+							} else {
+								return _models2.default.SlackUser.create({
+									UserId: UserId,
+									SlackUserId: SlackUserId,
+									TeamId: TeamId
+								});
+							}
+						}
+					}).then(function (slackUser) {
+						controller.trigger('begin_onboard_flow', [bot, { SlackUserId: SlackUserId }]);
+					});
+				}
+			})();
+		}
+	});
+});
+
+// simple way to keep track of bots
 var bots = exports.bots = {};
 
 if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT) {

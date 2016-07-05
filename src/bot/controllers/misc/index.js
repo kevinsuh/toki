@@ -13,6 +13,7 @@ import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, con
 import intentConfig from '../../lib/intents';
 
 export default function(controller) {
+
 	// this will send message if no other intent gets picked up
 	controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
 
@@ -108,7 +109,7 @@ export default function(controller) {
 
 				convo.on('end', (convo) => {
 
-					consoleLog("in back up area!!!", convo.onBoard);
+					consoleLog("end of onboard for user!!!!", convo.onBoard);
 
 					const { SlackUserId, nickName, timeZone } = convo.onBoard;
 

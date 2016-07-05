@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 exports.default = function (controller) {
+
 	// this will send message if no other intent gets picked up
 	controller.hears([''], 'direct_message', _index.wit.hears, function (bot, message) {
 
@@ -92,7 +93,7 @@ exports.default = function (controller) {
 
 				convo.on('end', function (convo) {
 
-					(0, _miscHelpers.consoleLog)("in back up area!!!", convo.onBoard);
+					(0, _miscHelpers.consoleLog)("end of onboard for user!!!!", convo.onBoard);
 
 					var _convo$onBoard = convo.onBoard;
 					var SlackUserId = _convo$onBoard.SlackUserId;

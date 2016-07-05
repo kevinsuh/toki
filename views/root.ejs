@@ -1,8 +1,29 @@
 <!DOCTYPE html>
 <html dir="ltr" lang="en-US">
+
   <body>
 	<h1 style="text-align: center; margin-top: 20px;">Hey! I'm toki</h1>
 
+	<% if (locals.invite && locals.msg) { %>
+	<div class="flash-<%= locals.success ? 'success' : 'error' %>">
+		<%= locals.msg %>
+	</div>
+	<% } %>
+
+	<div class="splash <%= true ? 'helo' : 'goodbye' %>">
+		<p>
+			Join Toki on Slack!
+		</p>
+		<form id="invite" method="post" action="/invite">
+			<input class="form-item" type="email" name="email" placeholder="you@yourdomain.com" required />
+			<input type="submit" value="Get my Invite" />
+			<a href=<%= "https://"+org+".slack.com" %> target="_top">
+				Sign In
+			</a>
+		</form>
+	</div>
+
+	<% if (false) { %>
 	<center>
 		<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
 	</center>
@@ -10,7 +31,7 @@
 	<center style="margin-top: 25px;">
 		<a href="https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>login&scope=identity.basic"><img alt="Add to Slack" height="40" width="172" src="/assets/images/sign_in_with_slack_2.png" /></a>
 	</center>
-	
+	<% } %>
 
   </body>
 </html>

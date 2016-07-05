@@ -1,6 +1,6 @@
-# Toki: your personal time fairy
+# Toki: your time and attention sidekick
 
-**Toki is a slackbot that helps you accomplish the things that you intend to each day.** Its goal is to help you make the most of your time and attention, so you can do the things that are most important to you.
+**Toki is a slackbot that helps you accomplish the things that you intend to each day.** Its goal is to help manage your time and attention throughout the day, so you can do the things that are most important to you.
 
 We have personally noticed a growing problem: **_our attention is being arbitraged by internet companies._** As technology grows, our attention doesn't scale accordingly. This leads to an unceasing competition for a limited resource that is most important to each of us: our time and attention. We want to build technology that's on our side of this battle, that cares about our values and intentions holistically.
 
@@ -20,10 +20,10 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 <a name="main-features"/>
 # Main Features
 #### Start your day
-  * View/add pending tasks
   * Add new tasks
   * Prioritize tasks
   * Add time to tasks
+  * View/add pending tasks
   * Launch into work session
 
 #### Start Work Session
@@ -52,6 +52,7 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 * Node.js
 * ExpressJS
 * React-Redux
+* HTML / SCSS / jQuery
 
 #### Slack Bot
 * Node.js
@@ -68,7 +69,7 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 <a name="config"/>
 # Config
 `config.json` holds DB config settings
-We use a shell variable to hold our production DB settings, which Sequelize recognizes.
+Our production DB settings is held in `~/.bash_profile` which you can access through the alias `update-env`. Sequelize uses this when `NODE_ENV` is set to `production`
 
 <a name="directory-structure">
 # Directory Structure
