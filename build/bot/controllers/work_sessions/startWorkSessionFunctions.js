@@ -544,7 +544,13 @@ function addNewTask(response, convo) {
 
 		var customTimeString = customTimeObject.format("h:mm a");
 
+		// create new task
 		newTask.text = entities.reminder[0].value;
+		// get minutes duration for new task
+		var now = (0, _momentTimezone2.default)();
+		var minutes = _momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes();
+		newTask.minutes = Math.round(minutes);
+
 		// this is how long user wants to work on session for as well
 		convo.sessionStart.calculatedTime = customTimeString;
 		convo.sessionStart.calculatedTimeObject = customTimeObject;
