@@ -18,7 +18,7 @@ var THANK_YOU = exports.THANK_YOU = {
 	reg_exp: new RegExp(/(^[thanksyou]{5,}\b|^[thx]{3,5}\b|^[ty]{2,3}\b)/i)
 };
 
-// contains an intent for duration and not custom_time
+// contains an intent for duration and not datetime
 var DURATION_INTENT = exports.DURATION_INTENT = {
 	word: "duration",
 	reg_exp: new RegExp(/((\b[\d]+( [hoursminutes]+\b|[hoursminutes]+\b))|([forin]{2,}[ ]?[\d]+\b)|(\bh[our]{2,}|\bm[inutes]{2,}))/i)

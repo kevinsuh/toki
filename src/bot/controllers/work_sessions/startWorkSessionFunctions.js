@@ -637,7 +637,7 @@ function askForCustomTotalMinutes(response, convo) {
 
     var { intentObject: { entities } } = response;
     // for time to tasks, these wit intents are the only ones that makes sense
-    if (entities.duration || entities.custom_time) {
+    if (entities.duration || entities.datetime) {
       confirmCustomTotalMinutes(response, convo);
     } else {
       // invalid
@@ -688,7 +688,7 @@ function askForCheckIn(response, convo) {
 
     var { intentObject: { entities } } = response;
     // for time to tasks, these wit intents are the only ones that makes sense
-    if (entities.duration || entities.custom_time) { // || entities.reminder
+    if (entities.duration || entities.datetime) { // || entities.reminder
       confirmCheckInTime(response, convo);
     } else {
       // invalid

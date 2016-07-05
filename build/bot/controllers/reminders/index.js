@@ -14,7 +14,7 @@ exports.default = function (controller) {
 		var text = message.text;
 		var _message$intentObject = message.intentObject.entities;
 		var reminder = _message$intentObject.reminder;
-		var custom_time = _message$intentObject.custom_time;
+		var datetime = _message$intentObject.datetime;
 		var duration = _message$intentObject.duration;
 
 		var SlackUserId = message.user;
@@ -22,13 +22,13 @@ exports.default = function (controller) {
 		var config = {
 			text: text,
 			reminder: reminder,
-			custom_time: custom_time,
+			datetime: datetime,
 			duration: duration,
 			SlackUserId: SlackUserId
 		};
 
 		// if they want a reminder, just tell them how to structure it
-		if (!custom_time && !duration) {
+		if (!datetime && !duration) {
 			console.log("about to ask for reminder...");
 			console.log(config);
 			controller.trigger('ask_for_reminder', [bot, config]);
@@ -72,17 +72,17 @@ exports.default = function (controller) {
 					var entities = response.intentObject.entities;
 					var reminder = entities.reminder;
 					var duration = entities.duration;
-					var custom_time = entities.custom_time;
+					var datetime = entities.datetime;
 
 
-					if (!duration && !custom_time) {
+					if (!duration && !datetime) {
 						convo.say("Sorry, still learning :dog:. Please let me know the time that you want a reminder `i.e. at 4:51pm`");
 						convo.repeat();
 					} else {
 
 						convo.reminderConfig.text = text;
 						convo.reminderConfig.duration = duration;
-						convo.reminderConfig.custom_time = custom_time;
+						convo.reminderConfig.datetime = datetime;
 
 						convo.say("Excellent! Would you like me to remind you about anything when I check in?");
 						convo.ask("You can leave any kind of one-line note, like `call Kevin` or `follow up with Taylor about design feedback`", [{
@@ -125,7 +125,7 @@ exports.default = function (controller) {
 	controller.on('set_reminder', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
 		var reminder = config.reminder;
-		var custom_time = config.custom_time;
+		var datetime = config.datetime;
 		var duration = config.duration;
 		var text = config.text;
 
@@ -163,7 +163,7 @@ exports.default = function (controller) {
 					intentObject: {
 						entities: {
 							duration: duration,
-							custom_time: custom_time
+							datetime: datetime
 						}
 					}
 				};

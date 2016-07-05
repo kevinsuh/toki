@@ -72,11 +72,11 @@ export function witTimeResponseToTimeZoneObject(response, tz) {
 	console.log("\n\n response obj in witTimeResponseToTimeZoneObject \n\n")
 
 	var { intentObject: { entities } } = response;
-	const { duration, custom_time } = entities;
+	const { duration, datetime } = entities;
 
 	var now = moment();
 	var remindTimeStamp;
-	if (!custom_time && !duration) {
+	if (!datetime && !duration) {
 		remindTimeStamp = false; // not valid
 	} else {
 
@@ -89,21 +89,21 @@ export function witTimeResponseToTimeZoneObject(response, tz) {
 			remindTimeStamp = now.tz(tz).add(durationSeconds, 'seconds');
 		}
 
-		if (custom_time) {
+		if (datetime) {
 
-			var customTime = custom_time[0]; // 2016-06-24T16:24:00.000-04:00
+			var dateTime = datetime[0]; // 2016-06-24T16:24:00.000-04:00
 
 			// make it the same timestamp
-			if (customTime.type == "interval") {
-				remindTimeStamp = customTime.to.value;
+			if (dateTime.type == "interval") {
+				remindTimeStamp = dateTime.to.value;
 			} else {
-				remindTimeStamp = customTime.value;
+				remindTimeStamp = dateTime.value;
 			}
 			
 			// handle if it is a duration configured intent
 			if (DURATION_INTENT.reg_exp.test(response.text) && !TIME_INTENT.reg_exp.test(response.text)) {
 
-				console.log("\n\n ~~ interpreted custom_time as duration ~~ \n");
+				console.log("\n\n ~~ interpreted datetime as duration ~~ \n");
 				console.log(response.text);
 				console.log(remindTimeStamp);
 				console.log("\n\n");
