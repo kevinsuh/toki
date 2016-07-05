@@ -14,19 +14,19 @@ export default function(controller) {
 	controller.hears(['custom_reminder'], 'direct_message', wit.hears, (bot, message) => {
 
 		// these are array of objects
-		const { text, intentObject: { entities: { reminder, custom_time, duration } } } = message;
+		const { text, intentObject: { entities: { reminder, datetime, duration } } } = message;
 		const SlackUserId = message.user;
 
 		var config = {
 			text,
 			reminder,
-			custom_time,
+			datetime,
 			duration,
 			SlackUserId
 		};
 
 		// if they want a reminder, just tell them how to structure it
-		if (!custom_time && !duration) {
+		if (!datetime && !duration) {
 			console.log("about to ask for reminder...");
 			console.log(config);
 			controller.trigger(`ask_for_reminder`, [ bot, config ]);
@@ -71,16 +71,16 @@ export default function(controller) {
 				convo.ask("What time would you like me to check in with you? :bellhop_bell:", (response, convo) => {
 
 					var { text, intentObject: { entities } } = response;
-					const { reminder, duration, custom_time } = entities;
+					const { reminder, duration, datetime } = entities;
 
-					if (!duration && !custom_time) {
+					if (!duration && !datetime) {
 						convo.say("Sorry, still learning :dog:. Please let me know the time that you want a reminder `i.e. at 4:51pm`");
 						convo.repeat();
 					} else {
 
 						convo.reminderConfig.text        = text;
 						convo.reminderConfig.duration    = duration;
-						convo.reminderConfig.custom_time = custom_time;
+						convo.reminderConfig.datetime = datetime;
 
 						convo.say("Excellent! Would you like me to remind you about anything when I check in?");
 						convo.ask("You can leave any kind of one-line note, like `call Kevin` or `follow up with Taylor about design feedback`", [
@@ -132,7 +132,7 @@ export default function(controller) {
 	// the actual setting of reminder
 	controller.on(`set_reminder`, (bot, config) => {
 
-		const { SlackUserId, reminder, custom_time, duration, text } = config;
+		const { SlackUserId, reminder, datetime, duration, text } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -169,7 +169,7 @@ export default function(controller) {
 					intentObject: {
 						entities: {
 							duration,
-							custom_time
+							datetime
 						}
 					}
 				}
