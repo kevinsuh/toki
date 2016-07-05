@@ -62,6 +62,9 @@ export default function(controller) {
 				case buttonValues.backLater.value:
 					bot.replyInteractive(message, "Okay! I'll be here when you get back");
 					break;
+				case buttonValues.actuallyWantToAddATask.value:
+					bot.replyInteractive(message, "Of course - just add another task here and say `done` when you're ready to go");
+				break;
 				case buttonValues.differentTask.value:
 					bot.replyInteractive(message, "What did you get done instead?");
 					break;

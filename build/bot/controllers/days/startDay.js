@@ -161,7 +161,7 @@ exports.default = function (controller) {
 					if (convo.status == 'completed') {
 						var _ret = function () {
 							var UserId = dayStart.UserId;
-							var prioritizedTaskArray = dayStart.prioritizedTaskArray;
+							var taskArray = dayStart.taskArray;
 
 							// log `start_work` in SessionGroups
 							// and all other relevant DB inserts
@@ -183,7 +183,7 @@ exports.default = function (controller) {
 									});
 
 									// After all of the previous tasks have been put into "pending", choose the select ones and bring them back to "live"
-									prioritizedTaskArray.forEach(function (task, index) {
+									taskArray.forEach(function (task, index) {
 										var dataValues = task.dataValues;
 
 										var priority = index + 1;
