@@ -33,272 +33,272 @@ export function startSessionStartConversation(response, convo) {
 // confirm task and time in one place and start if it's good
 function finalizeTimeAndTasksToStart(response, convo) {
 
-  const { sessionStart: { totalMinutes, calculatedTimeObject, calculatedTime, tasksToWorkOnHash, dailyTasks } } = convo;
+	const { sessionStart: { totalMinutes, calculatedTimeObject, calculatedTime, tasksToWorkOnHash, dailyTasks } } = convo;
 
-  // convert hash to array
-  var tasksToWorkOnArray = [];
-  for (var key in tasksToWorkOnHash) {
-    tasksToWorkOnArray.push(tasksToWorkOnHash[key]);
-  }
-  var taskTextsToWorkOnArray = tasksToWorkOnArray.map((task) => {
-    var text = task.dataValues ? task.dataValues.text : task.text;
-    return text;
-  });
-  var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
+	// convert hash to array
+	var tasksToWorkOnArray = [];
+	for (var key in tasksToWorkOnHash) {
+		tasksToWorkOnArray.push(tasksToWorkOnHash[key]);
+	}
+	var taskTextsToWorkOnArray = tasksToWorkOnArray.map((task) => {
+		var text = task.dataValues ? task.dataValues.text : task.text;
+		return text;
+	});
+	var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
 
-  convo.ask({
-    text: `Ready to work on ${tasksToWorkOnString} until *${calculatedTime}*?`,
-    attachments:[
-      {
-        attachment_type: 'default',
-        callback_id: "START_SESSION",
-        color: colorsHash.turquoise.hex,
-        fallback: "I was unable to process your decision",
-        actions: [
-          {
-              name: buttonValues.startNow.name,
-              text: "Start :punch:",
-              value: buttonValues.startNow.value,
-              type: "button",
-              style: "primary"
-          },
-          {
-              name: buttonValues.checkIn.name,
-              text: "Check in :alarm_clock:",
-              value: buttonValues.checkIn.value,
-              type: "button"
-          },
-          {
-              name: buttonValues.changeTask.name,
-              text: "Change Task",
-              value: buttonValues.changeTask.value,
-              type: "button",
-              style: "danger"
-          },
-          {
-              name: buttonValues.changeSessionTime.name,
-              text: "Change Time",
-              value: buttonValues.changeSessionTime.value,
-              type: "button",
-              style: "danger"
-          }
-        ]
-      }
-    ]
-  },
-  [
-    {
-      pattern: buttonValues.startNow.value,
-      callback: function(response, convo) {
-        convo.sessionStart.confirmStart = true;
-        convo.stop();
-        convo.next();
-      }
-    },
-    { // NL equivalent to buttonValues.startNow.value
-      pattern: utterances.yes,
-      callback: function(response, convo) {
-        convo.sessionStart.confirmStart = true;
-        convo.stop();
-        convo.next();
-      }
-    },
-    {
-      pattern: buttonValues.checkIn.value,
-      callback: function(response, convo) {
-        askForCheckIn(response, convo);
-        convo.next();
-      }
-    },
-    { // NL equivalent to buttonValues.checkIn.value
-      pattern: utterances.containsCheckin,
-      callback: function(response, convo) {
-        askForCheckIn(response, convo);
-        convo.next();
-      }
-    },
-    {
-      pattern: buttonValues.changeTask.value,
-      callback: function(response, convo) {
-        askWhichTasksToWorkOn(response, convo);
-        convo.next();
-      }
-    },
-    { // NL equivalent to buttonValues.changeTask.value
-      pattern: utterances.containsChangeTask,
-      callback: function(response, convo) {
-        askWhichTasksToWorkOn(response, convo);
-        convo.next();
-      }
-    },
-    {
-      pattern: buttonValues.changeSessionTime.value,
-      callback: function(response, convo) {
-        askForCustomTotalMinutes(response, convo);
-        convo.next();
-      }
-    },
-    { // NL equivalent to buttonValues.changeSessionTime.value
-      pattern: utterances.containsChangeTime,
-      callback: function(response, convo) {
-        askForCustomTotalMinutes(response, convo);
-        convo.next();
-      }
-    },
-    { // this is failure point. restart with question
-      default: true,
-      callback: function(response, convo) {
-        convo.say("I didn't quite get that :thinking_face:");
-        convo.repeat();
-        convo.next();
-      }
-    }
-  ]);
+	convo.ask({
+		text: `Ready to work on ${tasksToWorkOnString} until *${calculatedTime}*?`,
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "START_SESSION",
+				color: colorsHash.turquoise.hex,
+				fallback: "I was unable to process your decision",
+				actions: [
+					{
+							name: buttonValues.startNow.name,
+							text: "Start :punch:",
+							value: buttonValues.startNow.value,
+							type: "button",
+							style: "primary"
+					},
+					{
+							name: buttonValues.checkIn.name,
+							text: "Check in :alarm_clock:",
+							value: buttonValues.checkIn.value,
+							type: "button"
+					},
+					{
+							name: buttonValues.changeTask.name,
+							text: "Change Task",
+							value: buttonValues.changeTask.value,
+							type: "button",
+							style: "danger"
+					},
+					{
+							name: buttonValues.changeSessionTime.name,
+							text: "Change Time",
+							value: buttonValues.changeSessionTime.value,
+							type: "button",
+							style: "danger"
+					}
+				]
+			}
+		]
+	},
+	[
+		{
+			pattern: buttonValues.startNow.value,
+			callback: function(response, convo) {
+				convo.sessionStart.confirmStart = true;
+				convo.stop();
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.startNow.value
+			pattern: utterances.yes,
+			callback: function(response, convo) {
+				convo.sessionStart.confirmStart = true;
+				convo.stop();
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.checkIn.value,
+			callback: function(response, convo) {
+				askForCheckIn(response, convo);
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.checkIn.value
+			pattern: utterances.containsCheckin,
+			callback: function(response, convo) {
+				askForCheckIn(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.changeTask.value,
+			callback: function(response, convo) {
+				askWhichTasksToWorkOn(response, convo);
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.changeTask.value
+			pattern: utterances.containsChangeTask,
+			callback: function(response, convo) {
+				askWhichTasksToWorkOn(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.changeSessionTime.value,
+			callback: function(response, convo) {
+				askForCustomTotalMinutes(response, convo);
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.changeSessionTime.value
+			pattern: utterances.containsChangeTime,
+			callback: function(response, convo) {
+				askForCustomTotalMinutes(response, convo);
+				convo.next();
+			}
+		},
+		{ // this is failure point. restart with question
+			default: true,
+			callback: function(response, convo) {
+				convo.say("I didn't quite get that :thinking_face:");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
 }
 
 // start session with a new task
 function finalizeNewTaskToStart(response, convo) {
 
-  // here we add this task to dailyTasks
-  var { sessionStart: { totalMinutes, calculatedTimeObject, calculatedTime, tasksToWorkOnHash, dailyTasks, newTask } } = convo;
+	// here we add this task to dailyTasks
+	var { sessionStart: { totalMinutes, calculatedTimeObject, calculatedTime, tasksToWorkOnHash, dailyTasks, newTask } } = convo;
 
-  convo.ask({
-    text: `Ready to work on \`${newTask.text}\` until *${calculatedTime}*?`,
-    attachments:[
-      {
-        attachment_type: 'default',
-        callback_id: "START_SESSION",
-        color: colorsHash.turquoise.hex,
-        fallback: "I was unable to process your decision",
-        actions: [
-          {
-              name: buttonValues.startNow.name,
-              text: "Start :punch:",
-              value: buttonValues.startNow.value,
-              type: "button",
-              style: "primary"
-          },
-          {
-              name: buttonValues.checkIn.name,
-              text: "Check in :alarm_clock:",
-              value: buttonValues.checkIn.value,
-              type: "button"
-          },
-          {
-              name: buttonValues.changeTask.name,
-              text: "Change Task",
-              value: buttonValues.changeTask.value,
-              type: "button",
-              style: "danger"
-          },
-          {
-              name: buttonValues.changeSessionTime.name,
-              text: "Change Time",
-              value: buttonValues.changeSessionTime.value,
-              type: "button",
-              style: "danger"
-          }
-        ]
-      }
-    ]
-  },
-  [
-    {
-      pattern: buttonValues.startNow.value,
-      callback: function(response, convo) {
+	convo.ask({
+		text: `Ready to work on \`${newTask.text}\` until *${calculatedTime}*?`,
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "START_SESSION",
+				color: colorsHash.turquoise.hex,
+				fallback: "I was unable to process your decision",
+				actions: [
+					{
+							name: buttonValues.startNow.name,
+							text: "Start :punch:",
+							value: buttonValues.startNow.value,
+							type: "button",
+							style: "primary"
+					},
+					{
+							name: buttonValues.checkIn.name,
+							text: "Check in :alarm_clock:",
+							value: buttonValues.checkIn.value,
+							type: "button"
+					},
+					{
+							name: buttonValues.changeTask.name,
+							text: "Change Task",
+							value: buttonValues.changeTask.value,
+							type: "button",
+							style: "danger"
+					},
+					{
+							name: buttonValues.changeSessionTime.name,
+							text: "Change Time",
+							value: buttonValues.changeSessionTime.value,
+							type: "button",
+							style: "danger"
+					}
+				]
+			}
+		]
+	},
+	[
+		{
+			pattern: buttonValues.startNow.value,
+			callback: function(response, convo) {
 
-        tasksToWorkOnHash[1]                 = newTask;
-        convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
-        convo.sessionStart.confirmStart      = true;
+				tasksToWorkOnHash[1]                 = newTask;
+				convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+				convo.sessionStart.confirmStart      = true;
 
-        convo.stop();
-        convo.next();
-      }
-    },
-    { // NL equivalent to buttonValues.startNow.value
-      pattern: utterances.yes,
-      callback: function(response, convo) {
+				convo.stop();
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.startNow.value
+			pattern: utterances.yes,
+			callback: function(response, convo) {
 
-        tasksToWorkOnHash[1]                 = newTask;
-        convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
-        convo.sessionStart.confirmStart      = true;
+				tasksToWorkOnHash[1]                 = newTask;
+				convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+				convo.sessionStart.confirmStart      = true;
 
-        convo.stop();
-        convo.next();
+				convo.stop();
+				convo.next();
 
-      }
-    },
-    {
-      pattern: buttonValues.checkIn.value,
-      callback: function(response, convo) {
+			}
+		},
+		{
+			pattern: buttonValues.checkIn.value,
+			callback: function(response, convo) {
 
-        tasksToWorkOnHash[1]                 = newTask;
-        convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
-        convo.sessionStart.confirmStart      = true;
+				tasksToWorkOnHash[1]                 = newTask;
+				convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+				convo.sessionStart.confirmStart      = true;
 
-        askForCheckIn(response, convo);
-        convo.next();
-      }
-    },
-    { // NL equivalent to buttonValues.checkIn.value
-      pattern: utterances.containsCheckin,
-      callback: function(response, convo) {
+				askForCheckIn(response, convo);
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.checkIn.value
+			pattern: utterances.containsCheckin,
+			callback: function(response, convo) {
 
-        tasksToWorkOnHash[1]                 = newTask;
-        convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
-        convo.sessionStart.confirmStart      = true;
+				tasksToWorkOnHash[1]                 = newTask;
+				convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+				convo.sessionStart.confirmStart      = true;
 
-        askForCheckIn(response, convo);
-        convo.next();
-      }
-    },
-    {
-      pattern: buttonValues.changeTask.value,
-      callback: function(response, convo) {
-        askWhichTasksToWorkOn(response, convo);
-        convo.next();
-      }
-    },
-    { // NL equivalent to buttonValues.changeTask.value
-      pattern: utterances.containsChangeTask,
-      callback: function(response, convo) {
-        askWhichTasksToWorkOn(response, convo);
-        convo.next();
-      }
-    },
-    {
-      pattern: buttonValues.changeSessionTime.value,
-      callback: function(response, convo) {
+				askForCheckIn(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.changeTask.value,
+			callback: function(response, convo) {
+				askWhichTasksToWorkOn(response, convo);
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.changeTask.value
+			pattern: utterances.containsChangeTask,
+			callback: function(response, convo) {
+				askWhichTasksToWorkOn(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.changeSessionTime.value,
+			callback: function(response, convo) {
 
-        tasksToWorkOnHash[1]                 = newTask;
-        convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
-        convo.sessionStart.confirmStart      = true;
+				tasksToWorkOnHash[1]                 = newTask;
+				convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+				convo.sessionStart.confirmStart      = true;
 
-        askForCustomTotalMinutes(response, convo);
-        convo.next();
-      }
-    },
-    { // NL equivalent to buttonValues.changeSessionTime.value
-      pattern: utterances.containsChangeTime,
-      callback: function(response, convo) {
+				askForCustomTotalMinutes(response, convo);
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.changeSessionTime.value
+			pattern: utterances.containsChangeTime,
+			callback: function(response, convo) {
 
-        tasksToWorkOnHash[1]                 = newTask;
-        convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
-        convo.sessionStart.confirmStart      = true;
+				tasksToWorkOnHash[1]                 = newTask;
+				convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+				convo.sessionStart.confirmStart      = true;
 
-        askForCustomTotalMinutes(response, convo);
-        convo.next();
-      }
-    },
-    { // this is failure point. restart with question
-      default: true,
-      callback: function(response, convo) {
-        convo.say("I didn't quite get that :thinking_face:");
-        convo.repeat();
-        convo.next();
-      }
-    }
-  ]);
+				askForCustomTotalMinutes(response, convo);
+				convo.next();
+			}
+		},
+		{ // this is failure point. restart with question
+			default: true,
+			callback: function(response, convo) {
+				convo.say("I didn't quite get that :thinking_face:");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
 
 }
 
@@ -306,116 +306,116 @@ function finalizeNewTaskToStart(response, convo) {
 // option add note or start session after setting a checkin
 function finalizeCheckinTimeToStart(response, convo) {
 
-  console.log("\n\n ~~ in finalizeCheckinTimeToStart ~~ \n\n");
+	console.log("\n\n ~~ in finalizeCheckinTimeToStart ~~ \n\n");
 
-  const { sessionStart: { checkinTimeString, checkinTimeObject, reminderNote, tasksToWorkOnHash, calculatedTime } } = convo;
+	const { sessionStart: { checkinTimeString, checkinTimeObject, reminderNote, tasksToWorkOnHash, calculatedTime } } = convo;
 
-  var confirmCheckinMessage = '';
-  if (checkinTimeString) {
-    confirmCheckinMessage = `Excellent, I'll check in with you at *${checkinTimeString}*!`;
-    if (reminderNote) {
-      confirmCheckinMessage = `Excellent, I'll check in with you at *${checkinTimeString}* about \`${reminderNote}\`!`;
-    }
-  }
+	var confirmCheckinMessage = '';
+	if (checkinTimeString) {
+		confirmCheckinMessage = `Excellent, I'll check in with you at *${checkinTimeString}*!`;
+		if (reminderNote) {
+			confirmCheckinMessage = `Excellent, I'll check in with you at *${checkinTimeString}* about \`${reminderNote}\`!`;
+		}
+	}
 
-  // convert hash to array
-  var tasksToWorkOnArray = [];
-  for (var key in tasksToWorkOnHash) {
-    tasksToWorkOnArray.push(tasksToWorkOnHash[key]);
-  }
-  var taskTextsToWorkOnArray = tasksToWorkOnArray.map((task) => {
-    var text = task.dataValues ? task.dataValues.text : task.text;
-    return text;
-  });
-  var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
+	// convert hash to array
+	var tasksToWorkOnArray = [];
+	for (var key in tasksToWorkOnHash) {
+		tasksToWorkOnArray.push(tasksToWorkOnHash[key]);
+	}
+	var taskTextsToWorkOnArray = tasksToWorkOnArray.map((task) => {
+		var text = task.dataValues ? task.dataValues.text : task.text;
+		return text;
+	});
+	var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
 
-  convo.say(confirmCheckinMessage);
-  convo.ask({
-    text: `Ready to work on ${tasksToWorkOnString} until *${calculatedTime}*?`,
-    attachments:[
-      {
-        attachment_type: 'default',
-        callback_id: "START_SESSION",
-        color: colorsHash.turquoise.hex,
-        fallback: "I was unable to process your decision",
-        actions: [
-          {
-              name: buttonValues.startNow.name,
-              text: "Start :punch:",
-              value: buttonValues.startNow.value,
-              type: "button",
-              style: "primary"
-          },
-          {
-              name: buttonValues.changeCheckinTime.name,
-              text: "Change time",
-              value: buttonValues.changeCheckinTime.value,
-              type: "button"
-          },
-          {
-              name: buttonValues.addCheckinNote.name,
-              text: "Add note",
-              value: buttonValues.addCheckinNote.value,
-              type: "button"
-          }
-        ]
-      }
-    ]
-  },
-  [
-    {
-      pattern: buttonValues.startNow.value,
-      callback: function(response, convo) {
-        convo.sessionStart.confirmStart = true;
-        convo.stop();
-        convo.next();
-      }
-    },
-    { // NL equivalent to buttonValues.startNow.value
-      pattern: utterances.yes,
-      callback: function(response, convo) {
-        convo.sessionStart.confirmStart = true;
-        convo.stop();
-        convo.next();
-      }
-    },
-    {
-      pattern: buttonValues.changeCheckinTime.value,
-      callback: function(response, convo) {
-        askForCheckIn(response, convo);
-        convo.next();
-      }
-    },
-    { // NL equivalent to buttonValues.changeCheckinTime.value
-      pattern: utterances.containsChangeTime,
-      callback: function(response, convo) {
-        askForCheckIn(response, convo);
-        convo.next();
-      }
-    },
-    {
-      pattern: buttonValues.addCheckinNote.value,
-      callback: function(response, convo) {
-        askForReminderDuringCheckin(response, convo);
-        convo.next();
-      }
-    },
-    { // NL equivalent to buttonValues.addCheckinNote.value
-      pattern: utterances.containsAddNote,
-      callback: function(response, convo) {
-        askForReminderDuringCheckin(response, convo);
-        convo.next();
-      }
-    },
-    { // this is failure point. restart with question
-      default: true,
-      callback: function(response, convo) {
-        convo.say("I didn't quite get that :thinking_face:");
-        convo.repeat();
-        convo.next();
-      }
-    }
-  ]);
+	convo.say(confirmCheckinMessage);
+	convo.ask({
+		text: `Ready to work on ${tasksToWorkOnString} until *${calculatedTime}*?`,
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "START_SESSION",
+				color: colorsHash.turquoise.hex,
+				fallback: "I was unable to process your decision",
+				actions: [
+					{
+							name: buttonValues.startNow.name,
+							text: "Start :punch:",
+							value: buttonValues.startNow.value,
+							type: "button",
+							style: "primary"
+					},
+					{
+							name: buttonValues.changeCheckinTime.name,
+							text: "Change time",
+							value: buttonValues.changeCheckinTime.value,
+							type: "button"
+					},
+					{
+							name: buttonValues.addCheckinNote.name,
+							text: "Add note",
+							value: buttonValues.addCheckinNote.value,
+							type: "button"
+					}
+				]
+			}
+		]
+	},
+	[
+		{
+			pattern: buttonValues.startNow.value,
+			callback: function(response, convo) {
+				convo.sessionStart.confirmStart = true;
+				convo.stop();
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.startNow.value
+			pattern: utterances.yes,
+			callback: function(response, convo) {
+				convo.sessionStart.confirmStart = true;
+				convo.stop();
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.changeCheckinTime.value,
+			callback: function(response, convo) {
+				askForCheckIn(response, convo);
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.changeCheckinTime.value
+			pattern: utterances.containsChangeTime,
+			callback: function(response, convo) {
+				askForCheckIn(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.addCheckinNote.value,
+			callback: function(response, convo) {
+				askForReminderDuringCheckin(response, convo);
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.addCheckinNote.value
+			pattern: utterances.containsAddNote,
+			callback: function(response, convo) {
+				askForReminderDuringCheckin(response, convo);
+				convo.next();
+			}
+		},
+		{ // this is failure point. restart with question
+			default: true,
+			callback: function(response, convo) {
+				convo.say("I didn't quite get that :thinking_face:");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
 
 }
 
@@ -439,7 +439,7 @@ function askWhichTasksToWorkOn(response, convo) {
 				attachment_type: 'default',
 				callback_id: "START_SESSION",
 				fallback: "I was unable to process your decision",
-        color: colorsHash.grey.hex,
+				color: colorsHash.grey.hex,
 				actions: [
 					{
 					name: buttonValues.newTask.name,
@@ -486,59 +486,59 @@ function askWhichTasksToWorkOn(response, convo) {
 // if user decides to work on existing tasks
 function confirmTasks(response, convo) {
 
-  const { task }                          = convo;
-  const { bot, source_message }           = task;
-  const { dailyTasks, tasksToWorkOnHash } = convo.sessionStart;
-  var tasksToWorkOnString                 = response.text;
+	const { task }                          = convo;
+	const { bot, source_message }           = task;
+	const { dailyTasks, tasksToWorkOnHash } = convo.sessionStart;
+	var tasksToWorkOnString                 = response.text;
 
-  // if we capture 0 valid tasks from string, then we start over
-  var taskNumbersToWorkOnArray = convertTaskNumberStringToArray(tasksToWorkOnString, dailyTasks);
+	// if we capture 0 valid tasks from string, then we start over
+	var taskNumbersToWorkOnArray = convertTaskNumberStringToArray(tasksToWorkOnString, dailyTasks);
 
-  if (!taskNumbersToWorkOnArray) {
-    convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-    convo.say("You can pick a task from your list `i.e. tasks 1, 3` or create a new task");
-    askWhichTasksToWorkOn(response, convo);
-    return;
-  }
+	if (!taskNumbersToWorkOnArray) {
+		convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+		convo.say("You can pick a task from your list `i.e. tasks 1, 3` or create a new task");
+		askWhichTasksToWorkOn(response, convo);
+		return;
+	}
 
-  // if not invalid, we can set the tasksToWorkOnArray
-  taskNumbersToWorkOnArray.forEach((taskNumber) => {
-    var index = taskNumber - 1; // make this 0-index based
-    if (dailyTasks[index])
-      tasksToWorkOnHash[taskNumber] = dailyTasks[index];
-  });
+	// if not invalid, we can set the tasksToWorkOnArray
+	taskNumbersToWorkOnArray.forEach((taskNumber) => {
+		var index = taskNumber - 1; // make this 0-index based
+		if (dailyTasks[index])
+			tasksToWorkOnHash[taskNumber] = dailyTasks[index];
+	});
 
-  convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
-  confirmTimeForTasks(response,convo);
-  convo.next();
+	convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+	confirmTimeForTasks(response,convo);
+	convo.next();
 
 }
 
 // calculate ask about the time to the existing tasks user chose
 function confirmTimeForTasks(response, convo) {
 
-  const { task }                = convo;
-  const { bot, source_message } = task;
-  const { tasksToWorkOnHash, dailyTasks, tz }  = convo.sessionStart;
-  const SlackUserId = response.user;
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	const { tasksToWorkOnHash, dailyTasks, tz }  = convo.sessionStart;
+	const SlackUserId = response.user;
 
-  var totalMinutes = 0;
-  for (var key in tasksToWorkOnHash) {
-    const task = tasksToWorkOnHash[key];
-    var { dataValues: { minutes } } = task;
-    totalMinutes += parseInt(minutes);
-  }
+	var totalMinutes = 0;
+	for (var key in tasksToWorkOnHash) {
+		const task = tasksToWorkOnHash[key];
+		var { dataValues: { minutes } } = task;
+		totalMinutes += parseInt(minutes);
+	}
 
-  var now = moment().tz(tz);
-  var calculatedTimeObject = now.add(totalMinutes, 'minutes');
-  var calculatedTimeString = calculatedTimeObject.format("h:mm a");
+	var now = moment().tz(tz);
+	var calculatedTimeObject = now.add(totalMinutes, 'minutes');
+	var calculatedTimeString = calculatedTimeObject.format("h:mm a");
 
-  // these are the final values used to determine work session info
-  convo.sessionStart.totalMinutes         = totalMinutes;
-  convo.sessionStart.calculatedTime       = calculatedTimeString;
-  convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
+	// these are the final values used to determine work session info
+	convo.sessionStart.totalMinutes         = totalMinutes;
+	convo.sessionStart.calculatedTime       = calculatedTimeString;
+	convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
 
-  finalizeTimeAndTasksToStart(response, convo);
+	finalizeTimeAndTasksToStart(response, convo);
 
 }
 
@@ -549,35 +549,35 @@ function confirmTimeForTasks(response, convo) {
 // if user wants to add a new task instead
 function addNewTask(response, convo) {
 
-  const { task }                = convo;
-  const { bot, source_message } = task;
-  const SlackUserId             = response.user;
-  var newTask                   = {};
-  const { tz }                  = convo.sessionStart;
-  
-  var { intentObject: { entities } } = response;
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	const SlackUserId             = response.user;
+	var newTask                   = {};
+	const { tz }                  = convo.sessionStart;
+	
+	var { intentObject: { entities } } = response;
 
-  var customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
-  if (customTimeObject && entities.reminder) {
+	var customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+	if (customTimeObject && entities.reminder) {
 
-    var customTimeString = customTimeObject.format("h:mm a");
+		var customTimeString = customTimeObject.format("h:mm a");
 
-    newTask.text                            = entities.reminder[0].value;
-    // this is how long user wants to work on session for as well
-    convo.sessionStart.calculatedTime       = customTimeString;
-    convo.sessionStart.calculatedTimeObject = customTimeObject;
-    convo.sessionStart.newTask              = newTask;
+		newTask.text                            = entities.reminder[0].value;
+		// this is how long user wants to work on session for as well
+		convo.sessionStart.calculatedTime       = customTimeString;
+		convo.sessionStart.calculatedTimeObject = customTimeObject;
+		convo.sessionStart.newTask              = newTask;
 
-    finalizeNewTaskToStart(response, convo);
+		finalizeNewTaskToStart(response, convo);
 
-  } else {
-    // user did nto specify a time
-    newTask.text               = response.text;
-    convo.sessionStart.newTask = newTask;
-    addTimeToNewTask(response, convo);
-  }
+	} else {
+		// user did nto specify a time
+		newTask.text               = response.text;
+		convo.sessionStart.newTask = newTask;
+		addTimeToNewTask(response, convo);
+	}
 
-  convo.next();
+	convo.next();
 
 }
 
@@ -585,41 +585,41 @@ function addNewTask(response, convo) {
 
 // get the time desired for new task
 function addTimeToNewTask(response, convo) {
-  const { task }                        = convo;
-  const { bot, source_message }         = task;
-  var { sessionStart: { newTask, tz } } = convo;
+	const { task }                        = convo;
+	const { bot, source_message }         = task;
+	var { sessionStart: { newTask, tz } } = convo;
 
-  convo.ask(`How long would you like to work on \`${newTask.text}\`?`, (response, convo) => {
+	convo.ask(`How long would you like to work on \`${newTask.text}\`?`, (response, convo) => {
 
-    var timeToTask = response.text;
+		var timeToTask = response.text;
 
-    var validMinutesTester = new RegExp(/[\dh]/);
-    var isInvalid = false;
-    if (!validMinutesTester.test(timeToTask)) {
-      isInvalid = true;
-    }
+		var validMinutesTester = new RegExp(/[\dh]/);
+		var isInvalid = false;
+		if (!validMinutesTester.test(timeToTask)) {
+			isInvalid = true;
+		}
 
-    // INVALID tester
-    if (isInvalid) {
-      convo.say("Oops, looks like you didn't put in valid minutes :thinking_face:. Let's try this again");
-      convo.say("I'll assume you mean minutes - like `30` would be 30 minutes - unless you specify hours - like `1 hour 15 min`");
-      convo.repeat();
-    } else {
+		// INVALID tester
+		if (isInvalid) {
+			convo.say("Oops, looks like you didn't put in valid minutes :thinking_face:. Let's try this again");
+			convo.say("I'll assume you mean minutes - like `30` would be 30 minutes - unless you specify hours - like `1 hour 15 min`");
+			convo.repeat();
+		} else {
 
-      var minutes          = convertTimeStringToMinutes(timeToTask);
-      var customTimeObject = moment().tz(tz).add(minutes, 'minutes');
-      var customTimeString = customTimeObject.format("h:mm a");
+			var minutes          = convertTimeStringToMinutes(timeToTask);
+			var customTimeObject = moment().tz(tz).add(minutes, 'minutes');
+			var customTimeString = customTimeObject.format("h:mm a");
 
-      newTask.minutes                         = minutes;
-      convo.sessionStart.newTask              = newTask;
-      convo.sessionStart.calculatedTime       = customTimeString;
-      convo.sessionStart.calculatedTimeObject = customTimeObject;
+			newTask.minutes                         = minutes;
+			convo.sessionStart.newTask              = newTask;
+			convo.sessionStart.calculatedTime       = customTimeString;
+			convo.sessionStart.calculatedTimeObject = customTimeObject;
 
-      finalizeNewTaskToStart(response, convo);
+			finalizeNewTaskToStart(response, convo);
 
-    }
-    convo.next();
-  });
+		}
+		convo.next();
+	});
 }
 
 /**
@@ -629,47 +629,47 @@ function addTimeToNewTask(response, convo) {
 // ask for custom amount of time to work on
 function askForCustomTotalMinutes(response, convo) {
 
-  const { task }                = convo;
-  const { bot, source_message } = task;
-  const SlackUserId             = response.user;
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	const SlackUserId             = response.user;
 
-  convo.ask("How long, or until what time, would you like to work?", (response, convo) => {
+	convo.ask("How long, or until what time, would you like to work?", (response, convo) => {
 
-    var { intentObject: { entities } } = response;
-    // for time to tasks, these wit intents are the only ones that makes sense
-    if (entities.duration || entities.datetime) {
-      confirmCustomTotalMinutes(response, convo);
-    } else {
-      // invalid
-      convo.say("I'm sorry, I didn't catch that :dog:");
-      convo.repeat();
-    }
+		var { intentObject: { entities } } = response;
+		// for time to tasks, these wit intents are the only ones that makes sense
+		if (entities.duration || entities.datetime) {
+			confirmCustomTotalMinutes(response, convo);
+		} else {
+			// invalid
+			convo.say("I'm sorry, I didn't catch that :dog:");
+			convo.repeat();
+		}
 
-    convo.next();
+		convo.next();
 
-  });
+	});
 
 };
 
 function confirmCustomTotalMinutes(response, convo) {
 
-  const { task }                = convo;
-  const { bot, source_message } = task;
-  const SlackUserId             = response.user;
-  const { tz }                  = convo.sessionStart;
-  var now                       = moment().tz(tz);
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	const SlackUserId             = response.user;
+	const { tz }                  = convo.sessionStart;
+	var now                       = moment().tz(tz);
 
 
-  // use Wit to understand the message in natural language!
-  var { intentObject: { entities } } = response;
+	// use Wit to understand the message in natural language!
+	var { intentObject: { entities } } = response;
 
-  var customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
-  var customTimeString = customTimeObject.format("h:mm a");
+	var customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+	var customTimeString = customTimeObject.format("h:mm a");
 
-  convo.sessionStart.calculatedTime       = customTimeString;
-  convo.sessionStart.calculatedTimeObject = customTimeObject;
+	convo.sessionStart.calculatedTime       = customTimeString;
+	convo.sessionStart.calculatedTimeObject = customTimeObject;
 
-  finalizeTimeAndTasksToStart(response, convo);
+	finalizeTimeAndTasksToStart(response, convo);
 
 }
 
@@ -680,98 +680,98 @@ function confirmCustomTotalMinutes(response, convo) {
 // ask if user wants a checkin during middle of session
 function askForCheckIn(response, convo) {
 
-  const { task }                = convo;
-  const { bot, source_message } = task;
-  const SlackUserId = response.user;
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	const SlackUserId = response.user;
 
-  convo.ask("When would you like me to check in with you?", (response, convo) => {
+	convo.ask("When would you like me to check in with you?", (response, convo) => {
 
-    var { intentObject: { entities } } = response;
-    // for time to tasks, these wit intents are the only ones that makes sense
-    if (entities.duration || entities.datetime) { // || entities.reminder
-      confirmCheckInTime(response, convo);
-    } else {
-      // invalid
-      convo.say("I'm sorry, I'm still learning :dog:");
-      convo.say("For this one, put only the time first (i.e. `2:41pm` or `35 minutes`) and then let's figure out your note)");
-      convo.repeat();
-    }
+		var { intentObject: { entities } } = response;
+		// for time to tasks, these wit intents are the only ones that makes sense
+		if (entities.duration || entities.datetime) { // || entities.reminder
+			confirmCheckInTime(response, convo);
+		} else {
+			// invalid
+			convo.say("I'm sorry, I'm still learning :dog:");
+			convo.say("For this one, put only the time first (i.e. `2:41pm` or `35 minutes`) and then let's figure out your note)");
+			convo.repeat();
+		}
 
-    convo.next();
+		convo.next();
 
-  }, { 'key' : 'respondTime' });
+	}, { 'key' : 'respondTime' });
 
 }
 
 // confirm check in time with user
 function confirmCheckInTime(response, convo) {
 
-  const { task }                 = convo;
-  const { bot, source_message }  = task;
-  const SlackUserId              = response.user;
-  var now                        = moment();
-  const { sessionStart: { tz } } = convo;
+	const { task }                 = convo;
+	const { bot, source_message }  = task;
+	const SlackUserId              = response.user;
+	var now                        = moment();
+	const { sessionStart: { tz } } = convo;
 
-  console.log("\n\n ~~ message in confirmCheckInTime ~~ \n\n");
+	console.log("\n\n ~~ message in confirmCheckInTime ~~ \n\n");
 
-  // use Wit to understand the message in natural language!
-  var { intentObject: { entities } } = response;
+	// use Wit to understand the message in natural language!
+	var { intentObject: { entities } } = response;
 
-  // just assuming this will work?
-  var checkinTimeObject = witTimeResponseToTimeZoneObject(response, tz);
-  var checkinTimeString = checkinTimeObject.format("h:mm a");
+	// just assuming this will work?
+	var checkinTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+	var checkinTimeString = checkinTimeObject.format("h:mm a");
 
-  convo.sessionStart.checkinTimeObject = checkinTimeObject;
-  convo.sessionStart.checkinTimeString = checkinTimeString;
+	convo.sessionStart.checkinTimeObject = checkinTimeObject;
+	convo.sessionStart.checkinTimeString = checkinTimeString;
 
-  // skip the step if reminder exists
-  if (entities.reminder) {
-    convo.sessionStart.reminderNote = entities.reminder[0].value;
-    finalizeCheckinTimeToStart(response, convo);
-  } else {
-    askForReminderDuringCheckin(response, convo);
-  }
+	// skip the step if reminder exists
+	if (entities.reminder) {
+		convo.sessionStart.reminderNote = entities.reminder[0].value;
+		finalizeCheckinTimeToStart(response, convo);
+	} else {
+		askForReminderDuringCheckin(response, convo);
+	}
 
 }
 
 // wants a reminder note to the checkin
 function askForReminderDuringCheckin(response, convo) {
 
-  const { task }                = convo;
-  const { bot, source_message } = task;
-  const SlackUserId = response.user;
+	const { task }                = convo;
+	const { bot, source_message } = task;
+	const SlackUserId = response.user;
 
-  convo.say("Is there anything you'd like me to remind you during the check in?");
-  convo.ask("This could be a note like `call Eileen` or `should be on the second section of the proposal by now`", [
-    {
-      pattern: utterances.yes,
-      callback: (response, convo) => {
-        convo.ask(`What note would you like me to remind you about?`, (response, convo) => {
-          convo.sessionStart.reminderNote = response.text;
-          finalizeCheckinTimeToStart(response, convo)
-          convo.next();
-        });
+	convo.say("Is there anything you'd like me to remind you during the check in?");
+	convo.ask("This could be a note like `call Eileen` or `should be on the second section of the proposal by now`", [
+		{
+			pattern: utterances.yes,
+			callback: (response, convo) => {
+				convo.ask(`What note would you like me to remind you about?`, (response, convo) => {
+					convo.sessionStart.reminderNote = response.text;
+					finalizeCheckinTimeToStart(response, convo)
+					convo.next();
+				});
 
-        convo.next();
-      }
-    },
-    {
-      pattern: utterances.no,
-      callback: (response, convo) => {
-      	finalizeCheckinTimeToStart(response, convo)
-        convo.next();
-      }
-    },
-    {
-      default: true,
-      callback: (response, convo) => {
-        // we are assuming anything else is the reminderNote
-        convo.sessionStart.reminderNote = response.text;
-        finalizeCheckinTimeToStart(response, convo)
-        convo.next();
-      }
-    }
-  ], { 'key' : 'reminderNote' });
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				finalizeCheckinTimeToStart(response, convo)
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				// we are assuming anything else is the reminderNote
+				convo.sessionStart.reminderNote = response.text;
+				finalizeCheckinTimeToStart(response, convo)
+				convo.next();
+			}
+		}
+	], { 'key' : 'reminderNote' });
 
 }
 
