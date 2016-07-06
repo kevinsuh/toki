@@ -20,7 +20,14 @@ export default function(controller) {
 		const SlackUserId = message.user;
 
 		var config = { SlackUserId };
-		controller.trigger(`begin_settings_flow`, [ bot, config ]);
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(() => {
+			controller.trigger(`begin_settings_flow`, [ bot, config ]);
+		}, 850);
 
 	});
 
@@ -107,14 +114,14 @@ function startSettingsConversation(err, convo) {
 		{
 			pattern: buttonValues.changeName.value,
 			callback: (response, convo) => {
-				convo.say("u want to change name");
+				changeName(response, convo);
 				convo.next();
 			}
 		},
 		{ // same as buttonValues.changeName.value
 			pattern: utterances.containsName,
 			callback: (response, convo) => {
-				convo.say("u want to change name");
+				changeName(response, convo);
 				convo.next();
 			}
 		},
@@ -265,14 +272,14 @@ function returnToMainSettings(response, convo) {
 		{
 			pattern: buttonValues.changeName.value,
 			callback: (response, convo) => {
-				convo.say("u want to change name");
+				changeName(response, convo);
 				convo.next();
 			}
 		},
 		{ // same as buttonValues.changeName.value
 			pattern: utterances.containsName,
 			callback: (response, convo) => {
-				convo.say("u want to change name");
+				changeName(response, convo);
 				convo.next();
 			}
 		},
@@ -294,7 +301,46 @@ function returnToMainSettings(response, convo) {
 			default: true,
 			callback: (response, convo) => {
 				// for now this will be where "never mind" goes
-				convo.say("Happy to help. Now let's get back to it");
+				convo.say("Happy to help! Now let's get back to it :punch:");
+				convo.next();
+			}
+		}
+	]);
+
+}
+
+// user wants to change name
+function changeName(response, convo) {
+	convo.ask("What would you like me to call you?", (response, convo) => {
+		confirmName(response.text, convo);
+		convo.next();
+	});
+}
+
+function confirmName(name, convo) {
+
+	convo.ask(`So you'd like me to call you *${name}*?`, [
+		{
+			pattern: utterances.yes,
+			callback: (response, convo) => {
+				convo.settings.nickName = name;
+				convo.say(`It's a pleasure to be working with you, ${name}`);
+				returnToMainSettings(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				changeName(response, convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				convo.say("Sorry, I didn't get that :thinking_face:");
+				convo.repeat();
 				convo.next();
 			}
 		}

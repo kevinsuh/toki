@@ -81,7 +81,7 @@ export default function(controller) {
 					bot.replyInteractive(message, "Let's change your name!")
 					break;
 				case buttonValues.neverMind.value:
-					bot.replyInteractive(message, "Okay!")
+					bot.replyInteractive(message, "Sounds good")
 					break;
 				default:
 					// some default to replace button no matter what

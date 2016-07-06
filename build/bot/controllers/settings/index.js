@@ -11,7 +11,14 @@ exports.default = function (controller) {
 		var SlackUserId = message.user;
 
 		var config = { SlackUserId: SlackUserId };
-		controller.trigger('begin_settings_flow', [bot, config]);
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(function () {
+			controller.trigger('begin_settings_flow', [bot, config]);
+		}, 850);
 	});
 
 	/**
@@ -130,13 +137,13 @@ function startSettingsConversation(err, convo) {
 	}, [{
 		pattern: _constants.buttonValues.changeName.value,
 		callback: function callback(response, convo) {
-			convo.say("u want to change name");
+			changeName(response, convo);
 			convo.next();
 		}
 	}, { // same as buttonValues.changeName.value
 		pattern: _botResponses.utterances.containsName,
 		callback: function callback(response, convo) {
-			convo.say("u want to change name");
+			changeName(response, convo);
 			convo.next();
 		}
 	}, {
@@ -273,13 +280,13 @@ function returnToMainSettings(response, convo) {
 	}, [{
 		pattern: _constants.buttonValues.changeName.value,
 		callback: function callback(response, convo) {
-			convo.say("u want to change name");
+			changeName(response, convo);
 			convo.next();
 		}
 	}, { // same as buttonValues.changeName.value
 		pattern: _botResponses.utterances.containsName,
 		callback: function callback(response, convo) {
-			convo.say("u want to change name");
+			changeName(response, convo);
 			convo.next();
 		}
 	}, {
@@ -298,7 +305,41 @@ function returnToMainSettings(response, convo) {
 		default: true,
 		callback: function callback(response, convo) {
 			// for now this will be where "never mind" goes
-			convo.say("Happy to help. Now let's get back to it");
+			convo.say("Happy to help! Now let's get back to it :punch:");
+			convo.next();
+		}
+	}]);
+}
+
+// user wants to change name
+function changeName(response, convo) {
+	convo.ask("What would you like me to call you?", function (response, convo) {
+		confirmName(response.text, convo);
+		convo.next();
+	});
+}
+
+function confirmName(name, convo) {
+
+	convo.ask('So you\'d like me to call you *' + name + '*?', [{
+		pattern: _botResponses.utterances.yes,
+		callback: function callback(response, convo) {
+			convo.settings.nickName = name;
+			convo.say('It\'s a pleasure to be working with you, ' + name);
+			returnToMainSettings(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _botResponses.utterances.no,
+		callback: function callback(response, convo) {
+			changeName(response, convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say("Sorry, I didn't get that :thinking_face:");
+			convo.repeat();
 			convo.next();
 		}
 	}]);
