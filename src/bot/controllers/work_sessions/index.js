@@ -9,7 +9,7 @@ import middleWorkSessionController from './middleWorkSession';
 import startWorKSessionController from './startWorkSession';
 
 import intentConfig from '../../lib/intents';
-import { startDayExpirationTime, colorsArray, buttonValues, colorsHash } from '../../lib/constants';
+import { hoursForExpirationTime, startDayExpirationTime, colorsArray, buttonValues, colorsHash } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
 import { utterances } from '../../lib/botResponses';
 
@@ -65,7 +65,17 @@ export default function(controller) {
 					.then((workSessions) => {
 
 						if (workSessions.length == 0) {
-							shouldStartNewDay = true;
+							if (sessionGroups[0] && sessionGroups[0].type == "start_work") {
+								// if you started a day recently, this can be used as proxy instead of a session
+								var startDaySessionTime = moment(sessionGroups[0].createdAt);
+								var now                 = moment();
+								var hoursSinceStartDay  = moment.duration(now.diff(startDaySessionTime)).asHours();
+								if (hoursSinceStartDay > hoursForExpirationTime) {
+									shouldStartNewDay = true;
+								}
+							} else {
+								shouldStartNewDay = true;
+							}
 						}
 
 						var config = { SlackUserId, shouldStartNewDay };
@@ -118,7 +128,7 @@ export default function(controller) {
 					} else {
 						convo.say(`Welcome back, ${name}!`);
 						if (dailyTasks.length > 0) {
-							convo.say(`Here are your current priorities: ${taskListMessage}`);
+							convo.say(`Here are your current priorities:\n${taskListMessage}`);
 						}
 						shouldStartSessionFlow(err, convo);
 					}
@@ -182,7 +192,7 @@ export default function(controller) {
 function shouldStartNewDayFlow(err, convo) {
 
 	convo.ask({
-		text: `Ready to make a plan for today? If the above tasks are what you want to work on, we can start a session with those instead :pick:`,
+		text: `*Ready to make a plan for today?* If the above tasks are what you want to work on, we can start a session with those instead :pick:`,
 		attachments:[
 			{
 				attachment_type: 'default',
@@ -252,7 +262,6 @@ function shouldStartNewDayFlow(err, convo) {
 		{ // NL equivalent to buttonValues.startSession.value
 			pattern: utterances.startSession,
 			callback: function(response, convo) {
-				convo.say(`Let's kick off a new session :soccer:`);
 				convo.isBackDecision = intentConfig.START_SESSION;
 				convo.next();
 			}
@@ -302,7 +311,7 @@ function shouldStartNewDayFlow(err, convo) {
 function shouldStartSessionFlow(err, convo) {
 
 	convo.ask({
-		text: `Ready to start another session?`,
+		text: `*Ready to start another session?*`,
 		attachments:[
 			{
 				attachment_type: 'default',

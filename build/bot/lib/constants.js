@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = undefined;
+exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.hoursForExpirationTime = undefined;
 
 var _moment = require('moment');
 
@@ -11,7 +11,9 @@ var _moment2 = _interopRequireDefault(_moment);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var startDayExpirationTime = exports.startDayExpirationTime = (0, _moment2.default)().subtract(6, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
+var hoursForExpirationTime = exports.hoursForExpirationTime = 6;
+
+var startDayExpirationTime = exports.startDayExpirationTime = (0, _moment2.default)().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
 
 var FINISH_WORD = exports.FINISH_WORD = {
 	word: "done",

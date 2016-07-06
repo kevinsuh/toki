@@ -52,7 +52,17 @@ exports.default = function (controller) {
 					}).then(function (workSessions) {
 
 						if (workSessions.length == 0) {
-							shouldStartNewDay = true;
+							if (sessionGroups[0] && sessionGroups[0].type == "start_work") {
+								// if you started a day recently, this can be used as proxy instead of a session
+								var startDaySessionTime = (0, _momentTimezone2.default)(sessionGroups[0].createdAt);
+								var now = (0, _momentTimezone2.default)();
+								var hoursSinceStartDay = _momentTimezone2.default.duration(now.diff(startDaySessionTime)).asHours();
+								if (hoursSinceStartDay > _constants.hoursForExpirationTime) {
+									shouldStartNewDay = true;
+								}
+							} else {
+								shouldStartNewDay = true;
+							}
 						}
 
 						var config = { SlackUserId: SlackUserId, shouldStartNewDay: shouldStartNewDay };
@@ -100,7 +110,7 @@ exports.default = function (controller) {
 					} else {
 						convo.say('Welcome back, ' + name + '!');
 						if (dailyTasks.length > 0) {
-							convo.say('Here are your current priorities: ' + taskListMessage);
+							convo.say('Here are your current priorities:\n' + taskListMessage);
 						}
 						shouldStartSessionFlow(err, convo);
 					}
@@ -204,7 +214,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function shouldStartNewDayFlow(err, convo) {
 
 	convo.ask({
-		text: 'Ready to make a plan for today? If the above tasks are what you want to work on, we can start a session with those instead :pick:',
+		text: '*Ready to make a plan for today?* If the above tasks are what you want to work on, we can start a session with those instead :pick:',
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "IS_BACK_START_DAY",
@@ -261,7 +271,6 @@ function shouldStartNewDayFlow(err, convo) {
 	}, { // NL equivalent to buttonValues.startSession.value
 		pattern: _botResponses.utterances.startSession,
 		callback: function callback(response, convo) {
-			convo.say('Let\'s kick off a new session :soccer:');
 			convo.isBackDecision = _intents2.default.START_SESSION;
 			convo.next();
 		}
@@ -304,7 +313,7 @@ function shouldStartNewDayFlow(err, convo) {
 function shouldStartSessionFlow(err, convo) {
 
 	convo.ask({
-		text: 'Ready to start another session?',
+		text: '*Ready to start another session?*',
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "IS_BACK_START_SESSION",

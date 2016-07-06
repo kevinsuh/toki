@@ -1,6 +1,8 @@
 import moment from 'moment';
 
-export const startDayExpirationTime = moment().subtract(6, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
+export const hoursForExpirationTime = 6;
+
+export const startDayExpirationTime = moment().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
 
 export const FINISH_WORD = {
 	word: "done",
