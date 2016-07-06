@@ -166,6 +166,18 @@ var buttonValues = exports.buttonValues = {
 			name: "OTHER_TIMEZONE",
 			value: "OTHER_TIMEZONE"
 		}
+	},
+	changeName: {
+		name: "CHANGE_NAME",
+		value: "CHANGE_NAME"
+	},
+	changeTimeZone: {
+		name: "CHANGE_TIME_ZONE",
+		value: "CHANGE_TIME_ZONE"
+	},
+	neverMind: {
+		name: "NEVER_MIND",
+		value: "NEVER_MIND"
 	}
 };
 
