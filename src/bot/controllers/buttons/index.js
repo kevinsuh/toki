@@ -74,6 +74,15 @@ export default function(controller) {
 				case buttonValues.differentName.value:
 					bot.replyInteractive(message, "Let's do another name then!")
 					break;
+				case buttonValues.changeTimeZone.value:
+					bot.replyInteractive(message, "Let's change your timezone!")
+					break;
+				case buttonValues.changeName.value:
+					bot.replyInteractive(message, "Let's change your name!")
+					break;
+				case buttonValues.neverMind.value:
+					bot.replyInteractive(message, "Okay!")
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");

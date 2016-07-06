@@ -142,20 +142,163 @@ function startSettingsConversation(err, convo) {
 	}, {
 		pattern: _constants.buttonValues.changeTimeZone.value,
 		callback: function callback(response, convo) {
-			convo.say("u want to change timezone");
+			changeTimezone(response, convo);
 			convo.next();
 		}
 	}, { // same as buttonValues.changeTimeZone.value
 		pattern: _botResponses.utterances.containsTimeZone,
 		callback: function callback(response, convo) {
-			convo.say("u want to change timezone");
+			changeTimezone(response, convo);
 			convo.next();
 		}
 	}, {
 		default: true,
 		callback: function callback(response, convo) {
 			// for now this will be where "never mind" goes
-			convo.say("you said never mind");
+			convo.say("If you change your mind, just tell me that you want to `show settings`");
+			convo.next();
+		}
+	}]);
+}
+
+// user wants to change time zones
+
+
+// user wants to update settings!
+function changeTimezone(response, convo) {
+	var settings = convo.settings;
+	var _convo$settings3 = convo.settings;
+	var timeZone = _convo$settings3.timeZone;
+	var nickName = _convo$settings3.nickName;
+
+	convo.ask({
+		text: 'Which timezone are you in now?',
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "CHANGE_TIME_ZONE",
+			fallback: "What's your timezone?",
+			color: _constants.colorsHash.blue.hex,
+			actions: [{
+				name: _constants.buttonValues.timeZones.eastern.name,
+				text: 'Eastern',
+				value: _constants.buttonValues.timeZones.eastern.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.timeZones.central.name,
+				text: 'Central',
+				value: _constants.buttonValues.timeZones.central.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.timeZones.mountain.name,
+				text: 'Mountain',
+				value: _constants.buttonValues.timeZones.mountain.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.timeZones.pacific.name,
+				text: 'Pacific',
+				value: _constants.buttonValues.timeZones.pacific.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.timeZones.other.name,
+				text: 'Other',
+				value: _constants.buttonValues.timeZones.other.value,
+				type: "button"
+			}]
+		}]
+	}, [{
+		pattern: _constants.buttonValues.timeZones.eastern.value,
+		callback: function callback(response, convo) {
+			convo.settings.timeZone = _constants.timeZones.eastern;
+			returnToMainSettings(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.timeZones.central.value,
+		callback: function callback(response, convo) {
+			convo.settings.timeZone = _constants.timeZones.central;
+			returnToMainSettings(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.timeZones.mountain.value,
+		callback: function callback(response, convo) {
+			convo.settings.timeZone = _constants.timeZones.mountain;
+			returnToMainSettings(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.timeZones.pacific.value,
+		callback: function callback(response, convo) {
+			convo.settings.timeZone = _constants.timeZones.pacific;
+			returnToMainSettings(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.timeZones.other.value,
+		callback: function callback(response, convo) {
+			askOtherTimeZoneOptions(response, convo);
+			returnToMainSettings(response, convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say("I didn't get that :thinking_face:");
+			convo.repeat();
+			convo.next();
+		}
+	}]);
+}
+
+// user wants other time zone
+function askOtherTimeZoneOptions(response, convo) {
+
+	convo.say("Oops dont have that feature right now");
+	convo.next();
+}
+
+// return after updating statuses
+function returnToMainSettings(response, convo) {
+	var settings = convo.settings;
+	var _convo$settings4 = convo.settings;
+	var timeZone = _convo$settings4.timeZone;
+	var nickName = _convo$settings4.nickName;
+
+
+	var settingsAttachment = getSettingsAttachment(settings);
+
+	convo.ask({
+		text: 'Here are your updated settings. Is there anything else I can help you with?',
+		attachments: settingsAttachment
+	}, [{
+		pattern: _constants.buttonValues.changeName.value,
+		callback: function callback(response, convo) {
+			convo.say("u want to change name");
+			convo.next();
+		}
+	}, { // same as buttonValues.changeName.value
+		pattern: _botResponses.utterances.containsName,
+		callback: function callback(response, convo) {
+			convo.say("u want to change name");
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.changeTimeZone.value,
+		callback: function callback(response, convo) {
+			changeTimezone(response, convo);
+			convo.next();
+		}
+	}, { // same as buttonValues.changeTimeZone.value
+		pattern: _botResponses.utterances.containsTimeZone,
+		callback: function callback(response, convo) {
+			changeTimezone(response, convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			// for now this will be where "never mind" goes
+			convo.say("Happy to help. Now let's get back to it");
 			convo.next();
 		}
 	}]);
@@ -166,16 +309,13 @@ function startSettingsConversation(err, convo) {
  * @param  {User} user user obj. w/ SlackUser attached to it
  * @return {array}      array that is the slack message attachment
  */
-
-
-// user wants to update settings!
 function getSettingsAttachment(settings) {
 	var timeZone = settings.timeZone;
 	var nickName = settings.nickName;
 
 
 	var attachment = [{
-
+		callback_id: "SETTINGS",
 		fallback: 'Here are your settings',
 		color: _constants.colorsHash.grey.hex,
 		attachment_type: 'default',
