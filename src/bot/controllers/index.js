@@ -11,6 +11,7 @@ import daysController from './days';
 import buttonsController from './buttons';
 import setupReceiveMiddleware from '../middleware/receiveMiddleware';
 import miscController from './misc';
+import settingsController from './settings';
 
 import models from '../../app/models';
 import intentConfig from '../lib/intents';
@@ -133,6 +134,8 @@ export function customConfigBot(controller) {
 	workSessionsController(controller);
 	remindersController(controller);
 	buttonsController(controller);
+	settingsController(controller);
+
 }
 
 // try to avoid repeat RTM's
