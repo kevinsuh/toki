@@ -38,8 +38,9 @@ function randomInt(min, max) {
 var utterances = exports.utterances = (_utterances = {
 	yes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|(\bd[o ]+[this]{2,})|(\bd[o ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
 	no: new RegExp(/(^(no|nah|nope|n)|\bn[oahpe]+\b)/i),
+	specificYes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|\by[esahp]{2,}\b|\bs[ure]{2,}\b)/i),
 	containsNew: new RegExp(/(\bn[new]{2,}\b)/i),
-	containsCheckin: new RegExp(/(\bch[check in]{3,}\b)/i),
+	containsCheckin: new RegExp(/(\bch[check in]{3,}\b|r[reminder ]{4,})/i),
 	containsChangeTask: new RegExp(/(ch[change ]{3,}t[task ]{2,})/i),
 	containsChangeTime: new RegExp(/(ch[change ]{3,}t[time ]{2,})/i),
 	containsAddNote: new RegExp(/(a[add ]{1,}n[note ]{2,})/i),
@@ -49,5 +50,5 @@ var utterances = exports.utterances = (_utterances = {
 	containsEnd: new RegExp(/(e[end]{2,})/i),
 	containsNone: new RegExp(/((no|none|didnt|didn't)|\bn[otahpe]+\b)/i),
 	containsDifferent: new RegExp(/((\bdi[different]{4,}\b)|(\b[else ]{3,}\b))/i)
-}, _defineProperty(_utterances, "containsNone", new RegExp(/\b[none]{2,}\b/i)), _defineProperty(_utterances, "containsNumber", new RegExp(/\d/i)), _defineProperty(_utterances, "containsAdd", new RegExp(/a[add]{1,}/i)), _defineProperty(_utterances, "containsTask", new RegExp(/t[task]{2,}/i)), _defineProperty(_utterances, "containsName", new RegExp(/n[name]{2,}/i)), _defineProperty(_utterances, "containsTimeZone", new RegExp(/t[timezone ]{4,}/i)), _utterances);
+}, _defineProperty(_utterances, "containsNone", new RegExp(/\b[none]{2,}\b/i)), _defineProperty(_utterances, "containsNumber", new RegExp(/\d/i)), _defineProperty(_utterances, "containsAdd", new RegExp(/a[add]{1,}/i)), _defineProperty(_utterances, "containsTask", new RegExp(/t[task]{2,}/i)), _defineProperty(_utterances, "containsName", new RegExp(/n[name]{2,}/i)), _defineProperty(_utterances, "containsTimeZone", new RegExp(/t[timezone ]{4,}/i)), _defineProperty(_utterances, "containsPlan", new RegExp(/p[plan ]{2,}/i)), _utterances);
 //# sourceMappingURL=botResponses.js.map

@@ -81,6 +81,15 @@ exports.default = function (controller) {
 				case _constants.buttonValues.neverMind.value:
 					bot.replyInteractive(message, "Sounds good");
 					break;
+				case _constants.buttonValues.startDay.value:
+					bot.replyInteractive(message, "Let's do it!");
+					break;
+				case _constants.buttonValues.startSession.value:
+					bot.replyInteractive(message, "Let's kick off a new session :soccer:");
+					break;
+				case _constants.buttonValues.endDay.value:
+					bot.replyInteractive(message, "It's about that time, isn't it?");
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");
