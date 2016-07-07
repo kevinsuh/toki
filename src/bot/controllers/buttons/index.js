@@ -93,7 +93,14 @@ export default function(controller) {
 					bot.replyInteractive(message, "It's about that time, isn't it?")
 					break;
 				case buttonValues.resetTimes.value:
-				bot.replyInteractive(message, "_Resetting :repeat:..._")
+					bot.replyInteractive(message, "_Resetting :repeat:..._")
+					break;
+				case buttonValues.snooze.value:
+					bot.replyInteractive(message, "Okay, snoozing!")
+					console.log("\n\n\nTHIS IS BOT:");
+					console.log(bot);
+					console.log("\n\n\n");
+					controller.trigger(`snooze_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				default:
 					// some default to replace button no matter what

@@ -210,6 +210,10 @@ var buttonValues = exports.buttonValues = {
 	resetTimes: {
 		name: "RESET_TIMES",
 		value: "RESET_TIMES"
+	},
+	snooze: {
+		name: "SNOOZE",
+		value: "SNOOZE"
 	}
 };
 

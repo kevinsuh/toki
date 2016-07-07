@@ -80,6 +80,35 @@ exports.default = function (controller) {
 		}, 1250);
 	});
 
+	// snooze flow
+	controller.on('snooze_flow', function (bot, config) {
+
+		console.log("\n\n\n IN SNOOZE FLOW \n\n\n");
+
+		var SlackUserId = config.SlackUserId;
+		var botCallback = config.botCallback;
+
+
+		_models2.default.User.find({
+			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+			include: [_models2.default.SlackUser]
+		}).then(function (user) {
+
+			if (botCallback) {
+				// if botCallback, need to get the correct bot
+				var botToken = bot.config.token;
+				bot = _index.bots[botToken];
+			}
+
+			// making this just a reminder now so that user can end his own session as he pleases
+			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+				convo.say("OKAY SNOOZING....");
+				convo.next();
+			});
+		});
+	});
+
 	// session timer is up
 	controller.on('session_timer_up', function (bot, config) {
 
@@ -88,13 +117,65 @@ exports.default = function (controller) {
    */
 
 		var SlackUserId = config.SlackUserId;
+		var workSession = config.workSession;
 
-		// making this just a reminder now so that user can end his own session as he pleases
+		var dailyTaskIds = workSession.DailyTasks.map(function (dailyTask) {
+			return dailyTask.id;
+		});
 
-		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+		_models2.default.User.find({
+			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+			include: [_models2.default.SlackUser]
+		}).then(function (user) {
+			user.getDailyTasks({
+				where: ['"DailyTask"."id" IN (?)', dailyTaskIds],
+				include: [_models2.default.Task]
+			}).then(function (dailyTasks) {
 
-			convo.say(':timer_clock: time\'s up. Reply `done` when you\'re ready to end the session');
-			convo.next();
+				var taskTextsToWorkOnArray = dailyTasks.map(function (dailyTask) {
+					var text = dailyTask.Task.dataValues.text;
+					return text;
+				});
+				var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
+
+				var message = {
+					channel: SlackUserId,
+					text: 'Hey, did you finish ' + tasksToWorkOnString + '?'
+				};
+				// console.log(message);
+				// bot.api.chat.postMessage(message, (err, res) => {
+				// 		console.log("HEY!!");
+				// 	console.log(err);
+				// 	console.log(res);
+				// 	console.log("\n\n\n\n");
+				// })
+				// bot.say(message, (err, res) => {
+				// 	console.log("HEY!!");
+				// 	console.log(err);
+				// 	console.log(res);
+				// 	console.log("\n\n\n\n");
+				// })
+
+				// making this just a reminder now so that user can end his own session as he pleases
+				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+					convo.say({
+						text: 'Hey, did you finish ' + tasksToWorkOnString + '?',
+						attachments: [{
+							attachment_type: 'default',
+							callback_id: "DONE_SESSION",
+							fallback: "I was unable to process your decision",
+							actions: [{
+								name: _constants.buttonValues.snooze.name,
+								text: "SNOOZE",
+								value: _constants.buttonValues.snooze.value,
+								type: "button"
+							}]
+						}]
+					});
+					convo.next();
+				});
+			});
 		});
 	});
 

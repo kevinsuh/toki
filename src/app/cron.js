@@ -24,7 +24,9 @@ var checkForSessions = () => {
 	var now = moment.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 
 	models.WorkSession.findAll({
-		where: [ `"endTime" < ? AND open = ?`, now, true ]
+		where: [ `"endTime" < ? AND open = ?`, now, true ],
+		order: `"WorkSession"."createdAt" DESC`,
+		include: [ models.DailyTask ]
 	}).then((workSessions) => {
 
 		// these are the work sessions that have ended within last 5 minutes
@@ -45,38 +47,39 @@ var checkForSessions = () => {
 			workSession.update({
 				open: false
 			})
-			.then(() => {
-				return models.User.find({
+			.then((workSession) => {
+				models.User.find({
 					where: { id: UserId },
 					include: [ models.SlackUser ]
-				});
-			})
-			.then((user) => {
-
-				var { SlackUserId } = user.SlackUser;
-				var config = {
-					SlackUserId
-				}
-
-				// we need to find the bot that contains this user
-				// 1. find team of slack user
-				// 2. get token of that team
-				// 3. get that bot by token
-				
-				const { SlackUser: { TeamId } } = user;
-
-				models.Team.find({
-					where: { TeamId }
 				})
-				.then((team) => {
-					const { token } = team;
-					var bot = bots[token];
-					if (bot) {
-						// alarm is up for session
-						controller.trigger('session_timer_up', [bot, config]);
-					}
-				});
+				.then((user) => {
 
+					var { SlackUserId } = user.SlackUser;
+					var config = {
+						SlackUserId,
+						workSession
+					}
+
+					// we need to find the bot that contains this user
+					// 1. find team of slack user
+					// 2. get token of that team
+					// 3. get that bot by token
+					
+					const { SlackUser: { TeamId } } = user;
+
+					models.Team.find({
+						where: { TeamId }
+					})
+					.then((team) => {
+						const { token } = team;
+						var bot = bots[token];
+						if (bot) {
+							// alarm is up for session
+							controller.trigger('session_timer_up', [bot, config]);
+						}
+					});
+
+				})
 			})
 
 		});

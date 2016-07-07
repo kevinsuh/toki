@@ -32,7 +32,9 @@ var checkForSessions = function checkForSessions() {
 	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 
 	_models2.default.WorkSession.findAll({
-		where: ['"endTime" < ? AND open = ?', now, true]
+		where: ['"endTime" < ? AND open = ?', now, true],
+		order: '"WorkSession"."createdAt" DESC',
+		include: [_models2.default.DailyTask]
 	}).then(function (workSessions) {
 
 		// these are the work sessions that have ended within last 5 minutes
@@ -52,36 +54,37 @@ var checkForSessions = function checkForSessions() {
 
 			workSession.update({
 				open: false
-			}).then(function () {
-				return _models2.default.User.find({
+			}).then(function (workSession) {
+				_models2.default.User.find({
 					where: { id: UserId },
 					include: [_models2.default.SlackUser]
-				});
-			}).then(function (user) {
-				var SlackUserId = user.SlackUser.SlackUserId;
+				}).then(function (user) {
+					var SlackUserId = user.SlackUser.SlackUserId;
 
-				var config = {
-					SlackUserId: SlackUserId
-				};
+					var config = {
+						SlackUserId: SlackUserId,
+						workSession: workSession
+					};
 
-				// we need to find the bot that contains this user
-				// 1. find team of slack user
-				// 2. get token of that team
-				// 3. get that bot by token
+					// we need to find the bot that contains this user
+					// 1. find team of slack user
+					// 2. get token of that team
+					// 3. get that bot by token
 
-				var TeamId = user.SlackUser.TeamId;
+					var TeamId = user.SlackUser.TeamId;
 
 
-				_models2.default.Team.find({
-					where: { TeamId: TeamId }
-				}).then(function (team) {
-					var token = team.token;
+					_models2.default.Team.find({
+						where: { TeamId: TeamId }
+					}).then(function (team) {
+						var token = team.token;
 
-					var bot = _controllers.bots[token];
-					if (bot) {
-						// alarm is up for session
-						_controllers.controller.trigger('session_timer_up', [bot, config]);
-					}
+						var bot = _controllers.bots[token];
+						if (bot) {
+							// alarm is up for session
+							_controllers.controller.trigger('session_timer_up', [bot, config]);
+						}
+					});
 				});
 			});
 		});

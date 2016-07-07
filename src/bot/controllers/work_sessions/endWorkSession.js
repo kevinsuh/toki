@@ -6,8 +6,10 @@ import http from 'http';
 import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
+
+import { bots } from '../index';
 
 import { colorsArray, buttonValues, colorsHash } from '../../lib/constants';
 
@@ -98,6 +100,38 @@ export default function(controller) {
 			
 	});
 
+	// snooze flow
+	controller.on(`snooze_flow`, (bot, config) => {
+
+		console.log("\n\n\n IN SNOOZE FLOW \n\n\n");
+
+		const { SlackUserId, botCallback } = config;
+
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			if (botCallback) {
+				// if botCallback, need to get the correct bot
+				var botToken = bot.config.token;
+				bot          = bots[botToken];
+			}
+
+			// making this just a reminder now so that user can end his own session as he pleases
+			bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+				convo.say("OKAY SNOOZING....");
+				convo.next();
+				
+			});
+
+		});
+	})
+
 	// session timer is up
 	controller.on('session_timer_up', (bot, config) => {
 
@@ -105,16 +139,77 @@ export default function(controller) {
 		 * 		Timer is up. Give user option to extend session or start reflection
 		 */
 
-		const { SlackUserId } = config;
-
-		// making this just a reminder now so that user can end his own session as he pleases
-		bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-
-			convo.say(`:timer_clock: time's up. Reply \`done\` when you're ready to end the session`);
-			convo.next();
-			
+		const { SlackUserId, workSession } = config;
+		var dailyTaskIds = workSession.DailyTasks.map((dailyTask) => {
+			return dailyTask.id;
 		});
 
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+			user.getDailyTasks({
+				where: [ `"DailyTask"."id" IN (?)`, dailyTaskIds ],
+				include: [ models.Task ]
+			})
+			.then((dailyTasks) => {
+
+				var taskTextsToWorkOnArray = dailyTasks.map((dailyTask) => {
+					var text = dailyTask.Task.dataValues.text;
+					return text;
+				});
+				var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
+
+				var message = {
+					channel: SlackUserId,
+					text: `Hey, did you finish ${tasksToWorkOnString}?`
+				}
+				// console.log(message);
+				// bot.api.chat.postMessage(message, (err, res) => {
+				// 		console.log("HEY!!");
+				// 	console.log(err);
+				// 	console.log(res);
+				// 	console.log("\n\n\n\n");
+				// })
+				// bot.say(message, (err, res) => {
+				// 	console.log("HEY!!");
+				// 	console.log(err);
+				// 	console.log(res);
+				// 	console.log("\n\n\n\n");
+				// })
+
+				// making this just a reminder now so that user can end his own session as he pleases
+				bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+					convo.say({
+						text: `Hey, did you finish ${tasksToWorkOnString}?`,
+						attachments:[
+							{
+								attachment_type: 'default',
+								callback_id: "DONE_SESSION",
+								fallback: "I was unable to process your decision",
+								actions: [
+									{
+											name: buttonValues.snooze.name,
+											text: "SNOOZE",
+											value: buttonValues.snooze.value,
+											type: "button"
+									}
+								]
+							}
+						]
+					});
+					convo.next();
+					
+				});
+
+			});
+		})
+
+				
 	});
 
 	// the actual end_session flow
