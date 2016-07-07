@@ -32,6 +32,10 @@ var _scripts = require('./app/scripts');
 
 var _miscHelpers = require('./bot/lib/miscHelpers');
 
+var _analyticsNode = require('analytics-node');
+
+var _analyticsNode2 = _interopRequireDefault(_analyticsNode);
+
 var _controllers = require('./bot/controllers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -76,6 +80,11 @@ if (env == 'development') {
 	process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
 	process.env.SLACK_ID = process.env.DEV_SLACK_ID;
 	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
+
+	// segment for dev
+	var analytics = new _analyticsNode2.default(process.env.SEGMENT_WRITE_KEY, { flushAt: 1 });
+} else {
+	var analytics = new _analyticsNode2.default(process.env.SEGMENT_WRITE_KEY);
 }
 
 /**

@@ -13,6 +13,8 @@ var CronJob = cron.CronJob;
 import { seedUsers, updateUsers } from './app/scripts';
 import { consoleLog } from './bot/lib/miscHelpers';
 
+import Analytics from 'analytics-node';
+
 setTimeout(() => {
 	consoleLog("updating and seeding users");
 	// updateUsers(); // to fill in all users who are not in DB yet
@@ -48,6 +50,11 @@ if (env == 'development') {
   process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
   process.env.SLACK_ID = process.env.DEV_SLACK_ID;
 	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
+
+	// segment for dev
+	var analytics = new Analytics(process.env.SEGMENT_WRITE_KEY, { flushAt: 1 });
+} else {
+	var analytics = new Analytics(process.env.SEGMENT_WRITE_KEY);
 }
 
 /**
