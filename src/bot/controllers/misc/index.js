@@ -7,7 +7,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, FINISH_WORD, EXIT_EARLY_WORDS, NONE } from '../../lib/constants';
+import { colorsArray, THANK_YOU, RESET, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, FINISH_WORD, EXIT_EARLY_WORDS, NONE } from '../../lib/constants';
 import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput } from '../../lib/messageHelpers';
 import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
@@ -393,6 +393,13 @@ function getTimeToTasks(response, convo) {
 							text: "Add more tasks!",
 							value: buttonValues.actuallyWantToAddATask.value,
 							type: "button"
+					},
+					{
+							name: buttonValues.resetTimes.name,
+							text: "Reset times",
+							value: buttonValues.resetTimes.value,
+							type: "button",
+							style: "danger"
 					}
 				]
 			}
@@ -404,6 +411,65 @@ function getTimeToTasks(response, convo) {
 			callback: function(response, convo) {
 				addMoreTasks(response, convo);
 				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.resetTimes.value,
+			callback: (response, convo) => {
+
+				var { sentMessages } = bot;
+				if (sentMessages) {
+					// lastMessage is the one just asked by `convo`
+					// in this case, it is `taskListMessage`
+					var lastMessage = sentMessages.slice(-1)[0];
+					if (lastMessage) {
+						const { channel, ts } = lastMessage;
+						var updateTaskListMessageObject = {
+							channel,
+							ts
+						};
+						// this is the message that the bot will be updating
+						convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
+					}
+				}
+
+				// reset ze task list message
+				timeToTasksArray = [];
+				taskListMessage = convertArrayToTaskListMessage(taskArray, { dontShowMinutes: true });
+				updateTaskListMessageObject.text = taskListMessage;
+				bot.api.chat.update(updateTaskListMessageObject);
+
+				convo.silentRepeat();
+			}
+		},
+		{
+			pattern: RESET.reg_exp,
+			callback: (response, convo) => {
+
+				var { sentMessages } = bot;
+				if (sentMessages) {
+					// lastMessage is the one just asked by `convo`
+					// in this case, it is `taskListMessage`
+					var lastMessage = sentMessages.slice(-1)[0];
+					if (lastMessage) {
+						const { channel, ts } = lastMessage;
+						var updateTaskListMessageObject = {
+							channel,
+							ts
+						};
+						// this is the message that the bot will be updating
+						convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
+					}
+				}
+
+				// reset ze task list message
+				timeToTasksArray = [];
+				taskListMessage = convertArrayToTaskListMessage(taskArray, { dontShowMinutes: true });
+				updateTaskListMessageObject.text = taskListMessage;
+				bot.api.chat.update(updateTaskListMessageObject);
+
+				convo.silentRepeat();
+
 			}
 		},
 		{

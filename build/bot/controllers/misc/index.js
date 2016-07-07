@@ -388,6 +388,12 @@ function getTimeToTasks(response, convo) {
 				text: "Add more tasks!",
 				value: _constants.buttonValues.actuallyWantToAddATask.value,
 				type: "button"
+			}, {
+				name: _constants.buttonValues.resetTimes.name,
+				text: "Reset times",
+				value: _constants.buttonValues.resetTimes.value,
+				type: "button",
+				style: "danger"
 			}]
 		}]
 	}, [{
@@ -395,6 +401,66 @@ function getTimeToTasks(response, convo) {
 		callback: function callback(response, convo) {
 			addMoreTasks(response, convo);
 			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.resetTimes.value,
+		callback: function callback(response, convo) {
+			var sentMessages = bot.sentMessages;
+
+			if (sentMessages) {
+				// lastMessage is the one just asked by `convo`
+				// in this case, it is `taskListMessage`
+				var lastMessage = sentMessages.slice(-1)[0];
+				if (lastMessage) {
+					var channel = lastMessage.channel;
+					var ts = lastMessage.ts;
+
+					var updateTaskListMessageObject = {
+						channel: channel,
+						ts: ts
+					};
+					// this is the message that the bot will be updating
+					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
+				}
+			}
+
+			// reset ze task list message
+			timeToTasksArray = [];
+			taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontShowMinutes: true });
+			updateTaskListMessageObject.text = taskListMessage;
+			bot.api.chat.update(updateTaskListMessageObject);
+
+			convo.silentRepeat();
+		}
+	}, {
+		pattern: _constants.RESET.reg_exp,
+		callback: function callback(response, convo) {
+			var sentMessages = bot.sentMessages;
+
+			if (sentMessages) {
+				// lastMessage is the one just asked by `convo`
+				// in this case, it is `taskListMessage`
+				var lastMessage = sentMessages.slice(-1)[0];
+				if (lastMessage) {
+					var channel = lastMessage.channel;
+					var ts = lastMessage.ts;
+
+					var updateTaskListMessageObject = {
+						channel: channel,
+						ts: ts
+					};
+					// this is the message that the bot will be updating
+					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
+				}
+			}
+
+			// reset ze task list message
+			timeToTasksArray = [];
+			taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontShowMinutes: true });
+			updateTaskListMessageObject.text = taskListMessage;
+			bot.api.chat.update(updateTaskListMessageObject);
+
+			convo.silentRepeat();
 		}
 	}, {
 		default: true,

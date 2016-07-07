@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.hoursForExpirationTime = undefined;
+exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.hoursForExpirationTime = undefined;
 
 var _moment = require('moment');
 
@@ -23,6 +23,11 @@ var FINISH_WORD = exports.FINISH_WORD = {
 var NONE = exports.NONE = {
 	word: "none",
 	reg_exp: new RegExp(/^[none]{3,}e$/i)
+};
+
+var RESET = exports.RESET = {
+	word: "reset",
+	reg_exp: new RegExp(/^r[reset]{3,}\b/i)
 };
 
 var THANK_YOU = exports.THANK_YOU = {
@@ -201,6 +206,10 @@ var buttonValues = exports.buttonValues = {
 	createReminder: {
 		name: "CREATE_REMINDER",
 		value: "CREATE_REMINDER"
+	},
+	resetTimes: {
+		name: "RESET_TIMES",
+		value: "RESET_TIMES"
 	}
 };
 

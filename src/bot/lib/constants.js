@@ -14,6 +14,11 @@ export const NONE = {
 	reg_exp: new RegExp(/^[none]{3,}e$/i)
 };
 
+export const RESET = {
+	word: "reset",
+	reg_exp: new RegExp(/^r[reset]{3,}\b/i)
+}
+
 export const THANK_YOU = {
 	word: "thank you",
 	reg_exp: new RegExp(/(^[thanksyou]{5,}\b|^[thx]{3,5}\b|^[ty]{2,3}\b)/i)
@@ -191,6 +196,10 @@ export const buttonValues ={
 	createReminder: {
 		name: "CREATE_REMINDER",
 		value: "CREATE_REMINDER"
+	},
+	resetTimes: {
+		name: "RESET_TIMES",
+		value: "RESET_TIMES"
 	}
 }
 
