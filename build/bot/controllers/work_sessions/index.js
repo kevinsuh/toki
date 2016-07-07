@@ -273,7 +273,13 @@ function shouldStartNewDayFlow(err, convo) {
 				type: "button"
 			}]
 		}]
-	}, [{
+	}, [{ // user does not want any of the options
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say('Okay! I\'ll be here whenever you\'re ready :hand:');
+			convo.next();
+		}
+	}, {
 		pattern: _constants.buttonValues.startDay.value,
 		callback: function callback(response, convo) {
 			convo.isBackDecision = _intents2.default.START_DAY;
@@ -372,7 +378,13 @@ function shouldStartSessionFlow(err, convo) {
 				type: "button"
 			}]
 		}]
-	}, [{
+	}, [{ // user does not want any of the options
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say('Okay! I\'ll be here whenever you\'re ready :hand:');
+			convo.next();
+		}
+	}, {
 		pattern: _constants.buttonValues.startDay.value,
 		callback: function callback(response, convo) {
 			convo.isBackDecision = _intents2.default.START_DAY;

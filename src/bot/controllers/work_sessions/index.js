@@ -261,6 +261,13 @@ function shouldStartNewDayFlow(err, convo) {
 		]
 	},
 	[
+		{ // user does not want any of the options
+			pattern: utterances.noAndNeverMind,
+			callback: (response, convo) => {
+				convo.say(`Okay! I'll be here whenever you're ready :hand:`);
+				convo.next();
+			}
+		},
 		{
 			pattern: buttonValues.startDay.value,
 			callback: function(response, convo) {
@@ -380,6 +387,13 @@ function shouldStartSessionFlow(err, convo) {
 		]
 	},
 	[
+		{ // user does not want any of the options
+			pattern: utterances.noAndNeverMind,
+			callback: (response, convo) => {
+				convo.say(`Okay! I'll be here whenever you're ready :hand:`);
+				convo.next();
+			}
+		},
 		{
 			pattern: buttonValues.startDay.value,
 			callback: function(response, convo) {
