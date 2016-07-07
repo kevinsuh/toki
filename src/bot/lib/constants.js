@@ -6,13 +6,18 @@ export const startDayExpirationTime = moment().subtract(hoursForExpirationTime, 
 
 export const FINISH_WORD = {
 	word: "done",
-	reg_exp: new RegExp(/\b[done]{3,}\b/i)
+	reg_exp: new RegExp(/^d[one]{2,}\b/i)
 };
 
 export const NONE = {
 	word: "none",
 	reg_exp: new RegExp(/^[none]{3,}e$/i)
 };
+
+export const RESET = {
+	word: "reset",
+	reg_exp: new RegExp(/^r[reset]{3,}\b/i)
+}
 
 export const THANK_YOU = {
 	word: "thank you",
@@ -191,6 +196,10 @@ export const buttonValues ={
 	createReminder: {
 		name: "CREATE_REMINDER",
 		value: "CREATE_REMINDER"
+	},
+	resetTimes: {
+		name: "RESET_TIMES",
+		value: "RESET_TIMES"
 	}
 }
 

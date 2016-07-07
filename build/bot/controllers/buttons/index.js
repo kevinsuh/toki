@@ -90,6 +90,9 @@ exports.default = function (controller) {
 				case _constants.buttonValues.endDay.value:
 					bot.replyInteractive(message, "It's about that time, isn't it?");
 					break;
+				case _constants.buttonValues.resetTimes.value:
+					bot.replyInteractive(message, "_Resetting :repeat:..._");
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");

@@ -124,6 +124,7 @@ exports.default = function (controller) {
 				convo.name = name;
 
 				convo.dayStart = {
+					bot: bot,
 					UserId: user.id,
 					startDayDecision: false, // what does user want to do with day
 					prioritizedTaskArray: [] // the final tasks to do for the day
@@ -137,12 +138,12 @@ exports.default = function (controller) {
 
 					if (dailyTasks.length == 0) {
 						// no pending tasks -- it's a new day
-						(0, _startDayFunctions.askForDayTasks)(err, convo);
+						(0, _plan.askForDayTasks)(err, convo);
 					} else {
 						// has pending tasks
 						dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
 						convo.dayStart.pendingTasks = dailyTasks;
-						(0, _startDayFunctions.showPendingTasks)(err, convo);
+						(0, _plan.showPendingTasks)(err, convo);
 					}
 				});
 
@@ -289,7 +290,7 @@ var _intents2 = _interopRequireDefault(_intents);
 
 var _constants = require('../../lib/constants');
 
-var _startDayFunctions = require('./startDayFunctions');
+var _plan = require('../modules/plan');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 

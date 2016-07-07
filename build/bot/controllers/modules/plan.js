@@ -6,127 +6,8 @@ Object.defineProperty(exports, "__esModule", {
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-exports.default = function (controller) {
-
-	// this will send message if no other intent gets picked up
-	controller.hears([''], 'direct_message', _index.wit.hears, function (bot, message) {
-
-		var SlackUserId = message.user;
-
-		(0, _miscHelpers.consoleLog)("in back up area!!!", message);
-
-		var SECRET_KEY = new RegExp(/^TOKI_T1ME/);
-
-		// user said something outside of wit's scope
-		if (!message.selectedIntent) {
-
-			bot.send({
-				type: "typing",
-				channel: message.channel
-			});
-			setTimeout(function () {
-
-				// different fallbacks based on reg exp
-				var text = message.text;
-
-
-				if (_constants.THANK_YOU.reg_exp.test(text)) {
-					// user says thank you
-					bot.reply(message, "You're welcome!! :smile:");
-				} else if (SECRET_KEY.test(text)) {
-
-					(0, _miscHelpers.consoleLog)("UNLOCKED TOKI_T1ME!!!");
-					/*
-     		
-     *** ~~ TOP SECRET PASSWORD FOR TESTING FLOWS ~~ ***
-     		
-      */
-					controller.trigger('test_begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
-				} else {
-					// end-all fallback
-					var options = [{ title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
-					var colorsArrayLength = _constants.colorsArray.length;
-					var optionsAttachment = options.map(function (option, index) {
-						var colorsArrayIndex = index % colorsArrayLength;
-						return {
-							fields: [{
-								title: option.title,
-								value: option.description
-							}],
-							color: _constants.colorsArray[colorsArrayIndex].hex,
-							attachment_type: 'default',
-							callback_id: "SHOW OPTIONS",
-							fallback: option.description
-						};
-					});
-
-					bot.reply(message, {
-						text: "Hey! I can only help you with a few things. Here's the list of things I can help you with:",
-						attachments: optionsAttachment
-					});
-				}
-			}, 1000);
-		}
-	});
-
-	/**
-  *      START DAY W/ EDITABLE MESSAGES FLOW
-  */
-
-	controller.on('test_begin_day_flow', function (bot, config) {
-		var SlackUserId = config.SlackUserId;
-
-
-		_models2.default.User.find({
-			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
-			include: [_models2.default.SlackUser]
-		}).then(function (user) {
-
-			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-
-				var name = user.nickName || user.email;
-				convo.name = name;
-
-				convo.dayStart = {
-					bot: bot,
-					UserId: user.id,
-					startDayDecision: false, // what does user want to do with day
-					prioritizedTaskArray: [] // the final tasks to do for the day
-				};
-
-				// live or pending tasks, that are not completed yet
-				user.getDailyTasks({
-					where: ['"DailyTask"."type" in (?) AND "Task"."done" = ?', ["pending", "live"], false],
-					include: [_models2.default.Task]
-				}).then(function (dailyTasks) {
-
-					if (dailyTasks.length == 0) {
-						// no pending tasks -- it's a new day
-						askForDayTasks(err, convo);
-					} else {
-						// has pending tasks
-						dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
-						convo.dayStart.pendingTasks = dailyTasks;
-						showPendingTasks(err, convo);
-					}
-				});
-
-				// on finish conversation
-				convo.on('end', function (convo) {
-
-					var responses = convo.extractResponses();
-					var dayStart = convo.dayStart;
-
-
-					console.log('done!');
-					console.log("here is day start object:\n\n\n");
-					console.log(convo.dayStart);
-					console.log("\n\n\n");
-				});
-			});
-		});
-	});
-};
+exports.showPendingTasks = showPendingTasks;
+exports.askForDayTasks = askForDayTasks;
 
 var _os = require('os');
 
@@ -142,25 +23,21 @@ var _bodyParser = require('body-parser');
 
 var _bodyParser2 = _interopRequireDefault(_bodyParser);
 
-var _momentTimezone = require('moment-timezone');
-
-var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
-
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
 
 var _botResponses = require('../../lib/botResponses');
 
-var _constants = require('../../lib/constants');
-
 var _messageHelpers = require('../../lib/messageHelpers');
-
-var _miscHelpers = require('../../lib/miscHelpers');
 
 var _intents = require('../../lib/intents');
 
 var _intents2 = _interopRequireDefault(_intents);
+
+var _constants = require('../../lib/constants');
+
+var _miscHelpers = require('../../lib/miscHelpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -252,8 +129,7 @@ function savePendingTasksToWorkOn(response, convo) {
 
 	var tasks = [];
 	convo.say("This is starting to look good :sunglasses:");
-	convo.say("Which additional tasks would you like to work on with me today?");
-	convo.say("You can enter everything in one line, separated by commas, or send me each task in a separate line");
+	convo.say("Which additional tasks would you like to work on with me today? Please send me each task in a separate line");
 	convo.ask({
 		text: "Then just tell me when you're `done`!",
 		attachments: [{
@@ -328,7 +204,7 @@ function askForDayTasks(response, convo) {
 
 	var tasks = [];
 	convo.say('What tasks would you like to work on today? :pencil:');
-	convo.ask('Please enter all of the tasks in one line, separated by commas, or just send me each task in a separate line. Then just tell me when you\'re done by saying `' + _constants.FINISH_WORD.word + '`', function (response, convo) {
+	convo.ask('Please send me each task in a separate line. Then just tell me when you\'re done by saying `' + _constants.FINISH_WORD.word + '`', function (response, convo) {
 
 		tasks.push(response);
 		if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
@@ -508,7 +384,7 @@ function getTimeToTasks(response, convo) {
 				});
 			});
 
-			var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontUseDataValues: true, emphasizeMinutes: true });
+			var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontUseDataValues: true, emphasizeMinutes: true, calculateMinutes: true });
 
 			updateTaskListMessageObject.text = taskListMessage;
 			bot.api.chat.update(updateTaskListMessageObject);
@@ -526,7 +402,7 @@ function getTimeToTasks(response, convo) {
 // this is the work we do to actually assign time to tasks
 function confirmTimeToTasks(timeToTasksArray, convo) {
 
-	convo.ask("Great! Are these times right?", [{
+	convo.ask("Are these times right?", [{
 		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.say(":boom: This looks great!");
@@ -642,4 +518,4 @@ function prioritizeTaskList(response, convo) {
 		}
 	}], { 'key': 'confirmedRightPriority' });
 }
-//# sourceMappingURL=index.js.map
+//# sourceMappingURL=plan.js.map
