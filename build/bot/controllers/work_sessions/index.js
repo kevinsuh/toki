@@ -35,38 +35,61 @@ exports.default = function (controller) {
 
 				var shouldStartNewDay = false;
 
-				// 1. has user started day yet?
-				user.getSessionGroups({
-					order: '"SessionGroup"."createdAt" DESC',
-					limit: 1
-				}).then(function (sessionGroups) {
+				// is user already in a work session?
+				user.getWorkSessions({
+					where: ['"open" = ?', true]
+				}).then(function (workSessions) {
 
-					if (sessionGroups.length == 0) {
-						shouldStartNewDay = true;
-					} else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
-						shouldStartNewDay = true;
+					if (workSessions.length > 0) {
+						// user is in a work session
+						var config = { SlackUserId: SlackUserId };
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+							var name = user.nickName || user.email;
+							var message = 'Welcome back, ' + name + '!';
+							convo.say(message);
+
+							convo.on('end', function (convo) {
+								controller.trigger('confirm_new_session', [bot, config]);
+							});
+						});
+						return;
 					}
 
-					user.getWorkSessions({
-						where: ['"WorkSession"."endTime" > ? ', _constants.startDayExpirationTime]
-					}).then(function (workSessions) {
+					// otherwise, do normal flow
+					// 1. has user started day yet?
+					user.getSessionGroups({
+						order: '"SessionGroup"."createdAt" DESC',
+						limit: 1
+					}).then(function (sessionGroups) {
 
-						if (workSessions.length == 0) {
-							if (sessionGroups[0] && sessionGroups[0].type == "start_work") {
-								// if you started a day recently, this can be used as proxy instead of a session
-								var startDaySessionTime = (0, _momentTimezone2.default)(sessionGroups[0].createdAt);
-								var now = (0, _momentTimezone2.default)();
-								var hoursSinceStartDay = _momentTimezone2.default.duration(now.diff(startDaySessionTime)).asHours();
-								if (hoursSinceStartDay > _constants.hoursForExpirationTime) {
-									shouldStartNewDay = true;
-								}
-							} else {
-								shouldStartNewDay = true;
-							}
+						if (sessionGroups.length == 0) {
+							shouldStartNewDay = true;
+						} else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
+							shouldStartNewDay = true;
 						}
 
-						var config = { SlackUserId: SlackUserId, shouldStartNewDay: shouldStartNewDay };
-						controller.trigger('is_back_flow', [bot, config]);
+						user.getWorkSessions({
+							where: ['"WorkSession"."endTime" > ? ', _constants.startDayExpirationTime]
+						}).then(function (workSessions) {
+
+							if (workSessions.length == 0) {
+								if (sessionGroups[0] && sessionGroups[0].type == "start_work") {
+									// if you started a day recently, this can be used as proxy instead of a session
+									var startDaySessionTime = (0, _momentTimezone2.default)(sessionGroups[0].createdAt);
+									var now = (0, _momentTimezone2.default)();
+									var hoursSinceStartDay = _momentTimezone2.default.duration(now.diff(startDaySessionTime)).asHours();
+									if (hoursSinceStartDay > _constants.hoursForExpirationTime) {
+										shouldStartNewDay = true;
+									}
+								} else {
+									shouldStartNewDay = true;
+								}
+							}
+
+							var config = { SlackUserId: SlackUserId, shouldStartNewDay: shouldStartNewDay };
+							controller.trigger('is_back_flow', [bot, config]);
+						});
 					});
 				});
 			});
@@ -95,23 +118,25 @@ exports.default = function (controller) {
 					convo.isBack = {
 						SlackUserId: SlackUserId,
 						shouldStartNewDay: shouldStartNewDay,
+						dailyTasks: dailyTasks,
 						isBackDecision: false // what user wants to do
 					};
 
 					var name = user.nickName || user.email;
 
 					// give response based on state user is in
+					var message = 'Welcome back, ' + name + '!';
 					if (shouldStartNewDay) {
-						convo.say('Welcome back, ' + name + '!');
 						if (dailyTasks.length > 0) {
-							convo.say('Here are your priorities from our last time together:\n' + taskListMessage);
+							message = message + ' Here are your priorities from our last time together:\n' + taskListMessage;
 						}
+						convo.say(message);
 						shouldStartNewDayFlow(err, convo);
 					} else {
-						convo.say('Welcome back, ' + name + '!');
 						if (dailyTasks.length > 0) {
-							convo.say('Here are your current priorities:\n' + taskListMessage);
+							message = message + ' Here are your current priorities:\n' + taskListMessage;
 						}
+						convo.say(message);
 						shouldStartSessionFlow(err, convo);
 					}
 
@@ -212,9 +237,15 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 // base controller for work sessions!
 function shouldStartNewDayFlow(err, convo) {
+	var dailyTasks = convo.isBack.dailyTasks;
 
+
+	var message = '*Ready to make a plan for today?*';
+	if (dailyTasks.length > 0) {
+		message = message + ' If the above tasks are what you want to work on, we can start a session with those instead :pick:';
+	}
 	convo.ask({
-		text: '*Ready to make a plan for today?* If the above tasks are what you want to work on, we can start a session with those instead :pick:',
+		text: message,
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "IS_BACK_START_DAY",
