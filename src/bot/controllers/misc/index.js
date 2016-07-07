@@ -376,9 +376,9 @@ function addMoreTasks(response, convo) {
 // ask the question to get time to tasks
 function getTimeToTasks(response, convo) {
 
-	var { taskArray, bot }   = convo.dayStart;
-	var options         = { dontShowMinutes: true };
-	var taskListMessage = convertArrayToTaskListMessage(taskArray, options);
+	var { taskArray, bot } = convo.dayStart;
+	var options            = { dontShowMinutes: true };
+	var taskListMessage    = convertArrayToTaskListMessage(taskArray, options);
 
 	convo.say("How much time would you like to allocate to each task?");
 	convo.ask({
@@ -415,33 +415,17 @@ function getTimeToTasks(response, convo) {
 				var { sentMessages } = bot;
 				if (sentMessages) {
 					// lastMessage is the one just asked by `convo`
+					// in this case, it is `taskListMessage`
 					var lastMessage = sentMessages.slice(-1)[0];
 					if (lastMessage) {
-						console.log("\n\n\nlast message:");
-						console.log(lastMessage);
-						console.log('\n\n\n\n');
 						const { channel, ts } = lastMessage;
-						var message = {
+						var updateTaskListMessageObject = {
 							channel,
-							ts,
-							text: "Hello world!~~"
+							ts
 						};
-						bot.api.chat.update(message, (err, res) => {
-							console.log("update?");
-							console.log(err);
-							console.log("response:\n\n\n\n");
-							console.log(res);
-							console.log("\n\n\n\n");
-						});
+						convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 					}
 				}
-
-
-				// const { channel, ts } = response; // necessary ingredients for message
-				// var message = { channel, ts, text:"Hello world!!!", token: bot.config.token, as_user: true };
-				// console.log(message);
-				// console.log("bot: ");
-				// console.log(bot.config.token);
 
 
 				if (utterances.containsAdd.test(response.text) && utterances.containsTask.test(response.text)) {
@@ -461,9 +445,9 @@ function getTimeToTasks(response, convo) {
 // this is the work we do to actually assign time to tasks
 function assignTimeToTasks(response, convo) {
 
-	const { task }                = convo;
-	const { bot, source_message } = task;
-	var { taskArray }             = convo.dayStart;
+	const { task }                                 = convo;
+	const { bot, source_message }                  = task;
+	var { taskArray, updateTaskListMessageObject } = convo.dayStart;
 
 	var timeToTask = response.text;
 
@@ -510,9 +494,12 @@ function assignTimeToTasks(response, convo) {
 	convo.dayStart.taskArray = taskArray;
 	var options              = { dontUseDataValues: true };
 	var taskListMessage      = convertArrayToTaskListMessage(taskArray, options);
+	var taskListMessageWithoutMinutes = convertArrayToTaskListMessage(taskArray, { dontUseDataValues: true, dontShowMinutes: true });
 
-	convo.say("Are these times right?");
-	convo.ask(taskListMessage, [
+	updateTaskListMessageObject.text = taskListMessage;
+	bot.api.chat.update(updateTaskListMessageObject);
+
+	convo.ask("Great! Are you ready to go on?", [
 		{
 			pattern: utterances.yes,
 			callback: (response, convo) => {
@@ -539,6 +526,8 @@ function assignTimeToTasks(response, convo) {
 		{
 			pattern: utterances.no,
 			callback: (response, convo) => {
+				// updateTaskListMessageObject.text = taskListMessageWithoutMinutes;
+				// bot.api.chat.update(updateTaskListMessageObject);
 				convo.say("Let's give this another try :repeat_one:");
 				convo.say("The first time you list will represent the first task above, the second time you list will represent the second task, and on and on");
 				convo.say("Just say, `30, 40, 50, 1 hour, 15 min` and I'll figure it out and assign those times to the tasks above in order :smiley:");

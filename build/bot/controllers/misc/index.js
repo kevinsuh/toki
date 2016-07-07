@@ -405,34 +405,19 @@ function getTimeToTasks(response, convo) {
 
 			if (sentMessages) {
 				// lastMessage is the one just asked by `convo`
+				// in this case, it is `taskListMessage`
 				var lastMessage = sentMessages.slice(-1)[0];
 				if (lastMessage) {
-					console.log("\n\n\nlast message:");
-					console.log(lastMessage);
-					console.log('\n\n\n\n');
 					var channel = lastMessage.channel;
 					var ts = lastMessage.ts;
 
-					var message = {
+					var updateTaskListMessageObject = {
 						channel: channel,
-						ts: ts,
-						text: "Hello world!~~"
+						ts: ts
 					};
-					bot.api.chat.update(message, function (err, res) {
-						console.log("update?");
-						console.log(err);
-						console.log("response:\n\n\n\n");
-						console.log(res);
-						console.log("\n\n\n\n");
-					});
+					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 				}
 			}
-
-			// const { channel, ts } = response; // necessary ingredients for message
-			// var message = { channel, ts, text:"Hello world!!!", token: bot.config.token, as_user: true };
-			// console.log(message);
-			// console.log("bot: ");
-			// console.log(bot.config.token);
 
 			if (_botResponses.utterances.containsAdd.test(response.text) && _botResponses.utterances.containsTask.test(response.text)) {
 				convo.say("Of course - just add another task here and say `done` when you're ready to go");
@@ -451,7 +436,9 @@ function assignTimeToTasks(response, convo) {
 	var task = convo.task;
 	var bot = task.bot;
 	var source_message = task.source_message;
-	var taskArray = convo.dayStart.taskArray;
+	var _convo$dayStart2 = convo.dayStart;
+	var taskArray = _convo$dayStart2.taskArray;
+	var updateTaskListMessageObject = _convo$dayStart2.updateTaskListMessageObject;
 
 
 	var timeToTask = response.text;
@@ -498,9 +485,12 @@ function assignTimeToTasks(response, convo) {
 	convo.dayStart.taskArray = taskArray;
 	var options = { dontUseDataValues: true };
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
+	var taskListMessageWithoutMinutes = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontUseDataValues: true, dontShowMinutes: true });
 
-	convo.say("Are these times right?");
-	convo.ask(taskListMessage, [{
+	updateTaskListMessageObject.text = taskListMessage;
+	bot.api.chat.update(updateTaskListMessageObject);
+
+	convo.ask("Great! Are you ready to go on?", [{
 		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.say(":boom: This looks great!");
@@ -522,6 +512,8 @@ function assignTimeToTasks(response, convo) {
 	}, {
 		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
+			// updateTaskListMessageObject.text = taskListMessageWithoutMinutes;
+			// bot.api.chat.update(updateTaskListMessageObject);
 			convo.say("Let's give this another try :repeat_one:");
 			convo.say("The first time you list will represent the first task above, the second time you list will represent the second task, and on and on");
 			convo.say("Just say, `30, 40, 50, 1 hour, 15 min` and I'll figure it out and assign those times to the tasks above in order :smiley:");
