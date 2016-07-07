@@ -17,16 +17,17 @@ export function convertResponseObjectsToTaskArray(tasks) {
 	tasks.forEach((task, index) => {
 		// ignore the last one (`done` command)
 		// also ignore if it is an `add a task` NL command
-		if (FINISH_WORD.reg_exp.test(task.text) || (utterances.containsAdd.test(task.text) && utterances.containsTask.test(task.text))) {
+		if (FINISH_WORD.reg_exp.test(task.text)) {
 			return;
 		}
 
 		taskString += task.text;
 		taskString += '\n';
+
 	});
 
-	const commaOrNewLine = /[,\n]+/;
-	var taskStringArray = taskString.split(commaOrNewLine);
+	const newLine = /[\n]+/;
+	var taskStringArray = taskString.split(newLine);
 	taskStringArray.pop(); // last one will be \n with this reg ex split
 
 	// this is the final task array we are returning

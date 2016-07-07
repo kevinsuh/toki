@@ -110,8 +110,7 @@ function savePendingTasksToWorkOn(response, convo) {
 
 	var tasks = [];
 	convo.say("This is starting to look good :sunglasses:");
-	convo.say("Which additional tasks would you like to work on with me today?");
-	convo.say("You can enter everything in one line, separated by commas, or send me each task in a separate line");
+	convo.say("Which additional tasks would you like to work on with me today? Please send me each task in a separate line");
 	convo.ask({
 		text: "Then just tell me when you're `done`!",
 		attachments:[
@@ -195,7 +194,7 @@ export function askForDayTasks(response, convo){
 
 	var tasks = [];
 	convo.say(`What tasks would you like to work on today? :pencil:`);
-	convo.ask(`Please enter all of the tasks in one line, separated by commas, or just send me each task in a separate line. Then just tell me when you're done by saying \`${FINISH_WORD.word}\``, (response, convo) => {
+	convo.ask(`Please send me each task in a separate line. Then just tell me when you're done by saying \`${FINISH_WORD.word}\``, (response, convo) => {
 
 		tasks.push(response);
 		if (FINISH_WORD.reg_exp.test(response.text)) {
