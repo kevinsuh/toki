@@ -343,14 +343,18 @@ controller.on('new_session_group_decision', function (bot, config) {
 			}
 
 			// 2. you have already `started your day`, but it's been 5 hours since working with me
-			var fiveHoursAgo = (0, _momentTimezone2.default)().subtract(5, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
 			user.getWorkSessions({
-				where: ['"WorkSession"."endTime" > ?', fiveHoursAgo]
+				where: ['"WorkSession"."endTime" > ?', _constants.startDayExpirationTime]
 			}).then(function (workSessions) {
 
-				// you have had at least one work session in the last 5 hours
+				// at this point you know the most recent SessionGroup is a `start_work`. has it been six hours since?
+				var startDaySessionTime = (0, _momentTimezone2.default)(sessionGroups[0].createdAt);
+				var now = (0, _momentTimezone2.default)();
+				var hoursSinceStartDay = _momentTimezone2.default.duration(now.diff(startDaySessionTime)).asHours();
+
+				// you have started your day or had work session in the last 6 hours
 				// so we will pass you through and not have you start a new day
-				if (workSessions.length > 0) {
+				if (hoursSinceStartDay < _constants.hoursForExpirationTime || workSessions.length > 0) {
 					switch (intent) {
 						case _intents2.default.ADD_TASK:
 							controller.trigger('add_task_flow', [bot, { SlackUserId: SlackUserId }]);

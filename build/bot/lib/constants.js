@@ -1,8 +1,20 @@
-"use strict";
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
+exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.hoursForExpirationTime = undefined;
+
+var _moment = require('moment');
+
+var _moment2 = _interopRequireDefault(_moment);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var hoursForExpirationTime = exports.hoursForExpirationTime = 6;
+
+var startDayExpirationTime = exports.startDayExpirationTime = (0, _moment2.default)().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
+
 var FINISH_WORD = exports.FINISH_WORD = {
 	word: "done",
 	reg_exp: new RegExp(/\b[done]{3,}\b/i)
@@ -55,6 +67,9 @@ var colorsHash = exports.colorsHash = {
 	},
 	blue: {
 		hex: "#3E589D"
+	},
+	orange: {
+		hex: "#E99704"
 	},
 	grey: {
 		hex: "#C1C1C3"
@@ -178,6 +193,14 @@ var buttonValues = exports.buttonValues = {
 	neverMind: {
 		name: "NEVER_MIND",
 		value: "NEVER_MIND"
+	},
+	startDay: {
+		name: "START_DAY",
+		value: "START_DAY"
+	},
+	createReminder: {
+		name: "CREATE_REMINDER",
+		value: "CREATE_REMINDER"
 	}
 };
 
@@ -203,7 +226,7 @@ var timeZones = exports.timeZones = {
 var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
 	fields: [{
 		title: "Starting your day",
-		value: "Say \"start my day\" to plan the tasks you intend to accomplish each day and estimate how long each will take you"
+		value: 'Say "start my day" to plan the tasks you intend to accomplish each day and estimate how long each will take you'
 	}],
 	color: colorsHash.blue.hex,
 	attachment_type: "default",
@@ -212,7 +235,7 @@ var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
 }, {
 	fields: [{
 		title: "Launching work sessions",
-		value: "Say \"start a session\" to kick off a focused work session to accomplish specific tasks"
+		value: 'Say "start a session" to kick off a focused work session to accomplish specific tasks'
 	}],
 	color: colorsHash.green.hex,
 	attachment_type: "default",
@@ -221,7 +244,7 @@ var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
 }, {
 	fields: [{
 		title: "Setting reminders",
-		value: "Say \"I'd like a reminder\" to prompt me to remind you about whatever you'd like at any time or duration"
+		value: 'Say "I\'d like a reminder" to prompt me to remind you about whatever you\'d like at any time or duration'
 	}],
 	color: colorsHash.yellow.hex,
 	attachment_type: "default",
@@ -230,7 +253,7 @@ var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
 }, {
 	fields: [{
 		title: "Viewing and adjusting priorities on the fly",
-		value: "Say \"view tasks\" to view your unfinished tasks each day and change your priorities by adding tasks or adjusting time estimates"
+		value: 'Say "view tasks" to view your unfinished tasks each day and change your priorities by adding tasks or adjusting time estimates'
 	}],
 	color: colorsHash.salmon.hex,
 	attachment_type: "default",

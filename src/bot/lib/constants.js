@@ -1,3 +1,9 @@
+import moment from 'moment';
+
+export const hoursForExpirationTime = 6;
+
+export const startDayExpirationTime = moment().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
+
 export const FINISH_WORD = {
 	word: "done",
 	reg_exp: new RegExp(/\b[done]{3,}\b/i)
@@ -50,6 +56,9 @@ export const colorsHash = {
 	},
 	blue: {
 		hex: "#3E589D"
+	},
+	orange: {
+		hex: "#E99704"
 	},
 	grey: {
 		hex: "#C1C1C3"
@@ -174,6 +183,14 @@ export const buttonValues ={
 	neverMind: {
 		name: "NEVER_MIND",
 		value: "NEVER_MIND"
+	},
+	startDay: {
+		name: "START_DAY",
+		value: "START_DAY"
+	},
+	createReminder: {
+		name: "CREATE_REMINDER",
+		value: "CREATE_REMINDER"
 	}
 }
 
