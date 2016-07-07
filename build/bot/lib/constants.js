@@ -17,7 +17,7 @@ var startDayExpirationTime = exports.startDayExpirationTime = (0, _moment2.defau
 
 var FINISH_WORD = exports.FINISH_WORD = {
 	word: "done",
-	reg_exp: new RegExp(/\b[done]{3,}\b/i)
+	reg_exp: new RegExp(/^d[one]{2,}\b/i)
 };
 
 var NONE = exports.NONE = {

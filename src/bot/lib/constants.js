@@ -6,7 +6,7 @@ export const startDayExpirationTime = moment().subtract(hoursForExpirationTime, 
 
 export const FINISH_WORD = {
 	word: "done",
-	reg_exp: new RegExp(/\b[done]{3,}\b/i)
+	reg_exp: new RegExp(/^d[one]{2,}\b/i)
 };
 
 export const NONE = {

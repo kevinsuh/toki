@@ -109,11 +109,18 @@ function convertArrayToTaskListMessage(taskArray) {
 	taskArray.forEach(function (task) {
 
 		// for when you get task from DB
+		var minutesMessage = '';
 		if (!options.dontUseDataValues && task.dataValues) {
 			task = task.dataValues;
 		};
 
-		var minutesMessage = !options.dontShowMinutes && task.minutes ? ' (' + task.minutes + ' minutes)' : '';
+		if (!options.dontShowMinutes && task.minutes) {
+			if (options.emphasizeMinutes) {
+				minutesMessage = ' *_(' + task.minutes + ' minutes)_*';
+			} else {
+				minutesMessage = ' (' + task.minutes + ' minutes)';
+			}
+		}
 		var taskContent = count + ') ' + task.text + minutesMessage;
 
 		taskContent = task.done ? '~' + taskContent + '~\n' : taskContent + '\n';

@@ -128,8 +128,6 @@ exports.default = function (controller) {
 	});
 };
 
-exports.askForDayTasks = askForDayTasks;
-
 var _os = require('os');
 
 var _os2 = _interopRequireDefault(_os);
@@ -276,16 +274,18 @@ function savePendingTasksToWorkOn(response, convo) {
 			getTimeToTasks(response, convo);
 			convo.next();
 		}
-	}, { // NL equivalent to buttonValues.noAdditionalTasks.value
-		pattern: _botResponses.utterances.containsNone,
-		callback: function callback(response, convo) {
-			convo.say("Excellent!");
-			getTimeToTasks(response, convo);
-			convo.next();
-		}
 	}, { // this is additional task added in this case.
 		default: true,
 		callback: function callback(response, convo) {
+
+			// should contain none and additional to be
+			// NL equivalent to buttonValues.noAdditionalTasks.value
+			if (_botResponses.utterances.containsNone.test(response.text) && _botResponses.utterances.containsAdditional.test(response.text)) {
+				convo.say("Excellent!");
+				getTimeToTasks(response, convo);
+				convo.next();
+			}
+
 			tasks.push(response);
 			if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
 				saveTaskResponsesToDayStartObject(tasks, convo);
@@ -330,10 +330,6 @@ function askForDayTasks(response, convo) {
 	convo.say('What tasks would you like to work on today? :pencil:');
 	convo.ask('Please enter all of the tasks in one line, separated by commas, or just send me each task in a separate line. Then just tell me when you\'re done by saying `' + _constants.FINISH_WORD.word + '`', function (response, convo) {
 
-		for (var i = 0; i < _constants.EXIT_EARLY_WORDS.length; i++) {
-			if (response.text == _constants.EXIT_EARLY_WORDS[i]) convo.stop();
-		}
-
 		tasks.push(response);
 		if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
 			saveTaskResponsesToDayStartObject(tasks, convo);
@@ -377,6 +373,8 @@ function getTimeToTasks(response, convo) {
 	var options = { dontShowMinutes: true };
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 
+	var timeToTasksArray = [];
+
 	convo.say("How much time would you like to allocate to each task?");
 	convo.ask({
 		text: taskListMessage,
@@ -415,24 +413,60 @@ function getTimeToTasks(response, convo) {
 						channel: channel,
 						ts: ts
 					};
+					// this is the message that the bot will be updating
 					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 				}
 			}
 
-			if (_botResponses.utterances.containsAdd.test(response.text) && _botResponses.utterances.containsTask.test(response.text)) {
-				convo.say("Of course - just add another task here and say `done` when you're ready to go");
-				// NL equivalent to buttonValues.actuallyWantToAddATask.value
-				addMoreTasks(response, convo);
-			} else {
-				assignTimeToTasks(response, convo);
+			console.log("\n\n\n in this place \n\n\n");
+
+			var comma = new RegExp(/[,]/);
+			var validMinutesTester = new RegExp(/[\dh]/);
+			var timeToTasks = response.text.split(comma);
+
+			timeToTasks.forEach(function (time) {
+				if (validMinutesTester.test(time)) {
+					var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(time);
+					timeToTasksArray.push(minutes);
+				}
+			});
+
+			taskArray = taskArray.map(function (task, index) {
+				if (task.dataValues) {
+					// task from DB
+					return _extends({}, task, {
+						minutes: timeToTasksArray[index],
+						text: task.dataValues.text
+					});
+				}
+				return _extends({}, task, {
+					minutes: timeToTasksArray[index]
+				});
+			});
+
+			var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontUseDataValues: true, emphasizeMinutes: true });
+
+			updateTaskListMessageObject.text = taskListMessage;
+			bot.api.chat.update(updateTaskListMessageObject);
+
+			if (timeToTasksArray.length >= taskArray.length) {
+				assignTimeToTasks(timeToTasksArray, convo);
+				convo.next();
 			}
-			convo.next();
 		}
 	}]);
 }
 
 // this is the work we do to actually assign time to tasks
-function assignTimeToTasks(response, convo) {
+function assignTimeToTasks(timeToTasksArray, convo) {
+
+	// ASSIGNING TIME TO TASKS!!
+	console.log("\n\n HERE IS MINUTES TO TASKS:");
+	console.log(timeToTasksArray);
+	console.log("\n\n\n");
+	convo.say("you done");
+	return;
+
 	var task = convo.task;
 	var bot = task.bot;
 	var source_message = task.source_message;
