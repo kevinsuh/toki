@@ -385,7 +385,7 @@ function getTimeToTasks(response, convo) {
 				});
 			});
 
-			var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontUseDataValues: true, emphasizeMinutes: true });
+			var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontUseDataValues: true, emphasizeMinutes: true, calculateMinutes: true });
 
 			updateTaskListMessageObject.text = taskListMessage;
 			bot.api.chat.update(updateTaskListMessageObject);

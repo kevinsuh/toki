@@ -81,6 +81,7 @@ export function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 export function convertArrayToTaskListMessage(taskArray, options = {}) {
 	var taskListMessage = '';
 	var count = 1;
+	var totalMinutes = 0;
 
 	if (taskArray.length  == 0) {
 		console.log("array passed in is empty at convertArrayToTaskListMessage");
@@ -100,6 +101,12 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		};
 
 		if (!options.dontShowMinutes && task.minutes) {
+
+			var minutesInt = parseInt(task.minutes);
+			if (!isNaN(minutesInt)) {
+				totalMinutes += minutesInt;
+			}
+
 			if (options.emphasizeMinutes) {
 				minutesMessage = ` *_(${task.minutes} minutes)_*`;
 			} else {
@@ -115,7 +122,36 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		
 		count++;
 	});
+
+	if (options.calculateMinutes) {
+		var timeString = convertMinutesToHoursString(totalMinutes);
+		var totalMinutesContent = `\n*Total time estimate: ${timeString} :clock730:*`;
+		taskListMessage += totalMinutesContent;
+	}
+
 	return taskListMessage;
+}
+
+/**
+ * i.e. `75` => `1 hour 15 minutes`
+ * @param  {int} minutes number of minutes
+ * @return {string}         hour + minutes
+ */
+function convertMinutesToHoursString(minutes) {
+	var hours = 0;
+	while (minutes - 60 > 0) {
+		hours++;
+		minutes-=60;
+	}
+	var content = '';
+	if (hours == 0) {
+		content = `${minutes} minutes`;
+	} else if (hours == 1) {
+		content = `${hours} hour ${minutes} minutes`;
+	} else {
+		content = `${hours} hours ${minutes} minutes`;
+	}
+	return content;
 }
 
 /**
