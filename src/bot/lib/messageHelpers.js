@@ -165,35 +165,71 @@ export function convertTimeStringToMinutes(timeString) {
 	var totalMinutes = 0;
 	var timeArray = timeString.split(" ");
 
+	var totalMinutesCount = 0; // max of 1
+	var totalHoursCount = 0; // max of 1
 	for (var i = 0; i < timeArray.length; i++) {
-  
-  	if (isNaN(parseInt(timeArray[i])))
-    	continue;
-      
+		
+		var numberValue = timeArray[i].match(/\d+/);
+		if (!numberValue) {
+			continue;
+		}
+			
 		var minutes = 0;
 
-		// option 1: int with space (i.e. `1 hr`)
+		// OPTION 1: int with space (i.e. `1 hr`)
 		if (timeArray[i] == parseInt(timeArray[i])) {
-    	minutes = parseInt(timeArray[i]);
+			minutes = parseInt(timeArray[i]);
 			var hourOrMinute = timeArray[i+1];
 			if (hourOrMinute && hourOrMinute[0] == "h") {
 				minutes *= 60;
+				totalHoursCount++;
+			} else {
+				// number greater than 0
+				if (minutes > 0) {
+					totalMinutesCount++;
+				}
 			}
 		} else {
-			// option 2: int with no space (i.e. `1hr`)
-			// use hacky solution...
-			var minutes = parseInt(timeArray[i]);
-			var minuteString = String(minutes);
-			if (timeArray[i][minuteString.length] == "h") {
-				minutes *= 60;
-			}
+			// OPTION 2: No space b/w ints (i.e. 1hr)
+		
+			// need to check for "h" or "m" in these instances
+			var timeString = timeArray[i];
+			var containsH = new RegExp(/[h]/);
+			var timeStringArray = timeString.split(containsH);
+			
+			timeStringArray.forEach(function(element, index) {
+				var time = parseInt(element); // can be minutes or hours
+				if (isNaN(parseInt(element)))
+					return;
+				
+				// if string contains "h", then you can assume first one is hour
+				if (containsH.test(timeString)) {
+					if (index == 0) {
+						// hours
+						minutes += 60 * time;  
+						totalHoursCount++;
+					} else {
+						// minutes
+						minutes += time;
+						totalMinutesCount++;
+					}
+				} else {
+					minutes += time;
+					totalMinutesCount++;
+				}
+				
+			});
+			
 		}
-
-    totalMinutes += minutes;
+		
+		if (totalMinutesCount > 1 || totalHoursCount > 1) {
+			continue;
+		}
+		totalMinutes += minutes;
 
 	}
 
-  
+	
 	return totalMinutes;
 }
 
