@@ -492,8 +492,6 @@ function getTimeToTasks(response, convo) {
 					}
 				}
 
-				console.log("\n\n\n in this place \n\n\n");
-
 				const comma            = new RegExp(/[,]/);
 				var validMinutesTester = new RegExp(/[\dh]/);
 				var timeToTasks        = response.text.split(comma);
@@ -525,7 +523,9 @@ function getTimeToTasks(response, convo) {
 				bot.api.chat.update(updateTaskListMessageObject);
 
 				if (timeToTasksArray.length >= taskArray.length) {
-					assignTimeToTasks(timeToTasksArray, convo);
+					convo.dayStart.taskArray = taskArray;
+					consoleLog("finished task array!", taskArray);
+					confirmTimeToTasks(timeToTasksArray, convo);
 					convo.next();
 				}
 				
@@ -536,70 +536,9 @@ function getTimeToTasks(response, convo) {
 }
 
 // this is the work we do to actually assign time to tasks
-function assignTimeToTasks(timeToTasksArray, convo) {
+function confirmTimeToTasks(timeToTasksArray, convo) {
 
-	// ASSIGNING TIME TO TASKS!!
-	console.log("\n\n HERE IS MINUTES TO TASKS:");
-	console.log(timeToTasksArray);
-	console.log("\n\n\n");
-	convo.say("you done");
-	return;
-
-	const { task }                                 = convo;
-	const { bot, source_message }                  = task;
-	var { taskArray, updateTaskListMessageObject } = convo.dayStart;
-
-	var timeToTask = response.text;
-
-	// need to check for invalid responses.
-	// does not say minutes or hours, or is not right length
-	var isInvalid = false;
-	timeToTask = timeToTask.split(",");
-	if (timeToTask.length != taskArray.length) {
-		isInvalid = true;
-	};
-
-	var validMinutesTester = new RegExp(/[\dh]/);
-	timeToTask = timeToTask.map((time) => {
-		if (!validMinutesTester.test(time)) {
-			isInvalid = true;
-		}
-		var minutes = convertTimeStringToMinutes(time);
-		return minutes;
-	});
-
-	taskArray = taskArray.map((task, index) => {
-		if (task.dataValues) { // task from DB
-			return {
-				...task,
-				minutes: timeToTask[index],
-				text: task.dataValues.text
-			}
-		}
-		return { // newly created task
-			...task,
-			minutes: timeToTask[index]
-		}
-	});
-
-	// INVALID tester
-	if (isInvalid) {
-		convo.say("Oops, looks like you didn't put in valid times :thinking_face:. Let's try this again");
-		convo.say("The first time you list will represent the first task above, the second time you list will represent the second task, and on and on");
-		convo.say("Just say, `30, 40, 50, 1 hour, 15 min` and I'll figure it out and assign those times to the tasks above in order :smiley:");
-		getTimeToTasks(response, convo);
-		return;
-	}
-
-	convo.dayStart.taskArray = taskArray;
-	var options              = { dontUseDataValues: true };
-	var taskListMessage      = convertArrayToTaskListMessage(taskArray, options);
-	var taskListMessageWithoutMinutes = convertArrayToTaskListMessage(taskArray, { dontUseDataValues: true, dontShowMinutes: true });
-
-	updateTaskListMessageObject.text = taskListMessage;
-	bot.api.chat.update(updateTaskListMessageObject);
-
-	convo.ask("Great! Are you ready to go on?", [
+	convo.ask("Great! Are these times right?", [
 		{
 			pattern: utterances.yes,
 			callback: (response, convo) => {
@@ -629,8 +568,7 @@ function assignTimeToTasks(timeToTasksArray, convo) {
 				// updateTaskListMessageObject.text = taskListMessageWithoutMinutes;
 				// bot.api.chat.update(updateTaskListMessageObject);
 				convo.say("Let's give this another try :repeat_one:");
-				convo.say("The first time you list will represent the first task above, the second time you list will represent the second task, and on and on");
-				convo.say("Just say, `30, 40, 50, 1 hour, 15 min` and I'll figure it out and assign those times to the tasks above in order :smiley:");
+				convo.say("Just say time estimates, like `30, 1 hour, or 15 min` and I'll figure it out and assign times to the tasks above in order :smiley:");
 				getTimeToTasks(response, convo);
 				convo.next();
 			}
