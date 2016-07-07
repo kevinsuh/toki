@@ -102,7 +102,8 @@ export default function(controller) {
 				convo.name = name;
 
 				convo.onBoard = {
-					SlackUserId
+					SlackUserId,
+					bot // pass in the bot for updating messages
 				}
 
 				startOnBoardConversation(err, convo);
@@ -151,7 +152,7 @@ function startOnBoardConversation(err, convo) {
 
 function askForUserName(err, convo) {
 
-	const { name } = convo;
+	const { name, onBoard: { bot } } = convo;
 
 	convo.ask({
 		text: `Would you like me to call you ${name} or another name?`,
@@ -195,6 +196,40 @@ function askForUserName(err, convo) {
 		{
 			default: true,
 			callback: (response, convo) => {
+
+				var { sentMessages } = bot;
+				if (sentMessages) {
+					var lastMessage = sentMessages.slice(-1)[0];
+					if (lastMessage) {
+						console.log("last message:");
+						console.log(lastMessage);
+						console.log('\n\n\n\n');
+						const { channel, ts } = lastMessage;
+						var message = {
+							channel,
+							ts,
+							text: "Hello world!",
+							token: bot.config.token,
+							as_user: true
+						};
+						bot.api.chat.update(message, (err, res) => {
+							console.log("update?");
+							console.log(err);
+							console.log("response:\n\n\n\n");
+							console.log(res);
+							console.log("\n\n\n\n");
+						});
+					}
+				}
+
+
+				// const { channel, ts } = response; // necessary ingredients for message
+				// var message = { channel, ts, text:"Hello world!!!", token: bot.config.token, as_user: true };
+				// console.log(message);
+				// console.log("bot: ");
+				// console.log(bot.config.token);
+				
+
 				confirmUserName(response.text, convo);
 				convo.next();
 			}
