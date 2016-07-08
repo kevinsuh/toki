@@ -2,10 +2,10 @@ import os from 'os';
 import { wit } from '../index';
 import http from 'http';
 import bodyParser from 'body-parser';
-import moment from 'moment';
 
 import models from '../../../app/models';
 import { buttonValues } from '../../lib/constants';
+import moment from 'moment-timezone';
 
 // base controller for "buttons" flow
 export default function(controller) {
@@ -95,12 +95,43 @@ export default function(controller) {
 				case buttonValues.resetTimes.value:
 					bot.replyInteractive(message, "_Resetting :repeat:..._")
 					break;
-				case buttonValues.snooze.value:
-					bot.replyInteractive(message, "Okay, snoozing!")
-					console.log("\n\n\nTHIS IS BOT:");
-					console.log(bot);
-					console.log("\n\n\n");
-					controller.trigger(`snooze_flow`, [ bot, { SlackUserId, botCallback: true }]);
+				case buttonValues.doneSessionYes.value:
+					bot.replyInteractive(message, "Great work! :raised_hands:")
+					controller.trigger(`done_session_yes_flow`, [ bot, { SlackUserId, botCallback: true }]);
+					break;
+				case buttonValues.doneSessionSnooze.value:
+					models.User.find({
+						where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+						include: [
+							models.SlackUser
+						]
+					})
+					.then((user) => {
+						const { SlackUser: { tz } } = user;
+						const UserId                = user.id;
+
+						var now               = moment().tz(tz);
+						var defaultSnoozeTime = 9; // default snooze time
+						var snoozeTimeObject  = now.add(defaultSnoozeTime, 'minutes');
+						var snoozeTimeString  = snoozeTimeObject.format("h:mm a");
+
+						models.Reminder.create({
+							remindTime: snoozeTimeObject,
+							UserId,
+							type: "done_session_snooze"
+						})
+						.then((reminder) => {
+							bot.replyInteractive(message, `Keep at it! I'll check in with you at ${snoozeTimeString}`);
+						})
+
+						controller.trigger(`done_session_snooze_button_flow`, [ bot, { SlackUserId, botCallback: true, snoozeTimeObject }]);
+					});
+					break;
+				case buttonValues.doneSessionDidSomethingElse.value:
+					controller.trigger(`done_session_something_else_flow`, [ bot, { SlackUserId, botCallback: true }]);
+					break;
+				case buttonValues.doneSessionNo.value:
+					controller.trigger(`done_session_no_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				default:
 					// some default to replace button no matter what

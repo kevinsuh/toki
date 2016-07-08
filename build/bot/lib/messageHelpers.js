@@ -139,7 +139,8 @@ function convertArrayToTaskListMessage(taskArray) {
 		count++;
 	});
 
-	if (options.calculateMinutes) {
+	if (options.calculateMinutes || true) {
+		// all taskListMessages will show this for now
 		var timeString = convertMinutesToHoursString(totalMinutes);
 		var totalMinutesContent = '\n*Total time estimate: ' + timeString + ' :clock730:*';
 		taskListMessage += totalMinutesContent;

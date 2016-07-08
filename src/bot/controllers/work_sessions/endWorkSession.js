@@ -100,37 +100,10 @@ export default function(controller) {
 			
 	});
 
-	// snooze flow
-	controller.on(`snooze_flow`, (bot, config) => {
+	/**
+	 * 			~~ START OF SESSION_TIMER FUNCTIONALITIES ~~
+	 */
 
-		console.log("\n\n\n IN SNOOZE FLOW \n\n\n");
-
-		const { SlackUserId, botCallback } = config;
-
-		models.User.find({
-			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-			include: [
-				models.SlackUser
-			]
-		})
-		.then((user) => {
-
-			if (botCallback) {
-				// if botCallback, need to get the correct bot
-				var botToken = bot.config.token;
-				bot          = bots[botToken];
-			}
-
-			// making this just a reminder now so that user can end his own session as he pleases
-			bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-
-				convo.say("OKAY SNOOZING....");
-				convo.next();
-				
-			});
-
-		});
-	})
 
 	// session timer is up
 	controller.on('session_timer_up', (bot, config) => {
@@ -167,19 +140,6 @@ export default function(controller) {
 					channel: SlackUserId,
 					text: `Hey, did you finish ${tasksToWorkOnString}?`
 				}
-				// console.log(message);
-				// bot.api.chat.postMessage(message, (err, res) => {
-				// 		console.log("HEY!!");
-				// 	console.log(err);
-				// 	console.log(res);
-				// 	console.log("\n\n\n\n");
-				// })
-				// bot.say(message, (err, res) => {
-				// 	console.log("HEY!!");
-				// 	console.log(err);
-				// 	console.log(res);
-				// 	console.log("\n\n\n\n");
-				// })
 
 				// making this just a reminder now so that user can end his own session as he pleases
 				bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
@@ -193,9 +153,28 @@ export default function(controller) {
 								fallback: "I was unable to process your decision",
 								actions: [
 									{
-											name: buttonValues.snooze.name,
-											text: "SNOOZE",
-											value: buttonValues.snooze.value,
+											name: buttonValues.doneSessionYes.name,
+											text: "Yes! :punch:",
+											value: buttonValues.doneSessionYes.value,
+											type: "button",
+											style: "primary"
+									},
+									{
+											name: buttonValues.doneSessionSnooze.name,
+											text: "Snooze :timer_clock:",
+											value: buttonValues.doneSessionSnooze.value,
+											type: "button"
+									},
+									{
+											name: buttonValues.doneSessionDidSomethingElse.name,
+											text: "Did something else",
+											value: buttonValues.doneSessionDidSomethingElse.value,
+											type: "button"
+									},
+									{
+											name: buttonValues.doneSessionNo.name,
+											text: "Nope",
+											value: buttonValues.doneSessionNo.value,
 											type: "button"
 									}
 								]
@@ -211,6 +190,135 @@ export default function(controller) {
 
 				
 	});
+
+	// `yes` button flow
+	controller.on(`done_session_yes_flow`, (bot, config) => {
+
+		console.log("\n\n\n IN YES SESSION FLOW \n\n\n");
+
+		const { SlackUserId, botCallback } = config;
+
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			if (botCallback) {
+				// if botCallback, need to get the correct bot
+				var botToken = bot.config.token;
+				bot          = bots[botToken];
+			}
+
+			// making this just a reminder now so that user can end his own session as he pleases
+			bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+				convo.say("AWESOME YOU FINISHED THE TASK....");
+				convo.next();
+				
+			});
+
+		});
+	})
+
+	// `snooze` button flow
+	// right now this is all handled in the buttons/index file
+	controller.on(`done_session_snooze_button_flow`, (bot, config) => {
+
+		const { SlackUserId, botCallback, snoozeTimeObject } = config;
+
+		// models.User.find({
+		// 	where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+		// 	include: [
+		// 		models.SlackUser
+		// 	]
+		// })
+		// .then((user) => {
+
+		// 	if (botCallback) {
+		// 		// if botCallback, need to get the correct bot
+		// 		var botToken = bot.config.token;
+		// 		bot          = bots[botToken];
+		// 	}
+
+		// });
+		
+	})
+
+	// `didSomethingElse` button flow
+	controller.on(`done_session_something_else_flow`, (bot, config) => {
+
+		console.log("\n\n\n IN DONE SOMETHING ELSE FLOW \n\n\n");
+
+		const { SlackUserId, botCallback } = config;
+
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			if (botCallback) {
+				// if botCallback, need to get the correct bot
+				var botToken = bot.config.token;
+				bot          = bots[botToken];
+			}
+
+			// making this just a reminder now so that user can end his own session as he pleases
+			bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+				convo.say("YA DID SOMETHING ELSE....");
+				convo.next();
+				
+			});
+
+		});
+	})
+
+	// `no` button flow
+	controller.on(`done_session_no_flow`, (bot, config) => {
+
+		console.log("\n\n\n IN DONE SOMETHING ELSE FLOW \n\n\n");
+
+		const { SlackUserId, botCallback } = config;
+
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			if (botCallback) {
+				// if botCallback, need to get the correct bot
+				var botToken = bot.config.token;
+				bot          = bots[botToken];
+			}
+
+			// making this just a reminder now so that user can end his own session as he pleases
+			bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+				convo.say("YA DID SOMETHING ELSE....");
+				convo.next();
+				
+			});
+
+		});
+	})
+
+	/**
+	 * 			~~ END OF DONE_SESSION TIMER FUNCTIONALITIES ~~
+	 */
+
+
+	/**
+	 * 			~~ START OF END_SESSION FLOW FUNCTIONALITIES ~~
+	 */
 
 	// the actual end_session flow
 	controller.on('end_session', (bot, config) => {

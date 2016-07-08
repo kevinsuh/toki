@@ -201,9 +201,21 @@ export const buttonValues ={
 		name: "RESET_TIMES",
 		value: "RESET_TIMES"
 	},
-	snooze: {
-		name: "SNOOZE",
-		value: "SNOOZE"
+	doneSessionSnooze: {
+		name: "DONE_SESSION_SNOOZE",
+		value: "DONE_SESSION_SNOOZE"
+	},
+	doneSessionYes: {
+		name: "DONE_SESSION_YES",
+		value: "DONE_SESSION_YES"
+	},
+	doneSessionNo: {
+		name: "DONE_SESSION_NO",
+		value: "DONE_SESSION_NO"
+	},
+	doneSessionDidSomethingElse: {
+		name: "DONE_SESSION_DID_SOMETHING_ELSE",
+		value: "DONE_SESSION_DID_SOMETHING_ELSE"
 	}
 }
 

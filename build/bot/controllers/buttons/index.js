@@ -93,12 +93,40 @@ exports.default = function (controller) {
 				case _constants.buttonValues.resetTimes.value:
 					bot.replyInteractive(message, "_Resetting :repeat:..._");
 					break;
-				case _constants.buttonValues.snooze.value:
-					bot.replyInteractive(message, "Okay, snoozing!");
-					console.log("\n\n\nTHIS IS BOT:");
-					console.log(bot);
-					console.log("\n\n\n");
-					controller.trigger('snooze_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+				case _constants.buttonValues.doneSessionYes.value:
+					bot.replyInteractive(message, "Great work! :raised_hands:");
+					controller.trigger('done_session_yes_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+					break;
+				case _constants.buttonValues.doneSessionSnooze.value:
+					_models2.default.User.find({
+						where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+						include: [_models2.default.SlackUser]
+					}).then(function (user) {
+						var tz = user.SlackUser.tz;
+
+						var UserId = user.id;
+
+						var now = (0, _momentTimezone2.default)().tz(tz);
+						var defaultSnoozeTime = 9; // default snooze time
+						var snoozeTimeObject = now.add(defaultSnoozeTime, 'minutes');
+						var snoozeTimeString = snoozeTimeObject.format("h:mm a");
+
+						_models2.default.Reminder.create({
+							remindTime: snoozeTimeObject,
+							UserId: UserId,
+							type: "done_session_snooze"
+						}).then(function (reminder) {
+							bot.replyInteractive(message, 'Keep at it! I\'ll check in with you at ' + snoozeTimeString);
+						});
+
+						controller.trigger('done_session_snooze_button_flow', [bot, { SlackUserId: SlackUserId, botCallback: true, snoozeTimeObject: snoozeTimeObject }]);
+					});
+					break;
+				case _constants.buttonValues.doneSessionDidSomethingElse.value:
+					controller.trigger('done_session_something_else_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+					break;
+				case _constants.buttonValues.doneSessionNo.value:
+					controller.trigger('done_session_no_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
 				default:
 					// some default to replace button no matter what
@@ -122,15 +150,15 @@ var _bodyParser = require('body-parser');
 
 var _bodyParser2 = _interopRequireDefault(_bodyParser);
 
-var _moment = require('moment');
-
-var _moment2 = _interopRequireDefault(_moment);
-
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
 
 var _constants = require('../../lib/constants');
+
+var _momentTimezone = require('moment-timezone');
+
+var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
