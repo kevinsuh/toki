@@ -1,5 +1,6 @@
 import { bots } from '../bot/controllers';
 import { controller } from '../bot/controllers';
+import { constants } from './lib/constants';
 
 // sequelize models
 import models from './models';
@@ -109,20 +110,21 @@ var checkForReminders = () => {
 			// 3. send the reminder
 			
 			reminder.update({
-		    	open: false
-		   })
+					open: false
+			 })
 			.then(() => {
 				return models.User.find({
-			    where: { id: UserId },
-			    include: [
-			      models.SlackUser
-			    ]
-			  })
-			  
+					where: { id: UserId },
+					include: [
+						models.SlackUser
+					]
+				})
+				
 			})
 			.then((user) => {
 
-				const { SlackUser: { TeamId } } = user;
+				const { SlackUser: { TeamId, SlackUserId } } = user;
+
 				models.Team.find({
 					where: { TeamId }
 				})
@@ -132,25 +134,45 @@ var checkForReminders = () => {
 
 					if (bot) {
 
-						// alarm is up for reminder
-						// send the message!
-				    bot.startPrivateConversation({
-				      user: user.SlackUser.SlackUserId 
-				    }, (err, convo) => {
+						if (reminder.type == constants.reminders.doneSessionSnooze) {
+							
+							user.getWorkSessions({
+								order: `"WorkSession"."createdAt" DESC`,
+								limit: 1,
+								include: [ models.DailyTask ]
+							})
+							.then((workSessions) => {
+								// get most recent work session for snooze option
+								if (workSessions.length > 0) {
+									var config = {
+										workSession: workSessions[0],
+										SlackUserId
+									}
+									controller.trigger(`session_timer_up`, [ bot, config ]);
+								}
+							})
 
-				    	if (convo) {
-				    		var customNote = reminder.customNote ? `(\`${reminder.customNote}\`)` : '';
-					    	var message = `Hey! You wanted a reminder ${customNote} :smiley: :alarm_clock: `;
+						} else {
+							// alarm is up for reminder
+							// send the message!
+							bot.startPrivateConversation({
+								user: user.SlackUser.SlackUserId 
+							}, (err, convo) => {
 
-					    	convo.say(message);
-				    	}
-				    	
-				    });
+								if (convo) {
+									var customNote = reminder.customNote ? `(\`${reminder.customNote}\`)` : '';
+									var message = `Hey! You wanted a reminder ${customNote} :smiley: :alarm_clock: `;
+
+									convo.say(message);
+								}
+								
+							});
+						}
 
 					}
 				});
 
-		  });
+			});
 
 		});
 	});

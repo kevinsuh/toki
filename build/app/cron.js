@@ -16,6 +16,8 @@ exports.default = function () {
 
 var _controllers = require('../bot/controllers');
 
+var _constants = require('./lib/constants');
+
 var _models = require('./models');
 
 var _models2 = _interopRequireDefault(_models);
@@ -126,7 +128,10 @@ var checkForReminders = function checkForReminders() {
 					include: [_models2.default.SlackUser]
 				});
 			}).then(function (user) {
-				var TeamId = user.SlackUser.TeamId;
+				var _user$SlackUser = user.SlackUser;
+				var TeamId = _user$SlackUser.TeamId;
+				var SlackUserId = _user$SlackUser.SlackUserId;
+
 
 				_models2.default.Team.find({
 					where: { TeamId: TeamId }
@@ -137,19 +142,37 @@ var checkForReminders = function checkForReminders() {
 
 					if (bot) {
 
-						// alarm is up for reminder
-						// send the message!
-						bot.startPrivateConversation({
-							user: user.SlackUser.SlackUserId
-						}, function (err, convo) {
+						if (reminder.type == _constants.constants.reminders.doneSessionSnooze) {
 
-							if (convo) {
-								var customNote = reminder.customNote ? '(`' + reminder.customNote + '`)' : '';
-								var message = 'Hey! You wanted a reminder ' + customNote + ' :smiley: :alarm_clock: ';
+							user.getWorkSessions({
+								order: '"WorkSession"."createdAt" DESC',
+								limit: 1,
+								include: [_models2.default.DailyTask]
+							}).then(function (workSessions) {
+								// get most recent work session for snooze option
+								if (workSessions.length > 0) {
+									var config = {
+										workSession: workSessions[0],
+										SlackUserId: SlackUserId
+									};
+									_controllers.controller.trigger('session_timer_up', [bot, config]);
+								}
+							});
+						} else {
+							// alarm is up for reminder
+							// send the message!
+							bot.startPrivateConversation({
+								user: user.SlackUser.SlackUserId
+							}, function (err, convo) {
 
-								convo.say(message);
-							}
-						});
+								if (convo) {
+									var customNote = reminder.customNote ? '(`' + reminder.customNote + '`)' : '';
+									var message = 'Hey! You wanted a reminder ' + customNote + ' :smiley: :alarm_clock: ';
+
+									convo.say(message);
+								}
+							});
+						}
 					}
 				});
 			});
