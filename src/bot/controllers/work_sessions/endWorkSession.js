@@ -11,7 +11,7 @@ import intentConfig from '../../lib/intents';
 
 import { bots } from '../index';
 
-import { colorsArray, buttonValues, colorsHash } from '../../lib/constants';
+import { colorsArray, buttonValues, colorsHash, TOKI_DEFAULT_SNOOZE_TIME } from '../../lib/constants';
 
 // END OF A WORK SESSION
 export default function(controller) {
@@ -236,6 +236,10 @@ export default function(controller) {
 		})
 		.then((user) => {
 
+			const { defaultSnoozeTime } = user;
+
+			var snoozeTime = defaultSnoozeTime ? defaultSnoozeTime : TOKI_DEFAULT_SNOOZE_TIME;
+
 			if (botCallback) {
 				// if botCallback, need to get the correct bot
 				var botToken = bot.config.token;
@@ -246,8 +250,7 @@ export default function(controller) {
 			const UserId                = user.id;
 
 			var now               = moment().tz(tz);
-			var defaultSnoozeTime = 9; // default snooze time
-			var snoozeTimeObject  = now.add(defaultSnoozeTime, 'minutes');
+			var snoozeTimeObject  = now.add(snoozeTime, 'minutes');
 			var snoozeTimeString  = snoozeTimeObject.format("h:mm a");
 
 			models.Reminder.create({
@@ -257,8 +260,30 @@ export default function(controller) {
 			})
 			.then((reminder) => {
 				bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+					convo.snoozeObject = {
+						defaultSnoozeTime
+					}
+
+					if (!defaultSnoozeTime) {
+						convo.say(`Wait, this is your first time hitting snooze! The default snooze is *${TOKI_DEFAULT_SNOOZE_TIME} minutes*, but you can change it in your settings by telling me to \`show settings\``);
+						convo.say("You can also specify a custom snooze by saying `snooze for 20 minutes` or something like that :grinning:");
+					}
+
 					convo.say(`I'll check in with you at ${snoozeTimeString} :fist:`);
 					convo.next();
+
+					convo.on('end', (convo) => {
+
+						const { defaultSnoozeTime } = convo.snoozeObject
+
+						// set snooze to default snooze if null
+						if (!defaultSnoozeTime) {
+							user.update({
+								defaultSnoozeTime: TOKI_DEFAULT_SNOOZE_TIME
+							});
+						}
+					})
 				});
 			});
 		});

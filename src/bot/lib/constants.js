@@ -1,5 +1,7 @@
 import moment from 'moment';
 
+export const TOKI_DEFAULT_SNOOZE_TIME = 9;
+
 export const hoursForExpirationTime = 6;
 
 export const startDayExpirationTime = moment().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");

@@ -197,6 +197,10 @@ exports.default = function (controller) {
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
+			var defaultSnoozeTime = user.defaultSnoozeTime;
+
+
+			var snoozeTime = defaultSnoozeTime ? defaultSnoozeTime : _constants.TOKI_DEFAULT_SNOOZE_TIME;
 
 			if (botCallback) {
 				// if botCallback, need to get the correct bot
@@ -209,8 +213,7 @@ exports.default = function (controller) {
 			var UserId = user.id;
 
 			var now = (0, _momentTimezone2.default)().tz(tz);
-			var defaultSnoozeTime = 9; // default snooze time
-			var snoozeTimeObject = now.add(defaultSnoozeTime, 'minutes');
+			var snoozeTimeObject = now.add(snoozeTime, 'minutes');
 			var snoozeTimeString = snoozeTimeObject.format("h:mm a");
 
 			_models2.default.Reminder.create({
@@ -219,8 +222,30 @@ exports.default = function (controller) {
 				type: "done_session_snooze"
 			}).then(function (reminder) {
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+					convo.snoozeObject = {
+						defaultSnoozeTime: defaultSnoozeTime
+					};
+
+					if (!defaultSnoozeTime) {
+						convo.say('Wait, this is your first time hitting snooze! The default snooze is *' + _constants.TOKI_DEFAULT_SNOOZE_TIME + ' minutes*, but you can change it in your settings by telling me to `show settings`');
+						convo.say("You can also specify a custom snooze by saying `snooze for 20 minutes` or something like that :grinning:");
+					}
+
 					convo.say('I\'ll check in with you at ' + snoozeTimeString + ' :fist:');
 					convo.next();
+
+					convo.on('end', function (convo) {
+						var defaultSnoozeTime = convo.snoozeObject.defaultSnoozeTime;
+
+						// set snooze to default snooze if null
+
+						if (!defaultSnoozeTime) {
+							user.update({
+								defaultSnoozeTime: _constants.TOKI_DEFAULT_SNOOZE_TIME
+							});
+						}
+					});
 				});
 			});
 		});
