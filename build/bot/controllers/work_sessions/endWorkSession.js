@@ -180,7 +180,6 @@ exports.default = function (controller) {
 						pattern: _constants.buttonValues.doneSessionSnooze.value,
 						callback: function callback(response, convo) {
 							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.snooze;
-							askUserPostSessionOptions(response, convo);
 							convo.next();
 						}
 					}, { // same as buttonValues.doneSessionSnooze.value
@@ -188,7 +187,16 @@ exports.default = function (controller) {
 						callback: function callback(response, convo) {
 							convo.say('Keep at it!');
 							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.snooze;
-							askUserPostSessionOptions(response, convo);
+
+							// wit will pick up duration here
+							var text = response.text;
+							var duration = response.intentObject.entities.duration;
+
+							convo.doneSessionTimerObject.customSnooze = {
+								text: text,
+								duration: duration
+							};
+
 							convo.next();
 						}
 					}, { // this just triggers `end_session` flow
@@ -235,6 +243,7 @@ exports.default = function (controller) {
 						var timeOut = _convo$doneSessionTim.timeOut;
 						var SlackUserId = _convo$doneSessionTim.SlackUserId;
 						var sessionTimerDecision = _convo$doneSessionTim.sessionTimerDecision;
+						var customSnooze = _convo$doneSessionTim.customSnooze;
 
 
 						if (timeOut) {
@@ -261,20 +270,60 @@ exports.default = function (controller) {
 						} else {
 
 							// NORMAL FLOW
+							_models2.default.User.find({
+								where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+								include: [_models2.default.SlackUser]
+							}).then(function (user) {
+								switch (sessionTimerDecision) {
+									case _constants.sessionTimerDecisions.didTask:
+										// update the specific task finished
 
-							switch (sessionTimerDecision) {
-								case _constants.sessionTimerDecisions.didTask:
-									break;
-								case _constants.sessionTimerDecisions.snooze:
-									break;
-								case _constants.sessionTimerDecisions.didSomethingElse:
-									controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
-									break;
-								case _constants.sessionTimerDecisions.noTasks:
-									break;
-								default:
-									break;
-							}
+										break;
+									case _constants.sessionTimerDecisions.snooze:
+
+										if (customSnooze) {
+											var text = customSnooze.text;
+											var duration = customSnooze.duration;
+
+											// user only said `snooze`
+
+											if (_botResponses.utterances.onlyContainsSnooze.test(text)) {
+												// automatically do default snooze here then
+												controller.trigger('done_session_snooze_button_flow', [bot, { SlackUserId: SlackUserId }]);
+											} else {
+												// user said `snooze for X minutes`
+												controller.trigger('snooze_reminder_flow', [bot, { SlackUserId: SlackUserId, duration: duration }]);
+											}
+										} else {
+											// button triggered it (do default)
+											controller.trigger('done_session_snooze_button_flow', [bot, { SlackUserId: SlackUserId }]);
+										}
+
+										return;
+									case _constants.sessionTimerDecisions.didSomethingElse:
+										controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
+										return;
+									case _constants.sessionTimerDecisions.noTasks:
+										// nothing
+										break;
+									default:
+										break;
+								}
+
+								// then from here, active the postSessionDecisions
+								switch (postSessionDecion) {
+									case _intents2.default.WANT_BREAK:
+										break;
+									case _intents2.default.END_DAY:
+										controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
+										break;
+									case _intents2.default.START_SESSION:
+										controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+										break;
+									default:
+										break;
+								}
+							});
 						}
 					});
 				});
