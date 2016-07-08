@@ -136,19 +136,25 @@ var checkForReminders = () => {
 
 						if (reminder.type == constants.reminders.doneSessionSnooze) {
 							
-							user.getWorkSessions({
+							const UserId = user.id;
+							models.WorkSession.findAll({
+								where: [`"WorkSession"."UserId" = ?`, UserId],
 								order: `"WorkSession"."createdAt" DESC`,
-								limit: 1,
-								include: [ models.DailyTask ]
+								limit: 1
 							})
 							.then((workSessions) => {
 								// get most recent work session for snooze option
 								if (workSessions.length > 0) {
-									var config = {
-										workSession: workSessions[0],
-										SlackUserId
-									}
-									controller.trigger(`session_timer_up`, [ bot, config ]);
+									var workSession = workSessions[0];
+									workSession.getDailyTasks({})
+									.then((dailyTasks) => {
+										workSession.DailyTasks = dailyTasks;
+										var config = {
+											workSession,
+											SlackUserId
+										}
+										controller.trigger(`session_timer_up`, [ bot, config ]);
+									})
 								}
 							})
 

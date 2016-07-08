@@ -144,18 +144,23 @@ var checkForReminders = function checkForReminders() {
 
 						if (reminder.type == _constants.constants.reminders.doneSessionSnooze) {
 
-							user.getWorkSessions({
+							var _UserId = user.id;
+							_models2.default.WorkSession.findAll({
+								where: ['"WorkSession"."UserId" = ?', _UserId],
 								order: '"WorkSession"."createdAt" DESC',
-								limit: 1,
-								include: [_models2.default.DailyTask]
+								limit: 1
 							}).then(function (workSessions) {
 								// get most recent work session for snooze option
 								if (workSessions.length > 0) {
-									var config = {
-										workSession: workSessions[0],
-										SlackUserId: SlackUserId
-									};
-									_controllers.controller.trigger('session_timer_up', [bot, config]);
+									var workSession = workSessions[0];
+									workSession.getDailyTasks({}).then(function (dailyTasks) {
+										workSession.DailyTasks = dailyTasks;
+										var config = {
+											workSession: workSession,
+											SlackUserId: SlackUserId
+										};
+										_controllers.controller.trigger('session_timer_up', [bot, config]);
+									});
 								}
 							});
 						} else {

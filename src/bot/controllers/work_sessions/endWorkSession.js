@@ -141,7 +141,8 @@ export default function(controller) {
 
 					convo.doneSessionTimerObject = {
 						SlackUserId,
-						sessionTimerDecision: false
+						sessionTimerDecision: false,
+						dailyTaskIds
 					}
 
 					convo.sessionEnd = {
@@ -229,7 +230,7 @@ export default function(controller) {
 									text,
 									duration
 								};
-								
+
 								convo.next();
 							}
 						},
@@ -278,7 +279,7 @@ export default function(controller) {
 
 					convo.on('end', (convo) => {
 
-						const { sessionEnd: { postSessionDecision }, doneSessionTimerObject: { timeOut, SlackUserId, sessionTimerDecision, customSnooze } } = convo;
+						const { sessionEnd: { postSessionDecision }, doneSessionTimerObject: { dailyTaskIds, timeOut, SlackUserId, sessionTimerDecision, customSnooze } } = convo;
 
 						if (timeOut) {
 							var { sentMessages } = bot;
@@ -311,7 +312,20 @@ export default function(controller) {
 								switch (sessionTimerDecision) {
 									case sessionTimerDecisions.didTask:
 										// update the specific task finished
-										
+										user.getDailyTasks({
+											where: [ `"DailyTask"."id" IN (?)`, dailyTaskIds ],
+											include: [ models.Task ]
+										})
+										.then((dailyTasks) => {
+											var completedTaskIds = dailyTasks.map((dailyTask) => {
+			    							return dailyTask.TaskId;
+			    						});
+			    						models.Task.update({
+			    							done: true
+			    						}, {
+			    							where: [`"Tasks"."id" in (?)`, completedTaskIds]
+			    						})
+										});
 										break;
 									case sessionTimerDecisions.snooze:
 
