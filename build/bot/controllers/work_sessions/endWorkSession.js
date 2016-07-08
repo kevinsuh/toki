@@ -122,8 +122,16 @@ exports.default = function (controller) {
 						dailyTaskIds: dailyTaskIds
 					};
 
+					var tz = user.SlackUser.tz;
+
+
 					convo.sessionEnd = {
-						postSessionDecision: false
+						UserId: user.id,
+						tz: tz,
+						postSessionDecision: false,
+						reminders: [],
+						tasksCompleted: [],
+						SlackUserId: SlackUserId
 					};
 
 					var thirtyMinutes = 1000 * 60 * 30;
@@ -239,7 +247,9 @@ exports.default = function (controller) {
 					convo.next();
 
 					convo.on('end', function (convo) {
-						var postSessionDecision = convo.sessionEnd.postSessionDecision;
+						var _convo$sessionEnd = convo.sessionEnd;
+						var postSessionDecision = _convo$sessionEnd.postSessionDecision;
+						var reminders = _convo$sessionEnd.reminders;
 						var _convo$doneSessionTim = convo.doneSessionTimerObject;
 						var dailyTaskIds = _convo$doneSessionTim.dailyTaskIds;
 						var timeOut = _convo$doneSessionTim.timeOut;
@@ -276,6 +286,20 @@ exports.default = function (controller) {
 								where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 								include: [_models2.default.SlackUser]
 							}).then(function (user) {
+
+								var UserId = user.id;
+
+								// cancel all old reminders
+								user.getReminders({
+									where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break", "done_session_snooze"]]
+								}).then(function (oldReminders) {
+									oldReminders.forEach(function (reminder) {
+										reminder.update({
+											"open": false
+										});
+									});
+								});
+
 								switch (sessionTimerDecision) {
 									case _constants.sessionTimerDecisions.didTask:
 										// update the specific task finished
@@ -324,8 +348,27 @@ exports.default = function (controller) {
 										break;
 								}
 
+								/**
+         * 		~~ THIS IS SIMULATION OF `session_end` FLOW
+         * 		essentially figuring out postSessionDecision
+         */
+
+								// set reminders (usually a break)
+								reminders.forEach(function (reminder) {
+									var remindTime = reminder.remindTime;
+									var customNote = reminder.customNote;
+									var type = reminder.type;
+
+									_models2.default.Reminder.create({
+										UserId: UserId,
+										remindTime: remindTime,
+										customNote: customNote,
+										type: type
+									});
+								});
+
 								// then from here, active the postSessionDecisions
-								switch (postSessionDecion) {
+								switch (postSessionDecision) {
 									case _intents2.default.WANT_BREAK:
 										break;
 									case _intents2.default.END_DAY:
@@ -729,15 +772,15 @@ exports.default = function (controller) {
 						console.log(convo.sessionEnd);
 
 						// went according to plan
-						var _convo$sessionEnd = convo.sessionEnd;
-						var SlackUserId = _convo$sessionEnd.SlackUserId;
-						var UserId = _convo$sessionEnd.UserId;
-						var postSessionDecision = _convo$sessionEnd.postSessionDecision;
-						var reminders = _convo$sessionEnd.reminders;
-						var tasksCompleted = _convo$sessionEnd.tasksCompleted;
-						var taskArray = _convo$sessionEnd.taskArray;
-						var differentCompletedTask = _convo$sessionEnd.differentCompletedTask;
-						var tz = _convo$sessionEnd.tz;
+						var _convo$sessionEnd2 = convo.sessionEnd;
+						var SlackUserId = _convo$sessionEnd2.SlackUserId;
+						var UserId = _convo$sessionEnd2.UserId;
+						var postSessionDecision = _convo$sessionEnd2.postSessionDecision;
+						var reminders = _convo$sessionEnd2.reminders;
+						var tasksCompleted = _convo$sessionEnd2.tasksCompleted;
+						var taskArray = _convo$sessionEnd2.taskArray;
+						var differentCompletedTask = _convo$sessionEnd2.differentCompletedTask;
+						var tz = _convo$sessionEnd2.tz;
 
 						// end all open sessions and reminder checkins (type `work_session`) the user might have
 

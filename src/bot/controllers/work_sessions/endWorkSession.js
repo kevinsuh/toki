@@ -145,8 +145,15 @@ export default function(controller) {
 						dailyTaskIds
 					}
 
+					const { SlackUser: { tz } } = user;
+
 					convo.sessionEnd = {
-						postSessionDecision: false
+						UserId: user.id,
+						tz,
+						postSessionDecision: false,
+						reminders: [],
+						tasksCompleted: [],
+						SlackUserId
 					}
 
 					var thirtyMinutes = 1000 * 60 * 30;
@@ -279,7 +286,7 @@ export default function(controller) {
 
 					convo.on('end', (convo) => {
 
-						const { sessionEnd: { postSessionDecision }, doneSessionTimerObject: { dailyTaskIds, timeOut, SlackUserId, sessionTimerDecision, customSnooze } } = convo;
+						const { sessionEnd: { postSessionDecision, reminders }, doneSessionTimerObject: { dailyTaskIds, timeOut, SlackUserId, sessionTimerDecision, customSnooze } } = convo;
 
 						if (timeOut) {
 							var { sentMessages } = bot;
@@ -309,6 +316,21 @@ export default function(controller) {
 								]
 							})
 							.then((user) => {
+
+								const UserId = user.id;
+
+								// cancel all old reminders
+								user.getReminders({
+									where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break", "done_session_snooze"] ]
+								}).
+								then((oldReminders) => {
+									oldReminders.forEach((reminder) => {
+										reminder.update({
+											"open": false
+										})
+									});
+								});
+
 								switch (sessionTimerDecision) {
 									case sessionTimerDecisions.didTask:
 										// update the specific task finished
@@ -357,8 +379,24 @@ export default function(controller) {
 									default: break;
 								}
 
+								/**
+								 * 		~~ THIS IS SIMULATION OF `session_end` FLOW
+								 * 		essentially figuring out postSessionDecision
+								 */
+
+								// set reminders (usually a break)
+								reminders.forEach((reminder) => {
+									const { remindTime, customNote, type } = reminder;
+									models.Reminder.create({
+										UserId,
+										remindTime,
+										customNote,
+										type
+									});
+								});
+
 								// then from here, active the postSessionDecisions
-								switch (postSessionDecion) {
+								switch (postSessionDecision) {
 									case intentConfig.WANT_BREAK:
 										break;
 									case intentConfig.END_DAY:
