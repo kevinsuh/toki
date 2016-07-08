@@ -102,24 +102,9 @@ exports.default = function (controller) {
 						where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 						include: [_models2.default.SlackUser]
 					}).then(function (user) {
-						var tz = user.SlackUser.tz;
 
-						var UserId = user.id;
-
-						var now = (0, _momentTimezone2.default)().tz(tz);
-						var defaultSnoozeTime = 9; // default snooze time
-						var snoozeTimeObject = now.add(defaultSnoozeTime, 'minutes');
-						var snoozeTimeString = snoozeTimeObject.format("h:mm a");
-
-						_models2.default.Reminder.create({
-							remindTime: snoozeTimeObject,
-							UserId: UserId,
-							type: "done_session_snooze"
-						}).then(function (reminder) {
-							bot.replyInteractive(message, 'Keep at it! I\'ll check in with you at ' + snoozeTimeString);
-						});
-
-						controller.trigger('done_session_snooze_button_flow', [bot, { SlackUserId: SlackUserId, botCallback: true, snoozeTimeObject: snoozeTimeObject }]);
+						bot.replyInteractive(message, 'Keep at it!');
+						controller.trigger('done_session_snooze_button_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					});
 					break;
 				case _constants.buttonValues.doneSessionDidSomethingElse.value:

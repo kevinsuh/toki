@@ -291,68 +291,103 @@ export default function(controller) {
 
 						var { UserId, SlackUserId, dailyTasks, calculatedTime, calculatedTimeObject, tasksToWorkOnHash, checkinTimeObject, reminderNote, newTask, tz } = sessionStart;
 
-						// if user wanted a checkin reminder
-						if (checkinTimeObject) {
-							models.Reminder.create({
-								remindTime: checkinTimeObject,
-								UserId,
-								customNote: reminderNote,
-								type: "work_session"
-							});
-						}
+						// cancel all user breaks cause user is RDY TO WORK
+						models.User.find({
+							where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+							include: [
+								models.SlackUser
+							]
+						})
+						.then((user) => {
 
-						// 1. create work session 
-						// 2. attach the daily tasks to work on during that work session
-						var startTime = moment();
-						var endTime   = calculatedTimeObject;
-
-						// create necessary data models:
-						//  array of Ids for insert, taskObjects to create taskListMessage
-						var dailyTaskIds       = [];
-						var tasksToWorkOnArray = [];
-						for (var key in tasksToWorkOnHash) {
-							var task = tasksToWorkOnHash[key];
-							if (task.dataValues) { // existing tasks
-								dailyTaskIds.push(task.dataValues.id);
-							}
-							tasksToWorkOnArray.push(task);
-						}
-
-						models.WorkSession.create({
-							startTime,
-							endTime,
-							UserId
-						}).then((workSession) => {
-							workSession.setDailyTasks(dailyTaskIds);
-
-							// if new task, insert that into DB and attach to work session
-							if (newTask) {
-
-								const priority          = (dailyTasks.length+1);
-								const { text, minutes } = newTask;
-								models.Task.create({
-									text
-								})
-								.then((task) => {
-									models.DailyTask.create({
-										TaskId: task.id,
-										priority,
-										minutes,
-										UserId
-									})
-									.then((dailyTask) => {
-										workSession.setDailyTasks([dailyTask.id]);
+							// END ALL REMINDERS BEFORE CREATING NEW ONE
+							user.getReminders({
+								where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break", "done_session_snooze"] ]
+							}).
+							then((reminders) => {
+								reminders.forEach((reminder) => {
+									reminder.update({
+										"open": false
 									})
 								});
+								// if user wanted a checkin reminder
+								if (checkinTimeObject) {
+									models.Reminder.create({
+										remindTime: checkinTimeObject,
+										UserId,
+										customNote: reminderNote,
+										type: "work_session"
+									});
+								}
+							});
+
+							// 1. create work session 
+							// 2. attach the daily tasks to work on during that work session
+							var startTime = moment();
+							var endTime   = calculatedTimeObject;
+
+							// create necessary data models:
+							//  array of Ids for insert, taskObjects to create taskListMessage
+							var dailyTaskIds       = [];
+							var tasksToWorkOnArray = [];
+							for (var key in tasksToWorkOnHash) {
+								var task = tasksToWorkOnHash[key];
+								if (task.dataValues) { // existing tasks
+									dailyTaskIds.push(task.dataValues.id);
+								}
+								tasksToWorkOnArray.push(task);
 							}
-						});
 
-						var taskListMessage = convertArrayToTaskListMessage(tasksToWorkOnArray);
+							// END ALL WORK SESSIONS BEFORE CREATING NEW ONE
+							user.getWorkSessions({
+								where: [`"open" = ?`, true ]
+							})
+							.then((workSessions) => {
+								workSessions.forEach((workSession) => {
+									workSession.update({
+										open: false
+									})
+								});
 
-						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-							convo.say(`See you at *${calculatedTime}!* :timer_clock:`);
-							convo.say(`Good luck with: \n${taskListMessage}`);
-							convo.next();
+								models.WorkSession.create({
+									startTime,
+									endTime,
+									UserId
+								}).then((workSession) => {
+									workSession.setDailyTasks(dailyTaskIds);
+
+									// if new task, insert that into DB and attach to work session
+									if (newTask) {
+
+										const priority          = (dailyTasks.length+1);
+										const { text, minutes } = newTask;
+										models.Task.create({
+											text
+										})
+										.then((task) => {
+											models.DailyTask.create({
+												TaskId: task.id,
+												priority,
+												minutes,
+												UserId
+											})
+											.then((dailyTask) => {
+												workSession.setDailyTasks([dailyTask.id]);
+											})
+										});
+									}
+								});
+
+							})
+
+							var taskListMessage = convertArrayToTaskListMessage(tasksToWorkOnArray);
+
+							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+								convo.say(`See you at *${calculatedTime}!* :timer_clock:`);
+								convo.say(`Good luck with: \n${taskListMessage}`);
+								convo.next();
+							});
+
 						});
 
 					} else {

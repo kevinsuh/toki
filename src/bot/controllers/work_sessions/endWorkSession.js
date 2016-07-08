@@ -224,26 +224,44 @@ export default function(controller) {
 	})
 
 	// `snooze` button flow
-	// right now this is all handled in the buttons/index file
 	controller.on(`done_session_snooze_button_flow`, (bot, config) => {
 
 		const { SlackUserId, botCallback, snoozeTimeObject } = config;
 
-		// models.User.find({
-		// 	where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-		// 	include: [
-		// 		models.SlackUser
-		// 	]
-		// })
-		// .then((user) => {
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
 
-		// 	if (botCallback) {
-		// 		// if botCallback, need to get the correct bot
-		// 		var botToken = bot.config.token;
-		// 		bot          = bots[botToken];
-		// 	}
+			if (botCallback) {
+				// if botCallback, need to get the correct bot
+				var botToken = bot.config.token;
+				bot          = bots[botToken];
+			}
 
-		// });
+			const { SlackUser: { tz } } = user;
+			const UserId                = user.id;
+
+			var now               = moment().tz(tz);
+			var defaultSnoozeTime = 9; // default snooze time
+			var snoozeTimeObject  = now.add(defaultSnoozeTime, 'minutes');
+			var snoozeTimeString  = snoozeTimeObject.format("h:mm a");
+
+			models.Reminder.create({
+				remindTime: snoozeTimeObject,
+				UserId,
+				type: "done_session_snooze"
+			})
+			.then((reminder) => {
+				bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+					convo.say(`I'll check in with you at ${snoozeTimeString}`);
+					convo.next();
+				});
+			});
+		});
 		
 	})
 
