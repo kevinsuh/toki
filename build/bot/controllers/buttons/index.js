@@ -93,25 +93,38 @@ exports.default = function (controller) {
 				case _constants.buttonValues.resetTimes.value:
 					bot.replyInteractive(message, "_Resetting :repeat:..._");
 					break;
-				case _constants.buttonValues.doneSessionYes.value:
+				case _constants.buttonValues.doneSessionTimeoutYes.value:
 					bot.replyInteractive(message, "Great work! :raised_hands:");
 					controller.trigger('done_session_yes_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
-				case _constants.buttonValues.doneSessionSnooze.value:
+				case _constants.buttonValues.doneSessionTimeoutSnooze.value:
 					_models2.default.User.find({
 						where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 						include: [_models2.default.SlackUser]
 					}).then(function (user) {
-
 						bot.replyInteractive(message, 'Keep at it!');
 						controller.trigger('done_session_snooze_button_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					});
 					break;
-				case _constants.buttonValues.doneSessionDidSomethingElse.value:
+				case _constants.buttonValues.doneSessionTimeoutDidSomethingElse.value:
+					bot.replyInteractive(message, ':ocean: Woo!');
 					controller.trigger('done_session_something_else_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
-				case _constants.buttonValues.doneSessionNo.value:
+				case _constants.buttonValues.doneSessionTimeoutNo.value:
+					bot.replyInteractive(message, 'That\'s okay! You can keep chipping away and you\'ll get there :pick:');
 					controller.trigger('done_session_no_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+					break;
+				case _constants.buttonValues.doneSessionYes.value:
+					bot.replyInteractive(message, "Great work! :raised_hands:");
+					break;
+				case _constants.buttonValues.doneSessionSnooze.value:
+					bot.replyInteractive(message, 'Keep at it!');
+					break;
+				case _constants.buttonValues.doneSessionDidSomethingElse.value:
+					bot.replyInteractive(message, ':ocean: Woo!');
+					break;
+				case _constants.buttonValues.doneSessionNo.value:
+					bot.replyInteractive(message, 'That\'s okay! You can keep chipping away and you\'ll get there :pick:');
 					break;
 				default:
 					// some default to replace button no matter what

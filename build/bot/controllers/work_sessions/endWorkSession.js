@@ -84,7 +84,7 @@ exports.default = function (controller) {
   * 			~~ START OF SESSION_TIMER FUNCTIONALITIES ~~
   */
 
-	// session timer is up
+	// session timer is up AND IN CONVO.ASK FLOW!
 	controller.on('session_timer_up', function (bot, config) {
 
 		/**
@@ -117,7 +117,12 @@ exports.default = function (controller) {
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
 					convo.doneSessionTimerObject = {
-						SlackUserId: SlackUserId
+						SlackUserId: SlackUserId,
+						sessionTimerDecision: false
+					};
+
+					convo.sessionEnd = {
+						postSessionDecision: false
 					};
 
 					var thirtyMinutes = 1000 * 60 * 30;
@@ -159,49 +164,59 @@ exports.default = function (controller) {
 					}, [{
 						pattern: _constants.buttonValues.doneSessionYes.value,
 						callback: function callback(response, convo) {
-
+							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.didTask;
+							askUserPostSessionOptions(response, convo);
 							convo.next();
 						}
 					}, { // same as buttonValues.doneSessionYes.value
 						pattern: _botResponses.utterances.yes,
 						callback: function callback(response, convo) {
-
+							convo.say("Great work :raised_hands:");
+							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.didTask;
+							askUserPostSessionOptions(response, convo);
 							convo.next();
 						}
 					}, {
 						pattern: _constants.buttonValues.doneSessionSnooze.value,
 						callback: function callback(response, convo) {
-
+							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.snooze;
+							askUserPostSessionOptions(response, convo);
 							convo.next();
 						}
 					}, { // same as buttonValues.doneSessionSnooze.value
 						pattern: _botResponses.utterances.containsSnooze,
 						callback: function callback(response, convo) {
-
+							convo.say('Keep at it!');
+							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.snooze;
+							askUserPostSessionOptions(response, convo);
 							convo.next();
 						}
-					}, {
+					}, { // this just triggers `end_session` flow
 						pattern: _constants.buttonValues.doneSessionDidSomethingElse.value,
 						callback: function callback(response, convo) {
-
+							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.didSomethingElse;
 							convo.next();
 						}
 					}, { // same as buttonValues.doneSessionDidSomethingElse.value
 						pattern: _botResponses.utterances.containsElse,
 						callback: function callback(response, convo) {
-
+							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.didSomethingElse;
+							convo.say(':ocean: Woo!');
 							convo.next();
 						}
 					}, {
 						pattern: _constants.buttonValues.doneSessionNo.value,
 						callback: function callback(response, convo) {
-
+							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.noTasks;
+							askUserPostSessionOptions(response, convo);
 							convo.next();
 						}
 					}, { // same as buttonValues.doneSessionNo.value
 						pattern: _botResponses.utterances.no,
 						callback: function callback(response, convo) {
-
+							convo.say('That\'s okay! You can keep chipping away and you\'ll get there :pick:');
+							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.noTasks;
+							askUserPostSessionOptions(response, convo);
 							convo.next();
 						}
 					}, { // this is failure point. restart with question
@@ -215,7 +230,12 @@ exports.default = function (controller) {
 					convo.next();
 
 					convo.on('end', function (convo) {
-						var timeOut = convo.doneSessionTimerObject.timeOut;
+						var postSessionDecision = convo.sessionEnd.postSessionDecision;
+						var _convo$doneSessionTim = convo.doneSessionTimerObject;
+						var timeOut = _convo$doneSessionTim.timeOut;
+						var SlackUserId = _convo$doneSessionTim.SlackUserId;
+						var sessionTimerDecision = _convo$doneSessionTim.sessionTimerDecision;
+
 
 						if (timeOut) {
 							var sentMessages = bot.sentMessages;
@@ -238,6 +258,23 @@ exports.default = function (controller) {
 
 							// this was a 30 minute timeout for done_session timer!
 							controller.trigger('done_session_timeout_flow', [bot, { SlackUserId: SlackUserId, workSession: workSession }]);
+						} else {
+
+							// NORMAL FLOW
+
+							switch (sessionTimerDecision) {
+								case _constants.sessionTimerDecisions.didTask:
+									break;
+								case _constants.sessionTimerDecisions.snooze:
+									break;
+								case _constants.sessionTimerDecisions.didSomethingElse:
+									controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
+									break;
+								case _constants.sessionTimerDecisions.noTasks:
+									break;
+								default:
+									break;
+							}
 						}
 					});
 				});
@@ -279,25 +316,25 @@ exports.default = function (controller) {
 							callback_id: "DONE_SESSION",
 							fallback: "I was unable to process your decision",
 							actions: [{
-								name: _constants.buttonValues.doneSessionYes.name,
+								name: _constants.buttonValues.doneSessionTimeoutYes.name,
 								text: "Yes! :punch:",
-								value: _constants.buttonValues.doneSessionYes.value,
+								value: _constants.buttonValues.doneSessionTimeoutYes.value,
 								type: "button",
 								style: "primary"
 							}, {
-								name: _constants.buttonValues.doneSessionSnooze.name,
+								name: _constants.buttonValues.doneSessionTimeoutSnooze.name,
 								text: "Snooze :timer_clock:",
-								value: _constants.buttonValues.doneSessionSnooze.value,
+								value: _constants.buttonValues.doneSessionTimeoutSnooze.value,
 								type: "button"
 							}, {
-								name: _constants.buttonValues.doneSessionDidSomethingElse.name,
+								name: _constants.buttonValues.doneSessionTimeoutDidSomethingElse.name,
 								text: "Did something else",
-								value: _constants.buttonValues.doneSessionDidSomethingElse.value,
+								value: _constants.buttonValues.doneSessionTimeoutDidSomethingElse.value,
 								type: "button"
 							}, {
-								name: _constants.buttonValues.doneSessionNo.name,
+								name: _constants.buttonValues.doneSessionTimeoutNo.name,
 								text: "Nope",
-								value: _constants.buttonValues.doneSessionNo.value,
+								value: _constants.buttonValues.doneSessionTimeoutNo.value,
 								type: "button"
 							}]
 						}]
@@ -533,7 +570,7 @@ exports.default = function (controller) {
 					askUserPostSessionOptions(err, convo);
 					convo.next();
 				} else {
-					convo.say("Woo! Which task(s) did you get done? `i.e. tasks 1, 2`");
+					convo.say("Which task(s) did you get done? `i.e. tasks 1, 2`");
 					convo.ask({
 						text: '' + taskListMessage,
 						attachments: [{

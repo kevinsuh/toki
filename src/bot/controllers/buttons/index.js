@@ -95,11 +95,11 @@ export default function(controller) {
 				case buttonValues.resetTimes.value:
 					bot.replyInteractive(message, "_Resetting :repeat:..._")
 					break;
-				case buttonValues.doneSessionYes.value:
+				case buttonValues.doneSessionTimeoutYes.value:
 					bot.replyInteractive(message, "Great work! :raised_hands:")
 					controller.trigger(`done_session_yes_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
-				case buttonValues.doneSessionSnooze.value:
+				case buttonValues.doneSessionTimeoutSnooze.value:
 					models.User.find({
 						where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
 						include: [
@@ -107,16 +107,29 @@ export default function(controller) {
 						]
 					})
 					.then((user) => {
-
 						bot.replyInteractive(message, `Keep at it!`);
 						controller.trigger(`done_session_snooze_button_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					});
 					break;
-				case buttonValues.doneSessionDidSomethingElse.value:
+				case buttonValues.doneSessionTimeoutDidSomethingElse.value:
+					bot.replyInteractive(message, `:ocean: Woo!`);
 					controller.trigger(`done_session_something_else_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
-				case buttonValues.doneSessionNo.value:
+				case buttonValues.doneSessionTimeoutNo.value:
+					bot.replyInteractive(message, `That's okay! You can keep chipping away and you'll get there :pick:`);
 					controller.trigger(`done_session_no_flow`, [ bot, { SlackUserId, botCallback: true }]);
+					break;
+				case buttonValues.doneSessionYes.value:
+					bot.replyInteractive(message, "Great work! :raised_hands:")
+					break;
+				case buttonValues.doneSessionSnooze.value:
+					bot.replyInteractive(message, `Keep at it!`);
+					break;
+				case buttonValues.doneSessionDidSomethingElse.value:
+					bot.replyInteractive(message, `:ocean: Woo!`);
+					break;
+				case buttonValues.doneSessionNo.value:
+					bot.replyInteractive(message, `That's okay! You can keep chipping away and you'll get there :pick:`);
 					break;
 				default:
 					// some default to replace button no matter what
