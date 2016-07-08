@@ -226,7 +226,8 @@ export default function(controller) {
 	// `snooze` button flow
 	controller.on(`done_session_snooze_button_flow`, (bot, config) => {
 
-		const { SlackUserId, botCallback, snoozeTimeObject } = config;
+		// optionally can get duration if passed in via NL
+		const { SlackUserId, botCallback, snoozeTimeObject, remindTimeStampObject } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -251,6 +252,13 @@ export default function(controller) {
 
 			var now               = moment().tz(tz);
 			var snoozeTimeObject  = now.add(snoozeTime, 'minutes');
+
+			// CUSTOM NL SNOOZE FROM USER
+			if (remindTimeStampObject) {
+				snoozeTimeObject  = remindTimeStampObject;
+				defaultSnoozeTime = TOKI_DEFAULT_SNOOZE_TIME; 
+			}
+
 			var snoozeTimeString  = snoozeTimeObject.format("h:mm a");
 
 			models.Reminder.create({

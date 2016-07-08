@@ -87,7 +87,7 @@ export default function(controller) {
 					bot.replyInteractive(message, "Let's do it!")
 					break;
 				case buttonValues.startSession.value:
-					bot.replyInteractive(message, "Let's kick off a new session :soccer:")
+					bot.replyInteractive(message, ":boom: boom")
 					break;
 				case buttonValues.endDay.value:
 					bot.replyInteractive(message, "It's about that time, isn't it?")

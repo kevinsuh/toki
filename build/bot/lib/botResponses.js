@@ -51,6 +51,8 @@ var utterances = exports.utterances = {
 	containsName: new RegExp(/n[name]{2,}/i),
 	containsTimeZone: new RegExp(/t[timezone ]{4,}/i),
 	containsPlan: new RegExp(/p[plan ]{2,}/i),
-	containsAdditional: new RegExp(/\ba[additional]{4,}/i)
+	containsAdditional: new RegExp(/\ba[additional]{4,}/i),
+	containsSnooze: new RegExp(/\bs[snooze]{4,}/i),
+	onlyContainsSnooze: new RegExp(/^s[snooze]{4,}$/i)
 };
 //# sourceMappingURL=botResponses.js.map

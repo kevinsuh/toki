@@ -188,9 +188,12 @@ exports.default = function (controller) {
 
 	// `snooze` button flow
 	controller.on('done_session_snooze_button_flow', function (bot, config) {
+
+		// optionally can get duration if passed in via NL
 		var SlackUserId = config.SlackUserId;
 		var botCallback = config.botCallback;
 		var snoozeTimeObject = config.snoozeTimeObject;
+		var remindTimeStampObject = config.remindTimeStampObject;
 
 
 		_models2.default.User.find({
@@ -214,6 +217,12 @@ exports.default = function (controller) {
 
 			var now = (0, _momentTimezone2.default)().tz(tz);
 			var snoozeTimeObject = now.add(snoozeTime, 'minutes');
+
+			// CUSTOM NL SNOOZE FROM USER
+			if (remindTimeStampObject) {
+				snoozeTimeObject = remindTimeStampObject;
+			}
+
 			var snoozeTimeString = snoozeTimeObject.format("h:mm a");
 
 			_models2.default.Reminder.create({
