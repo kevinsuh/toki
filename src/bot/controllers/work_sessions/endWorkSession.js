@@ -257,7 +257,7 @@ export default function(controller) {
 			})
 			.then((reminder) => {
 				bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-					convo.say(`I'll check in with you at ${snoozeTimeString}`);
+					convo.say(`I'll check in with you at ${snoozeTimeString} :fist:`);
 					convo.next();
 				});
 			});

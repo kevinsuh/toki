@@ -219,7 +219,7 @@ exports.default = function (controller) {
 				type: "done_session_snooze"
 			}).then(function (reminder) {
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-					convo.say('I\'ll check in with you at ' + snoozeTimeString);
+					convo.say('I\'ll check in with you at ' + snoozeTimeString + ' :fist:');
 					convo.next();
 				});
 			});
