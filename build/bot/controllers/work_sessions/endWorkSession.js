@@ -113,15 +113,21 @@ exports.default = function (controller) {
 				});
 				var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
 
-				var message = {
-					channel: SlackUserId,
-					text: 'Hey, did you finish ' + tasksToWorkOnString + '?'
-				};
-
 				// making this just a reminder now so that user can end his own session as he pleases
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-					convo.say({
+					convo.doneSessionTimerObject = {
+						SlackUserId: SlackUserId
+					};
+
+					var thirtyMinutes = 1000 * 60 * 30;
+
+					setTimeout(function () {
+						convo.doneSessionTimerObject.timeOut = true;
+						convo.stop();
+					}, thirtyMinutes);
+
+					convo.ask({
 						text: 'Hey, did you finish ' + tasksToWorkOnString + '?',
 						attachments: [{
 							attachment_type: 'default',
@@ -150,7 +156,105 @@ exports.default = function (controller) {
 								type: "button"
 							}]
 						}]
+					}, [{ // this is failure point. restart with question
+						default: true,
+						callback: function callback(response, convo) {
+							convo.say("I didn't quite get that :thinking_face:");
+							// convo.repeat();
+							convo.next();
+						}
+					}]);
+					convo.next();
+
+					convo.on('end', function (convo) {
+						var timeOut = convo.doneSessionTimerObject.timeOut;
+
+						if (timeOut) {
+							var sentMessages = bot.sentMessages;
+
+							if (sentMessages) {
+								// lastMessage is the one just asked by `convo`
+								// in this case, it is `taskListMessage`
+								var lastMessage = sentMessages.slice(-1)[0];
+								if (lastMessage) {
+									var channel = lastMessage.channel;
+									var ts = lastMessage.ts;
+
+									var doneSessionMessageObject = {
+										channel: channel,
+										ts: ts
+									};
+									bot.api.chat.delete(doneSessionMessageObject);
+								}
+							}
+
+							// this was a 30 minute timeout for done_session timer!
+							controller.trigger('done_session_timeout_flow', [bot, { SlackUserId: SlackUserId, workSession: workSession }]);
+						}
 					});
+				});
+			});
+		});
+	});
+
+	// we put users in this ether when it has been a 30 mintime out!
+	controller.on('done_session_timeout_flow', function (bot, config) {
+		var SlackUserId = config.SlackUserId;
+		var workSession = config.workSession;
+
+		var dailyTaskIds = workSession.DailyTasks.map(function (dailyTask) {
+			return dailyTask.id;
+		});
+
+		_models2.default.User.find({
+			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+			include: [_models2.default.SlackUser]
+		}).then(function (user) {
+			user.getDailyTasks({
+				where: ['"DailyTask"."id" IN (?)', dailyTaskIds],
+				include: [_models2.default.Task]
+			}).then(function (dailyTasks) {
+
+				var taskTextsToWorkOnArray = dailyTasks.map(function (dailyTask) {
+					var text = dailyTask.Task.dataValues.text;
+					return text;
+				});
+				var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
+
+				// making this just a reminder now so that user can end his own session as he pleases
+				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+					convo.say({
+						text: 'Hey! It\'s been 30 minutes since you wanted to finish ' + tasksToWorkOnString + '. Did you finish the task?',
+						attachments: [{
+							attachment_type: 'default',
+							callback_id: "DONE_SESSION",
+							fallback: "I was unable to process your decision",
+							actions: [{
+								name: _constants.buttonValues.doneSessionYes.name,
+								text: "Yes! :punch:",
+								value: _constants.buttonValues.doneSessionYes.value,
+								type: "button",
+								style: "primary"
+							}, {
+								name: _constants.buttonValues.doneSessionSnooze.name,
+								text: "Snooze :timer_clock:",
+								value: _constants.buttonValues.doneSessionSnooze.value,
+								type: "button"
+							}, {
+								name: _constants.buttonValues.doneSessionDidSomethingElse.name,
+								text: "Did something else",
+								value: _constants.buttonValues.doneSessionDidSomethingElse.value,
+								type: "button"
+							}, {
+								name: _constants.buttonValues.doneSessionNo.name,
+								text: "Nope",
+								value: _constants.buttonValues.doneSessionNo.value,
+								type: "button"
+							}]
+						}]
+					});
+					convo.say("Please click one of the items above if applicable!");
 					convo.next();
 				});
 			});
@@ -236,7 +340,7 @@ exports.default = function (controller) {
 						defaultSnoozeTime: defaultSnoozeTime
 					};
 
-					if (!defaultSnoozeTime) {
+					if (!defaultSnoozeTime && !remindTimeStampObject) {
 						convo.say('Wait, this is your first time hitting snooze! The default snooze is *' + _constants.TOKI_DEFAULT_SNOOZE_TIME + ' minutes*, but you can change it in your settings by telling me to `show settings`');
 						convo.say("You can also specify a custom snooze by saying `snooze for 20 minutes` or something like that :grinning:");
 					}
