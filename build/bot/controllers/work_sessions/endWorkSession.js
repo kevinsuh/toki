@@ -156,11 +156,59 @@ exports.default = function (controller) {
 								type: "button"
 							}]
 						}]
-					}, [{ // this is failure point. restart with question
+					}, [{
+						pattern: _constants.buttonValues.doneSessionYes.value,
+						callback: function callback(response, convo) {
+
+							convo.next();
+						}
+					}, { // same as buttonValues.doneSessionYes.value
+						pattern: _botResponses.utterances.yes,
+						callback: function callback(response, convo) {
+
+							convo.next();
+						}
+					}, {
+						pattern: _constants.buttonValues.doneSessionSnooze.value,
+						callback: function callback(response, convo) {
+
+							convo.next();
+						}
+					}, { // same as buttonValues.doneSessionSnooze.value
+						pattern: _botResponses.utterances.containsSnooze,
+						callback: function callback(response, convo) {
+
+							convo.next();
+						}
+					}, {
+						pattern: _constants.buttonValues.doneSessionDidSomethingElse.value,
+						callback: function callback(response, convo) {
+
+							convo.next();
+						}
+					}, { // same as buttonValues.doneSessionDidSomethingElse.value
+						pattern: _botResponses.utterances.containsElse,
+						callback: function callback(response, convo) {
+
+							convo.next();
+						}
+					}, {
+						pattern: _constants.buttonValues.doneSessionNo.value,
+						callback: function callback(response, convo) {
+
+							convo.next();
+						}
+					}, { // same as buttonValues.doneSessionNo.value
+						pattern: _botResponses.utterances.no,
+						callback: function callback(response, convo) {
+
+							convo.next();
+						}
+					}, { // this is failure point. restart with question
 						default: true,
 						callback: function callback(response, convo) {
 							convo.say("I didn't quite get that :thinking_face:");
-							// convo.repeat();
+							convo.repeat();
 							convo.next();
 						}
 					}]);

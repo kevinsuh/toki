@@ -188,11 +188,67 @@ export default function(controller) {
 						]
 					},
 					[
+						{
+							pattern: buttonValues.doneSessionYes.value,
+							callback: function(response, convo) {
+								
+								convo.next();
+							}
+						},
+						{ // same as buttonValues.doneSessionYes.value
+							pattern: utterances.yes,
+							callback: (response, convo) => {
+
+								convo.next();
+							}
+						},
+						{
+							pattern: buttonValues.doneSessionSnooze.value,
+							callback: (response, convo) => {
+
+								convo.next();
+							}
+						},
+						{ // same as buttonValues.doneSessionSnooze.value
+							pattern: utterances.containsSnooze,
+							callback: (response, convo) => {
+
+								convo.next();
+							}
+						},
+						{
+							pattern: buttonValues.doneSessionDidSomethingElse.value,
+							callback: (response, convo) => {
+
+								convo.next();
+							}
+						},
+						{ // same as buttonValues.doneSessionDidSomethingElse.value
+							pattern: utterances.containsElse,
+							callback: (response, convo) => {
+
+								convo.next();
+							}
+						},
+						{
+							pattern: buttonValues.doneSessionNo.value,
+							callback: (response, convo) => {
+
+								convo.next();
+							}
+						},
+						{ // same as buttonValues.doneSessionNo.value
+							pattern: utterances.no,
+							callback: (response, convo) => {
+
+								convo.next();
+							}
+						},
 						{ // this is failure point. restart with question
 							default: true,
 							callback: function(response, convo) {
 								convo.say("I didn't quite get that :thinking_face:");
-								// convo.repeat();
+								convo.repeat();
 								convo.next();
 							}
 						}
