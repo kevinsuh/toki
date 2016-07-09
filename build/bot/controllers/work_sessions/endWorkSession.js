@@ -136,6 +136,8 @@ exports.default = function (controller) {
 
 					var thirtyMinutes = 1000 * 60 * 30;
 
+					thirtyMinutes = 10000;
+
 					setTimeout(function () {
 						convo.doneSessionTimerObject.timeOut = true;
 						convo.stop();
@@ -288,6 +290,8 @@ exports.default = function (controller) {
 							controller.trigger('done_session_timeout_flow', [bot, { SlackUserId: SlackUserId, workSession: workSession }]);
 						} else {
 
+							convo.doneSessionTimerObject.timeOut = false;
+
 							// NORMAL FLOW
 							_models2.default.User.find({
 								where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
@@ -375,18 +379,7 @@ exports.default = function (controller) {
 								});
 
 								// then from here, active the postSessionDecisions
-								switch (postSessionDecision) {
-									case _intents2.default.WANT_BREAK:
-										break;
-									case _intents2.default.END_DAY:
-										controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
-										break;
-									case _intents2.default.START_SESSION:
-										controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
-										break;
-									default:
-										break;
-								}
+								handlePostSessionDecision(controller, postSessionDecision);
 							});
 						}
 					});
@@ -408,62 +401,73 @@ exports.default = function (controller) {
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
-			user.getDailyTasks({
-				where: ['"DailyTask"."id" IN (?)', dailyTaskIds],
-				include: [_models2.default.Task]
-			}).then(function (dailyTasks) {
 
-				var taskTextsToWorkOnArray = dailyTasks.map(function (dailyTask) {
-					var text = dailyTask.Task.dataValues.text;
-					return text;
-				});
-				var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
+			var UserId = user.id;
 
-				// making this just a reminder now so that user can end his own session as he pleases
-				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+			user.getWorkSessions({
+				where: ['"WorkSession"."UserId" = ?', UserId],
+				order: '"WorkSession"."createdAt" DESC',
+				limit: 1
+			}).then(function (workSessions) {
+				// get most recent work session for snooze option
+				if (workSessions.length > 0) {
+					var workSession = workSessions[0];
+					workSession.getDailyTasks({
+						include: [_models2.default.Task]
+					}).then(function (dailyTasks) {
 
-					convo.say({
-						text: 'Hey! It\'s been 30 minutes since you wanted to finish ' + tasksToWorkOnString + '. Did you finish the task?',
-						attachments: [{
-							attachment_type: 'default',
-							callback_id: "DONE_SESSION",
-							fallback: "I was unable to process your decision",
-							actions: [{
-								name: _constants.buttonValues.doneSessionTimeoutYes.name,
-								text: "Yes! :punch:",
-								value: _constants.buttonValues.doneSessionTimeoutYes.value,
-								type: "button",
-								style: "primary"
-							}, {
-								name: _constants.buttonValues.doneSessionTimeoutSnooze.name,
-								text: "Snooze :timer_clock:",
-								value: _constants.buttonValues.doneSessionTimeoutSnooze.value,
-								type: "button"
-							}, {
-								name: _constants.buttonValues.doneSessionTimeoutDidSomethingElse.name,
-								text: "Did something else",
-								value: _constants.buttonValues.doneSessionTimeoutDidSomethingElse.value,
-								type: "button"
-							}, {
-								name: _constants.buttonValues.doneSessionTimeoutNo.name,
-								text: "Nope",
-								value: _constants.buttonValues.doneSessionTimeoutNo.value,
-								type: "button"
-							}]
-						}]
+						workSession.DailyTasks = dailyTasks;
+
+						var taskTextsToWorkOnArray = dailyTasks.map(function (dailyTask) {
+							var text = dailyTask.Task.dataValues.text;
+							return text;
+						});
+						var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
+
+						// making this just a reminder now so that user can end his own session as he pleases
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+							convo.say({
+								text: 'Hey! It\'s been 30 minutes since you wanted to finish ' + tasksToWorkOnString + '. Did you finish the task?',
+								attachments: [{
+									attachment_type: 'default',
+									callback_id: "DONE_SESSION",
+									fallback: "I was unable to process your decision",
+									actions: [{
+										name: _constants.buttonValues.doneSessionTimeoutYes.name,
+										text: "Yes! :punch:",
+										value: _constants.buttonValues.doneSessionTimeoutYes.value,
+										type: "button",
+										style: "primary"
+									}, {
+										name: _constants.buttonValues.doneSessionTimeoutSnooze.name,
+										text: "Snooze :timer_clock:",
+										value: _constants.buttonValues.doneSessionTimeoutSnooze.value,
+										type: "button"
+									}, {
+										name: _constants.buttonValues.doneSessionTimeoutDidSomethingElse.name,
+										text: "Did something else",
+										value: _constants.buttonValues.doneSessionTimeoutDidSomethingElse.value,
+										type: "button"
+									}, {
+										name: _constants.buttonValues.doneSessionTimeoutNo.name,
+										text: "Nope",
+										value: _constants.buttonValues.doneSessionTimeoutNo.value,
+										type: "button"
+									}]
+								}]
+							});
+							convo.say("Please click one of the items above if applicable!");
+							convo.next();
+						});
 					});
-					convo.say("Please click one of the items above if applicable!");
-					convo.next();
-				});
+				}
 			});
 		});
 	});
 
 	// `yes` button flow
 	controller.on('done_session_yes_flow', function (bot, config) {
-
-		console.log("\n\n\n IN YES SESSION FLOW \n\n\n");
-
 		var SlackUserId = config.SlackUserId;
 		var botCallback = config.botCallback;
 
@@ -481,9 +485,60 @@ exports.default = function (controller) {
 
 			// making this just a reminder now so that user can end his own session as he pleases
 			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+				var tz = user.SlackUser.tz;
 
-				convo.say("AWESOME YOU FINISHED THE TASK....");
+
+				convo.sessionEnd = {
+					UserId: user.id,
+					tz: tz,
+					postSessionDecision: false,
+					reminders: [],
+					tasksCompleted: [],
+					SlackUserId: SlackUserId
+				};
+
+				askUserPostSessionOptions(err, convo);
 				convo.next();
+				convo.on('end', function (convo) {
+					// NORMAL FLOW
+					_models2.default.User.find({
+						where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+						include: [_models2.default.SlackUser]
+					}).then(function (user) {
+
+						// get most recent work session to assume this off of
+						user.getWorkSessions({
+							where: ['"WorkSession"."UserId" = ?', user.id],
+							order: '"WorkSession"."createdAt" DESC',
+							limit: 1
+						}).then(function (workSessions) {
+
+							if (workSessions.length > 0) {
+								var workSession = workSessions[0];
+								workSession.getDailyTasks({
+									include: [_models2.default.Task]
+								}).then(function (dailyTasks) {
+									workSession.DailyTasks = dailyTasks;
+									var config = {
+										workSession: workSession,
+										SlackUserId: SlackUserId
+									};
+
+									var completedTaskIds = dailyTasks.map(function (dailyTask) {
+										return dailyTask.TaskId;
+									});
+									_models2.default.Task.update({
+										done: true
+									}, {
+										where: ['"Tasks"."id" in (?)', completedTaskIds]
+									});
+
+									CHIP;
+								});
+							}
+						});
+					});
+				});
 			});
 		});
 	});
@@ -901,18 +956,7 @@ exports.default = function (controller) {
 									});
 								});
 
-								switch (postSessionDecision) {
-									case _intents2.default.WANT_BREAK:
-										break;
-									case _intents2.default.END_DAY:
-										controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
-										break;
-									case _intents2.default.START_SESSION:
-										controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
-										break;
-									default:
-										break;
-								}
+								handlePostSessionDecision(controller, postSessionDecision);
 							});
 						});
 					})();
@@ -1147,6 +1191,21 @@ function getBreakTime(response, convo) {
 			}
 			convo.next();
 		});
+	}
+}
+
+function handlePostSessionDecision(controller, postSessionDecision) {
+	switch (postSessionDecision) {
+		case _intents2.default.WANT_BREAK:
+			break;
+		case _intents2.default.END_DAY:
+			controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
+			break;
+		case _intents2.default.START_SESSION:
+			controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+			break;
+		default:
+			break;
 	}
 }
 //# sourceMappingURL=endWorkSession.js.map

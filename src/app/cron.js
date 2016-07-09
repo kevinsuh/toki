@@ -137,7 +137,7 @@ var checkForReminders = () => {
 						if (reminder.type == constants.reminders.doneSessionSnooze) {
 							
 							const UserId = user.id;
-							models.WorkSession.findAll({
+							user.getWorkSessions({
 								where: [`"WorkSession"."UserId" = ?`, UserId],
 								order: `"WorkSession"."createdAt" DESC`,
 								limit: 1

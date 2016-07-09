@@ -158,6 +158,8 @@ export default function(controller) {
 
 					var thirtyMinutes = 1000 * 60 * 30;
 
+					thirtyMinutes = 10000;
+
 					setTimeout(() => {
 						convo.doneSessionTimerObject.timeOut = true;
 						convo.stop();
@@ -315,6 +317,8 @@ export default function(controller) {
 							controller.trigger(`done_session_timeout_flow`, [ bot, { SlackUserId, workSession }])
 						} else {
 
+							convo.doneSessionTimerObject.timeOut = false;
+
 							// NORMAL FLOW
 							models.User.find({
 								where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -403,23 +407,10 @@ export default function(controller) {
 								});
 
 								// then from here, active the postSessionDecisions
-								switch (postSessionDecision) {
-									case intentConfig.WANT_BREAK:
-										break;
-									case intentConfig.END_DAY:
-										controller.trigger('trigger_day_end', [bot, { SlackUserId }]);
-										break;
-									case intentConfig.START_SESSION:
-										controller.trigger('confirm_new_session', [bot, { SlackUserId }]);
-										break;
-									default: break;
-								}
+								handlePostSessionDecision(controller, postSessionDecision);
+
 							});
-
-							
-
 						}
-
 					});
 				});
 			});
@@ -441,69 +432,82 @@ export default function(controller) {
 			]
 		})
 		.then((user) => {
-			user.getDailyTasks({
-				where: [ `"DailyTask"."id" IN (?)`, dailyTaskIds ],
-				include: [ models.Task ]
+
+			var UserId = user.id;
+
+			user.getWorkSessions({
+				where: [`"WorkSession"."UserId" = ?`, UserId],
+				order: `"WorkSession"."createdAt" DESC`,
+				limit: 1
 			})
-			.then((dailyTasks) => {
+			.then((workSessions) => {
+				// get most recent work session for snooze option
+				if (workSessions.length > 0) {
+					var workSession = workSessions[0];
+					workSession.getDailyTasks({
+						include: [ models.Task ]
+					})
+					.then((dailyTasks) => {
 
-				var taskTextsToWorkOnArray = dailyTasks.map((dailyTask) => {
-					var text = dailyTask.Task.dataValues.text;
-					return text;
-				});
-				var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
+						workSession.DailyTasks = dailyTasks;
 
-				// making this just a reminder now so that user can end his own session as he pleases
-				bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+						var taskTextsToWorkOnArray = dailyTasks.map((dailyTask) => {
+							var text = dailyTask.Task.dataValues.text;
+							return text;
+						});
+						var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
 
-					convo.say({
-						text: `Hey! It's been 30 minutes since you wanted to finish ${tasksToWorkOnString}. Did you finish the task?`,
-						attachments:[
-							{
-								attachment_type: 'default',
-								callback_id: "DONE_SESSION",
-								fallback: "I was unable to process your decision",
-								actions: [
+						// making this just a reminder now so that user can end his own session as he pleases
+						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+							convo.say({
+								text: `Hey! It's been 30 minutes since you wanted to finish ${tasksToWorkOnString}. Did you finish the task?`,
+								attachments:[
 									{
-											name: buttonValues.doneSessionTimeoutYes.name,
-											text: "Yes! :punch:",
-											value: buttonValues.doneSessionTimeoutYes.value,
-											type: "button",
-											style: "primary"
-									},
-									{
-											name: buttonValues.doneSessionTimeoutSnooze.name,
-											text: "Snooze :timer_clock:",
-											value: buttonValues.doneSessionTimeoutSnooze.value,
-											type: "button"
-									},
-									{
-											name: buttonValues.doneSessionTimeoutDidSomethingElse.name,
-											text: "Did something else",
-											value: buttonValues.doneSessionTimeoutDidSomethingElse.value,
-											type: "button"
-									},
-									{
-											name: buttonValues.doneSessionTimeoutNo.name,
-											text: "Nope",
-											value: buttonValues.doneSessionTimeoutNo.value,
-											type: "button"
+										attachment_type: 'default',
+										callback_id: "DONE_SESSION",
+										fallback: "I was unable to process your decision",
+										actions: [
+											{
+													name: buttonValues.doneSessionTimeoutYes.name,
+													text: "Yes! :punch:",
+													value: buttonValues.doneSessionTimeoutYes.value,
+													type: "button",
+													style: "primary"
+											},
+											{
+													name: buttonValues.doneSessionTimeoutSnooze.name,
+													text: "Snooze :timer_clock:",
+													value: buttonValues.doneSessionTimeoutSnooze.value,
+													type: "button"
+											},
+											{
+													name: buttonValues.doneSessionTimeoutDidSomethingElse.name,
+													text: "Did something else",
+													value: buttonValues.doneSessionTimeoutDidSomethingElse.value,
+													type: "button"
+											},
+											{
+													name: buttonValues.doneSessionTimeoutNo.name,
+													text: "Nope",
+													value: buttonValues.doneSessionTimeoutNo.value,
+													type: "button"
+											}
+										]
 									}
 								]
-							}
-						]
-					});
-					convo.say("Please click one of the items above if applicable!");
-					convo.next();
-				});
-			});
+							});
+							convo.say("Please click one of the items above if applicable!");
+							convo.next();
+						});
+					})
+				}
+			})
 		})
 	})
 
 	// `yes` button flow
 	controller.on(`done_session_yes_flow`, (bot, config) => {
-
-		console.log("\n\n\n IN YES SESSION FLOW \n\n\n");
 
 		const { SlackUserId, botCallback } = config;
 
@@ -524,8 +528,66 @@ export default function(controller) {
 			// making this just a reminder now so that user can end his own session as he pleases
 			bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
-				convo.say("AWESOME YOU FINISHED THE TASK....");
+				const { SlackUser: { tz } } = user;
+
+				convo.sessionEnd = {
+					UserId: user.id,
+					tz,
+					postSessionDecision: false,
+					reminders: [],
+					tasksCompleted: [],
+					SlackUserId
+				}
+
+				askUserPostSessionOptions(err, convo);
 				convo.next();
+				convo.on('end', (convo) => {
+					// NORMAL FLOW
+					models.User.find({
+						where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+						include: [
+							models.SlackUser
+						]
+					})
+					.then((user) => {
+
+						// get most recent work session to assume this off of
+						user.getWorkSessions({
+							where: [`"WorkSession"."UserId" = ?`, user.id],
+							order: `"WorkSession"."createdAt" DESC`,
+							limit: 1
+						})
+						.then((workSessions) => {
+
+							if (workSessions.length > 0) {
+								var workSession = workSessions[0];
+								workSession.getDailyTasks({
+									include: [ models.Task ]
+								})
+								.then((dailyTasks) => {
+									workSession.DailyTasks = dailyTasks;
+									var config = {
+										workSession,
+										SlackUserId
+									}
+									
+									var completedTaskIds = dailyTasks.map((dailyTask) => {
+										return dailyTask.TaskId;
+									});
+									models.Task.update({
+										done: true
+									}, {
+										where: [`"Tasks"."id" in (?)`, completedTaskIds]
+									})
+
+									CHIP
+
+								})
+							}
+
+						});
+					});
+				});
 				
 			});
 
@@ -959,18 +1021,8 @@ export default function(controller) {
 									"open": false
 								});
 							});
-
-							switch (postSessionDecision) {
-								case intentConfig.WANT_BREAK:
-									break;
-								case intentConfig.END_DAY:
-									controller.trigger('trigger_day_end', [bot, { SlackUserId }]);
-									break;
-								case intentConfig.START_SESSION:
-									controller.trigger('confirm_new_session', [bot, { SlackUserId }]);
-									break;
-								default: break;
-							}
+							
+							handlePostSessionDecision(controller, postSessionDecision);
 
 						});
 
@@ -1195,3 +1247,16 @@ function getBreakTime(response, convo) {
 
 }
 
+function handlePostSessionDecision(controller, postSessionDecision) {
+	switch (postSessionDecision) {
+		case intentConfig.WANT_BREAK:
+			break;
+		case intentConfig.END_DAY:
+			controller.trigger('trigger_day_end', [bot, { SlackUserId }]);
+			break;
+		case intentConfig.START_SESSION:
+			controller.trigger('confirm_new_session', [bot, { SlackUserId }]);
+			break;
+		default: break;
+	}
+}
