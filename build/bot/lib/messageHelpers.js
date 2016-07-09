@@ -118,7 +118,7 @@ function convertArrayToTaskListMessage(taskArray) {
 		if (!options.dontShowMinutes && task.minutes) {
 
 			var minutesInt = parseInt(task.minutes);
-			if (!isNaN(minutesInt)) {
+			if (!isNaN(minutesInt) && !task.done) {
 				totalMinutes += minutesInt;
 			}
 			var timeString = convertMinutesToHoursString(minutesInt);
