@@ -158,7 +158,7 @@ export default function(controller) {
 
 					var thirtyMinutes = 1000 * 60 * 30;
 
-					thirtyMinutes = 20000;
+					thirtyMinutes = 10000;
 
 					setTimeout(() => {
 						convo.doneSessionTimerObject.timeOut = true;
@@ -406,7 +406,6 @@ export default function(controller) {
 								
 								// end all OPEN work sessions here, because user
 								// has decided to PROACTIVELY CLOSE IT
-								// make decision afterwards (to ensure you have no sessions live if u want to start a new one)
 								user.getWorkSessions({
 									where: [ `"WorkSession"."open" = ?`, true ],
 									order: `"createdAt" DESC`
@@ -440,326 +439,6 @@ export default function(controller) {
 			});
 		})
 	});
-
-	// we put users in this ether when it has been a 30 mintime out!
-	controller.on(`done_session_timeout_flow`, (bot, config) => {
-
-		const { SlackUserId, workSession } = config;
-		var dailyTaskIds = workSession.DailyTasks.map((dailyTask) => {
-			return dailyTask.id;
-		});
-
-		models.User.find({
-			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-			include: [
-				models.SlackUser
-			]
-		})
-		.then((user) => {
-
-			var UserId = user.id;
-
-			user.getWorkSessions({
-				where: [`"WorkSession"."UserId" = ?`, UserId],
-				order: `"WorkSession"."createdAt" DESC`,
-				limit: 1
-			})
-			.then((workSessions) => {
-				// get most recent work session for snooze option
-				if (workSessions.length > 0) {
-					var workSession = workSessions[0];
-					workSession.getDailyTasks({
-						include: [ models.Task ]
-					})
-					.then((dailyTasks) => {
-
-						workSession.DailyTasks = dailyTasks;
-
-						var taskTextsToWorkOnArray = dailyTasks.map((dailyTask) => {
-							var text = dailyTask.Task.dataValues.text;
-							return text;
-						});
-						var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
-
-						// making this just a reminder now so that user can end his own session as he pleases
-						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-
-							convo.say({
-								text: `Hey! It's been 30 minutes since you wanted to finish ${tasksToWorkOnString}. Did you finish the task?`,
-								attachments:[
-									{
-										attachment_type: 'default',
-										callback_id: "DONE_SESSION",
-										fallback: "I was unable to process your decision",
-										actions: [
-											{
-													name: buttonValues.doneSessionTimeoutYes.name,
-													text: "Yes! :punch:",
-													value: buttonValues.doneSessionTimeoutYes.value,
-													type: "button",
-													style: "primary"
-											},
-											{
-													name: buttonValues.doneSessionTimeoutSnooze.name,
-													text: "Snooze :timer_clock:",
-													value: buttonValues.doneSessionTimeoutSnooze.value,
-													type: "button"
-											},
-											{
-													name: buttonValues.doneSessionTimeoutDidSomethingElse.name,
-													text: "Did something else",
-													value: buttonValues.doneSessionTimeoutDidSomethingElse.value,
-													type: "button"
-											},
-											{
-													name: buttonValues.doneSessionTimeoutNo.name,
-													text: "Nope",
-													value: buttonValues.doneSessionTimeoutNo.value,
-													type: "button"
-											}
-										]
-									}
-								]
-							});
-							convo.say("Please click one of the items above if applicable!");
-							convo.next();
-						});
-					})
-				}
-			})
-		})
-	})
-
-	// `yes` button flow
-	controller.on(`done_session_yes_flow`, (bot, config) => {
-
-		const { SlackUserId, botCallback } = config;
-
-		models.User.find({
-			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-			include: [
-				models.SlackUser
-			]
-		})
-		.then((user) => {
-
-			if (botCallback) {
-				// if botCallback, need to get the correct bot
-				var botToken = bot.config.token;
-				bot          = bots[botToken];
-			}
-
-			// making this just a reminder now so that user can end his own session as he pleases
-			bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-
-				const { SlackUser: { tz } } = user;
-
-				convo.sessionEnd = {
-					UserId: user.id,
-					tz,
-					postSessionDecision: false,
-					reminders: [],
-					tasksCompleted: [],
-					SlackUserId
-				}
-
-				askUserPostSessionOptions(err, convo);
-				convo.next();
-				convo.on('end', (convo) => {
-					// NORMAL FLOW
-					models.User.find({
-						where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-						include: [
-							models.SlackUser
-						]
-					})
-					.then((user) => {
-
-						// get most recent work session to assume this off of
-						user.getWorkSessions({
-							where: [`"WorkSession"."UserId" = ?`, user.id],
-							order: `"WorkSession"."createdAt" DESC`,
-							limit: 1
-						})
-						.then((workSessions) => {
-
-							if (workSessions.length > 0) {
-								var workSession = workSessions[0];
-								workSession.getDailyTasks({
-									include: [ models.Task ]
-								})
-								.then((dailyTasks) => {
-									workSession.DailyTasks = dailyTasks;
-									var config = {
-										workSession,
-										SlackUserId
-									}
-									
-									var completedTaskIds = dailyTasks.map((dailyTask) => {
-										return dailyTask.TaskId;
-									});
-									models.Task.update({
-										done: true
-									}, {
-										where: [`"Tasks"."id" in (?)`, completedTaskIds]
-									})
-
-									CHIP
-
-								})
-							}
-
-						});
-					});
-				});
-				
-			});
-
-		});
-	})
-
-	// `snooze` button flow
-	controller.on(`done_session_snooze_button_flow`, (bot, config) => {
-
-		// optionally can get duration if passed in via NL
-		const { SlackUserId, botCallback, snoozeTimeObject, remindTimeStampObject } = config;
-
-		models.User.find({
-			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-			include: [
-				models.SlackUser
-			]
-		})
-		.then((user) => {
-
-			const { defaultSnoozeTime } = user;
-
-			var snoozeTime = defaultSnoozeTime ? defaultSnoozeTime : TOKI_DEFAULT_SNOOZE_TIME;
-
-			if (botCallback) {
-				// if botCallback, need to get the correct bot
-				var botToken = bot.config.token;
-				bot          = bots[botToken];
-			}
-
-			const { SlackUser: { tz } } = user;
-			const UserId                = user.id;
-
-			var now               = moment().tz(tz);
-			var snoozeTimeObject  = now.add(snoozeTime, 'minutes');
-
-			// CUSTOM NL SNOOZE FROM USER
-			if (remindTimeStampObject) {
-				snoozeTimeObject  = remindTimeStampObject;
-			}
-
-			var snoozeTimeString  = snoozeTimeObject.format("h:mm a");
-
-			models.Reminder.create({
-				remindTime: snoozeTimeObject,
-				UserId,
-				type: "done_session_snooze"
-			})
-			.then((reminder) => {
-				bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-
-					convo.snoozeObject = {
-						defaultSnoozeTime
-					}
-
-					if (!defaultSnoozeTime && !remindTimeStampObject) {
-						convo.say(`Wait, this is your first time hitting snooze! The default snooze is *${TOKI_DEFAULT_SNOOZE_TIME} minutes*, but you can change it in your settings by telling me to \`show settings\``);
-						convo.say("You can also specify a custom snooze by saying `snooze for 20 minutes` or something like that :grinning:");
-					}
-
-					convo.say(`I'll check in with you at ${snoozeTimeString} :fist:`);
-					convo.next();
-
-					convo.on('end', (convo) => {
-
-						const { defaultSnoozeTime } = convo.snoozeObject
-
-						// set snooze to default snooze if null
-						if (!defaultSnoozeTime) {
-							user.update({
-								defaultSnoozeTime: TOKI_DEFAULT_SNOOZE_TIME
-							});
-						}
-					})
-				});
-			});
-		});
-		
-	})
-
-	// `didSomethingElse` button flow
-	controller.on(`done_session_something_else_flow`, (bot, config) => {
-
-		console.log("\n\n\n IN DONE SOMETHING ELSE FLOW \n\n\n");
-
-		const { SlackUserId, botCallback } = config;
-
-		models.User.find({
-			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-			include: [
-				models.SlackUser
-			]
-		})
-		.then((user) => {
-
-			if (botCallback) {
-				// if botCallback, need to get the correct bot
-				var botToken = bot.config.token;
-				bot          = bots[botToken];
-			}
-
-			// making this just a reminder now so that user can end his own session as he pleases
-			bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-
-				convo.say("YA DID SOMETHING ELSE....");
-				convo.next();
-				
-			});
-
-		});
-	})
-
-	// `no` button flow
-	controller.on(`done_session_no_flow`, (bot, config) => {
-
-		console.log("\n\n\n IN DONE SOMETHING ELSE FLOW \n\n\n");
-
-		const { SlackUserId, botCallback } = config;
-
-		models.User.find({
-			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-			include: [
-				models.SlackUser
-			]
-		})
-		.then((user) => {
-
-			if (botCallback) {
-				// if botCallback, need to get the correct bot
-				var botToken = bot.config.token;
-				bot          = bots[botToken];
-			}
-
-			// making this just a reminder now so that user can end his own session as he pleases
-			bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-
-				convo.say("YA DID SOMETHING ELSE....");
-				convo.next();
-				
-			});
-
-		});
-	})
-
-	/**
-	 * 			~~ END OF DONE_SESSION TIMER FUNCTIONALITIES ~~
-	 */
-
 
 	/**
 	 * 			~~ START OF END_SESSION FLOW FUNCTIONALITIES ~~
@@ -1069,7 +748,7 @@ export default function(controller) {
 };
 
 // ask user for options after finishing session
-function askUserPostSessionOptions(response, convo) {
+export function askUserPostSessionOptions(response, convo) {
 
 	const { task }                = convo;
 	const { bot, source_message } = task;
@@ -1272,7 +951,7 @@ function getBreakTime(response, convo) {
 
 }
 
-function handlePostSessionDecision(controller, postSessionDecision) {
+export function handlePostSessionDecision(controller, postSessionDecision) {
 	switch (postSessionDecision) {
 		case intentConfig.WANT_BREAK:
 			break;

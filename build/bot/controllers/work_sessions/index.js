@@ -13,6 +13,7 @@ exports.default = function (controller) {
 	(0, _startWorkSession2.default)(controller);
 	(0, _middleWorkSession2.default)(controller);
 	(0, _endWorkSession2.default)(controller);
+	(0, _endWorkSessionTimeouts2.default)(controller);
 
 	/**
   * 		IS_BACK ("READY TO WORK" - Peon WC3)
@@ -209,6 +210,10 @@ var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 var _endWorkSession = require('./endWorkSession');
 
 var _endWorkSession2 = _interopRequireDefault(_endWorkSession);
+
+var _endWorkSessionTimeouts = require('./endWorkSessionTimeouts');
+
+var _endWorkSessionTimeouts2 = _interopRequireDefault(_endWorkSessionTimeouts);
 
 var _middleWorkSession = require('./middleWorkSession');
 

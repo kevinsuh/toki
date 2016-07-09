@@ -5,6 +5,7 @@ import models from '../../../app/models';
 import moment from 'moment-timezone';
 
 import endWorkSessionController from './endWorkSession';
+import endWorkSessionTimeoutsController from './endWorkSessionTimeouts';
 import middleWorkSessionController from './middleWorkSession';
 import startWorKSessionController from './startWorkSession';
 
@@ -23,6 +24,7 @@ export default function(controller) {
 	startWorKSessionController(controller);
 	middleWorkSessionController(controller);
 	endWorkSessionController(controller);
+	endWorkSessionTimeoutsController(controller);
 
 	/**
 	 * 		IS_BACK ("READY TO WORK" - Peon WC3)
