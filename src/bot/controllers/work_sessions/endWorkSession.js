@@ -11,7 +11,7 @@ import intentConfig from '../../lib/intents';
 
 import { bots } from '../index';
 
-import { colorsArray, buttonValues, colorsHash, TOKI_DEFAULT_SNOOZE_TIME, sessionTimerDecisions } from '../../lib/constants';
+import { colorsArray, buttonValues, colorsHash, TOKI_DEFAULT_SNOOZE_TIME, sessionTimerDecisions, MINUTES_FOR_DONE_SESSION_TIMEOUT } from '../../lib/constants';
 
 // END OF A WORK SESSION
 export default function(controller) {
@@ -156,12 +156,12 @@ export default function(controller) {
 						SlackUserId
 					}
 
-					var thirtyMinutes = 1000 * 60 * 30;
+					var timeOutMinutes = 1000 * 60 * MINUTES_FOR_DONE_SESSION_TIMEOUT;
 
 					setTimeout(() => {
 						convo.doneSessionTimerObject.timeOut = true;
 						convo.stop();
-					}, thirtyMinutes);
+					}, timeOutMinutes);
 
 					var message = ``;
 					if (dailyTasks.length == 0) {
@@ -304,9 +304,12 @@ export default function(controller) {
 						.then((user) => {
 
 							if (timeOut) {
-
+								
+								// open sessions that were ENDED < 29.5 minutes ago
+								var minutes = MINUTES_FOR_DONE_SESSION_TIMEOUT - 0.5;
+								var timeOutMinutesAgo = moment().subtract(minutes, 'minutes').format("YYYY-MM-DD HH:mm:ss Z");
 								user.getWorkSessions({
-									where: [`"WorkSession"."open" = ?`, true]
+									where: [`"WorkSession"."open" = ? AND "WorkSession"."endTime" < ?`, true, timeOutMinutesAgo]
 								})
 								.then((workSessions) => {
 									// only if there are still "open" work sessions

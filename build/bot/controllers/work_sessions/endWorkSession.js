@@ -139,12 +139,12 @@ exports.default = function (controller) {
 						SlackUserId: SlackUserId
 					};
 
-					var thirtyMinutes = 1000 * 60 * 30;
+					var timeOutMinutes = 1000 * 60 * _constants.MINUTES_FOR_DONE_SESSION_TIMEOUT;
 
 					setTimeout(function () {
 						convo.doneSessionTimerObject.timeOut = true;
 						convo.stop();
-					}, thirtyMinutes);
+					}, timeOutMinutes);
 
 					var message = '';
 					if (dailyTasks.length == 0) {
@@ -277,8 +277,11 @@ exports.default = function (controller) {
 
 							if (timeOut) {
 
+								// open sessions that were ENDED < 29.5 minutes ago
+								var minutes = _constants.MINUTES_FOR_DONE_SESSION_TIMEOUT - 0.5;
+								var timeOutMinutesAgo = (0, _momentTimezone2.default)().subtract(minutes, 'minutes').format("YYYY-MM-DD HH:mm:ss Z");
 								user.getWorkSessions({
-									where: ['"WorkSession"."open" = ?', true]
+									where: ['"WorkSession"."open" = ? AND "WorkSession"."endTime" < ?', true, timeOutMinutesAgo]
 								}).then(function (workSessions) {
 									// only if there are still "open" work sessions
 									if (workSessions.length > 0) {

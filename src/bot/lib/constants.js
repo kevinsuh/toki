@@ -4,6 +4,8 @@ export const TOKI_DEFAULT_SNOOZE_TIME = 9;
 
 export const hoursForExpirationTime = 6;
 
+export const MINUTES_FOR_DONE_SESSION_TIMEOUT = 30;
+
 export const startDayExpirationTime = moment().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
 
 export const FINISH_WORD = {
