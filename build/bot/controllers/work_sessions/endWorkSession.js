@@ -614,7 +614,7 @@ exports.default = function (controller) {
 							// cancel all checkin reminders (type: `work_session` or `break`)
 							// AFTER this is done, put in new break
 							user.getReminders({
-								where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break"]]
+								where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break", "done_session_snooze"]]
 							}).then(function (oldReminders) {
 								oldReminders.forEach(function (reminder) {
 									reminder.update({
