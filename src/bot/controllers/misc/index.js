@@ -480,7 +480,7 @@ function askUserToStartDay(response, convo) {
 				convo.next();
 			}
 		},
-		{
+		{ 
 			default: true,
 			callback: (response, convo) => {
 				convo.say(`Well, this is a bit embarrassing. Say \`start the day\` to keep moving forward so I can show you how I can help you work`);
