@@ -434,7 +434,13 @@ exports.default = function (controller) {
    */
 
 		var SlackUserId = config.SlackUserId;
+		var botCallback = config.botCallback;
 
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			var botToken = bot.config.token;
+			bot = _index.bots[botToken];
+		}
 
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 

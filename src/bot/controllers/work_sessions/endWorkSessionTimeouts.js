@@ -150,12 +150,8 @@ export default function(controller) {
 
 						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
-							const { SlackUser: { tz } } = user;
-
 							convo.sessionEnd = {
-								UserId: user.id,
 								SlackUserId,
-								tz,
 								postSessionDecision: false,
 								reminders: [],
 								completedTaskIds
@@ -166,7 +162,7 @@ export default function(controller) {
 
 							convo.on('end', (convo) => {
 
-								const { UserId, tz, postSessionDecision, reminders, completedTaskIds } = convo.sessionEnd;
+								const { postSessionDecision, reminders, completedTaskIds } = convo.sessionEnd;
 
 								models.Task.update({
 									done: true
@@ -189,18 +185,10 @@ export default function(controller) {
 								handlePostSessionDecision(controller, postSessionDecision);
 
 							});
-							
 						});
-
 					});
-
-						
 				}
-
 			});
-
-				
-
 		});
 	})
 
@@ -276,45 +264,11 @@ export default function(controller) {
 			});
 		});
 		
-	})
-
-	// `didSomethingElse` button flow
-	controller.on(`done_session_something_else_flow`, (bot, config) => {
-
-		console.log("\n\n\n IN DONE SOMETHING ELSE FLOW \n\n\n");
-
-		const { SlackUserId, botCallback } = config;
-
-		models.User.find({
-			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-			include: [
-				models.SlackUser
-			]
-		})
-		.then((user) => {
-
-			if (botCallback) {
-				// if botCallback, need to get the correct bot
-				var botToken = bot.config.token;
-				bot          = bots[botToken];
-			}
-
-			// making this just a reminder now so that user can end his own session as he pleases
-			bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-
-				convo.say("YA DID SOMETHING ELSE....");
-				convo.next();
-				
-			});
-
-		});
-	})
+	});
 
 	// `no` button flow
 	controller.on(`done_session_no_flow`, (bot, config) => {
 
-		console.log("\n\n\n IN DONE SOMETHING ELSE FLOW \n\n\n");
-
 		const { SlackUserId, botCallback } = config;
 
 		models.User.find({
@@ -334,11 +288,35 @@ export default function(controller) {
 			// making this just a reminder now so that user can end his own session as he pleases
 			bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
-				convo.say("YA DID SOMETHING ELSE....");
-				convo.next();
-				
-			});
+				convo.sessionEnd = {
+					SlackUserId,
+					postSessionDecision: false,
+					reminders: []
+				};
 
+				askUserPostSessionOptions(err, convo);
+				convo.next();
+
+				convo.on('end', (convo) => {
+
+					const { postSessionDecision, reminders } = convo.sessionEnd;
+
+					user.getWorkSessions({
+						where: [ `"WorkSession"."open" = ?`, true ],
+						order: `"createdAt" DESC`
+					})
+					.then((workSessions) => {
+						workSessions.forEach((workSession) => {
+							workSession.update({
+								open: false
+							});
+						});
+					});
+
+					handlePostSessionDecision(controller, postSessionDecision);
+
+				});
+			});
 		});
 	})
 

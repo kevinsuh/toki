@@ -451,7 +451,12 @@ export default function(controller) {
 		 * 		User has agreed for session to end at this point
 		 */
 
-		const { SlackUserId } = config;
+		const { SlackUserId, botCallback } = config;
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			var botToken = bot.config.token;
+			bot          = bots[botToken];
+		}
 
 		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
