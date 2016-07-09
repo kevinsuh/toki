@@ -141,8 +141,6 @@ exports.default = function (controller) {
 
 					var thirtyMinutes = 1000 * 60 * 30;
 
-					thirtyMinutes = 10000;
-
 					setTimeout(function () {
 						convo.doneSessionTimerObject.timeOut = true;
 						convo.stop();
