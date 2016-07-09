@@ -43,7 +43,7 @@ exports.default = function (controller) {
 				include: [_models2.default.SlackUser]
 			}).then(function (user) {
 				return user.getWorkSessions({
-					where: ['"live" = ?', true]
+					where: ['"open" = ?', true]
 				});
 			}).then(function (workSessions) {
 				// if live work session, confirm end early

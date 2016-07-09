@@ -51,7 +51,7 @@ export default function(controller) {
 			})
 			.then((user) => {
 				return user.getWorkSessions({
-					where: [ `"live" = ?`, true ]
+					where: [ `"open" = ?`, true ]
 				});
 			})
 			.then((workSessions) => {
