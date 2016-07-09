@@ -150,17 +150,17 @@ function convertMinutesToHoursString(minutes) {
 	if (hours == 0) {
 		content = ``;
 	} else if (hours == 1) {
-		content = `${hours} hour`;
+		content = `${hours} hour `;
 	} else {
-		content = `${hours} hours`;
+		content = `${hours} hours `;
 	}
 
 	if (minutes == 0) {
 		content = `${content}`;
 	} else if (minutes == 1) {
-		content = `${content} ${minutes} minute`;
+		content = `${content}${minutes} minute`;
 	} else {
-		content = `${content} ${minutes} minutes`;
+		content = `${content}${minutes} minutes`;
 	}
 
 	return content;
