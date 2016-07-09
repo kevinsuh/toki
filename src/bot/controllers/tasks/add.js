@@ -94,23 +94,24 @@ export default function(controller) {
 					getTaskContent(err, convo);
 
 					// on finish conversation
-	    		convo.on('end', (convo) => {
+					convo.on('end', (convo) => {
 
-	  				const { tasksAdd } = convo;
+						const { tasksAdd } = convo;
 
-	  				consoleLog("convo ended in add tasks", tasksAdd);
+						consoleLog("convo ended in add tasks", tasksAdd);
 
-	    			if (convo.status == 'completed') {
+						if (convo.status == 'completed') {
 
-	    			} else {
 
-	    				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+						} else {
+
+							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 								convo.say("Okay! I didn't add any tasks. I'll be here whenever you want to do that :smile:");
 								convo.next();
 							});
-		    				
-	    			}
-	    		});
+								
+						}
+					});
 				});
 		});
 	});
@@ -157,7 +158,7 @@ export default function(controller) {
 			.then((sessionGroups) => {
 
 				// should start day
-	      const startSessionGroup   = sessionGroups[0]; // the start day
+				const startSessionGroup   = sessionGroups[0]; // the start day
 
 				user.getDailyTasks({
 					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, startSessionGroup.dataValues.createdAt, false, "live"],
@@ -182,88 +183,88 @@ export default function(controller) {
 						askForNewTasksToAdd(err, convo);
 
 						// on finish conversation
-		    		convo.on('end', (convo) => {
+						convo.on('end', (convo) => {
 
-		    			console.log("\n\n\n\n ~~ convo ended in add tasks ~~ \n\n\n\n");
+							console.log("\n\n\n\n ~~ convo ended in add tasks ~~ \n\n\n\n");
 
-		  				var responses = convo.extractResponses();
-		  				const { tasksAdd } = convo;
+							var responses = convo.extractResponses();
+							const { tasksAdd } = convo;
 
-		    			if (convo.status == 'completed') {
+							if (convo.status == 'completed') {
 
-		    				// prioritized task array is the one we're ultimately going with
-		    				const { dailyTasks, prioritizedTaskArray } = tasksAdd;
+								// prioritized task array is the one we're ultimately going with
+								const { dailyTasks, prioritizedTaskArray } = tasksAdd;
 
-		    				// we're going to archive all existing daily tasks first by default, then re-update the ones that matter
-		    				dailyTasks.forEach((dailyTask) => {
-		    					const { id } = dailyTask.dataValues;
-		    					console.log(`\n\n\nupdating daily task id: ${id}\n\n\n`);
-		    					models.DailyTask.update({
-		    						type: "archived"
-		    					},{
-		    						where: { id }
-		    					});
-		    				});
+								// we're going to archive all existing daily tasks first by default, then re-update the ones that matter
+								dailyTasks.forEach((dailyTask) => {
+									const { id } = dailyTask.dataValues;
+									console.log(`\n\n\nupdating daily task id: ${id}\n\n\n`);
+									models.DailyTask.update({
+										type: "archived"
+									},{
+										where: { id }
+									});
+								});
 
-		    				// store the user's tasks
-		    				// existing dailyTasks: update to new obj (esp. `priority`)
-		    				// new dailyTasks: create new obj
-		    				prioritizedTaskArray.forEach((dailyTask, index) => {
+								// store the user's tasks
+								// existing dailyTasks: update to new obj (esp. `priority`)
+								// new dailyTasks: create new obj
+								prioritizedTaskArray.forEach((dailyTask, index) => {
 
-		    					const { dataValues } = dailyTask;
-		    					var newPriority = index + 1;
-		    					
-		    					if (dataValues) {
+									const { dataValues } = dailyTask;
+									var newPriority = index + 1;
+									
+									if (dataValues) {
 
-			    					console.log("\n\nexisting daily task:\n\n\n");
-			    					console.log(dailyTask.dataValues);
-			    					console.log(`user id: ${UserId}`);
-			    					console.log("\n\n\n\n")
+										console.log("\n\nexisting daily task:\n\n\n");
+										console.log(dailyTask.dataValues);
+										console.log(`user id: ${UserId}`);
+										console.log("\n\n\n\n")
 
-		    						// existing daily task and make it live
-		    						const { id, minutes } = dataValues;
-		    						models.DailyTask.update({
-		    							minutes,
-		    							UserId,
-		    							priority: newPriority,
-		    							type: "live"
-		    						}, {
-		    							where: { id }
-		    						});
+										// existing daily task and make it live
+										const { id, minutes } = dataValues;
+										models.DailyTask.update({
+											minutes,
+											UserId,
+											priority: newPriority,
+											type: "live"
+										}, {
+											where: { id }
+										});
 
-		    					} else {
+									} else {
 
-		    						console.log("\n\n new daily task:\n\n\n");
-			    					console.log(dailyTask);
-			    					console.log(`user id: ${UserId}`);
-			    					console.log("\n\n\n\n")
+										console.log("\n\n new daily task:\n\n\n");
+										console.log(dailyTask);
+										console.log(`user id: ${UserId}`);
+										console.log("\n\n\n\n")
 
-		    						// new task
-		    						const { text, minutes } = dailyTask;
-		    						models.Task.create({
-		    							text
-		    						})
-		    						.then((task) => {
-		    							models.DailyTask.create({
-		    								TaskId: task.id,
-		    								priority: newPriority,
-		    								minutes,
-		    								UserId
-		    							})
-		    						});
-		    					}
+										// new task
+										const { text, minutes } = dailyTask;
+										models.Task.create({
+											text
+										})
+										.then((task) => {
+											models.DailyTask.create({
+												TaskId: task.id,
+												priority: newPriority,
+												minutes,
+												UserId
+											})
+										});
+									}
 
-		    				})
+								})
 
-		    			} else {
+							} else {
 
-		    				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 									convo.say("Okay! I didn't add any tasks. I'll be here whenever you want to do that :smile:");
 									convo.next();
 								});
-			    				
-		    			}
-		    		});
+									
+							}
+						});
 					});
 				});
 			});
