@@ -4,6 +4,8 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 exports.default = function (controller) {
 
 	// this will send message if no other intent gets picked up
@@ -39,7 +41,7 @@ exports.default = function (controller) {
      *** ~~ TOP SECRET PASSWORD FOR TESTING FLOWS ~~ ***
      		
       */
-					controller.trigger('begin_onboard_flow', [bot, { SlackUserId: SlackUserId }]);
+					controller.trigger('test_begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
 				} else {
 					// end-all fallback
 					var options = [{ title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
@@ -68,10 +70,10 @@ exports.default = function (controller) {
 	});
 
 	/**
-  *      ONBOARD FLOW
+  *      START DAY W/ EDITABLE MESSAGES FLOW
   */
 
-	controller.on('begin_onboard_flow', function (bot, config) {
+	controller.on('test_begin_day_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
 
 
@@ -85,37 +87,41 @@ exports.default = function (controller) {
 				var name = user.nickName || user.email;
 				convo.name = name;
 
-				convo.onBoard = {
-					SlackUserId: SlackUserId
+				convo.dayStart = {
+					bot: bot,
+					UserId: user.id,
+					startDayDecision: false, // what does user want to do with day
+					prioritizedTaskArray: [] // the final tasks to do for the day
 				};
 
-				startOnBoardConversation(err, convo);
+				// live or pending tasks, that are not completed yet
+				user.getDailyTasks({
+					where: ['"DailyTask"."type" in (?) AND "Task"."done" = ?', ["pending", "live"], false],
+					include: [_models2.default.Task]
+				}).then(function (dailyTasks) {
 
+					if (dailyTasks.length == 0) {
+						// no pending tasks -- it's a new day
+						askForDayTasks(err, convo);
+					} else {
+						// has pending tasks
+						dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
+						convo.dayStart.pendingTasks = dailyTasks;
+						showPendingTasks(err, convo);
+					}
+				});
+
+				// on finish conversation
 				convo.on('end', function (convo) {
 
-					(0, _miscHelpers.consoleLog)("end of onboard for user!!!!", convo.onBoard);
-
-					var _convo$onBoard = convo.onBoard;
-					var SlackUserId = _convo$onBoard.SlackUserId;
-					var nickName = _convo$onBoard.nickName;
-					var timeZone = _convo$onBoard.timeZone;
+					var responses = convo.extractResponses();
+					var dayStart = convo.dayStart;
 
 
-					if (timeZone) {
-						var tz = timeZone.tz;
-
-
-						user.SlackUser.update({
-							tz: tz
-						});
-					}
-
-					if (nickName) {
-
-						user.update({
-							nickName: nickName
-						});
-					}
+					console.log('done!');
+					console.log("here is day start object:\n\n\n");
+					console.log(convo.dayStart);
+					console.log("\n\n\n");
 				});
 			});
 		});
@@ -158,232 +164,482 @@ var _intents2 = _interopRequireDefault(_intents);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function startOnBoardConversation(err, convo) {
-	var name = convo.name;
+/**
+ * 		START DAY CONVERSATION FLOW FUNCTIONS
+ */
+
+// show user previous pending tasks to decide on them
+function showPendingTasks(response, convo) {
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
+	var pendingTasks = convo.dayStart.pendingTasks;
 
 
-	convo.say('Hey ' + name + '! Thanks for inviting me to help you make the most of your time each day');
-	convo.say("Before I explain how I work, let's make sure I have two crucial details: your name and your timezone!");
-	askForUserName(err, convo);
-}
-
-function askForUserName(err, convo) {
-	var name = convo.name;
-
-
+	var options = {
+		dontShowMinutes: true
+	};
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(pendingTasks, options);
+	convo.say("Which of these outstanding tasks would you still like to work on? Just tell me the numbers :1234:");
 	convo.ask({
-		text: 'Would you like me to call you ' + name + ' or another name?',
+		text: taskListMessage,
 		attachments: [{
 			attachment_type: 'default',
-			callback_id: "ONBOARD",
-			fallback: "What's your name?",
-			color: _constants.colorsHash.blue.hex,
+			callback_id: "PENDING_TASKS",
+			fallback: "Which tasks do you want to work on today?",
+			color: _constants.colorsHash.grey.hex,
 			actions: [{
-				name: _constants.buttonValues.keepName.name,
-				text: 'Call me ' + name + '!',
-				value: _constants.buttonValues.keepName.value,
-				type: "button"
-			}, {
-				name: _constants.buttonValues.differentName.name,
-				text: 'Another name',
-				value: _constants.buttonValues.differentName.value,
+				name: _constants.buttonValues.noPendingTasks.name,
+				text: "None of these",
+				value: _constants.buttonValues.noPendingTasks.value,
 				type: "button"
 			}]
 		}]
 	}, [{
-		pattern: _constants.buttonValues.keepName.value,
+		pattern: _constants.buttonValues.noPendingTasks.value,
 		callback: function callback(response, convo) {
-			confirmUserName(name, convo);
+			askForDayTasks(response, convo);
 			convo.next();
 		}
-	}, {
-		pattern: _constants.buttonValues.differentName.value,
+	}, { // NL equivalent to buttonValues.noPendingTasks.value
+		pattern: _botResponses.utterances.containsNone,
 		callback: function callback(response, convo) {
-			askCustomUserName(response, convo);
+			convo.say("I like a fresh start each day, too :tangerine:");
+			askForDayTasks(response, convo);
 			convo.next();
 		}
-	}, {
+	}, { // user inserts some task numbers
+		pattern: _botResponses.utterances.containsNumber,
+		callback: function callback(response, convo) {
+			savePendingTasksToWorkOn(response, convo);
+			convo.next();
+		}
+	}, { // this is failure point
 		default: true,
 		callback: function callback(response, convo) {
-			confirmUserName(response.text, convo);
+			convo.say("I didn't quite get that :thinking_face:");
+			convo.repeat();
 			convo.next();
 		}
 	}]);
 }
 
-function confirmUserName(name, convo) {
+function savePendingTasksToWorkOn(response, convo) {
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
+	var pendingTasks = convo.dayStart.pendingTasks; // ported from beginning of convo flow
 
-	convo.ask('So you\'d like me to call you *' + name + '*?', [{
+	// get tasks from array
+
+	var userInput = response.text; // i.e. `1, 3, 4, 2`
+	var taskArray = (0, _messageHelpers.prioritizeTaskArrayFromUserInput)(pendingTasks, userInput);
+
+	// means user input is invalid
+	if (!taskArray) {
+		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
+		showPendingTasks(response, convo);
+		return;
+	} else {
+		// save this to keep moving on!
+		convo.dayStart.taskArray = taskArray;
+	}
+
+	var options = {
+		dontShowMinutes: true
+	};
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
+
+	var tasks = [];
+	convo.say("This is starting to look good :sunglasses:");
+	convo.say("Which additional tasks would you like to work on with me today?");
+	convo.say("You can enter everything in one line, separated by commas, or send me each task in a separate line");
+	convo.ask({
+		text: "Then just tell me when you're `done`!",
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "NEW_TASKS",
+			fallback: "Which additional tasks do you want to work on?",
+			color: _constants.colorsHash.grey.hex,
+			actions: [{
+				name: _constants.buttonValues.noAdditionalTasks.name,
+				text: "No additional tasks",
+				value: _constants.buttonValues.noAdditionalTasks.value,
+				type: "button"
+			}]
+		}]
+	}, [{
+		pattern: _constants.buttonValues.noAdditionalTasks.value,
+		callback: function callback(response, convo) {
+			getTimeToTasks(response, convo);
+			convo.next();
+		}
+	}, { // this is additional task added in this case.
+		default: true,
+		callback: function callback(response, convo) {
+
+			// should contain none and additional to be
+			// NL equivalent to buttonValues.noAdditionalTasks.value
+			if (_botResponses.utterances.containsNone.test(response.text) && _botResponses.utterances.containsAdditional.test(response.text)) {
+				convo.say("Excellent!");
+				getTimeToTasks(response, convo);
+				convo.next();
+			}
+
+			tasks.push(response);
+			if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
+				saveTaskResponsesToDayStartObject(tasks, convo);
+				convo.say("Excellent!");
+				getTimeToTasks(response, convo);
+				convo.next();
+			}
+		}
+	}]);
+}
+
+// helper function save convo responses to your taskArray obj
+// this will get the new tasks, from whichever part of convo flow
+// that you are getting them, then add them to the existing
+// `convo.dayStart.taskArray` property
+function saveTaskResponsesToDayStartObject(tasks, convo) {
+
+	// add the new tasks to existing pending tasks!
+	var taskArray = convo.dayStart.taskArray;
+
+
+	if (tasks) {
+		var newTasksArray = (0, _messageHelpers.convertResponseObjectsToTaskArray)(tasks);
+		if (!taskArray) {
+			taskArray = [];
+		}
+		newTasksArray.forEach(function (task) {
+			taskArray.push(task);
+		});
+		convo.dayStart.taskArray = taskArray;
+	}
+}
+
+// user just started conersation and is entering tasks
+function askForDayTasks(response, convo) {
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
+
+
+	var tasks = [];
+	convo.say('What tasks would you like to work on today? :pencil:');
+	convo.ask('Please enter all of the tasks in one line, separated by commas, or just send me each task in a separate line. Then just tell me when you\'re done by saying `' + _constants.FINISH_WORD.word + '`', function (response, convo) {
+
+		tasks.push(response);
+		if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
+			saveTaskResponsesToDayStartObject(tasks, convo);
+			convo.say("Excellent!");
+			getTimeToTasks(response, convo);
+			convo.next();
+		}
+	});
+}
+
+// if user wants to add more tasks
+function addMoreTasks(response, convo) {
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
+	var taskArray = convo.dayStart.taskArray;
+
+	var options = { dontShowMinutes: true };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
+
+	var tasks = [];
+	convo.ask(taskListMessage, function (response, convo) {
+
+		tasks.push(response);
+
+		if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
+			saveTaskResponsesToDayStartObject(tasks, convo);
+			convo.say("Excellent!");
+			getTimeToTasks(response, convo);
+			convo.next();
+		}
+	});
+}
+
+// ask the question to get time to tasks
+function getTimeToTasks(response, convo) {
+	var _convo$dayStart = convo.dayStart;
+	var taskArray = _convo$dayStart.taskArray;
+	var bot = _convo$dayStart.bot;
+
+	var options = { dontShowMinutes: true };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
+
+	var timeToTasksArray = [];
+
+	convo.say("How much time would you like to allocate to each task?");
+	convo.ask({
+		text: taskListMessage,
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "TIME_TO_TASKS",
+			fallback: "How much time would you like to allocate to your tasks?",
+			color: _constants.colorsHash.grey.hex,
+			actions: [{
+				name: _constants.buttonValues.actuallyWantToAddATask.name,
+				text: "Add more tasks!",
+				value: _constants.buttonValues.actuallyWantToAddATask.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.resetTimes.name,
+				text: "Reset times",
+				value: _constants.buttonValues.resetTimes.value,
+				type: "button",
+				style: "danger"
+			}]
+		}]
+	}, [{
+		pattern: _constants.buttonValues.actuallyWantToAddATask.value,
+		callback: function callback(response, convo) {
+			addMoreTasks(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.resetTimes.value,
+		callback: function callback(response, convo) {
+			var sentMessages = bot.sentMessages;
+
+			if (sentMessages) {
+				// lastMessage is the one just asked by `convo`
+				// in this case, it is `taskListMessage`
+				var lastMessage = sentMessages.slice(-1)[0];
+				if (lastMessage) {
+					var channel = lastMessage.channel;
+					var ts = lastMessage.ts;
+
+					var updateTaskListMessageObject = {
+						channel: channel,
+						ts: ts
+					};
+					// this is the message that the bot will be updating
+					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
+				}
+			}
+
+			// reset ze task list message
+			timeToTasksArray = [];
+			taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontShowMinutes: true });
+			updateTaskListMessageObject.text = taskListMessage;
+			bot.api.chat.update(updateTaskListMessageObject);
+
+			convo.silentRepeat();
+		}
+	}, {
+		pattern: _constants.RESET.reg_exp,
+		callback: function callback(response, convo) {
+			var sentMessages = bot.sentMessages;
+
+			if (sentMessages) {
+				// lastMessage is the one just asked by `convo`
+				// in this case, it is `taskListMessage`
+				var lastMessage = sentMessages.slice(-1)[0];
+				if (lastMessage) {
+					var channel = lastMessage.channel;
+					var ts = lastMessage.ts;
+
+					var updateTaskListMessageObject = {
+						channel: channel,
+						ts: ts
+					};
+					// this is the message that the bot will be updating
+					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
+				}
+			}
+
+			// reset ze task list message
+			timeToTasksArray = [];
+			taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontShowMinutes: true });
+			updateTaskListMessageObject.text = taskListMessage;
+			bot.api.chat.update(updateTaskListMessageObject);
+
+			convo.silentRepeat();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			var sentMessages = bot.sentMessages;
+
+			if (sentMessages) {
+				// lastMessage is the one just asked by `convo`
+				// in this case, it is `taskListMessage`
+				var lastMessage = sentMessages.slice(-1)[0];
+				if (lastMessage) {
+					var channel = lastMessage.channel;
+					var ts = lastMessage.ts;
+
+					var updateTaskListMessageObject = {
+						channel: channel,
+						ts: ts
+					};
+					// this is the message that the bot will be updating
+					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
+				}
+			}
+
+			var comma = new RegExp(/[,]/);
+			var validMinutesTester = new RegExp(/[\dh]/);
+			var timeToTasks = response.text.split(comma);
+
+			timeToTasks.forEach(function (time) {
+				if (validMinutesTester.test(time)) {
+					var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(time);
+					timeToTasksArray.push(minutes);
+				}
+			});
+
+			taskArray = taskArray.map(function (task, index) {
+				if (task.dataValues) {
+					// task from DB
+					return _extends({}, task, {
+						minutes: timeToTasksArray[index],
+						text: task.dataValues.text
+					});
+				}
+				return _extends({}, task, {
+					minutes: timeToTasksArray[index]
+				});
+			});
+
+			var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontUseDataValues: true, emphasizeMinutes: true });
+
+			updateTaskListMessageObject.text = taskListMessage;
+			bot.api.chat.update(updateTaskListMessageObject);
+
+			if (timeToTasksArray.length >= taskArray.length) {
+				convo.dayStart.taskArray = taskArray;
+				(0, _miscHelpers.consoleLog)("finished task array!", taskArray);
+				confirmTimeToTasks(timeToTasksArray, convo);
+				convo.next();
+			}
+		}
+	}]);
+}
+
+// this is the work we do to actually assign time to tasks
+function confirmTimeToTasks(timeToTasksArray, convo) {
+
+	convo.ask("Great! Are these times right?", [{
 		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
-			convo.onBoard.nickName = name;
-			askForTimeZone(response, convo);
+			convo.say(":boom: This looks great!");
+			convo.ask("Ready to start your first focused work session today?", [{
+				pattern: _botResponses.utterances.yes,
+				callback: function callback(response, convo) {
+					convo.dayStart.startDayDecision = _intents2.default.START_SESSION;
+					convo.next();
+				}
+			}, {
+				pattern: _botResponses.utterances.no,
+				callback: function callback(response, convo) {
+					convo.say("Great! Let me know when you're ready to start by saying `start session`");
+					convo.next();
+				}
+			}], { 'key': 'startFirstSession' });
 			convo.next();
 		}
 	}, {
 		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
-			askCustomUserName(response, convo);
-			convo.next();
-		}
-	}, {
-		default: true,
-		callback: function callback(response, convo) {
-			convo.say("Sorry, I didn't get that :thinking_face:");
-			convo.repeat();
+			// updateTaskListMessageObject.text = taskListMessageWithoutMinutes;
+			// bot.api.chat.update(updateTaskListMessageObject);
+			convo.say("Let's give this another try :repeat_one:");
+			convo.say("Just say time estimates, like `30, 1 hour, or 15 min` and I'll figure it out and assign times to the tasks above in order :smiley:");
+			getTimeToTasks(response, convo);
 			convo.next();
 		}
 	}]);
 }
 
-function askCustomUserName(response, convo) {
+/**
+ * 		DEPRECATED NOW THAT NO PRIORITIZATION
+ * 		~~ if reimplemented will need to re-integrate properly ~~
+ */
+// user has just entered his tasks for us to display back
+function displayTaskList(response, convo) {
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
+	var tasks = convo.responses.tasks;
+	var prioritizedTaskArray = convo.dayStart.prioritizedTaskArray; // this can be filled if user is passing over pending tasks
 
-	convo.ask("What would you like me to call you?", function (response, convo) {
-		confirmUserName(response.text, convo);
+	var tasks = convo.responses.tasks;
+	var taskArray = (0, _messageHelpers.convertResponseObjectsToTaskArray)(tasks);
+
+	// push pending tasks onto user inputed daily tasks
+	prioritizedTaskArray.forEach(function (task) {
+		taskArray.push(task);
+	});
+
+	// taskArray is now attached to convo
+	convo.dayStart.taskArray = taskArray;
+
+	var options = { dontShowMinutes: true };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
+
+	// we need to prioritize the task list here to display to user
+	convo.say('Now, please rank your tasks in order of your priorities today');
+	convo.say(taskListMessage);
+	convo.ask('You can just list the numbers, like `3, 4, 1, 2, 5`', function (response, convo) {
+		prioritizeTaskList(response, convo);
 		convo.next();
-	});
+	}, { 'key': 'taskPriorities' });
 }
 
-function askForTimeZone(response, convo) {
-	var nickName = convo.onBoard.nickName;
+/**
+ * 		DEPRECATED NOW THAT NO PRIORITIZATION
+ * 		~~ if reimplemented will need to re-integrate properly ~~
+ */
+// user has listed `5, 4, 2, 1, 3` for priorities to handle here
+function prioritizeTaskList(response, convo) {
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
 
+	// organize the task list!
 
-	convo.say('I really like the name *' + nickName + '*!');
-	convo.ask({
-		text: 'Now which *timezone* are you in?',
-		attachments: [{
-			attachment_type: 'default',
-			callback_id: "ONBOARD",
-			fallback: "What's your timezone?",
-			color: _constants.colorsHash.blue.hex,
-			actions: [{
-				name: _constants.buttonValues.timeZones.eastern.name,
-				text: 'Eastern',
-				value: _constants.buttonValues.timeZones.eastern.value,
-				type: "button"
-			}, {
-				name: _constants.buttonValues.timeZones.central.name,
-				text: 'Central',
-				value: _constants.buttonValues.timeZones.central.value,
-				type: "button"
-			}, {
-				name: _constants.buttonValues.timeZones.mountain.name,
-				text: 'Mountain',
-				value: _constants.buttonValues.timeZones.mountain.value,
-				type: "button"
-			}, {
-				name: _constants.buttonValues.timeZones.pacific.name,
-				text: 'Pacific',
-				value: _constants.buttonValues.timeZones.pacific.value,
-				type: "button"
-			}, {
-				name: _constants.buttonValues.timeZones.other.name,
-				text: 'Other',
-				value: _constants.buttonValues.timeZones.other.value,
-				type: "button"
-			}]
-		}]
-	}, [{
-		pattern: _constants.buttonValues.timeZones.eastern.value,
+	var taskArray = convo.dayStart.taskArray;
+
+	// get tasks from array
+
+	var userInput = response.text; // i.e. `1, 3, 4, 2`
+	var prioritizedTaskArray = (0, _messageHelpers.prioritizeTaskArrayFromUserInput)(taskArray, userInput);
+
+	// means user input is invalid
+	if (!prioritizedTaskArray) {
+		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
+		displayTaskList(response, convo);
+		return;
+	}
+
+	convo.dayStart.prioritizedTaskArray = prioritizedTaskArray;
+	var options = { dontShowMinutes: true };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTaskArray, options);
+
+	convo.say("Is this the right priority?");
+	convo.ask(taskListMessage, [{
+		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
-			convo.onBoard.timeZone = _constants.timeZones.eastern;
-			displayTokiOptions(response, convo);
+			convo.say("Excellent! Last thing: how much time would you like to allocate to each task today?");
+			convo.say(taskListMessage);
+			getTimeToTasks(response, convo);
 			convo.next();
 		}
 	}, {
-		pattern: _constants.buttonValues.timeZones.central.value,
+		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
-			convo.onBoard.timeZone = _constants.timeZones.central;
-			displayTokiOptions(response, convo);
+
+			convo.say("Whoops :banana: Let's try to do this again");
+			displayTaskList(response, convo);
 			convo.next();
 		}
-	}, {
-		pattern: _constants.buttonValues.timeZones.mountain.value,
-		callback: function callback(response, convo) {
-			convo.onBoard.timeZone = _constants.timeZones.mountain;
-			displayTokiOptions(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _constants.buttonValues.timeZones.pacific.value,
-		callback: function callback(response, convo) {
-			convo.onBoard.timeZone = _constants.timeZones.pacific;
-			displayTokiOptions(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _constants.buttonValues.timeZones.other.value,
-		callback: function callback(response, convo) {
-			askOtherTimeZoneOptions(response, convo);
-			convo.next();
-		}
-	}, {
-		default: true,
-		callback: function callback(response, convo) {
-			convo.say("I didn't get that :thinking_face:");
-			convo.repeat();
-			convo.next();
-		}
-	}]);
-}
-
-// for now we do not provide this
-function askOtherTimeZoneOptions(response, convo) {
-
-	convo.say("As Toki the Time Fairy, I need to get this right :grin:");
-	convo.ask("What is your timezone?", function (response, convo) {
-
-		var timezone = response.text;
-		if (false) {
-			// functionality to try and get timezone here
-
-		} else {
-			convo.say("I'm so sorry, but I don't support your timezone yet for this beta phase, but I'll reach out when I'm ready to help you work");
-			convo.stop();
-		}
-
-		convo.next();
-	});
-
-	convo.next();
-}
-
-function confirmTimeZone(response, convo) {}
-
-function displayTokiOptions(response, convo) {
-	var _convo$onBoard$timeZo = convo.onBoard.timeZone;
-	var tz = _convo$onBoard$timeZo.tz;
-	var name = _convo$onBoard$timeZo.name;
-
-
-	convo.say('I now have you in *' + name + '* timezone. You can change settings like your current timezone and name by telling me to `show settings`');
-	convo.say({
-		text: "As your personal sidekick, I can help you with your time by:",
-		attachments: _constants.tokiOptionsAttachment
-	});
-	convo.say("The specific commands above, like `start my day` are guidelines - I'm able to understand other related commands");
-	convo.say("Tell me `let's start the day, Toki!` or something like that to see this in action :grin:");
-	convo.next();
-
-	// END OF CONVERSATION
-}
-
-function TEMPLATE_FOR_TEST(bot, message) {
-
-	var SlackUserId = message.user;
-
-	_models2.default.User.find({
-		where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
-		include: [_models2.default.SlackUser]
-	}).then(function (user) {
-
-		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-
-			var name = user.nickName || user.email;
-
-			// on finish convo
-			convo.on('end', function (convo) {});
-		});
-	});
+	}], { 'key': 'confirmedRightPriority' });
 }
 //# sourceMappingURL=index.js.map

@@ -48,6 +48,7 @@ if (env == 'development') {
   process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
   process.env.SLACK_ID = process.env.DEV_SLACK_ID;
 	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
+
 }
 
 /**

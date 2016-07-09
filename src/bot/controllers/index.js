@@ -15,7 +15,7 @@ import settingsController from './settings';
 
 import models from '../../app/models';
 import intentConfig from '../lib/intents';
-import { colorsArray, THANK_YOU } from '../lib/constants';
+import { colorsArray, THANK_YOU, hoursForExpirationTime, startDayExpirationTime } from '../lib/constants';
 import { consoleLog } from '../lib/miscHelpers';
 
 import storageCreator from '../lib/storage';
@@ -289,15 +289,19 @@ controller.on(`new_session_group_decision`, (bot, config) => {
 			}
 
 			// 2. you have already `started your day`, but it's been 5 hours since working with me
-			var fiveHoursAgo = moment().subtract(5, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
 			user.getWorkSessions({
-				where: [`"WorkSession"."endTime" > ?`, fiveHoursAgo]
+				where: [`"WorkSession"."endTime" > ?`, startDayExpirationTime]
 			})
 			.then((workSessions) => {
 
-				// you have had at least one work session in the last 5 hours
+				// at this point you know the most recent SessionGroup is a `start_work`. has it been six hours since?
+				var startDaySessionTime = moment(sessionGroups[0].createdAt);
+				var now                 = moment();
+				var hoursSinceStartDay  = moment.duration(now.diff(startDaySessionTime)).asHours();
+
+				// you have started your day or had work session in the last 6 hours
 				// so we will pass you through and not have you start a new day
-				if (workSessions.length > 0) {
+				if (hoursSinceStartDay < hoursForExpirationTime || workSessions.length > 0) {
 					switch (intent) {
 						case intentConfig.ADD_TASK:
 							controller.trigger(`add_task_flow`, [ bot, { SlackUserId }]);
