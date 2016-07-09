@@ -6,7 +6,7 @@ import bodyParser from 'body-parser';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput } from '../../lib/messageHelpers';
+import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, getUpdateTaskListMessageObject } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 import { FINISH_WORD, EXIT_EARLY_WORDS, NONE, RESET, colorsHash, buttonValues } from '../../lib/constants';
 import { consoleLog } from '../../lib/miscHelpers';
@@ -239,7 +239,7 @@ function getTimeToTasks(response, convo) {
 	var options            = { dontShowMinutes: true };
 	var taskListMessage    = convertArrayToTaskListMessage(taskArray, options);
 
-	var timeToTasksArray = []
+	var timeToTasksArray = [];
 
 	convo.say("How much time would you like to allocate to each task?");
 	convo.ask({
@@ -280,27 +280,15 @@ function getTimeToTasks(response, convo) {
 			pattern: buttonValues.resetTimes.value,
 			callback: (response, convo) => {
 
-				var { sentMessages } = bot;
-				if (sentMessages) {
-					// lastMessage is the one just asked by `convo`
-					// in this case, it is `taskListMessage`
-					var lastMessage = sentMessages.slice(-1)[0];
-					if (lastMessage) {
-						const { channel, ts } = lastMessage;
-						var updateTaskListMessageObject = {
-							channel,
-							ts
-						};
-						// this is the message that the bot will be updating
-						convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
-					}
+				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response, bot);
+				if (updateTaskListMessageObject) {
+					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
+					// reset ze task list message
+					timeToTasksArray = [];
+					taskListMessage = convertArrayToTaskListMessage(taskArray, { dontShowMinutes: true });
+					updateTaskListMessageObject.text = taskListMessage;
+					bot.api.chat.update(updateTaskListMessageObject);
 				}
-
-				// reset ze task list message
-				timeToTasksArray = [];
-				taskListMessage = convertArrayToTaskListMessage(taskArray, { dontShowMinutes: true });
-				updateTaskListMessageObject.text = taskListMessage;
-				bot.api.chat.update(updateTaskListMessageObject);
 
 				convo.silentRepeat();
 			}
@@ -309,28 +297,16 @@ function getTimeToTasks(response, convo) {
 			pattern: RESET.reg_exp,
 			callback: (response, convo) => {
 
-				var { sentMessages } = bot;
-				if (sentMessages) {
-					// lastMessage is the one just asked by `convo`
-					// in this case, it is `taskListMessage`
-					var lastMessage = sentMessages.slice(-1)[0];
-					if (lastMessage) {
-						const { channel, ts } = lastMessage;
-						var updateTaskListMessageObject = {
-							channel,
-							ts
-						};
-						// this is the message that the bot will be updating
-						convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
-					}
+				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response, bot);
+				if (updateTaskListMessageObject) {
+					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
+					// reset ze task list message
+					timeToTasksArray = [];
+					taskListMessage = convertArrayToTaskListMessage(taskArray, { dontShowMinutes: true });
+					updateTaskListMessageObject.text = taskListMessage;
+					bot.api.chat.update(updateTaskListMessageObject);
 				}
-
-				// reset ze task list message
-				timeToTasksArray = [];
-				taskListMessage = convertArrayToTaskListMessage(taskArray, { dontShowMinutes: true });
-				updateTaskListMessageObject.text = taskListMessage;
-				bot.api.chat.update(updateTaskListMessageObject);
-
+				
 				convo.silentRepeat();
 
 			}
@@ -339,51 +315,40 @@ function getTimeToTasks(response, convo) {
 			default: true,
 			callback: function(response, convo) {
 
-				var { sentMessages } = bot;
-				if (sentMessages) {
-					// lastMessage is the one just asked by `convo`
-					// in this case, it is `taskListMessage`
-					var lastMessage = sentMessages.slice(-1)[0];
-					if (lastMessage) {
-						const { channel, ts } = lastMessage;
-						var updateTaskListMessageObject = {
-							channel,
-							ts
-						};
-						// this is the message that the bot will be updating
-						convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
-					}
-				}
+				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response, bot);
 
-				const comma            = new RegExp(/[,]/);
-				var validMinutesTester = new RegExp(/[\dh]/);
-				var timeToTasks        = response.text.split(comma);
+				if (updateTaskListMessageObject) {
+					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
+					const comma            = new RegExp(/[,]/);
+					var validMinutesTester = new RegExp(/[\dh]/);
+					var timeToTasks        = response.text.split(comma);
 
-				timeToTasks.forEach((time) => {
-					if (validMinutesTester.test(time)) {
-						var minutes = convertTimeStringToMinutes(time);
-						timeToTasksArray.push(minutes);
-					}
-				});
-
-				taskArray = taskArray.map((task, index) => {
-					if (task.dataValues) { // task from DB
-						return {
-							...task,
-							minutes: timeToTasksArray[index],
-							text: task.dataValues.text
+					timeToTasks.forEach((time) => {
+						if (validMinutesTester.test(time)) {
+							var minutes = convertTimeStringToMinutes(time);
+							timeToTasksArray.push(minutes);
 						}
-					}
-					return { // newly created task
-						...task,
-						minutes: timeToTasksArray[index]
-					}
-				});
+					});
 
-				var taskListMessage = convertArrayToTaskListMessage(taskArray, { dontUseDataValues: true, emphasizeMinutes: true, calculateMinutes: true });
+					taskArray = taskArray.map((task, index) => {
+						if (task.dataValues) { // task from DB
+							return {
+								...task,
+								minutes: timeToTasksArray[index],
+								text: task.dataValues.text
+							}
+						}
+						return { // newly created task
+							...task,
+							minutes: timeToTasksArray[index]
+						}
+					});
 
-				updateTaskListMessageObject.text = taskListMessage;
-				bot.api.chat.update(updateTaskListMessageObject);
+					var taskListMessage = convertArrayToTaskListMessage(taskArray, { dontUseDataValues: true, emphasizeMinutes: true, calculateMinutes: true });
+
+					updateTaskListMessageObject.text = taskListMessage;
+					bot.api.chat.update(updateTaskListMessageObject);
+				}
 
 				if (timeToTasksArray.length >= taskArray.length) {
 					convo.dayStart.taskArray = taskArray;
@@ -428,8 +393,6 @@ function confirmTimeToTasks(timeToTasksArray, convo) {
 		{
 			pattern: utterances.no,
 			callback: (response, convo) => {
-				// updateTaskListMessageObject.text = taskListMessageWithoutMinutes;
-				// bot.api.chat.update(updateTaskListMessageObject);
 				convo.say("Let's give this another try :repeat_one:");
 				convo.say("Just say time estimates, like `30, 1 hour, or 15 min` and I'll figure it out and assign times to the tasks above in order :smiley:");
 				getTimeToTasks(response, convo);

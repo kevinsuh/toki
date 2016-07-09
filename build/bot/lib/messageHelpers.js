@@ -15,6 +15,7 @@ exports.convertTimeStringToMinutes = convertTimeStringToMinutes;
 exports.convertToSingleTaskObjectArray = convertToSingleTaskObjectArray;
 exports.prioritizeTaskArrayFromUserInput = prioritizeTaskArrayFromUserInput;
 exports.commaSeparateOutTaskArray = commaSeparateOutTaskArray;
+exports.getUpdateTaskListMessageObject = getUpdateTaskListMessageObject;
 
 var _constants = require('./constants');
 
@@ -348,5 +349,35 @@ function commaSeparateOutTaskArray(a) {
 	// make into string
 	var string = [a.slice(0, -1).join(', '), a.slice(-1)[0]].join(a.length < 2 ? '' : ' and ');
 	return string;
+}
+
+// match the closest message that matches the CHANNEL_ID of this response to the CHANNEL_ID that the bot is speaking to
+function getUpdateTaskListMessageObject(response, bot) {
+
+	var userChannel = response.channel;
+	var sentMessages = bot.sentMessages;
+
+
+	var updateTaskListMessageObject = false;
+	if (sentMessages) {
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (var i = sentMessages.length - 1; i >= 0; i--) {
+
+			var message = sentMessages[i];
+			var channel = message.channel;
+			var ts = message.ts;
+
+			if (channel == userChannel) {
+				updateTaskListMessageObject = {
+					channel: channel,
+					ts: ts
+				};
+				break;
+			}
+		}
+	}
+
+	return updateTaskListMessageObject;
 }
 //# sourceMappingURL=messageHelpers.js.map

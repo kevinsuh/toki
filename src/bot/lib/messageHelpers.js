@@ -340,3 +340,33 @@ export function commaSeparateOutTaskArray(a) {
 	var string = [a.slice(0, -1).join(', '), a.slice(-1)[0]].join(a.length < 2 ? '' : ' and ');
 	return string;
 }
+
+// match the closest message that matches the CHANNEL_ID of this response to the CHANNEL_ID that the bot is speaking to
+export function getUpdateTaskListMessageObject(response, bot) {
+	
+	const userChannel = response.channel;
+	var { sentMessages } = bot;
+
+	var updateTaskListMessageObject = false;
+	if (sentMessages) {
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (var i = sentMessages.length - 1; i >= 0; i--) {
+
+			var message           = sentMessages[i];
+			const { channel, ts } = message;
+			if (channel == userChannel) {
+				updateTaskListMessageObject = {
+					channel,
+					ts
+				};
+				break;
+			}
+		}
+	}
+
+	return updateTaskListMessageObject;
+
+}
+
+
