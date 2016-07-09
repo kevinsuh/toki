@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.sessionTimerDecisions = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
@@ -244,6 +244,10 @@ var buttonValues = exports.buttonValues = {
 	doneSessionDidSomethingElse: {
 		name: "DONE_SESSION_DID_SOMETHING_ELSE",
 		value: "DONE_SESSION_DID_SOMETHING_ELSE"
+	},
+	thatsCorrect: {
+		value: "THATS_CORRECT",
+		name: "THATS_CORRECT"
 	}
 };
 
@@ -267,6 +271,32 @@ var timeZones = exports.timeZones = {
 };
 
 var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
+	text: "planning which tasks you intend to work on each day",
+	color: colorsHash.blue.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Starting your day"
+}, {
+	text: "launching work sessions to get those tasks done",
+	color: colorsHash.green.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Launching work sessions"
+}, {
+	text: "setting reminders to keep you on top of your tasks and obligations",
+	color: colorsHash.yellow.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Setting reminders"
+}, {
+	text: "adjusting your prioritized tasks on the fly",
+	color: colorsHash.salmon.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Starting your day"
+}];
+
+var tokiOptionsExtendedAttachment = exports.tokiOptionsExtendedAttachment = [{
 	fields: [{
 		title: "Starting your day",
 		value: 'Say "start my day" to plan the tasks you intend to accomplish each day and estimate how long each will take you'

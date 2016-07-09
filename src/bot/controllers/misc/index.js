@@ -7,7 +7,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment } from '../../lib/constants';
+import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, tokiOptionsExtendedAttachment } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
 import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
@@ -181,7 +181,9 @@ function askForUserName(err, convo) {
 		{
 			pattern: buttonValues.keepName.value,
 			callback: (response, convo) => {
-				confirmUserName(name, convo);
+				convo.onBoard.nickName = name;
+				convo.say(`I really like the name *${nickName}*!`);
+				askForTimeZone(response, convo);
 				convo.next();
 			}
 		},
@@ -211,6 +213,7 @@ function confirmUserName(name, convo) {
 			pattern: utterances.yes,
 			callback: (response, convo) => {
 				convo.onBoard.nickName = name;
+				convo.say(`I really like the name *${nickName}*!`);
 				askForTimeZone(response, convo);
 				convo.next();
 			}
@@ -247,7 +250,6 @@ function askForTimeZone(response, convo) {
 
 	const { nickName } = convo.onBoard;
 
-	convo.say(`I really like the name *${nickName}*!`);
 	convo.ask({
 		text: `Now which *timezone* are you in?`,
 		attachments: [
@@ -295,7 +297,7 @@ function askForTimeZone(response, convo) {
 			pattern: buttonValues.timeZones.eastern.value,
 			callback: (response, convo) => {
 				convo.onBoard.timeZone = timeZones.eastern;
-				displayTokiOptions(response, convo);
+				confirmTimeZone(response, convo);
 				convo.next();
 			}
 		},
@@ -303,7 +305,7 @@ function askForTimeZone(response, convo) {
 			pattern: buttonValues.timeZones.central.value,
 			callback: (response, convo) => {
 				convo.onBoard.timeZone = timeZones.central;
-				displayTokiOptions(response, convo);
+				confirmTimeZone(response, convo);
 				convo.next();
 			}
 		},
@@ -311,7 +313,7 @@ function askForTimeZone(response, convo) {
 			pattern: buttonValues.timeZones.mountain.value,
 			callback: (response, convo) => {
 				convo.onBoard.timeZone = timeZones.mountain;
-				displayTokiOptions(response, convo);
+				confirmTimeZone(response, convo);
 				convo.next();
 			}
 		},
@@ -319,7 +321,7 @@ function askForTimeZone(response, convo) {
 			pattern: buttonValues.timeZones.pacific.value,
 			callback: (response, convo) => {
 				convo.onBoard.timeZone = timeZones.pacific;
-				displayTokiOptions(response, convo);
+				confirmTimeZone(response, convo);
 				convo.next();
 			}
 		},
@@ -367,19 +369,111 @@ function askOtherTimeZoneOptions(response, convo) {
 
 function confirmTimeZone(response, convo) {
 
+	const { timeZone: { tz, name } } = convo.onBoard;
+
+	convo.ask({
+		text: `I have you in the *${name}* timezone!`,
+		attachments: [
+			{
+				attachment_type: 'default',
+				callback_id: "ONBOARD",
+				fallback: "What's your timezone?",
+				color: colorsHash.blue.hex,
+				actions: [
+					{
+						name: buttonValues.thatsCorrect.name,
+						text: `That's correct`,
+						value: buttonValues.thatsCorrect.value,
+						type: "button",
+						style: "primary"
+					},
+					{
+						name: buttonValues.thatsIncorrect.name,
+						text: `Wait, that's not right!`,
+						value: buttonValues.thatsIncorrect.value,
+						type: "button"
+					}
+				]
+			}
+		]
+	}, [
+		{
+			pattern: buttonValues.thatsIncorrect.value,
+			callback: (response, convo) => {
+				askForTimeZone(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				convo.say(`Oops, okay!`);
+				askForTimeZone(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.thatsCorrect.value,
+			callback: (response, convo) => {
+				displayTokiOptions(response, convo);
+				convo.next();
+			}
+		},
+		{ // everything else other than that's incorrect or "no" should be treated as yes
+			default: true,
+			callback: (response, convo) => {
+				convo.say(`Fantastic!`);
+				displayTokiOptions(response, convo);
+				convo.next();
+			}
+		}
+	]);
+
 }
 
 function displayTokiOptions(response, convo) {
 
-	const { timeZone: { tz, name } } = convo.onBoard;
-
-	convo.say(`I now have you in *${name}* timezone. You can change settings like your current timezone and name by telling me to \`show settings\``);
+	convo.say(`You can change settings like your current timezone and name by telling me to \`show settings\``);
 	convo.say({
 		text: "As your personal sidekick, I can help you with your time by:",
 		attachments: tokiOptionsAttachment
 	});
-	convo.say("The specific commands above, like `start my day` are guidelines - I'm able to understand other related commands");
-	convo.say("Tell me `let's start the day, Toki!` or something like that to see this in action :grin:");
+	convo.say("I'll walk you through you how I can assist you to make the most of each day (but if you ever want to see all the things I can help you with, just say `show commands`!)");
+
+	convo.ask("Please tell me `let's start the day, Toki!` to plan our first day together :grin:",
+	[
+		{
+			pattern: buttonValues.thatsIncorrect.value,
+			callback: (response, convo) => {
+				askForTimeZone(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				convo.say(`Oops, okay!`);
+				askForTimeZone(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.thatsCorrect.value,
+			callback: (response, convo) => {
+				displayTokiOptions(response, convo);
+				convo.next();
+			}
+		},
+		{ // everything else other than that's incorrect or "no" should be treated as yes
+			default: true,
+			callback: (response, convo) => {
+				convo.say(`Fantastic!`);
+				displayTokiOptions(response, convo);
+				convo.next();
+			}
+		}
+	]);
+
 	convo.next();
 
 	// END OF CONVERSATION

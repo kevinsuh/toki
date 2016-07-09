@@ -234,6 +234,10 @@ export const buttonValues ={
 	doneSessionDidSomethingElse: {
 		name: "DONE_SESSION_DID_SOMETHING_ELSE",
 		value: "DONE_SESSION_DID_SOMETHING_ELSE"
+	},
+	thatsCorrect: { 
+		value: "THATS_CORRECT",
+		name: "THATS_CORRECT"
 	}
 }
 
@@ -257,6 +261,38 @@ export const timeZones = {
 }
 
 export const tokiOptionsAttachment = [
+	{
+		text: "planning which tasks you intend to work on each day",
+		color: colorsHash.blue.hex,
+		attachment_type: "default",
+		callback_id: "TOKI_OPTIONS",
+		fallback: "Starting your day"
+	},
+	{
+		text: "launching work sessions to get those tasks done",
+		color: colorsHash.green.hex,
+		attachment_type: "default",
+		callback_id: "TOKI_OPTIONS",
+		fallback: "Launching work sessions"
+	},
+	{
+		text: "setting reminders to keep you on top of your tasks and obligations",
+		color: colorsHash.yellow.hex,
+		attachment_type: "default",
+		callback_id: "TOKI_OPTIONS",
+		fallback: "Setting reminders"
+	},
+	{
+		text: "adjusting your prioritized tasks on the fly",
+		color: colorsHash.salmon.hex,
+		attachment_type: "default",
+		callback_id: "TOKI_OPTIONS",
+		fallback: "Starting your day"
+	}
+]
+
+
+export const tokiOptionsExtendedAttachment = [
 	{
 		fields: [
 			{

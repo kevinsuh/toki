@@ -131,6 +131,12 @@ export default function(controller) {
 				case buttonValues.doneSessionNo.value:
 					bot.replyInteractive(message, `That's okay! You can keep chipping away and you'll get there :pick:`);
 					break;
+				case buttonValues.thatsCorrect.value:
+					bot.replyInteractive(message, `Fantastic!`);
+					break;
+				case buttonValues.thatsIncorrect.value:
+					bot.replyInteractive(message, `Oops, okay!`);
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");
