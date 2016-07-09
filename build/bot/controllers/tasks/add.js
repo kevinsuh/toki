@@ -348,21 +348,33 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 
 function getTaskContent(response, convo) {
-	var task = convo.tasksAdd.task;
+	var _convo$tasksAdd2 = convo.tasksAdd;
+	var task = _convo$tasksAdd2.task;
+	var minutes = _convo$tasksAdd2.minutes;
 
 
 	if (task) {
 		// task has been filled and we can move on
-		getTaskMinutes(response, convo);
-	} else {
-		convo.ask('What is the task?', function (response, convo) {
-			var text = response.text;
 
-			convo.tasksAdd.task = text;
+		// hack to handle wit problems
+		if (!minutes && (_botResponses.utterances.containsTask.test(task) && task.length < 7 || _botResponses.utterances.startsWithAdd.test(task)) || _botResponses.utterances.containsAdd.test(task) && _botResponses.utterances.containsTask.test(task)) {
+			askForTask(response, convo);
+		} else {
 			getTaskMinutes(response, convo);
-			convo.next();
-		});
+		}
+	} else {
+		askForTask(response, convo);
 	}
+}
+
+function askForTask(response, convo) {
+	convo.ask('What is the task?', function (response, convo) {
+		var text = response.text;
+
+		convo.tasksAdd.task = text;
+		getTaskMinutes(response, convo);
+		convo.next();
+	});
 }
 
 function getTaskMinutes(response, convo) {
@@ -392,9 +404,9 @@ function getTaskMinutes(response, convo) {
 
 // confirm here to add the task
 function confirmTaskToAdd(response, convo) {
-	var _convo$tasksAdd2 = convo.tasksAdd;
-	var task = _convo$tasksAdd2.task;
-	var minutes = _convo$tasksAdd2.minutes;
+	var _convo$tasksAdd3 = convo.tasksAdd;
+	var task = _convo$tasksAdd3.task;
+	var minutes = _convo$tasksAdd3.minutes;
 
 	var timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
 
@@ -655,9 +667,9 @@ function askToPrioritizeList(response, convo) {
 
 	// organize the task lists!
 
-	var _convo$tasksAdd3 = convo.tasksAdd;
-	var dailyTasks = _convo$tasksAdd3.dailyTasks;
-	var newTasksArray = _convo$tasksAdd3.newTasksArray;
+	var _convo$tasksAdd4 = convo.tasksAdd;
+	var dailyTasks = _convo$tasksAdd4.dailyTasks;
+	var newTasksArray = _convo$tasksAdd4.newTasksArray;
 
 	var allTasksArray = dailyTasks.slice();
 	newTasksArray.forEach(function (newTask) {
@@ -683,10 +695,10 @@ function prioritizeTaskList(response, convo) {
 
 	// organize the task lists!
 
-	var _convo$tasksAdd4 = convo.tasksAdd;
-	var dailyTasks = _convo$tasksAdd4.dailyTasks;
-	var newTasksArray = _convo$tasksAdd4.newTasksArray;
-	var allTasksArray = _convo$tasksAdd4.allTasksArray;
+	var _convo$tasksAdd5 = convo.tasksAdd;
+	var dailyTasks = _convo$tasksAdd5.dailyTasks;
+	var newTasksArray = _convo$tasksAdd5.newTasksArray;
+	var allTasksArray = _convo$tasksAdd5.allTasksArray;
 
 	var allTasksArray = dailyTasks.slice();
 	newTasksArray.forEach(function (newTask) {

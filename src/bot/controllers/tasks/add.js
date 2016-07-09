@@ -73,7 +73,6 @@ export default function(controller) {
 			task = reminder[0].value;
 		}
 
-
 		// find user then get tasks
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -126,7 +125,7 @@ export default function(controller) {
 						convo.on('end', (convo) => {
 
 							const { tasksAdd: { task, minutes, editTaskList } } = convo;
-							
+
 							if (convo.status == 'completed') {
 
 								// if we have the task and minutes, let's add it
@@ -322,20 +321,31 @@ export default function(controller) {
 
 function getTaskContent(response, convo) {
 
-	const { task } = convo.tasksAdd;
+	const { task, minutes } = convo.tasksAdd;
 
 	if (task) {
 		// task has been filled and we can move on
-		getTaskMinutes(response, convo);
-	} else {
-		convo.ask(`What is the task?`, (response, convo) => {
-			const { text } = response;
-			convo.tasksAdd.task = text;
+		
+		// hack to handle wit problems
+		if (!minutes && ((utterances.containsTask.test(task) && task.length < 7) || utterances.startsWithAdd.test(task)) || (utterances.containsAdd.test(task) && utterances.containsTask.test(task)) ) {
+			askForTask(response, convo);
+		} else {
 			getTaskMinutes(response, convo);
-			convo.next();
-		})
+		}
+
+	} else {
+		askForTask(response, convo);
 	}
 
+}
+
+function askForTask(response, convo) {
+	convo.ask(`What is the task?`, (response, convo) => {
+		const { text } = response;
+		convo.tasksAdd.task = text;
+		getTaskMinutes(response, convo);
+		convo.next();
+	})
 }
 
 function getTaskMinutes(response, convo) {
