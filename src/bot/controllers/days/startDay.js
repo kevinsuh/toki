@@ -10,7 +10,7 @@ import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, conve
 import intentConfig from '../../lib/intents';
 import { FINISH_WORD, EXIT_EARLY_WORDS, NONE } from '../../lib/constants';
 
-import { showPendingTasks, askForDayTasks } from '../modules/plan';
+import { showPendingTasks, askForDayTasks } from './startDayFunctions';
 
 // base controller for start day
 export default function(controller) {
@@ -162,7 +162,6 @@ export default function(controller) {
 				convo.name = name;
 
 				convo.dayStart = {
-					bot,
 					UserId: user.id,
 					useHelperText,
 					startDayDecision: false, // what does user want to do with day

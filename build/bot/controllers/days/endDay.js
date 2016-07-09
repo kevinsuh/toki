@@ -178,13 +178,12 @@ exports.default = function (controller) {
 
 								// end all open work sessions. should only be one for the user
 								user.getWorkSessions({
-									where: ['"open" = ? OR "live" = ?', true, true]
+									where: ['"open" = ?', true]
 								}).then(function (workSessions) {
 									workSessions.forEach(function (workSession) {
 										workSession.update({
 											endTime: now,
-											open: false,
-											live: false
+											open: false
 										});
 									});
 								});

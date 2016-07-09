@@ -10,8 +10,7 @@ var intentConfig = {
 	START_SESSION: 'start_session',
 	END_SESSION: 'end_session',
 	ADD_TASK: 'add_daily_task',
-	VIEW_TASKS: 'daily_tasks',
-	REMINDER: 'reminder'
+	VIEW_TASKS: 'daily_tasks'
 };
 
 exports.default = intentConfig;

@@ -64,7 +64,7 @@ function finalizeTimeAndTasksToStart(response, convo) {
 					},
 					{
 							name: buttonValues.checkIn.name,
-							text: "Add Checkin",
+							text: "Check in :alarm_clock:",
 							value: buttonValues.checkIn.value,
 							type: "button"
 					},

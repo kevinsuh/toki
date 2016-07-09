@@ -1,25 +1,12 @@
-import moment from 'moment';
-
-export const TOKI_DEFAULT_SNOOZE_TIME = 9;
-
-export const hoursForExpirationTime = 6;
-
-export const startDayExpirationTime = moment().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
-
 export const FINISH_WORD = {
 	word: "done",
-	reg_exp: new RegExp(/^d[one]{2,}\b/i)
+	reg_exp: new RegExp(/\b[done]{3,}\b/i)
 };
 
 export const NONE = {
 	word: "none",
 	reg_exp: new RegExp(/^[none]{3,}e$/i)
 };
-
-export const RESET = {
-	word: "reset",
-	reg_exp: new RegExp(/^r[reset]{3,}\b/i)
-}
 
 export const THANK_YOU = {
 	word: "thank you",
@@ -63,9 +50,6 @@ export const colorsHash = {
 	},
 	blue: {
 		hex: "#3E589D"
-	},
-	orange: {
-		hex: "#E99704"
 	},
 	grey: {
 		hex: "#C1C1C3"
@@ -190,50 +174,6 @@ export const buttonValues ={
 	neverMind: {
 		name: "NEVER_MIND",
 		value: "NEVER_MIND"
-	},
-	startDay: {
-		name: "START_DAY",
-		value: "START_DAY"
-	},
-	createReminder: {
-		name: "CREATE_REMINDER",
-		value: "CREATE_REMINDER"
-	},
-	resetTimes: {
-		name: "RESET_TIMES",
-		value: "RESET_TIMES"
-	},
-	doneSessionTimeoutSnooze: {
-		name: "DONE_SESSION_TIMEOUT_SNOOZE",
-		value: "DONE_SESSION_TIMEOUT_SNOOZE"
-	},
-	doneSessionTimeoutYes: {
-		name: "DONE_SESSION_TIMEOUT_YES",
-		value: "DONE_SESSION_TIMEOUT_YES"
-	},
-	doneSessionTimeoutNo: {
-		name: "DONE_SESSION_TIMEOUT_NO",
-		value: "DONE_SESSION_TIMEOUT_NO"
-	},
-	doneSessionTimeoutDidSomethingElse: {
-		name: "DONE_SESSION_TIMEOUT_DID_SOMETHING_ELSE",
-		value: "DONE_SESSION_TIMEOUT_DID_SOMETHING_ELSE"
-	},
-	doneSessionSnooze: {
-		name: "DONE_SESSION_SNOOZE",
-		value: "DONE_SESSION_SNOOZE"
-	},
-	doneSessionYes: {
-		name: "DONE_SESSION_YES",
-		value: "DONE_SESSION_YES"
-	},
-	doneSessionNo: {
-		name: "DONE_SESSION_NO",
-		value: "DONE_SESSION_NO"
-	},
-	doneSessionDidSomethingElse: {
-		name: "DONE_SESSION_DID_SOMETHING_ELSE",
-		value: "DONE_SESSION_DID_SOMETHING_ELSE"
 	}
 }
 
@@ -307,12 +247,7 @@ export const tokiOptionsAttachment = [
 	}
 ]
 
-export const sessionTimerDecisions = {
-	didTask: "DID_TASK",
-	snooze: "SNOOZE",
-	didSomethingElse: "DID_SOMETHING_ELSE",
-	noTasks: "NO_TASKS"
-}
+
 
 
 

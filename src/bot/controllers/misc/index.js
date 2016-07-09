@@ -7,8 +7,8 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsArray, THANK_YOU, RESET, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, FINISH_WORD, EXIT_EARLY_WORDS, NONE } from '../../lib/constants';
-import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput } from '../../lib/messageHelpers';
+import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment } from '../../lib/constants';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
 import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
@@ -46,7 +46,7 @@ export default function(controller) {
 			*** ~~ TOP SECRET PASSWORD FOR TESTING FLOWS ~~ ***
 							
 					 */
-					controller.trigger(`test_begin_day_flow`, [ bot, { SlackUserId } ]);
+					controller.trigger(`begin_onboard_flow`, [ bot, { SlackUserId } ]);
 
 				} else {
 					// end-all fallback
@@ -81,10 +81,10 @@ export default function(controller) {
 	});
 
 	/**
-	 *      START DAY W/ EDITABLE MESSAGES FLOW
+	 *      ONBOARD FLOW
 	 */
-	
-	controller.on('test_begin_day_flow', (bot, config) => {
+
+	controller.on('begin_onboard_flow', (bot, config) => {
 
 		const { SlackUserId } = config;
 
@@ -101,51 +101,312 @@ export default function(controller) {
 				var name   = user.nickName || user.email;
 				convo.name = name;
 
-				convo.dayStart = {
-					bot,
-					UserId: user.id,
-					startDayDecision: false, // what does user want to do with day
-					prioritizedTaskArray: [] // the final tasks to do for the day
+				convo.onBoard = {
+					SlackUserId
 				}
 
-				// live or pending tasks, that are not completed yet
-				user.getDailyTasks({
-					where: [`"DailyTask"."type" in (?) AND "Task"."done" = ?`, ["pending", "live"], false ],
-					include: [ models.Task ]
-				})
-				.then((dailyTasks) => {
+				startOnBoardConversation(err, convo);
 
-					if (dailyTasks.length == 0) {
-						// no pending tasks -- it's a new day
-						askForDayTasks(err, convo);
-					} else {
-						// has pending tasks
-						dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
-						convo.dayStart.pendingTasks = dailyTasks;
-						showPendingTasks(err, convo);
+				convo.on('end', (convo) => {
+
+					consoleLog("end of onboard for user!!!!", convo.onBoard);
+
+					const { SlackUserId, nickName, timeZone } = convo.onBoard;
+
+					if (timeZone) {
+						const { tz } = timeZone;
+
+						user.SlackUser.update({
+							tz
+						});
+
+					}
+
+					if (nickName) {
+
+						user.update({
+							nickName
+						});
+
 					}
 
 				});
 
-				// on finish conversation
-				convo.on('end', (convo) => {
+			})
 
-					var responses = convo.extractResponses();
-					const { dayStart } = convo;
-
-					console.log('done!')
-					console.log("here is day start object:\n\n\n");
-					console.log(convo.dayStart);
-					console.log("\n\n\n");
-
-				});
-
-			});
-
-		})
+		});
 
 	});
 
 }
 
-/
+function startOnBoardConversation(err, convo) {
+	
+	const { name } = convo;
+
+	convo.say(`Hey ${name}! Thanks for inviting me to help you make the most of your time each day`);
+	convo.say("Before I explain how I work, let's make sure I have two crucial details: your name and your timezone!");
+	askForUserName(err, convo);
+}
+
+function askForUserName(err, convo) {
+
+	const { name } = convo;
+
+	convo.ask({
+		text: `Would you like me to call you ${name} or another name?`,
+		attachments: [
+			{
+				attachment_type: 'default',
+				callback_id: "ONBOARD",
+				fallback: "What's your name?",
+				color: colorsHash.blue.hex,
+				actions: [
+					{
+						name: buttonValues.keepName.name,
+						text: `Call me ${name}!`,
+						value: buttonValues.keepName.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.differentName.name,
+						text: `Another name`,
+						value: buttonValues.differentName.value,
+						type: "button"
+					}
+				]
+			}
+		]
+	}, [
+		{
+			pattern: buttonValues.keepName.value,
+			callback: (response, convo) => {
+				confirmUserName(name, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.differentName.value,
+			callback: (response, convo) => {
+				askCustomUserName(response, convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				confirmUserName(response.text, convo);
+				convo.next();
+			}
+		}
+	]);
+
+
+}
+
+function confirmUserName(name, convo) {
+
+	convo.ask(`So you'd like me to call you *${name}*?`, [
+		{
+			pattern: utterances.yes,
+			callback: (response, convo) => {
+				convo.onBoard.nickName = name;
+				askForTimeZone(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				askCustomUserName(response, convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				convo.say("Sorry, I didn't get that :thinking_face:");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
+
+}
+
+function askCustomUserName(response, convo) {
+
+	convo.ask("What would you like me to call you?", (response, convo) => {
+		confirmUserName(response.text, convo);
+		convo.next();
+	});
+
+}
+
+function askForTimeZone(response, convo) {
+
+	const { nickName } = convo.onBoard;
+
+	convo.say(`I really like the name *${nickName}*!`);
+	convo.ask({
+		text: `Now which *timezone* are you in?`,
+		attachments: [
+			{
+				attachment_type: 'default',
+				callback_id: "ONBOARD",
+				fallback: "What's your timezone?",
+				color: colorsHash.blue.hex,
+				actions: [
+					{
+						name: buttonValues.timeZones.eastern.name,
+						text: `Eastern`,
+						value: buttonValues.timeZones.eastern.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.timeZones.central.name,
+						text: `Central`,
+						value: buttonValues.timeZones.central.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.timeZones.mountain.name,
+						text: `Mountain`,
+						value: buttonValues.timeZones.mountain.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.timeZones.pacific.name,
+						text: `Pacific`,
+						value: buttonValues.timeZones.pacific.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.timeZones.other.name,
+						text: `Other`,
+						value: buttonValues.timeZones.other.value,
+						type: "button"
+					}
+				]
+			}
+		]
+	}, [
+		{
+			pattern: buttonValues.timeZones.eastern.value,
+			callback: (response, convo) => {
+				convo.onBoard.timeZone = timeZones.eastern;
+				displayTokiOptions(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.timeZones.central.value,
+			callback: (response, convo) => {
+				convo.onBoard.timeZone = timeZones.central;
+				displayTokiOptions(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.timeZones.mountain.value,
+			callback: (response, convo) => {
+				convo.onBoard.timeZone = timeZones.mountain;
+				displayTokiOptions(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.timeZones.pacific.value,
+			callback: (response, convo) => {
+				convo.onBoard.timeZone = timeZones.pacific;
+				displayTokiOptions(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.timeZones.other.value,
+			callback: (response, convo) => {
+				askOtherTimeZoneOptions(response, convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				convo.say("I didn't get that :thinking_face:");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
+
+}
+
+// for now we do not provide this
+function askOtherTimeZoneOptions(response, convo) {
+
+	convo.say("As Toki the Time Fairy, I need to get this right :grin:");
+	convo.ask("What is your timezone?", (response, convo) => {
+
+		var timezone = response.text;
+		if (false) {
+			// functionality to try and get timezone here
+			
+		} else {
+			convo.say("I'm so sorry, but I don't support your timezone yet for this beta phase, but I'll reach out when I'm ready to help you work");
+			convo.stop();
+		}
+
+		convo.next();
+
+	});
+
+	convo.next();
+
+}
+
+function confirmTimeZone(response, convo) {
+
+}
+
+function displayTokiOptions(response, convo) {
+
+	const { timeZone: { tz, name } } = convo.onBoard;
+
+	convo.say(`I now have you in *${name}* timezone. You can change settings like your current timezone and name by telling me to \`show settings\``);
+	convo.say({
+		text: "As your personal sidekick, I can help you with your time by:",
+		attachments: tokiOptionsAttachment
+	});
+	convo.say("The specific commands above, like `start my day` are guidelines - I'm able to understand other related commands");
+	convo.say("Tell me `let's start the day, Toki!` or something like that to see this in action :grin:");
+	convo.next();
+
+	// END OF CONVERSATION
+
+}
+
+
+function TEMPLATE_FOR_TEST(bot, message) {
+
+	const SlackUserId = message.user;
+
+	models.User.find({
+		where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+		include: [
+			models.SlackUser
+		]
+	}).then((user) => {
+
+		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+			var name = user.nickName || user.email;
+
+			// on finish convo
+			convo.on('end', (convo) => {
+				
+			});
+
+		});
+	});
+}

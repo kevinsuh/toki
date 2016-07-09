@@ -10,120 +10,33 @@ exports.default = function (controller) {
 	// if user did not specify reminder, then go through conversational flow about it
 	controller.hears(['custom_reminder'], 'direct_message', _index.wit.hears, function (bot, message) {
 
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(function () {
+		// these are array of objects
+		var text = message.text;
+		var _message$intentObject = message.intentObject.entities;
+		var reminder = _message$intentObject.reminder;
+		var datetime = _message$intentObject.datetime;
+		var duration = _message$intentObject.duration;
 
-			// these are array of objects
-			var text = message.text;
-			var _message$intentObject = message.intentObject.entities;
-			var reminder = _message$intentObject.reminder;
-			var datetime = _message$intentObject.datetime;
-			var duration = _message$intentObject.duration;
+		var SlackUserId = message.user;
 
-			var SlackUserId = message.user;
+		var config = {
+			text: text,
+			reminder: reminder,
+			datetime: datetime,
+			duration: duration,
+			SlackUserId: SlackUserId
+		};
 
-			var config = {
-				text: text,
-				reminder: reminder,
-				datetime: datetime,
-				duration: duration,
-				SlackUserId: SlackUserId
-			};
-
-			// handle for snooze!
-			var response = message.text;
-			if (_botResponses.utterances.containsSnooze.test(response)) {
-
-				if (_botResponses.utterances.onlyContainsSnooze.test(response)) {
-					// automatically do default snooze here then
-					controller.trigger('done_session_snooze_button_flow', [bot, { SlackUserId: SlackUserId }]);
-				} else {
-					// ask how long to snooze for
-					controller.trigger('snooze_reminder_flow', [bot, config]);
-				}
-
-				return;
-			}
-
-			// if they want a reminder, just tell them how to structure it
-			if (!datetime && !duration) {
-				console.log("about to ask for reminder...");
-				console.log(config);
-				controller.trigger('ask_for_reminder', [bot, config]);
-				return;
-			} else {
-				// user has already specified time
-				controller.trigger('set_reminder', [bot, config]);
-			}
-		}, 850);
-	});
-
-	// asking for snooze flow
-	// snooze currently does not handle `datetime`, ONLY `duration`
-	controller.on('snooze_reminder_flow', function (bot, config) {
-		var SlackUserId = config.SlackUserId;
-		var duration = config.duration;
-
-
-		_models2.default.User.find({
-			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
-			include: [_models2.default.SlackUser]
-		}).then(function (user) {
-
-			// get timezone of user
-			var tz = user.SlackUser.tz;
-
-
-			if (duration) {
-				var remindTimeStampObject = (0, _miscHelpers.witDurationToTimeZoneObject)(duration, tz);
-				controller.trigger('done_session_snooze_button_flow', [bot, { SlackUserId: SlackUserId, remindTimeStampObject: remindTimeStampObject }]);
-			} else {
-				// need to ask for duration if it doesn't exist
-				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-
-					convo.snoozeConfig = {
-						SlackUserId: SlackUserId,
-						tz: tz
-					};
-
-					convo.ask("How long would you like to snooze?", function (response, convo) {
-
-						var time = response.text;
-						var minutes = false;
-
-						var validMinutesTester = new RegExp(/[\dh]/);
-						if (validMinutesTester.test(time)) {
-							minutes = (0, _messageHelpers.convertTimeStringToMinutes)(time);
-						}
-
-						if (minutes) {
-							convo.snoozeConfig.minutes = minutes;
-						} else {
-							convo.say("Sorry, still learning :dog:. Let me know how long you want to snooze for `i.e. 10 min`");
-							convo.repeat();
-						}
-						convo.next();
-					});
-					convo.on('end', function (convo) {
-						var _convo$snoozeConfig = convo.snoozeConfig;
-						var tz = _convo$snoozeConfig.tz;
-						var minutes = _convo$snoozeConfig.minutes;
-
-						// create moment object out of info
-
-						if (minutes) {
-							var now = (0, _momentTimezone2.default)().tz(tz);
-							var remindTimeStampObject = now.add(minutes, 'minutes');
-
-							controller.trigger('done_session_snooze_button_flow', [bot, { SlackUserId: SlackUserId, remindTimeStampObject: remindTimeStampObject }]);
-						}
-					});
-				});
-			}
-		});
+		// if they want a reminder, just tell them how to structure it
+		if (!datetime && !duration) {
+			console.log("about to ask for reminder...");
+			console.log(config);
+			controller.trigger('ask_for_reminder', [bot, config]);
+			return;
+		} else {
+			// user has already specified time
+			controller.trigger('set_reminder', [bot, config]);
+		}
 	});
 
 	// this is conversational flow to get reminder set
@@ -306,8 +219,6 @@ var _models2 = _interopRequireDefault(_models);
 var _botResponses = require('../../lib/botResponses');
 
 var _miscHelpers = require('../../lib/miscHelpers');
-
-var _messageHelpers = require('../../lib/messageHelpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 

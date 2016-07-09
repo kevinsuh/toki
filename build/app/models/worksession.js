@@ -5,8 +5,7 @@ module.exports = function (sequelize, DataTypes) {
     startTime: DataTypes.DATE,
     endTime: DataTypes.DATE,
     UserId: DataTypes.INTEGER,
-    open: DataTypes.BOOLEAN,
-    live: DataTypes.BOOLEAN
+    open: DataTypes.BOOLEAN
   }, {
     classMethods: {
       associate: function associate(models) {

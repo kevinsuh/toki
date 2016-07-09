@@ -1,35 +1,16 @@
-'use strict';
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.sessionTimerDecisions = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
-
-var _moment = require('moment');
-
-var _moment2 = _interopRequireDefault(_moment);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var TOKI_DEFAULT_SNOOZE_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = 9;
-
-var hoursForExpirationTime = exports.hoursForExpirationTime = 6;
-
-var startDayExpirationTime = exports.startDayExpirationTime = (0, _moment2.default)().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
-
 var FINISH_WORD = exports.FINISH_WORD = {
 	word: "done",
-	reg_exp: new RegExp(/^d[one]{2,}\b/i)
+	reg_exp: new RegExp(/\b[done]{3,}\b/i)
 };
 
 var NONE = exports.NONE = {
 	word: "none",
 	reg_exp: new RegExp(/^[none]{3,}e$/i)
-};
-
-var RESET = exports.RESET = {
-	word: "reset",
-	reg_exp: new RegExp(/^r[reset]{3,}\b/i)
 };
 
 var THANK_YOU = exports.THANK_YOU = {
@@ -74,9 +55,6 @@ var colorsHash = exports.colorsHash = {
 	},
 	blue: {
 		hex: "#3E589D"
-	},
-	orange: {
-		hex: "#E99704"
 	},
 	grey: {
 		hex: "#C1C1C3"
@@ -200,50 +178,6 @@ var buttonValues = exports.buttonValues = {
 	neverMind: {
 		name: "NEVER_MIND",
 		value: "NEVER_MIND"
-	},
-	startDay: {
-		name: "START_DAY",
-		value: "START_DAY"
-	},
-	createReminder: {
-		name: "CREATE_REMINDER",
-		value: "CREATE_REMINDER"
-	},
-	resetTimes: {
-		name: "RESET_TIMES",
-		value: "RESET_TIMES"
-	},
-	doneSessionTimeoutSnooze: {
-		name: "DONE_SESSION_TIMEOUT_SNOOZE",
-		value: "DONE_SESSION_TIMEOUT_SNOOZE"
-	},
-	doneSessionTimeoutYes: {
-		name: "DONE_SESSION_TIMEOUT_YES",
-		value: "DONE_SESSION_TIMEOUT_YES"
-	},
-	doneSessionTimeoutNo: {
-		name: "DONE_SESSION_TIMEOUT_NO",
-		value: "DONE_SESSION_TIMEOUT_NO"
-	},
-	doneSessionTimeoutDidSomethingElse: {
-		name: "DONE_SESSION_TIMEOUT_DID_SOMETHING_ELSE",
-		value: "DONE_SESSION_TIMEOUT_DID_SOMETHING_ELSE"
-	},
-	doneSessionSnooze: {
-		name: "DONE_SESSION_SNOOZE",
-		value: "DONE_SESSION_SNOOZE"
-	},
-	doneSessionYes: {
-		name: "DONE_SESSION_YES",
-		value: "DONE_SESSION_YES"
-	},
-	doneSessionNo: {
-		name: "DONE_SESSION_NO",
-		value: "DONE_SESSION_NO"
-	},
-	doneSessionDidSomethingElse: {
-		name: "DONE_SESSION_DID_SOMETHING_ELSE",
-		value: "DONE_SESSION_DID_SOMETHING_ELSE"
 	}
 };
 
@@ -269,7 +203,7 @@ var timeZones = exports.timeZones = {
 var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
 	fields: [{
 		title: "Starting your day",
-		value: 'Say "start my day" to plan the tasks you intend to accomplish each day and estimate how long each will take you'
+		value: "Say \"start my day\" to plan the tasks you intend to accomplish each day and estimate how long each will take you"
 	}],
 	color: colorsHash.blue.hex,
 	attachment_type: "default",
@@ -278,7 +212,7 @@ var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
 }, {
 	fields: [{
 		title: "Launching work sessions",
-		value: 'Say "start a session" to kick off a focused work session to accomplish specific tasks'
+		value: "Say \"start a session\" to kick off a focused work session to accomplish specific tasks"
 	}],
 	color: colorsHash.green.hex,
 	attachment_type: "default",
@@ -287,7 +221,7 @@ var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
 }, {
 	fields: [{
 		title: "Setting reminders",
-		value: 'Say "I\'d like a reminder" to prompt me to remind you about whatever you\'d like at any time or duration'
+		value: "Say \"I'd like a reminder\" to prompt me to remind you about whatever you'd like at any time or duration"
 	}],
 	color: colorsHash.yellow.hex,
 	attachment_type: "default",
@@ -296,18 +230,11 @@ var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
 }, {
 	fields: [{
 		title: "Viewing and adjusting priorities on the fly",
-		value: 'Say "view tasks" to view your unfinished tasks each day and change your priorities by adding tasks or adjusting time estimates'
+		value: "Say \"view tasks\" to view your unfinished tasks each day and change your priorities by adding tasks or adjusting time estimates"
 	}],
 	color: colorsHash.salmon.hex,
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
 	fallback: "Starting your day"
 }];
-
-var sessionTimerDecisions = exports.sessionTimerDecisions = {
-	didTask: "DID_TASK",
-	snooze: "SNOOZE",
-	didSomethingElse: "DID_SOMETHING_ELSE",
-	noTasks: "NO_TASKS"
-};
 //# sourceMappingURL=constants.js.map

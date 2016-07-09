@@ -386,7 +386,7 @@ function prioritizeTaskList(response, convo) {
 				})
 				.then((user) => {
 					user.getWorkSessions({
-						where: [`"live" = ?`, true ]
+						where: [`"open" = ?`, true ]
 					})
 					.then((workSessions) => {
 						// user should start a session!

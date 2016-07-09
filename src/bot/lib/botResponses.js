@@ -31,12 +31,10 @@ export function randomInt(min, max) {
 }
 
 export const utterances = {
-	yes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|(\bd[o ]+[this]{2,})|(\bd[o ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
+	yes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|(\b[do ]+[this]{2,})|(\b[do ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
 	no: new RegExp(/(^(no|nah|nope|n)|\bn[oahpe]+\b)/i),
-	noAndNeverMind: new RegExp(/((no|nah|nope)|\bn[oahpe]+\b|\bn[never mind]{4,}\b|[nvm]{2,})/i),
-	specificYes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|\by[esahp]{2,}\b|\bs[ure]{2,}\b)/i),
 	containsNew: new RegExp(/(\bn[new]{2,}\b)/i),
-	containsCheckin: new RegExp(/(\bch[check in]{3,}\b|r[reminder ]{4,})/i),
+	containsCheckin: new RegExp(/(\bch[check in]{3,}\b)/i),
 	containsChangeTask: new RegExp(/(ch[change ]{3,}t[task ]{2,})/i),
 	containsChangeTime: new RegExp(/(ch[change ]{3,}t[time ]{2,})/i),
 	containsAddNote: new RegExp(/(a[add ]{1,}n[note ]{2,})/i),
@@ -46,14 +44,10 @@ export const utterances = {
 	containsEnd: new RegExp(/(e[end]{2,})/i),
 	containsNone: new RegExp(/((no|none|didnt|didn't)|\bn[otahpe]+\b)/i),
 	containsDifferent: new RegExp(/((\bdi[different]{4,}\b)|(\b[else ]{3,}\b))/i),
+	containsNone: new RegExp(/\b[none]{2,}\b/i),
 	containsNumber: new RegExp(/\d/i),
 	containsAdd: new RegExp(/a[add]{1,}/i),
 	containsTask: new RegExp(/t[task]{2,}/i),
 	containsName: new RegExp(/n[name]{2,}/i),
-	containsTimeZone: new RegExp(/t[timezone ]{4,}/i),
-	containsPlan: new RegExp(/p[plan ]{2,}/i),
-	containsAdditional: new RegExp(/\ba[additional]{4,}/i),
-	containsSnooze: new RegExp(/\bs[snooze]{4,}/i),
-	onlyContainsSnooze: new RegExp(/^s[snooze]{4,}$/i),
-	containsElse: new RegExp(/\be[else]{2,}/i)
+	containsTimeZone: new RegExp(/t[timezone ]{4,}/i)
 }
