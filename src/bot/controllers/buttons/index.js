@@ -135,7 +135,7 @@ export default function(controller) {
 					bot.replyInteractive(message, `Fantastic!`);
 					break;
 				case buttonValues.thatsIncorrect.value:
-					bot.replyInteractive(message, `Oops, okay!`);
+					bot.replyInteractive(message, `Oops, okay! Let's get this right`);
 					break;
 				default:
 					// some default to replace button no matter what

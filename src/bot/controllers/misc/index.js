@@ -102,7 +102,8 @@ export default function(controller) {
 				convo.name = name;
 
 				convo.onBoard = {
-					SlackUserId
+					SlackUserId,
+					postOnboardDecision: false
 				}
 
 				startOnBoardConversation(err, convo);
@@ -111,7 +112,7 @@ export default function(controller) {
 
 					consoleLog("end of onboard for user!!!!", convo.onBoard);
 
-					const { SlackUserId, nickName, timeZone } = convo.onBoard;
+					const { SlackUserId, nickName, timeZone, postOnboardDecision } = convo.onBoard;
 
 					if (timeZone) {
 						const { tz } = timeZone;
@@ -128,6 +129,13 @@ export default function(controller) {
 							nickName
 						});
 
+					}
+
+					switch (postOnboardDecision) {
+						case intentConfig.START_DAY:
+							controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
+							break;
+						default: break;
 					}
 
 				});
@@ -182,7 +190,7 @@ function askForUserName(err, convo) {
 			pattern: buttonValues.keepName.value,
 			callback: (response, convo) => {
 				convo.onBoard.nickName = name;
-				convo.say(`I really like the name *${nickName}*!`);
+				convo.say(`I really like the name *${name}*!`);
 				askForTimeZone(response, convo);
 				convo.next();
 			}
@@ -213,7 +221,7 @@ function confirmUserName(name, convo) {
 			pattern: utterances.yes,
 			callback: (response, convo) => {
 				convo.onBoard.nickName = name;
-				convo.say(`I really like the name *${nickName}*!`);
+				convo.say(`I really like the name *${name}*!`);
 				askForTimeZone(response, convo);
 				convo.next();
 			}
@@ -251,7 +259,7 @@ function askForTimeZone(response, convo) {
 	const { nickName } = convo.onBoard;
 
 	convo.ask({
-		text: `Now which *timezone* are you in?`,
+		text: `Which *timezone* are you in?`,
 		attachments: [
 			{
 				attachment_type: 'default',
@@ -371,18 +379,17 @@ function confirmTimeZone(response, convo) {
 
 	const { timeZone: { tz, name } } = convo.onBoard;
 
+	convo.say(`I have you in the *${name}* timezone!`);
 	convo.ask({
-		text: `I have you in the *${name}* timezone!`,
 		attachments: [
 			{
 				attachment_type: 'default',
 				callback_id: "ONBOARD",
 				fallback: "What's your timezone?",
-				color: colorsHash.blue.hex,
 				actions: [
 					{
 						name: buttonValues.thatsCorrect.name,
-						text: `That's correct`,
+						text: `That's correct :+1:`,
 						value: buttonValues.thatsCorrect.value,
 						type: "button",
 						style: "primary"
@@ -440,46 +447,62 @@ function displayTokiOptions(response, convo) {
 	});
 	convo.say("I'll walk you through you how I can assist you to make the most of each day (but if you ever want to see all the things I can help you with, just say `show commands`!)");
 
+	askUserToStartDay(response, convo);
+
+	convo.next();
+
+}
+
+// end of convo, to start day
+function askUserToStartDay(response, convo) {
 	convo.ask("Please tell me `let's start the day, Toki!` to plan our first day together :grin:",
 	[
 		{
-			pattern: buttonValues.thatsIncorrect.value,
+			pattern: utterances.containsSettings,
 			callback: (response, convo) => {
-				askForTimeZone(response, convo);
+				convo.say("Okay, let's configure these settings again!");
+				askForUserName(response, convo);
 				convo.next();
 			}
 		},
 		{
-			pattern: utterances.no,
+			pattern: utterances.containsShowCommands,
 			callback: (response, convo) => {
-				convo.say(`Oops, okay!`);
-				askForTimeZone(response, convo);
+				showCommands(response, convo);
 				convo.next();
 			}
 		},
 		{
-			pattern: buttonValues.thatsCorrect.value,
+			pattern: utterances.containsStartDay,
 			callback: (response, convo) => {
-				displayTokiOptions(response, convo);
+				convo.say("Let's do this :grin:");
+				convo.onBoard.postOnboardDecision = intentConfig.START_DAY;
 				convo.next();
 			}
 		},
-		{ // everything else other than that's incorrect or "no" should be treated as yes
+		{
 			default: true,
 			callback: (response, convo) => {
-				convo.say(`Fantastic!`);
-				displayTokiOptions(response, convo);
+				convo.say(`Well, this is a bit embarrassing. Say \`start the day\` to keep moving forward so I can show you how I can help you work`);
 				convo.next();
 			}
 		}
 	]);
-
-	convo.next();
-
-	// END OF CONVERSATION
-
 }
 
+// show the more complex version of commands
+function showCommands(response, convo) {
+
+	convo.say({
+		text: "I had a feeling you'd do that! Here are the different types of items you can tell me to help you with:",
+		attachments: tokiOptionsExtendedAttachment
+	});
+	convo.say("The specific commands above, like `start my day` are guidelines - I'm able to understand other related commands, like `let's start the day` :smiley:");
+	convo.say("I can also understand more complicated reminders, like `remind me to grab a glass of water in 5 min` to set a reminder to grab a glass of water for a time 5 minutes from now or `remind me to drink the glass of water at 9am` to set a reminder to grab drink the glass of water at 9am!");
+	askUserToStartDay(response, convo);
+	convo.next();
+
+}
 
 function TEMPLATE_FOR_TEST(bot, message) {
 

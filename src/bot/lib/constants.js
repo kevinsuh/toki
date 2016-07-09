@@ -238,6 +238,10 @@ export const buttonValues ={
 	thatsCorrect: { 
 		value: "THATS_CORRECT",
 		name: "THATS_CORRECT"
+	},
+	thatsIncorrect: { 
+		value: "THATS_INCORRECT",
+		name: "THATS_INCORRECT"
 	}
 }
 
