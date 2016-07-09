@@ -418,7 +418,7 @@ function prioritizeTaskList(response, convo) {
 				include: [_models2.default.SlackUser]
 			}).then(function (user) {
 				user.getWorkSessions({
-					where: ['"open" = ?', true]
+					where: ['"live" = ?', true]
 				}).then(function (workSessions) {
 					// user should start a session!
 					if (workSessions.length == 0) {

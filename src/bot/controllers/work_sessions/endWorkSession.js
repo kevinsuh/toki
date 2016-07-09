@@ -51,11 +51,11 @@ export default function(controller) {
 			})
 			.then((user) => {
 				return user.getWorkSessions({
-					where: [ `"open" = ?`, true ]
+					where: [ `"live" = ?`, true ]
 				});
 			})
 			.then((workSessions) => {
-				// if open work session, confirm end early
+				// if live work session, confirm end early
 				// else, user MUST say `done` to trigger end (this properly simulates user is done with that session)
 				if (workSessions.length > 0) {
 					bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
@@ -83,7 +83,7 @@ export default function(controller) {
 					});
 				} else {
 					// this is a bad solution right now
-					// we need another column in WorkSessions to be `done`, which is different from `open` (`open` is for cronjob reminder, `done` is for when user explicitly ends the session.)
+					// we need another column in WorkSessions to be `live`, which is different from `open` (`open` is for cronjob reminder, `done` is for when user explicitly ends the session.)
 					if (message.text == `done` || message.text == `Done`) {
 						controller.trigger('end_session', [bot, { SlackUserId }]);
 					} else {
@@ -158,7 +158,7 @@ export default function(controller) {
 
 					var thirtyMinutes = 1000 * 60 * 30;
 
-					thirtyMinutes = 10000;
+					thirtyMinutes = 20000;
 
 					setTimeout(() => {
 						convo.doneSessionTimerObject.timeOut = true;
@@ -297,37 +297,46 @@ export default function(controller) {
 
 						const { sessionEnd: { postSessionDecision, reminders }, doneSessionTimerObject: { dailyTaskIds, timeOut, SlackUserId, sessionTimerDecision, customSnooze } } = convo;
 
-						if (timeOut) {
-							var { sentMessages } = bot;
-							if (sentMessages) {
-								// lastMessage is the one just asked by `convo`
-								// in this case, it is `taskListMessage`
-								var lastMessage = sentMessages.slice(-1)[0];
-								if (lastMessage) {
-									const { channel, ts } = lastMessage;
-									var doneSessionMessageObject = {
-										channel,
-										ts
+						models.User.find({
+							where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+							include: [
+								models.SlackUser
+							]
+						})
+						.then((user) => {
+
+							if (timeOut) {
+
+								user.getWorkSessions({
+									where: [`"WorkSession"."open" = ?`, true]
+								})
+								.then((workSessions) => {
+									// only if there are still "open" work sessions
+									if (workSessions.length > 0) {
+										var { sentMessages } = bot;
+										if (sentMessages) {
+											// lastMessage is the one just asked by `convo`
+											// in this case, it is `taskListMessage`
+											var lastMessage = sentMessages.slice(-1)[0];
+											if (lastMessage) {
+												const { channel, ts } = lastMessage;
+												var doneSessionMessageObject = {
+													channel,
+													ts
+												};
+												bot.api.chat.delete(doneSessionMessageObject);
+											}
+										}
+
+										// this was a 30 minute timeout for done_session timer!
+										controller.trigger(`done_session_timeout_flow`, [ bot, { SlackUserId, workSession }])
 									};
-									bot.api.chat.delete(doneSessionMessageObject);
-								}
-							}
+								});
+							} else {
 
-							// this was a 30 minute timeout for done_session timer!
-							controller.trigger(`done_session_timeout_flow`, [ bot, { SlackUserId, workSession }])
-						} else {
+								convo.doneSessionTimerObject.timeOut = false;
 
-							convo.doneSessionTimerObject.timeOut = false;
-
-							// NORMAL FLOW
-							models.User.find({
-								where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-								include: [
-									models.SlackUser
-								]
-							})
-							.then((user) => {
-
+								// NORMAL FLOW
 								const UserId = user.id;
 
 								// cancel all old reminders
@@ -394,6 +403,21 @@ export default function(controller) {
 								 * 		~~ THIS IS SIMULATION OF `session_end` FLOW
 								 * 		essentially figuring out postSessionDecision
 								 */
+								
+								// end all OPEN work sessions here, because user
+								// has decided to PROACTIVELY CLOSE IT
+								// make decision afterwards (to ensure you have no sessions live if u want to start a new one)
+								user.getWorkSessions({
+									where: [ `"WorkSession"."open" = ?`, true ],
+									order: `"createdAt" DESC`
+								})
+								.then((workSessions) => {
+									workSessions.forEach((workSession) => {
+										workSession.update({
+											open: false
+										});
+									});
+								});
 
 								// set reminders (usually a break)
 								reminders.forEach((reminder) => {
@@ -409,8 +433,8 @@ export default function(controller) {
 								// then from here, active the postSessionDecisions
 								handlePostSessionDecision(controller, postSessionDecision);
 
-							});
-						}
+							};
+						});
 					});
 				});
 			});
@@ -907,7 +931,7 @@ export default function(controller) {
 					// went according to plan
 					const { SlackUserId, UserId, postSessionDecision, reminders, tasksCompleted, taskArray, differentCompletedTask, tz } = convo.sessionEnd;
 
-					// end all open sessions and reminder checkins (type `work_session`) the user might have
+					// end all live sessions and reminder checkins (type `work_session`) the user might have
 					models.User.find({
 						where: [`"User"."id" = ?`, UserId ],
 						include: [ models.SlackUser ]
@@ -919,7 +943,7 @@ export default function(controller) {
 						 * 			1. cancel all `break` and `checkin` reminders
 						 * 			2. mark said `tasks` as done
 						 * 			3. handle postSession decision (set `break` reminder, start new session, etc.)
-						 * 			4. close all open worksessions
+						 * 			4. close all live worksessions
 						 * 			5. if completed diff task, store that for user
 						 */
 
@@ -962,10 +986,11 @@ export default function(controller) {
 							})
 						});
 
-						// end all open work sessions
-						// make decision afterwards (to ensure you have no sessions open if u want to start a new one)
+						// end all OPEN work sessions here b/c user has closed it officially
+						// LIVE work sessions only matter through CRON JOB
+						// make decision afterwards (to ensure you have no sessions live if u want to start a new one)
 						user.getWorkSessions({
-							where: [ `"open" = ?`, true ],
+							where: [ `"WorkSession"."open" =? `, true ],
 							order: `"createdAt" DESC`
 						})
 						.then((workSessions) => {
@@ -1018,10 +1043,10 @@ export default function(controller) {
 							workSessions.forEach((workSession) => {
 								workSession.update({
 									endTime,
-									"open": false
+									open: false
 								});
 							});
-							
+
 							handlePostSessionDecision(controller, postSessionDecision);
 
 						});

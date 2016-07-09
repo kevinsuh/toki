@@ -34,7 +34,7 @@ var checkForSessions = function checkForSessions() {
 	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 
 	_models2.default.WorkSession.findAll({
-		where: ['"endTime" < ? AND open = ?', now, true],
+		where: ['"endTime" < ? AND live = ?', now, true],
 		order: '"WorkSession"."createdAt" DESC',
 		include: [_models2.default.DailyTask]
 	}).then(function (workSessions) {
@@ -47,6 +47,7 @@ var checkForSessions = function checkForSessions() {
 		workSessions.forEach(function (workSession) {
 			var UserId = workSession.UserId;
 			var open = workSession.open;
+			var live = workSession.live;
 
 			/**
     * 		For each work session
@@ -55,7 +56,7 @@ var checkForSessions = function checkForSessions() {
     */
 
 			workSession.update({
-				open: false
+				live: false
 			}).then(function (workSession) {
 				_models2.default.User.find({
 					where: { id: UserId },

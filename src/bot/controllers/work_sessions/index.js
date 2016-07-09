@@ -48,7 +48,7 @@ export default function(controller) {
 
 				// is user already in a work session?
 				user.getWorkSessions({
-					where: [`"open" = ?`, true ]
+					where: [`"live" = ?`, true ]
 				})
 				.then((workSessions) => {
 

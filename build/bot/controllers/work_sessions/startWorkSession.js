@@ -59,11 +59,11 @@ exports.default = function (controller) {
 		}).then(function (user) {
 
 			user.getWorkSessions({
-				where: ['"open" = ?', true]
+				where: ['"live" = ?', true]
 			}).then(function (workSessions) {
 				var tz = user.SlackUser.tz;
 
-				// no open work sessions => you're good to go!
+				// no live work sessions => you're good to go!
 
 				if (workSessions.length == 0) {
 					controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
@@ -76,14 +76,14 @@ exports.default = function (controller) {
 
 					// by default, user wants to start a new session
 					// that's why she is in this flow...
-					// no openWorkSession unless we found one
+					// no liveWorkSession unless we found one
 					convo.startNewSession = true;
-					convo.openWorkSession = false;
+					convo.liveWorkSession = false;
 
-					var openWorkSession = workSessions[0]; // deal with first one as reference point
-					convo.openWorkSession = openWorkSession;
+					var liveWorkSession = workSessions[0]; // deal with first one as reference point
+					convo.liveWorkSession = liveWorkSession;
 
-					var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime).tz(tz);
+					var endTime = (0, _momentTimezone2.default)(liveWorkSession.endTime).tz(tz);
 					var endTimeString = endTime.format("h:mm a");
 					var now = (0, _momentTimezone2.default)();
 					var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
@@ -122,7 +122,7 @@ exports.default = function (controller) {
 						console.log("\n\n\n ~~ here in end of confirm_new_session ~~ \n\n\n");
 
 						var startNewSession = convo.startNewSession;
-						var openWorkSession = convo.openWorkSession;
+						var liveWorkSession = convo.liveWorkSession;
 
 						// if user wants to start new session, then do this flow and enter `begin_session` flow
 
@@ -137,15 +137,17 @@ exports.default = function (controller) {
 
 							var now = (0, _momentTimezone2.default)();
 
-							// if user had an open work session(s), cancel them!
-							if (openWorkSession) {
-								openWorkSession.update({
+							// if user had any live work session(s), cancel them!
+							if (liveWorkSession) {
+								liveWorkSession.update({
 									endTime: now,
-									open: false
+									open: false,
+									live: false
 								});
 								workSessions.forEach(function (workSession) {
 									workSession.update({
-										open: false
+										open: false,
+										live: false
 									});
 								});
 							};
@@ -331,11 +333,12 @@ exports.default = function (controller) {
 
 							// END ALL WORK SESSIONS BEFORE CREATING NEW ONE
 							user.getWorkSessions({
-								where: ['"open" = ?', true]
+								where: ['"live" = ?', true]
 							}).then(function (workSessions) {
 								workSessions.forEach(function (workSession) {
 									workSession.update({
-										open: false
+										open: false,
+										live: false
 									});
 								});
 

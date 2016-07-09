@@ -25,7 +25,7 @@ var checkForSessions = () => {
 	var now = moment.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 
 	models.WorkSession.findAll({
-		where: [ `"endTime" < ? AND open = ?`, now, true ],
+		where: [ `"endTime" < ? AND live = ?`, now, true ],
 		order: `"WorkSession"."createdAt" DESC`,
 		include: [ models.DailyTask ]
 	}).then((workSessions) => {
@@ -37,7 +37,7 @@ var checkForSessions = () => {
 
 		workSessions.forEach((workSession) => {
 
-			const { UserId, open } = workSession;
+			const { UserId, open, live } = workSession;
 
 			/**
 			 * 		For each work session
@@ -46,7 +46,7 @@ var checkForSessions = () => {
 			 */
 			
 			workSession.update({
-				open: false
+				live: false
 			})
 			.then((workSession) => {
 				models.User.find({
