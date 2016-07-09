@@ -403,6 +403,7 @@ export default function(controller) {
 								 */
 								
 								// end all OPEN work sessions here, because user
+								// ~~ CLOSING a work session MUST ALSO MAKE IT NOT LIVE!! ~~
 								// has decided to PROACTIVELY CLOSE IT
 								user.getWorkSessions({
 									where: [ `"WorkSession"."open" = ?`, true ],
@@ -411,9 +412,15 @@ export default function(controller) {
 								.then((workSessions) => {
 									workSessions.forEach((workSession) => {
 										workSession.update({
-											open: false
+											open: false,
+											live: false
 										});
 									});
+
+									// then from here, active the postSessionDecisions
+									setTimeout(() => { 
+										handlePostSessionDecision(postSessionDecision, { controller, bot, SlackUserId });
+									}, 500);
 								});
 
 								// set reminders (usually a break)
@@ -426,9 +433,6 @@ export default function(controller) {
 										type
 									});
 								});
-
-								// then from here, active the postSessionDecisions
-								handlePostSessionDecision(controller, postSessionDecision);
 
 							};
 						});
@@ -677,9 +681,6 @@ export default function(controller) {
 						})
 						.then((workSessions) => {
 
-							console.log("all work sessions:");
-							console.log(workSessions);
-
 							var endTime = moment();
 							// IF you chose a new task not on your list to have completed
 							if (differentCompletedTask) {
@@ -725,11 +726,14 @@ export default function(controller) {
 							workSessions.forEach((workSession) => {
 								workSession.update({
 									endTime,
-									open: false
+									open: false,
+									live: false
 								});
 							});
 
-							handlePostSessionDecision(controller, postSessionDecision);
+							setTimeout(() => { 
+								handlePostSessionDecision(postSessionDecision, { controller, bot, SlackUserId });
+							}, 500);
 
 						});
 
@@ -954,7 +958,11 @@ function getBreakTime(response, convo) {
 
 }
 
-export function handlePostSessionDecision(controller, postSessionDecision) {
+// NEED ALL 3 FOR CONFIG: SlackUserId, controller, bot
+export function handlePostSessionDecision(postSessionDecision, config) {
+
+	const { SlackUserId, controller, bot } = config;
+
 	switch (postSessionDecision) {
 		case intentConfig.WANT_BREAK:
 			break;

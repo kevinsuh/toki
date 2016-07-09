@@ -180,9 +180,10 @@ export default function(controller) {
 											open: false
 										});
 									});
+									setTimeout(() => { 
+										handlePostSessionDecision(postSessionDecision, { controller, bot, SlackUserId });
+									}, 500);
 								});
-
-								handlePostSessionDecision(controller, postSessionDecision);
 
 							});
 						});
@@ -311,9 +312,10 @@ export default function(controller) {
 								open: false
 							});
 						});
+						setTimeout(() => { 
+							handlePostSessionDecision(postSessionDecision, { controller, bot, SlackUserId });
+						}, 500);
 					});
-
-					handlePostSessionDecision(controller, postSessionDecision);
 
 				});
 			});

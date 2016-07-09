@@ -381,6 +381,7 @@ exports.default = function (controller) {
           */
 
 									// end all OPEN work sessions here, because user
+									// ~~ CLOSING a work session MUST ALSO MAKE IT NOT LIVE!! ~~
 									// has decided to PROACTIVELY CLOSE IT
 									user.getWorkSessions({
 										where: ['"WorkSession"."open" = ?', true],
@@ -388,9 +389,15 @@ exports.default = function (controller) {
 									}).then(function (workSessions) {
 										workSessions.forEach(function (workSession) {
 											workSession.update({
-												open: false
+												open: false,
+												live: false
 											});
 										});
+
+										// then from here, active the postSessionDecisions
+										setTimeout(function () {
+											handlePostSessionDecision(postSessionDecision, { controller: controller, bot: bot, SlackUserId: SlackUserId });
+										}, 500);
 									});
 
 									// set reminders (usually a break)
@@ -406,9 +413,6 @@ exports.default = function (controller) {
 											type: type
 										});
 									});
-
-									// then from here, active the postSessionDecisions
-									handlePostSessionDecision(controller, postSessionDecision);
 								}();
 
 								if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
@@ -655,9 +659,6 @@ exports.default = function (controller) {
 								order: '"createdAt" DESC'
 							}).then(function (workSessions) {
 
-								console.log("all work sessions:");
-								console.log(workSessions);
-
 								var endTime = (0, _momentTimezone2.default)();
 								// IF you chose a new task not on your list to have completed
 								if (differentCompletedTask) {
@@ -700,11 +701,14 @@ exports.default = function (controller) {
 								workSessions.forEach(function (workSession) {
 									workSession.update({
 										endTime: endTime,
-										open: false
+										open: false,
+										live: false
 									});
 								});
 
-								handlePostSessionDecision(controller, postSessionDecision);
+								setTimeout(function () {
+									handlePostSessionDecision(postSessionDecision, { controller: controller, bot: bot, SlackUserId: SlackUserId });
+								}, 500);
 							});
 						});
 					})();
@@ -942,7 +946,13 @@ function getBreakTime(response, convo) {
 	}
 }
 
-function handlePostSessionDecision(controller, postSessionDecision) {
+// NEED ALL 3 FOR CONFIG: SlackUserId, controller, bot
+function handlePostSessionDecision(postSessionDecision, config) {
+	var SlackUserId = config.SlackUserId;
+	var controller = config.controller;
+	var bot = config.bot;
+
+
 	switch (postSessionDecision) {
 		case _intents2.default.WANT_BREAK:
 			break;

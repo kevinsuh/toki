@@ -155,9 +155,10 @@ exports.default = function (controller) {
 											open: false
 										});
 									});
+									setTimeout(function () {
+										(0, _endWorkSession.handlePostSessionDecision)(postSessionDecision, { controller: controller, bot: bot, SlackUserId: SlackUserId });
+									}, 500);
 								});
-
-								(0, _endWorkSession.handlePostSessionDecision)(controller, postSessionDecision);
 							});
 						});
 					});
@@ -284,9 +285,10 @@ exports.default = function (controller) {
 								open: false
 							});
 						});
+						setTimeout(function () {
+							(0, _endWorkSession.handlePostSessionDecision)(postSessionDecision, { controller: controller, bot: bot, SlackUserId: SlackUserId });
+						}, 500);
 					});
-
-					(0, _endWorkSession.handlePostSessionDecision)(controller, postSessionDecision);
 				});
 			});
 		});

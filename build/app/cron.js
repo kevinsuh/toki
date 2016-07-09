@@ -34,7 +34,7 @@ var checkForSessions = function checkForSessions() {
 	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 
 	_models2.default.WorkSession.findAll({
-		where: ['"endTime" < ? AND live = ?', now, true],
+		where: ['"endTime" < ? AND "live" = ? AND "open" = ?', now, true, true],
 		order: '"WorkSession"."createdAt" DESC',
 		include: [_models2.default.DailyTask]
 	}).then(function (workSessions) {

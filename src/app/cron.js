@@ -25,7 +25,7 @@ var checkForSessions = () => {
 	var now = moment.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 
 	models.WorkSession.findAll({
-		where: [ `"endTime" < ? AND live = ?`, now, true ],
+		where: [ `"endTime" < ? AND "live" = ? AND "open" = ?`, now, true, true ],
 		order: `"WorkSession"."createdAt" DESC`,
 		include: [ models.DailyTask ]
 	}).then((workSessions) => {
