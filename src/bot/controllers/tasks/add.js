@@ -83,61 +83,105 @@ export default function(controller) {
 		})
 		.then((user) => {
 
-			bot.startPrivateConversation ({ user: SlackUserId }, (err, convo) => {
+			const UserId = user.id;
 
-					convo.tasksAdd = {
-						SlackUserId,
-						minutes,
-						task
-					};
+			user.getSessionGroups({
+				order: `"SessionGroup"."createdAt" DESC`,
+				limit: 1
+			})
+			.then((sessionGroups) => {
 
-					getTaskContent(err, convo);
-
-					// on finish conversation
-					convo.on('end', (convo) => {
-
-						const { tasksAdd } = convo;
-
-						consoleLog("convo ended in add tasks", tasksAdd);
-
-						if (convo.status == 'completed') {
-
-
-						} else {
-
-							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-								convo.say("Okay! I didn't add any tasks. I'll be here whenever you want to do that :smile:");
-								convo.next();
-							});
-								
-						}
+				if (sessionGroups.length == 0 || sessionGroups[0].dataValues.type == "end_work") {
+					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+						convo.say("Hey! You haven't `started a day` yet, let's do that first");
+						convo.next();
 					});
+					return;
+				}
+
+				// should start day
+				const startSessionGroup = sessionGroups[0];
+
+				user.getDailyTasks({
+					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, startSessionGroup.dataValues.createdAt, false, "live"],
+					include: [ models.Task ],
+					order: `"DailyTask"."priority" ASC`
+				})
+				.then((dailyTasks) => {
+
+					var name   = user.nickName || user.email;
+					var SlackUserId = user.SlackUser.SlackUserId;
+
+					bot.startPrivateConversation ({ user: SlackUserId }, (err, convo) => {
+
+						convo.tasksAdd = {
+							SlackUserId,
+							minutes,
+							task
+						};
+
+						getTaskContent(err, convo);
+
+						// on finish conversation
+						convo.on('end', (convo) => {
+
+							const { tasksAdd: { task, minutes, editTaskList } } = convo;
+							
+							if (convo.status == 'completed') {
+
+								// if we have the task and minutes, let's add it
+								if (task && minutes) {
+
+									var newPriority = dailyTasks.length + 1;
+									models.Task.create({
+										text: task
+									})
+									.then((task) => {
+										models.DailyTask.create({
+											TaskId: task.id,
+											priority: newPriority,
+											minutes,
+											UserId
+										})
+										.then(() => {
+											// if user added a task, then we need to edit task list flow after creation
+											if (editTaskList) {
+												controller.trigger(`edit_tasks_flow`, [ bot, { SlackUserId } ]);
+											} else {
+												controller.trigger(`view_daily_tasks_flow`, [ bot, { SlackUserId } ]);
+											}
+										})
+									});
+								} else {
+									// if user did not add a task, then we can go straight to editing task list
+									if (editTaskList) {
+										controller.trigger(`edit_tasks_flow`, [ bot, { SlackUserId } ]);
+									}
+								}
+
+							} else {
+
+								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+									convo.say("Okay! I didn't add any tasks. I'll be here whenever you want to do that :smile:");
+									convo.next();
+								});
+									
+							}
+						});
+					});
+
 				});
+			});
 		});
 	});
 
 
 
-	controller.on(`EDIT_VIEW_TASKS_FLOW_HERE`, (bot, config) => {
+	controller.on(`edit_tasks_flow`, (bot, config) => {
 
-		const { SlackUserId, message } = config;
+		const { SlackUserId } = config;
 
-		consoleLog("in add task flow", message);
-
-		// if has duration and/or reminder we can autofill
-		const { reminder, duration } = message;
-		var minutes = false;
-		var task    = false;
-
-		// length of task
-		if (duration) {
-			minutes = witDurationToMinutes(duration);
-		}
-		// content of task
-		if (reminder) {
-			task = reminder[0].value;
-		}
-
+		consoleLog("in edit tasks flow", message);
 
 		// find user then get tasks
 		models.User.find({
@@ -173,24 +217,23 @@ export default function(controller) {
 					bot.startPrivateConversation ({ user: SlackUserId }, (err, convo) => {
 
 						convo.name = name;
-						convo.tasksAdd = {
+						convo.tasksEdit = {
 							SlackUserId
 						};
 
-						dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
-						convo.tasksAdd.dailyTasks   = dailyTasks;
-
-						askForNewTasksToAdd(err, convo);
-
+						convo.say(`IN EDIT TASKS FLOW, YO!`);
+						return;
+						
 						// on finish conversation
 						convo.on('end', (convo) => {
 
-							console.log("\n\n\n\n ~~ convo ended in add tasks ~~ \n\n\n\n");
-
-							var responses = convo.extractResponses();
 							const { tasksAdd } = convo;
+							consoleLog("finished edit task flow", tasksEdit)
 
 							if (convo.status == 'completed') {
+
+								// NEED TO EDIT HERE
+								return;
 
 								// prioritized task array is the one we're ultimately going with
 								const { dailyTasks, prioritizedTaskArray } = tasksAdd;
