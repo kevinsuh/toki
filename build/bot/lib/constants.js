@@ -254,6 +254,22 @@ var buttonValues = exports.buttonValues = {
 	thatsIncorrect: {
 		value: "THATS_INCORRECT",
 		name: "THATS_INCORRECT"
+	},
+	addTask: {
+		value: "ADD_TASK",
+		name: "ADD_TASK"
+	},
+	changeTaskContent: {
+		value: "CHANGE_TASK_CONTENT",
+		name: "CHANGE_TASK_CONTENT"
+	},
+	changeTaskTime: {
+		value: "CHANGE_TASK_TIME",
+		name: "CHANGE_TASK_TIME"
+	},
+	editTaskList: {
+		value: "EDIT_TASK_LIST",
+		name: "EDIT_TASK_LIST"
 	}
 };
 

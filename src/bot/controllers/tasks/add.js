@@ -6,10 +6,11 @@ import moment from 'moment-timezone';
 
 import models from '../../../app/models';
 
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, prioritizeTaskArrayFromUserInput, convertTimeStringToMinutes } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, prioritizeTaskArrayFromUserInput, convertTimeStringToMinutes, convertMinutesToHoursString } from '../../lib/messageHelpers';
+import { consoleLog, witDurationToTimeZoneObject, witDurationToMinutes } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
-import { FINISH_WORD } from '../../lib/constants';
+import { FINISH_WORD, buttonValues } from '../../lib/constants';
 import { utterances } from '../../lib/botResponses';
 
 // base controller for tasks
@@ -25,9 +26,18 @@ export default function(controller) {
 		var intent        = intentConfig.ADD_TASK;
 		var channel       = message.channel;
 
+		const { text, intentObject: { entities: { reminder, duration } } } = message;
+
+		var userMessage = {
+			text,
+			reminder,
+			duration
+		}
+
 		var config = {
 			intent,
-			SlackUserId
+			SlackUserId,
+			message: userMessage
 		}
 
 		bot.send({
@@ -45,7 +55,88 @@ export default function(controller) {
 	 */
 	controller.on(`add_task_flow`, (bot, config) => {
 
-		const { SlackUserId } = config;
+		const { SlackUserId, message } = config;
+
+		consoleLog("in add task flow", message);
+
+		// if has duration and/or reminder we can autofill
+		const { reminder, duration } = message;
+		var minutes = false;
+		var task    = false;
+
+		// length of task
+		if (duration) {
+			minutes = witDurationToMinutes(duration);
+		}
+		// content of task
+		if (reminder) {
+			task = reminder[0].value;
+		}
+
+
+		// find user then get tasks
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			bot.startPrivateConversation ({ user: SlackUserId }, (err, convo) => {
+
+					convo.tasksAdd = {
+						SlackUserId,
+						minutes,
+						task
+					};
+
+					getTaskContent(err, convo);
+
+					// on finish conversation
+	    		convo.on('end', (convo) => {
+
+	  				const { tasksAdd } = convo;
+
+	  				consoleLog("convo ended in add tasks", tasksAdd);
+
+	    			if (convo.status == 'completed') {
+
+	    			} else {
+
+	    				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+								convo.say("Okay! I didn't add any tasks. I'll be here whenever you want to do that :smile:");
+								convo.next();
+							});
+		    				
+	    			}
+	    		});
+				});
+		});
+	});
+
+
+
+	controller.on(`EDIT_VIEW_TASKS_FLOW_HERE`, (bot, config) => {
+
+		const { SlackUserId, message } = config;
+
+		consoleLog("in add task flow", message);
+
+		// if has duration and/or reminder we can autofill
+		const { reminder, duration } = message;
+		var minutes = false;
+		var task    = false;
+
+		// length of task
+		if (duration) {
+			minutes = witDurationToMinutes(duration);
+		}
+		// content of task
+		if (reminder) {
+			task = reminder[0].value;
+		}
+
 
 		// find user then get tasks
 		models.User.find({
@@ -180,6 +271,202 @@ export default function(controller) {
 	});
 
 };
+
+/**
+ * 			~~ START OF SINGLE TASK ADD FLOW ~~
+ */
+
+function getTaskContent(response, convo) {
+
+	const { task } = convo.tasksAdd;
+
+	if (task) {
+		// task has been filled and we can move on
+		getTaskMinutes(response, convo);
+	} else {
+		convo.ask(`What is the task?`, (response, convo) => {
+			const { text } = response;
+			convo.tasksAdd.task = text;
+			getTaskMinutes(response, convo);
+			convo.next();
+		})
+	}
+
+}
+
+function getTaskMinutes(response, convo) {
+
+	const { minutes } = convo.tasksAdd;
+
+	if (minutes) {
+		// minutes has been filled and we can move on
+		confirmTaskToAdd(response, convo);
+	} else {
+		convo.ask(`How long will this task take?`, (response, convo) => {
+
+			const { text } = response;
+			var validMinutesTester = new RegExp(/[\dh]/);
+			if (validMinutesTester.test(text)) {
+				var minutes = convertTimeStringToMinutes(text);
+				convo.tasksAdd.minutes = minutes;
+				confirmTaskToAdd(response, convo);
+			} else {
+				convo.say("Oops, I didn't quite get that. Let me know duration like `30 min` or `1 hour`");
+				convo.repeat();
+			}
+			convo.next();
+
+		});
+	}
+
+}
+
+// confirm here to add the task
+function confirmTaskToAdd(response, convo) {
+
+	const { task, minutes } = convo.tasksAdd;
+	var timeString = convertMinutesToHoursString(minutes);
+
+	convo.ask({
+		text: `Does this look good? If so, I'll add \`${task} (${timeString})\` to your tasks`,
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "CONFIRM_TASK_ADD",
+				fallback: "Does this task look good?",
+				actions: [
+					{
+							name: buttonValues.addTask.name,
+							text: "Yes!",
+							value: buttonValues.addTask.value,
+							type: "button",
+							style: "primary"
+					},
+					{
+							name: buttonValues.changeTaskContent.name,
+							text: "Change task",
+							value: buttonValues.changeTaskContent.value,
+							type: "button"
+					},
+					{
+							name: buttonValues.changeTaskTime.name,
+							text: "Change time",
+							value: buttonValues.changeTaskTime.value,
+							type: "button"
+					},
+					{
+							name: buttonValues.editTaskList.name,
+							text: "Edit task list",
+							value: buttonValues.editTaskList.value,
+							type: "button"
+					},
+					{
+							name: buttonValues.neverMind.name,
+							text: "Never mind",
+							value: buttonValues.neverMind.value,
+							type: "button"
+					}
+				]
+			}
+		]
+	},
+	[
+		{
+			pattern: buttonValues.addTask.value,
+			callback: function(response, convo) {
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.addTask.value
+			pattern: utterances.yes,
+			callback: function(response, convo) {
+				convo.say(`Added! Keep at it :muscle:`);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.changeTaskContent.value,
+			callback: function(response, convo) {
+				convo.tasksAdd.task = false;
+				getTaskContent(response, convo);
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.changeTaskContent.value
+			pattern: utterances.containsChangeTask,
+			callback: function(response, convo) {
+				convo.say("Okay!");
+				convo.tasksAdd.task = false;
+				getTaskContent(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.changeTaskTime.value,
+			callback: function(response, convo) {
+				convo.tasksAdd.minutes = false;
+				getTaskMinutes(response, convo);
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.changeTaskTime.value
+			pattern: utterances.containsChangeTime,
+			callback: function(response, convo) {
+				convo.say("Okay!");
+				convo.tasksAdd.minutes = false;
+				getTaskMinutes(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.editTaskList.value,
+			callback: function(response, convo) {
+				convo.say("I added this task too :grin:");
+				convo.tasksAdd.editTaskList = true;
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.editTaskList.value
+			pattern: utterances.containsEditTaskList,
+			callback: function(response, convo) {
+				convo.say("Okay! I added your task :grin:. Let's edit your task list");
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.neverMind.value,
+			callback: function(response, convo) {
+				convo.say("Let's back to it!");
+				convo.tasksAdd.minutes = false;
+				convo.tasksAdd.task    = false;
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.editTaskList.value
+			pattern: utterances.noAndNeverMind,
+			callback: function(response, convo) {
+				convo.say("Okay, I didn't add any tasks. Let's back to it!");
+				convo.tasksAdd.minutes = false;
+				convo.tasksAdd.task    = false;
+				convo.next();
+			}
+		},
+		{ // this is failure point. restart with question
+			default: true,
+			callback: function(response, convo) {
+				convo.say("I didn't quite get that :thinking_face:");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
+
+}
+
+
+/**
+ * 			~~ END OF SINGLE TASK ADD FLOW ~~
+ */
 
 // user adds new tasks here
 function askForNewTasksToAdd(response, convo) {

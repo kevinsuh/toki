@@ -249,7 +249,7 @@ controller.on('login_bot', (bot,identity) => {
 controller.on(`new_session_group_decision`, (bot, config) => {
 
 	// type is either `ADD_TASK` or `START_SESSION`
-	const { SlackUserId, intent } = config;
+	const { SlackUserId, intent, message } = config;
 
 	models.User.find({
 		where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -304,13 +304,13 @@ controller.on(`new_session_group_decision`, (bot, config) => {
 				if (hoursSinceStartDay < hoursForExpirationTime || workSessions.length > 0) {
 					switch (intent) {
 						case intentConfig.ADD_TASK:
-							controller.trigger(`add_task_flow`, [ bot, { SlackUserId }]);
+							controller.trigger(`add_task_flow`, [ bot, { SlackUserId, message }]);
 							break;
 						case intentConfig.START_SESSION:
 							controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
 							break;
 						case intentConfig.VIEW_TASKS:
-							controller.trigger(`view_daily_tasks_flow`, [ bot, { SlackUserId } ]);
+							controller.trigger(`view_daily_tasks_flow`, [ bot, { SlackUserId, message } ]);
 							break;
 						case intentConfig.END_DAY:
 							controller.trigger(`trigger_day_end`, [ bot, { SlackUserId } ]);

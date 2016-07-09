@@ -139,7 +139,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
  * @param  {int} minutes number of minutes
  * @return {string}         hour + minutes
  */
-function convertMinutesToHoursString(minutes) {
+export function convertMinutesToHoursString(minutes) {
 	minutes = parseInt(minutes);
 	var hours = 0;
 	while (minutes - 60 >= 0) {

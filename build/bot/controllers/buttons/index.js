@@ -132,6 +132,18 @@ exports.default = function (controller) {
 				case _constants.buttonValues.thatsIncorrect.value:
 					bot.replyInteractive(message, 'Oops, okay! Let\'s get this right');
 					break;
+				case _constants.buttonValues.addTask.value:
+					bot.replyInteractive(message, 'Added! Keep at it :muscle:');
+					break;
+				case _constants.buttonValues.changeTaskContent.value:
+					bot.replyInteractive(message, 'Let\'s change the task then!');
+					break;
+				case _constants.buttonValues.changeTaskTime.value:
+					bot.replyInteractive(message, 'Let\'s change the time then!');
+					break;
+				case _constants.buttonValues.editTaskList.value:
+					bot.replyInteractive(message, 'Okay! Let\'s edit your task list');
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");

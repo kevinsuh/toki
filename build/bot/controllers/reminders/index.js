@@ -25,6 +25,30 @@ exports.default = function (controller) {
 
 			var SlackUserId = message.user;
 
+			// if command starts with "add", then we must assume they are adding a task
+			if (_botResponses.utterances.startsWithAdd.test(text)) {
+				/**
+     * 		TRIGGERING ADD TASK FLOW (add_task_flow)
+     */
+				var intent = _intents2.default.ADD_TASK;
+
+				var userMessage = {
+					text: text,
+					reminder: reminder,
+					duration: duration
+				};
+
+				var config = {
+					intent: intent,
+					SlackUserId: SlackUserId,
+					message: userMessage
+				};
+
+				controller.trigger('new_session_group_decision', [bot, config]);
+
+				return;
+			}
+
 			var config = {
 				text: text,
 				reminder: reminder,
@@ -308,6 +332,10 @@ var _botResponses = require('../../lib/botResponses');
 var _miscHelpers = require('../../lib/miscHelpers');
 
 var _messageHelpers = require('../../lib/messageHelpers');
+
+var _intents = require('../../lib/intents');
+
+var _intents2 = _interopRequireDefault(_intents);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 

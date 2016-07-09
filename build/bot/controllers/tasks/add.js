@@ -21,9 +21,22 @@ exports.default = function (controller) {
 		var intent = _intents2.default.ADD_TASK;
 		var channel = message.channel;
 
+		var text = message.text;
+		var _message$intentObject = message.intentObject.entities;
+		var reminder = _message$intentObject.reminder;
+		var duration = _message$intentObject.duration;
+
+
+		var userMessage = {
+			text: text,
+			reminder: reminder,
+			duration: duration
+		};
+
 		var config = {
 			intent: intent,
-			SlackUserId: SlackUserId
+			SlackUserId: SlackUserId,
+			message: userMessage
 		};
 
 		bot.send({
@@ -40,9 +53,86 @@ exports.default = function (controller) {
   */
 	controller.on('add_task_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
+		var message = config.message;
+
+
+		(0, _miscHelpers.consoleLog)("in add task flow", message);
+
+		// if has duration and/or reminder we can autofill
+		var reminder = message.reminder;
+		var duration = message.duration;
+
+		var minutes = false;
+		var task = false;
+
+		// length of task
+		if (duration) {
+			minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
+		}
+		// content of task
+		if (reminder) {
+			task = reminder[0].value;
+		}
 
 		// find user then get tasks
+		_models2.default.User.find({
+			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+			include: [_models2.default.SlackUser]
+		}).then(function (user) {
 
+			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+				convo.tasksAdd = {
+					SlackUserId: SlackUserId,
+					minutes: minutes,
+					task: task
+				};
+
+				getTaskContent(err, convo);
+
+				// on finish conversation
+				convo.on('end', function (convo) {
+					var tasksAdd = convo.tasksAdd;
+
+
+					(0, _miscHelpers.consoleLog)("convo ended in add tasks", tasksAdd);
+
+					if (convo.status == 'completed') {} else {
+
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+							convo.say("Okay! I didn't add any tasks. I'll be here whenever you want to do that :smile:");
+							convo.next();
+						});
+					}
+				});
+			});
+		});
+	});
+
+	controller.on('EDIT_VIEW_TASKS_FLOW_HERE', function (bot, config) {
+		var SlackUserId = config.SlackUserId;
+		var message = config.message;
+
+
+		(0, _miscHelpers.consoleLog)("in add task flow", message);
+
+		// if has duration and/or reminder we can autofill
+		var reminder = message.reminder;
+		var duration = message.duration;
+
+		var minutes = false;
+		var task = false;
+
+		// length of task
+		if (duration) {
+			minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
+		}
+		// content of task
+		if (reminder) {
+			task = reminder[0].value;
+		}
+
+		// find user then get tasks
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 			include: [_models2.default.SlackUser]
@@ -125,10 +215,10 @@ exports.default = function (controller) {
 
 										// existing daily task and make it live
 										var id = dataValues.id;
-										var minutes = dataValues.minutes;
+										var _minutes = dataValues.minutes;
 
 										_models2.default.DailyTask.update({
-											minutes: minutes,
+											minutes: _minutes,
 											UserId: UserId,
 											priority: newPriority,
 											type: "live"
@@ -199,6 +289,8 @@ var _models2 = _interopRequireDefault(_models);
 
 var _messageHelpers = require('../../lib/messageHelpers');
 
+var _miscHelpers = require('../../lib/miscHelpers');
+
 var _intents = require('../../lib/intents');
 
 var _intents2 = _interopRequireDefault(_intents);
@@ -210,6 +302,179 @@ var _botResponses = require('../../lib/botResponses');
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 ;
+
+/**
+ * 			~~ START OF SINGLE TASK ADD FLOW ~~
+ */
+
+function getTaskContent(response, convo) {
+	var task = convo.tasksAdd.task;
+
+
+	if (task) {
+		// task has been filled and we can move on
+		getTaskMinutes(response, convo);
+	} else {
+		convo.ask('What is the task?', function (response, convo) {
+			var text = response.text;
+
+			convo.tasksAdd.task = text;
+			getTaskMinutes(response, convo);
+			convo.next();
+		});
+	}
+}
+
+function getTaskMinutes(response, convo) {
+	var minutes = convo.tasksAdd.minutes;
+
+
+	if (minutes) {
+		// minutes has been filled and we can move on
+		confirmTaskToAdd(response, convo);
+	} else {
+		convo.ask('How long will this task take?', function (response, convo) {
+			var text = response.text;
+
+			var validMinutesTester = new RegExp(/[\dh]/);
+			if (validMinutesTester.test(text)) {
+				var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(text);
+				convo.tasksAdd.minutes = minutes;
+				confirmTaskToAdd(response, convo);
+			} else {
+				convo.say("Oops, I didn't quite get that. Let me know duration like `30 min` or `1 hour`");
+				convo.repeat();
+			}
+			convo.next();
+		});
+	}
+}
+
+// confirm here to add the task
+function confirmTaskToAdd(response, convo) {
+	var _convo$tasksAdd = convo.tasksAdd;
+	var task = _convo$tasksAdd.task;
+	var minutes = _convo$tasksAdd.minutes;
+
+	var timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+
+	convo.ask({
+		text: 'Does this look good? If so, I\'ll add `' + task + ' (' + timeString + ')` to your tasks',
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "CONFIRM_TASK_ADD",
+			fallback: "Does this task look good?",
+			actions: [{
+				name: _constants.buttonValues.addTask.name,
+				text: "Yes!",
+				value: _constants.buttonValues.addTask.value,
+				type: "button",
+				style: "primary"
+			}, {
+				name: _constants.buttonValues.changeTaskContent.name,
+				text: "Change task",
+				value: _constants.buttonValues.changeTaskContent.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.changeTaskTime.name,
+				text: "Change time",
+				value: _constants.buttonValues.changeTaskTime.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.editTaskList.name,
+				text: "Edit task list",
+				value: _constants.buttonValues.editTaskList.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.neverMind.name,
+				text: "Never mind",
+				value: _constants.buttonValues.neverMind.value,
+				type: "button"
+			}]
+		}]
+	}, [{
+		pattern: _constants.buttonValues.addTask.value,
+		callback: function callback(response, convo) {
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.addTask.value
+		pattern: _botResponses.utterances.yes,
+		callback: function callback(response, convo) {
+			convo.say('Added! Keep at it :muscle:');
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.changeTaskContent.value,
+		callback: function callback(response, convo) {
+			convo.tasksAdd.task = false;
+			getTaskContent(response, convo);
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.changeTaskContent.value
+		pattern: _botResponses.utterances.containsChangeTask,
+		callback: function callback(response, convo) {
+			convo.say("Okay!");
+			convo.tasksAdd.task = false;
+			getTaskContent(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.changeTaskTime.value,
+		callback: function callback(response, convo) {
+			convo.tasksAdd.minutes = false;
+			getTaskMinutes(response, convo);
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.changeTaskTime.value
+		pattern: _botResponses.utterances.containsChangeTime,
+		callback: function callback(response, convo) {
+			convo.say("Okay!");
+			convo.tasksAdd.minutes = false;
+			getTaskMinutes(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.editTaskList.value,
+		callback: function callback(response, convo) {
+			convo.say("I added this task too :grin:");
+			convo.tasksAdd.editTaskList = true;
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.editTaskList.value
+		pattern: _botResponses.utterances.containsEditTaskList,
+		callback: function callback(response, convo) {
+			convo.say("Okay! I added your task :grin:. Let's edit your task list");
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.neverMind.value,
+		callback: function callback(response, convo) {
+			convo.say("Let's back to it!");
+			convo.tasksAdd.minutes = false;
+			convo.tasksAdd.task = false;
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.editTaskList.value
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say("Okay, I didn't add any tasks. Let's back to it!");
+			convo.tasksAdd.minutes = false;
+			convo.tasksAdd.task = false;
+			convo.next();
+		}
+	}, { // this is failure point. restart with question
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say("I didn't quite get that :thinking_face:");
+			convo.repeat();
+			convo.next();
+		}
+	}]);
+}
+
+/**
+ * 			~~ END OF SINGLE TASK ADD FLOW ~~
+ */
 
 // user adds new tasks here
 function askForNewTasksToAdd(response, convo) {
@@ -350,9 +615,9 @@ function askToPrioritizeList(response, convo) {
 
 	// organize the task lists!
 
-	var _convo$tasksAdd = convo.tasksAdd;
-	var dailyTasks = _convo$tasksAdd.dailyTasks;
-	var newTasksArray = _convo$tasksAdd.newTasksArray;
+	var _convo$tasksAdd2 = convo.tasksAdd;
+	var dailyTasks = _convo$tasksAdd2.dailyTasks;
+	var newTasksArray = _convo$tasksAdd2.newTasksArray;
 
 	var allTasksArray = dailyTasks.slice();
 	newTasksArray.forEach(function (newTask) {
@@ -378,10 +643,10 @@ function prioritizeTaskList(response, convo) {
 
 	// organize the task lists!
 
-	var _convo$tasksAdd2 = convo.tasksAdd;
-	var dailyTasks = _convo$tasksAdd2.dailyTasks;
-	var newTasksArray = _convo$tasksAdd2.newTasksArray;
-	var allTasksArray = _convo$tasksAdd2.allTasksArray;
+	var _convo$tasksAdd3 = convo.tasksAdd;
+	var dailyTasks = _convo$tasksAdd3.dailyTasks;
+	var newTasksArray = _convo$tasksAdd3.newTasksArray;
+	var allTasksArray = _convo$tasksAdd3.allTasksArray;
 
 	var allTasksArray = dailyTasks.slice();
 	newTasksArray.forEach(function (newTask) {

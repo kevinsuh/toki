@@ -11,6 +11,7 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 exports.convertResponseObjectsToTaskArray = convertResponseObjectsToTaskArray;
 exports.convertTaskNumberStringToArray = convertTaskNumberStringToArray;
 exports.convertArrayToTaskListMessage = convertArrayToTaskListMessage;
+exports.convertMinutesToHoursString = convertMinutesToHoursString;
 exports.convertTimeStringToMinutes = convertTimeStringToMinutes;
 exports.convertToSingleTaskObjectArray = convertToSingleTaskObjectArray;
 exports.prioritizeTaskArrayFromUserInput = prioritizeTaskArrayFromUserInput;

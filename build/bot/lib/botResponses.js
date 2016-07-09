@@ -47,6 +47,7 @@ var utterances = exports.utterances = {
 	containsDifferent: new RegExp(/((\bdi[different]{4,}\b)|(\b[else ]{3,}\b))/i),
 	containsNumber: new RegExp(/\d/i),
 	containsAdd: new RegExp(/a[add]{1,}/i),
+	startsWithAdd: new RegExp(/^a[add]{2,}\b/i),
 	containsTask: new RegExp(/t[task]{2,}/i),
 	containsName: new RegExp(/n[name]{2,}/i),
 	containsTimeZone: new RegExp(/t[timezone ]{4,}/i),
@@ -57,6 +58,7 @@ var utterances = exports.utterances = {
 	containsElse: new RegExp(/\be[else]{2,}/i),
 	containsShowCommands: new RegExp(/(\bs[show]{2,}|\bc[commands]{4,})/i),
 	containsStartDay: new RegExp(/(\bs[start]{3,}|\bd[day]{2,})/i),
-	containsSettings: new RegExp(/\bs[settings]{4,}/i)
+	containsSettings: new RegExp(/\bs[settings]{4,}/i),
+	containsEditTaskList: new RegExp(/(\be[edit ]{2,}(\bl[list]{2,}|\bt[task]{2,}))/i)
 };
 //# sourceMappingURL=botResponses.js.map
