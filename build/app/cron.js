@@ -16,6 +16,8 @@ exports.default = function () {
 
 var _controllers = require('../bot/controllers');
 
+var _constants = require('./lib/constants');
+
 var _models = require('./models');
 
 var _models2 = _interopRequireDefault(_models);
@@ -32,7 +34,9 @@ var checkForSessions = function checkForSessions() {
 	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 
 	_models2.default.WorkSession.findAll({
-		where: ['"endTime" < ? AND open = ?', now, true]
+		where: ['"endTime" < ? AND "live" = ? AND "open" = ?', now, true, true],
+		order: '"WorkSession"."createdAt" DESC',
+		include: [_models2.default.DailyTask]
 	}).then(function (workSessions) {
 
 		// these are the work sessions that have ended within last 5 minutes
@@ -43,6 +47,7 @@ var checkForSessions = function checkForSessions() {
 		workSessions.forEach(function (workSession) {
 			var UserId = workSession.UserId;
 			var open = workSession.open;
+			var live = workSession.live;
 
 			/**
     * 		For each work session
@@ -51,37 +56,38 @@ var checkForSessions = function checkForSessions() {
     */
 
 			workSession.update({
-				open: false
-			}).then(function () {
-				return _models2.default.User.find({
+				live: false
+			}).then(function (workSession) {
+				_models2.default.User.find({
 					where: { id: UserId },
 					include: [_models2.default.SlackUser]
-				});
-			}).then(function (user) {
-				var SlackUserId = user.SlackUser.SlackUserId;
+				}).then(function (user) {
+					var SlackUserId = user.SlackUser.SlackUserId;
 
-				var config = {
-					SlackUserId: SlackUserId
-				};
+					var config = {
+						SlackUserId: SlackUserId,
+						workSession: workSession
+					};
 
-				// we need to find the bot that contains this user
-				// 1. find team of slack user
-				// 2. get token of that team
-				// 3. get that bot by token
+					// we need to find the bot that contains this user
+					// 1. find team of slack user
+					// 2. get token of that team
+					// 3. get that bot by token
 
-				var TeamId = user.SlackUser.TeamId;
+					var TeamId = user.SlackUser.TeamId;
 
 
-				_models2.default.Team.find({
-					where: { TeamId: TeamId }
-				}).then(function (team) {
-					var token = team.token;
+					_models2.default.Team.find({
+						where: { TeamId: TeamId }
+					}).then(function (team) {
+						var token = team.token;
 
-					var bot = _controllers.bots[token];
-					if (bot) {
-						// alarm is up for session
-						_controllers.controller.trigger('session_timer_up', [bot, config]);
-					}
+						var bot = _controllers.bots[token];
+						if (bot) {
+							// alarm is up for session
+							_controllers.controller.trigger('session_timer_up', [bot, config]);
+						}
+					});
 				});
 			});
 		});
@@ -123,7 +129,10 @@ var checkForReminders = function checkForReminders() {
 					include: [_models2.default.SlackUser]
 				});
 			}).then(function (user) {
-				var TeamId = user.SlackUser.TeamId;
+				var _user$SlackUser = user.SlackUser;
+				var TeamId = _user$SlackUser.TeamId;
+				var SlackUserId = _user$SlackUser.SlackUserId;
+
 
 				_models2.default.Team.find({
 					where: { TeamId: TeamId }
@@ -134,19 +143,42 @@ var checkForReminders = function checkForReminders() {
 
 					if (bot) {
 
-						// alarm is up for reminder
-						// send the message!
-						bot.startPrivateConversation({
-							user: user.SlackUser.SlackUserId
-						}, function (err, convo) {
+						if (reminder.type == _constants.constants.reminders.doneSessionSnooze) {
 
-							if (convo) {
-								var customNote = reminder.customNote ? '(`' + reminder.customNote + '`)' : '';
-								var message = 'Hey! You wanted a reminder ' + customNote + ' :smiley: :alarm_clock: ';
+							var _UserId = user.id;
+							user.getWorkSessions({
+								where: ['"WorkSession"."UserId" = ?', _UserId],
+								order: '"WorkSession"."createdAt" DESC',
+								limit: 1
+							}).then(function (workSessions) {
+								// get most recent work session for snooze option
+								if (workSessions.length > 0) {
+									var workSession = workSessions[0];
+									workSession.getDailyTasks({}).then(function (dailyTasks) {
+										workSession.DailyTasks = dailyTasks;
+										var config = {
+											workSession: workSession,
+											SlackUserId: SlackUserId
+										};
+										_controllers.controller.trigger('session_timer_up', [bot, config]);
+									});
+								}
+							});
+						} else {
+							// alarm is up for reminder
+							// send the message!
+							bot.startPrivateConversation({
+								user: user.SlackUser.SlackUserId
+							}, function (err, convo) {
 
-								convo.say(message);
-							}
-						});
+								if (convo) {
+									var customNote = reminder.customNote ? '(`' + reminder.customNote + '`)' : '';
+									var message = 'Hey! You wanted a reminder ' + customNote + ' :smiley: :alarm_clock: ';
+
+									convo.say(message);
+								}
+							});
+						}
 					}
 				});
 			});

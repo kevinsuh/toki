@@ -234,7 +234,6 @@ function changeTimezone(response, convo) {
 			pattern: buttonValues.timeZones.other.value,
 			callback: (response, convo) => {
 				askOtherTimeZoneOptions(response, convo);
-				returnToMainSettings(response, convo);
 				convo.next();
 			}
 		},
@@ -252,7 +251,22 @@ function changeTimezone(response, convo) {
 // user wants other time zone
 function askOtherTimeZoneOptions(response, convo) {
 
-	convo.say("Oops dont have that feature right now");
+	convo.say("As Toki the Time Fairy, I need to get this right :grin:");
+	convo.ask("What is your timezone?", (response, convo) => {
+
+		var timezone = response.text;
+		if (false) {
+			// functionality to try and get timezone here
+			
+		} else {
+			convo.say("I'm so sorry, but I don't support your timezone yet for this beta phase, but I'll reach out when I'm ready to help you work");
+		}
+
+		returnToMainSettings(response, convo);
+		convo.next();
+
+	});
+
 	convo.next();
 
 }
@@ -378,7 +392,7 @@ function getSettingsAttachment(settings) {
 					short: true
 				},
 				{
-					value: timeZone.tz,
+					value: timeZone.name,
 					short: true
 				}
 			],

@@ -59,11 +59,11 @@ exports.default = function (controller) {
 		}).then(function (user) {
 
 			user.getWorkSessions({
-				where: ['"open" = ?', true]
+				where: ['"live" = ?', true]
 			}).then(function (workSessions) {
 				var tz = user.SlackUser.tz;
 
-				// no open work sessions => you're good to go!
+				// no live work sessions => you're good to go!
 
 				if (workSessions.length == 0) {
 					controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
@@ -76,14 +76,14 @@ exports.default = function (controller) {
 
 					// by default, user wants to start a new session
 					// that's why she is in this flow...
-					// no openWorkSession unless we found one
+					// no liveWorkSession unless we found one
 					convo.startNewSession = true;
-					convo.openWorkSession = false;
+					convo.liveWorkSession = false;
 
-					var openWorkSession = workSessions[0]; // deal with first one as reference point
-					convo.openWorkSession = openWorkSession;
+					var liveWorkSession = workSessions[0]; // deal with first one as reference point
+					convo.liveWorkSession = liveWorkSession;
 
-					var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime).tz(tz);
+					var endTime = (0, _momentTimezone2.default)(liveWorkSession.endTime).tz(tz);
 					var endTimeString = endTime.format("h:mm a");
 					var now = (0, _momentTimezone2.default)();
 					var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
@@ -122,7 +122,7 @@ exports.default = function (controller) {
 						console.log("\n\n\n ~~ here in end of confirm_new_session ~~ \n\n\n");
 
 						var startNewSession = convo.startNewSession;
-						var openWorkSession = convo.openWorkSession;
+						var liveWorkSession = convo.liveWorkSession;
 
 						// if user wants to start new session, then do this flow and enter `begin_session` flow
 
@@ -137,15 +137,17 @@ exports.default = function (controller) {
 
 							var now = (0, _momentTimezone2.default)();
 
-							// if user had an open work session(s), cancel them!
-							if (openWorkSession) {
-								openWorkSession.update({
+							// if user had any live work session(s), cancel them!
+							if (liveWorkSession) {
+								liveWorkSession.update({
 									endTime: now,
-									open: false
+									open: false,
+									live: false
 								});
 								workSessions.forEach(function (workSession) {
 									workSession.update({
-										open: false
+										open: false,
+										live: false
 									});
 								});
 							};
@@ -284,72 +286,101 @@ exports.default = function (controller) {
 						var newTask = sessionStart.newTask;
 						var tz = sessionStart.tz;
 
-						// if user wanted a checkin reminder
+						// cancel all user breaks cause user is RDY TO WORK
 
-						if (checkinTimeObject) {
-							_models2.default.Reminder.create({
-								remindTime: checkinTimeObject,
-								UserId: UserId,
-								customNote: reminderNote,
-								type: "work_session"
-							});
-						}
+						_models2.default.User.find({
+							where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+							include: [_models2.default.SlackUser]
+						}).then(function (user) {
 
-						// 1. create work session
-						// 2. attach the daily tasks to work on during that work session
-						var startTime = (0, _momentTimezone2.default)();
-						var endTime = calculatedTimeObject;
-
-						// create necessary data models:
-						//  array of Ids for insert, taskObjects to create taskListMessage
-						var dailyTaskIds = [];
-						var tasksToWorkOnArray = [];
-						for (var key in tasksToWorkOnHash) {
-							var task = tasksToWorkOnHash[key];
-							if (task.dataValues) {
-								// existing tasks
-								dailyTaskIds.push(task.dataValues.id);
-							}
-							tasksToWorkOnArray.push(task);
-						}
-
-						_models2.default.WorkSession.create({
-							startTime: startTime,
-							endTime: endTime,
-							UserId: UserId
-						}).then(function (workSession) {
-							workSession.setDailyTasks(dailyTaskIds);
-
-							// if new task, insert that into DB and attach to work session
-							if (newTask) {
-								(function () {
-
-									var priority = dailyTasks.length + 1;
-									var text = newTask.text;
-									var minutes = newTask.minutes;
-
-									_models2.default.Task.create({
-										text: text
-									}).then(function (task) {
-										_models2.default.DailyTask.create({
-											TaskId: task.id,
-											priority: priority,
-											minutes: minutes,
-											UserId: UserId
-										}).then(function (dailyTask) {
-											workSession.setDailyTasks([dailyTask.id]);
-										});
+							// END ALL REMINDERS BEFORE CREATING NEW ONE
+							user.getReminders({
+								where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break", "done_session_snooze"]]
+							}).then(function (reminders) {
+								reminders.forEach(function (reminder) {
+									reminder.update({
+										"open": false
 									});
-								})();
+								});
+								// if user wanted a checkin reminder
+								if (checkinTimeObject) {
+									_models2.default.Reminder.create({
+										remindTime: checkinTimeObject,
+										UserId: UserId,
+										customNote: reminderNote,
+										type: "work_session"
+									});
+								}
+							});
+
+							// 1. create work session
+							// 2. attach the daily tasks to work on during that work session
+							var startTime = (0, _momentTimezone2.default)();
+							var endTime = calculatedTimeObject;
+
+							// create necessary data models:
+							//  array of Ids for insert, taskObjects to create taskListMessage
+							var dailyTaskIds = [];
+							var tasksToWorkOnArray = [];
+							for (var key in tasksToWorkOnHash) {
+								var task = tasksToWorkOnHash[key];
+								if (task.dataValues) {
+									// existing tasks
+									dailyTaskIds.push(task.dataValues.id);
+								}
+								tasksToWorkOnArray.push(task);
 							}
-						});
 
-						var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(tasksToWorkOnArray);
+							// END ALL WORK SESSIONS BEFORE CREATING NEW ONE
+							user.getWorkSessions({
+								where: ['"live" = ?', true]
+							}).then(function (workSessions) {
+								workSessions.forEach(function (workSession) {
+									workSession.update({
+										open: false,
+										live: false
+									});
+								});
 
-						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-							convo.say('See you at *' + calculatedTime + '!* :timer_clock:');
-							convo.say('Good luck with: \n' + taskListMessage);
-							convo.next();
+								_models2.default.WorkSession.create({
+									startTime: startTime,
+									endTime: endTime,
+									UserId: UserId
+								}).then(function (workSession) {
+									workSession.setDailyTasks(dailyTaskIds);
+
+									// if new task, insert that into DB and attach to work session
+									if (newTask) {
+										(function () {
+
+											var priority = dailyTasks.length + 1;
+											var text = newTask.text;
+											var minutes = newTask.minutes;
+
+											_models2.default.Task.create({
+												text: text
+											}).then(function (task) {
+												_models2.default.DailyTask.create({
+													TaskId: task.id,
+													priority: priority,
+													minutes: minutes,
+													UserId: UserId
+												}).then(function (dailyTask) {
+													workSession.setDailyTasks([dailyTask.id]);
+												});
+											});
+										})();
+									}
+								});
+							});
+
+							var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(tasksToWorkOnArray);
+
+							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+								convo.say('See you at *' + calculatedTime + '!* :timer_clock:');
+								convo.say('Good luck with: \n' + taskListMessage);
+								convo.next();
+							});
 						});
 					} else {
 

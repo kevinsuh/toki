@@ -15,6 +15,7 @@ exports.convertTimeStringToMinutes = convertTimeStringToMinutes;
 exports.convertToSingleTaskObjectArray = convertToSingleTaskObjectArray;
 exports.prioritizeTaskArrayFromUserInput = prioritizeTaskArrayFromUserInput;
 exports.commaSeparateOutTaskArray = commaSeparateOutTaskArray;
+exports.getUpdateTaskListMessageObject = getUpdateTaskListMessageObject;
 
 var _constants = require('./constants');
 
@@ -32,7 +33,7 @@ function convertResponseObjectsToTaskArray(tasks) {
 	tasks.forEach(function (task, index) {
 		// ignore the last one (`done` command)
 		// also ignore if it is an `add a task` NL command
-		if (_constants.FINISH_WORD.reg_exp.test(task.text) || _botResponses.utterances.containsAdd.test(task.text) && _botResponses.utterances.containsTask.test(task.text)) {
+		if (_constants.FINISH_WORD.reg_exp.test(task.text)) {
 			return;
 		}
 
@@ -40,8 +41,8 @@ function convertResponseObjectsToTaskArray(tasks) {
 		taskString += '\n';
 	});
 
-	var commaOrNewLine = /[,\n]+/;
-	var taskStringArray = taskString.split(commaOrNewLine);
+	var newLine = /[\n]+/;
+	var taskStringArray = taskString.split(newLine);
 	taskStringArray.pop(); // last one will be \n with this reg ex split
 
 	// this is the final task array we are returning
@@ -96,6 +97,7 @@ function convertArrayToTaskListMessage(taskArray) {
 
 	var taskListMessage = '';
 	var count = 1;
+	var totalMinutes = 0;
 
 	if (taskArray.length == 0) {
 		console.log("array passed in is empty at convertArrayToTaskListMessage");
@@ -109,11 +111,25 @@ function convertArrayToTaskListMessage(taskArray) {
 	taskArray.forEach(function (task) {
 
 		// for when you get task from DB
+		var minutesMessage = '';
 		if (!options.dontUseDataValues && task.dataValues) {
 			task = task.dataValues;
 		};
 
-		var minutesMessage = !options.dontShowMinutes && task.minutes ? ' (' + task.minutes + ' minutes)' : '';
+		if (!options.dontShowMinutes && task.minutes) {
+
+			var minutesInt = parseInt(task.minutes);
+			if (!isNaN(minutesInt) && !task.done) {
+				totalMinutes += minutesInt;
+			}
+			var timeString = convertMinutesToHoursString(minutesInt);
+
+			if (options.emphasizeMinutes) {
+				minutesMessage = ' *_(' + timeString + ')_*';
+			} else {
+				minutesMessage = ' (' + timeString + ')';
+			}
+		}
 		var taskContent = count + ') ' + task.text + minutesMessage;
 
 		taskContent = task.done ? '~' + taskContent + '~\n' : taskContent + '\n';
@@ -123,7 +139,47 @@ function convertArrayToTaskListMessage(taskArray) {
 
 		count++;
 	});
+
+	if (options.calculateMinutes || true) {
+		// all taskListMessages will show this for now
+		var timeString = convertMinutesToHoursString(totalMinutes);
+		var totalMinutesContent = '\n*Total time estimate: ' + timeString + ' :clock730:*';
+		taskListMessage += totalMinutesContent;
+	}
+
 	return taskListMessage;
+}
+
+/**
+ * i.e. `75` => `1 hour 15 minutes`
+ * @param  {int} minutes number of minutes
+ * @return {string}         hour + minutes
+ */
+function convertMinutesToHoursString(minutes) {
+	minutes = parseInt(minutes);
+	var hours = 0;
+	while (minutes - 60 >= 0) {
+		hours++;
+		minutes -= 60;
+	}
+	var content = '';
+	if (hours == 0) {
+		content = '';
+	} else if (hours == 1) {
+		content = hours + ' hour ';
+	} else {
+		content = hours + ' hours ';
+	}
+
+	if (minutes == 0) {
+		content = '' + content;
+	} else if (minutes == 1) {
+		content = '' + content + minutes + ' minute';
+	} else {
+		content = '' + content + minutes + ' minutes';
+	}
+
+	return content;
 }
 
 /**
@@ -137,29 +193,63 @@ function convertTimeStringToMinutes(timeString) {
 	var totalMinutes = 0;
 	var timeArray = timeString.split(" ");
 
+	var totalMinutesCount = 0; // max of 1
+	var totalHoursCount = 0; // max of 1
 	for (var i = 0; i < timeArray.length; i++) {
 
-		if (isNaN(parseInt(timeArray[i]))) continue;
+		var numberValue = timeArray[i].match(/\d+/);
+		if (!numberValue) {
+			continue;
+		}
 
 		var minutes = 0;
 
-		// option 1: int with space (i.e. `1 hr`)
+		// OPTION 1: int with space (i.e. `1 hr`)
 		if (timeArray[i] == parseInt(timeArray[i])) {
 			minutes = parseInt(timeArray[i]);
 			var hourOrMinute = timeArray[i + 1];
 			if (hourOrMinute && hourOrMinute[0] == "h") {
 				minutes *= 60;
+				totalHoursCount++;
+			} else {
+				// number greater than 0
+				if (minutes > 0) {
+					totalMinutesCount++;
+				}
 			}
 		} else {
-			// option 2: int with no space (i.e. `1hr`)
-			// use hacky solution...
-			var minutes = parseInt(timeArray[i]);
-			var minuteString = String(minutes);
-			if (timeArray[i][minuteString.length] == "h") {
-				minutes *= 60;
-			}
+			// OPTION 2: No space b/w ints (i.e. 1hr)
+
+			// need to check for "h" or "m" in these instances
+			var timeString = timeArray[i];
+			var containsH = new RegExp(/[h]/);
+			var timeStringArray = timeString.split(containsH);
+
+			timeStringArray.forEach(function (element, index) {
+				var time = parseInt(element); // can be minutes or hours
+				if (isNaN(parseInt(element))) return;
+
+				// if string contains "h", then you can assume first one is hour
+				if (containsH.test(timeString)) {
+					if (index == 0) {
+						// hours
+						minutes += 60 * time;
+						totalHoursCount++;
+					} else {
+						// minutes
+						minutes += time;
+						totalMinutesCount++;
+					}
+				} else {
+					minutes += time;
+					totalMinutesCount++;
+				}
+			});
 		}
 
+		if (totalMinutesCount > 1 || totalHoursCount > 1) {
+			continue;
+		}
 		totalMinutes += minutes;
 	}
 
@@ -259,5 +349,35 @@ function commaSeparateOutTaskArray(a) {
 	// make into string
 	var string = [a.slice(0, -1).join(', '), a.slice(-1)[0]].join(a.length < 2 ? '' : ' and ');
 	return string;
+}
+
+// match the closest message that matches the CHANNEL_ID of this response to the CHANNEL_ID that the bot is speaking to
+function getUpdateTaskListMessageObject(response, bot) {
+
+	var userChannel = response.channel;
+	var sentMessages = bot.sentMessages;
+
+
+	var updateTaskListMessageObject = false;
+	if (sentMessages) {
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (var i = sentMessages.length - 1; i >= 0; i--) {
+
+			var message = sentMessages[i];
+			var channel = message.channel;
+			var ts = message.ts;
+
+			if (channel == userChannel) {
+				updateTaskListMessageObject = {
+					channel: channel,
+					ts: ts
+				};
+				break;
+			}
+		}
+	}
+
+	return updateTaskListMessageObject;
 }
 //# sourceMappingURL=messageHelpers.js.map

@@ -11,7 +11,8 @@ module.exports = function (sequelize, DataTypes) {
     admin: { type: DataTypes.BOOLEAN,
       defaultValue: false
     },
-    nickName: DataTypes.STRING
+    nickName: DataTypes.STRING,
+    defaultSnoozeTime: DataTypes.INTEGER
   }, {
 
     classMethods: {

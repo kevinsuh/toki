@@ -200,13 +200,14 @@ export default function(controller) {
 
 		    				// end all open work sessions. should only be one for the user
 		    				user.getWorkSessions({
-									where: [ `"open" = ?`, true ]
+									where: [ `"open" = ? OR "live" = ?`, true, true ]
 								})
 								.then((workSessions) => {
 									workSessions.forEach((workSession) => {
 										workSession.update({
 											endTime: now,
-											open: false
+											open: false,
+											live: false
 										})
 									})
 								})
