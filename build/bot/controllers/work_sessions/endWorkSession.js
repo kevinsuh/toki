@@ -103,7 +103,7 @@ exports.default = function (controller) {
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 			user.getDailyTasks({
-				where: ['"DailyTask"."id" IN (?)', dailyTaskIds],
+				where: ['"DailyTask"."id" IN (?) AND "Task"."done" = ?', dailyTaskIds, false],
 				include: [_models2.default.Task]
 			}).then(function (dailyTasks) {
 
@@ -141,8 +141,15 @@ exports.default = function (controller) {
 						convo.stop();
 					}, thirtyMinutes);
 
+					var message = '';
+					if (dailyTasks.length == 0) {
+						message = 'Hey, did you finish your tasks for this session?';
+					} else {
+						message = 'Hey, did you finish ' + tasksToWorkOnString + '?';
+					}
+
 					convo.ask({
-						text: 'Hey, did you finish ' + tasksToWorkOnString + '?',
+						text: message,
 						attachments: [{
 							attachment_type: 'default',
 							callback_id: "DONE_SESSION",

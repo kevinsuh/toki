@@ -125,7 +125,7 @@ export default function(controller) {
 		})
 		.then((user) => {
 			user.getDailyTasks({
-				where: [ `"DailyTask"."id" IN (?)`, dailyTaskIds ],
+				where: [ `"DailyTask"."id" IN (?) AND "Task"."done" = ?`, dailyTaskIds, false ],
 				include: [ models.Task ]
 			})
 			.then((dailyTasks) => {
@@ -163,8 +163,15 @@ export default function(controller) {
 						convo.stop();
 					}, thirtyMinutes);
 
+					var message = ``;
+					if (dailyTasks.length == 0) {
+						message = `Hey, did you finish your tasks for this session?`;
+					} else {
+						message = `Hey, did you finish ${tasksToWorkOnString}?`
+					}
+
 					convo.ask({
-						text: `Hey, did you finish ${tasksToWorkOnString}?`,
+						text: message,
 						attachments:[
 							{
 								attachment_type: 'default',

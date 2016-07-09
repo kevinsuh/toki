@@ -112,7 +112,7 @@ export default function(controller) {
 					});
 					break;
 				case buttonValues.doneSessionTimeoutDidSomethingElse.value:
-					bot.replyInteractive(message, `:ocean: Woo!`);
+					bot.replyInteractive(message, `Woo! :ocean:`);
 					controller.trigger(`done_session_something_else_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				case buttonValues.doneSessionTimeoutNo.value:
