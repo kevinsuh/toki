@@ -201,10 +201,22 @@ function askForDayTasks(response, convo) {
 	var task = convo.task;
 	var bot = task.bot;
 	var source_message = task.source_message;
+	var useHelperText = convo.dayStart.useHelperText;
 
 
 	var tasks = [];
+
+	if (useHelperText) {
+		convo.say("This is where I help you plan the tasks you intend to accomplish each day");
+		convo.say("I'll help you walk through this first planning session :dancers: This process will be more streamlined the next time, once you learn how it works :raised_hands:");
+	}
+
 	convo.say('What tasks would you like to work on today? :pencil:');
+
+	if (useHelperText) {
+		convo.say("Don't worry - if the tasks you'd like to work on change, you can update your list by telling me, `I'd like to add a task` or something along those lines :grinning:");
+	}
+
 	convo.ask('Please enter all of the tasks in one line, separated by commas, or just send me each task in a separate line. Then just tell me when you\'re done by saying `' + _constants.FINISH_WORD.word + '`', function (response, convo) {
 
 		tasks.push(response);

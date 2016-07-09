@@ -21,7 +21,6 @@ exports.default = function (controller) {
 	/**
   * 		User directly asks to start day
   * 				~* via Wit *~
-  * 			confirm for `begin_day_flow`
   */
 	controller.hears(['start_day'], 'direct_message', _index.wit.hears, function (bot, message) {
 
@@ -54,7 +53,7 @@ exports.default = function (controller) {
 	/**
   * 			User confirms he is wanting to
   * 					start his day. confirmation
-  * 				needed every time b/c this resets everything
+  * 				needed EVERY time b/c this resets everything
   */
 
 	controller.on('user_confirm_new_day', function (bot, config) {
@@ -66,36 +65,51 @@ exports.default = function (controller) {
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 
-			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+			user.getSessionGroups({
+				limit: 5,
+				where: ['"SessionGroup"."type" = ?', "start_work"]
+			}).then(function (sessionGroups) {
 
-				var name = user.nickName || user.email;
-				convo.name = name;
-				convo.readyToStartDay = false;
+				var useHelperText = false;
+				if (sessionGroups.length == 0) {
+					// if user has 0 start days, then we will trigger helper text flow
+					useHelperText = true;
+				}
 
-				convo.ask('Would you like to start your day?', [{
-					pattern: _botResponses.utterances.yes,
-					callback: function callback(response, convo) {
-						convo.say("Let's do it! :car: :dash:");
-						convo.readyToStartDay = true;
-						convo.next();
-					}
-				}, {
-					pattern: _botResponses.utterances.no,
-					callback: function callback(response, convo) {
-						convo.say("Okay. Let me know whenever you're ready to start your day :wave:");
-						convo.next();
-					}
-				}, {
-					default: true,
-					callback: function callback(response, convo) {
-						convo.say("Couldn't quite catch that. Let me know whenever you're ready to `start your day` :wave:");
-						convo.next();
-					}
-				}]);
-				convo.on('end', function (convo) {
-					if (convo.readyToStartDay) {
-						controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
-					}
+				// testing for now
+				useHelperText = true;
+
+				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+					var name = user.nickName || user.email;
+					convo.name = name;
+					convo.readyToStartDay = false;
+
+					convo.ask('Would you like to start your day?', [{
+						pattern: _botResponses.utterances.yes,
+						callback: function callback(response, convo) {
+							convo.say("Let's do it! :car: :dash:");
+							convo.readyToStartDay = true;
+							convo.next();
+						}
+					}, {
+						pattern: _botResponses.utterances.no,
+						callback: function callback(response, convo) {
+							convo.say("Okay. Let me know whenever you're ready to start your day :wave:");
+							convo.next();
+						}
+					}, {
+						default: true,
+						callback: function callback(response, convo) {
+							convo.say("Couldn't quite catch that. Let me know whenever you're ready to `start your day` :wave:");
+							convo.next();
+						}
+					}]);
+					convo.on('end', function (convo) {
+						if (convo.readyToStartDay) {
+							controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId, useHelperText: useHelperText }]);
+						}
+					});
 				});
 			});
 		});
@@ -111,6 +125,7 @@ exports.default = function (controller) {
  */
 	controller.on('begin_day_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
+		var useHelperText = config.useHelperText;
 
 
 		_models2.default.User.find({
@@ -126,6 +141,7 @@ exports.default = function (controller) {
 				convo.dayStart = {
 					bot: bot,
 					UserId: user.id,
+					useHelperText: useHelperText,
 					startDayDecision: false, // what does user want to do with day
 					prioritizedTaskArray: [] // the final tasks to do for the day
 				};
