@@ -118,14 +118,15 @@ function convertArrayToTaskListMessage(taskArray) {
 		if (!options.dontShowMinutes && task.minutes) {
 
 			var minutesInt = parseInt(task.minutes);
-			if (!isNaN(minutesInt)) {
+			if (!isNaN(minutesInt) && !task.done) {
 				totalMinutes += minutesInt;
 			}
+			var timeString = convertMinutesToHoursString(minutesInt);
 
 			if (options.emphasizeMinutes) {
-				minutesMessage = ' *_(' + task.minutes + ' minutes)_*';
+				minutesMessage = ' *_(' + timeString + ')_*';
 			} else {
-				minutesMessage = ' (' + task.minutes + ' minutes)';
+				minutesMessage = ' (' + timeString + ')';
 			}
 		}
 		var taskContent = count + ') ' + task.text + minutesMessage;
@@ -138,7 +139,8 @@ function convertArrayToTaskListMessage(taskArray) {
 		count++;
 	});
 
-	if (options.calculateMinutes) {
+	if (options.calculateMinutes || true) {
+		// all taskListMessages will show this for now
 		var timeString = convertMinutesToHoursString(totalMinutes);
 		var totalMinutesContent = '\n*Total time estimate: ' + timeString + ' :clock730:*';
 		taskListMessage += totalMinutesContent;
@@ -153,19 +155,29 @@ function convertArrayToTaskListMessage(taskArray) {
  * @return {string}         hour + minutes
  */
 function convertMinutesToHoursString(minutes) {
+	minutes = parseInt(minutes);
 	var hours = 0;
-	while (minutes - 60 > 0) {
+	while (minutes - 60 >= 0) {
 		hours++;
 		minutes -= 60;
 	}
 	var content = '';
 	if (hours == 0) {
-		content = minutes + ' minutes';
+		content = '';
 	} else if (hours == 1) {
-		content = hours + ' hour ' + minutes + ' minutes';
+		content = hours + ' hour';
 	} else {
-		content = hours + ' hours ' + minutes + ' minutes';
+		content = hours + ' hours';
 	}
+
+	if (minutes == 0) {
+		content = '' + content;
+	} else if (minutes == 1) {
+		content = content + ' ' + minutes + ' minute';
+	} else {
+		content = content + ' ' + minutes + ' minutes';
+	}
+
 	return content;
 }
 

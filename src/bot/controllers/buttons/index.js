@@ -2,10 +2,10 @@ import os from 'os';
 import { wit } from '../index';
 import http from 'http';
 import bodyParser from 'body-parser';
-import moment from 'moment';
 
 import models from '../../../app/models';
 import { buttonValues } from '../../lib/constants';
+import moment from 'moment-timezone';
 
 // base controller for "buttons" flow
 export default function(controller) {
@@ -87,13 +87,49 @@ export default function(controller) {
 					bot.replyInteractive(message, "Let's do it!")
 					break;
 				case buttonValues.startSession.value:
-					bot.replyInteractive(message, "Let's kick off a new session :soccer:")
+					bot.replyInteractive(message, ":boom: boom")
 					break;
 				case buttonValues.endDay.value:
 					bot.replyInteractive(message, "It's about that time, isn't it?")
 					break;
 				case buttonValues.resetTimes.value:
-				bot.replyInteractive(message, "_Resetting :repeat:..._")
+					bot.replyInteractive(message, "_Resetting :repeat:..._")
+					break;
+				case buttonValues.doneSessionTimeoutYes.value:
+					bot.replyInteractive(message, "Great work! :raised_hands:")
+					controller.trigger(`done_session_yes_flow`, [ bot, { SlackUserId, botCallback: true }]);
+					break;
+				case buttonValues.doneSessionTimeoutSnooze.value:
+					models.User.find({
+						where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+						include: [
+							models.SlackUser
+						]
+					})
+					.then((user) => {
+						bot.replyInteractive(message, `Keep at it!`);
+						controller.trigger(`done_session_snooze_button_flow`, [ bot, { SlackUserId, botCallback: true }]);
+					});
+					break;
+				case buttonValues.doneSessionTimeoutDidSomethingElse.value:
+					bot.replyInteractive(message, `Woo! :ocean:`);
+					controller.trigger(`end_session`, [ bot, { SlackUserId, botCallback: true }]);
+					break;
+				case buttonValues.doneSessionTimeoutNo.value:
+					bot.replyInteractive(message, `That's okay! You can keep chipping away and you'll get there :pick:`);
+					controller.trigger(`done_session_no_flow`, [ bot, { SlackUserId, botCallback: true }]);
+					break;
+				case buttonValues.doneSessionYes.value:
+					bot.replyInteractive(message, "Great work! :raised_hands:")
+					break;
+				case buttonValues.doneSessionSnooze.value:
+					bot.replyInteractive(message, `Keep at it!`);
+					break;
+				case buttonValues.doneSessionDidSomethingElse.value:
+					bot.replyInteractive(message, `:ocean: Woo!`);
+					break;
+				case buttonValues.doneSessionNo.value:
+					bot.replyInteractive(message, `That's okay! You can keep chipping away and you'll get there :pick:`);
 					break;
 				default:
 					// some default to replace button no matter what

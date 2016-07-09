@@ -3,13 +3,15 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.hoursForExpirationTime = undefined;
+exports.sessionTimerDecisions = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
 var _moment2 = _interopRequireDefault(_moment);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var TOKI_DEFAULT_SNOOZE_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = 9;
 
 var hoursForExpirationTime = exports.hoursForExpirationTime = 6;
 
@@ -210,6 +212,38 @@ var buttonValues = exports.buttonValues = {
 	resetTimes: {
 		name: "RESET_TIMES",
 		value: "RESET_TIMES"
+	},
+	doneSessionTimeoutSnooze: {
+		name: "DONE_SESSION_TIMEOUT_SNOOZE",
+		value: "DONE_SESSION_TIMEOUT_SNOOZE"
+	},
+	doneSessionTimeoutYes: {
+		name: "DONE_SESSION_TIMEOUT_YES",
+		value: "DONE_SESSION_TIMEOUT_YES"
+	},
+	doneSessionTimeoutNo: {
+		name: "DONE_SESSION_TIMEOUT_NO",
+		value: "DONE_SESSION_TIMEOUT_NO"
+	},
+	doneSessionTimeoutDidSomethingElse: {
+		name: "DONE_SESSION_TIMEOUT_DID_SOMETHING_ELSE",
+		value: "DONE_SESSION_TIMEOUT_DID_SOMETHING_ELSE"
+	},
+	doneSessionSnooze: {
+		name: "DONE_SESSION_SNOOZE",
+		value: "DONE_SESSION_SNOOZE"
+	},
+	doneSessionYes: {
+		name: "DONE_SESSION_YES",
+		value: "DONE_SESSION_YES"
+	},
+	doneSessionNo: {
+		name: "DONE_SESSION_NO",
+		value: "DONE_SESSION_NO"
+	},
+	doneSessionDidSomethingElse: {
+		name: "DONE_SESSION_DID_SOMETHING_ELSE",
+		value: "DONE_SESSION_DID_SOMETHING_ELSE"
 	}
 };
 
@@ -269,4 +303,11 @@ var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
 	callback_id: "TOKI_OPTIONS",
 	fallback: "Starting your day"
 }];
+
+var sessionTimerDecisions = exports.sessionTimerDecisions = {
+	didTask: "DID_TASK",
+	snooze: "SNOOZE",
+	didSomethingElse: "DID_SOMETHING_ELSE",
+	noTasks: "NO_TASKS"
+};
 //# sourceMappingURL=constants.js.map

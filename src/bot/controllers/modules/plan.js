@@ -401,7 +401,7 @@ function getTimeToTasks(response, convo) {
 // this is the work we do to actually assign time to tasks
 function confirmTimeToTasks(timeToTasksArray, convo) {
 
-	convo.ask("Are these times right?", [
+	convo.ask("Are those times right?", [
 		{
 			pattern: utterances.yes,
 			callback: (response, convo) => {

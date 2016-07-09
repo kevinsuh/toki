@@ -1,5 +1,6 @@
 import { bots } from '../bot/controllers';
 import { controller } from '../bot/controllers';
+import { constants } from './lib/constants';
 
 // sequelize models
 import models from './models';
@@ -24,7 +25,9 @@ var checkForSessions = () => {
 	var now = moment.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 
 	models.WorkSession.findAll({
-		where: [ `"endTime" < ? AND open = ?`, now, true ]
+		where: [ `"endTime" < ? AND live = ?`, now, true ],
+		order: `"WorkSession"."createdAt" DESC`,
+		include: [ models.DailyTask ]
 	}).then((workSessions) => {
 
 		// these are the work sessions that have ended within last 5 minutes
@@ -34,7 +37,7 @@ var checkForSessions = () => {
 
 		workSessions.forEach((workSession) => {
 
-			const { UserId, open } = workSession;
+			const { UserId, open, live } = workSession;
 
 			/**
 			 * 		For each work session
@@ -43,40 +46,41 @@ var checkForSessions = () => {
 			 */
 			
 			workSession.update({
-				open: false
+				live: false
 			})
-			.then(() => {
-				return models.User.find({
+			.then((workSession) => {
+				models.User.find({
 					where: { id: UserId },
 					include: [ models.SlackUser ]
-				});
-			})
-			.then((user) => {
-
-				var { SlackUserId } = user.SlackUser;
-				var config = {
-					SlackUserId
-				}
-
-				// we need to find the bot that contains this user
-				// 1. find team of slack user
-				// 2. get token of that team
-				// 3. get that bot by token
-				
-				const { SlackUser: { TeamId } } = user;
-
-				models.Team.find({
-					where: { TeamId }
 				})
-				.then((team) => {
-					const { token } = team;
-					var bot = bots[token];
-					if (bot) {
-						// alarm is up for session
-						controller.trigger('session_timer_up', [bot, config]);
-					}
-				});
+				.then((user) => {
 
+					var { SlackUserId } = user.SlackUser;
+					var config = {
+						SlackUserId,
+						workSession
+					}
+
+					// we need to find the bot that contains this user
+					// 1. find team of slack user
+					// 2. get token of that team
+					// 3. get that bot by token
+					
+					const { SlackUser: { TeamId } } = user;
+
+					models.Team.find({
+						where: { TeamId }
+					})
+					.then((team) => {
+						const { token } = team;
+						var bot = bots[token];
+						if (bot) {
+							// alarm is up for session
+							controller.trigger('session_timer_up', [bot, config]);
+						}
+					});
+
+				})
 			})
 
 		});
@@ -106,20 +110,21 @@ var checkForReminders = () => {
 			// 3. send the reminder
 			
 			reminder.update({
-		    	open: false
-		   })
+					open: false
+			 })
 			.then(() => {
 				return models.User.find({
-			    where: { id: UserId },
-			    include: [
-			      models.SlackUser
-			    ]
-			  })
-			  
+					where: { id: UserId },
+					include: [
+						models.SlackUser
+					]
+				})
+				
 			})
 			.then((user) => {
 
-				const { SlackUser: { TeamId } } = user;
+				const { SlackUser: { TeamId, SlackUserId } } = user;
+
 				models.Team.find({
 					where: { TeamId }
 				})
@@ -129,25 +134,51 @@ var checkForReminders = () => {
 
 					if (bot) {
 
-						// alarm is up for reminder
-						// send the message!
-				    bot.startPrivateConversation({
-				      user: user.SlackUser.SlackUserId 
-				    }, (err, convo) => {
+						if (reminder.type == constants.reminders.doneSessionSnooze) {
+							
+							const UserId = user.id;
+							user.getWorkSessions({
+								where: [`"WorkSession"."UserId" = ?`, UserId],
+								order: `"WorkSession"."createdAt" DESC`,
+								limit: 1
+							})
+							.then((workSessions) => {
+								// get most recent work session for snooze option
+								if (workSessions.length > 0) {
+									var workSession = workSessions[0];
+									workSession.getDailyTasks({})
+									.then((dailyTasks) => {
+										workSession.DailyTasks = dailyTasks;
+										var config = {
+											workSession,
+											SlackUserId
+										}
+										controller.trigger(`session_timer_up`, [ bot, config ]);
+									})
+								}
+							})
 
-				    	if (convo) {
-				    		var customNote = reminder.customNote ? `(\`${reminder.customNote}\`)` : '';
-					    	var message = `Hey! You wanted a reminder ${customNote} :smiley: :alarm_clock: `;
+						} else {
+							// alarm is up for reminder
+							// send the message!
+							bot.startPrivateConversation({
+								user: user.SlackUser.SlackUserId 
+							}, (err, convo) => {
 
-					    	convo.say(message);
-				    	}
-				    	
-				    });
+								if (convo) {
+									var customNote = reminder.customNote ? `(\`${reminder.customNote}\`)` : '';
+									var message = `Hey! You wanted a reminder ${customNote} :smiley: :alarm_clock: `;
+
+									convo.say(message);
+								}
+								
+							});
+						}
 
 					}
 				});
 
-		  });
+			});
 
 		});
 	});
