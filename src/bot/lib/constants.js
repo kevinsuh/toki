@@ -260,6 +260,26 @@ export const buttonValues ={
 	editTaskList: {
 		value: "EDIT_TASK_LIST",
 		name: "EDIT_TASK_LIST"
+	},
+	addTasks: {
+		value: "ADD_TASKS",
+		name: "ADD_TASKS"
+	},
+	markComplete: {
+		value: "MARK_TASK_COMPLETE",
+		name: "MARK_TASK_COMPLETE"
+	},
+	deleteTasks: {
+		value: "DELETE_TASKS",
+		name: "DELETE_TASKS"
+	},
+	editTaskTimes: {
+		value: "EDIT_TASK_TIMES",
+		name: "EDIT_TASK_TIMES"
+	},
+	neverMindTasks: {
+		value: "NEVER_MIND_TASKS",
+		name: "NEVER_MIND_TASKS"
 	}
 }
 

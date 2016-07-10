@@ -149,6 +149,21 @@ export default function(controller) {
 				case buttonValues.editTaskList.value:
 					bot.replyInteractive(message, `Okay! Let's edit your task list`);
 					break;
+				case buttonValues.addTasks.value:
+					bot.replyInteractive(message, `Boom! Let's add some tasks :muscle:`);
+					break;
+				case buttonValues.markComplete.value:
+					bot.replyInteractive(message, `Woo! Let's check off some tasks :grin:`);
+					break;
+				case buttonValues.deleteTasks.value:
+					bot.replyInteractive(message, `Okay! Let's remove some tasks `);
+					break;
+				case buttonValues.neverMindTasks.value:
+					bot.replyInteractive(message, "Okay! Keep at it :smile_cat:")
+					break;
+				case buttonValues.editTaskTimes.value:
+					bot.replyInteractive(message, "Let's do this :hourglass:");
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");
