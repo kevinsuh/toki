@@ -25,7 +25,8 @@ export function showPendingTasks(response, convo) {
 	var { pendingTasks }          = convo.dayStart;
 
 	var options = {
-		dontShowMinutes: true
+		dontShowMinutes: true,
+		dontCalculateMinutes: true
 	}
 	var taskListMessage = convertArrayToTaskListMessage(pendingTasks, options);
 	convo.say("Which of these outstanding tasks would you still like to work on? Just tell me the numbers :1234:");
@@ -201,21 +202,11 @@ export function askForDayTasks(response, convo){
 	}
 
 	convo.say(`What tasks would you like to work on today? :pencil:`);
-<<<<<<< HEAD:src/bot/controllers/days/startDayFunctions.js
-
 	if (useHelperText) {
 		convo.say("Don't worry - if the tasks you'd like to work on change, you can update your list by telling me, `I'd like to add a task` or something along those lines :grinning:");
 	}
 
-	convo.ask(`Please enter all of the tasks in one line, separated by commas, or just send me each task in a separate line. Then just tell me when you're done by saying \`${FINISH_WORD.word}\``, (response, convo) => {
-
-		for (var i = 0; i < EXIT_EARLY_WORDS.length; i++) {
-			if (response.text == EXIT_EARLY_WORDS[i])
-				convo.stop();
-		}
-=======
 	convo.ask(`Please send me each task in a separate line. Then just tell me when you're done by saying \`${FINISH_WORD.word}\``, (response, convo) => {
->>>>>>> master:src/bot/controllers/modules/plan.js
 
 		tasks.push(response);
 		if (FINISH_WORD.reg_exp.test(response.text)) {
@@ -365,7 +356,7 @@ function getTimeToTasks(response, convo) {
 						}
 					});
 
-					var taskListMessage = convertArrayToTaskListMessage(taskArray, { dontUseDataValues: true, emphasizeMinutes: true, calculateMinutes: true });
+					var taskListMessage = convertArrayToTaskListMessage(taskArray, { dontUseDataValues: true, emphasizeMinutes: true });
 
 					updateTaskListMessageObject.text = taskListMessage;
 					bot.api.chat.update(updateTaskListMessageObject);

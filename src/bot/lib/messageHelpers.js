@@ -125,7 +125,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		count++;
 	});
 
-	if (options.calculateMinutes || true) { // all taskListMessages will show this for now
+	if (!options.dontCalculateMinutes) { // taskListMessages default to show calculated minutes
 		var timeString = convertMinutesToHoursString(totalMinutes);
 		var totalMinutesContent = `\n*Total time estimate: ${timeString} :clock730:*`;
 		taskListMessage += totalMinutesContent;
