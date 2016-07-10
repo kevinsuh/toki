@@ -90,7 +90,7 @@ export default function(controller) {
 				}
 
 				// testing for now
-				useHelperText = true;
+				// useHelperText = true;
 
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 

@@ -86,6 +86,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 
 	if (taskArray.length  == 0) {
 		console.log("array passed in is empty at convertArrayToTaskListMessage");
+		taskListMessage = '> :tangerine:';
 		return taskListMessage;
 	}
 
