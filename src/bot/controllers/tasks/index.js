@@ -90,8 +90,10 @@ export default function(controller) {
 					dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
 
 					convo.tasksEdit = {
+						bot,
 						SlackUserId,
-						dailyTasks
+						dailyTasks,
+						updateTaskListMessageObject = {}
 					}
 
 					if (dailyTasks.length == 0) {

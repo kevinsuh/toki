@@ -68,6 +68,7 @@ exports.default = function (controller) {
 					dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
 
 					convo.tasksEdit = {
+						bot: bot,
 						SlackUserId: SlackUserId,
 						dailyTasks: dailyTasks
 					};

@@ -6,18 +6,19 @@ import moment from 'moment';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsHash, buttonValues } from '../../lib/constants';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
+import { colorsHash, buttonValues, FINISH_WORD } from '../../lib/constants';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, getUpdateTaskListMessageObject } from '../../lib/messageHelpers';
 
 // this one shows the task list message and asks for options
 export function startEditTaskListMessage(convo) {
 
-	const { dailyTasks } = convo.tasksEdit;
+	const { tasksEdit: { dailyTasks, bot } } = convo;
 
 	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 
 	convo.say("Here are your tasks for today :memo::");
 	convo.say(taskListMessage);
+
 	askForTaskListOptions(convo);
 	convo.next();
 }
@@ -154,7 +155,63 @@ function askForTaskListOptions(convo) {
 }
 
 function addTasksFlow(response, convo) {
-	convo.say("~~ ADDING TASKS ~~");
+
+	var { tasksEdit: { bot, dailyTasks, updateTaskListMessageObject } } = convo;
+	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+
+	var newTasks = [];
+	dailyTasks.forEach((dailyTask) => {
+		newTasks.push(dailyTask);
+	});
+	// newTasks is just a copy of dailyTasks (you're saved tasks)
+	convo.say(`What tasks would you like to add to your list? Please send me each task in a separate line`);
+	convo.say("Then just tell me when you're `done`!");
+	convo.ask({
+		text: taskListMessage,
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "ADD_TASKS",
+				fallback: "What tasks do you want to add?",
+			}
+		]
+	},
+	[
+		{ // this is failure point. restart with question
+			default: true,
+			callback: function(response, convo) {
+				console.log("BOT's SENT MESSAGES:");
+				console.log(bot.sentMessages);
+				console.log("\n\n\n\n");
+				updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
+				convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
+
+				const { text } = response;
+				const newTask = {
+					text,
+					newTask: true
+				}
+				newTasks.push(newTask);
+
+				// everything except done!
+				if (FINISH_WORD.reg_exp.test(response.text)) {
+					saveNewTaskResponses(newTasks, convo);
+					convo.say("Excellent!");
+					convo.next();
+				} else {
+					taskListMessage = convertArrayToTaskListMessage(newTasks)
+					updateTaskListMessageObject.text = taskListMessage;
+					bot.api.chat.update(updateTaskListMessageObject);
+				}
+			}
+		}
+	]);
+
+	convo.next();
+}
+
+function saveNewTaskResponses(newTasks, convo) {
+	convo.say("NEW TASKS!!!");
 	convo.next();
 }
 

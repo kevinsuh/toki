@@ -33,13 +33,16 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 // this one shows the task list message and asks for options
 function startEditTaskListMessage(convo) {
-	var dailyTasks = convo.tasksEdit.dailyTasks;
+	var _convo$tasksEdit = convo.tasksEdit;
+	var dailyTasks = _convo$tasksEdit.dailyTasks;
+	var bot = _convo$tasksEdit.bot;
 
 
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
 
 	convo.say("Here are your tasks for today :memo::");
 	convo.say(taskListMessage);
+
 	askForTaskListOptions(convo);
 	convo.next();
 }
@@ -155,7 +158,62 @@ function askForTaskListOptions(convo) {
 }
 
 function addTasksFlow(response, convo) {
-	convo.say("~~ ADDING TASKS ~~");
+	var _convo$tasksEdit2 = convo.tasksEdit;
+	var bot = _convo$tasksEdit2.bot;
+	var dailyTasks = _convo$tasksEdit2.dailyTasks;
+	var updateTaskListMessageObject = _convo$tasksEdit2.updateTaskListMessageObject;
+
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
+
+	var newTasks = [];
+	dailyTasks.forEach(function (dailyTask) {
+		newTasks.push(dailyTask);
+	});
+	// newTasks is just a copy of dailyTasks (you're saved tasks)
+	convo.say('What tasks would you like to add to your list? Please send me each task in a separate line');
+	convo.say("Then just tell me when you're `done`!");
+	convo.ask({
+		text: taskListMessage,
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "ADD_TASKS",
+			fallback: "What tasks do you want to add?"
+		}]
+	}, [{ // this is failure point. restart with question
+		default: true,
+		callback: function callback(response, convo) {
+			console.log("BOT's SENT MESSAGES:");
+			console.log(bot.sentMessages);
+			console.log("\n\n\n\n");
+			updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
+			convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
+
+			var text = response.text;
+
+			var newTask = {
+				text: text,
+				newTask: true
+			};
+			newTasks.push(newTask);
+
+			// everything except done!
+			if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
+				saveNewTaskResponses(newTasks, convo);
+				convo.say("Excellent!");
+				convo.next();
+			} else {
+				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(newTasks);
+				updateTaskListMessageObject.text = taskListMessage;
+				bot.api.chat.update(updateTaskListMessageObject);
+			}
+		}
+	}]);
+
+	convo.next();
+}
+
+function saveNewTaskResponses(newTasks, convo) {
+	convo.say("NEW TASKS!!!");
 	convo.next();
 }
 
