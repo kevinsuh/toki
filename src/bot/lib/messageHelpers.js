@@ -342,9 +342,8 @@ export function commaSeparateOutTaskArray(a) {
 }
 
 // match the closest message that matches the CHANNEL_ID of this response to the CHANNEL_ID that the bot is speaking to
-export function getUpdateTaskListMessageObject(response, bot) {
+export function getUpdateTaskListMessageObject(userChannel, bot) {
 	
-	const userChannel = response.channel;
 	var { sentMessages } = bot;
 
 	var updateTaskListMessageObject = false;

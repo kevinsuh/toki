@@ -292,7 +292,7 @@ function getTimeToTasks(response, convo) {
 			pattern: buttonValues.resetTimes.value,
 			callback: (response, convo) => {
 
-				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response, bot);
+				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
 				if (updateTaskListMessageObject) {
 					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 					// reset ze task list message
@@ -309,7 +309,7 @@ function getTimeToTasks(response, convo) {
 			pattern: RESET.reg_exp,
 			callback: (response, convo) => {
 
-				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response, bot);
+				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
 				if (updateTaskListMessageObject) {
 					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 					// reset ze task list message
@@ -327,7 +327,7 @@ function getTimeToTasks(response, convo) {
 			default: true,
 			callback: function(response, convo) {
 
-				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response, bot);
+				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
 
 				if (updateTaskListMessageObject) {
 					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
