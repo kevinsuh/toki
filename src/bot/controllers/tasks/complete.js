@@ -12,7 +12,9 @@ import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '.
 // completed task controller
 export default function(controller) {
 
-	controller.hears(['completed_task'], 'direct_message', wit.hears, (bot, message) => {
+
+if (false) {
+	controller.hears(['NO_LONGER_RELEVANT'], 'direct_message', wit.hears, (bot, message) => {
 
 		const SlackUserId = message.user;
 		var channel       = message.channel;
@@ -170,6 +172,8 @@ export default function(controller) {
 			})
 		}, 1000);
 	});
+}
+
 };
 
 // ask which tasks to complete

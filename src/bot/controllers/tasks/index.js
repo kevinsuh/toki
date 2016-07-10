@@ -12,6 +12,8 @@ import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '.
 import addTaskController from './add';
 import completeTasksController from './complete';
 
+import { startEditTaskListMessage } from './editTaskListFunctions';
+
 // base controller for tasks
 export default function(controller) {
 
@@ -64,7 +66,53 @@ export default function(controller) {
 
 	});
 
-	controller.hears(['daily_tasks'], 'direct_message', wit.hears, (bot, message) => {
+	controller.on(`edit_tasks_flow`, (bot, config) => {
+
+		const { SlackUserId } = config;
+
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			user.getDailyTasks({
+				where: [`"DailyTask"."type" = ?`, "live"],
+				include: [ models.Task ],
+				order: `"DailyTask"."priority" ASC`
+			})
+			.then((dailyTasks) => {
+
+				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+					dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
+
+					convo.tasksEdit = {
+						SlackUserId,
+						dailyTasks
+					}
+
+					if (dailyTasks.length == 0) {
+						convo.say("Looks like you don't have any tasks for today!");
+						convo.say("Let me know if you want to `start your day` or `add tasks` to an existing day :memo:");
+					} else {
+						// this is the flow you expect for editing tasks
+						startEditTaskListMessage(convo);
+					}
+          convo.on('end', (convo) => {
+          	console.log("\n\n ~ view tasks finished ~ \n\n");
+          });
+        });
+
+			});
+
+		})
+
+	});
+
+	controller.hears(['daily_tasks', 'completed_task'], 'direct_message', wit.hears, (bot, message) => {
 
 		const SlackUserId = message.user;
 		var channel       = message.channel;
@@ -75,7 +123,7 @@ export default function(controller) {
 		});
 
 		setTimeout(() => {
-			controller.trigger(`view_daily_tasks_flow`, [ bot, { SlackUserId } ]);
+			controller.trigger(`edit_tasks_flow`, [ bot, { SlackUserId } ]);
 		}, 1000);
 
 	});

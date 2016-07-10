@@ -48,7 +48,46 @@ exports.default = function (controller) {
 		});
 	});
 
-	controller.hears(['daily_tasks'], 'direct_message', _index.wit.hears, function (bot, message) {
+	controller.on('edit_tasks_flow', function (bot, config) {
+		var SlackUserId = config.SlackUserId;
+
+
+		_models2.default.User.find({
+			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+			include: [_models2.default.SlackUser]
+		}).then(function (user) {
+
+			user.getDailyTasks({
+				where: ['"DailyTask"."type" = ?', "live"],
+				include: [_models2.default.Task],
+				order: '"DailyTask"."priority" ASC'
+			}).then(function (dailyTasks) {
+
+				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+					dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
+
+					convo.tasksEdit = {
+						SlackUserId: SlackUserId,
+						dailyTasks: dailyTasks
+					};
+
+					if (dailyTasks.length == 0) {
+						convo.say("Looks like you don't have any tasks for today!");
+						convo.say("Let me know if you want to `start your day` or `add tasks` to an existing day :memo:");
+					} else {
+						// this is the flow you expect for editing tasks
+						(0, _editTaskListFunctions.startEditTaskListMessage)(convo);
+					}
+					convo.on('end', function (convo) {
+						console.log("\n\n ~ view tasks finished ~ \n\n");
+					});
+				});
+			});
+		});
+	});
+
+	controller.hears(['daily_tasks', 'completed_task'], 'direct_message', _index.wit.hears, function (bot, message) {
 
 		var SlackUserId = message.user;
 		var channel = message.channel;
@@ -59,7 +98,7 @@ exports.default = function (controller) {
 		});
 
 		setTimeout(function () {
-			controller.trigger('view_daily_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
+			controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
 		}, 1000);
 	});
 };
@@ -97,6 +136,8 @@ var _add2 = _interopRequireDefault(_add);
 var _complete = require('./complete');
 
 var _complete2 = _interopRequireDefault(_complete);
+
+var _editTaskListFunctions = require('./editTaskListFunctions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 

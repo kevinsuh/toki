@@ -6,6 +6,7 @@ const intentConfig =  {
 	END_SESSION: 'end_session',
 	ADD_TASK: 'add_daily_task',
 	VIEW_TASKS: 'daily_tasks',
+	EDIT_TASKS: 'edit_tasks',
 	REMINDER: 'reminder'
 }
 

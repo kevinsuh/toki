@@ -366,6 +366,9 @@ controller.on('new_session_group_decision', function (bot, config) {
 						case _intents2.default.VIEW_TASKS:
 							controller.trigger('view_daily_tasks_flow', [bot, { SlackUserId: SlackUserId, message: message }]);
 							break;
+						case _intents2.default.EDIT_TASKS:
+							controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
+							break;
 						case _intents2.default.END_DAY:
 							controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
 							break;
