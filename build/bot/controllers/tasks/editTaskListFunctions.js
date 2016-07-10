@@ -78,9 +78,9 @@ function askForTaskListOptions(convo) {
 				type: "button",
 				style: "danger"
 			}, {
-				name: _constants.buttonValues.neverMind.name,
+				name: _constants.buttonValues.neverMindTasks.name,
 				text: "Nothing!",
-				value: _constants.buttonValues.neverMind.value,
+				value: _constants.buttonValues.neverMindTasks.value,
 				type: "button"
 			}]
 		}]

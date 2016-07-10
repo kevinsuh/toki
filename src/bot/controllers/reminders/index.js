@@ -30,12 +30,19 @@ export default function(controller) {
 				/**
 				 * 		TRIGGERING ADD TASK FLOW (add_task_flow)
 				 */
-				var intent        = intentConfig.ADD_TASK;
+				var intent = intentConfig.ADD_TASK;
 				
 				var userMessage = {
 					text,
 					reminder,
 					duration
+				}
+
+				// if the user says tasks (plural), then assume
+				// they want to add multiple tasks
+				var tasksRegExp = new RegExp(/(\btasks\b)/i);
+				if (tasksRegExp.test(text)) {
+					intent = intentConfig.EDIT_TASKS;
 				}
 
 				var config = {

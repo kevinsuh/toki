@@ -38,6 +38,13 @@ exports.default = function (controller) {
 					duration: duration
 				};
 
+				// if the user says tasks (plural), then assume
+				// they want to add multiple tasks
+				var tasksRegExp = new RegExp(/(\btasks\b)/i);
+				if (tasksRegExp.test(text)) {
+					intent = _intents2.default.EDIT_TASKS;
+				}
+
 				var config = {
 					intent: intent,
 					SlackUserId: SlackUserId,

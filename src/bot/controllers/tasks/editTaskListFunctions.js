@@ -60,9 +60,9 @@ function askForTaskListOptions(convo) {
 							style: "danger"
 					},
 					{
-							name: buttonValues.neverMind.name,
+							name: buttonValues.neverMindTasks.name,
 							text: "Nothing!",
-							value: buttonValues.neverMind.value,
+							value: buttonValues.neverMindTasks.value,
 							type: "button"
 					}
 				]
