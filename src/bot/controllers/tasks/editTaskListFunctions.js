@@ -180,9 +180,7 @@ function addTasksFlow(response, convo) {
 		{ // this is failure point. restart with question
 			default: true,
 			callback: function(response, convo) {
-				console.log("BOT's SENT MESSAGES:");
-				console.log(bot.sentMessages);
-				console.log("\n\n\n\n");
+
 				updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
 				convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
 
@@ -191,7 +189,6 @@ function addTasksFlow(response, convo) {
 					text,
 					newTask: true
 				}
-				newTasks.push(newTask);
 
 				// everything except done!
 				if (FINISH_WORD.reg_exp.test(response.text)) {
@@ -199,6 +196,7 @@ function addTasksFlow(response, convo) {
 					convo.say("Excellent!");
 					convo.next();
 				} else {
+					newTasks.push(newTask);
 					taskListMessage = convertArrayToTaskListMessage(newTasks)
 					updateTaskListMessageObject.text = taskListMessage;
 					bot.api.chat.update(updateTaskListMessageObject);
