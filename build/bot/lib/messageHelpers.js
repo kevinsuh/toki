@@ -102,7 +102,7 @@ function convertArrayToTaskListMessage(taskArray) {
 
 	if (taskArray.length == 0) {
 		console.log("array passed in is empty at convertArrayToTaskListMessage");
-		taskListMessage = '> :tangerine:';
+		taskListMessage = '> :spiral_note_pad:';
 		return taskListMessage;
 	}
 

@@ -52,7 +52,7 @@ exports.default = function (controller) {
 					bot.replyInteractive(message, "No worries! :smile_cat:");
 					break;
 				case _constants.buttonValues.noPendingTasks.value:
-					bot.replyInteractive(message, "I like a fresh start each day, too :tangerine:");
+					bot.replyInteractive(message, "I like a fresh start each day, too");
 					break;
 				case _constants.buttonValues.noAdditionalTasks.value:
 					bot.replyInteractive(message, "Sounds good!");

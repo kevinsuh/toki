@@ -60,7 +60,7 @@ export function showPendingTasks(response, convo) {
 		{ // NL equivalent to buttonValues.noPendingTasks.value
 			pattern: utterances.containsNone,
 			callback: function(response, convo) {
-				convo.say("I like a fresh start each day, too :tangerine:");
+				convo.say("I like a fresh start each day, too");
 				askForDayTasks(response, convo);
 				convo.next();
 			}
@@ -226,12 +226,11 @@ export function askForDayTasks(response, convo){
 		convo.say("I'll help you walk through this first planning session :dancers: This process will be more streamlined the next time, once you learn how it works :raised_hands:");
 	}
 
-	convo.say(`What tasks would you like to work on today? :pencil:`);
 	if (useHelperText) {
 		convo.say("Don't worry - if the tasks you'd like to work on change, you can update your list by telling me, `I'd like to add a task` or something along those lines :grinning:");
 	}
 
-	convo.say(`Please send me each task in a separate line. Then just tell me when you're done by saying \`${FINISH_WORD.word}\``);
+	convo.say(`What tasks would you like to work on today? :pencil: Please send me each task in a separate line, and tell me when you're \`${FINISH_WORD.word}\``);
 
 	var options = {
 		dontShowMinutes: true,

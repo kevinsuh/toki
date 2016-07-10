@@ -54,7 +54,7 @@ export default function(controller) {
 					bot.replyInteractive(message, "No worries! :smile_cat:");
 					break;
 				case buttonValues.noPendingTasks.value:
-					bot.replyInteractive(message, "I like a fresh start each day, too :tangerine:");
+					bot.replyInteractive(message, "I like a fresh start each day, too");
 					break;
 				case buttonValues.noAdditionalTasks.value:
 					bot.replyInteractive(message, "Sounds good!");
