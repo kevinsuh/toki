@@ -156,7 +156,7 @@ export default function(controller) {
 					bot.replyInteractive(message, `Woo! Let's check off some tasks :grin:`);
 					break;
 				case buttonValues.deleteTasks.value:
-					bot.replyInteractive(message, `Okay! Let's remove some tasks `);
+					bot.replyInteractive(message, `Okay! Let's remove some tasks`);
 					break;
 				case buttonValues.neverMindTasks.value:
 					bot.replyInteractive(message, "Okay! Keep at it :smile_cat:")

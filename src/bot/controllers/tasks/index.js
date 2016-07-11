@@ -96,7 +96,8 @@ export default function(controller) {
 						SlackUserId,
 						dailyTasks,
 						updateTaskListMessageObject: {},
-						newTasks: []
+						newTasks: [],
+						dailyTaskIdsToDelete: []
 					}
 
 					if (dailyTasks.length == 0) {
@@ -110,7 +111,7 @@ export default function(controller) {
 						console.log("\n\n ~ edit tasks finished ~ \n\n");
 						console.log(convo.tasksEdit);
 						
-						var { newTasks, dailyTasks, SlackUserId } = convo.tasksEdit;
+						var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete } = convo.tasksEdit;
 
 						// add new tasks if they got added
 						if (newTasks.length > 0) {
@@ -140,6 +141,15 @@ export default function(controller) {
 										});
 									});
 								}
+							})
+						}
+
+						// delete tasks if requested
+						if (dailyTaskIdsToDelete.length > 0) {
+							return models.DailyTask.update({
+								type: "deleted"
+							}, {
+								where: [`"DailyTasks"."id" in (?)`, dailyTaskIdsToDelete]
 							})
 						}
 

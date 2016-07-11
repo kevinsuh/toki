@@ -122,7 +122,6 @@ function askForTaskListOptions(convo) {
 	}, { // NL equivalent to buttonValues.deleteTasks.value
 		pattern: _botResponses.utterances.containsDeleteOrRemove,
 		callback: function callback(response, convo) {
-			convo.say("Let's do it!");
 			deleteTasksFlow(response, convo);
 			convo.next();
 		}
@@ -159,6 +158,10 @@ function askForTaskListOptions(convo) {
 		}
 	}]);
 }
+
+/**
+ * 			~~ ADD TASKS FLOW ~~
+ */
 
 function addTasksFlow(response, convo) {
 
@@ -405,15 +408,122 @@ function addNewTasksToTaskList(response, convo) {
 	convo.next();
 }
 
+/**
+ * 			~~ COMPLETE TASKS FLOW ~~
+ */
+
 function completeTasksFlow(response, convo) {
 	convo.say("~~ COMPLETING TASKS ~~");
 	convo.next();
 }
 
+/**
+ * 			~~ DELETE TASKS FLOW ~~
+ */
+
 function deleteTasksFlow(response, convo) {
-	convo.say("~~ DELETING TASKS ~~");
+	var dailyTasks = convo.tasksEdit.dailyTasks;
+
+	var message = 'Which of your task(s) above would you like to delete?';
+
+	convo.ask(message, [{
+		pattern: _botResponses.utterances.no,
+		callback: function callback(response, convo) {
+			convo.say("Okay, let me know if you still want to `edit tasks`");
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			confirmDeleteTasks(response, convo);
+			convo.next();
+		}
+	}]);
+
 	convo.next();
 }
+
+function confirmDeleteTasks(response, convo) {
+
+	var tasksToDeleteString = response.text;
+	var _convo$tasksEdit5 = convo.tasksEdit;
+	var dailyTasks = _convo$tasksEdit5.dailyTasks;
+	var dailyTaskIdsToDelete = _convo$tasksEdit5.dailyTaskIdsToDelete;
+
+	// if we capture 0 valid tasks from string, then we start over
+
+	var taskNumbersToDeleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(tasksToDeleteString, dailyTasks);
+	if (!taskNumbersToDeleteArray) {
+		convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+		convo.say("Please pick tasks from your list like `tasks 1, 3 and 4` or say `never mind`");
+		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
+		convo.say(taskListMessage);
+		deleteTasksFlow(response, convo);
+		return;
+	}
+
+	var dailyTasksToDelete = [];
+	dailyTasks.forEach(function (dailyTask, index) {
+		var taskNumber = index + 1; // b/c index is 0-based
+		if (taskNumbersToDeleteArray.indexOf(taskNumber) > -1) {
+			dailyTasksToDelete.push(dailyTask);
+		}
+	});
+
+	var dailyTaskTextsToDelete = dailyTasksToDelete.map(function (dailyTask) {
+		return dailyTask.dataValues.Task.text;
+	});
+
+	var taskListMessage = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTextsToDelete);
+
+	convo.ask('So you would like to delete ' + taskListMessage + '?', [{
+		pattern: _botResponses.utterances.yes,
+		callback: function callback(response, convo) {
+			convo.say("Sounds great, deleted!");
+
+			// add to delete array for tasksEdit
+			dailyTaskIdsToDelete = dailyTasksToDelete.map(function (dailyTask) {
+				return dailyTask.dataValues.id;
+			});
+			convo.tasksEdit.dailyTaskIdsToDelete = dailyTaskIdsToDelete;
+
+			// spit back updated task list
+			var taskArray = [];
+			dailyTasks.forEach(function (dailyTask, index) {
+				var id = dailyTask.dataValues.id;
+
+				if (dailyTaskIdsToDelete.indexOf(id) < 0) {
+					// daily task is NOT in the ids to delete
+					taskArray.push(dailyTask);
+				}
+			});
+
+			var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray);
+
+			convo.say("Here's your updated task list :memo::");
+			convo.say(taskListMessage);
+
+			convo.next();
+		}
+	}, {
+		pattern: _botResponses.utterances.no,
+		callback: function callback(response, convo) {
+			convo.say("Okay, let me know if you still want to `edit tasks`");
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say("Couldn't quite catch that :thinking_face:");
+			convo.repeat();
+			convo.next();
+		}
+	}]);
+}
+
+/**
+ * 			~~ EDIT TIMES TO TASKS FLOW ~~
+ */
 
 function editTaskTimesFlow(response, convo) {
 	convo.say("~~ EDITING TIME TO TASKS ~~");

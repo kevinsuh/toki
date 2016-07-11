@@ -7,7 +7,7 @@ import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
 import { colorsHash, buttonValues, FINISH_WORD, RESET } from '../../lib/constants';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, getUpdateTaskListMessageObject, convertResponseObjectsToTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, getUpdateTaskListMessageObject, convertResponseObjectsToTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray } from '../../lib/messageHelpers';
 
 // this one shows the task list message and asks for options
 export function startEditTaskListMessage(convo) {
@@ -110,7 +110,6 @@ function askForTaskListOptions(convo) {
 		{ // NL equivalent to buttonValues.deleteTasks.value
 			pattern: utterances.containsDeleteOrRemove,
 			callback: function(response, convo) {
-				convo.say("Let's do it!");
 				deleteTasksFlow(response, convo);
 				convo.next();
 			}
@@ -153,6 +152,10 @@ function askForTaskListOptions(convo) {
 		}
 	]);
 }
+
+/**
+ * 			~~ ADD TASKS FLOW ~~
+ */
 
 function addTasksFlow(response, convo) {
 
@@ -415,15 +418,126 @@ function addNewTasksToTaskList(response, convo) {
 
 }
 
+/**
+ * 			~~ COMPLETE TASKS FLOW ~~
+ */
+
 function completeTasksFlow(response, convo) {
 	convo.say("~~ COMPLETING TASKS ~~");
 	convo.next();
 }
 
+/**
+ * 			~~ DELETE TASKS FLOW ~~
+ */
+
 function deleteTasksFlow(response, convo) {
-	convo.say("~~ DELETING TASKS ~~");
+
+	var { tasksEdit: { dailyTasks } } = convo;
+	var message = `Which of your task(s) above would you like to delete?`;
+
+	convo.ask(message, [
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				convo.say("Okay, let me know if you still want to `edit tasks`");
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				confirmDeleteTasks(response, convo);
+				convo.next();
+			}
+		}
+	]);
+
 	convo.next();
 }
+
+function confirmDeleteTasks(response, convo) {
+
+	var tasksToDeleteString = response.text;
+	var { dailyTasks, dailyTaskIdsToDelete } = convo.tasksEdit;
+
+	// if we capture 0 valid tasks from string, then we start over
+	var taskNumbersToDeleteArray = convertTaskNumberStringToArray(tasksToDeleteString, dailyTasks);
+	if (!taskNumbersToDeleteArray) {
+		convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+		convo.say("Please pick tasks from your list like `tasks 1, 3 and 4` or say `never mind`");
+		var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+		convo.say(taskListMessage);
+		deleteTasksFlow(response, convo);
+		return;
+	}
+
+	var dailyTasksToDelete = [];
+	dailyTasks.forEach((dailyTask, index) => {
+		var taskNumber = index + 1; // b/c index is 0-based
+		if (taskNumbersToDeleteArray.indexOf(taskNumber) > -1) {
+			dailyTasksToDelete.push(dailyTask);
+		}
+	});
+
+	var dailyTaskTextsToDelete = dailyTasksToDelete.map((dailyTask) => {
+		return dailyTask.dataValues.Task.text;
+	})
+
+	var taskListMessage = commaSeparateOutTaskArray(dailyTaskTextsToDelete);
+
+	convo.ask(`So you would like to delete ${taskListMessage}?`, [
+		{
+			pattern: utterances.yes,
+			callback: (response, convo) => {
+				convo.say("Sounds great, deleted!");
+
+				// add to delete array for tasksEdit
+				dailyTaskIdsToDelete = dailyTasksToDelete.map((dailyTask) => {
+					return dailyTask.dataValues.id;
+				})
+				convo.tasksEdit.dailyTaskIdsToDelete = dailyTaskIdsToDelete;
+
+				// spit back updated task list
+				var taskArray = [];
+				dailyTasks.forEach((dailyTask, index) => {
+					const { dataValues: { id } } = dailyTask;
+					if (dailyTaskIdsToDelete.indexOf(id) < 0) {
+						// daily task is NOT in the ids to delete
+						taskArray.push(dailyTask);
+					}
+				});
+
+				var taskListMessage = convertArrayToTaskListMessage(taskArray);
+
+				convo.say("Here's your updated task list :memo::");
+				convo.say(taskListMessage);
+
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				convo.say("Okay, let me know if you still want to `edit tasks`");
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				convo.say("Couldn't quite catch that :thinking_face:");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
+
+}
+
+/**
+ * 			~~ EDIT TIMES TO TASKS FLOW ~~
+ */
 
 function editTaskTimesFlow(response, convo) {
 	convo.say("~~ EDITING TIME TO TASKS ~~");

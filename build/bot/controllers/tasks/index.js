@@ -79,7 +79,8 @@ exports.default = function (controller) {
 						SlackUserId: SlackUserId,
 						dailyTasks: dailyTasks,
 						updateTaskListMessageObject: {},
-						newTasks: []
+						newTasks: [],
+						dailyTaskIdsToDelete: []
 					};
 
 					if (dailyTasks.length == 0) {
@@ -97,6 +98,7 @@ exports.default = function (controller) {
 						var newTasks = _convo$tasksEdit.newTasks;
 						var dailyTasks = _convo$tasksEdit.dailyTasks;
 						var SlackUserId = _convo$tasksEdit.SlackUserId;
+						var dailyTaskIdsToDelete = _convo$tasksEdit.dailyTaskIdsToDelete;
 
 						// add new tasks if they got added
 
@@ -128,6 +130,15 @@ exports.default = function (controller) {
 										});
 									});
 								}
+							});
+						}
+
+						// delete tasks if requested
+						if (dailyTaskIdsToDelete.length > 0) {
+							return _models2.default.DailyTask.update({
+								type: "deleted"
+							}, {
+								where: ['"DailyTasks"."id" in (?)', dailyTaskIdsToDelete]
 							});
 						}
 					});
