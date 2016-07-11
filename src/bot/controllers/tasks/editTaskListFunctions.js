@@ -649,20 +649,7 @@ function confirmDeleteTasks(response, convo) {
 				})
 				convo.tasksEdit.dailyTaskIdsToDelete = dailyTaskIdsToDelete;
 
-				// spit back updated task list
-				var taskArray = [];
-				dailyTasks.forEach((dailyTask, index) => {
-					const { dataValues: { id } } = dailyTask;
-					if (dailyTaskIdsToDelete.indexOf(id) < 0) {
-						// daily task is NOT in the ids to delete
-						taskArray.push(dailyTask);
-					}
-				});
-
-				var taskListMessage = convertArrayToTaskListMessage(taskArray);
-
-				convo.say("Here's your updated task list :memo::");
-				convo.say(taskListMessage);
+				updateDeleteTaskListMessage(response, convo);
 
 				convo.next();
 			}
@@ -683,6 +670,31 @@ function confirmDeleteTasks(response, convo) {
 			}
 		}
 	]);
+
+}
+
+function updateDeleteTaskListMessage(response, convo) {
+
+	var { tasksEdit: { bot, dailyTasks, dailyTaskIdsToDelete } } = convo;
+	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+
+	// spit back updated task list
+	var taskArray = [];
+	dailyTasks.forEach((dailyTask, index) => {
+		const { dataValues: { id } } = dailyTask;
+		if (dailyTaskIdsToDelete.indexOf(id) < 0) {
+			// daily task is NOT in the ids to delete
+			taskArray.push(dailyTask);
+		}
+	});
+
+	var options = { segmentCompleted: true };
+	var taskListMessage = convertArrayToTaskListMessage(taskArray, options);
+
+	convo.say("Here's your updated task list :memo::");
+	convo.say(taskListMessage);
+
+	convo.next();
 
 }
 

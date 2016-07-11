@@ -631,21 +631,7 @@ function confirmDeleteTasks(response, convo) {
 			});
 			convo.tasksEdit.dailyTaskIdsToDelete = dailyTaskIdsToDelete;
 
-			// spit back updated task list
-			var taskArray = [];
-			dailyTasks.forEach(function (dailyTask, index) {
-				var id = dailyTask.dataValues.id;
-
-				if (dailyTaskIdsToDelete.indexOf(id) < 0) {
-					// daily task is NOT in the ids to delete
-					taskArray.push(dailyTask);
-				}
-			});
-
-			var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray);
-
-			convo.say("Here's your updated task list :memo::");
-			convo.say(taskListMessage);
+			updateDeleteTaskListMessage(response, convo);
 
 			convo.next();
 		}
@@ -663,6 +649,34 @@ function confirmDeleteTasks(response, convo) {
 			convo.next();
 		}
 	}]);
+}
+
+function updateDeleteTaskListMessage(response, convo) {
+	var _convo$tasksEdit9 = convo.tasksEdit;
+	var bot = _convo$tasksEdit9.bot;
+	var dailyTasks = _convo$tasksEdit9.dailyTasks;
+	var dailyTaskIdsToDelete = _convo$tasksEdit9.dailyTaskIdsToDelete;
+
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
+
+	// spit back updated task list
+	var taskArray = [];
+	dailyTasks.forEach(function (dailyTask, index) {
+		var id = dailyTask.dataValues.id;
+
+		if (dailyTaskIdsToDelete.indexOf(id) < 0) {
+			// daily task is NOT in the ids to delete
+			taskArray.push(dailyTask);
+		}
+	});
+
+	var options = { segmentCompleted: true };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
+
+	convo.say("Here's your updated task list :memo::");
+	convo.say(taskListMessage);
+
+	convo.next();
 }
 
 /**
