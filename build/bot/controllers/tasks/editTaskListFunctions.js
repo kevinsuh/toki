@@ -314,6 +314,13 @@ function getTimeToNewTasks(response, convo) {
 		pattern: _constants.buttonValues.actuallyWantToAddATask.value,
 		callback: function callback(response, convo) {
 			convo.tasksEdit.actuallyWantToAddATask = true;
+
+			// take out the total time estimate
+			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
+			taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(newTasks, { dontShowMinutes: true, dontCalculateMinutes: true });
+			updateTaskListMessageObject.text = taskListMessage;
+			bot.api.chat.update(updateTaskListMessageObject);
+
 			askWhichTasksToAdd(response, convo);
 			convo.next();
 		}
@@ -321,7 +328,7 @@ function getTimeToNewTasks(response, convo) {
 		pattern: _constants.buttonValues.resetTimes.value,
 		callback: function callback(response, convo) {
 
-			var updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
+			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
 			if (updateTaskListMessageObject) {
 				convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
 				// reset ze task list message
@@ -337,7 +344,7 @@ function getTimeToNewTasks(response, convo) {
 		pattern: _constants.RESET.reg_exp,
 		callback: function callback(response, convo) {
 
-			var updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
+			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
 			if (updateTaskListMessageObject) {
 				convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
 				// reset ze task list message
@@ -353,7 +360,7 @@ function getTimeToNewTasks(response, convo) {
 		default: true,
 		callback: function callback(response, convo) {
 
-			var updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
+			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
 
 			if (updateTaskListMessageObject) {
 				convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;

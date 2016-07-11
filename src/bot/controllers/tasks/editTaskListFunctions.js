@@ -318,6 +318,13 @@ function getTimeToNewTasks(response, convo) {
 			pattern: buttonValues.actuallyWantToAddATask.value,
 			callback: function(response, convo) {
 				convo.tasksEdit.actuallyWantToAddATask = true;
+
+				// take out the total time estimate
+				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
+				taskListMessage = convertArrayToTaskListMessage(newTasks, { dontShowMinutes: true, dontCalculateMinutes: true });
+				updateTaskListMessageObject.text = taskListMessage;
+				bot.api.chat.update(updateTaskListMessageObject);
+
 				askWhichTasksToAdd(response, convo);
 				convo.next();
 			}
@@ -326,7 +333,7 @@ function getTimeToNewTasks(response, convo) {
 			pattern: buttonValues.resetTimes.value,
 			callback: (response, convo) => {
 
-				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
+				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 				if (updateTaskListMessageObject) {
 					convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
 					// reset ze task list message
@@ -343,7 +350,7 @@ function getTimeToNewTasks(response, convo) {
 			pattern: RESET.reg_exp,
 			callback: (response, convo) => {
 
-				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
+				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 				if (updateTaskListMessageObject) {
 					convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
 					// reset ze task list message
@@ -361,7 +368,7 @@ function getTimeToNewTasks(response, convo) {
 			default: true,
 			callback: function(response, convo) {
 
-				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
+				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 
 				if (updateTaskListMessageObject) {
 					convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
