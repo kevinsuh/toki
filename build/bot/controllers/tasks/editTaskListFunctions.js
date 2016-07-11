@@ -550,15 +550,11 @@ function updateCompleteTaskListMessage(response, convo) {
 		fullTaskArray.push(dailyTask);
 	});
 
-	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray);
-	var fullTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(fullTaskArray);
-
-	var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
-	updateTaskListMessageObject.text = fullTaskListMessage;
-	bot.api.chat.update(updateTaskListMessageObject);
+	var options = { segmentCompleted: true };
+	var fullTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(fullTaskArray, options);
 
 	convo.say("Here's the rest of your task list for today :memo::");
-	convo.say(taskListMessage);
+	convo.say(fullTaskListMessage);
 
 	// should ask if ready for session
 
