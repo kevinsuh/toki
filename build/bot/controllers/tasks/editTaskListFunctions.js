@@ -3,6 +3,9 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 exports.startEditTaskListMessage = startEditTaskListMessage;
 
 var _os = require('os');
@@ -93,7 +96,7 @@ function askForTaskListOptions(convo) {
 	}, { // NL equivalent to buttonValues.addTasks.value
 		pattern: _botResponses.utterances.containsAdd,
 		callback: function callback(response, convo) {
-			convo.say("Boom! Let's add some tasks :muscle:");
+			convo.say("Okay, let's add some tasks :muscle:");
 			addTasksFlow(response, convo);
 			convo.next();
 		}
@@ -158,6 +161,15 @@ function askForTaskListOptions(convo) {
 }
 
 function addTasksFlow(response, convo) {
+
+	// tasks is just a copy of dailyTasks (you're saved tasks)
+	convo.say('What tasks would you like to add to your list? Please send me each task in a separate line');
+	convo.say("Then just tell me when you're `done`!");
+	askWhichTasksToAdd(response, convo);
+	convo.next();
+}
+
+function askWhichTasksToAdd(response, convo) {
 	var _convo$tasksEdit2 = convo.tasksEdit;
 	var bot = _convo$tasksEdit2.bot;
 	var dailyTasks = _convo$tasksEdit2.dailyTasks;
@@ -165,13 +177,11 @@ function addTasksFlow(response, convo) {
 
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
 
-	var newTasks = [];
+	var tasks = [];
 	dailyTasks.forEach(function (dailyTask) {
-		newTasks.push(dailyTask);
+		tasks.push(dailyTask);
 	});
-	// newTasks is just a copy of dailyTasks (you're saved tasks)
-	convo.say('What tasks would you like to add to your list? Please send me each task in a separate line');
-	convo.say("Then just tell me when you're `done`!");
+
 	convo.ask({
 		text: taskListMessage,
 		attachments: [{
@@ -195,24 +205,184 @@ function addTasksFlow(response, convo) {
 
 			// everything except done!
 			if (_constants.FINISH_WORD.reg_exp.test(response.text)) {
-				saveNewTaskResponses(newTasks, convo);
+				saveNewTaskResponses(tasks, convo);
 				convo.say("Excellent!");
+				getTimeToNewTasks(response, convo);
 				convo.next();
 			} else {
-				newTasks.push(newTask);
-				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(newTasks);
+				tasks.push(newTask);
+				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(tasks);
 				updateTaskListMessageObject.text = taskListMessage;
 				bot.api.chat.update(updateTaskListMessageObject);
 			}
 		}
 	}]);
+}
+
+function saveNewTaskResponses(tasks, convo) {
+
+	// get the newTasks!
+	var dailyTasks = convo.tasksEdit.dailyTasks;
+
+
+	if (tasks) {
+
+		// only get the new tasks
+		var newTasks = [];
+		tasks.forEach(function (task) {
+			if (task.newTask) {
+				newTasks.push(task);
+			}
+		});
+		var newTasksArray = (0, _messageHelpers.convertResponseObjectsToTaskArray)(newTasks);
+		if (!dailyTasks) {
+			dailyTasks = [];
+		}
+		newTasksArray.forEach(function (task) {
+			dailyTasks.push(task);
+		});
+
+		convo.tasksEdit.dailyTasks = dailyTasks; // all daily tasks
+		convo.tasksEdit.newTasks = newTasksArray; // only the new ones
+	}
 
 	convo.next();
 }
 
-function saveNewTaskResponses(newTasks, convo) {
-	convo.say("NEW TASKS!!!");
-	convo.next();
+function getTimeToNewTasks(response, convo) {
+	var _convo$tasksEdit3 = convo.tasksEdit;
+	var bot = _convo$tasksEdit3.bot;
+	var dailyTasks = _convo$tasksEdit3.dailyTasks;
+	var newTasks = _convo$tasksEdit3.newTasks;
+
+	var options = { dontShowMinutes: true };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(newTasks, options);
+
+	convo.say("How much time would you like to allocate to your new tasks?");
+
+	var timeToTasksArray = [];
+	convo.ask({
+		text: taskListMessage,
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "ADD_TIME_TO_NEW_TASKS",
+			fallback: "What are the times to your new tasks?",
+			color: _constants.colorsHash.grey.hex,
+			actions: [{
+				name: _constants.buttonValues.actuallyWantToAddATask.name,
+				text: "Add more tasks!",
+				value: _constants.buttonValues.actuallyWantToAddATask.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.resetTimes.name,
+				text: "Reset times",
+				value: _constants.buttonValues.resetTimes.value,
+				type: "button",
+				style: "danger"
+			}]
+		}]
+	}, [{
+		pattern: _constants.buttonValues.actuallyWantToAddATask.value,
+		callback: function callback(response, convo) {
+			askWhichTasksToAdd(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.resetTimes.value,
+		callback: function callback(response, convo) {
+
+			var updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
+			if (updateTaskListMessageObject) {
+				convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
+				// reset ze task list message
+				timeToTasksArray = [];
+				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(newTasks, { dontShowMinutes: true });
+				updateTaskListMessageObject.text = taskListMessage;
+				bot.api.chat.update(updateTaskListMessageObject);
+			}
+
+			convo.silentRepeat();
+		}
+	}, {
+		pattern: _constants.RESET.reg_exp,
+		callback: function callback(response, convo) {
+
+			var updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
+			if (updateTaskListMessageObject) {
+				convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
+				// reset ze task list message
+				timeToTasksArray = [];
+				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(newTasks, { dontShowMinutes: true });
+				updateTaskListMessageObject.text = taskListMessage;
+				bot.api.chat.update(updateTaskListMessageObject);
+			}
+
+			convo.silentRepeat();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+
+			var updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
+
+			if (updateTaskListMessageObject) {
+				convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
+				var comma = new RegExp(/[,]/);
+				var validMinutesTester = new RegExp(/[\dh]/);
+				var timeToTasks = response.text.split(comma);
+
+				timeToTasks.forEach(function (time) {
+					if (validMinutesTester.test(time)) {
+						var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(time);
+						timeToTasksArray.push(minutes);
+					}
+				});
+
+				newTasks = newTasks.map(function (task, index) {
+					if (task.dataValues) {
+						// task from DB
+						return _extends({}, task, {
+							minutes: timeToTasksArray[index],
+							text: task.dataValues.text
+						});
+					}
+					return _extends({}, task, {
+						minutes: timeToTasksArray[index]
+					});
+				});
+
+				var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(newTasks, { dontUseDataValues: true, emphasizeMinutes: true });
+
+				updateTaskListMessageObject.text = taskListMessage;
+				bot.api.chat.update(updateTaskListMessageObject);
+			}
+
+			if (timeToTasksArray.length >= newTasks.length) {
+				convo.tasksEdit.newTasks = newTasks;
+				confirmTimeToTasks(response, convo);
+				convo.next();
+			}
+		}
+	}]);
+}
+
+function confirmTimeToTasks(response, convo) {
+
+	convo.ask("Are those times right?", [{
+		pattern: _botResponses.utterances.yes,
+		callback: function callback(response, convo) {
+			convo.say(":boom: This looks great!");
+			convo.next();
+		}
+	}, {
+		pattern: _botResponses.utterances.no,
+		callback: function callback(response, convo) {
+			convo.say("Let's give this another try :repeat_one:");
+			convo.say("Just say time estimates, like `30, 1 hour, or 15 min` and I'll figure it out and assign times to the tasks above in order :smiley:");
+			getTimeToNewTasks(response, convo);
+			convo.next();
+		}
+	}]);
 }
 
 function completeTasksFlow(response, convo) {
