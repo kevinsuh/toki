@@ -39,7 +39,7 @@ export default function(controller) {
 			user.getDailyTasks({
 				where: [`"DailyTask"."type" = ?`, "live"],
 				include: [ models.Task ],
-				order: `"DailyTask"."priority" ASC`
+				order: `"Task"."done", "DailyTask"."priority" ASC`
 			})
 			.then((dailyTasks) => {
 
@@ -83,7 +83,7 @@ export default function(controller) {
 			user.getDailyTasks({
 				where: [`"DailyTask"."type" = ?`, "live"],
 				include: [ models.Task ],
-				order: `"DailyTask"."priority" ASC`
+				order: `"Task"."done", "DailyTask"."priority" ASC`
 			})
 			.then((dailyTasks) => {
 

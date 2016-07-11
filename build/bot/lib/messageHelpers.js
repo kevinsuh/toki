@@ -101,17 +101,44 @@ function convertArrayToTaskListMessage(taskArray) {
 	var count = 1;
 	var totalMinutes = 0;
 
+	console.log("\n\n options passed in to convertArrayToTaskListMessage:");
+	console.log(options);
+	console.log("\n\n");
+
 	if (taskArray.length == 0) {
 		console.log("array passed in is empty at convertArrayToTaskListMessage");
 		taskListMessage = '> :spiral_note_pad:';
 		return taskListMessage;
 	}
 
-	console.log("\n\n options passed in to convertArrayToTaskListMessage:");
-	console.log(options);
-	console.log("\n\n");
+	// different format if has 1+ completed tasks (`segmentCompleted`)
+	var hasCompletedTasks = false;
+	taskArray.some(function (task) {
+		if (task.dataValues) {
+			task = task.dataValues;
+		}
+		if (task.done) {
+			hasCompletedTasks = true;
+			return true;
+		}
+	});
 
-	taskArray.forEach(function (task) {
+	var segmentCompleted = options.segmentCompleted;
+
+	// cant segment if no completed tasks
+
+	if (!hasCompletedTasks) {
+		segmentCompleted = false;
+	}
+
+	if (segmentCompleted) {
+		console.log("\n\n ~~ segmenting tasks ( completed / not completed ) ~~ \n\n");
+		taskListMessage = options.noKarets ? '*Remaining Tasks:*\n' : '> *Remaining Tasks:*\n';
+	}
+
+	taskArray.forEach(function (task, index) {
+
+		// segment based on completed and not!
 
 		// for when you get task from DB
 		var minutesMessage = '';
@@ -133,12 +160,31 @@ function convertArrayToTaskListMessage(taskArray) {
 				minutesMessage = ' (' + timeString + ')';
 			}
 		}
-		var taskContent = count + ') ' + task.text + minutesMessage;
+
+		// completed tasks do not have count
+		var taskContent = '';
+		if (!segmentCompleted || task.done == false) {
+			taskContent = count + ') ';
+		}
+		taskContent = '' + taskContent + task.text + minutesMessage;
 
 		taskContent = task.done ? '~' + taskContent + '~\n' : taskContent + '\n';
 		taskContent = options.noKarets ? taskContent : '> ' + taskContent;
 
 		taskListMessage += taskContent;
+
+		// title when segmentCompleted
+		if (segmentCompleted) {
+			var nextIndex = index + 1;
+			var nextTask = taskArray[nextIndex];
+			if (nextTask && !options.dontUseDataValues && nextTask.dataValues) {
+				nextTask = nextTask.dataValues;
+			};
+
+			if (task.done == false && nextTask && nextTask.done) {
+				taskListMessage += options.noKarets ? '\n*Completed Tasks:*\n' : '>\n> *Completed Tasks:*\n';
+			}
+		}
 
 		count++;
 	});

@@ -14,7 +14,8 @@ export function startEditTaskListMessage(convo) {
 
 	const { tasksEdit: { dailyTasks, bot } } = convo;
 
-	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+	var options = { segmentCompleted: true }
+	var taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
 
 	convo.say("Here are your tasks for today :memo::");
 	convo.say({

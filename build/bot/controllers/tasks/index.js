@@ -30,7 +30,7 @@ exports.default = function (controller) {
 			user.getDailyTasks({
 				where: ['"DailyTask"."type" = ?', "live"],
 				include: [_models2.default.Task],
-				order: '"DailyTask"."priority" ASC'
+				order: '"Task"."done", "DailyTask"."priority" ASC'
 			}).then(function (dailyTasks) {
 
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
@@ -67,7 +67,7 @@ exports.default = function (controller) {
 			user.getDailyTasks({
 				where: ['"DailyTask"."type" = ?', "live"],
 				include: [_models2.default.Task],
-				order: '"DailyTask"."priority" ASC'
+				order: '"Task"."done", "DailyTask"."priority" ASC'
 			}).then(function (dailyTasks) {
 
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
