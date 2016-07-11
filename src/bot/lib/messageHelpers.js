@@ -370,3 +370,33 @@ export function getUpdateTaskListMessageObject(userChannel, bot) {
 }
 
 
+// new function to ensure you are getting a task list message to update
+export function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
+	
+	var { sentMessages } = bot;
+
+	var updateTaskListMessageObject = false;
+	if (sentMessages) {
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (var i = sentMessages.length - 1; i >= 0; i--) {
+
+			var message           = sentMessages[i];
+			const { channel, ts, attachments } = message;
+			if (channel == userChannel) {
+				if (attachments && attachments[0].callback_id == "TASK_LIST_MESSAGE") {
+					updateTaskListMessageObject = {
+						channel,
+						ts
+					};
+					break;
+				}
+			}
+		}
+	}
+
+	return updateTaskListMessageObject;
+
+}
+
+

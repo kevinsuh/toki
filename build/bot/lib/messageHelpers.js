@@ -17,6 +17,7 @@ exports.convertToSingleTaskObjectArray = convertToSingleTaskObjectArray;
 exports.prioritizeTaskArrayFromUserInput = prioritizeTaskArrayFromUserInput;
 exports.commaSeparateOutTaskArray = commaSeparateOutTaskArray;
 exports.getUpdateTaskListMessageObject = getUpdateTaskListMessageObject;
+exports.getMostRecentTaskListMessageToUpdate = getMostRecentTaskListMessageToUpdate;
 
 var _constants = require('./constants');
 
@@ -374,6 +375,37 @@ function getUpdateTaskListMessageObject(userChannel, bot) {
 					ts: ts
 				};
 				break;
+			}
+		}
+	}
+
+	return updateTaskListMessageObject;
+}
+
+// new function to ensure you are getting a task list message to update
+function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
+	var sentMessages = bot.sentMessages;
+
+
+	var updateTaskListMessageObject = false;
+	if (sentMessages) {
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (var i = sentMessages.length - 1; i >= 0; i--) {
+
+			var message = sentMessages[i];
+			var channel = message.channel;
+			var ts = message.ts;
+			var attachments = message.attachments;
+
+			if (channel == userChannel) {
+				if (attachments && attachments[0].callback_id == "TASK_LIST_MESSAGE") {
+					updateTaskListMessageObject = {
+						channel: channel,
+						ts: ts
+					};
+					break;
+				}
 			}
 		}
 	}

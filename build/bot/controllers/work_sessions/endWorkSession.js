@@ -277,34 +277,47 @@ exports.default = function (controller) {
 
 							if (timeOut) {
 
+								// this "timeout" message only gets sent if this specific convo still has an open work session and no snooze attached. this means that user has gone AFK. if there is a snooze, another `done_session_timer` will trigger in 9 minutes and will be handle the ending of the work session
+
 								// open sessions that were ENDED < 29.5 minutes ago
 								var minutes = _constants.MINUTES_FOR_DONE_SESSION_TIMEOUT - 0.5;
 								var timeOutMinutesAgo = (0, _momentTimezone2.default)().subtract(minutes, 'minutes').format("YYYY-MM-DD HH:mm:ss Z");
 								user.getWorkSessions({
-									where: ['"WorkSession"."open" = ? AND "WorkSession"."endTime" < ?', true, timeOutMinutesAgo]
+									where: ['"WorkSession"."open" = ? AND "WorkSession"."endTime" < ?', true, timeOutMinutesAgo],
+									order: '"WorkSession"."createdAt" DESC'
 								}).then(function (workSessions) {
 									// only if there are still "open" work sessions
 									if (workSessions.length > 0) {
-										var sentMessages = bot.sentMessages;
 
-										if (sentMessages) {
-											// lastMessage is the one just asked by `convo`
-											// in this case, it is `taskListMessage`
-											var lastMessage = sentMessages.slice(-1)[0];
-											if (lastMessage) {
-												var channel = lastMessage.channel;
-												var ts = lastMessage.ts;
+										// also, if they did not snooze within the last 30 minutes
+										var mostRecentOpenWorkSession = workSessions[0];
+										user.getReminders({
+											where: ['"Reminder"."type" = ? AND "Reminder"."createdAt" > ?', "done_session_snooze", mostRecentOpenWorkSession.dataValues.createdAt]
+										}).then(function (reminders) {
 
-												var doneSessionMessageObject = {
-													channel: channel,
-													ts: ts
-												};
-												bot.api.chat.delete(doneSessionMessageObject);
+											if (reminders.length == 0) {
+												var sentMessages = bot.sentMessages;
+
+												if (sentMessages) {
+													// lastMessage is the one just asked by `convo`
+													// in this case, it is `taskListMessage`
+													var lastMessage = sentMessages.slice(-1)[0];
+													if (lastMessage) {
+														var channel = lastMessage.channel;
+														var ts = lastMessage.ts;
+
+														var doneSessionMessageObject = {
+															channel: channel,
+															ts: ts
+														};
+														bot.api.chat.delete(doneSessionMessageObject);
+													}
+												}
+
+												// this was a 30 minute timeout for done_session timer!
+												controller.trigger('done_session_timeout_flow', [bot, { SlackUserId: SlackUserId, workSession: workSession }]);
 											}
-										}
-
-										// this was a 30 minute timeout for done_session timer!
-										controller.trigger('done_session_timeout_flow', [bot, { SlackUserId: SlackUserId, workSession: workSession }]);
+										});
 									};
 								});
 							} else {
