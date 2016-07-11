@@ -98,7 +98,8 @@ export default function(controller) {
 						updateTaskListMessageObject: {},
 						newTasks: [],
 						dailyTaskIdsToDelete: [],
-						dailyTaskIdsToComplete: []
+						dailyTaskIdsToComplete: [],
+						dailyTasksToUpdate: [] // existing dailyTasks
 					}
 
 					if (dailyTasks.length == 0) {

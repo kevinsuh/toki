@@ -303,9 +303,9 @@ function getTimeToNewTasks(response, convo) {
 							type: "button"
 					},
 					{
-							name: buttonValues.resetTimes.name,
+							name: buttonValues.resetTimesPersistent.name,
 							text: "Reset times",
-							value: buttonValues.resetTimes.value,
+							value: buttonValues.resetTimesPersistent.value,
 							type: "button",
 							style: "danger"
 					}
@@ -330,7 +330,7 @@ function getTimeToNewTasks(response, convo) {
 			}
 		},
 		{
-			pattern: buttonValues.resetTimes.value,
+			pattern: buttonValues.resetTimesPersistent.value,
 			callback: (response, convo) => {
 
 				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
@@ -710,6 +710,199 @@ function updateDeleteTaskListMessage(response, convo) {
  */
 
 function editTaskTimesFlow(response, convo) {
-	convo.say("~~ EDITING TIME TO TASKS ~~");
-	convo.next();
+
+	var { tasksEdit: { bot, dailyTasks, dailyTasksToUpdate } } = convo;
+	
+
+	var dailyTasksToSetMinutes = [];
+	// for all the remaining daily tasks
+	dailyTasks.forEach((dailyTask) => {
+		if (dailyTask.dataValues && !dailyTask.dataValues.Task.done) {
+			dailyTasksToSetMinutes.push(dailyTask);
+		}
+	});
+
+	convo.tasksEdit.dailyTasksToSetMinutes = dailyTasksToSetMinutes;
+
+	var options = { dontShowMinutes: true, dontCalculateMinutes: true };
+	var taskListMessage = convertArrayToTaskListMessage(dailyTasksToSetMinutes, options);
+	convo.say({
+		text: taskListMessage,
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "TASK_LIST_MESSAGE",
+				fallback: "Here's your task list!"
+			}
+		]
+	});
+
+	getTimeToTasks(response, convo);
+
+}
+
+function getTimeToTasks(response, convo) {
+
+	var { dailyTasksToSetMinutes, bot } = convo.tasksEdit;
+
+	var taskListMessage;
+
+	var timeToTasksArray = [];
+	convo.ask({
+		text: "How much time would you like to allocate to each task?",
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "TIME_TO_TASKS",
+				fallback: "How much time would you like to allocate to your tasks?",
+				color: colorsHash.grey.hex,
+				actions: [
+					{
+							name: buttonValues.neverMind.name,
+							text: "Never mind!",
+							value: buttonValues.neverMind.value,
+							type: "button"
+					},
+					{
+							name: buttonValues.resetTimesPersistent.name,
+							text: "Reset times",
+							value: buttonValues.resetTimesPersistent.value,
+							type: "button",
+							style: "danger"
+					}
+				]
+			}
+		]
+	},
+	[
+		{
+			pattern: buttonValues.neverMindTasks.value,
+			callback: function(response, convo) {
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.neverMind.value
+			pattern: utterances.noAndNeverMind,
+			callback: function(response, convo) {
+				convo.say("Okay! Let me know if you want to `edit tasks`");
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.resetTimesPersistent.value,
+			callback: (response, convo) => {
+
+				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
+				if (updateTaskListMessageObject) {
+
+					// reset ze task list message
+					timeToTasksArray = [];
+					taskListMessage = convertArrayToTaskListMessage(dailyTasksToSetMinutes, { dontShowMinutes: true, dontCalculateMinutes: true });
+					updateTaskListMessageObject.text = taskListMessage;
+					bot.api.chat.update(updateTaskListMessageObject);
+
+				}
+				
+				convo.silentRepeat();
+			}
+		},
+		{
+			pattern: RESET.reg_exp,
+			callback: (response, convo) => {
+
+				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
+				if (updateTaskListMessageObject) {
+
+					// reset ze task list message
+					timeToTasksArray = [];
+					taskListMessage = convertArrayToTaskListMessage(dailyTasksToSetMinutes, { dontShowMinutes: true, dontCalculateMinutes: true });
+					updateTaskListMessageObject.text = taskListMessage;
+					bot.api.chat.update(updateTaskListMessageObject);
+
+				}
+				
+				convo.silentRepeat();
+
+			}
+		},
+		{
+			default: true,
+			callback: function(response, convo) {
+
+				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
+
+				if (updateTaskListMessageObject) {
+					
+					const comma            = new RegExp(/[,]/);
+					var validMinutesTester = new RegExp(/[\dh]/);
+					var timeToTasks        = response.text.split(comma);
+
+
+					timeToTasks.forEach((time) => {
+						if (validMinutesTester.test(time)) {
+							var minutes = convertTimeStringToMinutes(time);
+							timeToTasksArray.push(minutes);
+						}
+					});
+
+					dailyTasksToSetMinutes = dailyTasksToSetMinutes.map((task, index) => {
+						if (task.dataValues) { // task from DB
+							return {
+								...task,
+								minutes: timeToTasksArray[index],
+								text: task.dataValues.text
+							}
+						}
+						return { // newly created task
+							...task,
+							minutes: timeToTasksArray[index]
+						}
+					});
+
+					var taskListMessage = convertArrayToTaskListMessage(dailyTasksToSetMinutes, { dontUseDataValues: true, emphasizeMinutes: true });
+
+					updateTaskListMessageObject.text = taskListMessage;
+					bot.api.chat.update(updateTaskListMessageObject);
+				}
+
+				if (timeToTasksArray.length >= dailyTasksToSetMinutes.length) {
+					convo.tasksEdit.dailyTasksToUpdate = dailyTasksToSetMinutes;
+					confirmTimeToTasks(convo);
+					convo.next();
+				}
+				
+			}
+		}
+	]);
+}
+
+function confirmTimeToTasks(convo) {
+
+	var { dailyTasks, dailyTasksToUpdate } = convo.tasksEdit;
+
+	convo.ask("Are those times right?", [
+		{
+			pattern: utterances.yes,
+			callback: (response, convo) => {
+				convo.say(":boom: This looks great!");
+
+				var options = { segmentCompleted: true, updateTasks: dailyTasksToUpdate };
+				var fullTaskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
+
+				convo.say("Here's your updated task list :memo::");
+				convo.say(fullTaskListMessage);
+
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				convo.say("Let's give this another try :repeat_one:");
+				convo.say("Just say time estimates, like `30, 1 hour, or 15 min` and I'll figure it out and assign times to the tasks above in order :smiley:");
+				editTaskTimesFlow(response, convo);
+				convo.next();
+			}
+		}
+	]);
 }

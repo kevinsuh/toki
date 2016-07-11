@@ -91,7 +91,9 @@ exports.default = function (controller) {
 					bot.replyInteractive(message, "It's about that time, isn't it?");
 					break;
 				case _constants.buttonValues.resetTimes.value:
-					bot.replyInteractive(message, "_Resetting :repeat:..._");
+					// bot.replyInteractive(message, "_Resetting :repeat:..._")
+					break;
+				case _constants.buttonValues.resetTimesPersistent.value:
 					break;
 				case _constants.buttonValues.doneSessionTimeoutYes.value:
 					bot.replyInteractive(message, "Great work! :raised_hands:");

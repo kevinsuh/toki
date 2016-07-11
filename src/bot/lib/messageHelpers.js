@@ -105,7 +105,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		}
 	});
 
-	var { segmentCompleted, newTasks } = options;
+	var { segmentCompleted, newTasks, updateTasks } = options;
 
 	// cant segment if no completed tasks
 	if (!hasCompletedTasks) {
@@ -124,6 +124,21 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 			if (task.done) {
 				completedTasks.push(task);
 			} else {
+
+				// update if necessary
+				if (updateTasks) {
+					for (var i = 0; i < updateTasks.length; i++) {
+						var updateTask = updateTasks[i];
+						if (updateTask.dataValues) {
+							updateTask = updateTask.dataValues;
+						}
+						if (task.id == updateTask.id) {
+							task = updateTask;
+							break;
+						}
+					}
+				}
+
 				remainingTasks.push(task);
 			}
 		});
@@ -134,15 +149,16 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 			})
 		}
 
-		// add remaining tasks to right place
-		taskListMessage = (options.noKarets ? `*Remaining Tasks:*\n` : `> *Remaining Tasks:*\n`);
-		var taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
+
+		// add completed tasks to right place
+		var taskListMessageBody = '';
+		taskListMessage = (options.noKarets ? `*Completed Tasks:*\n` : `> *Completed Tasks:*\n`);
+		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
 		taskListMessage += taskListMessageBody;
 
-		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
-
-		console.log("no here?");
-		taskListMessage += (options.noKarets ? `\n*Completed Tasks:*\n` : `>\n> *Completed Tasks:*\n`);
+		// add remaining tasks to right place
+		taskListMessage += (options.noKarets ? `\n*Remaining Tasks:*\n` : `>\n>*Remaining Tasks:*\n`);
+		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
 		taskListMessage += taskListMessageBody;
 
 	} else {

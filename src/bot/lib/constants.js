@@ -205,6 +205,10 @@ export const buttonValues ={
 		name: "RESET_TIMES",
 		value: "RESET_TIMES"
 	},
+	resetTimesPersistent: {
+		name: "RESET_TIMES_PERSISTENT",
+		value: "RESET_TIMES_PERSISTENT"
+	},
 	doneSessionTimeoutSnooze: {
 		name: "DONE_SESSION_TIMEOUT_SNOOZE",
 		value: "DONE_SESSION_TIMEOUT_SNOOZE"
