@@ -105,7 +105,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		}
 	});
 
-	var { segmentCompleted } = options;
+	var { segmentCompleted, newTasks } = options;
 
 	// cant segment if no completed tasks
 	if (!hasCompletedTasks) {
@@ -127,6 +127,12 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 				remainingTasks.push(task);
 			}
 		});
+
+		if (newTasks) {
+			newTasks.forEach((newTask) => {
+				remainingTasks.push(newTask);
+			})
+		}
 
 		// add remaining tasks to right place
 		taskListMessage = (options.noKarets ? `*Remaining Tasks:*\n` : `> *Remaining Tasks:*\n`);
@@ -187,7 +193,7 @@ function createTaskListMessageBody(taskArray, options) {
 
 		// completed tasks do not have count
 		var taskContent = ``;
-		if (!options.segmentCompleted || task.done == false) {
+		if (!options.segmentCompleted || task.done != true) {
 			taskContent = `${count}) `;
 		}
 		taskContent = `${taskContent}${task.text}${minutesMessage}`

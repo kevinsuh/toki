@@ -123,6 +123,7 @@ function convertArrayToTaskListMessage(taskArray) {
 	});
 
 	var segmentCompleted = options.segmentCompleted;
+	var newTasks = options.newTasks;
 
 	// cant segment if no completed tasks
 
@@ -145,6 +146,12 @@ function convertArrayToTaskListMessage(taskArray) {
 				remainingTasks.push(task);
 			}
 		});
+
+		if (newTasks) {
+			newTasks.forEach(function (newTask) {
+				remainingTasks.push(newTask);
+			});
+		}
 
 		// add remaining tasks to right place
 		taskListMessage = options.noKarets ? '*Remaining Tasks:*\n' : '> *Remaining Tasks:*\n';
@@ -206,7 +213,7 @@ function createTaskListMessageBody(taskArray, options) {
 
 		// completed tasks do not have count
 		var taskContent = '';
-		if (!options.segmentCompleted || task.done == false) {
+		if (!options.segmentCompleted || task.done != true) {
 			taskContent = count + ') ';
 		}
 		taskContent = '' + taskContent + task.text + minutesMessage;
