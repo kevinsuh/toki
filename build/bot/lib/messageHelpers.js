@@ -174,7 +174,7 @@ function convertMinutesToHoursString(minutes) {
 	}
 
 	if (minutes == 0) {
-		content = '' + content;
+		content = content.slice(0, -1);
 	} else if (minutes == 1) {
 		content = '' + content + minutes + ' minute';
 	} else {

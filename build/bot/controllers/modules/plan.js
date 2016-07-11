@@ -469,7 +469,7 @@ function confirmTimeToTasks(timeToTasksArray, convo) {
 			}, {
 				pattern: _botResponses.utterances.no,
 				callback: function callback(response, convo) {
-					convo.say("Great! Let me know when you're ready to start by saying `start session`");
+					convo.say("Great! Let me know when you're ready to `start a session`");
 					convo.next();
 				}
 			}], { 'key': 'startFirstSession' });
