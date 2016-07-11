@@ -113,7 +113,7 @@ export default function(controller) {
 						console.log("\n\n ~ edit tasks finished ~ \n\n");
 						console.log(convo.tasksEdit);
 						
-						var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete } = convo.tasksEdit;
+						var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate } = convo.tasksEdit;
 
 						// add new tasks if they got added
 						if (newTasks.length > 0) {
@@ -164,14 +164,29 @@ export default function(controller) {
 							.then((dailyTasks) => {
 
 								var completedTaskIds = dailyTasks.map((dailyTask) => {
-    							return dailyTask.TaskId;
-    						});
-    						models.Task.update({
-    							done: true
-    						}, {
-    							where: [`"Tasks"."id" in (?)`, completedTaskIds]
-    						});
+									return dailyTask.TaskId;
+								});
+								models.Task.update({
+									done: true
+								}, {
+									where: [`"Tasks"."id" in (?)`, completedTaskIds]
+								});
 
+							})
+						}
+
+						// update daily tasks if requested
+						if (dailyTasksToUpdate.length > 0) {
+							dailyTasksToUpdate.forEach((dailyTask) => {
+								if (dailyTask.dataValues && dailyTask.minutes && dailyTask.text) {
+									const { minutes, text } = dailyTask;
+									models.DailyTask.update({
+										text,
+										minutes
+									}, {
+										where: [`"DailyTasks"."id" = ?`, dailyTask.dataValues.id]
+									})
+								}
 							})
 						}
 

@@ -102,6 +102,7 @@ exports.default = function (controller) {
 						var SlackUserId = _convo$tasksEdit.SlackUserId;
 						var dailyTaskIdsToDelete = _convo$tasksEdit.dailyTaskIdsToDelete;
 						var dailyTaskIdsToComplete = _convo$tasksEdit.dailyTaskIdsToComplete;
+						var dailyTasksToUpdate = _convo$tasksEdit.dailyTasksToUpdate;
 
 						// add new tasks if they got added
 
@@ -160,6 +161,23 @@ exports.default = function (controller) {
 								}, {
 									where: ['"Tasks"."id" in (?)', completedTaskIds]
 								});
+							});
+						}
+
+						// update daily tasks if requested
+						if (dailyTasksToUpdate.length > 0) {
+							dailyTasksToUpdate.forEach(function (dailyTask) {
+								if (dailyTask.dataValues && dailyTask.minutes && dailyTask.text) {
+									var minutes = dailyTask.minutes;
+									var text = dailyTask.text;
+
+									_models2.default.DailyTask.update({
+										text: text,
+										minutes: minutes
+									}, {
+										where: ['"DailyTasks"."id" = ?', dailyTask.dataValues.id]
+									});
+								}
 							});
 						}
 					});

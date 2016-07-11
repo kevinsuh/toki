@@ -829,12 +829,12 @@ function getTimeToTasks(response, convo) {
 
 				updateTaskListMessageObject.text = taskListMessage;
 				bot.api.chat.update(updateTaskListMessageObject);
-			}
 
-			if (timeToTasksArray.length >= dailyTasksToSetMinutes.length) {
-				convo.tasksEdit.dailyTasksToUpdate = dailyTasksToSetMinutes;
-				confirmTimeToTasks(convo);
-				convo.next();
+				if (timeToTasksArray.length >= dailyTasksToSetMinutes.length) {
+					convo.tasksEdit.dailyTasksToUpdate = dailyTasksToSetMinutes;
+					confirmTimeToTasks(convo);
+					convo.next();
+				}
 			}
 		}
 	}]);
@@ -846,15 +846,20 @@ function confirmTimeToTasks(convo) {
 	var dailyTasksToUpdate = _convo$tasksEdit12.dailyTasksToUpdate;
 
 
+	console.log("\n\n\n daily tasks to update: ");
+
+	console.log(dailyTasksToUpdate);
+	console.log("\n\n\n");
+
 	convo.ask("Are those times right?", [{
 		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.say(":boom: This looks great!");
 
-			var options = { segmentCompleted: true, updateTasks: dailyTasksToUpdate };
-			var fullTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
+			var options = { dontUseDataValues: true, segmentCompleted: true };
+			var fullTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasksToUpdate, options);
 
-			convo.say("Here's your updated task list :memo::");
+			convo.say("Here's your remaining task list for today :memo::");
 			convo.say(fullTaskListMessage);
 
 			convo.next();

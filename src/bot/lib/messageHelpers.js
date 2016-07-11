@@ -105,7 +105,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		}
 	});
 
-	var { segmentCompleted, newTasks, updateTasks } = options;
+	var { segmentCompleted, newTasks } = options;
 
 	// cant segment if no completed tasks
 	if (!hasCompletedTasks) {
@@ -124,21 +124,6 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 			if (task.done) {
 				completedTasks.push(task);
 			} else {
-
-				// update if necessary
-				if (updateTasks) {
-					for (var i = 0; i < updateTasks.length; i++) {
-						var updateTask = updateTasks[i];
-						if (updateTask.dataValues) {
-							updateTask = updateTask.dataValues;
-						}
-						if (task.id == updateTask.id) {
-							task = updateTask;
-							break;
-						}
-					}
-				}
-
 				remainingTasks.push(task);
 			}
 		});
@@ -184,8 +169,6 @@ function createTaskListMessageBody(taskArray, options) {
 
 	taskArray.forEach((task, index) => {
 
-		// segment based on completed and not!
-		
 		// for when you get task from DB
 		var minutesMessage = '';
 		if (!options.dontUseDataValues && task.dataValues) {
