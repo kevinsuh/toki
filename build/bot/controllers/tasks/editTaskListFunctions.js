@@ -174,7 +174,6 @@ function addTasksFlow(response, convo) {
 
 	// tasks is just a copy of dailyTasks (you're saved tasks)
 	convo.say('What tasks would you like to add to your list? Please send me each task in a separate line');
-	convo.say("Then just tell me when you're `done`!");
 	askWhichTasksToAdd(response, convo);
 	convo.next();
 }
@@ -183,17 +182,13 @@ function askWhichTasksToAdd(response, convo) {
 	var _convo$tasksEdit2 = convo.tasksEdit;
 	var bot = _convo$tasksEdit2.bot;
 	var dailyTasks = _convo$tasksEdit2.dailyTasks;
-	var updateTaskListMessageObject = _convo$tasksEdit2.updateTaskListMessageObject;
 
-	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
+	var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
 
 	var tasks = [];
-	dailyTasks.forEach(function (dailyTask) {
-		tasks.push(dailyTask);
-	});
 
 	convo.ask({
-		text: taskListMessage,
+		text: "Then just tell me when you're `done`!",
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "ADD_TASKS",
@@ -202,10 +197,6 @@ function askWhichTasksToAdd(response, convo) {
 	}, [{ // this is failure point. restart with question
 		default: true,
 		callback: function callback(response, convo) {
-
-			updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
-			convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
-
 			var text = response.text;
 
 			var newTask = {
@@ -220,9 +211,12 @@ function askWhichTasksToAdd(response, convo) {
 				getTimeToNewTasks(response, convo);
 				convo.next();
 			} else {
+
 				tasks.push(newTask);
-				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(tasks);
-				updateTaskListMessageObject.text = taskListMessage;
+				var options = { segmentCompleted: true, newTasks: tasks };
+				var fullTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
+
+				updateTaskListMessageObject.text = fullTaskListMessage;
 				bot.api.chat.update(updateTaskListMessageObject);
 			}
 		}
@@ -398,7 +392,7 @@ function addNewTasksToTaskList(response, convo) {
 	var dailyTasks = _convo$tasksEdit4.dailyTasks;
 	var newTasks = _convo$tasksEdit4.newTasks;
 
-	var options = {};
+	var options = { segmentCompleted: true };
 
 	var taskArray = [];
 	dailyTasks.forEach(function (task) {

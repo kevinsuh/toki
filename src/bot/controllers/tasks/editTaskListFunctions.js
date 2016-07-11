@@ -170,7 +170,6 @@ function addTasksFlow(response, convo) {
 
 	// tasks is just a copy of dailyTasks (you're saved tasks)
 	convo.say(`What tasks would you like to add to your list? Please send me each task in a separate line`);
-	convo.say("Then just tell me when you're `done`!");
 	askWhichTasksToAdd(response, convo);
 	convo.next();
 
@@ -178,16 +177,13 @@ function addTasksFlow(response, convo) {
 
 function askWhichTasksToAdd(response, convo) {
 
-	var { tasksEdit: { bot, dailyTasks, updateTaskListMessageObject } } = convo;
-	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+	var { tasksEdit: { bot, dailyTasks } } = convo;
+	var updateTaskListMessageObject        = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 
 	var tasks = [];
-	dailyTasks.forEach((dailyTask) => {
-		tasks.push(dailyTask);
-	});
 
 	convo.ask({
-		text: taskListMessage,
+		text: "Then just tell me when you're `done`!",
 		attachments:[
 			{
 				attachment_type: 'default',
@@ -200,9 +196,6 @@ function askWhichTasksToAdd(response, convo) {
 		{ // this is failure point. restart with question
 			default: true,
 			callback: function(response, convo) {
-
-				updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
-				convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
 
 				const { text } = response;
 				const newTask = {
@@ -217,10 +210,14 @@ function askWhichTasksToAdd(response, convo) {
 					getTimeToNewTasks(response, convo);
 					convo.next();
 				} else {
+
 					tasks.push(newTask);
-					taskListMessage = convertArrayToTaskListMessage(tasks)
-					updateTaskListMessageObject.text = taskListMessage;
+					var options = { segmentCompleted: true, newTasks: tasks };
+					var fullTaskListMessage = convertArrayToTaskListMessage(dailyTasks, options)
+
+					updateTaskListMessageObject.text = fullTaskListMessage;
 					bot.api.chat.update(updateTaskListMessageObject);
+
 				}
 			}
 		}
@@ -409,7 +406,7 @@ function confirmTimeToTasks(response, convo) {
 function addNewTasksToTaskList(response, convo) {
 	// combine the newTasks with dailyTasks
 	var { dailyTasks, newTasks } = convo.tasksEdit;
-	var options                  = {};
+	var options                  = { segmentCompleted: true };
 
 	var taskArray = [];
 	dailyTasks.forEach((task) => {

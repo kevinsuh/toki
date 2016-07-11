@@ -84,9 +84,8 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 	var count = 1;
 	var totalMinutes = 0;
 
-	console.log("\n\n options passed in to convertArrayToTaskListMessage:");
-	console.log(options);
-	console.log("\n\n");
+	options.totalMinutes = totalMinutes;
+	options.count        = count;
 
 	if (taskArray.length  == 0) {
 		console.log("array passed in is empty at convertArrayToTaskListMessage");
@@ -114,9 +113,52 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 	}
 
 	if (segmentCompleted) {
-		console.log("\n\n ~~ segmenting tasks ( completed / not completed ) ~~ \n\n");
+		console.log("\n\n ~~ segmenting tasks ( completed / not completed ) ~~");
+
+		var remainingTasks = [];
+		var completedTasks = [];
+		taskArray.forEach((task) => {
+			if (!options.dontUseDataValues && task.dataValues) {
+				task = task.dataValues;
+			};
+			if (task.done) {
+				completedTasks.push(task);
+			} else {
+				remainingTasks.push(task);
+			}
+		});
+
+		// add remaining tasks to right place
 		taskListMessage = (options.noKarets ? `*Remaining Tasks:*\n` : `> *Remaining Tasks:*\n`);
+		var taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
+		taskListMessage += taskListMessageBody;
+
+		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
+
+		console.log("no here?");
+		taskListMessage += (options.noKarets ? `\n*Completed Tasks:*\n` : `>\n> *Completed Tasks:*\n`);
+		taskListMessage += taskListMessageBody;
+
+	} else {
+		var taskListMessageBody = createTaskListMessageBody(taskArray, options);
+		taskListMessage += taskListMessageBody;
+
 	}
+
+	if (!options.dontCalculateMinutes) { // taskListMessages default to show calculated minutes
+		var { totalMinutes } = options;
+		var timeString = convertMinutesToHoursString(totalMinutes);
+		var totalMinutesContent = `\n*Total time estimate: ${timeString} :clock730:*`;
+		taskListMessage += totalMinutesContent;
+	}
+
+	return taskListMessage;
+}
+
+function createTaskListMessageBody(taskArray, options) {
+
+	var taskListMessage = '';
+	var { count } = options
 
 	taskArray.forEach((task, index) => {
 
@@ -132,7 +174,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 
 			var minutesInt = parseInt(task.minutes);
 			if (!isNaN(minutesInt) && !task.done) {
-				totalMinutes += minutesInt;
+				options.totalMinutes += minutesInt;
 			}
 			var timeString = convertMinutesToHoursString(minutesInt);
 
@@ -145,7 +187,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 
 		// completed tasks do not have count
 		var taskContent = ``;
-		if (!segmentCompleted || task.done == false) {
+		if (!options.segmentCompleted || task.done == false) {
 			taskContent = `${count}) `;
 		}
 		taskContent = `${taskContent}${task.text}${minutesMessage}`
@@ -154,28 +196,9 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		taskContent = (options.noKarets ? taskContent : `> ${taskContent}`);
 
 		taskListMessage += taskContent;
-
-		// title when segmentCompleted
-		if (segmentCompleted) {
-			var nextIndex = index+1;
-			var nextTask = taskArray[nextIndex];
-			if (nextTask && !options.dontUseDataValues && nextTask.dataValues) {
-				nextTask = nextTask.dataValues;
-			};
-
-			if (task.done == false && nextTask && nextTask.done) {
-				taskListMessage += (options.noKarets ? `\n*Completed Tasks:*\n` : `>\n> *Completed Tasks:*\n`);
-			}
-		}
 		
 		count++;
 	});
-
-	if (!options.dontCalculateMinutes) { // taskListMessages default to show calculated minutes
-		var timeString = convertMinutesToHoursString(totalMinutes);
-		var totalMinutesContent = `\n*Total time estimate: ${timeString} :clock730:*`;
-		taskListMessage += totalMinutesContent;
-	}
 
 	return taskListMessage;
 }
