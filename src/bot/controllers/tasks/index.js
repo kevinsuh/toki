@@ -55,10 +55,10 @@ export default function(controller) {
 						convo.say("Here are your tasks for today :memo::");
 						convo.say(taskListMessage);
 					}
-          convo.on('end', (convo) => {
-          	console.log("\n\n ~ view tasks finished ~ \n\n");
-          });
-        });
+					convo.on('end', (convo) => {
+						console.log("\n\n ~ view tasks finished ~ \n\n");
+					});
+				});
 
 			});
 
@@ -78,6 +78,8 @@ export default function(controller) {
 		})
 		.then((user) => {
 
+			const UserId = user.id;
+
 			user.getDailyTasks({
 				where: [`"DailyTask"."type" = ?`, "live"],
 				include: [ models.Task ],
@@ -93,7 +95,8 @@ export default function(controller) {
 						bot,
 						SlackUserId,
 						dailyTasks,
-						updateTaskListMessageObject = {}
+						updateTaskListMessageObject: {},
+						newTasks: []
 					}
 
 					if (dailyTasks.length == 0) {
@@ -103,10 +106,45 @@ export default function(controller) {
 						// this is the flow you expect for editing tasks
 						startEditTaskListMessage(convo);
 					}
-          convo.on('end', (convo) => {
-          	console.log("\n\n ~ view tasks finished ~ \n\n");
-          });
-        });
+					convo.on('end', (convo) => {
+						console.log("\n\n ~ edit tasks finished ~ \n\n");
+						console.log(convo.tasksEdit);
+						
+						var { newTasks, dailyTasks, SlackUserId } = convo.tasksEdit;
+
+						// add new tasks if they got added
+						if (newTasks.length > 0) {
+							var priority = dailyTasks.length;
+							// add the priorities
+							newTasks = newTasks.map((newTask) => {
+								priority++;
+								return {
+									...newTask,
+									priority
+								};
+							});
+
+							newTasks.forEach((newTask) => {
+								const { minutes, text, priority } = newTask;
+								if (minutes && text) {
+									models.Task.create({
+										text
+									})
+									.then((task) => {
+										const TaskId = task.id;
+										models.DailyTask.create({
+											TaskId,
+											priority,
+											minutes,
+											UserId
+										});
+									});
+								}
+							})
+						}
+
+					});
+				});
 
 			});
 

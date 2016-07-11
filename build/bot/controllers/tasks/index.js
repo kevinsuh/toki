@@ -4,6 +4,11 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+// base controller for tasks
+
+
 exports.default = function (controller) {
 
 	(0, _add2.default)(controller);
@@ -57,6 +62,8 @@ exports.default = function (controller) {
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 
+			var UserId = user.id;
+
 			user.getDailyTasks({
 				where: ['"DailyTask"."type" = ?', "live"],
 				include: [_models2.default.Task],
@@ -70,7 +77,9 @@ exports.default = function (controller) {
 					convo.tasksEdit = {
 						bot: bot,
 						SlackUserId: SlackUserId,
-						dailyTasks: dailyTasks
+						dailyTasks: dailyTasks,
+						updateTaskListMessageObject: {},
+						newTasks: []
 					};
 
 					if (dailyTasks.length == 0) {
@@ -81,7 +90,46 @@ exports.default = function (controller) {
 						(0, _editTaskListFunctions.startEditTaskListMessage)(convo);
 					}
 					convo.on('end', function (convo) {
-						console.log("\n\n ~ view tasks finished ~ \n\n");
+						console.log("\n\n ~ edit tasks finished ~ \n\n");
+						console.log(convo.tasksEdit);
+
+						var _convo$tasksEdit = convo.tasksEdit;
+						var newTasks = _convo$tasksEdit.newTasks;
+						var dailyTasks = _convo$tasksEdit.dailyTasks;
+						var SlackUserId = _convo$tasksEdit.SlackUserId;
+
+						// add new tasks if they got added
+
+						if (newTasks.length > 0) {
+							var priority = dailyTasks.length;
+							// add the priorities
+							newTasks = newTasks.map(function (newTask) {
+								priority++;
+								return _extends({}, newTask, {
+									priority: priority
+								});
+							});
+
+							newTasks.forEach(function (newTask) {
+								var minutes = newTask.minutes;
+								var text = newTask.text;
+								var priority = newTask.priority;
+
+								if (minutes && text) {
+									_models2.default.Task.create({
+										text: text
+									}).then(function (task) {
+										var TaskId = task.id;
+										_models2.default.DailyTask.create({
+											TaskId: TaskId,
+											priority: priority,
+											minutes: minutes,
+											UserId: UserId
+										});
+									});
+								}
+							});
+						}
 					});
 				});
 			});
@@ -143,6 +191,4 @@ var _editTaskListFunctions = require('./editTaskListFunctions');
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 ;
-
-// base controller for tasks
 //# sourceMappingURL=index.js.map

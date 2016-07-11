@@ -233,9 +233,6 @@ function saveNewTaskResponses(tasks, convo) {
 		if (!dailyTasks) {
 			dailyTasks = [];
 		}
-		newTasksArray.forEach((task) => {
-			dailyTasks.push(task);
-		});
 
 		convo.tasksEdit.dailyTasks = dailyTasks; // all daily tasks
 		convo.tasksEdit.newTasks   = newTasksArray; // only the new ones
@@ -380,7 +377,7 @@ function confirmTimeToTasks(response, convo) {
 		{
 			pattern: utterances.yes,
 			callback: (response, convo) => {
-				convo.say(":boom: This looks great!");
+				addNewTasksToTaskList(response, convo);
 				convo.next();
 			}
 		},
@@ -394,6 +391,27 @@ function confirmTimeToTasks(response, convo) {
 			}
 		}
 	]);
+
+}
+
+function addNewTasksToTaskList(response, convo) {
+	// combine the newTasks with dailyTasks
+	var { dailyTasks, newTasks } = convo.tasksEdit;
+	var options                  = {};
+
+	var taskArray = [];
+	dailyTasks.forEach((task) => {
+		taskArray.push(task);
+	})
+	newTasks.forEach((newTask) => {
+		taskArray.push(newTask);
+	});
+
+	var taskListMessage = convertArrayToTaskListMessage(taskArray, options);
+
+	convo.say("This looks great! Here's your updated task list :memo::");
+	convo.say(taskListMessage);
+	convo.next();
 
 }
 
