@@ -169,7 +169,6 @@ function askForTaskListOptions(convo) {
 function addTasksFlow(response, convo) {
 
 	// tasks is just a copy of dailyTasks (you're saved tasks)
-	convo.say(`What tasks would you like to add to your list? Please send me each task in a separate line`);
 	askWhichTasksToAdd(response, convo);
 	convo.next();
 
@@ -177,13 +176,12 @@ function addTasksFlow(response, convo) {
 
 function askWhichTasksToAdd(response, convo) {
 
-	var { tasksEdit: { bot, dailyTasks } } = convo;
-	var updateTaskListMessageObject        = getMostRecentTaskListMessageToUpdate(response.channel, bot);
+	var { tasksEdit: { bot, dailyTasks, newTasks, actuallyWantToAddATask } } = convo;
+	var updateTaskListMessageObject                  = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 
-	var tasks = [];
-
+	var tasksToAdd = [];
 	convo.ask({
-		text: "Then just tell me when you're `done`!",
+		text: "What other tasks do you want to work on?",
 		attachments:[
 			{
 				attachment_type: 'default',
@@ -205,15 +203,30 @@ function askWhichTasksToAdd(response, convo) {
 
 				// everything except done!
 				if (FINISH_WORD.reg_exp.test(response.text)) {
-					saveNewTaskResponses(tasks, convo);
+					saveNewTaskResponses(tasksToAdd, convo);
 					convo.say("Excellent!");
 					getTimeToNewTasks(response, convo);
 					convo.next();
 				} else {
 
-					tasks.push(newTask);
-					var options = { segmentCompleted: true, newTasks: tasks };
-					var fullTaskListMessage = convertArrayToTaskListMessage(dailyTasks, options)
+					tasksToAdd.push(newTask);
+					var taskArray = [];
+					newTasks.forEach((task) => {
+						taskArray.push(task);
+					})
+					tasksToAdd.forEach((task) => {
+						taskArray.push(task);
+					})
+
+					var fullTaskListMessage = '';
+					if (actuallyWantToAddATask) {
+						var options = { dontCalculateMinutes: true };
+						fullTaskListMessage = convertArrayToTaskListMessage(taskArray, options)
+					} else {
+						var options = { segmentCompleted: true, newTasks: taskArray };
+						fullTaskListMessage = convertArrayToTaskListMessage(dailyTasks, options)
+					}
+					
 
 					updateTaskListMessageObject.text = fullTaskListMessage;
 					bot.api.chat.update(updateTaskListMessageObject);
@@ -224,27 +237,31 @@ function askWhichTasksToAdd(response, convo) {
 	]);
 }
 
-function saveNewTaskResponses(tasks, convo) {
+function saveNewTaskResponses(tasksToAdd, convo) {
 
 	// get the newTasks!
-	var { dailyTasks } = convo.tasksEdit;
+	var { dailyTasks, newTasks } = convo.tasksEdit;
 
-	if (tasks) {
+	if (tasksToAdd) {
 
 		// only get the new tasks
-		var newTasks = [];
-		tasks.forEach((task) => {
+		var tasksArray = [];
+		tasksToAdd.forEach((task) => {
 			if (task.newTask) {
-				newTasks.push(task);
+				tasksArray.push(task);
 			}
 		})
-		var newTasksArray = convertResponseObjectsToTaskArray(newTasks);
+		var tasksToAddArray = convertResponseObjectsToTaskArray(tasksArray);
 		if (!dailyTasks) {
 			dailyTasks = [];
 		}
 
+		tasksToAddArray.forEach((newTask) => {
+			newTasks.push(newTask);
+		})
+
 		convo.tasksEdit.dailyTasks = dailyTasks; // all daily tasks
-		convo.tasksEdit.newTasks   = newTasksArray; // only the new ones
+		convo.tasksEdit.newTasks   = newTasks; // only the new ones
 
 	}
 
@@ -257,11 +274,21 @@ function getTimeToNewTasks(response, convo) {
 	var options                    = { dontShowMinutes: true };
 	var taskListMessage            = convertArrayToTaskListMessage(newTasks, options);
 
-	convo.say("How much time would you like to allocate to your new tasks?");
-
 	var timeToTasksArray = [];
-	convo.ask({
+
+	convo.say({
 		text: taskListMessage,
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "TASK_LIST_MESSAGE",
+				fallback: "Here's your task list!"
+			}
+		]
+	})
+
+	convo.ask({
+		text: "How much time would you like to allocate to your new tasks?",
 		attachments:[
 			{
 				attachment_type: 'default',
@@ -290,6 +317,7 @@ function getTimeToNewTasks(response, convo) {
 		{
 			pattern: buttonValues.actuallyWantToAddATask.value,
 			callback: function(response, convo) {
+				convo.tasksEdit.actuallyWantToAddATask = true;
 				askWhichTasksToAdd(response, convo);
 				convo.next();
 			}
