@@ -282,8 +282,8 @@ function convertTimeStringToMinutes(timeString) {
 		var minutes = 0;
 
 		// OPTION 1: int with space (i.e. `1 hr`)
-		if (timeArray[i] == parseInt(timeArray[i])) {
-			minutes = parseInt(timeArray[i]);
+		if (timeArray[i] == parseFloat(timeArray[i])) {
+			minutes = parseFloat(timeArray[i]);
 			var hourOrMinute = timeArray[i + 1];
 			if (hourOrMinute && hourOrMinute[0] == "h") {
 				minutes *= 60;
@@ -303,8 +303,8 @@ function convertTimeStringToMinutes(timeString) {
 			var timeStringArray = timeString.split(containsH);
 
 			timeStringArray.forEach(function (element, index) {
-				var time = parseInt(element); // can be minutes or hours
-				if (isNaN(parseInt(element))) return;
+				var time = parseFloat(element); // can be minutes or hours
+				if (isNaN(parseFloat(element))) return;
 
 				// if string contains "h", then you can assume first one is hour
 				if (containsH.test(timeString)) {
