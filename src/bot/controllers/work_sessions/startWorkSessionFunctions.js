@@ -188,7 +188,7 @@ function finalizeNewTaskToStart(response, convo) {
 					},
 					{
 							name: buttonValues.checkIn.name,
-							text: "Check in :alarm_clock:",
+							text: "Add Checkin",
 							value: buttonValues.checkIn.value,
 							type: "button"
 					},

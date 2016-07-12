@@ -53,6 +53,7 @@ exports.default = function (controller) {
 						convo.ask('Are you finished with your session?', [{
 							pattern: _botResponses.utterances.yes,
 							callback: function callback(response, convo) {
+								convo.say("You are a star! :star:");
 								convo.finishedWithSession = true;
 								convo.next();
 							}

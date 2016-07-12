@@ -64,6 +64,7 @@ export default function(controller) {
 							{
 								pattern: utterances.yes,
 								callback: (response, convo) => {
+									convo.say("You are a star! :star:");
 									convo.finishedWithSession = true;
 									convo.next();
 								}
