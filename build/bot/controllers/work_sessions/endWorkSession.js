@@ -11,13 +11,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 exports.default = function (controller) {
 
-	/**
-  * 		ENDING WORK SESSION:
-  * 			1) Explict command to finish session early
-  * 			2) Your timer has run out
-  */
-
-	// User wants to finish session early (wit intent)
+	// User explicitly wants to finish session early (wit intent)
 	controller.hears(['done_session'], 'direct_message', _index.wit.hears, function (bot, message) {
 
 		/**
@@ -27,8 +21,6 @@ exports.default = function (controller) {
    */
 
 		var SlackUserId = message.user;
-		console.log("done message:");
-		console.log(message);
 
 		// no open sessions
 		bot.send({
@@ -43,12 +35,32 @@ exports.default = function (controller) {
 				include: [_models2.default.SlackUser]
 			}).then(function (user) {
 				return user.getWorkSessions({
-					where: ['"open" = ?', true]
+					where: ['"open" = ?', true],
+					order: '"WorkSession"."createdAt" DESC',
+					include: [_models2.default.DailyTask]
 				});
 			}).then(function (workSessions) {
 				// if live work session, confirm end early
 				// else, user MUST say `done` to trigger end (this properly simulates user is done with that session)
 				if (workSessions.length > 0) {
+
+					var workSession = workSessions[0]; // only deal with most recent one
+					var dailyTaskIds = workSession.DailyTasks.map(function (dailyTask) {
+						return dailyTask.id;
+					});
+
+					user.getDailyTasks({
+						where: ['"DailyTask"."id" IN (?) AND "Task"."done" = ?', dailyTaskIds, false],
+						include: [_models2.default.Task]
+					}).then(function (dailyTasks) {
+
+						var taskTextsToWorkOnArray = dailyTasks.map(function (dailyTask) {
+							var text = dailyTask.Task.dataValues.text;
+							return text;
+						});
+						var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
+					});
+
 					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 						convo.ask('Are you finished with your session?', [{
 							pattern: _botResponses.utterances.yes,
@@ -71,14 +83,34 @@ exports.default = function (controller) {
 						});
 					});
 				} else {
-					// this is a bad solution right now
-					// we need another column in WorkSessions to be `live`, which is different from `open` (`open` is for cronjob reminder, `done` is for when user explicitly ends the session.)
-					if (message.text == 'done' || message.text == 'Done') {
-						controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
+
+					if (_botResponses.utterances.containsTask.test(message.text)) {
+
+						// want to finish off some tasks
+						controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
 					} else {
+
+						// want to be end a session when they arent currently in one
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-							convo.say('I\'m not sure what you mean :thinking_face:. If you\'re finished with a session, reply `done`');
+							convo.ask('You aren\'t in a session right now! Would you like to start one?', [{
+								pattern: _botResponses.utterances.yes,
+								callback: function callback(response, convo) {
+									convo.startSession = true;
+									convo.next();
+								}
+							}, {
+								pattern: _botResponses.utterances.no,
+								callback: function callback(response, convo) {
+									convo.say('Okay! I\'ll be here when you\'re ready to crank again :wrench: ');
+									convo.next();
+								}
+							}]);
 							convo.next();
+							convo.on('end', function (convo) {
+								if (convo.startSession) {
+									controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+								}
+							});
 						});
 					}
 				}
