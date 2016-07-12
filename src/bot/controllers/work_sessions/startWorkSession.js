@@ -423,7 +423,7 @@ export default function(controller) {
 									if (startNewDay) {
 										convo.say("Hey! You haven't entered any tasks yet today. Let's start the day before doing a session :muscle:");
 									} else {
-										convo.say("Hey! You actually don't have any tasks right now. Let's get things to work on first");
+										convo.say("Hey! Let's get things to work on first");
 									}
 
 									convo.next();
@@ -436,7 +436,7 @@ export default function(controller) {
 										if (startNewDay) {
 											controller.trigger('begin_day_flow', [bot, config]);
 										} else {
-											controller.trigger('add_task_flow', [ bot, config ]);
+											controller.trigger('edit_tasks_flow', [ bot, config ]);
 										}
 
 									})

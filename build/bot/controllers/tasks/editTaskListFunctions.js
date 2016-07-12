@@ -74,9 +74,8 @@ function startEditTaskListMessage(convo) {
 // options to ask if user has no remaining tasks
 function askForTaskListOptionsIfNoRemainingTasks(convo) {
 
-	convo.say("Hey! You have no remaining tasks for today");
 	convo.ask({
-		text: 'Would you like to add some tasks?',
+		text: 'You have no remaining tasks for today. Would you like to add some tasks?',
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "ADD_TASKS",
