@@ -738,9 +738,9 @@ function getTimeToTasks(response, convo) {
 			fallback: "How much time would you like to allocate to your tasks?",
 			color: _constants.colorsHash.grey.hex,
 			actions: [{
-				name: _constants.buttonValues.neverMind.name,
+				name: _constants.buttonValues.neverMindTasks.name,
 				text: "Never mind!",
-				value: _constants.buttonValues.neverMind.value,
+				value: _constants.buttonValues.neverMindTasks.value,
 				type: "button"
 			}, {
 				name: _constants.buttonValues.resetTimesPersistent.name,
@@ -753,6 +753,7 @@ function getTimeToTasks(response, convo) {
 	}, [{
 		pattern: _constants.buttonValues.neverMindTasks.value,
 		callback: function callback(response, convo) {
+			convo.say("Good luck with today! Let me know if you want to `edit tasks`");
 			convo.next();
 		}
 	}, { // NL equivalent to buttonValues.neverMind.value

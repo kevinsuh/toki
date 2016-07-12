@@ -758,9 +758,9 @@ function getTimeToTasks(response, convo) {
 				color: colorsHash.grey.hex,
 				actions: [
 					{
-							name: buttonValues.neverMind.name,
+							name: buttonValues.neverMindTasks.name,
 							text: "Never mind!",
-							value: buttonValues.neverMind.value,
+							value: buttonValues.neverMindTasks.value,
 							type: "button"
 					},
 					{
@@ -778,6 +778,7 @@ function getTimeToTasks(response, convo) {
 		{
 			pattern: buttonValues.neverMindTasks.value,
 			callback: function(response, convo) {
+				convo.say("Good luck with today! Let me know if you want to `edit tasks`");
 				convo.next();
 			}
 		},
