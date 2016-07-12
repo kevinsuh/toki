@@ -6,6 +6,16 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
+	controller.hears([_constants.THANK_YOU.reg_exp], 'direct_message', function (bot, message) {
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(function () {
+			bot.reply(message, "You're welcome!! :smile:");
+		}, 500);
+	});
+
 	// this will send message if no other intent gets picked up
 	controller.hears([''], 'direct_message', _index.wit.hears, function (bot, message) {
 

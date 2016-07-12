@@ -405,7 +405,7 @@ function getTimeToNewTasks(response, convo) {
 
 				if (timeToTasksArray.length >= newTasks.length) {
 					convo.tasksEdit.newTasks = newTasks;
-					confirmTimeToTasks(response, convo);
+					confirmTimeToTasks(convo);
 					convo.next();
 				}
 
@@ -415,27 +415,52 @@ function getTimeToNewTasks(response, convo) {
 
 }
 
-function confirmTimeToTasks(response, convo) {
+// used for both edit time to tasks, as well as add new tasks!!
+function confirmTimeToTasks(convo) {
+
+	var { dailyTasks, dailyTasksToUpdate, newTasks } = convo.tasksEdit;
 
 	convo.ask("Are those times right?", [
 		{
 			pattern: utterances.yes,
 			callback: (response, convo) => {
-				addNewTasksToTaskList(response, convo);
+
+				convo.say(":boom: This looks great!");
+
+				// you use this function for either ADDING tasks or UPDATING tasks (one or the other)
+				if (newTasks.length > 0) {
+					// you added new tasks and are confirming time for them
+					addNewTasksToTaskList(response, convo);
+				} else if (dailyTasksToUpdate.length > 0) {
+					// editing time to tasks
+					var options = { dontUseDataValues: true, segmentCompleted: true };
+					var fullTaskListMessage = convertArrayToTaskListMessage(dailyTasksToUpdate, options);
+
+					convo.say("Here's your remaining task list :memo::");
+					convo.say(fullTaskListMessage);
+					convo.say("Good luck with today!");
+				}
+
 				convo.next();
 			}
 		},
 		{
 			pattern: utterances.no,
 			callback: (response, convo) => {
+
 				convo.say("Let's give this another try :repeat_one:");
 				convo.say("Just say time estimates, like `30, 1 hour, or 15 min` and I'll figure it out and assign times to the tasks above in order :smiley:");
-				getTimeToNewTasks(response, convo);
+
+				if (newTasks.length > 0) {
+					getTimeToNewTasks(response, convo);
+				} else if (dailyTasksToUpdate.length > 0) {
+					editTaskTimesFlow(response, convo);
+				}
+				
 				convo.next();
 			}
 		}
 	]);
-
 }
 
 function addNewTasksToTaskList(response, convo) {
@@ -453,8 +478,9 @@ function addNewTasksToTaskList(response, convo) {
 
 	var taskListMessage = convertArrayToTaskListMessage(taskArray, options);
 
-	convo.say("This looks great! Here's your updated task list :memo::");
+	convo.say("Here's your updated task list :memo::");
 	convo.say(taskListMessage);
+	convo.say("Good luck with today!");
 	convo.next();
 
 }
@@ -578,6 +604,7 @@ function updateCompleteTaskListMessage(response, convo) {
 
 	convo.say("Here's the rest of your task list for today :memo::");
 	convo.say(fullTaskListMessage);
+	convo.say("Good luck with today!");
 
 	// should ask if ready for session
 
@@ -700,6 +727,7 @@ function updateDeleteTaskListMessage(response, convo) {
 
 	convo.say("Here's your updated task list :memo::");
 	convo.say(taskListMessage);
+	convo.say("Good luck with today!");
 
 	convo.next();
 
@@ -872,42 +900,6 @@ function getTimeToTasks(response, convo) {
 					}
 				}
 				
-			}
-		}
-	]);
-}
-
-function confirmTimeToTasks(convo) {
-
-	var { dailyTasks, dailyTasksToUpdate } = convo.tasksEdit;
-
-	console.log("\n\n\n daily tasks to update: ");
-
-	console.log(dailyTasksToUpdate);
-	console.log("\n\n\n");
-
-	convo.ask("Are those times right?", [
-		{
-			pattern: utterances.yes,
-			callback: (response, convo) => {
-				convo.say(":boom: This looks great!");
-
-				var options = { dontUseDataValues: true, segmentCompleted: true };
-				var fullTaskListMessage = convertArrayToTaskListMessage(dailyTasksToUpdate, options);
-
-				convo.say("Here's your remaining task list for today :memo::");
-				convo.say(fullTaskListMessage);
-
-				convo.next();
-			}
-		},
-		{
-			pattern: utterances.no,
-			callback: (response, convo) => {
-				convo.say("Let's give this another try :repeat_one:");
-				convo.say("Just say time estimates, like `30, 1 hour, or 15 min` and I'll figure it out and assign times to the tasks above in order :smiley:");
-				editTaskTimesFlow(response, convo);
-				convo.next();
 			}
 		}
 	]);

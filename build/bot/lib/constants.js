@@ -36,7 +36,7 @@ var RESET = exports.RESET = {
 
 var THANK_YOU = exports.THANK_YOU = {
 	word: "thank you",
-	reg_exp: new RegExp(/(^[thanksyou]{5,}\b|^[thx]{3,5}\b|^[ty]{2,3}\b)/i)
+	reg_exp: new RegExp(/(^t[thanks you]{4,}\b|^[thanksyou]{5,}\b|^[thx]{3,5}\b|^[ty]{2,3}\b)/i)
 };
 
 // contains an intent for duration and not datetime
