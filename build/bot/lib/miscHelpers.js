@@ -12,6 +12,7 @@ exports.witTimeResponseToTimeZoneObject = witTimeResponseToTimeZoneObject;
 exports.witDurationToTimeZoneObject = witDurationToTimeZoneObject;
 exports.witDurationToMinutes = witDurationToMinutes;
 exports.consoleLog = consoleLog;
+exports.closeOldRemindersAndSessions = closeOldRemindersAndSessions;
 
 var _momentTimezone = require('moment-timezone');
 
@@ -187,5 +188,35 @@ function consoleLog() {
 		}
 	}
 	console.log("\n\n");
+}
+
+// used to close sessions and reminders
+// to avoid cron job pushing in middle of convo
+function closeOldRemindersAndSessions(user) {
+
+	// cancel old sessions and reminders as early as possible
+	user.getReminders({
+		where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break", "done_session_snooze"]]
+	}).then(function (oldReminders) {
+		oldReminders.forEach(function (reminder) {
+			reminder.update({
+				"open": false
+			});
+		});
+	});
+
+	var endTime = (0, _momentTimezone2.default)();
+	user.getWorkSessions({
+		where: ['"WorkSession"."open" = ? OR "WorkSession"."live" = ? ', true, true],
+		order: '"createdAt" DESC'
+	}).then(function (workSessions) {
+		workSessions.forEach(function (workSession) {
+			workSession.update({
+				endTime: endTime,
+				open: false,
+				live: false
+			});
+		});
+	});
 }
 //# sourceMappingURL=miscHelpers.js.map

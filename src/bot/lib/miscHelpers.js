@@ -171,3 +171,36 @@ export function consoleLog() {
 	console.log("\n\n");
 }
 
+// used to close sessions and reminders
+// to avoid cron job pushing in middle of convo
+export function closeOldRemindersAndSessions(user) {
+
+	// cancel old sessions and reminders as early as possible
+	user.getReminders({
+		where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break", "done_session_snooze"] ]
+	}).
+	then((oldReminders) => {
+		oldReminders.forEach((reminder) => {
+			reminder.update({
+				"open": false
+			})
+		});
+	});
+
+	var endTime = moment();
+	user.getWorkSessions({
+		where: [ `"WorkSession"."open" = ? OR "WorkSession"."live" = ? `, true, true ],
+		order: `"createdAt" DESC`
+	})
+	.then((workSessions) => {
+		workSessions.forEach((workSession) => {
+			workSession.update({
+				endTime,
+				open: false,
+				live: false
+			});
+		});
+	});
+
+}
+

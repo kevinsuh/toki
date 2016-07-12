@@ -112,6 +112,17 @@ exports.default = function (controller) {
 				include: [_models2.default.Task]
 			}).then(function (dailyTasks) {
 
+				// cancel all old reminders
+				user.getReminders({
+					where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break", "done_session_snooze"]]
+				}).then(function (oldReminders) {
+					oldReminders.forEach(function (reminder) {
+						reminder.update({
+							"open": false
+						});
+					});
+				});
+
 				var taskTextsToWorkOnArray = dailyTasks.map(function (dailyTask) {
 					var text = dailyTask.Task.dataValues.text;
 					return text;
@@ -328,17 +339,6 @@ exports.default = function (controller) {
 									// NORMAL FLOW
 									var UserId = user.id;
 
-									// cancel all old reminders
-									user.getReminders({
-										where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break", "done_session_snooze"]]
-									}).then(function (oldReminders) {
-										oldReminders.forEach(function (reminder) {
-											reminder.update({
-												"open": false
-											});
-										});
-									});
-
 									switch (sessionTimerDecision) {
 										case _constants.sessionTimerDecisions.didTask:
 											// update the specific task finished
@@ -488,6 +488,8 @@ exports.default = function (controller) {
 				convo.sessionEnd.UserId = user.id;
 				convo.sessionEnd.tz = tz;
 
+				(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+
 				return user.getDailyTasks({
 					where: ['"Task"."done" = ? AND "DailyTask"."type" = ?', false, "live"],
 					order: '"DailyTask"."priority" ASC',
@@ -628,16 +630,6 @@ exports.default = function (controller) {
         */
 
 							// cancel all checkin reminders (type: `work_session` or `break`)
-							// AFTER this is done, put in new break
-							user.getReminders({
-								where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break", "done_session_snooze"]]
-							}).then(function (oldReminders) {
-								oldReminders.forEach(function (reminder) {
-									reminder.update({
-										"open": false
-									});
-								});
-							});
 
 							// set reminders (usually a break)
 							reminders.forEach(function (reminder) {
@@ -667,11 +659,10 @@ exports.default = function (controller) {
 								});
 							});
 
-							// end all OPEN work sessions here b/c user has closed it officially
-							// LIVE work sessions only matter through CRON JOB
-							// make decision afterwards (to ensure you have no sessions live if u want to start a new one)
+							// get the most recent work session
+							// to handle if user got new task done
 							user.getWorkSessions({
-								where: ['"WorkSession"."open" =? ', true],
+								limit: 1,
 								order: '"createdAt" DESC'
 							}).then(function (workSessions) {
 
@@ -713,14 +704,6 @@ exports.default = function (controller) {
 										});
 									});
 								}
-
-								workSessions.forEach(function (workSession) {
-									workSession.update({
-										endTime: endTime,
-										open: false,
-										live: false
-									});
-								});
 
 								setTimeout(function () {
 									handlePostSessionDecision(postSessionDecision, { controller: controller, bot: bot, SlackUserId: SlackUserId });
@@ -767,6 +750,8 @@ var _models = require('../../../app/models');
 var _models2 = _interopRequireDefault(_models);
 
 var _messageHelpers = require('../../lib/messageHelpers');
+
+var _miscHelpers = require('../../lib/miscHelpers');
 
 var _intents = require('../../lib/intents');
 

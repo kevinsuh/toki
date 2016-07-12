@@ -81,6 +81,7 @@ exports.default = function (controller) {
 						}]);
 						convo.on('end', function (convo) {
 							if (convo.readyToEndDay) {
+								(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 								controller.trigger('end_day_flow', [bot, { SlackUserId: SlackUserId }]);
 							}
 						});
@@ -249,6 +250,8 @@ var _models2 = _interopRequireDefault(_models);
 var _botResponses = require('../../lib/botResponses');
 
 var _messageHelpers = require('../../lib/messageHelpers');
+
+var _miscHelpers = require('../../lib/miscHelpers');
 
 var _intents = require('../../lib/intents');
 
