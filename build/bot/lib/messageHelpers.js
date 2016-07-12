@@ -11,11 +11,13 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 exports.convertResponseObjectsToTaskArray = convertResponseObjectsToTaskArray;
 exports.convertTaskNumberStringToArray = convertTaskNumberStringToArray;
 exports.convertArrayToTaskListMessage = convertArrayToTaskListMessage;
+exports.convertMinutesToHoursString = convertMinutesToHoursString;
 exports.convertTimeStringToMinutes = convertTimeStringToMinutes;
 exports.convertToSingleTaskObjectArray = convertToSingleTaskObjectArray;
 exports.prioritizeTaskArrayFromUserInput = prioritizeTaskArrayFromUserInput;
 exports.commaSeparateOutTaskArray = commaSeparateOutTaskArray;
 exports.getUpdateTaskListMessageObject = getUpdateTaskListMessageObject;
+exports.getMostRecentTaskListMessageToUpdate = getMostRecentTaskListMessageToUpdate;
 
 var _constants = require('./constants');
 
@@ -99,16 +101,92 @@ function convertArrayToTaskListMessage(taskArray) {
 	var count = 1;
 	var totalMinutes = 0;
 
+	options.totalMinutes = totalMinutes;
+	options.count = count;
+
 	if (taskArray.length == 0) {
 		console.log("array passed in is empty at convertArrayToTaskListMessage");
+		taskListMessage = '> :spiral_note_pad:';
 		return taskListMessage;
 	}
 
-	console.log("\n\n options passed in to convertArrayToTaskListMessage:");
-	console.log(options);
-	console.log("\n\n");
+	// different format if has 1+ completed tasks (`segmentCompleted`)
+	var hasCompletedTasks = false;
+	taskArray.some(function (task) {
+		if (task.dataValues) {
+			task = task.dataValues;
+		}
+		if (task.done) {
+			hasCompletedTasks = true;
+			return true;
+		}
+	});
 
-	taskArray.forEach(function (task) {
+	var segmentCompleted = options.segmentCompleted;
+	var newTasks = options.newTasks;
+
+	// cant segment if no completed tasks
+
+	if (!hasCompletedTasks) {
+		segmentCompleted = false;
+	}
+
+	if (segmentCompleted) {
+		console.log("\n\n ~~ segmenting tasks ( completed / not completed ) ~~");
+
+		var remainingTasks = [];
+		var completedTasks = [];
+		taskArray.forEach(function (task) {
+			if (!options.dontUseDataValues && task.dataValues) {
+				task = task.dataValues;
+			};
+			if (task.done) {
+				completedTasks.push(task);
+			} else {
+				remainingTasks.push(task);
+			}
+		});
+
+		if (newTasks) {
+			newTasks.forEach(function (newTask) {
+				remainingTasks.push(newTask);
+			});
+		}
+
+		// add completed tasks to right place
+		var taskListMessageBody = '';
+		taskListMessage = options.noKarets ? '*Completed Tasks:*\n' : '> *Completed Tasks:*\n';
+		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
+		taskListMessage += taskListMessageBody;
+
+		// add remaining tasks to right place
+		taskListMessage += options.noKarets ? '\n*Remaining Tasks:*\n' : '>\n>*Remaining Tasks:*\n';
+		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
+		taskListMessage += taskListMessageBody;
+	} else {
+		var taskListMessageBody = createTaskListMessageBody(taskArray, options);
+		taskListMessage += taskListMessageBody;
+	}
+
+	if (!options.dontCalculateMinutes) {
+		// taskListMessages default to show calculated minutes
+		var totalMinutes = options.totalMinutes;
+
+		var timeString = convertMinutesToHoursString(totalMinutes);
+		var totalMinutesContent = '\n*Total time estimate: ' + timeString + ' :clock730:*';
+		taskListMessage += totalMinutesContent;
+	}
+
+	return taskListMessage;
+}
+
+function createTaskListMessageBody(taskArray, options) {
+
+	var taskListMessage = '';
+	var count = options.count;
+
+
+	taskArray.forEach(function (task, index) {
 
 		// for when you get task from DB
 		var minutesMessage = '';
@@ -120,7 +198,7 @@ function convertArrayToTaskListMessage(taskArray) {
 
 			var minutesInt = parseInt(task.minutes);
 			if (!isNaN(minutesInt) && !task.done) {
-				totalMinutes += minutesInt;
+				options.totalMinutes += minutesInt;
 			}
 			var timeString = convertMinutesToHoursString(minutesInt);
 
@@ -130,7 +208,13 @@ function convertArrayToTaskListMessage(taskArray) {
 				minutesMessage = ' (' + timeString + ')';
 			}
 		}
-		var taskContent = count + ') ' + task.text + minutesMessage;
+
+		// completed tasks do not have count
+		var taskContent = '';
+		if (!options.segmentCompleted || task.done != true) {
+			taskContent = count + ') ';
+		}
+		taskContent = '' + taskContent + task.text + minutesMessage;
 
 		taskContent = task.done ? '~' + taskContent + '~\n' : taskContent + '\n';
 		taskContent = options.noKarets ? taskContent : '> ' + taskContent;
@@ -139,13 +223,6 @@ function convertArrayToTaskListMessage(taskArray) {
 
 		count++;
 	});
-
-	if (options.calculateMinutes || true) {
-		// all taskListMessages will show this for now
-		var timeString = convertMinutesToHoursString(totalMinutes);
-		var totalMinutesContent = '\n*Total time estimate: ' + timeString + ' :clock730:*';
-		taskListMessage += totalMinutesContent;
-	}
 
 	return taskListMessage;
 }
@@ -172,7 +249,7 @@ function convertMinutesToHoursString(minutes) {
 	}
 
 	if (minutes == 0) {
-		content = '' + content;
+		content = content.slice(0, -1);
 	} else if (minutes == 1) {
 		content = '' + content + minutes + ' minute';
 	} else {
@@ -205,8 +282,8 @@ function convertTimeStringToMinutes(timeString) {
 		var minutes = 0;
 
 		// OPTION 1: int with space (i.e. `1 hr`)
-		if (timeArray[i] == parseInt(timeArray[i])) {
-			minutes = parseInt(timeArray[i]);
+		if (timeArray[i] == parseFloat(timeArray[i])) {
+			minutes = parseFloat(timeArray[i]);
 			var hourOrMinute = timeArray[i + 1];
 			if (hourOrMinute && hourOrMinute[0] == "h") {
 				minutes *= 60;
@@ -226,8 +303,8 @@ function convertTimeStringToMinutes(timeString) {
 			var timeStringArray = timeString.split(containsH);
 
 			timeStringArray.forEach(function (element, index) {
-				var time = parseInt(element); // can be minutes or hours
-				if (isNaN(parseInt(element))) return;
+				var time = parseFloat(element); // can be minutes or hours
+				if (isNaN(parseFloat(element))) return;
 
 				// if string contains "h", then you can assume first one is hour
 				if (containsH.test(timeString)) {
@@ -352,9 +429,7 @@ function commaSeparateOutTaskArray(a) {
 }
 
 // match the closest message that matches the CHANNEL_ID of this response to the CHANNEL_ID that the bot is speaking to
-function getUpdateTaskListMessageObject(response, bot) {
-
-	var userChannel = response.channel;
+function getUpdateTaskListMessageObject(userChannel, bot) {
 	var sentMessages = bot.sentMessages;
 
 
@@ -374,6 +449,37 @@ function getUpdateTaskListMessageObject(response, bot) {
 					ts: ts
 				};
 				break;
+			}
+		}
+	}
+
+	return updateTaskListMessageObject;
+}
+
+// new function to ensure you are getting a task list message to update
+function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
+	var sentMessages = bot.sentMessages;
+
+
+	var updateTaskListMessageObject = false;
+	if (sentMessages) {
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (var i = sentMessages.length - 1; i >= 0; i--) {
+
+			var message = sentMessages[i];
+			var channel = message.channel;
+			var ts = message.ts;
+			var attachments = message.attachments;
+
+			if (channel == userChannel) {
+				if (attachments && attachments[0].callback_id == "TASK_LIST_MESSAGE") {
+					updateTaskListMessageObject = {
+						channel: channel,
+						ts: ts
+					};
+					break;
+				}
 			}
 		}
 	}

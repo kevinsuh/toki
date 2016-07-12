@@ -6,6 +6,7 @@ import models from '../../../app/models';
 import { utterances } from '../../lib/botResponses';
 import { witTimeResponseToTimeZoneObject, witDurationToTimeZoneObject, dateStringToMomentTimeZone } from '../../lib/miscHelpers';
 import { convertTimeStringToMinutes } from '../../lib/messageHelpers';
+import intentConfig from '../../lib/intents';
 
 // base controller for reminders
 export default function(controller) {
@@ -23,6 +24,37 @@ export default function(controller) {
 			// these are array of objects
 			const { text, intentObject: { entities: { reminder, datetime, duration } } } = message;
 			const SlackUserId = message.user;
+
+			// if command starts with "add", then we must assume they are adding a task
+			if (utterances.startsWithAdd.test(text)) {
+				/**
+				 * 		TRIGGERING ADD TASK FLOW (add_task_flow)
+				 */
+				var intent = intentConfig.ADD_TASK;
+				
+				var userMessage = {
+					text,
+					reminder,
+					duration
+				}
+
+				// if the user says tasks (plural), then assume
+				// they want to add multiple tasks
+				var tasksRegExp = new RegExp(/(\btasks\b)/i);
+				if (tasksRegExp.test(text)) {
+					intent = intentConfig.EDIT_TASKS;
+				}
+
+				var config = {
+					intent,
+					SlackUserId,
+					message: userMessage
+				}
+
+				controller.trigger(`new_session_group_decision`, [ bot, config ]);
+
+				return;
+			}
 
 			var config = {
 				text,

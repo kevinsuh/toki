@@ -268,7 +268,7 @@ function shouldStartNewDayFlow(err, convo) {
 				type: "button"
 			}, {
 				name: _constants.buttonValues.createReminder.name,
-				text: "Create reminder",
+				text: "Set reminder",
 				value: _constants.buttonValues.createReminder.value,
 				type: "button"
 			}, {
@@ -368,7 +368,7 @@ function shouldStartSessionFlow(err, convo) {
 				style: "primary"
 			}, {
 				name: _constants.buttonValues.createReminder.name,
-				text: "Create reminder",
+				text: "Set reminder",
 				value: _constants.buttonValues.createReminder.value,
 				type: "button"
 			}, {
@@ -378,7 +378,7 @@ function shouldStartSessionFlow(err, convo) {
 				type: "button"
 			}, {
 				name: _constants.buttonValues.startDay.name,
-				text: "Create new Plan",
+				text: "New Plan",
 				value: _constants.buttonValues.startDay.value,
 				type: "button"
 			}]

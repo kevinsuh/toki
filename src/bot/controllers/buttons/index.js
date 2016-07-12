@@ -54,7 +54,7 @@ export default function(controller) {
 					bot.replyInteractive(message, "No worries! :smile_cat:");
 					break;
 				case buttonValues.noPendingTasks.value:
-					bot.replyInteractive(message, "I like a fresh start each day, too :tangerine:");
+					bot.replyInteractive(message, "I like a fresh start each day, too");
 					break;
 				case buttonValues.noAdditionalTasks.value:
 					bot.replyInteractive(message, "Sounds good!");
@@ -93,7 +93,9 @@ export default function(controller) {
 					bot.replyInteractive(message, "It's about that time, isn't it?")
 					break;
 				case buttonValues.resetTimes.value:
-					bot.replyInteractive(message, "_Resetting :repeat:..._")
+					// bot.replyInteractive(message, "_Resetting :repeat:..._")
+					break;
+				case buttonValues.resetTimesPersistent.value:
 					break;
 				case buttonValues.doneSessionTimeoutYes.value:
 					bot.replyInteractive(message, "Great work! :raised_hands:")
@@ -136,6 +138,33 @@ export default function(controller) {
 					break;
 				case buttonValues.thatsIncorrect.value:
 					bot.replyInteractive(message, `Oops, okay! Let's get this right`);
+					break;
+				case buttonValues.addTask.value:
+					bot.replyInteractive(message, `Added! Keep at it :muscle:`);
+					break;
+				case buttonValues.changeTaskContent.value:
+					bot.replyInteractive(message, `Let's change the task then!`);
+					break;
+				case buttonValues.changeTaskTime.value:
+					bot.replyInteractive(message, `Let's change the time then!`);
+					break;
+				case buttonValues.editTaskList.value:
+					bot.replyInteractive(message, `Okay! Let's edit your task list`);
+					break;
+				case buttonValues.addTasks.value:
+					bot.replyInteractive(message, `Boom! Let's add some tasks :muscle:`);
+					break;
+				case buttonValues.markComplete.value:
+					bot.replyInteractive(message, `Woo! Let's check off some tasks :grin:`);
+					break;
+				case buttonValues.deleteTasks.value:
+					bot.replyInteractive(message, `Okay! Let's remove some tasks`);
+					break;
+				case buttonValues.neverMindTasks.value:
+					bot.replyInteractive(message, "Okay! Keep at it :smile_cat:")
+					break;
+				case buttonValues.editTaskTimes.value:
+					bot.replyInteractive(message, "Let's do this :hourglass:");
 					break;
 				default:
 					// some default to replace button no matter what

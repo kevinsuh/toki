@@ -151,6 +151,13 @@ function finalizeTimeAndTasksToStart(response, convo) {
 			askForCustomTotalMinutes(response, convo);
 			convo.next();
 		}
+	}, {
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.sessionStart.confirmStart = false;
+			convo.stop();
+			convo.next();
+		}
 	}, { // this is failure point. restart with question
 		default: true,
 		callback: function callback(response, convo) {
@@ -253,13 +260,15 @@ function finalizeNewTaskToStart(response, convo) {
 	}, {
 		pattern: _constants.buttonValues.changeTask.value,
 		callback: function callback(response, convo) {
-			askWhichTasksToWorkOn(response, convo);
+			convo.addNewTaskCustomMessage = 'What is it? `i.e. clean up market report` ';
+			addNewTask(response, convo);
 			convo.next();
 		}
 	}, { // NL equivalent to buttonValues.changeTask.value
 		pattern: _botResponses.utterances.containsChangeTask,
 		callback: function callback(response, convo) {
-			askWhichTasksToWorkOn(response, convo);
+			convo.addNewTaskCustomMessage = 'What is it? `i.e. clean up market report` ';
+			addNewTask(response, convo);
 			convo.next();
 		}
 	}, {
@@ -282,6 +291,13 @@ function finalizeNewTaskToStart(response, convo) {
 			convo.sessionStart.confirmStart = true;
 
 			askForCustomTotalMinutes(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.sessionStart.confirmStart = false;
+			convo.stop();
 			convo.next();
 		}
 	}, { // this is failure point. restart with question
@@ -391,6 +407,13 @@ function finalizeCheckinTimeToStart(response, convo) {
 			askForReminderDuringCheckin(response, convo);
 			convo.next();
 		}
+	}, {
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.sessionStart.confirmStart = false;
+			convo.stop();
+			convo.next();
+		}
 	}, { // this is failure point. restart with question
 		default: true,
 		callback: function callback(response, convo) {
@@ -433,20 +456,14 @@ function askWhichTasksToWorkOn(response, convo) {
 	}, [{
 		pattern: _constants.buttonValues.newTask.value,
 		callback: function callback(response, convo) {
-			convo.ask('What is it? `i.e. clean up market report for 45 minutes` ', function (response, convo) {
-				addNewTask(response, convo);
-				convo.next();
-			});
+			addNewTask(response, convo);
 			convo.next();
 		}
 	}, {
 		pattern: _botResponses.utterances.containsNew,
 		callback: function callback(response, convo) {
 			// NL contains "new" (i.e. "i'll do a new task")
-			convo.ask('What is it? `i.e. clean up market report for 45 minutes` ', function (response, convo) {
-				addNewTask(response, convo);
-				convo.next();
-			});
+			addNewTask(response, convo);
 			convo.next();
 		}
 	}, {
@@ -529,40 +546,50 @@ function confirmTimeForTasks(response, convo) {
 
 // if user wants to add a new task instead
 function addNewTask(response, convo) {
-	var task = convo.task;
-	var bot = task.bot;
-	var source_message = task.source_message;
 
-	var SlackUserId = response.user;
-	var newTask = {};
-	var tz = convo.sessionStart.tz;
-	var entities = response.intentObject.entities;
-
-
-	var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
-	if (customTimeObject && entities.reminder) {
-
-		var customTimeString = customTimeObject.format("h:mm a");
-
-		// create new task
-		newTask.text = entities.reminder[0].value;
-		// get minutes duration for new task
-		var now = (0, _momentTimezone2.default)();
-		var minutes = _momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes();
-		newTask.minutes = Math.round(minutes);
-
-		// this is how long user wants to work on session for as well
-		convo.sessionStart.calculatedTime = customTimeString;
-		convo.sessionStart.calculatedTimeObject = customTimeObject;
-		convo.sessionStart.newTask = newTask;
-
-		finalizeNewTaskToStart(response, convo);
-	} else {
-		// user did nto specify a time
-		newTask.text = response.text;
-		convo.sessionStart.newTask = newTask;
-		addTimeToNewTask(response, convo);
+	var message = 'What is it? `i.e. clean up market report for 45 minutes` ';
+	if (convo.addNewTaskCustomMessage) {
+		message = convo.addNewTaskCustomMessage;
 	}
+
+	convo.ask(message, function (response, convo) {
+		var task = convo.task;
+		var bot = task.bot;
+		var source_message = task.source_message;
+
+		var SlackUserId = response.user;
+		var newTask = {};
+		var tz = convo.sessionStart.tz;
+		var entities = response.intentObject.entities;
+
+
+		var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+		if (customTimeObject && entities.reminder) {
+
+			var customTimeString = customTimeObject.format("h:mm a");
+
+			// create new task
+			newTask.text = entities.reminder[0].value;
+			// get minutes duration for new task
+			var now = (0, _momentTimezone2.default)();
+			var minutes = _momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes();
+			newTask.minutes = Math.round(minutes);
+
+			// this is how long user wants to work on session for as well
+			convo.sessionStart.calculatedTime = customTimeString;
+			convo.sessionStart.calculatedTimeObject = customTimeObject;
+			convo.sessionStart.newTask = newTask;
+
+			finalizeNewTaskToStart(response, convo);
+		} else {
+			// user did nto specify a time
+			newTask.text = response.text;
+			convo.sessionStart.newTask = newTask;
+			addTimeToNewTask(response, convo);
+		}
+
+		convo.next();
+	});
 
 	convo.next();
 }

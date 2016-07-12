@@ -25,7 +25,7 @@ export const RESET = {
 
 export const THANK_YOU = {
 	word: "thank you",
-	reg_exp: new RegExp(/(^[thanksyou]{5,}\b|^[thx]{3,5}\b|^[ty]{2,3}\b)/i)
+	reg_exp: new RegExp(/(^t[thanks you]{4,}\b|^[thanksyou]{5,}\b|^[thx]{3,5}\b|^[ty]{2,3}\b)/i)
 }
 
 // contains an intent for duration and not datetime
@@ -205,6 +205,10 @@ export const buttonValues ={
 		name: "RESET_TIMES",
 		value: "RESET_TIMES"
 	},
+	resetTimesPersistent: {
+		name: "RESET_TIMES_PERSISTENT",
+		value: "RESET_TIMES_PERSISTENT"
+	},
 	doneSessionTimeoutSnooze: {
 		name: "DONE_SESSION_TIMEOUT_SNOOZE",
 		value: "DONE_SESSION_TIMEOUT_SNOOZE"
@@ -244,6 +248,42 @@ export const buttonValues ={
 	thatsIncorrect: { 
 		value: "THATS_INCORRECT",
 		name: "THATS_INCORRECT"
+	},
+	addTask: {
+		value: "ADD_TASK",
+		name: "ADD_TASK"
+	},
+	changeTaskContent: {
+		value: "CHANGE_TASK_CONTENT",
+		name: "CHANGE_TASK_CONTENT"
+	},
+	changeTaskTime: {
+		value: "CHANGE_TASK_TIME",
+		name: "CHANGE_TASK_TIME"
+	},
+	editTaskList: {
+		value: "EDIT_TASK_LIST",
+		name: "EDIT_TASK_LIST"
+	},
+	addTasks: {
+		value: "ADD_TASKS",
+		name: "ADD_TASKS"
+	},
+	markComplete: {
+		value: "MARK_TASK_COMPLETE",
+		name: "MARK_TASK_COMPLETE"
+	},
+	deleteTasks: {
+		value: "DELETE_TASKS",
+		name: "DELETE_TASKS"
+	},
+	editTaskTimes: {
+		value: "EDIT_TASK_TIMES",
+		name: "EDIT_TASK_TIMES"
+	},
+	neverMindTasks: {
+		value: "NEVER_MIND_TASKS",
+		name: "NEVER_MIND_TASKS"
 	}
 }
 

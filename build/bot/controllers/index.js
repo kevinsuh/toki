@@ -305,6 +305,7 @@ controller.on('new_session_group_decision', function (bot, config) {
 	// type is either `ADD_TASK` or `START_SESSION`
 	var SlackUserId = config.SlackUserId;
 	var intent = config.intent;
+	var message = config.message;
 
 
 	_models2.default.User.find({
@@ -355,22 +356,13 @@ controller.on('new_session_group_decision', function (bot, config) {
 				// you have started your day or had work session in the last 6 hours
 				// so we will pass you through and not have you start a new day
 				if (hoursSinceStartDay < _constants.hoursForExpirationTime || workSessions.length > 0) {
-					switch (intent) {
-						case _intents2.default.ADD_TASK:
-							controller.trigger('add_task_flow', [bot, { SlackUserId: SlackUserId }]);
-							break;
-						case _intents2.default.START_SESSION:
-							controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
-							break;
-						case _intents2.default.VIEW_TASKS:
-							controller.trigger('view_daily_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
-							break;
-						case _intents2.default.END_DAY:
-							controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
-							break;
-						default:
-							break;
-					}
+					var config = {
+						SlackUserId: SlackUserId,
+						message: message,
+						controller: controller,
+						bot: bot
+					};
+					triggerIntent(intent, config);
 					return;
 				}
 
@@ -419,22 +411,13 @@ controller.on('new_session_group_decision', function (bot, config) {
 							controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
 							return;
 						} else {
-							switch (intent) {
-								case _intents2.default.ADD_TASK:
-									controller.trigger('add_task_flow', [bot, { SlackUserId: SlackUserId }]);
-									break;
-								case _intents2.default.START_SESSION:
-									controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
-									break;
-								case _intents2.default.VIEW_TASKS:
-									controller.trigger('view_daily_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
-									break;
-								case _intents2.default.END_DAY:
-									controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
-									break;
-								default:
-									break;
-							}
+							var config = {
+								SlackUserId: SlackUserId,
+								message: message,
+								controller: controller,
+								bot: bot
+							};
+							triggerIntent(intent, config);
 						}
 					});
 				});
@@ -442,4 +425,31 @@ controller.on('new_session_group_decision', function (bot, config) {
 		});
 	});
 });
+
+function triggerIntent(intent, config) {
+	var bot = config.bot;
+	var controller = config.controller;
+	var SlackUserId = config.SlackUserId;
+	var message = config.message;
+
+	switch (intent) {
+		case _intents2.default.ADD_TASK:
+			controller.trigger('add_task_flow', [bot, { SlackUserId: SlackUserId, message: message }]);
+			break;
+		case _intents2.default.START_SESSION:
+			controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+			break;
+		case _intents2.default.VIEW_TASKS:
+			controller.trigger('view_daily_tasks_flow', [bot, { SlackUserId: SlackUserId, message: message }]);
+			break;
+		case _intents2.default.EDIT_TASKS:
+			controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
+			break;
+		case _intents2.default.END_DAY:
+			controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
+			break;
+		default:
+			break;
+	}
+}
 //# sourceMappingURL=index.js.map

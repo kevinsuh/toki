@@ -21,9 +21,29 @@ exports.default = function (controller) {
 		var intent = _intents2.default.ADD_TASK;
 		var channel = message.channel;
 
+		var text = message.text;
+		var _message$intentObject = message.intentObject.entities;
+		var reminder = _message$intentObject.reminder;
+		var duration = _message$intentObject.duration;
+
+
+		var userMessage = {
+			text: text,
+			reminder: reminder,
+			duration: duration
+		};
+
+		// if the user says tasks (plural), then assume
+		// they want to add multiple tasks
+		var tasksRegExp = new RegExp(/(\btasks\b)/i);
+		if (tasksRegExp.test(text)) {
+			intent = _intents2.default.EDIT_TASKS;
+		}
+
 		var config = {
 			intent: intent,
-			SlackUserId: SlackUserId
+			SlackUserId: SlackUserId,
+			message: userMessage
 		};
 
 		bot.send({
@@ -40,15 +60,33 @@ exports.default = function (controller) {
   */
 	controller.on('add_task_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
+		var message = config.message;
+
+
+		(0, _miscHelpers.consoleLog)("in add task flow", message);
+
+		// if has duration and/or reminder we can autofill
+		var reminder = message.reminder;
+		var duration = message.duration;
+
+		var minutes = false;
+		var task = false;
+
+		// length of task
+		if (duration) {
+			minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
+		}
+		// content of task
+		if (reminder) {
+			task = reminder[0].value;
+		}
 
 		// find user then get tasks
-
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 
-			// we need user's task lists since start_day
 			var UserId = user.id;
 
 			user.getSessionGroups({
@@ -56,8 +94,16 @@ exports.default = function (controller) {
 				limit: 1
 			}).then(function (sessionGroups) {
 
+				if (sessionGroups.length == 0 || sessionGroups[0].dataValues.type == "end_work") {
+					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+						convo.say("Hey! You haven't `started a day` yet, let's do that first");
+						convo.next();
+					});
+					return;
+				}
+
 				// should start day
-				var startSessionGroup = sessionGroups[0]; // the start day
+				var startSessionGroup = sessionGroups[0];
 
 				user.getDailyTasks({
 					where: ['"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?', startSessionGroup.dataValues.createdAt, false, "live"],
@@ -70,96 +116,51 @@ exports.default = function (controller) {
 
 					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-						convo.name = name;
 						convo.tasksAdd = {
-							SlackUserId: SlackUserId
+							SlackUserId: SlackUserId,
+							minutes: minutes,
+							task: task
 						};
 
-						dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
-						convo.tasksAdd.dailyTasks = dailyTasks;
-
-						askForNewTasksToAdd(err, convo);
+						getTaskContent(err, convo);
 
 						// on finish conversation
 						convo.on('end', function (convo) {
-
-							console.log("\n\n\n\n ~~ convo ended in add tasks ~~ \n\n\n\n");
-
-							var responses = convo.extractResponses();
-							var tasksAdd = convo.tasksAdd;
+							var _convo$tasksAdd = convo.tasksAdd;
+							var task = _convo$tasksAdd.task;
+							var minutes = _convo$tasksAdd.minutes;
+							var editTaskList = _convo$tasksAdd.editTaskList;
 
 
 							if (convo.status == 'completed') {
 
-								// prioritized task array is the one we're ultimately going with
-								var _dailyTasks = tasksAdd.dailyTasks;
-								var prioritizedTaskArray = tasksAdd.prioritizedTaskArray;
+								// if we have the task and minutes, let's add it
+								if (task && minutes) {
 
-								// we're going to archive all existing daily tasks first by default, then re-update the ones that matter
-
-								_dailyTasks.forEach(function (dailyTask) {
-									var id = dailyTask.dataValues.id;
-
-									console.log('\n\n\nupdating daily task id: ' + id + '\n\n\n');
-									_models2.default.DailyTask.update({
-										type: "archived"
-									}, {
-										where: { id: id }
-									});
-								});
-
-								// store the user's tasks
-								// existing dailyTasks: update to new obj (esp. `priority`)
-								// new dailyTasks: create new obj
-								prioritizedTaskArray.forEach(function (dailyTask, index) {
-									var dataValues = dailyTask.dataValues;
-
-									var newPriority = index + 1;
-
-									if (dataValues) {
-
-										console.log("\n\nexisting daily task:\n\n\n");
-										console.log(dailyTask.dataValues);
-										console.log('user id: ' + UserId);
-										console.log("\n\n\n\n");
-
-										// existing daily task and make it live
-										var id = dataValues.id;
-										var minutes = dataValues.minutes;
-
-										_models2.default.DailyTask.update({
-											minutes: minutes,
-											UserId: UserId,
+									var newPriority = dailyTasks.length + 1;
+									_models2.default.Task.create({
+										text: task
+									}).then(function (task) {
+										_models2.default.DailyTask.create({
+											TaskId: task.id,
 											priority: newPriority,
-											type: "live"
-										}, {
-											where: { id: id }
+											minutes: minutes,
+											UserId: UserId
+										}).then(function () {
+											// if user added a task, then we need to edit task list flow after creation
+											if (editTaskList) {
+												controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
+											} else {
+												controller.trigger('view_daily_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
+											}
 										});
-									} else {
-										(function () {
-
-											console.log("\n\n new daily task:\n\n\n");
-											console.log(dailyTask);
-											console.log('user id: ' + UserId);
-											console.log("\n\n\n\n");
-
-											// new task
-											var text = dailyTask.text;
-											var minutes = dailyTask.minutes;
-
-											_models2.default.Task.create({
-												text: text
-											}).then(function (task) {
-												_models2.default.DailyTask.create({
-													TaskId: task.id,
-													priority: newPriority,
-													minutes: minutes,
-													UserId: UserId
-												});
-											});
-										})();
+									});
+								} else {
+									// if user did not add a task, then we can go straight to editing task list
+									if (editTaskList) {
+										controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
 									}
-								});
+								}
 							} else {
 
 								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
@@ -199,6 +200,8 @@ var _models2 = _interopRequireDefault(_models);
 
 var _messageHelpers = require('../../lib/messageHelpers');
 
+var _miscHelpers = require('../../lib/miscHelpers');
+
 var _intents = require('../../lib/intents');
 
 var _intents2 = _interopRequireDefault(_intents);
@@ -210,6 +213,203 @@ var _botResponses = require('../../lib/botResponses');
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 ;
+
+/**
+ * 			~~ START OF SINGLE TASK ADD FLOW ~~
+ */
+
+function getTaskContent(response, convo) {
+	var _convo$tasksAdd2 = convo.tasksAdd;
+	var task = _convo$tasksAdd2.task;
+	var minutes = _convo$tasksAdd2.minutes;
+
+
+	if (task) {
+		// task has been filled and we can move on
+
+		// hack to handle wit problems
+		if (!minutes && (_botResponses.utterances.containsTask.test(task) && task.length < 7 || _botResponses.utterances.startsWithAdd.test(task)) || _botResponses.utterances.containsAdd.test(task) && _botResponses.utterances.containsTask.test(task)) {
+			askForTask(response, convo);
+		} else {
+			getTaskMinutes(response, convo);
+		}
+	} else {
+		askForTask(response, convo);
+	}
+}
+
+function askForTask(response, convo) {
+	convo.ask('What is the task? `i.e. add email market report for 30 min`', function (response, convo) {
+		var text = response.text;
+		var entities = response.intentObject.entities;
+
+
+		convo.tasksAdd.task = text;
+
+		// shortcut add minutes if user uses single line
+		// `i.e. email market report for 30 min`
+		if (entities.duration && entities.reminder) {
+			var minutes = (0, _miscHelpers.witDurationToMinutes)(entities.duration);
+			var task = entities.reminder[0].value;
+			convo.tasksAdd.minutes = minutes;
+			convo.tasksAdd.task = task;
+		}
+
+		getTaskMinutes(response, convo);
+		convo.next();
+	});
+}
+
+function getTaskMinutes(response, convo) {
+	var minutes = convo.tasksAdd.minutes;
+
+
+	if (minutes) {
+		// minutes has been filled and we can move on
+		confirmTaskToAdd(response, convo);
+	} else {
+		convo.ask('How long will this task take?', function (response, convo) {
+			var text = response.text;
+
+			var validMinutesTester = new RegExp(/[\dh]/);
+			if (validMinutesTester.test(text)) {
+				var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(text);
+				convo.tasksAdd.minutes = minutes;
+				confirmTaskToAdd(response, convo);
+			} else {
+				convo.say("Oops, I didn't quite get that. Let me know duration like `30 min` or `1 hour`");
+				convo.repeat();
+			}
+			convo.next();
+		});
+	}
+}
+
+// confirm here to add the task
+function confirmTaskToAdd(response, convo) {
+	var _convo$tasksAdd3 = convo.tasksAdd;
+	var task = _convo$tasksAdd3.task;
+	var minutes = _convo$tasksAdd3.minutes;
+
+	var timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+
+	convo.ask({
+		text: 'Does this look good? If so, I\'ll add `' + task + ' (' + timeString + ')` to your tasks',
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "CONFIRM_TASK_ADD",
+			fallback: "Does this task look good?",
+			actions: [{
+				name: _constants.buttonValues.addTask.name,
+				text: "Yes!",
+				value: _constants.buttonValues.addTask.value,
+				type: "button",
+				style: "primary"
+			}, {
+				name: _constants.buttonValues.changeTaskContent.name,
+				text: "Change task",
+				value: _constants.buttonValues.changeTaskContent.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.changeTaskTime.name,
+				text: "Change time",
+				value: _constants.buttonValues.changeTaskTime.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.editTaskList.name,
+				text: "Yes + View tasks",
+				value: _constants.buttonValues.editTaskList.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.neverMind.name,
+				text: "Never mind",
+				value: _constants.buttonValues.neverMind.value,
+				type: "button"
+			}]
+		}]
+	}, [{
+		pattern: _constants.buttonValues.addTask.value,
+		callback: function callback(response, convo) {
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.addTask.value
+		pattern: _botResponses.utterances.yes,
+		callback: function callback(response, convo) {
+			convo.say('Added! Keep at it :muscle:');
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.changeTaskContent.value,
+		callback: function callback(response, convo) {
+			convo.tasksAdd.task = false;
+			getTaskContent(response, convo);
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.changeTaskContent.value
+		pattern: _botResponses.utterances.containsChangeTask,
+		callback: function callback(response, convo) {
+			convo.say("Okay!");
+			convo.tasksAdd.task = false;
+			getTaskContent(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.changeTaskTime.value,
+		callback: function callback(response, convo) {
+			convo.tasksAdd.minutes = false;
+			getTaskMinutes(response, convo);
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.changeTaskTime.value
+		pattern: _botResponses.utterances.containsChangeTime,
+		callback: function callback(response, convo) {
+			convo.say("Okay!");
+			convo.tasksAdd.minutes = false;
+			getTaskMinutes(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.editTaskList.value,
+		callback: function callback(response, convo) {
+			convo.say("I added this task too :grin:");
+			convo.tasksAdd.editTaskList = true;
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.editTaskList.value
+		pattern: _botResponses.utterances.containsEditTaskList,
+		callback: function callback(response, convo) {
+			convo.say("Okay! I added your task :grin:. Let's edit your task list");
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.neverMind.value,
+		callback: function callback(response, convo) {
+			convo.say("Let's back to it!");
+			convo.tasksAdd.minutes = false;
+			convo.tasksAdd.task = false;
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.editTaskList.value
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say("Okay, I didn't add any tasks. Let's back to it!");
+			convo.tasksAdd.minutes = false;
+			convo.tasksAdd.task = false;
+			convo.next();
+		}
+	}, { // this is failure point. restart with question
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say("I didn't quite get that :thinking_face:");
+			convo.repeat();
+			convo.next();
+		}
+	}]);
+}
+
+/**
+ * 			~~ END OF SINGLE TASK ADD FLOW ~~
+ */
 
 // user adds new tasks here
 function askForNewTasksToAdd(response, convo) {
@@ -350,9 +550,9 @@ function askToPrioritizeList(response, convo) {
 
 	// organize the task lists!
 
-	var _convo$tasksAdd = convo.tasksAdd;
-	var dailyTasks = _convo$tasksAdd.dailyTasks;
-	var newTasksArray = _convo$tasksAdd.newTasksArray;
+	var _convo$tasksAdd4 = convo.tasksAdd;
+	var dailyTasks = _convo$tasksAdd4.dailyTasks;
+	var newTasksArray = _convo$tasksAdd4.newTasksArray;
 
 	var allTasksArray = dailyTasks.slice();
 	newTasksArray.forEach(function (newTask) {
@@ -378,10 +578,10 @@ function prioritizeTaskList(response, convo) {
 
 	// organize the task lists!
 
-	var _convo$tasksAdd2 = convo.tasksAdd;
-	var dailyTasks = _convo$tasksAdd2.dailyTasks;
-	var newTasksArray = _convo$tasksAdd2.newTasksArray;
-	var allTasksArray = _convo$tasksAdd2.allTasksArray;
+	var _convo$tasksAdd5 = convo.tasksAdd;
+	var dailyTasks = _convo$tasksAdd5.dailyTasks;
+	var newTasksArray = _convo$tasksAdd5.newTasksArray;
+	var allTasksArray = _convo$tasksAdd5.allTasksArray;
 
 	var allTasksArray = dailyTasks.slice();
 	newTasksArray.forEach(function (newTask) {

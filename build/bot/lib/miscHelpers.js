@@ -10,6 +10,7 @@ exports.createMomentObjectWithSpecificTimeZone = createMomentObjectWithSpecificT
 exports.dateStringToMomentTimeZone = dateStringToMomentTimeZone;
 exports.witTimeResponseToTimeZoneObject = witTimeResponseToTimeZoneObject;
 exports.witDurationToTimeZoneObject = witDurationToTimeZoneObject;
+exports.witDurationToMinutes = witDurationToMinutes;
 exports.consoleLog = consoleLog;
 
 var _momentTimezone = require('moment-timezone');
@@ -151,6 +152,24 @@ function witDurationToTimeZoneObject(duration, tz) {
 		var durationMinutes = Math.floor(durationSeconds / 60);
 		remindTimeStamp = now.tz(tz).add(durationSeconds, 'seconds');
 		return remindTimeStamp;
+	} else {
+		return false;
+	}
+}
+
+// convert wit duration to total minutes
+function witDurationToMinutes(duration) {
+
+	var now = (0, _momentTimezone2.default)();
+	var remindTimeStamp;
+
+	if (duration) {
+		var durationSeconds = 0;
+		for (var i = 0; i < duration.length; i++) {
+			durationSeconds += duration[i].normalized.value;
+		}
+		var durationMinutes = Math.floor(durationSeconds / 60);
+		return durationMinutes;
 	} else {
 		return false;
 	}

@@ -84,16 +84,90 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 	var count = 1;
 	var totalMinutes = 0;
 
+	options.totalMinutes = totalMinutes;
+	options.count        = count;
+
 	if (taskArray.length  == 0) {
 		console.log("array passed in is empty at convertArrayToTaskListMessage");
+		taskListMessage = '> :spiral_note_pad:';
 		return taskListMessage;
 	}
 
-	console.log("\n\n options passed in to convertArrayToTaskListMessage:");
-	console.log(options);
-	console.log("\n\n");
+	// different format if has 1+ completed tasks (`segmentCompleted`)
+	var hasCompletedTasks = false;
+	taskArray.some((task) => {
+		if (task.dataValues) {
+			task = task.dataValues;
+		}
+		if (task.done) {
+			hasCompletedTasks = true;
+			return true;
+		}
+	});
 
-	taskArray.forEach((task) => {
+	var { segmentCompleted, newTasks } = options;
+
+	// cant segment if no completed tasks
+	if (!hasCompletedTasks) {
+		segmentCompleted = false;
+	}
+
+	if (segmentCompleted) {
+		console.log("\n\n ~~ segmenting tasks ( completed / not completed ) ~~");
+
+		var remainingTasks = [];
+		var completedTasks = [];
+		taskArray.forEach((task) => {
+			if (!options.dontUseDataValues && task.dataValues) {
+				task = task.dataValues;
+			};
+			if (task.done) {
+				completedTasks.push(task);
+			} else {
+				remainingTasks.push(task);
+			}
+		});
+
+		if (newTasks) {
+			newTasks.forEach((newTask) => {
+				remainingTasks.push(newTask);
+			})
+		}
+
+
+		// add completed tasks to right place
+		var taskListMessageBody = '';
+		taskListMessage = (options.noKarets ? `*Completed Tasks:*\n` : `> *Completed Tasks:*\n`);
+		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
+		taskListMessage += taskListMessageBody;
+
+		// add remaining tasks to right place
+		taskListMessage += (options.noKarets ? `\n*Remaining Tasks:*\n` : `>\n>*Remaining Tasks:*\n`);
+		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
+		taskListMessage += taskListMessageBody;
+
+	} else {
+		var taskListMessageBody = createTaskListMessageBody(taskArray, options);
+		taskListMessage += taskListMessageBody;
+
+	}
+
+	if (!options.dontCalculateMinutes) { // taskListMessages default to show calculated minutes
+		var { totalMinutes } = options;
+		var timeString = convertMinutesToHoursString(totalMinutes);
+		var totalMinutesContent = `\n*Total time estimate: ${timeString} :clock730:*`;
+		taskListMessage += totalMinutesContent;
+	}
+
+	return taskListMessage;
+}
+
+function createTaskListMessageBody(taskArray, options) {
+
+	var taskListMessage = '';
+	var { count } = options
+
+	taskArray.forEach((task, index) => {
 
 		// for when you get task from DB
 		var minutesMessage = '';
@@ -105,7 +179,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 
 			var minutesInt = parseInt(task.minutes);
 			if (!isNaN(minutesInt) && !task.done) {
-				totalMinutes += minutesInt;
+				options.totalMinutes += minutesInt;
 			}
 			var timeString = convertMinutesToHoursString(minutesInt);
 
@@ -115,7 +189,13 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 				minutesMessage = ` (${timeString})`;
 			}
 		}
-		var taskContent = `${count}) ${task.text}${minutesMessage}`;
+
+		// completed tasks do not have count
+		var taskContent = ``;
+		if (!options.segmentCompleted || task.done != true) {
+			taskContent = `${count}) `;
+		}
+		taskContent = `${taskContent}${task.text}${minutesMessage}`
 
 		taskContent = (task.done ? `~${taskContent}~\n` : `${taskContent}\n`);
 		taskContent = (options.noKarets ? taskContent : `> ${taskContent}`);
@@ -125,12 +205,6 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		count++;
 	});
 
-	if (options.calculateMinutes || true) { // all taskListMessages will show this for now
-		var timeString = convertMinutesToHoursString(totalMinutes);
-		var totalMinutesContent = `\n*Total time estimate: ${timeString} :clock730:*`;
-		taskListMessage += totalMinutesContent;
-	}
-
 	return taskListMessage;
 }
 
@@ -139,7 +213,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
  * @param  {int} minutes number of minutes
  * @return {string}         hour + minutes
  */
-function convertMinutesToHoursString(minutes) {
+export function convertMinutesToHoursString(minutes) {
 	minutes = parseInt(minutes);
 	var hours = 0;
 	while (minutes - 60 >= 0) {
@@ -156,7 +230,7 @@ function convertMinutesToHoursString(minutes) {
 	}
 
 	if (minutes == 0) {
-		content = `${content}`;
+		content = content.slice(0, -1);
 	} else if (minutes == 1) {
 		content = `${content}${minutes} minute`;
 	} else {
@@ -189,8 +263,8 @@ export function convertTimeStringToMinutes(timeString) {
 		var minutes = 0;
 
 		// OPTION 1: int with space (i.e. `1 hr`)
-		if (timeArray[i] == parseInt(timeArray[i])) {
-			minutes = parseInt(timeArray[i]);
+		if (timeArray[i] == parseFloat(timeArray[i])) {
+			minutes = parseFloat(timeArray[i]);
 			var hourOrMinute = timeArray[i+1];
 			if (hourOrMinute && hourOrMinute[0] == "h") {
 				minutes *= 60;
@@ -210,8 +284,8 @@ export function convertTimeStringToMinutes(timeString) {
 			var timeStringArray = timeString.split(containsH);
 			
 			timeStringArray.forEach(function(element, index) {
-				var time = parseInt(element); // can be minutes or hours
-				if (isNaN(parseInt(element)))
+				var time = parseFloat(element); // can be minutes or hours
+				if (isNaN(parseFloat(element)))
 					return;
 				
 				// if string contains "h", then you can assume first one is hour
@@ -342,9 +416,8 @@ export function commaSeparateOutTaskArray(a) {
 }
 
 // match the closest message that matches the CHANNEL_ID of this response to the CHANNEL_ID that the bot is speaking to
-export function getUpdateTaskListMessageObject(response, bot) {
+export function getUpdateTaskListMessageObject(userChannel, bot) {
 	
-	const userChannel = response.channel;
 	var { sentMessages } = bot;
 
 	var updateTaskListMessageObject = false;
@@ -361,6 +434,36 @@ export function getUpdateTaskListMessageObject(response, bot) {
 					ts
 				};
 				break;
+			}
+		}
+	}
+
+	return updateTaskListMessageObject;
+
+}
+
+
+// new function to ensure you are getting a task list message to update
+export function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
+	
+	var { sentMessages } = bot;
+
+	var updateTaskListMessageObject = false;
+	if (sentMessages) {
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (var i = sentMessages.length - 1; i >= 0; i--) {
+
+			var message           = sentMessages[i];
+			const { channel, ts, attachments } = message;
+			if (channel == userChannel) {
+				if (attachments && attachments[0].callback_id == "TASK_LIST_MESSAGE") {
+					updateTaskListMessageObject = {
+						channel,
+						ts
+					};
+					break;
+				}
 			}
 		}
 	}

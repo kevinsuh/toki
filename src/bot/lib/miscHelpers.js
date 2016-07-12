@@ -138,6 +138,25 @@ export function witDurationToTimeZoneObject(duration, tz) {
 	}
 }
 
+// convert wit duration to total minutes
+export function witDurationToMinutes(duration) {
+
+	var now = moment();
+	var remindTimeStamp;
+
+	if (duration) {
+		var durationSeconds = 0;
+		for (var i = 0; i < duration.length; i++) {
+			durationSeconds += duration[i].normalized.value;
+		}
+		var durationMinutes = Math.floor(durationSeconds / 60);
+		return durationMinutes;
+	} else {
+		return false;
+	}
+
+}
+
 // function export our console log functionality
 export function consoleLog() {
 	console.log("\n\n");
