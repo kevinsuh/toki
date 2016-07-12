@@ -231,6 +231,10 @@ var buttonValues = exports.buttonValues = {
 		name: "DONE_SESSION_TIMEOUT_NO",
 		value: "DONE_SESSION_TIMEOUT_NO"
 	},
+	doneSessionEarlyNo: {
+		name: "DONE_SESSION_EARLY_NO",
+		value: "DONE_SESSION_EARLY_NO"
+	},
 	doneSessionTimeoutDidSomethingElse: {
 		name: "DONE_SESSION_TIMEOUT_DID_SOMETHING_ELSE",
 		value: "DONE_SESSION_TIMEOUT_DID_SOMETHING_ELSE"
