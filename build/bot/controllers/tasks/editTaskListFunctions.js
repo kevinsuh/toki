@@ -415,8 +415,6 @@ function confirmTimeToTasks(convo) {
 		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 
-			convo.say(":boom: This looks great!");
-
 			// you use this function for either ADDING tasks or UPDATING tasks (one or the other)
 			if (newTasks.length > 0) {
 				// you added new tasks and are confirming time for them
@@ -514,7 +512,8 @@ function confirmCompleteTasks(response, convo) {
 	if (!taskNumbersToCompleteArray) {
 		convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 		convo.say("Please pick tasks from your list like `tasks 1, 3 and 4` or say `never mind`");
-		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
+		var options = { segmentCompleted: true };
+		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
 		convo.say(taskListMessage);
 		completeTasksFlow(response, convo);
 		return;
@@ -638,7 +637,8 @@ function confirmDeleteTasks(response, convo) {
 	if (!taskNumbersToDeleteArray) {
 		convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 		convo.say("Please pick tasks from your list like `tasks 1, 3 and 4` or say `never mind`");
-		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
+		var options = { segmentCompleted: true };
+		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
 		convo.say(taskListMessage);
 		deleteTasksFlow(response, convo);
 		return;
