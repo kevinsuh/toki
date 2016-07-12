@@ -208,9 +208,21 @@ function getTaskContent(response, convo) {
 }
 
 function askForTask(response, convo) {
-	convo.ask(`What is the task?`, (response, convo) => {
-		const { text } = response;
+	convo.ask(`What is the task? \`i.e. add email market report for 30 min\``, (response, convo) => {
+
+		const { text, intentObject: { entities } } = response;
+
 		convo.tasksAdd.task = text;
+
+		// shortcut add minutes if user uses single line
+		// `i.e. email market report for 30 min`
+		if (entities.duration && entities.reminder) {
+			var minutes            = witDurationToMinutes(entities.duration);
+			var task               = entities.reminder[0].value;
+			convo.tasksAdd.minutes = minutes;
+			convo.tasksAdd.task    = task;
+		}
+
 		getTaskMinutes(response, convo);
 		convo.next();
 	})
@@ -278,7 +290,7 @@ function confirmTaskToAdd(response, convo) {
 					},
 					{
 							name: buttonValues.editTaskList.name,
-							text: "Edit task list",
+							text: "Yes + View tasks",
 							value: buttonValues.editTaskList.value,
 							type: "button"
 					},

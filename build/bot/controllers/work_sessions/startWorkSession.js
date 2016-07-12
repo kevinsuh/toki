@@ -434,7 +434,7 @@ exports.default = function (controller) {
 						} else {
 							// default premature end!
 							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-								convo.say("Okay! Exiting now. Let me know when you want to start on a session");
+								convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 								convo.next();
 							});
 						}
