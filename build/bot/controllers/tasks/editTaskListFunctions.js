@@ -589,7 +589,7 @@ function updateCompleteTaskListMessage(response, convo) {
 	var options = { segmentCompleted: true };
 	var fullTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(fullTaskArray, options);
 
-	convo.say("Here's the rest of your task list for today :memo::");
+	convo.say("Here's your task list for today :memo::");
 	convo.say(fullTaskListMessage);
 	convo.say("Good luck with today!");
 
