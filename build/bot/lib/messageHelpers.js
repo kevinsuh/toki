@@ -155,14 +155,23 @@ function convertArrayToTaskListMessage(taskArray) {
 
 		// add completed tasks to right place
 		var taskListMessageBody = '';
-		taskListMessage = options.noKarets ? '*Completed Tasks:*\n' : '> *Completed Tasks:*\n';
-		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
-		taskListMessage += taskListMessageBody;
+		if (completedTasks.length > 0) {
+			taskListMessage = options.noKarets ? '*Completed Tasks:*\n' : '> *Completed Tasks:*\n';
+			taskListMessageBody = createTaskListMessageBody(completedTasks, options);
+			taskListMessage += taskListMessageBody;
+		}
 
-		// add remaining tasks to right place
-		taskListMessage += options.noKarets ? '\n*Remaining Tasks:*\n' : '>\n>*Remaining Tasks:*\n';
-		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
-		taskListMessage += taskListMessageBody;
+		if (remainingTasks.length > 0) {
+			// add remaining tasks to right place
+			if (completedTasks.length == 0) {
+				// only remaining tasks, no completed tasks
+				taskListMessage += options.noKarets ? '*Remaining Tasks:*\n' : '> *Remaining Tasks:*\n';
+			} else {
+				taskListMessage += options.noKarets ? '\n*Remaining Tasks:*\n' : '>\n>*Remaining Tasks:*\n';
+			}
+			taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
+			taskListMessage += taskListMessageBody;
+		}
 	} else {
 		var taskListMessageBody = createTaskListMessageBody(taskArray, options);
 		taskListMessage += taskListMessageBody;
