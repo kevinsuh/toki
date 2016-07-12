@@ -7,6 +7,7 @@ import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray } from '../../lib/messageHelpers';
+import { closeOldRemindersAndSessions } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
 import { bots } from '../index';
@@ -129,6 +130,18 @@ export default function(controller) {
 				include: [ models.Task ]
 			})
 			.then((dailyTasks) => {
+
+				// cancel all old reminders
+				user.getReminders({
+					where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break", "done_session_snooze"] ]
+				}).
+				then((oldReminders) => {
+					oldReminders.forEach((reminder) => {
+						reminder.update({
+							"open": false
+						})
+					});
+				});
 
 				var taskTextsToWorkOnArray = dailyTasks.map((dailyTask) => {
 					var text = dailyTask.Task.dataValues.text;
@@ -355,18 +368,6 @@ export default function(controller) {
 								// NORMAL FLOW
 								const UserId = user.id;
 
-								// cancel all old reminders
-								user.getReminders({
-									where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break", "done_session_snooze"] ]
-								}).
-								then((oldReminders) => {
-									oldReminders.forEach((reminder) => {
-										reminder.update({
-											"open": false
-										})
-									});
-								});
-
 								switch (sessionTimerDecision) {
 									case sessionTimerDecisions.didTask:
 										// update the specific task finished
@@ -507,6 +508,8 @@ export default function(controller) {
 
 				convo.sessionEnd.UserId = user.id;
 				convo.sessionEnd.tz     = tz;
+
+				closeOldRemindersAndSessions(user);
 
 				return user.getDailyTasks({
 					where: [ `"Task"."done" = ? AND "DailyTask"."type" = ?`, false, "live" ],
@@ -652,17 +655,6 @@ export default function(controller) {
 						 */
 
 						// cancel all checkin reminders (type: `work_session` or `break`)
-						// AFTER this is done, put in new break
-						user.getReminders({
-							where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break", "done_session_snooze"] ]
-						}).
-						then((oldReminders) => {
-							oldReminders.forEach((reminder) => {
-								reminder.update({
-									"open": false
-								})
-							});
-						});
 
 						// set reminders (usually a break)
 						reminders.forEach((reminder) => {
@@ -690,11 +682,11 @@ export default function(controller) {
 							})
 						});
 
-						// end all OPEN work sessions here b/c user has closed it officially
-						// LIVE work sessions only matter through CRON JOB
-						// make decision afterwards (to ensure you have no sessions live if u want to start a new one)
+						
+						// get the most recent work session
+						// to handle if user got new task done
 						user.getWorkSessions({
-							where: [ `"WorkSession"."open" =? `, true ],
+							limit: 1,
 							order: `"createdAt" DESC`
 						})
 						.then((workSessions) => {
@@ -740,14 +732,6 @@ export default function(controller) {
 									})
 								});
 							}
-
-							workSessions.forEach((workSession) => {
-								workSession.update({
-									endTime,
-									open: false,
-									live: false
-								});
-							});
 
 							setTimeout(() => { 
 								handlePostSessionDecision(postSessionDecision, { controller, bot, SlackUserId });

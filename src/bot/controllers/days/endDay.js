@@ -8,6 +8,7 @@ import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes } from '../../lib/messageHelpers';
+import { closeOldRemindersAndSessions } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
 // base controller for end day
@@ -97,6 +98,7 @@ export default function(controller) {
 						]);
 						convo.on('end', (convo) => {
 							if (convo.readyToEndDay) {
+								closeOldRemindersAndSessions(user);
 								controller.trigger(`end_day_flow`, [ bot, { SlackUserId }]);
 							}
 						})

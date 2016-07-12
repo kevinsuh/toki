@@ -4,7 +4,7 @@ import moment from 'moment-timezone';
 
 import models from '../../../app/models';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
-import { createMomentObjectWithSpecificTimeZone } from '../../lib/miscHelpers';
+import { createMomentObjectWithSpecificTimeZone, closeOldRemindersAndSessions } from '../../lib/miscHelpers';
 
 import intentConfig from '../../lib/intents';
 import { randomInt, utterances } from '../../lib/botResponses';
@@ -253,6 +253,10 @@ export default function(controller) {
 						convo.sessionStart.noDailyTasks = true;
 						convo.stop();
 					} else {
+						
+						// let's turn off sessions and reminders here
+						closeOldRemindersAndSessions(user);
+						
 						// entry point of thy conversation
 						startSessionStartConversation(err, convo);
 					}

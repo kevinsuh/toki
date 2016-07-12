@@ -236,6 +236,10 @@ exports.default = function (controller) {
 						convo.sessionStart.noDailyTasks = true;
 						convo.stop();
 					} else {
+
+						// let's turn off sessions and reminders here
+						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+
 						// entry point of thy conversation
 						(0, _startWorkSessionFunctions.startSessionStartConversation)(err, convo);
 					}
