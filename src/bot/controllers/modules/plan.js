@@ -476,7 +476,7 @@ function confirmTimeToTasks(timeToTasksArray, convo) {
 			pattern: utterances.yes,
 			callback: (response, convo) => {
 				convo.say(":boom: This looks great!");
-				convo.ask("Ready to start your first focused work session today?", [
+				convo.ask("Ready to start a work session?", [
 						{
 							pattern: utterances.no,
 							callback: (response, convo) => {

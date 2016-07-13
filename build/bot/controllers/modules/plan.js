@@ -460,7 +460,7 @@ function confirmTimeToTasks(timeToTasksArray, convo) {
 		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.say(":boom: This looks great!");
-			convo.ask("Ready to start your first focused work session today?", [{
+			convo.ask("Ready to start a work session?", [{
 				pattern: _botResponses.utterances.no,
 				callback: function callback(response, convo) {
 					convo.say("Great! Let me know when you're ready to `start a session`");
