@@ -13,6 +13,33 @@
   #splash-wrapper .main-title {
     font-size: 70px;
     padding: 0 20px; }
+  #splash-wrapper .subtitle {
+    font-size: 20px;
+    margin: 25px 0;
+    line-height: 22px; }
+  #splash-wrapper form.invite {
+    height: 40px; }
+    #splash-wrapper form.invite .email-input {
+      height: 40px;
+      min-width: 40%; }
+    #splash-wrapper form.invite .submit-div {
+      display: inline-block;
+      background-color: white;
+      border: 1pt solid lightgrey;
+      text-align: center;
+      height: 40px;
+      line-height: 40px;
+      padding: 0 10px;
+      margin-left: 5px;
+      vertical-align: middle;
+      border-radius: 6px;
+      background-image: url("../images/slack_logo.png");
+      background-repeat: no-repeat;
+      background-position: center right 10px;
+      background-size: 22px;
+      padding-right: 41px;
+      padding-left: 13px;
+      font-weight: 600; }
 
 .splash-header {
   padding-top: 20px;

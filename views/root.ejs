@@ -25,25 +25,22 @@
 
 			<div class="container">
 
-				<h1 class="main-title">Every hero needs a sidekick</h1>
-
 				<% if (locals.invite && locals.msg) { %>
-				<div class="flash-<%= locals.success ? 'success' : 'error' %>">
+				<div class="alert alert-<%= locals.success ? 'success' : 'warning' %>">
 					<%= locals.msg %>
 				</div>
 				<% } %>
+
+				<h1 class="main-title">Every hero needs a sidekick</h1>
 
 				<div class="main">
 					<p class="subtitle"><strong>Toki</strong> is a bot that puts you in control of your attention so you do the things you set out to do</p>
 				</div>
 
 				<div class="form-group">
-					<form id="invite" method="post" action="/invite">
-						<input class="form-control" type="email" name="email" placeholder="joeguy@example.com" required />
-						<input type="submit" value="Get my Invite" />
-						<a href=<%= "https://"+org+".slack.com" %> target="_top">
-							Sign In
-						</a>
+					<form id="invite" method="post" action="/invite" class="invite form-inline">
+						<input class="email-input form-control" type="email" name="email" placeholder="joeguy@example.com" required />
+						<input type="submit" class="submit-div" value="Join with Slack" />
 					</form>
 				</div>
 
@@ -55,7 +52,10 @@
 		</div>
 
 
-	<% if (false) { %>
+	<% if false { %>
+	<a href=<%= "https://"+org+".slack.com" %> target="_top">
+		Sign In
+	</a>
 	<center>
 		<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
 	</center>
