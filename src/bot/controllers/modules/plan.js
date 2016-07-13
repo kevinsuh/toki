@@ -478,16 +478,16 @@ function confirmTimeToTasks(timeToTasksArray, convo) {
 				convo.say(":boom: This looks great!");
 				convo.ask("Ready to start your first focused work session today?", [
 						{
-							pattern: utterances.yes,
+							pattern: utterances.no,
 							callback: (response, convo) => {
-								convo.dayStart.startDayDecision = intentConfig.START_SESSION;
+								convo.say("Great! Let me know when you're ready to `start a session`");
 								convo.next();
 							}
 						},
 						{
-							pattern: utterances.no,
+							pattern: utterances.yes,
 							callback: (response, convo) => {
-								convo.say("Great! Let me know when you're ready to `start a session`");
+								convo.dayStart.startDayDecision = intentConfig.START_SESSION;
 								convo.next();
 							}
 						}

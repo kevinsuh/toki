@@ -461,15 +461,15 @@ function confirmTimeToTasks(timeToTasksArray, convo) {
 		callback: function callback(response, convo) {
 			convo.say(":boom: This looks great!");
 			convo.ask("Ready to start your first focused work session today?", [{
-				pattern: _botResponses.utterances.yes,
-				callback: function callback(response, convo) {
-					convo.dayStart.startDayDecision = _intents2.default.START_SESSION;
-					convo.next();
-				}
-			}, {
 				pattern: _botResponses.utterances.no,
 				callback: function callback(response, convo) {
 					convo.say("Great! Let me know when you're ready to `start a session`");
+					convo.next();
+				}
+			}, {
+				pattern: _botResponses.utterances.yes,
+				callback: function callback(response, convo) {
+					convo.dayStart.startDayDecision = _intents2.default.START_SESSION;
 					convo.next();
 				}
 			}], { 'key': 'startFirstSession' });
