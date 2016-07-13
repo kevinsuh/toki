@@ -122,7 +122,7 @@ export default function(controller) {
 					controller.trigger(`done_session_no_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				case buttonValues.doneSessionEarlyNo.value:
-					bot.replyInteractive(message, `Oh okay, my bad`)
+					bot.replyInteractive(message, `Got it`)
 					break;
 				case buttonValues.doneSessionYes.value:
 					bot.replyInteractive(message, "Great work! :raised_hands:")

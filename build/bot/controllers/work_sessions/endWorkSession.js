@@ -157,7 +157,7 @@ exports.default = function (controller) {
 								}, { // same as buttonValues.doneSessionNo.value
 									pattern: _botResponses.utterances.no,
 									callback: function callback(response, convo) {
-										convo.say('Oh okay, my bad');
+										convo.say('Got it');
 										convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
 										convo.next();
 									}
