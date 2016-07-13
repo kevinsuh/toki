@@ -253,17 +253,6 @@ exports.default = function (controller) {
 					var SlackUserId = sessionStart.SlackUserId;
 					var confirmStart = sessionStart.confirmStart;
 
-					// proxy that some odd bug has happened
-					// impossible to have 1+ daily tasks and no time estimate
-
-					if (sessionStart.dailyTasks.length > 0 && !sessionStart.calculatedTimeObject) {
-
-						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-							convo.say("Sorry but something went wrong :dog:. Please try `start a session` again");
-							convo.next();
-						});
-						return;
-					}
 
 					if (confirmStart) {
 
@@ -415,7 +404,7 @@ exports.default = function (controller) {
 										if (startNewDay) {
 											convo.say("Hey! You haven't entered any tasks yet today. Let's start the day before doing a session :muscle:");
 										} else {
-											convo.say("Hey! You actually don't have any tasks right now. Let's get things to work on first");
+											convo.say("Hey! Let's get things to work on first");
 										}
 
 										convo.next();
@@ -429,18 +418,12 @@ exports.default = function (controller) {
 											if (startNewDay) {
 												controller.trigger('begin_day_flow', [bot, config]);
 											} else {
-												controller.trigger('add_task_flow', [bot, config]);
+												controller.trigger('edit_tasks_flow', [bot, config]);
 											}
 										});
 									});
 								});
 							})();
-						} else {
-							// default premature end!
-							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-								convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
-								convo.next();
-							});
 						}
 					}
 				});

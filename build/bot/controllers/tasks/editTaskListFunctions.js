@@ -54,10 +54,80 @@ function startEditTaskListMessage(convo) {
 		}]
 	});
 
-	askForTaskListOptions(convo);
+	// see if remaining tasks or not
+	var remainingTasks = [];
+	dailyTasks.forEach(function (dailyTask) {
+		if (!dailyTask.dataValues.Task.done) {
+			remainingTasks.push(dailyTask);
+		}
+	});
+
+	if (remainingTasks.length > 0) {
+		askForTaskListOptions(convo);
+	} else {
+		askForTaskListOptionsIfNoRemainingTasks(convo);
+	}
+
 	convo.next();
 }
 
+// options to ask if user has no remaining tasks
+function askForTaskListOptionsIfNoRemainingTasks(convo) {
+
+	convo.ask({
+		text: 'You have no remaining tasks for today. Would you like to add some tasks?',
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "ADD_TASKS",
+			color: _constants.colorsHash.turquoise.hex,
+			fallback: "Let's add some tasks?",
+			actions: [{
+				name: _constants.buttonValues.addTasks.name,
+				text: "Add tasks",
+				value: _constants.buttonValues.addTasks.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.neverMindTasks.name,
+				text: "Good for now!",
+				value: _constants.buttonValues.neverMindTasks.value,
+				type: "button"
+			}]
+		}]
+	}, [{
+		pattern: _constants.buttonValues.addTasks.value,
+		callback: function callback(response, convo) {
+			addTasksFlow(response, convo);
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.addTasks.value
+		pattern: _botResponses.utterances.containsAdd,
+		callback: function callback(response, convo) {
+			convo.say("Okay, let's add some tasks :muscle:");
+			addTasksFlow(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.neverMindTasks.value,
+		callback: function callback(response, convo) {
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.neverMind.value
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say("Okay! Keep at it :smile_cat:");
+			convo.next();
+		}
+	}, { // this is failure point. restart with question
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say("I didn't quite get that :thinking_face:");
+			convo.repeat();
+			convo.next();
+		}
+	}]);
+}
+
+// options to ask if user has at least 1 remaining task
 function askForTaskListOptions(convo) {
 
 	convo.ask({

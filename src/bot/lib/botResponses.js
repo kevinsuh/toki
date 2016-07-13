@@ -36,7 +36,7 @@ export const utterances = {
 	noAndNeverMind: new RegExp(/(\b(no|nah|nope)|\bn[oahpe]+\b|\bn[never mind]{4,}\b|[nvm]{2,})/i),
 	specificYes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|\by[esahp]{2,}\b|\bs[ure]{2,}\b)/i),
 	containsNew: new RegExp(/(\bn[new]{2,}\b)/i),
-	containsCheckin: new RegExp(/(\bch[check in]{3,}\b|r[reminder ]{4,})/i),
+	containsCheckin: new RegExp(/(\bch[check in]{3,}\b|r[reminder]{4,})/i),
 	containsChangeTask: new RegExp(/(ch[change ]{3,}t[task ]{2,})/i),
 	containsChangeTime: new RegExp(/(ch[change ]{3,}t[time ]{2,})/i),
 	containsAddNote: new RegExp(/(a[add ]{1,}n[note ]{2,})/i),

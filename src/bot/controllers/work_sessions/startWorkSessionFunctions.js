@@ -148,8 +148,7 @@ function finalizeTimeAndTasksToStart(response, convo) {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: function(response, convo) {
-				convo.sessionStart.confirmStart = false;
-				convo.stop();
+				convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 				convo.next();
 			}
 		},
@@ -303,8 +302,7 @@ function finalizeNewTaskToStart(response, convo) {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: function(response, convo) {
-				convo.sessionStart.confirmStart = false;
-				convo.stop();
+				convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 				convo.next();
 			}
 		},
@@ -428,8 +426,7 @@ function finalizeCheckinTimeToStart(response, convo) {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: function(response, convo) {
-				convo.sessionStart.confirmStart = false;
-				convo.stop();
+				convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 				convo.next();
 			}
 		},
@@ -489,6 +486,13 @@ function askWhichTasksToWorkOn(response, convo) {
 			callback: (response, convo) => {
 				// NL contains "new" (i.e. "i'll do a new task")
 				addNewTask(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.noAndNeverMind,
+			callback: (response, convo) => {
+				convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 				convo.next();
 			}
 		},

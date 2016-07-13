@@ -33,14 +33,12 @@ var checkForSessions = function checkForSessions() {
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
 	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
 
+	// get the most recent work session! assume this is the one user is working on
 	_models2.default.WorkSession.findAll({
 		where: ['"endTime" < ? AND "live" = ? AND "open" = ?', now, true, true],
 		order: '"WorkSession"."createdAt" DESC',
 		include: [_models2.default.DailyTask]
 	}).then(function (workSessions) {
-
-		// these are the work sessions that have ended within last 5 minutes
-		// and have not closed yet
 
 		var workSessionsArray = [];
 

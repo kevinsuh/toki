@@ -154,8 +154,7 @@ function finalizeTimeAndTasksToStart(response, convo) {
 	}, {
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.sessionStart.confirmStart = false;
-			convo.stop();
+			convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 			convo.next();
 		}
 	}, { // this is failure point. restart with question
@@ -296,8 +295,7 @@ function finalizeNewTaskToStart(response, convo) {
 	}, {
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.sessionStart.confirmStart = false;
-			convo.stop();
+			convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 			convo.next();
 		}
 	}, { // this is failure point. restart with question
@@ -410,8 +408,7 @@ function finalizeCheckinTimeToStart(response, convo) {
 	}, {
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.sessionStart.confirmStart = false;
-			convo.stop();
+			convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 			convo.next();
 		}
 	}, { // this is failure point. restart with question
@@ -464,6 +461,12 @@ function askWhichTasksToWorkOn(response, convo) {
 		callback: function callback(response, convo) {
 			// NL contains "new" (i.e. "i'll do a new task")
 			addNewTask(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 			convo.next();
 		}
 	}, {

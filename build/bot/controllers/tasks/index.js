@@ -85,13 +85,9 @@ exports.default = function (controller) {
 						dailyTasksToUpdate: [] // existing dailyTasks
 					};
 
-					if (dailyTasks.length == 0) {
-						convo.say("Looks like you don't have any tasks for today!");
-						convo.say("Let me know if you want to `start your day` or `add tasks` to an existing day :memo:");
-					} else {
-						// this is the flow you expect for editing tasks
-						(0, _editTaskListFunctions.startEditTaskListMessage)(convo);
-					}
+					// this is the flow you expect for editing tasks
+					(0, _editTaskListFunctions.startEditTaskListMessage)(convo);
+
 					convo.on('end', function (convo) {
 						console.log("\n\n ~ edit tasks finished ~ \n\n");
 						console.log(convo.tasksEdit);

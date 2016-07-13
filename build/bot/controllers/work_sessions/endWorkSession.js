@@ -11,13 +11,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 exports.default = function (controller) {
 
-	/**
-  * 		ENDING WORK SESSION:
-  * 			1) Explict command to finish session early
-  * 			2) Your timer has run out
-  */
-
-	// User wants to finish session early (wit intent)
+	// User explicitly wants to finish session early (wit intent)
 	controller.hears(['done_session'], 'direct_message', _index.wit.hears, function (bot, message) {
 
 		/**
@@ -27,8 +21,6 @@ exports.default = function (controller) {
    */
 
 		var SlackUserId = message.user;
-		console.log("done message:");
-		console.log(message);
 
 		// no open sessions
 		bot.send({
@@ -42,46 +34,247 @@ exports.default = function (controller) {
 				where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 				include: [_models2.default.SlackUser]
 			}).then(function (user) {
-				return user.getWorkSessions({
-					where: ['"open" = ?', true]
-				});
-			}).then(function (workSessions) {
-				// if live work session, confirm end early
-				// else, user MUST say `done` to trigger end (this properly simulates user is done with that session)
-				if (workSessions.length > 0) {
-					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-						convo.ask('Are you finished with your session?', [{
-							pattern: _botResponses.utterances.yes,
-							callback: function callback(response, convo) {
-								convo.say("You are a star! :star:");
-								convo.finishedWithSession = true;
-								convo.next();
-							}
-						}, {
-							pattern: _botResponses.utterances.no,
-							callback: function callback(response, convo) {
-								convo.say('Oh, never mind then! Keep up the work :weight_lifter:');
-								convo.next();
-							}
-						}]);
-						convo.on('end', function (convo) {
-							if (convo.finishedWithSession) {
-								controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
-							}
+				user.getWorkSessions({
+					where: ['"open" = ?', true],
+					order: '"WorkSession"."createdAt" DESC',
+					include: [_models2.default.DailyTask]
+				}).then(function (workSessions) {
+
+					var UserId = user.id;
+
+					// if live work session, confirm end early
+					// else, user MUST say `done` to trigger end (this properly simulates user is done with that session)
+					if (workSessions.length > 0) {
+
+						var workSession = workSessions[0]; // only deal with most recent one
+						var dailyTaskIds = workSession.DailyTasks.map(function (dailyTask) {
+							return dailyTask.id;
 						});
-					});
-				} else {
-					// this is a bad solution right now
-					// we need another column in WorkSessions to be `live`, which is different from `open` (`open` is for cronjob reminder, `done` is for when user explicitly ends the session.)
-					if (message.text == 'done' || message.text == 'Done') {
-						controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
+
+						user.getDailyTasks({
+							where: ['"DailyTask"."id" IN (?) AND "Task"."done" = ?', dailyTaskIds, false],
+							include: [_models2.default.Task]
+						}).then(function (dailyTasks) {
+
+							var taskTextsToWorkOnArray = dailyTasks.map(function (dailyTask) {
+								var text = dailyTask.Task.dataValues.text;
+								return text;
+							});
+							var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
+
+							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+								var tz = user.SlackUser.tz;
+
+
+								convo.doneSessionEarly = {
+									SlackUserId: SlackUserId,
+									dailyTaskIds: dailyTaskIds,
+									workSession: workSession,
+									doneEarlyDecision: false
+								};
+
+								convo.sessionEnd = {
+									UserId: user.id,
+									tz: tz,
+									postSessionDecision: false,
+									reminders: [],
+									tasksCompleted: [],
+									SlackUserId: SlackUserId
+								};
+
+								// get times for user
+								var now = (0, _momentTimezone2.default)();
+								var endTime = (0, _momentTimezone2.default)(workSession.dataValues.endTime).tz(tz);
+								var endTimeString = endTime.format("h:mm a");
+								var minutes = _momentTimezone2.default.duration(endTime.diff(now)).asMinutes();
+								var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+
+								var message = '';
+								if (dailyTasks.length == 0) {
+									message = 'Did you finish your tasks for this session?';
+								} else {
+									message = 'Did you finish ' + tasksToWorkOnString + '?';
+								}
+
+								convo.ask({
+									text: message,
+									attachments: [{
+										attachment_type: 'default',
+										callback_id: "DONE_SESSION",
+										fallback: "Are you done with your session?",
+										actions: [{
+											name: _constants.buttonValues.doneSessionYes.name,
+											text: "Yes! :punch:",
+											value: _constants.buttonValues.doneSessionYes.value,
+											type: "button",
+											style: "primary"
+										}, {
+											name: _constants.buttonValues.doneSessionDidSomethingElse.name,
+											text: "Did something else",
+											value: _constants.buttonValues.doneSessionDidSomethingElse.value,
+											type: "button"
+										}, {
+											name: _constants.buttonValues.doneSessionEarlyNo.name,
+											text: "Nope",
+											value: _constants.buttonValues.doneSessionEarlyNo.value,
+											type: "button"
+										}]
+									}]
+								}, [{
+									pattern: _constants.buttonValues.doneSessionYes.value,
+									callback: function callback(response, convo) {
+										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didTask;
+										askUserPostSessionOptions(response, convo);
+										convo.next();
+									}
+								}, { // same as buttonValues.doneSessionYes.value
+									pattern: _botResponses.utterances.yes,
+									callback: function callback(response, convo) {
+										convo.say("Great work :raised_hands:");
+										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didTask;
+										askUserPostSessionOptions(response, convo);
+										convo.next();
+									}
+								}, { // this just triggers `end_session` flow
+									pattern: _constants.buttonValues.doneSessionDidSomethingElse.value,
+									callback: function callback(response, convo) {
+										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didSomethingElse;
+										convo.next();
+									}
+								}, { // same as buttonValues.doneSessionDidSomethingElse.value
+									pattern: _botResponses.utterances.containsElse,
+									callback: function callback(response, convo) {
+										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didSomethingElse;
+										convo.say(':ocean: Woo!');
+										convo.next();
+									}
+								}, {
+									pattern: _constants.buttonValues.doneSessionEarlyNo.value,
+									callback: function callback(response, convo) {
+										convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
+										convo.next();
+									}
+								}, { // same as buttonValues.doneSessionNo.value
+									pattern: _botResponses.utterances.no,
+									callback: function callback(response, convo) {
+										convo.say('Oh okay, my bad');
+										convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
+										convo.next();
+									}
+								}, { // this is failure point. restart with question
+									default: true,
+									callback: function callback(response, convo) {
+										convo.say("I didn't quite get that :thinking_face:");
+										convo.repeat();
+										convo.next();
+									}
+								}]);
+								convo.next();
+
+								/**
+         * 		~~ END OF THIS CONVO ~~
+         */
+
+								convo.on('end', function (convo) {
+									var _convo$doneSessionEar = convo.doneSessionEarly;
+									var SlackUserId = _convo$doneSessionEar.SlackUserId;
+									var dailyTaskIds = _convo$doneSessionEar.dailyTaskIds;
+									var doneEarlyDecision = _convo$doneSessionEar.doneEarlyDecision;
+									var _convo$sessionEnd = convo.sessionEnd;
+									var postSessionDecision = _convo$sessionEnd.postSessionDecision;
+									var reminders = _convo$sessionEnd.reminders;
+
+
+									if (doneEarlyDecision) {
+
+										console.log("\n\nclosing old reminders\n\n");
+										(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+										console.log("\n\nclosing old reminders\n\n");
+
+										switch (doneEarlyDecision) {
+											case _constants.sessionTimerDecisions.didTask:
+												// update the specific task finished
+												user.getDailyTasks({
+													where: ['"DailyTask"."id" IN (?)', dailyTaskIds],
+													include: [_models2.default.Task]
+												}).then(function (dailyTasks) {
+													var completedTaskIds = dailyTasks.map(function (dailyTask) {
+														return dailyTask.TaskId;
+													});
+													_models2.default.Task.update({
+														done: true
+													}, {
+														where: ['"Tasks"."id" in (?)', completedTaskIds]
+													});
+												});
+												break;
+											case _constants.sessionTimerDecisions.didSomethingElse:
+												controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
+												return;
+											default:
+												break;
+										}
+
+										/**
+           * 		~~ THIS IS SIMULATION OF `session_end` FLOW
+           * 		essentially figuring out postSessionDecision
+           */
+
+										// then from here, active the postSessionDecisions
+										setTimeout(function () {
+											handlePostSessionDecision(postSessionDecision, { controller: controller, bot: bot, SlackUserId: SlackUserId });
+										}, 500);
+
+										// set reminders (usually a break)
+										reminders.forEach(function (reminder) {
+											var remindTime = reminder.remindTime;
+											var customNote = reminder.customNote;
+											var type = reminder.type;
+
+											_models2.default.Reminder.create({
+												UserId: UserId,
+												remindTime: remindTime,
+												customNote: customNote,
+												type: type
+											});
+										});
+									}
+								});
+							});
+						});
 					} else {
-						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-							convo.say('I\'m not sure what you mean :thinking_face:. If you\'re finished with a session, reply `done`');
-							convo.next();
-						});
+
+						if (_botResponses.utterances.containsTask.test(message.text)) {
+
+							// want to finish off some tasks
+							controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
+						} else {
+
+							// want to be end a session when they arent currently in one
+							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+								convo.ask('You aren\'t in a session right now! Would you like to start one?', [{
+									pattern: _botResponses.utterances.yes,
+									callback: function callback(response, convo) {
+										convo.startSession = true;
+										convo.next();
+									}
+								}, {
+									pattern: _botResponses.utterances.no,
+									callback: function callback(response, convo) {
+										convo.say('Okay! I\'ll be here when you\'re ready to crank again :wrench: ');
+										convo.next();
+									}
+								}]);
+								convo.next();
+								convo.on('end', function (convo) {
+									if (convo.startSession) {
+										controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+									}
+								});
+							});
+						}
 					}
-				}
+				});
 			});
 		}, 1250);
 	});
@@ -271,9 +464,9 @@ exports.default = function (controller) {
 					convo.next();
 
 					convo.on('end', function (convo) {
-						var _convo$sessionEnd = convo.sessionEnd;
-						var postSessionDecision = _convo$sessionEnd.postSessionDecision;
-						var reminders = _convo$sessionEnd.reminders;
+						var _convo$sessionEnd2 = convo.sessionEnd;
+						var postSessionDecision = _convo$sessionEnd2.postSessionDecision;
+						var reminders = _convo$sessionEnd2.reminders;
 						var _convo$doneSessionTim = convo.doneSessionTimerObject;
 						var dailyTaskIds = _convo$doneSessionTim.dailyTaskIds;
 						var timeOut = _convo$doneSessionTim.timeOut;
@@ -604,15 +797,15 @@ exports.default = function (controller) {
 						console.log(convo.sessionEnd);
 
 						// went according to plan
-						var _convo$sessionEnd2 = convo.sessionEnd;
-						var SlackUserId = _convo$sessionEnd2.SlackUserId;
-						var UserId = _convo$sessionEnd2.UserId;
-						var postSessionDecision = _convo$sessionEnd2.postSessionDecision;
-						var reminders = _convo$sessionEnd2.reminders;
-						var tasksCompleted = _convo$sessionEnd2.tasksCompleted;
-						var taskArray = _convo$sessionEnd2.taskArray;
-						var differentCompletedTask = _convo$sessionEnd2.differentCompletedTask;
-						var tz = _convo$sessionEnd2.tz;
+						var _convo$sessionEnd3 = convo.sessionEnd;
+						var SlackUserId = _convo$sessionEnd3.SlackUserId;
+						var UserId = _convo$sessionEnd3.UserId;
+						var postSessionDecision = _convo$sessionEnd3.postSessionDecision;
+						var reminders = _convo$sessionEnd3.reminders;
+						var tasksCompleted = _convo$sessionEnd3.tasksCompleted;
+						var taskArray = _convo$sessionEnd3.taskArray;
+						var differentCompletedTask = _convo$sessionEnd3.differentCompletedTask;
+						var tz = _convo$sessionEnd3.tz;
 
 						// end all live sessions and reminder checkins (type `work_session`) the user might have
 

@@ -79,12 +79,6 @@ export default function(controller) {
 													style: "primary"
 											},
 											{
-													name: buttonValues.doneSessionTimeoutSnooze.name,
-													text: "Snooze :timer_clock:",
-													value: buttonValues.doneSessionTimeoutSnooze.value,
-													type: "button"
-											},
-											{
 													name: buttonValues.doneSessionTimeoutDidSomethingElse.name,
 													text: "Did something else",
 													value: buttonValues.doneSessionTimeoutDidSomethingElse.value,
@@ -230,39 +224,71 @@ export default function(controller) {
 
 			var snoozeTimeString  = snoozeTimeObject.format("h:mm a");
 
-			models.Reminder.create({
-				remindTime: snoozeTimeObject,
-				UserId,
-				type: "done_session_snooze"
+			// make work session live, and extend endTime to snoozeTime from now
+			models.User.find({
+				where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+				include: [
+					models.SlackUser
+				]
 			})
-			.then((reminder) => {
-				bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+			.then((user) => {
 
-					convo.snoozeObject = {
-						defaultSnoozeTime
+				// get the most recent OPEN work session.
+				user.getWorkSessions({
+					where: [`"WorkSession"."open" = ?`, true ],
+					order: `"WorkSession"."createdAt" DESC`
+				})
+				.then((workSessions) => {
+					if (workSessions.length > 0) {
+
+						var openWorkSession = workSessions[0];
+
+						// update work session to snooze time from now
+						openWorkSession.update({
+							endTime: snoozeTimeObject,
+							live: true,
+							open: true
+						});
+
+						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+							convo.snoozeObject = {
+								defaultSnoozeTime
+							}
+
+							if (!defaultSnoozeTime && !remindTimeStampObject) {
+								convo.say(`Wait, this is your first time hitting snooze! The default snooze is *${TOKI_DEFAULT_SNOOZE_TIME} minutes*, but you can change it in your settings by telling me to \`show settings\``);
+								convo.say("You can also specify a custom snooze by saying `snooze for 20 minutes` or something like that :grinning:");
+							}
+
+							convo.say(`I'll check in with you at ${snoozeTimeString} :fist:`);
+							convo.next();
+
+							convo.on('end', (convo) => {
+
+								const { defaultSnoozeTime } = convo.snoozeObject
+
+								// set snooze to default snooze if null
+								if (!defaultSnoozeTime) {
+									user.update({
+										defaultSnoozeTime: TOKI_DEFAULT_SNOOZE_TIME
+									});
+								}
+							})
+						});
+
+					} else {
+						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+							convo.say(`Looks like you don't have any active sessions! Let me know when you want to \`start a session\` :grin: `);
+							convo.next();
+
+						});
 					}
-
-					if (!defaultSnoozeTime && !remindTimeStampObject) {
-						convo.say(`Wait, this is your first time hitting snooze! The default snooze is *${TOKI_DEFAULT_SNOOZE_TIME} minutes*, but you can change it in your settings by telling me to \`show settings\``);
-						convo.say("You can also specify a custom snooze by saying `snooze for 20 minutes` or something like that :grinning:");
-					}
-
-					convo.say(`I'll check in with you at ${snoozeTimeString} :fist:`);
-					convo.next();
-
-					convo.on('end', (convo) => {
-
-						const { defaultSnoozeTime } = convo.snoozeObject
-
-						// set snooze to default snooze if null
-						if (!defaultSnoozeTime) {
-							user.update({
-								defaultSnoozeTime: TOKI_DEFAULT_SNOOZE_TIME
-							});
-						}
-					})
 				});
+
 			});
+			
 		});
 		
 	});
