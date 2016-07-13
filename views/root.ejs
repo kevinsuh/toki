@@ -3,34 +3,43 @@
 
 	<head>
 		<script type="text/javascript">
-		  !function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error("Segment snippet included twice.");else{analytics.invoked=!0;analytics.methods=["trackSubmit","trackClick","trackLink","trackForm","pageview","identify","reset","group","track","ready","alias","page","once","off","on"];analytics.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);analytics.push(e);return analytics}};for(var t=0;t<analytics.methods.length;t++){var e=analytics.methods[t];analytics[e]=analytics.factory(e)}analytics.load=function(t){var e=document.createElement("script");e.type="text/javascript";e.async=!0;e.src=("https:"===document.location.protocol?"https://":"http://")+"cdn.segment.com/analytics.js/v1/"+t+"/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(e,n)};analytics.SNIPPET_VERSION="3.1.0";
-		  analytics.load("5nvEQLHWNyMSlHkNrEWDzm9CQAPL0JHk");
-		  analytics.page()
-		  }}();
+			!function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error("Segment snippet included twice.");else{analytics.invoked=!0;analytics.methods=["trackSubmit","trackClick","trackLink","trackForm","pageview","identify","reset","group","track","ready","alias","page","once","off","on"];analytics.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);analytics.push(e);return analytics}};for(var t=0;t<analytics.methods.length;t++){var e=analytics.methods[t];analytics[e]=analytics.factory(e)}analytics.load=function(t){var e=document.createElement("script");e.type="text/javascript";e.async=!0;e.src=("https:"===document.location.protocol?"https://":"http://")+"cdn.segment.com/analytics.js/v1/"+t+"/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(e,n)};analytics.SNIPPET_VERSION="3.1.0";
+			analytics.load("5nvEQLHWNyMSlHkNrEWDzm9CQAPL0JHk");
+			analytics.page()
+			}}();
 		</script>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<link rel="stylesheet" type="text/css" href="/assets/css/main.css" />
+		<link rel="stylesheet" type="text/css" href="/assets/css/splash.css" />
 	</head>
 
-  <body>
-	<h1 style="text-align: center; margin-top: 20px;">Hey! I'm toki</h1>
+	<body>
+		<div id="splash-wrapper">
+			<h1 style="text-align: center; margin-top: 20px;">Hey! I'm toki</h1>
 
-	<% if (locals.invite && locals.msg) { %>
-	<div class="flash-<%= locals.success ? 'success' : 'error' %>">
-		<%= locals.msg %>
-	</div>
-	<% } %>
+			<% if (locals.invite && locals.msg) { %>
+			<div class="flash-<%= locals.success ? 'success' : 'error' %>">
+				<%= locals.msg %>
+			</div>
+			<% } %>
 
-	<div class="splash <%= true ? 'helo' : 'goodbye' %>">
-		<p>
-			Join Toki on Slack!
-		</p>
-		<form id="invite" method="post" action="/invite">
-			<input class="form-item" type="email" name="email" placeholder="you@yourdomain.com" required />
-			<input type="submit" value="Get my Invite" />
-			<a href=<%= "https://"+org+".slack.com" %> target="_top">
-				Sign In
-			</a>
-		</form>
-	</div>
+			<div class="splash <%= true ? 'hello' : 'goodbye' %>">
+				<p>
+					Join Toki on Slack!
+				</p>
+				<form id="invite" method="post" action="/invite">
+					<input class="form-item" type="email" name="email" placeholder="you@yourdomain.com" required />
+					<input type="submit" value="Get my Invite" />
+					<a href=<%= "https://"+org+".slack.com" %> target="_top">
+						Sign In
+					</a>
+				</form>
+			</div>
+		</div>
+		<div>
+			<h1 style="text-align: center; margin-top: 20px;">Hello world</h1>
+		</div>
+
 
 	<% if (false) { %>
 	<center>
@@ -42,5 +51,5 @@
 	</center>
 	<% } %>
 
-  </body>
+	</body>
 </html>
