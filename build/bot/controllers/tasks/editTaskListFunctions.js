@@ -225,7 +225,7 @@ function askForTaskListOptions(convo) {
 	}, { // NL equivalent to buttonValues.neverMind.value
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.say("Okay! Keep at it :smile_cat:");
+			convo.say("Okay! No worries");
 			convo.next();
 		}
 	}, { // this is failure point. restart with question
@@ -498,7 +498,6 @@ function confirmTimeToTasks(convo) {
 
 				convo.say("Here's your remaining task list :memo::");
 				convo.say(fullTaskListMessage);
-				convo.say("Good luck with today!");
 			}
 
 			convo.next();
@@ -541,7 +540,6 @@ function addNewTasksToTaskList(response, convo) {
 
 	convo.say("Here's your updated task list :memo::");
 	convo.say(taskListMessage);
-	convo.say("Good luck with today!");
 	convo.next();
 }
 

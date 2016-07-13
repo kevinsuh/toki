@@ -131,6 +131,11 @@ exports.default = function (controller) {
 									});
 								}
 							});
+							setTimeout(function () {
+								(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
+							}, 200);
+
+							return;
 						}
 
 						// delete tasks if requested
@@ -142,6 +147,7 @@ exports.default = function (controller) {
 							}).then(function () {
 								(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
 							});
+							return;
 						}
 
 						// complete tasks if requested
@@ -163,6 +169,7 @@ exports.default = function (controller) {
 									(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
 								});
 							});
+							return;
 						}
 
 						// update daily tasks if requested
@@ -180,7 +187,16 @@ exports.default = function (controller) {
 									});
 								}
 							});
+							setTimeout(function () {
+								(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
+							}, 200);
+							return;
 						}
+
+						// fall back
+						setTimeout(function () {
+							(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
+						}, 200);
 					});
 				});
 			});

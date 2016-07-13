@@ -523,7 +523,7 @@ function checkWorkSessionForLiveTasks(config) {
 									SlackUserId: SlackUserId
 								};
 
-								var message = 'Great job finishing ' + finishedTasksString + ' :raised_hands:';
+								var message = 'Great job finishing ' + finishedTasksString + ' :raised_hands:!';
 								convo.say(message);
 
 								(0, _endWorkSession.askUserPostSessionOptions)(err, convo);
@@ -576,6 +576,44 @@ function checkWorkSessionForLiveTasks(config) {
 							convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*. Keep crushing :muscle:');
 						});
 					}
+				});
+			} else {
+				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+					convo.startSession = false;
+					convo.ask("Shall we crank out one of your tasks? :wrench:", [{
+						pattern: _botResponses.utterances.yes,
+						callback: function callback(response, convo) {
+							convo.startSession = true;
+							convo.next();
+						}
+					}, {
+						pattern: _botResponses.utterances.no,
+						callback: function callback(response, convo) {
+							convo.say("Okay! I'll be here when you're ready :fist:");
+							convo.next();
+						}
+					}, {
+						default: true,
+						callback: function callback(response, convo) {
+							convo.say("Sorry, I didn't catch that");
+							convo.repeat();
+							convo.next();
+						}
+					}]);
+					convo.on('end', function (convo) {
+						var startSession = convo.startSession;
+
+						if (startSession) {
+							var intent = _intents2.default.START_SESSION;
+
+							var config = {
+								intent: intent,
+								SlackUserId: SlackUserId
+							};
+
+							controller.trigger('new_session_group_decision', [bot, config]);
+						}
+					});
 				});
 			}
 		});

@@ -543,7 +543,7 @@ export function checkWorkSessionForLiveTasks(config) {
 										SlackUserId
 									}
 
-									var message = `Great job finishing ${finishedTasksString} :raised_hands:`;
+									var message = `Great job finishing ${finishedTasksString} :raised_hands:!`;
 									convo.say(message);
 
 									askUserPostSessionOptions(err, convo);
@@ -599,8 +599,44 @@ export function checkWorkSessionForLiveTasks(config) {
 
 				} else {
 					bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-						convo.say("Let me know when you're ready to start another session!");
-						}
+						convo.startSession = false;
+						convo.ask("Shall we crank out one of your tasks? :wrench:", [
+								{
+									pattern: utterances.yes,
+									callback: (response, convo) => {
+										convo.startSession = true;
+										convo.next();
+									}
+								},
+								{
+									pattern: utterances.no,
+									callback: (response, convo) => {
+										convo.say("Okay! I'll be here when you're ready :fist:");
+										convo.next();
+									}
+								},
+								{
+									default: true,
+									callback: (response, convo) => {
+										convo.say("Sorry, I didn't catch that");
+										convo.repeat();
+										convo.next();
+									}
+								}
+							]);
+						convo.on('end', (convo) => {
+							const { startSession } = convo;
+							if (startSession) {
+								var intent = intentConfig.START_SESSION;
+
+								var config = {
+									intent,
+									SlackUserId
+								}
+
+								controller.trigger(`new_session_group_decision`, [ bot, config ]);
+							}
+						})
 					});
 				}
 
