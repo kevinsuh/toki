@@ -89,21 +89,35 @@ export default function(controller) {
 						})
 						.then((workSessions) => {
 
+							console.log("\n\n\nlooking for start day\n\n\n");
+							console.log(startDayExpirationTime);
+
 							if (workSessions.length == 0) {
+
+								console.log(`\n\n\n0 work sessions as expected\n\n\n`);
+
 								if (sessionGroups[0] && sessionGroups[0].type == "start_work") {
+									console.log(`\n\n\n in first start group session as expected\n\n\n`);
 									// if you started a day recently, this can be used as proxy instead of a session
 									var startDaySessionTime = moment(sessionGroups[0].createdAt);
 									var now                 = moment();
 									var hoursSinceStartDay  = moment.duration(now.diff(startDaySessionTime)).asHours();
+									console.log(`hours since start day: ${hoursSinceStartDay}\n\n`);
 									if (hoursSinceStartDay > hoursForExpirationTime) {
+										console.log(`\n\n\ngoes in here??\n\n\n`);
 										shouldStartNewDay = true;
 									}
 								} else {
+									console.log(`\n\n\n or in here???\n\n\n`);
 									shouldStartNewDay = true;
 								}
 							}
 
+
+
 							var config = { SlackUserId, shouldStartNewDay };
+							console.log(`\n\n\nWhat is config?\n\n\n`);
+							console.log(config);
 							controller.trigger(`is_back_flow`, [ bot, config ]);
 
 						});
