@@ -686,9 +686,6 @@ function updateCompleteTaskListMessage(response, convo) {
 
 	convo.say("Here's your task list for today :memo::");
 	convo.say(fullTaskListMessage);
-	convo.say("Good luck with today!");
-
-	// should ask if ready for session
 
 	convo.next();
 
@@ -810,7 +807,6 @@ function updateDeleteTaskListMessage(response, convo) {
 
 	convo.say("Here's your updated task list :memo::");
 	convo.say(taskListMessage);
-	convo.say("Good luck with today!");
 
 	convo.next();
 

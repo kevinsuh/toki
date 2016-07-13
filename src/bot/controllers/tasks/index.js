@@ -11,6 +11,7 @@ import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '.
 
 import addTaskController from './add';
 import completeTasksController from './complete';
+import { checkWorkSessionForLiveTasks } from '../work_sessions';
 
 import { startEditTaskListMessage } from './editTaskListFunctions';
 
@@ -145,10 +146,13 @@ export default function(controller) {
 
 						// delete tasks if requested
 						if (dailyTaskIdsToDelete.length > 0) {
-							return models.DailyTask.update({
+							models.DailyTask.update({
 								type: "deleted"
 							}, {
 								where: [`"DailyTasks"."id" in (?)`, dailyTaskIdsToDelete]
+							})
+							.then(() => {
+								checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
 							})
 						}
 
@@ -163,11 +167,15 @@ export default function(controller) {
 								var completedTaskIds = dailyTasks.map((dailyTask) => {
 									return dailyTask.TaskId;
 								});
+
 								models.Task.update({
 									done: true
 								}, {
 									where: [`"Tasks"."id" in (?)`, completedTaskIds]
-								});
+								})
+								.then(() => {
+									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
+								})
 
 							})
 						}
@@ -191,7 +199,6 @@ export default function(controller) {
 				});
 			});
 		})
-
 	});
 
 	controller.hears(['daily_tasks', 'completed_task'], 'direct_message', wit.hears, (bot, message) => {
