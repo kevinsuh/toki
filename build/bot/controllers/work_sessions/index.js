@@ -74,32 +74,23 @@ exports.default = function (controller) {
 							where: ['"WorkSession"."endTime" > ? ', _constants.startDayExpirationTime]
 						}).then(function (workSessions) {
 
-							console.log("\n\n\nlooking for start day\n\n\n");
-							console.log(_constants.startDayExpirationTime);
-
 							if (workSessions.length == 0) {
 
-								console.log('\n\n\n0 work sessions as expected\n\n\n');
-
 								if (sessionGroups[0] && sessionGroups[0].type == "start_work") {
-									console.log('\n\n\n in first start group session as expected\n\n\n');
 									// if you started a day recently, this can be used as proxy instead of a session
 									var startDaySessionTime = (0, _momentTimezone2.default)(sessionGroups[0].createdAt);
 									var now = (0, _momentTimezone2.default)();
 									var hoursSinceStartDay = _momentTimezone2.default.duration(now.diff(startDaySessionTime)).asHours();
-									console.log('hours since start day: ' + hoursSinceStartDay + '\n\n');
 									if (hoursSinceStartDay > _constants.hoursForExpirationTime) {
-										console.log('\n\n\ngoes in here??\n\n\n');
 										shouldStartNewDay = true;
 									}
 								} else {
-									console.log('\n\n\n or in here???\n\n\n');
 									shouldStartNewDay = true;
 								}
 							}
 
 							var config = { SlackUserId: SlackUserId, shouldStartNewDay: shouldStartNewDay };
-							console.log('\n\n\nWhat is config?\n\n\n');
+							console.log('Config: \n');
 							console.log(config);
 							controller.trigger('is_back_flow', [bot, config]);
 						});
