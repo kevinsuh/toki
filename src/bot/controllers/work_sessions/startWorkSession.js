@@ -270,17 +270,6 @@ export default function(controller) {
 					var { sessionStart } = convo;
 					var { SlackUserId, confirmStart } = sessionStart;
 
-					// proxy that some odd bug has happened
-					// impossible to have 1+ daily tasks and no time estimate
-					if (sessionStart.dailyTasks.length > 0 && !sessionStart.calculatedTimeObject) {
-
-						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-							convo.say("Sorry but something went wrong :dog:. Please try `start a session` again");
-							convo.next();
-						});
-						return;
-					}
-
 					if (confirmStart) {
 
 						/**
@@ -441,12 +430,6 @@ export default function(controller) {
 
 									})
 								});
-							});
-						} else {
-							// default premature end!
-							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-								convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
-								convo.next();
 							});
 						}
 					}
