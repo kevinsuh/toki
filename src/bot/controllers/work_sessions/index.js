@@ -11,8 +11,10 @@ import startWorKSessionController from './startWorkSession';
 
 import intentConfig from '../../lib/intents';
 import { hoursForExpirationTime, startDayExpirationTime, colorsArray, buttonValues, colorsHash } from '../../lib/constants';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertMinutesToHoursString } from '../../lib/messageHelpers';
 import { utterances } from '../../lib/botResponses';
+
+import { askUserPostSessionOptions, handlePostSessionDecision } from './endWorkSession';
 
 // base controller for work sessions!
 export default function(controller) {
@@ -468,5 +470,178 @@ function shouldStartSessionFlow(err, convo) {
 			}
 		}
 	]);
+
+}
+
+// check if work session has any live tasks
+// if not, ask for a new session
+export function checkWorkSessionForLiveTasks(config) {
+
+	const { controller, bot, SlackUserId } = config;
+	var now               = moment();
+
+	/**
+	 * 		This will check for open work sessions
+	 * 		if NO tasks are live for open work sessions,
+	 * 		trigger end and ask for new work session
+	 */
+	models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			const UserId = user.id;
+			const { SlackUser: { tz } } = user;
+
+			user.getWorkSessions({
+				where: [`"open" = ?`, true ]
+			})
+			.then((workSessions) => {
+
+				if (workSessions.length > 0) {
+
+					var openWorkSession = workSessions[0];
+					openWorkSession.getDailyTasks({
+						include: [ models.Task ]
+					})
+					.then((dailyTasks) => {
+
+						var liveTasks       = [];
+
+						dailyTasks.forEach((dailyTask) => {
+							const { type, Task: { done } } = dailyTask;
+							if (!done && type == "live") {
+								liveTasks.push(dailyTask);
+							}
+						});
+
+						// if no live tasks, end work session and ask for new one
+						if (liveTasks.length == 0) {
+
+							var finishedTaskTextsArray = [];
+							dailyTasks.forEach((dailyTask) => {
+								finishedTaskTextsArray.push(dailyTask.dataValues.Task.text);
+							});
+							var finishedTasksString = commaSeparateOutTaskArray(finishedTaskTextsArray);
+
+							openWorkSession.update({
+								open: false,
+								live: false,
+								endTime: now
+							})
+							.then((workSession) => {
+								bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+									convo.sessionEnd = {
+										UserId,
+										tz,
+										postSessionDecision: false,
+										reminders: [],
+										SlackUserId
+									}
+
+									var message = `Great job finishing ${finishedTasksString} :raised_hands:!`;
+									convo.say(message);
+
+									askUserPostSessionOptions(err, convo);
+
+									convo.on('end', (convo) => {
+										
+										const { UserId, postSessionDecision, reminders, tz } = convo.sessionEnd;
+
+										// create reminders if requested
+										reminders.forEach((reminder) => {
+											const { remindTime, customNote, type } = reminder;
+											models.Reminder.create({
+												UserId,
+												remindTime,
+												customNote,
+												type
+											});
+										});
+
+										// work session if requested
+										handlePostSessionDecision(postSessionDecision, { controller, bot, SlackUserId });
+
+									});
+									
+								});
+							})
+
+						} else {
+							// inform user how much time is remaining
+							// and what tasks are attached to the work session
+							var liveTaskTextsArray = [];
+							liveTasks.forEach((dailyTask) => {
+								liveTaskTextsArray.push(dailyTask.dataValues.Task.text);
+							});
+							var liveTasksString = commaSeparateOutTaskArray(liveTaskTextsArray);
+
+							var now           = moment();
+							var endTime       = moment(openWorkSession.dataValues.endTime).tz(tz);
+							var endTimeString = endTime.format("h:mm a");
+							var minutes       = moment.duration(endTime.diff(now)).asMinutes();
+							var minutesString = convertMinutesToHoursString(minutes);
+
+							bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+								convo.say(`Good luck with ${liveTasksString}!`);
+								convo.say(`I'll see you in ${minutesString} at *${endTimeString}*. Keep crushing :muscle:`)
+
+							});
+
+						}
+
+					});
+
+				} else {
+					bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+						convo.startSession = false;
+						convo.ask("Shall we crank out one of your tasks? :wrench:", [
+								{
+									pattern: utterances.yes,
+									callback: (response, convo) => {
+										convo.startSession = true;
+										convo.next();
+									}
+								},
+								{
+									pattern: utterances.no,
+									callback: (response, convo) => {
+										convo.say("Okay! I'll be here when you're ready :fist:");
+										convo.next();
+									}
+								},
+								{
+									default: true,
+									callback: (response, convo) => {
+										convo.say("Sorry, I didn't catch that");
+										convo.repeat();
+										convo.next();
+									}
+								}
+							]);
+						convo.on('end', (convo) => {
+							const { startSession } = convo;
+							if (startSession) {
+								var intent = intentConfig.START_SESSION;
+
+								var config = {
+									intent,
+									SlackUserId
+								}
+
+								controller.trigger(`new_session_group_decision`, [ bot, config ]);
+							}
+						})
+					});
+				}
+
+			});
+
+		});
 
 }

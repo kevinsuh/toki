@@ -131,15 +131,23 @@ exports.default = function (controller) {
 									});
 								}
 							});
+							setTimeout(function () {
+								(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
+							}, 200);
+
+							return;
 						}
 
 						// delete tasks if requested
 						if (dailyTaskIdsToDelete.length > 0) {
-							return _models2.default.DailyTask.update({
+							_models2.default.DailyTask.update({
 								type: "deleted"
 							}, {
 								where: ['"DailyTasks"."id" in (?)', dailyTaskIdsToDelete]
+							}).then(function () {
+								(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
 							});
+							return;
 						}
 
 						// complete tasks if requested
@@ -152,12 +160,16 @@ exports.default = function (controller) {
 								var completedTaskIds = dailyTasks.map(function (dailyTask) {
 									return dailyTask.TaskId;
 								});
+
 								_models2.default.Task.update({
 									done: true
 								}, {
 									where: ['"Tasks"."id" in (?)', completedTaskIds]
+								}).then(function () {
+									(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
 								});
 							});
+							return;
 						}
 
 						// update daily tasks if requested
@@ -175,7 +187,16 @@ exports.default = function (controller) {
 									});
 								}
 							});
+							setTimeout(function () {
+								(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
+							}, 200);
+							return;
 						}
+
+						// fall back
+						setTimeout(function () {
+							(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
+						}, 200);
 					});
 				});
 			});
@@ -231,6 +252,8 @@ var _add2 = _interopRequireDefault(_add);
 var _complete = require('./complete');
 
 var _complete2 = _interopRequireDefault(_complete);
+
+var _work_sessions = require('../work_sessions');
 
 var _editTaskListFunctions = require('./editTaskListFunctions');
 

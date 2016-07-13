@@ -133,6 +133,13 @@ export default function(controller) {
 														text: "Nope",
 														value: buttonValues.doneSessionEarlyNo.value,
 														type: "button"
+												},
+												{
+														name: buttonValues.newSession.name,
+														text: "Cancel session",
+														value: buttonValues.newSession.value,
+														type: "button",
+														style: "danger"
 												}
 											]
 										}
@@ -168,6 +175,21 @@ export default function(controller) {
 										callback: (response, convo) => {
 											convo.doneSessionEarly.doneEarlyDecision = sessionTimerDecisions.didSomethingElse;
 											convo.say(`:ocean: Woo!`);
+											convo.next();
+										}
+									},
+									{
+										pattern: buttonValues.cancelSession.value,
+										callback: (response, convo) => {
+											convo.doneSessionEarly.doneEarlyDecision = sessionTimerDecisions.cancelSession;
+											convo.next();
+										}
+									},
+									{ // same as buttonValues.cancelSession.value
+										pattern: utterances.containsCancel,
+										callback: (response, convo) => {
+											convo.doneSessionEarly.doneEarlyDecision = sessionTimerDecisions.cancelSession;
+											convo.say("Okay! I canceled this session. Let me know when you're ready to `start a session` :punch:");
 											convo.next();
 										}
 									},
@@ -232,6 +254,12 @@ export default function(controller) {
 												break;
 											case sessionTimerDecisions.didSomethingElse:
 												controller.trigger(`end_session`, [ bot, { SlackUserId }])
+												return;
+											case sessionTimerDecisions.cancelSession:
+												// session canceled. (from earlier `closeOldRemindersAndSessions`)
+												return;
+											case sessionTimerDecisions.newSession:
+												controller.trigger(`begin_session`, [ bot, { SlackUserId }]);
 												return;
 											default: break;
 										}

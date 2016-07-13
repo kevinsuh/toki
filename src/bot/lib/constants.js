@@ -288,6 +288,14 @@ export const buttonValues ={
 	neverMindTasks: {
 		value: "NEVER_MIND_TASKS",
 		name: "NEVER_MIND_TASKS"
+	},
+	newSession: {
+		value: "NEW_SESSION",
+		name: "NEW_SESSION"
+	},
+	cancelSession: {
+		value: "CANCEL_SESSION",
+		name: "CANCEL_SESSION"
 	}
 }
 
@@ -397,7 +405,9 @@ export const sessionTimerDecisions = {
 	didTask: "DID_TASK",
 	snooze: "SNOOZE",
 	didSomethingElse: "DID_SOMETHING_ELSE",
-	noTasks: "NO_TASKS"
+	noTasks: "NO_TASKS",
+	newSession: "NEW_SESSION",
+	cancelSession: "CANCEL_SESSION"
 }
 
 

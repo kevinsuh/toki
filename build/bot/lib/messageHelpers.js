@@ -131,11 +131,12 @@ function convertArrayToTaskListMessage(taskArray) {
 		segmentCompleted = false;
 	}
 
+	var remainingTasks = [];
+	var completedTasks = [];
+
 	if (segmentCompleted) {
 		console.log("\n\n ~~ segmenting tasks ( completed / not completed ) ~~");
 
-		var remainingTasks = [];
-		var completedTasks = [];
 		taskArray.forEach(function (task) {
 			if (!options.dontUseDataValues && task.dataValues) {
 				task = task.dataValues;
@@ -177,7 +178,7 @@ function convertArrayToTaskListMessage(taskArray) {
 		taskListMessage += taskListMessageBody;
 	}
 
-	if (!options.dontCalculateMinutes) {
+	if (!options.dontCalculateMinutes && remainingTasks.length > 0) {
 		// taskListMessages default to show calculated minutes
 		var totalMinutes = options.totalMinutes;
 

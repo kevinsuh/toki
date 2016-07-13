@@ -109,12 +109,14 @@ function askForTaskListOptionsIfNoRemainingTasks(convo) {
 	}, {
 		pattern: _constants.buttonValues.neverMindTasks.value,
 		callback: function callback(response, convo) {
+			convo.say("Let me know whenever you're ready to `add tasks`");
 			convo.next();
 		}
-	}, { // NL equivalent to buttonValues.neverMind.value
+	}, { // NL equivalent to buttonValues.neverMindTasks.value
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.say("Okay! Keep at it :smile_cat:");
+			convo.say("Okay! I didn't add any :smile_cat:");
+			convo.say("Let me know whenever you're ready to `add tasks`");
 			convo.next();
 		}
 	}, { // this is failure point. restart with question
@@ -223,7 +225,7 @@ function askForTaskListOptions(convo) {
 	}, { // NL equivalent to buttonValues.neverMind.value
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.say("Okay! Keep at it :smile_cat:");
+			convo.say("Okay! No worries");
 			convo.next();
 		}
 	}, { // this is failure point. restart with question
@@ -496,7 +498,6 @@ function confirmTimeToTasks(convo) {
 
 				convo.say("Here's your remaining task list :memo::");
 				convo.say(fullTaskListMessage);
-				convo.say("Good luck with today!");
 			}
 
 			convo.next();
@@ -539,7 +540,6 @@ function addNewTasksToTaskList(response, convo) {
 
 	convo.say("Here's your updated task list :memo::");
 	convo.say(taskListMessage);
-	convo.say("Good luck with today!");
 	convo.next();
 }
 
@@ -638,6 +638,7 @@ function updateCompleteTaskListMessage(response, convo) {
 	var bot = _convo$tasksEdit8.bot;
 	var dailyTasks = _convo$tasksEdit8.dailyTasks;
 	var dailyTaskIdsToComplete = _convo$tasksEdit8.dailyTaskIdsToComplete;
+	var newTasks = _convo$tasksEdit8.newTasks;
 
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
 
@@ -659,11 +660,14 @@ function updateCompleteTaskListMessage(response, convo) {
 	var options = { segmentCompleted: true };
 	var fullTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(fullTaskArray, options);
 
+	var remainingTasks = getRemainingTasks(fullTaskArray, newTasks);
+
 	convo.say("Here's your task list for today :memo::");
 	convo.say(fullTaskListMessage);
-	convo.say("Good luck with today!");
 
-	// should ask if ready for session
+	if (remainingTasks.length == 0) {
+		askForTaskListOptionsIfNoRemainingTasks(convo);
+	}
 
 	convo.next();
 }
@@ -764,6 +768,7 @@ function updateDeleteTaskListMessage(response, convo) {
 	var bot = _convo$tasksEdit10.bot;
 	var dailyTasks = _convo$tasksEdit10.dailyTasks;
 	var dailyTaskIdsToDelete = _convo$tasksEdit10.dailyTaskIdsToDelete;
+	var newTasks = _convo$tasksEdit10.newTasks;
 
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
 
@@ -781,9 +786,20 @@ function updateDeleteTaskListMessage(response, convo) {
 	var options = { segmentCompleted: true };
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 
-	convo.say("Here's your updated task list :memo::");
+	var remainingTasks = getRemainingTasks(taskArray, newTasks);
+
+	convo.say("Here's your task list for today :memo::");
 	convo.say(taskListMessage);
-	convo.say("Good luck with today!");
+
+	console.log("new tasks:");
+	console.log(newTasks);
+	console.log(taskArray);
+	console.log(remainingTasks);
+	console.log("\n\n\n");
+
+	if (remainingTasks.length == 0) {
+		askForTaskListOptionsIfNoRemainingTasks(convo);
+	}
 
 	convo.next();
 }
@@ -941,5 +957,24 @@ function getTimeToTasks(response, convo) {
 			}
 		}
 	}]);
+}
+
+function getRemainingTasks(fullTaskArray, newTasks) {
+	var remainingTasks = [];
+	fullTaskArray.forEach(function (task) {
+		if (task.dataValues) {
+			task = task.dataValues;
+		};
+		if (!task.done && task.type == 'live') {
+			remainingTasks.push(task);
+		}
+	});
+
+	if (newTasks) {
+		newTasks.forEach(function (newTask) {
+			remainingTasks.push(newTask);
+		});
+	}
+	return remainingTasks;
 }
 //# sourceMappingURL=editTaskListFunctions.js.map

@@ -164,10 +164,16 @@ export default function(controller) {
 					bot.replyInteractive(message, `Okay! Let's remove some tasks`);
 					break;
 				case buttonValues.neverMindTasks.value:
-					bot.replyInteractive(message, "Okay! Keep at it :smile_cat:")
+					bot.replyInteractive(message, "Okay! I didn't add any :smile_cat:")
 					break;
 				case buttonValues.editTaskTimes.value:
 					bot.replyInteractive(message, "Let's do this :hourglass:");
+					break;
+				case buttonValues.newSession.value:
+					bot.replyInteractive(message, "Let's do this :baby:");
+					break;
+				case buttonValues.cancelSession.value:
+					bot.replyInteractive(message, "Okay! I canceled this session. Let me know when you're ready to `start a session` :punch:");
 					break;
 				default:
 					// some default to replace button no matter what
