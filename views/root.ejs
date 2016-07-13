@@ -3,36 +3,114 @@
 
 	<head>
 		<script type="text/javascript">
-		  !function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error("Segment snippet included twice.");else{analytics.invoked=!0;analytics.methods=["trackSubmit","trackClick","trackLink","trackForm","pageview","identify","reset","group","track","ready","alias","page","once","off","on"];analytics.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);analytics.push(e);return analytics}};for(var t=0;t<analytics.methods.length;t++){var e=analytics.methods[t];analytics[e]=analytics.factory(e)}analytics.load=function(t){var e=document.createElement("script");e.type="text/javascript";e.async=!0;e.src=("https:"===document.location.protocol?"https://":"http://")+"cdn.segment.com/analytics.js/v1/"+t+"/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(e,n)};analytics.SNIPPET_VERSION="3.1.0";
-		  analytics.load("5nvEQLHWNyMSlHkNrEWDzm9CQAPL0JHk");
-		  analytics.page()
-		  }}();
+			!function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error("Segment snippet included twice.");else{analytics.invoked=!0;analytics.methods=["trackSubmit","trackClick","trackLink","trackForm","pageview","identify","reset","group","track","ready","alias","page","once","off","on"];analytics.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);analytics.push(e);return analytics}};for(var t=0;t<analytics.methods.length;t++){var e=analytics.methods[t];analytics[e]=analytics.factory(e)}analytics.load=function(t){var e=document.createElement("script");e.type="text/javascript";e.async=!0;e.src=("https:"===document.location.protocol?"https://":"http://")+"cdn.segment.com/analytics.js/v1/"+t+"/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(e,n)};analytics.SNIPPET_VERSION="3.1.0";
+			analytics.load("5nvEQLHWNyMSlHkNrEWDzm9CQAPL0JHk");
+			analytics.page()
+			}}();
 		</script>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<link rel="icon" href="/assets/favicon.ico">
+		<link rel="stylesheet" type="text/css" href="/assets/css/main.css" />
+		<link rel="stylesheet" type="text/css" href="/assets/css/splash.css" />
+		<link rel="stylesheet" href="/css/bootstrap.min.css">
+		<title>Toki - your personal sidekick</title>
 	</head>
 
-  <body>
-	<h1 style="text-align: center; margin-top: 20px;">Hey! I'm toki</h1>
+	<body class="splash">
+		<div class="header-container clearfix">
+			<h3 class="title">Toki</h3>
+		</div>
 
-	<% if (locals.invite && locals.msg) { %>
-	<div class="flash-<%= locals.success ? 'success' : 'error' %>">
-		<%= locals.msg %>
-	</div>
-	<% } %>
+		<!-- main splash view -->
+		<div class="color-gradient main-landing">
 
-	<div class="splash <%= true ? 'helo' : 'goodbye' %>">
-		<p>
-			Join Toki on Slack!
-		</p>
-		<form id="invite" method="post" action="/invite">
-			<input class="form-item" type="email" name="email" placeholder="you@yourdomain.com" required />
-			<input type="submit" value="Get my Invite" />
-			<a href=<%= "https://"+org+".slack.com" %> target="_top">
-				Sign In
-			</a>
-		</form>
-	</div>
+			<div class="container">
+
+				<% if (locals.invite && locals.msg) { %>
+				<div class="alert alert-<%= locals.success ? 'success' : 'warning' %>">
+					<%= locals.msg %>
+				</div>
+				<% } %>
+
+				<h1 class="main-title">Every hero needs a sidekick</h1>
+
+				<div class="main">
+					<p class="subtitle"><strong>Toki</strong> is a bot that puts you in control of your attention so you do the things you set out to do</p>
+				</div>
+
+				<div class="form-group">
+					<form id="invite" method="post" action="/invite" class="invite form-inline">
+						<input class="email-input form-control" type="email" name="email" placeholder="joeguy@example.com" required />
+						<input type="submit" class="submit-div" value="Join with Slack" />
+					</form>
+				</div>
+
+			</div>
+		</div>
+
+		<!-- section 1 -->
+		<div class="body-container">
+			<div class="container">
+				<h2>How can Toki help me seize the day?</h2>
+				<img src="/assets/gifs/start_day.gif" class="img-responsive example" alt="Start Day" />
+				<div class="row">
+					<h4>Clear objectives</h4>
+					<p>Always know what you need to do and how long you need to do it</p>
+				</div>
+				<div class="row">
+					<h4>Make the most of your time</h4>
+					<p>Stay tuned in and on task as your day unfolds</p>
+				</div>
+				<div class="row">
+					<h4>Keep yourself accountable</h4>
+					<p>Celebrate the small wins and adjust when things don't go according to plan</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- section 2 -->
+		<div class="body-container">
+			<div class="container">
+				<h2>This sounds great, but I have a few questions...</h2>
+				<div class="row">
+					<h4>What is a bot?</h4>
+					<p>Toki is a chat bot, which is a virtual assistant that guides you through your day. Toki is always on and always ready to help you with your time!</p>
+				</div>
+				<div class="row">
+					<h4>What is Slack?</h4>
+					<p>Toki works in <a href="https://slack.com/">Slack</a>, the brilliant team messaging tool. To use Toki, you direct message Toki through Slack, so it feels like your team member, whether you're working with a large team or just installing Slack for the first time!</p>
+				</div>
+				<div class="row">
+					<h4>So do I install anything?</h4>
+					<p>If you already have Slack, signing up will add you to Toki's Slack organization, so there's nothing to install. If you don't have Slack installed, you can use Toki in Slack's web application, but we recommend installing Slack. You'll receive instructions in the email after you sign up!</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- final signup section -->
+		<div class="color-gradient bottom-landing">
+
+			<div class="container">
+
+				<div class="main">
+					<p class="subtitle">Don't forget to sign up!</p>
+				</div>
+
+				<div class="form-group">
+					<form id="invite" method="post" action="/invite" class="invite form-inline">
+						<input class="email-input form-control" type="email" name="email" placeholder="joeguy@example.com" required />
+						<input type="submit" class="submit-div" value="Join with Slack" />
+					</form>
+				</div>
+
+			</div>
+		</div>
+
 
 	<% if (false) { %>
+	<a href=<%= "https://"+org+".slack.com" %> target="_top">
+		Sign In
+	</a>
 	<center>
 		<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
 	</center>
@@ -42,5 +120,5 @@
 	</center>
 	<% } %>
 
-  </body>
+	</body>
 </html>

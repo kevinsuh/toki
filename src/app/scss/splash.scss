@@ -1,0 +1,107 @@
+@import "modules/all";
+@import "modules/constants";
+
+.splash { 
+
+	.color-gradient {
+		background: repeating-linear-gradient(
+			45deg,
+			$light-blue-gradient,
+			$light-blue-gradient 160px,
+			$dark-blue-gradient 160px,
+			$dark-blue-gradient 320px
+		);
+	}
+
+	.bottom-landing, .main-landing {
+		.container {
+			display: inline-block;
+			padding: 45px;
+		}
+		.main-title {
+			font-size: 70px;
+			padding: 0 20px;
+			font-weight: 600;
+		}
+		.subtitle {
+			font-size: 20px;
+			margin: 25px 0;
+			line-height: 22px;
+		}
+
+		border-bottom: 1px solid #e5e5e5;
+		
+		vertical-align: middle;
+		text-align: center;
+		
+		form.invite {
+			$form-height: 40px;
+			height: $form-height;
+			.email-input {
+				height: $form-height;
+				min-width: 40%;
+			}
+			.submit-div {
+				display: inline-block;
+				background-color: white;
+				border: 1pt solid lightgrey;
+				text-align: center;
+				height: $form-height;
+				line-height: $form-height;
+				padding: 0 10px;
+				margin-left: 5px;
+				vertical-align: middle;
+				border-radius: 6px;
+
+				background-image: url('../images/slack_logo.png');
+				background-repeat: no-repeat;
+				background-position: center right 10px;
+				background-size: 22px;
+				padding-right: 41px;
+				padding-left: 13px;
+
+				font-weight: 600;
+			}
+		}
+
+	}
+
+	.bottom-landing {
+		width: 100vw;
+		.subtitle {
+			font-weight: 600;
+		}
+	}
+
+	.main-landing {
+
+		display: block;
+		width: 100vw;
+		height: 100vh;
+		display: table-cell;
+		padding-bottom: 45px;
+
+	}
+
+	.header-container {
+		padding-top: 17px;
+		margin-bottom: 25px;
+		border-bottom: 1px solid $light-orange;
+		.title {
+			margin: 0;
+			padding: 0 0 15px 20px;
+		}
+	}
+
+	.body-container {
+		padding: 20px 0;
+		border-bottom: 5px solid $light-orange;
+	}
+
+	img {
+		&.example {
+			margin: 10px auto;
+		}
+	}
+
+}

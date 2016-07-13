@@ -1,6 +1,7 @@
-$test: 12px;
+@import "modules/all";
 
-body {
-	font-color: black;
-	font-size: $test;
+html, body {
+	height: 100%;
+	margin: 0;
+	font-family: $font-family-base;
 }

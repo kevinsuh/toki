@@ -31,6 +31,11 @@ app.use('/assets', express.static(`${__dirname}/public`));
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true })); //for parsing url encoded
 
+// include bootstrap and jQuery
+app.use('/js', express.static(`${__dirname}/../node_modules/bootstrap/dist/js`));
+app.use('/js', express.static(`${__dirname}/../node_modules/jquery/dist`));
+app.use('/css', express.static(`${__dirname}/../node_modules/bootstrap/dist/css`));
+
 // view engine ejs
 app.set('view engine', 'ejs');
 
