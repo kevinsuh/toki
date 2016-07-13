@@ -25,7 +25,7 @@ export const RESET = {
 
 export const THANK_YOU = {
 	word: "thank you",
-	reg_exp: new RegExp(/(^t[thanks you]{4,}\b|^[thanksyou]{5,}\b|^[thx]{3,5}\b|^[ty]{2,3}\b)/i)
+	reg_exp: new RegExp(/(^t(?=.*n)[thanks you]{4,}\b|^t(?=.*n)[thanksyou]{5,}\b|^t(?=.*x)[thx]{2,4}\b|^ty[y]{0,}\b)/i)
 }
 
 // contains an intent for duration and not datetime
