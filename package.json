@@ -26,6 +26,7 @@
   "homepage": "https://tokibot.com",
   "dependencies": {
     "body-parser": "^1.15.1",
+    "bootstrap": "^3.3.6",
     "botkit": "https://github.com/kevinsuh/botkit.git",
     "botkit-middleware-witai": "https://github.com/kevinsuh/botkit-middleware-witai.git",
     "cron": "^1.1.0",
