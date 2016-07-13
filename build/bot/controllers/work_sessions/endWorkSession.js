@@ -118,6 +118,12 @@ exports.default = function (controller) {
 											text: "Nope",
 											value: _constants.buttonValues.doneSessionEarlyNo.value,
 											type: "button"
+										}, {
+											name: _constants.buttonValues.newSession.name,
+											text: "Cancel session",
+											value: _constants.buttonValues.newSession.value,
+											type: "button",
+											style: "danger"
 										}]
 									}]
 								}, [{
@@ -146,6 +152,19 @@ exports.default = function (controller) {
 									callback: function callback(response, convo) {
 										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didSomethingElse;
 										convo.say(':ocean: Woo!');
+										convo.next();
+									}
+								}, {
+									pattern: _constants.buttonValues.cancelSession.value,
+									callback: function callback(response, convo) {
+										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.cancelSession;
+										convo.next();
+									}
+								}, { // same as buttonValues.cancelSession.value
+									pattern: _botResponses.utterances.containsCancel,
+									callback: function callback(response, convo) {
+										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.cancelSession;
+										convo.say("Okay! I canceled this session. Let me know when you're ready to `start a session` :punch:");
 										convo.next();
 									}
 								}, {
@@ -210,6 +229,12 @@ exports.default = function (controller) {
 												break;
 											case _constants.sessionTimerDecisions.didSomethingElse:
 												controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
+												return;
+											case _constants.sessionTimerDecisions.cancelSession:
+												// session canceled. (from earlier `closeOldRemindersAndSessions`)
+												return;
+											case _constants.sessionTimerDecisions.newSession:
+												controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
 												return;
 											default:
 												break;
