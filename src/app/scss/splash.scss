@@ -1,6 +1,40 @@
+@import "modules/all";
+@import "modules/constants";
+
 #splash-wrapper {
 	display: block;
 	width: 100vw;
 	height: 100vh;
-	background-color: blue;
+	
+	border-bottom: 1px solid #e5e5e5;
+	background: repeating-linear-gradient(
+		45deg,
+		$light-blue-gradient,
+		$light-blue-gradient 160px,
+		$dark-blue-gradient 160px,
+		$dark-blue-gradient 320px
+	);
+
+	display: table-cell;
+	vertical-align: middle;
+	text-align: center;
+
+	.container {
+		display: inline-block;
+		padding: 45px;
+	}
+	.main-title {
+		font-size: 70px;
+		padding: 0 20px;
+	}
+}
+
+.splash-header {
+	padding-top: 20px;
+	margin-bottom: 30px;
+	border-bottom: 1px solid $light-orange;
+	.title {
+		margin: 0;
+		padding: 0 0 20px 20px;
+	}
 }

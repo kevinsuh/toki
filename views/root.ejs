@@ -12,32 +12,44 @@
 		<link rel="icon" href="/assets/favicon.ico">
 		<link rel="stylesheet" type="text/css" href="/assets/css/main.css" />
 		<link rel="stylesheet" type="text/css" href="/assets/css/splash.css" />
+		<link rel="stylesheet" href="/css/bootstrap.min.css">
 		<title>Toki - your personal sidekick</title>
 	</head>
 
 	<body>
+		<div class="splash-header clearfix">
+			<h3 class="title">Toki</h3>
+		</div>
+
 		<div id="splash-wrapper">
-			<h1 style="text-align: center; margin-top: 0;">Hey! I'm toki</h1>
 
-			<% if (locals.invite && locals.msg) { %>
-			<div class="flash-<%= locals.success ? 'success' : 'error' %>">
-				<%= locals.msg %>
-			</div>
-			<% } %>
+			<div class="container">
 
-			<div class="splash <%= true ? 'hello' : 'goodbye' %>">
-				<p>
-					Join Toki on Slack!
-				</p>
-				<form id="invite" method="post" action="/invite">
-					<input class="form-item" type="email" name="email" placeholder="you@yourdomain.com" required />
-					<input type="submit" value="Get my Invite" />
-					<a href=<%= "https://"+org+".slack.com" %> target="_top">
-						Sign In
-					</a>
-				</form>
+				<h1 class="main-title">Every hero needs a sidekick</h1>
+
+				<% if (locals.invite && locals.msg) { %>
+				<div class="flash-<%= locals.success ? 'success' : 'error' %>">
+					<%= locals.msg %>
+				</div>
+				<% } %>
+
+				<div class="main">
+					<p class="subtitle"><strong>Toki</strong> is a bot that puts you in control of your attention so you do the things you set out to do</p>
+				</div>
+
+				<div class="form-group">
+					<form id="invite" method="post" action="/invite">
+						<input class="form-control" type="email" name="email" placeholder="joeguy@example.com" required />
+						<input type="submit" value="Get my Invite" />
+						<a href=<%= "https://"+org+".slack.com" %> target="_top">
+							Sign In
+						</a>
+					</form>
+				</div>
+
 			</div>
 		</div>
+
 		<div>
 			<h1 style="text-align: center; margin-top: 20px;">Hello world</h1>
 		</div>

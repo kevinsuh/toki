@@ -59,6 +59,11 @@ app.use('/assets', _express2.default.static(__dirname + '/public'));
 app.use(_bodyParser2.default.json()); // for parsing application/json
 app.use(_bodyParser2.default.urlencoded({ extended: true })); //for parsing url encoded
 
+// include bootstrap and jQuery
+app.use('/js', _express2.default.static(__dirname + '/../node_modules/bootstrap/dist/js'));
+app.use('/js', _express2.default.static(__dirname + '/../node_modules/jquery/dist'));
+app.use('/css', _express2.default.static(__dirname + '/../node_modules/bootstrap/dist/css'));
+
 // view engine ejs
 app.set('view engine', 'ejs');
 

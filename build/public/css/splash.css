@@ -2,4 +2,22 @@
   display: block;
   width: 100vw;
   height: 100vh;
-  background-color: blue; }
+  border-bottom: 1px solid #e5e5e5;
+  background: repeating-linear-gradient(45deg, rgba(94, 160, 202, 0.6), rgba(94, 160, 202, 0.6) 160px, rgba(8, 90, 144, 0.6) 160px, rgba(8, 90, 144, 0.6) 320px);
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center; }
+  #splash-wrapper .container {
+    display: inline-block;
+    padding: 45px; }
+  #splash-wrapper .main-title {
+    font-size: 70px;
+    padding: 0 20px; }
+
+.splash-header {
+  padding-top: 20px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid rgba(255, 191, 110, 0.6); }
+  .splash-header .title {
+    margin: 0;
+    padding: 0 0 20px 20px; }
