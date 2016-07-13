@@ -597,6 +597,11 @@ export function checkWorkSessionForLiveTasks(config) {
 
 					});
 
+				} else {
+					bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+						convo.say("Let me know when you're ready to start another session!");
+						}
+					});
 				}
 
 			});

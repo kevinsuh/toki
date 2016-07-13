@@ -131,11 +131,12 @@ function convertArrayToTaskListMessage(taskArray) {
 		segmentCompleted = false;
 	}
 
+	var remainingTasks = [];
+	var completedTasks = [];
+
 	if (segmentCompleted) {
 		console.log("\n\n ~~ segmenting tasks ( completed / not completed ) ~~");
 
-		var remainingTasks = [];
-		var completedTasks = [];
 		taskArray.forEach(function (task) {
 			if (!options.dontUseDataValues && task.dataValues) {
 				task = task.dataValues;
