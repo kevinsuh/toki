@@ -177,7 +177,7 @@ function convertArrayToTaskListMessage(taskArray) {
 		taskListMessage += taskListMessageBody;
 	}
 
-	if (!options.dontCalculateMinutes) {
+	if (!options.dontCalculateMinutes && remainingTasks.length > 0) {
 		// taskListMessages default to show calculated minutes
 		var totalMinutes = options.totalMinutes;
 
