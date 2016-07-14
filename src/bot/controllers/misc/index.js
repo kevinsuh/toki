@@ -12,6 +12,8 @@ import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSep
 import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
+import { resumeQueuedReachouts } from '../index';
+
 export default function(controller) {
 
 	controller.hears([THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
@@ -85,29 +87,7 @@ export default function(controller) {
 
 				}
 
-				console.log("\n\n ~~ bot's queuedReachouts ~~ \n\n");
-				console.log(bot.queuedReachouts);
-				var now = moment();
-				var { queuedReachouts } = bot;
-				if (queuedReachouts && queuedReachouts[SlackUserId]) {
-					var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
-					if (queuedWorkSessions) {
-						// resume each work session if now has not passed
-						var updatedQueuedWorkSessions = [];
-						queuedWorkSessions.forEach((workSession) => {
-							var endTime = moment(workSession.endTime);
-							// if there is still time left, then resume it
-							if (endTime > now) {
-								workSession.update({
-									open: true,
-									live: true
-								});
-								updatedQueuedWorkSessions.push(workSession);
-							}
-						})
-						bot.queuedReachouts[SlackUserId].workSessions = updatedQueuedWorkSessions;
-					}
-				}
+				resumeQueuedReachouts(bot, { SlackUserId });
 
 			}, 1000);
 

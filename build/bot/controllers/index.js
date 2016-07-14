@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 exports.bots = exports.controller = exports.wit = undefined;
+exports.resumeQueuedReachouts = resumeQueuedReachouts;
 exports.customConfigBot = customConfigBot;
 exports.trackBot = trackBot;
 exports.connectOnInstall = connectOnInstall;
@@ -179,6 +180,43 @@ var bots = exports.bots = {};
 if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT) {
 	console.log('Error: Specify SLACK_ID SLACK_SECRET and HTTP_PORT in environment');
 	process.exit(1);
+}
+
+/**
+ * 		The master controller to handle all double conversations
+ * 		This function is what turns back on the necessary functions
+ */
+function resumeQueuedReachouts(bot, config) {
+
+	console.log("\n\n ~~ bot's queuedReachouts ~~ \n\n");
+	console.log(bot.queuedReachouts);
+
+	// necessary config
+	var now = (0, _momentTimezone2.default)();
+	var SlackUserId = config.SlackUserId;
+	var queuedReachouts = bot.queuedReachouts;
+
+
+	if (queuedReachouts && SlackUserId && queuedReachouts[SlackUserId]) {
+		var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
+		var updatedQueuedWorkSessions = [];
+		if (queuedWorkSessions) {
+			// resume each work session if now has not passed
+			queuedWorkSessions.forEach(function (workSession) {
+				var endTime = (0, _momentTimezone2.default)(workSession.endTime);
+				if (endTime > now) {
+					_models2.default.WorkSession.update({
+						open: true,
+						live: true
+					}, {
+						where: ['"WorkSessions"."id" = ? ', workSession.dataValues.id]
+					});
+					updatedQueuedWorkSessions.push(workSession);
+				}
+			});
+		}
+		bot.queuedReachouts[SlackUserId].workSessions = updatedQueuedWorkSessions;
+	}
 }
 
 // Custom Toki Config
