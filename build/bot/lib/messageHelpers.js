@@ -178,7 +178,8 @@ function convertArrayToTaskListMessage(taskArray) {
 		taskListMessage += taskListMessageBody;
 	}
 
-	if (!options.dontCalculateMinutes && remainingTasks.length > 0) {
+	// plan has no remaining tasks but we want minutes to get calculated, so we need to forceCalculateMinutes for it
+	if (!options.dontCalculateMinutes && remainingTasks.length > 0 || options.forceCalculateMinutes) {
 		// taskListMessages default to show calculated minutes
 		var totalMinutes = options.totalMinutes;
 

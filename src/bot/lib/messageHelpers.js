@@ -144,7 +144,6 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 			taskListMessage += taskListMessageBody;
 		}
 			
-
 		if (remainingTasks.length > 0) {
 			// add remaining tasks to right place
 			if (completedTasks.length == 0) {
@@ -164,7 +163,8 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 
 	}
 
-	if (!options.dontCalculateMinutes && remainingTasks.length > 0) { // taskListMessages default to show calculated minutes
+	// plan has no remaining tasks but we want minutes to get calculated, so we need to forceCalculateMinutes for it
+	if ((!options.dontCalculateMinutes && remainingTasks.length > 0) || options.forceCalculateMinutes) { // taskListMessages default to show calculated minutes
 		var { totalMinutes } = options;
 		var timeString = convertMinutesToHoursString(totalMinutes);
 		var totalMinutesContent = `\n*Total time estimate: ${timeString} :clock730:*`;

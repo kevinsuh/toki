@@ -341,7 +341,7 @@ function addMoreTasks(response, convo) {
 function getTimeToTasks(response, convo) {
 
 	var { taskArray, bot } = convo.dayStart;
-	var options            = { dontShowMinutes: true };
+	var options            = { dontShowMinutes: true, forceCalculateMinutes: true };
 	var taskListMessage    = convertArrayToTaskListMessage(taskArray, options);
 
 	var timeToTasksArray = [];
