@@ -13,6 +13,8 @@ import intentConfig from '../../lib/intents';
 import { FINISH_WORD, buttonValues } from '../../lib/constants';
 import { utterances } from '../../lib/botResponses';
 
+import { resumeQueuedReachouts } from '../index';
+
 // base controller for tasks
 export default function(controller) {
 
@@ -54,6 +56,8 @@ export default function(controller) {
 		setTimeout(() => {
 			controller.trigger(`new_session_group_decision`, [ bot, config ]);
 		}, 1000);
+
+		resumeQueuedReachouts(bot, { SlackUserId });
 
 	});
 
@@ -158,10 +162,13 @@ export default function(controller) {
 											}
 										})
 									});
+
 								} else {
 									// if user did not add a task, then we can go straight to editing task list
 									if (editTaskList) {
 										controller.trigger(`edit_tasks_flow`, [ bot, { SlackUserId } ]);
+									} else {
+										resumeQueuedReachouts(bot, { SlackUserId });
 									}
 								}
 
@@ -171,7 +178,8 @@ export default function(controller) {
 									convo.say("Okay! I didn't add any tasks. I'll be here whenever you want to do that :smile:");
 									convo.next();
 								});
-									
+								resumeQueuedReachouts(bot, { SlackUserId });
+								
 							}
 						});
 					});

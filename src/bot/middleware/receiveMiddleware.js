@@ -35,6 +35,8 @@ export default (controller) => {
 
 		if (message.user) {
 
+			console.log(`\n\n ~~ queued reachouts middleware for SlackUserId: ${message.user} ~~ \n\n`);
+
 			const SlackUserId = message.user;
 
 			// if found user, find the user
@@ -91,6 +93,9 @@ export default (controller) => {
 								}
 							}
 						}
+
+						console.log("\n\n ~~ queuedReachouts for User: ~~");
+						console.log(bot.queuedReachouts);
 
 						next();
 

@@ -48,6 +48,8 @@ exports.default = function (controller) {
 		if (message.user) {
 			(function () {
 
+				console.log('\n\n ~~ queued reachouts middleware for SlackUserId: ' + message.user + ' ~~ \n\n');
+
 				var SlackUserId = message.user;
 
 				// if found user, find the user
@@ -99,6 +101,9 @@ exports.default = function (controller) {
 									};
 								}
 							}
+
+							console.log("\n\n ~~ queuedReachouts for User: ~~");
+							console.log(bot.queuedReachouts);
 
 							next();
 						});
