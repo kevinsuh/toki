@@ -12,6 +12,8 @@ import { colorsArray, THANK_YOU, buttonValues, colorsHash } from '../../lib/cons
 
 import { startSessionStartConversation } from './startWorkSessionFunctions';
 
+import { resumeQueuedReachouts } from '../index';
+
 // START OF A WORK SESSION
 export default function(controller) {
 
@@ -71,7 +73,7 @@ export default function(controller) {
 		.then((user) => {
 
 			user.getWorkSessions({
-				where: [`"live" = ?`, true ]
+				where: [`"live" = ? AND "open" = ?`, true, true ]
 			})
 			.then((workSessions) => {
 

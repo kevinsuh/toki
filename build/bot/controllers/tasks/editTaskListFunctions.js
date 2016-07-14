@@ -348,7 +348,7 @@ function getTimeToNewTasks(response, convo) {
 	var dailyTasks = _convo$tasksEdit4.dailyTasks;
 	var newTasks = _convo$tasksEdit4.newTasks;
 
-	var options = { dontShowMinutes: true };
+	var options = { dontShowMinutes: true, forceCalculateMinutes: true };
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(newTasks, options);
 
 	var timeToTasksArray = [];

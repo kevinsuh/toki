@@ -184,10 +184,12 @@ exports.default = function (controller) {
 									config.intent = _intents2.default.ADD_TASK;
 									controller.trigger('new_session_group_decision', [bot, config]);
 								default:
+									(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 									break;
 							}
 						} else {
 							bot.reply(message, "Okay! Let me know when you want to start a session or day");
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						}
 					});
 				});

@@ -35,8 +35,6 @@ export default (controller) => {
 
 		if (message.user) {
 
-			console.log(`\n\n ~~ queued reachouts middleware for SlackUserId: ${message.user} ~~ \n\n`);
-
 			const SlackUserId = message.user;
 
 			// if found user, find the user
@@ -51,34 +49,21 @@ export default (controller) => {
 				if (user) {
 
 					user.getWorkSessions({
-						where: [`"open" = ? AND "live" = ?`, true, true ]
+						where: [`"live" = ?`, true ]
 					})
 					.then((workSessions) => {
 
 						// found a work session! (should be <= 1 per user)
 						if (workSessions.length > 0) {
 
-							// make sure to not queue up more than 1 of the same workSession
-							var existingPausedWorkSessionIds = [];
-							if (bot.queuedReachouts[SlackUserId] && bot.queuedReachouts[SlackUserId].workSessions) {
-								existingPausedWorkSessionIds = bot.queuedReachouts[SlackUserId].workSessions.map((workSession) => {
-									return workSession.dataValues.id;
-								});
-							}
-
 							var pausedWorkSessions = [];
 							workSessions.forEach((workSession) => {
 
 								workSession.update({
-									live: false,
-									open: false
+									live: false
 								});
 
-								// make sure it is not already queued to add to
-								// bot.queuedReachouts
-								if (existingPausedWorkSessionIds.indexOf(workSession.dataValues.id) < 0) {
-									pausedWorkSessions.push(workSession);
-								}
+								pausedWorkSessions.push(workSession);
 
 							});
 
@@ -94,7 +79,7 @@ export default (controller) => {
 							}
 						}
 
-						console.log("\n\n ~~ queuedReachouts for User: ~~");
+						console.log(`\n\n ~~ queuedReachouts for User (${SlackUserId}): ~~`);
 						console.log(bot.queuedReachouts);
 
 						next();

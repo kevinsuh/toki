@@ -12,6 +12,8 @@ import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSep
 import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
+import { resumeQueuedReachouts } from '../index';
+
 // user wants to update settings!
 export default function(controller) {
 
@@ -90,6 +92,7 @@ export default function(controller) {
 						});
 
 					}
+					resumeQueuedReachouts(bot, { SlackUserId });
 
 				});
 

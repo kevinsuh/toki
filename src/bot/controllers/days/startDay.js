@@ -12,6 +12,8 @@ import { FINISH_WORD, EXIT_EARLY_WORDS, NONE } from '../../lib/constants';
 
 import { showPendingTasks, askForDayTasks } from '../modules/plan';
 
+import { resumeQueuedReachouts } from '../index';
+
 // base controller for start day
 export default function(controller) {
 
@@ -52,7 +54,7 @@ export default function(controller) {
 					convo.on('end', (convo) => {
 						console.log(convo);
 						const { SlackUserId } = convo.config;
-						
+
 					})
 				});
 			})
@@ -125,6 +127,8 @@ export default function(controller) {
 					convo.on('end', (convo) => {
 						if (convo.readyToStartDay) {
 							controller.trigger(`begin_day_flow`, [ bot, { SlackUserId, useHelperText }]);
+						} else {
+							resumeQueuedReachouts(bot, { SlackUserId });
 						}
 					});
 				
@@ -286,9 +290,12 @@ export default function(controller) {
 							return;
 						}
 
+						resumeQueuedReachouts(bot, { SlackUserId });
+
 					} else {
 						// default premature end
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+							resumeQueuedReachouts(bot, { SlackUserId });
 							convo.say("Okay! Exiting now. Let me know when you want to start your day!");
 							convo.next();
 						});

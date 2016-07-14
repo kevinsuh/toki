@@ -108,6 +108,8 @@ exports.default = function (controller) {
 					convo.on('end', function (convo) {
 						if (convo.readyToStartDay) {
 							controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId, useHelperText: useHelperText }]);
+						} else {
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						}
 					});
 				});
@@ -262,12 +264,15 @@ exports.default = function (controller) {
 									v: void 0
 								};
 							}
+
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						}();
 
 						if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
 					} else {
 						// default premature end
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 							convo.say("Okay! Exiting now. Let me know when you want to start your day!");
 							convo.next();
 						});

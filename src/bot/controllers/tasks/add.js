@@ -57,8 +57,6 @@ export default function(controller) {
 			controller.trigger(`new_session_group_decision`, [ bot, config ]);
 		}, 1000);
 
-		resumeQueuedReachouts(bot, { SlackUserId });
-
 	});
 
 	/**
@@ -106,6 +104,7 @@ export default function(controller) {
 						convo.say("Hey! You haven't `started a day` yet, let's do that first");
 						convo.next();
 					});
+					resumeQueuedReachouts(bot, { SlackUserId });
 					return;
 				}
 

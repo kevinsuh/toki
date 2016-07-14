@@ -53,8 +53,6 @@ exports.default = function (controller) {
 		setTimeout(function () {
 			controller.trigger('new_session_group_decision', [bot, config]);
 		}, 1000);
-
-		(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 	});
 
 	/**
@@ -101,6 +99,7 @@ exports.default = function (controller) {
 						convo.say("Hey! You haven't `started a day` yet, let's do that first");
 						convo.next();
 					});
+					(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 					return;
 				}
 

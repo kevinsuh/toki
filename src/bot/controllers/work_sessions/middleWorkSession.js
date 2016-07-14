@@ -4,6 +4,8 @@ import moment from 'moment-timezone';
 
 import models from '../../../app/models';
 
+import { resumeQueuedReachouts } from '../index';
+
 // MIDDLE OF A WORK SESSION
 export default function(controller) {
 

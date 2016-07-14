@@ -81,6 +81,7 @@ exports.default = function (controller) {
 							nickName: nickName
 						});
 					}
+					(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 				});
 			});
 		});

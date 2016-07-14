@@ -188,34 +188,40 @@ if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT
  */
 function resumeQueuedReachouts(bot, config) {
 
-	console.log("\n\n ~~ bot's queuedReachouts ~~ \n\n");
-	console.log(bot.queuedReachouts);
-
 	// necessary config
 	var now = (0, _momentTimezone2.default)();
 	var SlackUserId = config.SlackUserId;
 	var queuedReachouts = bot.queuedReachouts;
 
 
+	console.log("\n\n ~~ resuming these bot's queuedReachouts ~~:");
+	console.log(bot.queuedReachouts[SlackUserId].workSessions);
+	console.log("\n\n\n");
+
 	if (queuedReachouts && SlackUserId && queuedReachouts[SlackUserId]) {
 		var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
-		var updatedQueuedWorkSessions = [];
-		if (queuedWorkSessions) {
-			// resume each work session if now has not passed
+
+		if (queuedWorkSessions && queuedWorkSessions.length > 0) {
+
+			var queuedWorkSessionIds = [];
 			queuedWorkSessions.forEach(function (workSession) {
 				var endTime = (0, _momentTimezone2.default)(workSession.endTime);
-				if (endTime > now) {
-					_models2.default.WorkSession.update({
-						open: true,
-						live: true
-					}, {
-						where: ['"WorkSessions"."id" = ? ', workSession.dataValues.id]
-					});
-					updatedQueuedWorkSessions.push(workSession);
+				if (endTime > now && workSession.dataValues.open == true) {
+					queuedWorkSessionIds.push(workSession.dataValues.id);
 				}
 			});
+
+			if (queuedWorkSessionIds.length > 0) {
+				_models2.default.WorkSession.update({
+					live: true
+				}, {
+					where: ['"WorkSessions"."id" IN (?) ', queuedWorkSessionIds]
+				});
+			}
 		}
-		bot.queuedReachouts[SlackUserId].workSessions = updatedQueuedWorkSessions;
+
+		// "popping our queue" for the user
+		bot.queuedReachouts[SlackUserId].workSessions = [];
 	}
 }
 
@@ -487,6 +493,7 @@ function triggerIntent(intent, config) {
 			controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
 			break;
 		default:
+			resumeQueuedReachouts(bot, { SlackUserId: SlackUserId });
 			break;
 	}
 }

@@ -59,7 +59,7 @@ exports.default = function (controller) {
 		}).then(function (user) {
 
 			user.getWorkSessions({
-				where: ['"live" = ?', true]
+				where: ['"live" = ? AND "open" = ?', true, true]
 			}).then(function (workSessions) {
 				var tz = user.SlackUser.tz;
 

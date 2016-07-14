@@ -7,6 +7,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = function (controller) {
 
 	controller.hears([_constants.THANK_YOU.reg_exp], 'direct_message', function (bot, message) {
+		var SlackUserId = message.user;
 		bot.send({
 			type: "typing",
 			channel: message.channel
@@ -14,6 +15,7 @@ exports.default = function (controller) {
 		setTimeout(function () {
 			bot.reply(message, "You're welcome!! :smile:");
 		}, 500);
+		(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 	});
 
 	// this will send message if no other intent gets picked up
@@ -136,6 +138,7 @@ exports.default = function (controller) {
 							controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
 							break;
 						default:
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 							break;
 					}
 				});

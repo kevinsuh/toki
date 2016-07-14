@@ -10,7 +10,7 @@ import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertT
 import { closeOldRemindersAndSessions } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
-import { bots } from '../index';
+import { bots, resumeQueuedReachouts } from '../index';
 
 import { colorsArray, buttonValues, colorsHash, TOKI_DEFAULT_SNOOZE_TIME, sessionTimerDecisions, MINUTES_FOR_DONE_SESSION_TIMEOUT } from '../../lib/constants';
 
@@ -230,9 +230,7 @@ export default function(controller) {
 
 									if (doneEarlyDecision) {
 
-										console.log("\n\nclosing old reminders\n\n")
 										closeOldRemindersAndSessions(user);
-										console.log("\n\nclosing old reminders\n\n")
 
 										switch (doneEarlyDecision) {
 											case sessionTimerDecisions.didTask:
@@ -284,6 +282,8 @@ export default function(controller) {
 												type
 											});
 										});
+									} else {
+										resumeQueuedReachouts(bot, { SlackUserId });
 									}
 
 								});
@@ -330,6 +330,8 @@ export default function(controller) {
 								convo.on('end', (convo) => {
 									if (convo.startSession) {
 										controller.trigger('confirm_new_session', [bot, { SlackUserId }]);
+									} else {
+										resumeQueuedReachouts(bot, { SlackUserId });
 									}
 								});
 							});
@@ -1211,10 +1213,14 @@ export function handlePostSessionDecision(postSessionDecision, config) {
 			break;
 		case intentConfig.END_DAY:
 			controller.trigger('trigger_day_end', [bot, { SlackUserId }]);
-			break;
+			return;
 		case intentConfig.START_SESSION:
 			controller.trigger('confirm_new_session', [bot, { SlackUserId }]);
-			break;
+			return;
 		default: break;
 	}
+
+	// this is the end of the conversation, which is when we will
+	// resume all previously canceled sessions
+	resumeQueuedReachouts(bot, { SlackUserId });
 }

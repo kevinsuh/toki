@@ -222,6 +222,7 @@ exports.default = function (controller) {
 							live: true,
 							open: true
 						});
+						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 

@@ -206,9 +206,7 @@ exports.default = function (controller) {
 
 									if (doneEarlyDecision) {
 
-										console.log("\n\nclosing old reminders\n\n");
 										(0, _miscHelpers.closeOldRemindersAndSessions)(user);
-										console.log("\n\nclosing old reminders\n\n");
 
 										switch (doneEarlyDecision) {
 											case _constants.sessionTimerDecisions.didTask:
@@ -263,6 +261,8 @@ exports.default = function (controller) {
 												type: type
 											});
 										});
+									} else {
+										(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 									}
 								});
 							});
@@ -301,6 +301,8 @@ exports.default = function (controller) {
 								convo.on('end', function (convo) {
 									if (convo.startSession) {
 										controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+									} else {
+										(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 									}
 								});
 							});
@@ -1185,12 +1187,16 @@ function handlePostSessionDecision(postSessionDecision, config) {
 			break;
 		case _intents2.default.END_DAY:
 			controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
-			break;
+			return;
 		case _intents2.default.START_SESSION:
 			controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
-			break;
+			return;
 		default:
 			break;
 	}
+
+	// this is the end of the conversation, which is when we will
+	// resume all previously canceled sessions
+	(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 }
 //# sourceMappingURL=endWorkSession.js.map

@@ -15,6 +15,8 @@ import { checkWorkSessionForLiveTasks } from '../work_sessions';
 
 import { startEditTaskListMessage } from './editTaskListFunctions';
 
+import { resumeQueuedReachouts } from '../index';
+
 // base controller for tasks
 export default function(controller) {
 
@@ -57,6 +59,7 @@ export default function(controller) {
 						convo.say(taskListMessage);
 					}
 					convo.on('end', (convo) => {
+						resumeQueuedReachouts(bot, { SlackUserId });
 						console.log("\n\n ~ view tasks finished ~ \n\n");
 					});
 				});
@@ -112,6 +115,8 @@ export default function(controller) {
 						console.log(convo.tasksEdit);
 						
 						var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate } = convo.tasksEdit;
+
+						resumeQueuedReachouts(bot, { SlackUserId });
 
 						// add new tasks if they got added
 						if (newTasks.length > 0) {

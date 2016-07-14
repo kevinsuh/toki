@@ -46,6 +46,7 @@ exports.default = function (controller) {
 						convo.say(taskListMessage);
 					}
 					convo.on('end', function (convo) {
+						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						console.log("\n\n ~ view tasks finished ~ \n\n");
 					});
 				});
@@ -100,8 +101,10 @@ exports.default = function (controller) {
 						var dailyTaskIdsToComplete = _convo$tasksEdit.dailyTaskIdsToComplete;
 						var dailyTasksToUpdate = _convo$tasksEdit.dailyTasksToUpdate;
 
-						// add new tasks if they got added
 
+						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+
+						// add new tasks if they got added
 						if (newTasks.length > 0) {
 							var priority = dailyTasks.length;
 							// add the priorities

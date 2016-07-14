@@ -11,6 +11,8 @@ import intentConfig from '../../lib/intents';
 import { FINISH_WORD, EXIT_EARLY_WORDS, NONE, RESET, colorsHash, buttonValues } from '../../lib/constants';
 import { consoleLog } from '../../lib/miscHelpers';
 
+import { resumeQueuedReachouts } from '../index';
+
 
 /**
  * 		START DAY CONVERSATION FLOW FUNCTIONS

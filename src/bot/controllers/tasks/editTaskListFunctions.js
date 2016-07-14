@@ -356,7 +356,7 @@ function saveNewTaskResponses(tasksToAdd, convo) {
 function getTimeToNewTasks(response, convo) {
 
 	var { bot, dailyTasks, newTasks } = convo.tasksEdit;
-	var options                    = { dontShowMinutes: true };
+	var options                    = { dontShowMinutes: true, forceCalculateMinutes: true };
 	var taskListMessage            = convertArrayToTaskListMessage(newTasks, options);
 
 	var timeToTasksArray = [];

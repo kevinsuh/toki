@@ -11,6 +11,8 @@ import { convertToSingleTaskObjectArray, convertResponseObjectsToTaskArray, conv
 import { closeOldRemindersAndSessions } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
+import { resumeQueuedReachouts } from '../index';
+
 // base controller for end day
 export default function(controller) {
 
@@ -152,6 +154,7 @@ export default function(controller) {
 						convo.say("You have not started a day yet! Let's `start a day` together :smile:");
 						convo.next();
 					});
+					resumeQueuedReachouts(bot, { SlackUserId });
 					return;
 	      }
 	      
@@ -236,10 +239,12 @@ export default function(controller) {
 							      });
 			    				});
 		    				});
+		    				resumeQueuedReachouts(bot, { SlackUserId });
 
 		    			} else {
 		    				// default premature end
 								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+									resumeQueuedReachouts(bot, { SlackUserId });
 									convo.say("Okay! Exiting now. Let me know when you want to start your day!");
 									convo.next();
 								});

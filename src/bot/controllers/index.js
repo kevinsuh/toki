@@ -128,33 +128,41 @@ if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT
  */
 export function resumeQueuedReachouts(bot, config) {
 
-	console.log("\n\n ~~ bot's queuedReachouts ~~ \n\n");
-	console.log(bot.queuedReachouts);
-
 	// necessary config
 	var now                 = moment();
 	var { SlackUserId }     = config;
 	var { queuedReachouts } = bot;
 
+	console.log("\n\n ~~ resuming these bot's queuedReachouts ~~:");
+	console.log(bot.queuedReachouts[SlackUserId].workSessions);
+	console.log("\n\n\n");
+
 	if (queuedReachouts && SlackUserId && queuedReachouts[SlackUserId]) {
 		var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
-		var updatedQueuedWorkSessions = [];
-		if (queuedWorkSessions) {
-			// resume each work session if now has not passed
+
+		if (queuedWorkSessions && queuedWorkSessions.length > 0) {
+
+			var queuedWorkSessionIds = [];
 			queuedWorkSessions.forEach((workSession) => {
 				var endTime = moment(workSession.endTime);
-				if (endTime > now) {
-					models.WorkSession.update({
-						open: true,
-						live: true
-					}, {
-						where: [`"WorkSessions"."id" = ? `, workSession.dataValues.id]
-					});
-					updatedQueuedWorkSessions.push(workSession);
+				if (endTime > now && workSession.dataValues.open == true) {
+					queuedWorkSessionIds.push(workSession.dataValues.id);
 				}
 			})
+
+			if (queuedWorkSessionIds.length > 0) {
+				models.WorkSession.update({
+					live: true
+				}, {
+					where: [`"WorkSessions"."id" IN (?) `, queuedWorkSessionIds]
+				});
+			}
+
 		}
-		bot.queuedReachouts[SlackUserId].workSessions = updatedQueuedWorkSessions;
+
+		// "popping our queue" for the user
+		bot.queuedReachouts[SlackUserId].workSessions = [];
+		
 	}
 }
 
@@ -428,7 +436,9 @@ function triggerIntent(intent, config) {
 		case intentConfig.END_DAY:
 			controller.trigger(`trigger_day_end`, [ bot, { SlackUserId } ]);
 			break;
-		default: break;
+		default: 
+			resumeQueuedReachouts(bot, { SlackUserId });
+			break;
 	}
 }
 

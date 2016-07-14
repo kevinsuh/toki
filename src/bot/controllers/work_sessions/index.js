@@ -16,6 +16,8 @@ import { utterances } from '../../lib/botResponses';
 
 import { askUserPostSessionOptions, handlePostSessionDecision } from './endWorkSession';
 
+import { resumeQueuedReachouts } from '../index';
+
 // base controller for work sessions!
 export default function(controller) {
 
@@ -208,10 +210,12 @@ export default function(controller) {
 									config.intent = intentConfig.ADD_TASK;
 									controller.trigger(`new_session_group_decision`, [ bot, config ]);
 								default:
+									resumeQueuedReachouts(bot, { SlackUserId });
 									break;
 							}
 						} else {
 							bot.reply(message, "Okay! Let me know when you want to start a session or day");
+							resumeQueuedReachouts(bot, { SlackUserId });
 						}
 					});
 				});

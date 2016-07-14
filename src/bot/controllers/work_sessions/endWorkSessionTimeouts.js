@@ -10,7 +10,7 @@ import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertT
 import intentConfig from '../../lib/intents';
 import { askUserPostSessionOptions, handlePostSessionDecision } from './endWorkSession';
 
-import { bots } from '../index';
+import { bots, resumeQueuedReachouts } from '../index';
 
 import { colorsArray, buttonValues, colorsHash, TOKI_DEFAULT_SNOOZE_TIME, sessionTimerDecisions } from '../../lib/constants';
 
@@ -249,6 +249,7 @@ export default function(controller) {
 							live: true,
 							open: true
 						});
+						resumeQueuedReachouts(bot, { SlackUserId });
 
 						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 

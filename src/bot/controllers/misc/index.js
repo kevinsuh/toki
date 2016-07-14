@@ -17,6 +17,7 @@ import { resumeQueuedReachouts } from '../index';
 export default function(controller) {
 
 	controller.hears([THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
+		const SlackUserId = message.user;
 		bot.send({
 			type: "typing",
 			channel: message.channel
@@ -24,6 +25,7 @@ export default function(controller) {
 		setTimeout(() => {
 			bot.reply(message, "You're welcome!! :smile:");
 		}, 500);
+		resumeQueuedReachouts(bot, { SlackUserId });
 	})
 
 	// this will send message if no other intent gets picked up
@@ -150,7 +152,9 @@ export default function(controller) {
 						case intentConfig.START_DAY:
 							controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
 							break;
-						default: break;
+						default: 
+							resumeQueuedReachouts(bot, { SlackUserId });
+							break;
 					}
 
 				});
