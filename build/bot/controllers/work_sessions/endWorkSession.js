@@ -289,6 +289,13 @@ exports.default = function (controller) {
 										convo.say('Okay! I\'ll be here when you\'re ready to crank again :wrench: ');
 										convo.next();
 									}
+								}, {
+									default: true,
+									callback: function callback(response, convo) {
+										convo.say("Sorry, I didn't get that. Please tell me `yes` or `no` to the question!");
+										convo.repeat();
+										convo.next();
+									}
 								}]);
 								convo.next();
 								convo.on('end', function (convo) {
