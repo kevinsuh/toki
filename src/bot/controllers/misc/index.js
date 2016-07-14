@@ -82,6 +82,31 @@ export default function(controller) {
 						text: "Hey! I can only help you with a few things. Here's the list of things I can help you with:",
 						attachments: optionsAttachment
 					});
+
+				}
+
+				console.log("\n\n ~~ bot's queuedReachouts ~~ \n\n");
+				console.log(bot.queuedReachouts);
+				var now = moment();
+				var { queuedReachouts } = bot;
+				if (queuedReachouts && queuedReachouts[SlackUserId]) {
+					var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
+					if (queuedWorkSessions) {
+						// resume each work session if now has not passed
+						var updatedQueuedWorkSessions = [];
+						queuedWorkSessions.forEach((workSession) => {
+							var endTime = moment(workSession.endTime);
+							// if there is still time left, then resume it
+							if (endTime > now) {
+								workSession.update({
+									open: true,
+									live: true
+								});
+								updatedQueuedWorkSessions.push(workSession);
+							}
+						})
+						bot.queuedReachouts[SlackUserId].workSessions = updatedQueuedWorkSessions;
+					}
 				}
 
 			}, 1000);

@@ -73,6 +73,31 @@ exports.default = function (controller) {
 						attachments: optionsAttachment
 					});
 				}
+
+				console.log("\n\n ~~ bot's queuedReachouts ~~ \n\n");
+				console.log(bot.queuedReachouts);
+				var now = (0, _momentTimezone2.default)();
+				var queuedReachouts = bot.queuedReachouts;
+
+				if (queuedReachouts && queuedReachouts[SlackUserId]) {
+					var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
+					if (queuedWorkSessions) {
+						// resume each work session if now has not passed
+						var updatedQueuedWorkSessions = [];
+						queuedWorkSessions.forEach(function (workSession) {
+							var endTime = (0, _momentTimezone2.default)(workSession.endTime);
+							// if there is still time left, then resume it
+							if (endTime > now) {
+								workSession.update({
+									open: true,
+									live: true
+								});
+								updatedQueuedWorkSessions.push(workSession);
+							}
+						});
+						bot.queuedReachouts[SlackUserId].workSessions = updatedQueuedWorkSessions;
+					}
+				}
 			}, 1000);
 		}
 	});
