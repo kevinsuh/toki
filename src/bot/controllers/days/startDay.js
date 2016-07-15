@@ -83,15 +83,6 @@ export default function(controller) {
 			})
 			.then((sessionGroups) => {
 
-				var useHelperText = false;
-				if (sessionGroups.length == 0) {
-					// if user has 0 start days, then we will trigger helper text flow
-					useHelperText = true;
-				}
-
-				// testing for now
-				// useHelperText = true;
-
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
 					var name              = user.nickName || user.email;
@@ -124,7 +115,7 @@ export default function(controller) {
 					]);
 					convo.on('end', (convo) => {
 						if (convo.readyToStartDay) {
-							controller.trigger(`begin_day_flow`, [ bot, { SlackUserId, useHelperText }]);
+							controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
 						} else {
 							resumeQueuedReachouts(bot, { SlackUserId });
 						}
@@ -148,7 +139,7 @@ export default function(controller) {
 	*/
 	controller.on('begin_day_flow', (bot, config) => {
 
-		const { SlackUserId, useHelperText } = config;
+		const { SlackUserId } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -165,8 +156,8 @@ export default function(controller) {
 
 				convo.dayStart = {
 					bot,
+					taskArray: [],
 					UserId: user.id,
-					useHelperText,
 					startDayDecision: false, // what does user want to do with day
 					prioritizedTaskArray: [] // the final tasks to do for the day
 				}

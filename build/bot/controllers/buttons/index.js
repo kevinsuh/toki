@@ -61,7 +61,7 @@ exports.default = function (controller) {
 					bot.replyInteractive(message, "Okay! I'll be here when you get back");
 					break;
 				case _constants.buttonValues.actuallyWantToAddATask.value:
-					bot.replyInteractive(message, "Of course - just add another task here and say `done` when you're ready to go");
+					bot.replyInteractive(message, "Let's add more tasks! Enter them here separated by new lines");
 					break;
 				case _constants.buttonValues.differentTask.value:
 					bot.replyInteractive(message, "What did you get done instead?");
@@ -91,9 +91,6 @@ exports.default = function (controller) {
 					bot.replyInteractive(message, "It's about that time, isn't it?");
 					break;
 				case _constants.buttonValues.resetTimes.value:
-					// bot.replyInteractive(message, "_Resetting :repeat:..._")
-					break;
-				case _constants.buttonValues.resetTimesPersistent.value:
 					break;
 				case _constants.buttonValues.doneSessionTimeoutYes.value:
 					bot.replyInteractive(message, "Great work! :raised_hands:");

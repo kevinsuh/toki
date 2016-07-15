@@ -70,15 +70,6 @@ exports.default = function (controller) {
 				where: ['"SessionGroup"."type" = ?', "start_work"]
 			}).then(function (sessionGroups) {
 
-				var useHelperText = false;
-				if (sessionGroups.length == 0) {
-					// if user has 0 start days, then we will trigger helper text flow
-					useHelperText = true;
-				}
-
-				// testing for now
-				// useHelperText = true;
-
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
 					var name = user.nickName || user.email;
@@ -107,7 +98,7 @@ exports.default = function (controller) {
 					}]);
 					convo.on('end', function (convo) {
 						if (convo.readyToStartDay) {
-							controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId, useHelperText: useHelperText }]);
+							controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
 						} else {
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						}
@@ -127,7 +118,6 @@ exports.default = function (controller) {
  */
 	controller.on('begin_day_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
-		var useHelperText = config.useHelperText;
 
 
 		_models2.default.User.find({
@@ -142,8 +132,8 @@ exports.default = function (controller) {
 
 				convo.dayStart = {
 					bot: bot,
+					taskArray: [],
 					UserId: user.id,
-					useHelperText: useHelperText,
 					startDayDecision: false, // what does user want to do with day
 					prioritizedTaskArray: [] // the final tasks to do for the day
 				};
