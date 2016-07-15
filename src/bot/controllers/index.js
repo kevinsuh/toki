@@ -133,14 +133,13 @@ export function resumeQueuedReachouts(bot, config) {
 	var { SlackUserId }     = config;
 	var { queuedReachouts } = bot;
 
-	if (bot.queuedReachouts[SlackUserId]) {
-		console.log("\n\n ~~ resuming these bot's queuedReachouts ~~:");
-		console.log(bot.queuedReachouts[SlackUserId].workSessions);
-		console.log("\n\n\n");
-	}
-
 	if (queuedReachouts && SlackUserId && queuedReachouts[SlackUserId]) {
+
 		var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
+
+		console.log("\n\n ~~ resuming these bot's queuedReachouts ~~:");
+		console.log(queuedWorkSessions);
+		console.log("\n\n");
 
 		if (queuedWorkSessions && queuedWorkSessions.length > 0) {
 

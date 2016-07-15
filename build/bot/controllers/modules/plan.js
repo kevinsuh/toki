@@ -159,7 +159,7 @@ function savePendingTasksToWorkOn(response, convo) {
 		text: taskListMessage,
 		attachments: [{
 			attachment_type: 'default',
-			callback_id: "NEW_TASKS",
+			callback_id: "TASK_LIST_MESSAGE",
 			fallback: "Which additional tasks do you want to work on?",
 			color: _constants.colorsHash.grey.hex,
 			actions: [{
@@ -179,7 +179,7 @@ function savePendingTasksToWorkOn(response, convo) {
 		default: true,
 		callback: function callback(response, convo) {
 
-			var updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
+			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
 			var text = response.text;
 
 			var newTask = {
@@ -270,7 +270,7 @@ function askForDayTasks(response, convo) {
 		text: taskListMessage,
 		attachments: [{
 			attachment_type: 'default',
-			callback_id: "NEW_TASKS",
+			callback_id: "TASK_LIST_MESSAGE",
 			fallback: "What tasks do you want to work on?",
 			color: _constants.colorsHash.grey.hex
 		}]
@@ -278,7 +278,7 @@ function askForDayTasks(response, convo) {
 		default: true,
 		callback: function callback(response, convo) {
 
-			var updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
+			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
 			var text = response.text;
 
 			var newTask = {
@@ -321,7 +321,7 @@ function addMoreTasks(response, convo) {
 		text: taskListMessage,
 		attachments: [{
 			attachment_type: 'default',
-			callback_id: "NEW_TASKS",
+			callback_id: "TASK_LIST_MESSAGE",
 			fallback: "What tasks do you want to work on?",
 			color: _constants.colorsHash.grey.hex
 		}]
@@ -329,7 +329,7 @@ function addMoreTasks(response, convo) {
 		default: true,
 		callback: function callback(response, convo) {
 
-			var updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
+			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
 			var text = response.text;
 
 			var newTask = {
@@ -369,7 +369,7 @@ function getTimeToTasks(response, convo) {
 		text: taskListMessage,
 		attachments: [{
 			attachment_type: 'default',
-			callback_id: "TIME_TO_TASKS",
+			callback_id: "TASK_LIST_MESSAGE",
 			fallback: "How much time would you like to allocate to your tasks?",
 			color: _constants.colorsHash.grey.hex,
 			actions: [{
@@ -395,7 +395,7 @@ function getTimeToTasks(response, convo) {
 		pattern: _constants.buttonValues.resetTimes.value,
 		callback: function callback(response, convo) {
 
-			var updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
+			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
 			if (updateTaskListMessageObject) {
 				convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 				// reset ze task list message
@@ -411,7 +411,7 @@ function getTimeToTasks(response, convo) {
 		pattern: _constants.RESET.reg_exp,
 		callback: function callback(response, convo) {
 
-			var updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
+			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
 			if (updateTaskListMessageObject) {
 				convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 				// reset ze task list message
@@ -427,7 +427,7 @@ function getTimeToTasks(response, convo) {
 		default: true,
 		callback: function callback(response, convo) {
 
-			var updateTaskListMessageObject = (0, _messageHelpers.getUpdateTaskListMessageObject)(response.channel, bot);
+			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
 
 			if (updateTaskListMessageObject) {
 				convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;

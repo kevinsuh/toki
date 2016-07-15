@@ -49,7 +49,7 @@ export default function(controller) {
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 					convo.config = { SlackUserId };
 					var name = user.nickName || user.email;
-					convo.say(`Hey, ${name}!`);
+					convo.say(`Hey, ${name}! Let's make a plan :memo:`);
 					convo.on('end', (convo) => {
 						const { SlackUserId } = convo.config;
 						controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
@@ -294,7 +294,7 @@ export default function(controller) {
 						// default premature end
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 							resumeQueuedReachouts(bot, { SlackUserId });
-							convo.say("Okay! Let me know when you want to make a new plan :memo:");
+							convo.say("Okay! Let me know when you want to make a `new plan`");
 							convo.next();
 						});
 					}

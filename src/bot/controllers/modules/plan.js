@@ -6,7 +6,7 @@ import bodyParser from 'body-parser';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, getUpdateTaskListMessageObject } from '../../lib/messageHelpers';
+import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, getMostRecentTaskListMessageToUpdate } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 import { FINISH_WORD, EXIT_EARLY_WORDS, NONE, RESET, colorsHash, buttonValues } from '../../lib/constants';
 import { consoleLog } from '../../lib/miscHelpers';
@@ -146,7 +146,7 @@ function savePendingTasksToWorkOn(response, convo) {
 		attachments:[
 			{
 				attachment_type: 'default',
-				callback_id: "NEW_TASKS",
+				callback_id: "TASK_LIST_MESSAGE",
 				fallback: "Which additional tasks do you want to work on?",
 				color: colorsHash.grey.hex,
 				actions: [
@@ -172,7 +172,7 @@ function savePendingTasksToWorkOn(response, convo) {
 			default: true,
 			callback: function(response, convo) {
 
-				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
+				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 				const { text } = response;
 				const newTask = {
 					text,
@@ -266,7 +266,7 @@ export function askForDayTasks(response, convo){
 		attachments:[
 			{
 				attachment_type: 'default',
-				callback_id: "NEW_TASKS",
+				callback_id: "TASK_LIST_MESSAGE",
 				fallback: "What tasks do you want to work on?",
 				color: colorsHash.grey.hex
 			}
@@ -277,7 +277,7 @@ export function askForDayTasks(response, convo){
 			default: true,
 			callback: function(response, convo) {
 
-				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
+				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 				const { text } = response;
 				const newTask = {
 					text,
@@ -323,7 +323,7 @@ function addMoreTasks(response, convo) {
 		attachments:[
 			{
 				attachment_type: 'default',
-				callback_id: "NEW_TASKS",
+				callback_id: "TASK_LIST_MESSAGE",
 				fallback: "What tasks do you want to work on?",
 				color: colorsHash.grey.hex
 			}
@@ -334,7 +334,7 @@ function addMoreTasks(response, convo) {
 			default: true,
 			callback: function(response, convo) {
 
-				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
+				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 				const { text } = response;
 				const newTask = {
 					text,
@@ -375,7 +375,7 @@ function getTimeToTasks(response, convo) {
 		attachments:[
 			{
 				attachment_type: 'default',
-				callback_id: "TIME_TO_TASKS",
+				callback_id: "TASK_LIST_MESSAGE",
 				fallback: "How much time would you like to allocate to your tasks?",
 				color: colorsHash.grey.hex,
 				actions: [
@@ -408,7 +408,7 @@ function getTimeToTasks(response, convo) {
 			pattern: buttonValues.resetTimes.value,
 			callback: (response, convo) => {
 
-				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
+				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 				if (updateTaskListMessageObject) {
 					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 					// reset ze task list message
@@ -425,7 +425,7 @@ function getTimeToTasks(response, convo) {
 			pattern: RESET.reg_exp,
 			callback: (response, convo) => {
 
-				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
+				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 				if (updateTaskListMessageObject) {
 					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 					// reset ze task list message
@@ -443,7 +443,7 @@ function getTimeToTasks(response, convo) {
 			default: true,
 			callback: function(response, convo) {
 
-				var updateTaskListMessageObject = getUpdateTaskListMessageObject(response.channel, bot);
+				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 
 				if (updateTaskListMessageObject) {
 					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;

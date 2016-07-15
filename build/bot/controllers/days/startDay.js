@@ -39,7 +39,7 @@ exports.default = function (controller) {
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 					convo.config = { SlackUserId: SlackUserId };
 					var name = user.nickName || user.email;
-					convo.say('Hey, ' + name + '!');
+					convo.say('Hey, ' + name + '! Let\'s make a plan :memo:');
 					convo.on('end', function (convo) {
 						var SlackUserId = convo.config.SlackUserId;
 
@@ -273,7 +273,7 @@ exports.default = function (controller) {
 						// default premature end
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-							convo.say("Okay! Let me know when you want to make a new plan :memo:");
+							convo.say("Okay! Let me know when you want to make a `new plan`");
 							convo.next();
 						});
 					}
