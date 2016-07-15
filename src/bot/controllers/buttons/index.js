@@ -164,7 +164,7 @@ export default function(controller) {
 					bot.replyInteractive(message, `Okay! Let's remove some tasks`);
 					break;
 				case buttonValues.neverMindTasks.value:
-					bot.replyInteractive(message, "Okay! I didn't add any :smile_cat:")
+					bot.replyInteractive(message, "Okay! I didn't do anything :smile_cat:")
 					break;
 				case buttonValues.editTaskTimes.value:
 					bot.replyInteractive(message, "Let's do this :hourglass:");
