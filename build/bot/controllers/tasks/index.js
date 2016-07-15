@@ -65,141 +65,157 @@ exports.default = function (controller) {
 
 			var UserId = user.id;
 
-			user.getDailyTasks({
-				where: ['"DailyTask"."type" = ?', "live"],
-				include: [_models2.default.Task],
-				order: '"Task"."done", "DailyTask"."priority" ASC'
-			}).then(function (dailyTasks) {
+			user.getWorkSessions({
+				where: ['"open" = ?', true]
+			}).then(function (workSessions) {
 
-				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+				console.log("\n\n\nadding work session...\n\n");
+				var openWorkSession = false;
+				if (workSessions.length > 0) {
+					var now = (0, _moment2.default)();
+					var endTime = (0, _moment2.default)(workSessions[0].endTime).add(1, 'minutes');
+					if (endTime > now) {
+						openWorkSession = workSessions[0];
+					}
+				}
 
-					dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
+				user.getDailyTasks({
+					where: ['"DailyTask"."type" = ?', "live"],
+					include: [_models2.default.Task],
+					order: '"Task"."done", "DailyTask"."priority" ASC'
+				}).then(function (dailyTasks) {
 
-					convo.tasksEdit = {
-						bot: bot,
-						SlackUserId: SlackUserId,
-						dailyTasks: dailyTasks,
-						updateTaskListMessageObject: {},
-						newTasks: [],
-						dailyTaskIdsToDelete: [],
-						dailyTaskIdsToComplete: [],
-						dailyTasksToUpdate: [] // existing dailyTasks
-					};
+					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-					// this is the flow you expect for editing tasks
-					(0, _editTaskListFunctions.startEditTaskListMessage)(convo);
+						dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
 
-					convo.on('end', function (convo) {
-						console.log("\n\n ~ edit tasks finished ~ \n\n");
-						console.log(convo.tasksEdit);
+						convo.tasksEdit = {
+							bot: bot,
+							SlackUserId: SlackUserId,
+							dailyTasks: dailyTasks,
+							updateTaskListMessageObject: {},
+							newTasks: [],
+							dailyTaskIdsToDelete: [],
+							dailyTaskIdsToComplete: [],
+							dailyTasksToUpdate: [], // existing dailyTasks
+							openWorkSession: openWorkSession
+						};
 
-						var _convo$tasksEdit = convo.tasksEdit;
-						var newTasks = _convo$tasksEdit.newTasks;
-						var dailyTasks = _convo$tasksEdit.dailyTasks;
-						var SlackUserId = _convo$tasksEdit.SlackUserId;
-						var dailyTaskIdsToDelete = _convo$tasksEdit.dailyTaskIdsToDelete;
-						var dailyTaskIdsToComplete = _convo$tasksEdit.dailyTaskIdsToComplete;
-						var dailyTasksToUpdate = _convo$tasksEdit.dailyTasksToUpdate;
+						// this is the flow you expect for editing tasks
+						(0, _editTaskListFunctions.startEditTaskListMessage)(convo);
+
+						convo.on('end', function (convo) {
+							console.log("\n\n ~ edit tasks finished ~ \n\n");
+							console.log(convo.tasksEdit);
+
+							var _convo$tasksEdit = convo.tasksEdit;
+							var newTasks = _convo$tasksEdit.newTasks;
+							var dailyTasks = _convo$tasksEdit.dailyTasks;
+							var SlackUserId = _convo$tasksEdit.SlackUserId;
+							var dailyTaskIdsToDelete = _convo$tasksEdit.dailyTaskIdsToDelete;
+							var dailyTaskIdsToComplete = _convo$tasksEdit.dailyTaskIdsToComplete;
+							var dailyTasksToUpdate = _convo$tasksEdit.dailyTasksToUpdate;
 
 
-						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 
-						// add new tasks if they got added
-						if (newTasks.length > 0) {
-							var priority = dailyTasks.length;
-							// add the priorities
-							newTasks = newTasks.map(function (newTask) {
-								priority++;
-								return _extends({}, newTask, {
-									priority: priority
-								});
-							});
-
-							newTasks.forEach(function (newTask) {
-								var minutes = newTask.minutes;
-								var text = newTask.text;
-								var priority = newTask.priority;
-
-								if (minutes && text) {
-									_models2.default.Task.create({
-										text: text
-									}).then(function (task) {
-										var TaskId = task.id;
-										_models2.default.DailyTask.create({
-											TaskId: TaskId,
-											priority: priority,
-											minutes: minutes,
-											UserId: UserId
-										});
+							// add new tasks if they got added
+							if (newTasks.length > 0) {
+								var priority = dailyTasks.length;
+								// add the priorities
+								newTasks = newTasks.map(function (newTask) {
+									priority++;
+									return _extends({}, newTask, {
+										priority: priority
 									});
-								}
-							});
-							setTimeout(function () {
-								(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
-							}, 200);
-
-							return;
-						}
-
-						// delete tasks if requested
-						if (dailyTaskIdsToDelete.length > 0) {
-							_models2.default.DailyTask.update({
-								type: "deleted"
-							}, {
-								where: ['"DailyTasks"."id" in (?)', dailyTaskIdsToDelete]
-							}).then(function () {
-								(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
-							});
-							return;
-						}
-
-						// complete tasks if requested
-						if (dailyTaskIdsToComplete.length > 0) {
-							_models2.default.DailyTask.findAll({
-								where: ['"DailyTask"."id" in (?)', dailyTaskIdsToComplete],
-								include: [_models2.default.Task]
-							}).then(function (dailyTasks) {
-
-								var completedTaskIds = dailyTasks.map(function (dailyTask) {
-									return dailyTask.TaskId;
 								});
 
-								_models2.default.Task.update({
-									done: true
+								newTasks.forEach(function (newTask) {
+									var minutes = newTask.minutes;
+									var text = newTask.text;
+									var priority = newTask.priority;
+
+									if (minutes && text) {
+										_models2.default.Task.create({
+											text: text
+										}).then(function (task) {
+											var TaskId = task.id;
+											_models2.default.DailyTask.create({
+												TaskId: TaskId,
+												priority: priority,
+												minutes: minutes,
+												UserId: UserId
+											});
+										});
+									}
+								});
+								setTimeout(function () {
+									(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
+								}, 200);
+
+								return;
+							}
+
+							// delete tasks if requested
+							if (dailyTaskIdsToDelete.length > 0) {
+								_models2.default.DailyTask.update({
+									type: "deleted"
 								}, {
-									where: ['"Tasks"."id" in (?)', completedTaskIds]
+									where: ['"DailyTasks"."id" in (?)', dailyTaskIdsToDelete]
 								}).then(function () {
 									(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
 								});
-							});
-							return;
-						}
+								return;
+							}
 
-						// update daily tasks if requested
-						if (dailyTasksToUpdate.length > 0) {
-							dailyTasksToUpdate.forEach(function (dailyTask) {
-								if (dailyTask.dataValues && dailyTask.minutes && dailyTask.text) {
-									var minutes = dailyTask.minutes;
-									var text = dailyTask.text;
+							// complete tasks if requested
+							if (dailyTaskIdsToComplete.length > 0) {
+								_models2.default.DailyTask.findAll({
+									where: ['"DailyTask"."id" in (?)', dailyTaskIdsToComplete],
+									include: [_models2.default.Task]
+								}).then(function (dailyTasks) {
 
-									_models2.default.DailyTask.update({
-										text: text,
-										minutes: minutes
-									}, {
-										where: ['"DailyTasks"."id" = ?', dailyTask.dataValues.id]
+									var completedTaskIds = dailyTasks.map(function (dailyTask) {
+										return dailyTask.TaskId;
 									});
-								}
-							});
+
+									_models2.default.Task.update({
+										done: true
+									}, {
+										where: ['"Tasks"."id" in (?)', completedTaskIds]
+									}).then(function () {
+										(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
+									});
+								});
+								return;
+							}
+
+							// update daily tasks if requested
+							if (dailyTasksToUpdate.length > 0) {
+								dailyTasksToUpdate.forEach(function (dailyTask) {
+									if (dailyTask.dataValues && dailyTask.minutes && dailyTask.text) {
+										var minutes = dailyTask.minutes;
+										var text = dailyTask.text;
+
+										_models2.default.DailyTask.update({
+											text: text,
+											minutes: minutes
+										}, {
+											where: ['"DailyTasks"."id" = ?', dailyTask.dataValues.id]
+										});
+									}
+								});
+								setTimeout(function () {
+									(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
+								}, 200);
+								return;
+							}
+
+							// fall back
 							setTimeout(function () {
 								(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
 							}, 200);
-							return;
-						}
-
-						// fall back
-						setTimeout(function () {
-							(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
-						}, 200);
+						});
 					});
 				});
 			});

@@ -39,6 +39,7 @@ function startEditTaskListMessage(convo) {
 	var _convo$tasksEdit = convo.tasksEdit;
 	var dailyTasks = _convo$tasksEdit.dailyTasks;
 	var bot = _convo$tasksEdit.bot;
+	var openWorkSession = _convo$tasksEdit.openWorkSession;
 
 
 	var options = { segmentCompleted: true };
@@ -54,7 +55,45 @@ function startEditTaskListMessage(convo) {
 		}]
 	});
 
+	if (openWorkSession) {
+		openWorkSession.getDailyTasks({
+			include: [_models2.default.Task]
+		}).then(function (dailyTasks) {
+
+			var now = (0, _moment2.default)();
+			var endTime = (0, _moment2.default)(openWorkSession.endTime);
+			var endTimeString = endTime.format("h:mm a");
+			var minutes = Math.round(_moment2.default.duration(endTime.diff(now)).asMinutes());
+			var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+
+			var dailyTaskTexts = dailyTasks.map(function (dailyTask) {
+				return dailyTask.dataValues.Task.text;
+			});
+
+			var sessionTasks = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
+			convo.say({
+				attachments: [{
+					text: 'You\'re currently in a session for ' + sessionTasks + ' until *' + endTimeString + '* (' + minutesString + ' left)',
+					mrkdwn_in: ["text"],
+					color: _constants.colorsHash.salmon.hex
+				}]
+			});
+
+			askForTaskListOptions(convo);
+			convo.next();
+		});
+	} else {
+		askForTaskListOptions(convo);
+		convo.next();
+	}
+}
+
+// options to ask if user has at least 1 remaining task
+function askForTaskListOptions(convo) {
+	var dailyTasks = convo.tasksEdit.dailyTasks;
+
 	// see if remaining tasks or not
+
 	var remainingTasks = [];
 	dailyTasks.forEach(function (dailyTask) {
 		if (!dailyTask.dataValues.Task.done) {
@@ -62,75 +101,10 @@ function startEditTaskListMessage(convo) {
 		}
 	});
 
-	if (remainingTasks.length > 0) {
-		askForTaskListOptions(convo);
-	} else {
+	if (remainingTasks.length == 0) {
 		askForTaskListOptionsIfNoRemainingTasks(convo);
+		return;
 	}
-
-	convo.next();
-}
-
-// options to ask if user has no remaining tasks
-function askForTaskListOptionsIfNoRemainingTasks(convo) {
-
-	convo.ask({
-		text: 'You have no remaining tasks for today. Would you like to add some tasks?',
-		attachments: [{
-			attachment_type: 'default',
-			callback_id: "ADD_TASKS",
-			color: _constants.colorsHash.turquoise.hex,
-			fallback: "Let's add some tasks?",
-			actions: [{
-				name: _constants.buttonValues.addTasks.name,
-				text: "Add tasks",
-				value: _constants.buttonValues.addTasks.value,
-				type: "button"
-			}, {
-				name: _constants.buttonValues.neverMindTasks.name,
-				text: "Good for now!",
-				value: _constants.buttonValues.neverMindTasks.value,
-				type: "button"
-			}]
-		}]
-	}, [{
-		pattern: _constants.buttonValues.addTasks.value,
-		callback: function callback(response, convo) {
-			addTasksFlow(response, convo);
-			convo.next();
-		}
-	}, { // NL equivalent to buttonValues.addTasks.value
-		pattern: _botResponses.utterances.containsAdd,
-		callback: function callback(response, convo) {
-			convo.say("Okay, let's add some tasks :muscle:");
-			addTasksFlow(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _constants.buttonValues.neverMindTasks.value,
-		callback: function callback(response, convo) {
-			convo.say("Let me know whenever you're ready to `add tasks`");
-			convo.next();
-		}
-	}, { // NL equivalent to buttonValues.neverMindTasks.value
-		pattern: _botResponses.utterances.noAndNeverMind,
-		callback: function callback(response, convo) {
-			convo.say("Okay! I didn't add any :smile_cat:");
-			convo.say("Let me know whenever you're ready to `add tasks`");
-			convo.next();
-		}
-	}, { // this is failure point. restart with question
-		default: true,
-		callback: function callback(response, convo) {
-			convo.say("I didn't quite get that :thinking_face:");
-			convo.repeat();
-			convo.next();
-		}
-	}]);
-}
-
-// options to ask if user has at least 1 remaining task
-function askForTaskListOptions(convo) {
 
 	convo.ask({
 		text: 'What would you like to do?',
@@ -244,6 +218,64 @@ function askForTaskListOptions(convo) {
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
 			convo.say("Okay! No worries");
+			convo.next();
+		}
+	}, { // this is failure point. restart with question
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say("I didn't quite get that :thinking_face:");
+			convo.repeat();
+			convo.next();
+		}
+	}]);
+}
+
+// options to ask if user has no remaining tasks
+function askForTaskListOptionsIfNoRemainingTasks(convo) {
+
+	convo.ask({
+		text: 'You have no remaining tasks for today. Would you like to add some tasks?',
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "ADD_TASKS",
+			color: _constants.colorsHash.turquoise.hex,
+			fallback: "Let's add some tasks?",
+			actions: [{
+				name: _constants.buttonValues.addTasks.name,
+				text: "Add tasks",
+				value: _constants.buttonValues.addTasks.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.neverMindTasks.name,
+				text: "Good for now!",
+				value: _constants.buttonValues.neverMindTasks.value,
+				type: "button"
+			}]
+		}]
+	}, [{
+		pattern: _constants.buttonValues.addTasks.value,
+		callback: function callback(response, convo) {
+			addTasksFlow(response, convo);
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.addTasks.value
+		pattern: _botResponses.utterances.containsAdd,
+		callback: function callback(response, convo) {
+			convo.say("Okay, let's add some tasks :muscle:");
+			addTasksFlow(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.neverMindTasks.value,
+		callback: function callback(response, convo) {
+			convo.say("Let me know whenever you're ready to `add tasks`");
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.neverMindTasks.value
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say("Okay! I didn't add any :smile_cat:");
+			convo.say("Let me know whenever you're ready to `add tasks`");
 			convo.next();
 		}
 	}, { // this is failure point. restart with question

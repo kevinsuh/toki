@@ -84,141 +84,158 @@ export default function(controller) {
 
 			const UserId = user.id;
 
-			user.getDailyTasks({
-				where: [`"DailyTask"."type" = ?`, "live"],
-				include: [ models.Task ],
-				order: `"Task"."done", "DailyTask"."priority" ASC`
+			user.getWorkSessions({
+				where: [`"open" = ?`, true]
 			})
-			.then((dailyTasks) => {
+			.then((workSessions) => {
 
-				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-
-					dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
-
-					convo.tasksEdit = {
-						bot,
-						SlackUserId,
-						dailyTasks,
-						updateTaskListMessageObject: {},
-						newTasks: [],
-						dailyTaskIdsToDelete: [],
-						dailyTaskIdsToComplete: [],
-						dailyTasksToUpdate: [] // existing dailyTasks
+				console.log("\n\n\nadding work session...\n\n")
+				var openWorkSession = false;
+				if (workSessions.length > 0) {
+					var now     = moment();
+					var endTime = moment(workSessions[0].endTime).add(1, 'minutes');
+					if (endTime > now) {
+						openWorkSession = workSessions[0];
 					}
+				}
 
-					// this is the flow you expect for editing tasks
-					startEditTaskListMessage(convo);
+				user.getDailyTasks({
+					where: [`"DailyTask"."type" = ?`, "live"],
+					include: [ models.Task ],
+					order: `"Task"."done", "DailyTask"."priority" ASC`
+				})
+				.then((dailyTasks) => {
 
-					
-					convo.on('end', (convo) => {
-						console.log("\n\n ~ edit tasks finished ~ \n\n");
-						console.log(convo.tasksEdit);
+					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+						dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
+
+						convo.tasksEdit = {
+							bot,
+							SlackUserId,
+							dailyTasks,
+							updateTaskListMessageObject: {},
+							newTasks: [],
+							dailyTaskIdsToDelete: [],
+							dailyTaskIdsToComplete: [],
+							dailyTasksToUpdate: [], // existing dailyTasks
+							openWorkSession
+						}
+
+						// this is the flow you expect for editing tasks
+						startEditTaskListMessage(convo);
+
 						
-						var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate } = convo.tasksEdit;
-
-						resumeQueuedReachouts(bot, { SlackUserId });
-
-						// add new tasks if they got added
-						if (newTasks.length > 0) {
-							var priority = dailyTasks.length;
-							// add the priorities
-							newTasks = newTasks.map((newTask) => {
-								priority++;
-								return {
-									...newTask,
-									priority
-								};
-							});
-
-							newTasks.forEach((newTask) => {
-								const { minutes, text, priority } = newTask;
-								if (minutes && text) {
-									models.Task.create({
-										text
-									})
-									.then((task) => {
-										const TaskId = task.id;
-										models.DailyTask.create({
-											TaskId,
-											priority,
-											minutes,
-											UserId
-										});
-									});
-								}
-							})
-							setTimeout(() => {
-								checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
-							}, 200);
+						convo.on('end', (convo) => {
+							console.log("\n\n ~ edit tasks finished ~ \n\n");
+							console.log(convo.tasksEdit);
 							
-							return;
-						}
+							var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate } = convo.tasksEdit;
 
-						// delete tasks if requested
-						if (dailyTaskIdsToDelete.length > 0) {
-							models.DailyTask.update({
-								type: "deleted"
-							}, {
-								where: [`"DailyTasks"."id" in (?)`, dailyTaskIdsToDelete]
-							})
-							.then(() => {
-								checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
-							})
-							return;
-						}
+							resumeQueuedReachouts(bot, { SlackUserId });
 
-						// complete tasks if requested
-						if (dailyTaskIdsToComplete.length > 0) {
-							models.DailyTask.findAll({
-								where: [`"DailyTask"."id" in (?)`, dailyTaskIdsToComplete],
-								include: [models.Task]
-							})
-							.then((dailyTasks) => {
-
-								var completedTaskIds = dailyTasks.map((dailyTask) => {
-									return dailyTask.TaskId;
+							// add new tasks if they got added
+							if (newTasks.length > 0) {
+								var priority = dailyTasks.length;
+								// add the priorities
+								newTasks = newTasks.map((newTask) => {
+									priority++;
+									return {
+										...newTask,
+										priority
+									};
 								});
 
-								models.Task.update({
-									done: true
+								newTasks.forEach((newTask) => {
+									const { minutes, text, priority } = newTask;
+									if (minutes && text) {
+										models.Task.create({
+											text
+										})
+										.then((task) => {
+											const TaskId = task.id;
+											models.DailyTask.create({
+												TaskId,
+												priority,
+												minutes,
+												UserId
+											});
+										});
+									}
+								})
+								setTimeout(() => {
+									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
+								}, 200);
+								
+								return;
+							}
+
+							// delete tasks if requested
+							if (dailyTaskIdsToDelete.length > 0) {
+								models.DailyTask.update({
+									type: "deleted"
 								}, {
-									where: [`"Tasks"."id" in (?)`, completedTaskIds]
+									where: [`"DailyTasks"."id" in (?)`, dailyTaskIdsToDelete]
 								})
 								.then(() => {
 									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
 								})
+								return;
+							}
 
-							})
-							return;
-						}
+							// complete tasks if requested
+							if (dailyTaskIdsToComplete.length > 0) {
+								models.DailyTask.findAll({
+									where: [`"DailyTask"."id" in (?)`, dailyTaskIdsToComplete],
+									include: [models.Task]
+								})
+								.then((dailyTasks) => {
 
-						// update daily tasks if requested
-						if (dailyTasksToUpdate.length > 0) {
-							dailyTasksToUpdate.forEach((dailyTask) => {
-								if (dailyTask.dataValues && dailyTask.minutes && dailyTask.text) {
-									const { minutes, text } = dailyTask;
-									models.DailyTask.update({
-										text,
-										minutes
+									var completedTaskIds = dailyTasks.map((dailyTask) => {
+										return dailyTask.TaskId;
+									});
+
+									models.Task.update({
+										done: true
 									}, {
-										where: [`"DailyTasks"."id" = ?`, dailyTask.dataValues.id]
+										where: [`"Tasks"."id" in (?)`, completedTaskIds]
 									})
-								}
-							})
+									.then(() => {
+										checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
+									})
+
+								})
+								return;
+							}
+
+							// update daily tasks if requested
+							if (dailyTasksToUpdate.length > 0) {
+								dailyTasksToUpdate.forEach((dailyTask) => {
+									if (dailyTask.dataValues && dailyTask.minutes && dailyTask.text) {
+										const { minutes, text } = dailyTask;
+										models.DailyTask.update({
+											text,
+											minutes
+										}, {
+											where: [`"DailyTasks"."id" = ?`, dailyTask.dataValues.id]
+										})
+									}
+								})
+								setTimeout(() => {
+									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
+								}, 200);
+								return;
+							}
+
+							// fall back
 							setTimeout(() => {
 								checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
 							}, 200);
-							return;
-						}
 
-						// fall back
-						setTimeout(() => {
-							checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
-						}, 200);
-
+						});
 					});
 				});
-			});
+			})
 		})
 	});
 
