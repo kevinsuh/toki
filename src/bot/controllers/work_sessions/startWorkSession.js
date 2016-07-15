@@ -236,7 +236,8 @@ export default function(controller) {
 					UserId: user.id,
 					SlackUserId,
 					tasksToWorkOnHash: {},
-					tz
+					tz,
+					newTask: {}
 				};
 
 				// FIND DAILY TASKS, THEN START THE CONVERSATION
@@ -355,7 +356,7 @@ export default function(controller) {
 									workSession.setDailyTasks(dailyTaskIds);
 
 									// if new task, insert that into DB and attach to work session
-									if (newTask) {
+									if (newTask.text && newTask.minutes) {
 
 										const priority          = (dailyTasks.length+1);
 										const { text, minutes } = newTask;
