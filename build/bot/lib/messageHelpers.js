@@ -66,7 +66,8 @@ function convertResponseObjectsToTaskArray(tasks) {
  */
 function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 
-	var taskNumbersSplitArray = taskNumbersString.split(/(,|and)/);
+	var splitter = RegExp(/(,|\ba[and]{1,}\b)/);
+	var taskNumbersSplitArray = taskNumbersString.split(splitter);
 
 	// if we capture 0 valid tasks from string, then we start over
 	var numberRegEx = new RegExp(/[\d]+/);

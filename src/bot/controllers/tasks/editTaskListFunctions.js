@@ -190,7 +190,16 @@ function askForTaskListOptions(convo) {
 		{ // NL equivalent to buttonValues.markComplete.value
 			pattern: utterances.containsCompleteOrCheckOrCross,
 			callback: function(response, convo) {
-				completeTasksFlow(response, convo);
+
+				var { dailyTasks } = convo.tasksEdit;
+				var taskNumbersToCompleteArray = convertTaskNumberStringToArray(response.text, dailyTasks);
+				if (taskNumbersToCompleteArray) {
+					// single line complete ability
+					confirmCompleteTasks(response, convo);
+				} else {
+					completeTasksFlow(response, convo);
+				}
+
 				convo.next();
 			}
 		},
@@ -204,7 +213,16 @@ function askForTaskListOptions(convo) {
 		{ // NL equivalent to buttonValues.deleteTasks.value
 			pattern: utterances.containsDeleteOrRemove,
 			callback: function(response, convo) {
-				deleteTasksFlow(response, convo);
+
+				var { dailyTasks } = convo.tasksEdit;
+				var taskNumbersToCompleteArray = convertTaskNumberStringToArray(response.text, dailyTasks);
+				if (taskNumbersToCompleteArray) {
+					// single line complete ability
+					confirmDeleteTasks(response, convo);
+				} else {
+					deleteTasksFlow(response, convo);
+				}
+
 				convo.next();
 			}
 		},

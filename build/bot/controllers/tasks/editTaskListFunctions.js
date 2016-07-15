@@ -189,7 +189,16 @@ function askForTaskListOptions(convo) {
 	}, { // NL equivalent to buttonValues.markComplete.value
 		pattern: _botResponses.utterances.containsCompleteOrCheckOrCross,
 		callback: function callback(response, convo) {
-			completeTasksFlow(response, convo);
+			var dailyTasks = convo.tasksEdit.dailyTasks;
+
+			var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
+			if (taskNumbersToCompleteArray) {
+				// single line complete ability
+				confirmCompleteTasks(response, convo);
+			} else {
+				completeTasksFlow(response, convo);
+			}
+
 			convo.next();
 		}
 	}, {
@@ -201,7 +210,16 @@ function askForTaskListOptions(convo) {
 	}, { // NL equivalent to buttonValues.deleteTasks.value
 		pattern: _botResponses.utterances.containsDeleteOrRemove,
 		callback: function callback(response, convo) {
-			deleteTasksFlow(response, convo);
+			var dailyTasks = convo.tasksEdit.dailyTasks;
+
+			var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
+			if (taskNumbersToCompleteArray) {
+				// single line complete ability
+				confirmDeleteTasks(response, convo);
+			} else {
+				deleteTasksFlow(response, convo);
+			}
+
 			convo.next();
 		}
 	}, {
