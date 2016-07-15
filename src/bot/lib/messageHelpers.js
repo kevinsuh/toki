@@ -114,54 +114,44 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 
 	var remainingTasks = [];
 	var completedTasks = [];
-	
-	if (segmentCompleted) {
-		console.log("\n\n ~~ segmenting tasks ( completed / not completed ) ~~");
 
-		taskArray.forEach((task) => {
-			if (!options.dontUseDataValues && task.dataValues) {
-				task = task.dataValues;
-			};
-			if (task.done) {
-				completedTasks.push(task);
-			} else {
-				remainingTasks.push(task);
-			}
-		});
-
-		if (newTasks) {
-			newTasks.forEach((newTask) => {
-				remainingTasks.push(newTask);
-			})
+	taskArray.forEach((task) => {
+		if (!options.dontUseDataValues && task.dataValues) {
+			task = task.dataValues;
+		};
+		if (task.done) {
+			completedTasks.push(task);
+		} else {
+			remainingTasks.push(task);
 		}
+	});
 
-
-		// add completed tasks to right place
-		var taskListMessageBody = '';
-		if (completedTasks.length > 0) {
-			taskListMessage = (options.noKarets ? `*Completed Tasks:*\n` : `> *Completed Tasks:*\n`);
-			taskListMessageBody = createTaskListMessageBody(completedTasks, options);
-			taskListMessage += taskListMessageBody;
-		}
-			
-		if (remainingTasks.length > 0) {
-			// add remaining tasks to right place
-			if (completedTasks.length == 0) {
-				// only remaining tasks, no completed tasks
-				taskListMessage += (options.noKarets ? `*Remaining Tasks:*\n` : `> *Remaining Tasks:*\n`);
-			} else {
-				taskListMessage += (options.noKarets ? `\n*Remaining Tasks:*\n` : `>\n>*Remaining Tasks:*\n`);
-			}
-			taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
-			taskListMessage += taskListMessageBody;
-		}
-		
-
-	} else {
-		var taskListMessageBody = createTaskListMessageBody(taskArray, options);
-		taskListMessage += taskListMessageBody;
-
+	if (newTasks) {
+		newTasks.forEach((newTask) => {
+			remainingTasks.push(newTask);
+		})
 	}
+
+
+	// add completed tasks to right place
+	var taskListMessageBody = '';
+	if (completedTasks.length > 0) {
+		taskListMessage = (options.noKarets ? `*Completed Tasks:*\n` : `> *Completed Tasks:*\n`);
+		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
+		taskListMessage += taskListMessageBody;
+	}
+		
+	if (remainingTasks.length > 0) {
+		// add remaining tasks to right place
+		if (completedTasks.length > 0) {
+			// only remaining tasks, no completed tasks
+			taskListMessage += (options.noKarets ? `\n*Remaining Tasks:*\n` : `>\n>*Remaining Tasks:*\n`);
+		}
+		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
+		taskListMessage += taskListMessageBody;
+	}
+	
+	
 
 	// plan has no remaining tasks but we want minutes to get calculated, so we need to forceCalculateMinutes for it
 	if ((!options.dontCalculateMinutes && remainingTasks.length > 0) || options.forceCalculateMinutes) { // taskListMessages default to show calculated minutes

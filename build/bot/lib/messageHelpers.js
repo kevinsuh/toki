@@ -134,47 +134,38 @@ function convertArrayToTaskListMessage(taskArray) {
 	var remainingTasks = [];
 	var completedTasks = [];
 
-	if (segmentCompleted) {
-		console.log("\n\n ~~ segmenting tasks ( completed / not completed ) ~~");
+	taskArray.forEach(function (task) {
+		if (!options.dontUseDataValues && task.dataValues) {
+			task = task.dataValues;
+		};
+		if (task.done) {
+			completedTasks.push(task);
+		} else {
+			remainingTasks.push(task);
+		}
+	});
 
-		taskArray.forEach(function (task) {
-			if (!options.dontUseDataValues && task.dataValues) {
-				task = task.dataValues;
-			};
-			if (task.done) {
-				completedTasks.push(task);
-			} else {
-				remainingTasks.push(task);
-			}
+	if (newTasks) {
+		newTasks.forEach(function (newTask) {
+			remainingTasks.push(newTask);
 		});
+	}
 
-		if (newTasks) {
-			newTasks.forEach(function (newTask) {
-				remainingTasks.push(newTask);
-			});
-		}
+	// add completed tasks to right place
+	var taskListMessageBody = '';
+	if (completedTasks.length > 0) {
+		taskListMessage = options.noKarets ? '*Completed Tasks:*\n' : '> *Completed Tasks:*\n';
+		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
+		taskListMessage += taskListMessageBody;
+	}
 
-		// add completed tasks to right place
-		var taskListMessageBody = '';
+	if (remainingTasks.length > 0) {
+		// add remaining tasks to right place
 		if (completedTasks.length > 0) {
-			taskListMessage = options.noKarets ? '*Completed Tasks:*\n' : '> *Completed Tasks:*\n';
-			taskListMessageBody = createTaskListMessageBody(completedTasks, options);
-			taskListMessage += taskListMessageBody;
+			// only remaining tasks, no completed tasks
+			taskListMessage += options.noKarets ? '\n*Remaining Tasks:*\n' : '>\n>*Remaining Tasks:*\n';
 		}
-
-		if (remainingTasks.length > 0) {
-			// add remaining tasks to right place
-			if (completedTasks.length == 0) {
-				// only remaining tasks, no completed tasks
-				taskListMessage += options.noKarets ? '*Remaining Tasks:*\n' : '> *Remaining Tasks:*\n';
-			} else {
-				taskListMessage += options.noKarets ? '\n*Remaining Tasks:*\n' : '>\n>*Remaining Tasks:*\n';
-			}
-			taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
-			taskListMessage += taskListMessageBody;
-		}
-	} else {
-		var taskListMessageBody = createTaskListMessageBody(taskArray, options);
+		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
 		taskListMessage += taskListMessageBody;
 	}
 
