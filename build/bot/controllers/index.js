@@ -194,9 +194,11 @@ function resumeQueuedReachouts(bot, config) {
 	var queuedReachouts = bot.queuedReachouts;
 
 
-	console.log("\n\n ~~ resuming these bot's queuedReachouts ~~:");
-	console.log(bot.queuedReachouts[SlackUserId].workSessions);
-	console.log("\n\n\n");
+	if (bot.queuedReachouts[SlackUserId]) {
+		console.log("\n\n ~~ resuming these bot's queuedReachouts ~~:");
+		console.log(bot.queuedReachouts[SlackUserId].workSessions);
+		console.log("\n\n\n");
+	}
 
 	if (queuedReachouts && SlackUserId && queuedReachouts[SlackUserId]) {
 		var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;

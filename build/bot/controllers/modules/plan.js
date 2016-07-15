@@ -71,6 +71,12 @@ function showPendingTasks(response, convo) {
 				text: "None of these",
 				value: _constants.buttonValues.noPendingTasks.value,
 				type: "button"
+			}, {
+				name: _constants.buttonValues.neverMind.name,
+				text: "Never mind!",
+				value: _constants.buttonValues.neverMind.value,
+				type: "button",
+				style: "danger"
 			}]
 		}]
 	}, [{
@@ -90,6 +96,18 @@ function showPendingTasks(response, convo) {
 		pattern: _botResponses.utterances.containsNumber,
 		callback: function callback(response, convo) {
 			savePendingTasksToWorkOn(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.neverMind.value,
+		callback: function callback(response, convo) {
+			convo.stop();
+			convo.next();
+		}
+	}, { // same as never mind button
+		pattern: _botResponses.utterances.startsWithNever,
+		callback: function callback(response, convo) {
+			convo.stop();
 			convo.next();
 		}
 	}, { // this is failure point

@@ -21,7 +21,7 @@ export default function(controller) {
 	controller.on('trigger_day_start', (bot, config) => {
 
 		const { SlackUserId } = config;
-		controller.trigger(`user_confirm_new_day`, [ bot, { SlackUserId } ]);
+		controller.trigger(`begin_day_flow`, [ bot, { SlackUserId } ]);
 
 	})
 
@@ -45,16 +45,14 @@ export default function(controller) {
 				]
 			})
 			.then((user) => {
-				controller.trigger(`user_confirm_new_day`, [ bot, { SlackUserId }]);
 
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 					convo.config = { SlackUserId };
 					var name = user.nickName || user.email;
 					convo.say(`Hey, ${name}!`);
 					convo.on('end', (convo) => {
-						console.log(convo);
 						const { SlackUserId } = convo.config;
-
+						controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
 					})
 				});
 			})
@@ -296,7 +294,7 @@ export default function(controller) {
 						// default premature end
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 							resumeQueuedReachouts(bot, { SlackUserId });
-							convo.say("Okay! Exiting now. Let me know when you want to start your day!");
+							convo.say("Okay! Let me know when you want to make a new plan :memo:");
 							convo.next();
 						});
 					}

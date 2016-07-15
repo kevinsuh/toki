@@ -15,7 +15,7 @@ exports.default = function (controller) {
 	controller.on('trigger_day_start', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
 
-		controller.trigger('user_confirm_new_day', [bot, { SlackUserId: SlackUserId }]);
+		controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
 	});
 
 	/**
@@ -35,15 +35,15 @@ exports.default = function (controller) {
 				where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 				include: [_models2.default.SlackUser]
 			}).then(function (user) {
-				controller.trigger('user_confirm_new_day', [bot, { SlackUserId: SlackUserId }]);
 
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 					convo.config = { SlackUserId: SlackUserId };
 					var name = user.nickName || user.email;
 					convo.say('Hey, ' + name + '!');
 					convo.on('end', function (convo) {
-						console.log(convo);
 						var SlackUserId = convo.config.SlackUserId;
+
+						controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
 					});
 				});
 			});
@@ -273,7 +273,7 @@ exports.default = function (controller) {
 						// default premature end
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-							convo.say("Okay! Exiting now. Let me know when you want to start your day!");
+							convo.say("Okay! Let me know when you want to make a new plan :memo:");
 							convo.next();
 						});
 					}

@@ -46,6 +46,13 @@ export function showPendingTasks(response, convo) {
 							text: "None of these",
 							value: buttonValues.noPendingTasks.value,
 							type: "button"
+					},
+					{
+							name: buttonValues.neverMind.name,
+							text: "Never mind!",
+							value: buttonValues.neverMind.value,
+							type: "button",
+							style: "danger"
 					}
 				]
 			}
@@ -71,6 +78,20 @@ export function showPendingTasks(response, convo) {
 			pattern: utterances.containsNumber,
 			callback: function(response, convo) {
 				savePendingTasksToWorkOn(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.neverMind.value,
+			callback: function(response, convo) {
+				convo.stop();
+				convo.next();
+			}
+		},
+		{ // same as never mind button
+			pattern: utterances.startsWithNever,
+			callback: function(response, convo) {
+				convo.stop();
 				convo.next();
 			}
 		},
