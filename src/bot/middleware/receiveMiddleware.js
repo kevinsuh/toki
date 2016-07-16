@@ -33,7 +33,10 @@ export default (controller) => {
 			bot.queuedReachouts = {};
 		}
 
-		if (message.user && message.type && message.type != "user_typing") {
+		if (message.type && message.type == "user_typing") {
+			console.log(`\n ~~ user typing middleware ~~ \n`);
+			next();
+		} else if (message.user) {
 
 			console.log(`\n ~~ in pauseWorkSession middleware ~~ \n`);
 
