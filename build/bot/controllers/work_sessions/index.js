@@ -11,7 +11,6 @@ exports.default = function (controller) {
   */
 
 	(0, _startWorkSession2.default)(controller);
-	(0, _middleWorkSession2.default)(controller);
 	(0, _endWorkSession2.default)(controller);
 	(0, _endWorkSessionTimeouts2.default)(controller);
 
@@ -81,6 +80,8 @@ exports.default = function (controller) {
 									var startDaySessionTime = (0, _momentTimezone2.default)(sessionGroups[0].createdAt);
 									var now = (0, _momentTimezone2.default)();
 									var hoursSinceStartDay = _momentTimezone2.default.duration(now.diff(startDaySessionTime)).asHours();
+									console.log('hours since start day: ' + hoursSinceStartDay);
+									console.log('hours for expiration time: ' + _constants.hoursForExpirationTime);
 									if (hoursSinceStartDay > _constants.hoursForExpirationTime) {
 										shouldStartNewDay = true;
 									}
@@ -184,10 +185,12 @@ exports.default = function (controller) {
 									config.intent = _intents2.default.ADD_TASK;
 									controller.trigger('new_session_group_decision', [bot, config]);
 								default:
+									(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 									break;
 							}
 						} else {
 							bot.reply(message, "Okay! Let me know when you want to start a session or day");
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						}
 					});
 				});
@@ -219,10 +222,6 @@ var _endWorkSession2 = _interopRequireDefault(_endWorkSession);
 var _endWorkSessionTimeouts = require('./endWorkSessionTimeouts');
 
 var _endWorkSessionTimeouts2 = _interopRequireDefault(_endWorkSessionTimeouts);
-
-var _middleWorkSession = require('./middleWorkSession');
-
-var _middleWorkSession2 = _interopRequireDefault(_middleWorkSession);
 
 var _startWorkSession = require('./startWorkSession');
 
@@ -572,9 +571,10 @@ function checkWorkSessionForLiveTasks(config) {
 
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-							convo.say('Good luck with ' + liveTasksString + '!');
-							convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*. Keep crushing :muscle:');
+							convo.say('Good luck finishing ' + liveTasksString + '!');
 						});
+
+						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 					}
 				});
 			} else {
