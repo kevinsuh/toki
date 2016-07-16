@@ -6,6 +6,7 @@ import moment from 'moment-timezone';
 
 import endWorkSessionController from './endWorkSession';
 import endWorkSessionTimeoutsController from './endWorkSessionTimeouts';
+import middleWorkSessionController from './middleWorkSession';
 import startWorKSessionController from './startWorkSession';
 
 import intentConfig from '../../lib/intents';
@@ -15,8 +16,6 @@ import { utterances } from '../../lib/botResponses';
 
 import { askUserPostSessionOptions, handlePostSessionDecision } from './endWorkSession';
 
-import { resumeQueuedReachouts } from '../index';
-
 // base controller for work sessions!
 export default function(controller) {
 
@@ -25,6 +24,7 @@ export default function(controller) {
 	 */
 	
 	startWorKSessionController(controller);
+	middleWorkSessionController(controller);
 	endWorkSessionController(controller);
 	endWorkSessionTimeoutsController(controller);
 
@@ -98,8 +98,6 @@ export default function(controller) {
 									var startDaySessionTime = moment(sessionGroups[0].createdAt);
 									var now                 = moment();
 									var hoursSinceStartDay  = moment.duration(now.diff(startDaySessionTime)).asHours();
-									console.log(`hours since start day: ${hoursSinceStartDay}`);
-									console.log(`hours for expiration time: ${hoursForExpirationTime}`);
 									if (hoursSinceStartDay > hoursForExpirationTime) {
 										shouldStartNewDay = true;
 									}
@@ -210,12 +208,10 @@ export default function(controller) {
 									config.intent = intentConfig.ADD_TASK;
 									controller.trigger(`new_session_group_decision`, [ bot, config ]);
 								default:
-									resumeQueuedReachouts(bot, { SlackUserId });
 									break;
 							}
 						} else {
 							bot.reply(message, "Okay! Let me know when you want to start a session or day");
-							resumeQueuedReachouts(bot, { SlackUserId });
 						}
 					});
 				});
@@ -592,11 +588,10 @@ export function checkWorkSessionForLiveTasks(config) {
 
 							bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
-								convo.say(`Good luck finishing ${liveTasksString}!`);
+								convo.say(`Good luck with ${liveTasksString}!`);
+								convo.say(`I'll see you in ${minutesString} at *${endTimeString}*. Keep crushing :muscle:`)
 
 							});
-
-							resumeQueuedReachouts(bot, { SlackUserId });
 
 						}
 
