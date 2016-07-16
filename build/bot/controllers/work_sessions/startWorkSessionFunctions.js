@@ -260,6 +260,7 @@ function finalizeNewTaskToStart(response, convo) {
 		pattern: _constants.buttonValues.changeTask.value,
 		callback: function callback(response, convo) {
 			convo.addNewTaskCustomMessage = 'What is it? `i.e. clean up market report` ';
+			convo.sessionStart.newTask.text = false;
 			addNewTask(response, convo);
 			convo.next();
 		}
@@ -267,6 +268,7 @@ function finalizeNewTaskToStart(response, convo) {
 		pattern: _botResponses.utterances.containsChangeTask,
 		callback: function callback(response, convo) {
 			convo.addNewTaskCustomMessage = 'What is it? `i.e. clean up market report` ';
+			convo.sessionStart.newTask.text = false;
 			addNewTask(response, convo);
 			convo.next();
 		}
@@ -278,7 +280,9 @@ function finalizeNewTaskToStart(response, convo) {
 			convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
 			convo.sessionStart.confirmStart = true;
 
-			askForCustomTotalMinutes(response, convo);
+			convo.sessionStart.newTask.minutes = false;
+
+			addTimeToNewTask(response, convo);
 			convo.next();
 		}
 	}, { // NL equivalent to buttonValues.changeSessionTime.value
@@ -289,7 +293,9 @@ function finalizeNewTaskToStart(response, convo) {
 			convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
 			convo.sessionStart.confirmStart = true;
 
-			askForCustomTotalMinutes(response, convo);
+			convo.sessionStart.newTask.minutes = false;
+
+			addTimeToNewTask(response, convo);
 			convo.next();
 		}
 	}, {
@@ -561,40 +567,28 @@ function addNewTask(response, convo) {
 		var source_message = task.source_message;
 
 		var SlackUserId = response.user;
-		var newTask = {};
 		var tz = convo.sessionStart.tz;
 		var entities = response.intentObject.entities;
 
+		// create new task
 
-		var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
-		if (customTimeObject && entities.reminder) {
+		convo.sessionStart.newTask.text = response.text;
 
-			var customTimeString = customTimeObject.format("h:mm a");
+		if (entities.duration && entities.reminder) {
+			convo.sessionStart.newTask.minutes = (0, _miscHelpers.witDurationToMinutes)(entities.duration);
+			convo.sessionStart.newTask.text = entities.reminder[0].value;
 
-			// create new task
-			newTask.text = entities.reminder[0].value;
-			// get minutes duration for new task
-			var now = (0, _momentTimezone2.default)();
-			var minutes = _momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes();
-			newTask.minutes = Math.round(minutes);
-
-			// this is how long user wants to work on session for as well
-			convo.sessionStart.calculatedTime = customTimeString;
-			convo.sessionStart.calculatedTimeObject = customTimeObject;
-			convo.sessionStart.newTask = newTask;
-
-			finalizeNewTaskToStart(response, convo);
-		} else {
-			// user did nto specify a time
-			newTask.text = response.text;
-			convo.sessionStart.newTask = newTask;
-			addTimeToNewTask(response, convo);
+			var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+			if (customTimeObject) {
+				var customTimeString = customTimeObject.format("h:mm a");
+				convo.sessionStart.calculatedTime = customTimeString;
+				convo.sessionStart.calculatedTimeObject = customTimeObject;
+			}
 		}
 
+		addTimeToNewTask(response, convo);
 		convo.next();
 	});
-
-	convo.next();
 }
 
 // get the time desired for new task
@@ -602,41 +596,42 @@ function addTimeToNewTask(response, convo) {
 	var task = convo.task;
 	var bot = task.bot;
 	var source_message = task.source_message;
-	var _convo$sessionStart7 = convo.sessionStart;
-	var newTask = _convo$sessionStart7.newTask;
-	var tz = _convo$sessionStart7.tz;
+	var tz = convo.sessionStart.tz;
 
 
-	convo.ask('How long would you like to work on `' + newTask.text + '`?', function (response, convo) {
+	if (convo.sessionStart.newTask.minutes) {
+		finalizeNewTaskToStart(response, convo);
+	} else {
+		convo.ask('How long would you like to work on `' + convo.sessionStart.newTask.text + '`?', function (response, convo) {
 
-		var timeToTask = response.text;
+			var timeToTask = response.text;
 
-		var validMinutesTester = new RegExp(/[\dh]/);
-		var isInvalid = false;
-		if (!validMinutesTester.test(timeToTask)) {
-			isInvalid = true;
-		}
+			var validMinutesTester = new RegExp(/[\dh]/);
+			var isInvalid = false;
+			if (!validMinutesTester.test(timeToTask)) {
+				isInvalid = true;
+			}
 
-		// INVALID tester
-		if (isInvalid) {
-			convo.say("Oops, looks like you didn't put in valid minutes :thinking_face:. Let's try this again");
-			convo.say("I'll assume you mean minutes - like `30` would be 30 minutes - unless you specify hours - like `1 hour 15 min`");
-			convo.repeat();
-		} else {
+			// INVALID tester
+			if (isInvalid) {
+				convo.say("Oops, looks like you didn't put in valid minutes :thinking_face:. Let's try this again");
+				convo.say("I'll assume you mean minutes - like `30` would be 30 minutes - unless you specify hours - like `1 hour 15 min`");
+				convo.repeat();
+			} else {
 
-			var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(timeToTask);
-			var customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(minutes, 'minutes');
-			var customTimeString = customTimeObject.format("h:mm a");
+				var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(timeToTask);
+				var customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(minutes, 'minutes');
+				var customTimeString = customTimeObject.format("h:mm a");
 
-			newTask.minutes = minutes;
-			convo.sessionStart.newTask = newTask;
-			convo.sessionStart.calculatedTime = customTimeString;
-			convo.sessionStart.calculatedTimeObject = customTimeObject;
+				convo.sessionStart.newTask.minutes = minutes;
+				convo.sessionStart.calculatedTime = customTimeString;
+				convo.sessionStart.calculatedTimeObject = customTimeObject;
 
-			finalizeNewTaskToStart(response, convo);
-		}
-		convo.next();
-	});
+				finalizeNewTaskToStart(response, convo);
+			}
+			convo.next();
+		});
+	}
 }
 
 /**

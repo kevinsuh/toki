@@ -12,9 +12,12 @@ import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSep
 import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
+import { resumeQueuedReachouts } from '../index';
+
 export default function(controller) {
 
 	controller.hears([THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
+		const SlackUserId = message.user;
 		bot.send({
 			type: "typing",
 			channel: message.channel
@@ -22,6 +25,7 @@ export default function(controller) {
 		setTimeout(() => {
 			bot.reply(message, "You're welcome!! :smile:");
 		}, 500);
+		resumeQueuedReachouts(bot, { SlackUserId });
 	})
 
 	// this will send message if no other intent gets picked up
@@ -82,7 +86,10 @@ export default function(controller) {
 						text: "Hey! I can only help you with a few things. Here's the list of things I can help you with:",
 						attachments: optionsAttachment
 					});
+
 				}
+
+				resumeQueuedReachouts(bot, { SlackUserId });
 
 			}, 1000);
 
@@ -145,7 +152,9 @@ export default function(controller) {
 						case intentConfig.START_DAY:
 							controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
 							break;
-						default: break;
+						default: 
+							resumeQueuedReachouts(bot, { SlackUserId });
+							break;
 					}
 
 				});

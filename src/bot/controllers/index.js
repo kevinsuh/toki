@@ -122,6 +122,52 @@ if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT
 	process.exit(1);
 }
 
+/**
+ * 		The master controller to handle all double conversations
+ * 		This function is what turns back on the necessary functions
+ */
+export function resumeQueuedReachouts(bot, config) {
+
+	// necessary config
+	var now                 = moment();
+	var { SlackUserId }     = config;
+	var { queuedReachouts } = bot;
+
+	if (queuedReachouts && SlackUserId && queuedReachouts[SlackUserId]) {
+
+		var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
+
+		console.log("\n\n ~~ looking to resume bot's queuedReachouts ~~:");
+
+		if (queuedWorkSessions && queuedWorkSessions.length > 0) {
+
+			var queuedWorkSessionIds = [];
+			queuedWorkSessions.forEach((workSession) => {
+				var endTime = moment(workSession.endTime);
+				if (endTime > now && workSession.dataValues.open == true) {
+					console.log("resuming this queuedSession:");
+					console.log(workSession);
+					console.log("\n\n");
+					queuedWorkSessionIds.push(workSession.dataValues.id);
+				}
+			})
+
+			if (queuedWorkSessionIds.length > 0) {
+				models.WorkSession.update({
+					live: true
+				}, {
+					where: [`"WorkSessions"."id" IN (?) `, queuedWorkSessionIds]
+				});
+			}
+
+		}
+
+		// "popping our queue" for the user
+		bot.queuedReachouts[SlackUserId].workSessions = [];
+		
+	}
+}
+
 // Custom Toki Config
 export function customConfigBot(controller) {
 
@@ -392,7 +438,9 @@ function triggerIntent(intent, config) {
 		case intentConfig.END_DAY:
 			controller.trigger(`trigger_day_end`, [ bot, { SlackUserId } ]);
 			break;
-		default: break;
+		default: 
+			resumeQueuedReachouts(bot, { SlackUserId });
+			break;
 	}
 }
 

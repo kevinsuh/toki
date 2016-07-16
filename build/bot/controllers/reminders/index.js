@@ -150,6 +150,8 @@ exports.default = function (controller) {
 							var remindTimeStampObject = now.add(minutes, 'minutes');
 
 							controller.trigger('done_session_snooze_button_flow', [bot, { SlackUserId: SlackUserId, remindTimeStampObject: remindTimeStampObject }]);
+						} else {
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						}
 					});
 				});
@@ -314,6 +316,8 @@ exports.default = function (controller) {
 							customNote: customNote
 						});
 					}
+
+					(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 				});
 			});
 		});

@@ -83,6 +83,8 @@ exports.default = function (controller) {
 							if (convo.readyToEndDay) {
 								(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 								controller.trigger('end_day_flow', [bot, { SlackUserId: SlackUserId }]);
+							} else {
+								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 							}
 						});
 					});
@@ -127,6 +129,7 @@ exports.default = function (controller) {
 						convo.say("You have not started a day yet! Let's `start a day` together :smile:");
 						convo.next();
 					});
+					(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 					return;
 				}
 
@@ -210,9 +213,11 @@ exports.default = function (controller) {
 										});
 									});
 								});
+								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 							} else {
 								// default premature end
 								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+									(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 									convo.say("Okay! Exiting now. Let me know when you want to start your day!");
 									convo.next();
 								});

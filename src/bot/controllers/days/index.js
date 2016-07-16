@@ -12,6 +12,8 @@ import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '.
 import startDayFlowController from './startDay';
 import endDayFlowController from './endDay';
 
+import { resumeQueuedReachouts } from '../index';
+
 // base controller for "day" flow
 export default function(controller) {
 	

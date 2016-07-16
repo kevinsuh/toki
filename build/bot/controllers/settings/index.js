@@ -55,6 +55,7 @@ exports.default = function (controller) {
 				};
 
 				startSettingsConversation(err, convo);
+				convo.next();
 
 				convo.on('end', function (convo) {
 
@@ -81,6 +82,8 @@ exports.default = function (controller) {
 							nickName: nickName
 						});
 					}
+
+					(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 				});
 			});
 		});

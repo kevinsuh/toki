@@ -16,7 +16,6 @@ exports.convertTimeStringToMinutes = convertTimeStringToMinutes;
 exports.convertToSingleTaskObjectArray = convertToSingleTaskObjectArray;
 exports.prioritizeTaskArrayFromUserInput = prioritizeTaskArrayFromUserInput;
 exports.commaSeparateOutTaskArray = commaSeparateOutTaskArray;
-exports.getUpdateTaskListMessageObject = getUpdateTaskListMessageObject;
 exports.getMostRecentTaskListMessageToUpdate = getMostRecentTaskListMessageToUpdate;
 
 var _constants = require('./constants');
@@ -67,7 +66,8 @@ function convertResponseObjectsToTaskArray(tasks) {
  */
 function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 
-	var taskNumbersSplitArray = taskNumbersString.split(/(,|and)/);
+	var splitter = RegExp(/(,|\ba[and]{1,}\b)/);
+	var taskNumbersSplitArray = taskNumbersString.split(splitter);
 
 	// if we capture 0 valid tasks from string, then we start over
 	var numberRegEx = new RegExp(/[\d]+/);
@@ -134,51 +134,43 @@ function convertArrayToTaskListMessage(taskArray) {
 	var remainingTasks = [];
 	var completedTasks = [];
 
-	if (segmentCompleted) {
-		console.log("\n\n ~~ segmenting tasks ( completed / not completed ) ~~");
+	taskArray.forEach(function (task) {
+		if (!options.dontUseDataValues && task.dataValues) {
+			task = task.dataValues;
+		};
+		if (task.done) {
+			completedTasks.push(task);
+		} else {
+			remainingTasks.push(task);
+		}
+	});
 
-		taskArray.forEach(function (task) {
-			if (!options.dontUseDataValues && task.dataValues) {
-				task = task.dataValues;
-			};
-			if (task.done) {
-				completedTasks.push(task);
-			} else {
-				remainingTasks.push(task);
-			}
+	if (newTasks) {
+		newTasks.forEach(function (newTask) {
+			remainingTasks.push(newTask);
 		});
+	}
 
-		if (newTasks) {
-			newTasks.forEach(function (newTask) {
-				remainingTasks.push(newTask);
-			});
-		}
-
-		// add completed tasks to right place
-		var taskListMessageBody = '';
-		if (completedTasks.length > 0) {
-			taskListMessage = options.noKarets ? '*Completed Tasks:*\n' : '> *Completed Tasks:*\n';
-			taskListMessageBody = createTaskListMessageBody(completedTasks, options);
-			taskListMessage += taskListMessageBody;
-		}
-
-		if (remainingTasks.length > 0) {
-			// add remaining tasks to right place
-			if (completedTasks.length == 0) {
-				// only remaining tasks, no completed tasks
-				taskListMessage += options.noKarets ? '*Remaining Tasks:*\n' : '> *Remaining Tasks:*\n';
-			} else {
-				taskListMessage += options.noKarets ? '\n*Remaining Tasks:*\n' : '>\n>*Remaining Tasks:*\n';
-			}
-			taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
-			taskListMessage += taskListMessageBody;
-		}
-	} else {
-		var taskListMessageBody = createTaskListMessageBody(taskArray, options);
+	// add completed tasks to right place
+	var taskListMessageBody = '';
+	if (completedTasks.length > 0) {
+		taskListMessage = options.noKarets ? '*Completed Tasks:*\n' : '> *Completed Tasks:*\n';
+		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
 		taskListMessage += taskListMessageBody;
 	}
 
-	if (!options.dontCalculateMinutes && remainingTasks.length > 0) {
+	if (remainingTasks.length > 0) {
+		// add remaining tasks to right place
+		if (completedTasks.length > 0) {
+			// only remaining tasks, no completed tasks
+			taskListMessage += options.noKarets ? '\n*Remaining Tasks:*\n' : '>\n>*Remaining Tasks:*\n';
+		}
+		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
+		taskListMessage += taskListMessageBody;
+	}
+
+	// plan has no remaining tasks but we want minutes to get calculated, so we need to forceCalculateMinutes for it
+	if (!options.dontCalculateMinutes && remainingTasks.length > 0 || options.forceCalculateMinutes) {
 		// taskListMessages default to show calculated minutes
 		var totalMinutes = options.totalMinutes;
 
@@ -436,34 +428,6 @@ function commaSeparateOutTaskArray(a) {
 	// make into string
 	var string = [a.slice(0, -1).join(', '), a.slice(-1)[0]].join(a.length < 2 ? '' : ' and ');
 	return string;
-}
-
-// match the closest message that matches the CHANNEL_ID of this response to the CHANNEL_ID that the bot is speaking to
-function getUpdateTaskListMessageObject(userChannel, bot) {
-	var sentMessages = bot.sentMessages;
-
-
-	var updateTaskListMessageObject = false;
-	if (sentMessages) {
-		// loop backwards to find the most recent message that matches
-		// this convo ChannelId w/ the bot's sentMessage ChannelId
-		for (var i = sentMessages.length - 1; i >= 0; i--) {
-
-			var message = sentMessages[i];
-			var channel = message.channel;
-			var ts = message.ts;
-
-			if (channel == userChannel) {
-				updateTaskListMessageObject = {
-					channel: channel,
-					ts: ts
-				};
-				break;
-			}
-		}
-	}
-
-	return updateTaskListMessageObject;
 }
 
 // new function to ensure you are getting a task list message to update

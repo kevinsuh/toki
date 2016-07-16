@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
@@ -215,10 +215,6 @@ var buttonValues = exports.buttonValues = {
 		name: "RESET_TIMES",
 		value: "RESET_TIMES"
 	},
-	resetTimesPersistent: {
-		name: "RESET_TIMES_PERSISTENT",
-		value: "RESET_TIMES_PERSISTENT"
-	},
 	doneSessionTimeoutSnooze: {
 		name: "DONE_SESSION_TIMEOUT_SNOOZE",
 		value: "DONE_SESSION_TIMEOUT_SNOOZE"
@@ -306,6 +302,10 @@ var buttonValues = exports.buttonValues = {
 	cancelSession: {
 		value: "CANCEL_SESSION",
 		name: "CANCEL_SESSION"
+	},
+	doneAddingTasks: {
+		value: "DONE_ADDING_TASKS",
+		name: "DONE_ADDING_TASKS"
 	}
 };
 
@@ -400,4 +400,50 @@ var sessionTimerDecisions = exports.sessionTimerDecisions = {
 	newSession: "NEW_SESSION",
 	cancelSession: "CANCEL_SESSION"
 };
+
+var taskListMessageDoneButtonAttachment = exports.taskListMessageDoneButtonAttachment = [{
+	attachment_type: 'default',
+	callback_id: "TASK_LIST_MESSAGE",
+	fallback: "Which additional tasks do you want to work on?",
+	color: colorsHash.grey.hex,
+	actions: [{
+		name: buttonValues.doneAddingTasks.name,
+		text: "Done",
+		value: buttonValues.doneAddingTasks.value,
+		type: "button",
+		style: "primary"
+	}]
+}];
+
+var taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = [{
+	attachment_type: 'default',
+	callback_id: "TASK_LIST_MESSAGE",
+	fallback: "How much time would you like to allocate to your tasks?",
+	color: colorsHash.grey.hex,
+	actions: [{
+		name: buttonValues.actuallyWantToAddATask.name,
+		text: "Add more tasks!",
+		value: buttonValues.actuallyWantToAddATask.value,
+		type: "button"
+	}, {
+		name: buttonValues.resetTimes.name,
+		text: "Reset times",
+		value: buttonValues.resetTimes.value,
+		type: "button",
+		style: "danger"
+	}]
+}];
+
+var taskListMessageResetTimesButtonAttachment = exports.taskListMessageResetTimesButtonAttachment = [{
+	attachment_type: 'default',
+	callback_id: "TASK_LIST_MESSAGE",
+	fallback: "How much time would you like to allocate to your tasks?",
+	color: colorsHash.grey.hex,
+	actions: [{
+		name: buttonValues.actuallyWantToAddATask.name,
+		text: "Add more tasks!",
+		value: buttonValues.actuallyWantToAddATask.value,
+		type: "button"
+	}]
+}];
 //# sourceMappingURL=constants.js.map

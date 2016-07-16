@@ -50,7 +50,8 @@ export function convertResponseObjectsToTaskArray(tasks) {
  */
 export function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 
-	var taskNumbersSplitArray = taskNumbersString.split(/(,|and)/);
+	const splitter            = RegExp(/(,|\ba[and]{1,}\b)/);
+	var taskNumbersSplitArray = taskNumbersString.split(splitter);
 
 	// if we capture 0 valid tasks from string, then we start over
 	var numberRegEx          = new RegExp(/[\d]+/);
@@ -114,57 +115,47 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 
 	var remainingTasks = [];
 	var completedTasks = [];
-	
-	if (segmentCompleted) {
-		console.log("\n\n ~~ segmenting tasks ( completed / not completed ) ~~");
 
-		taskArray.forEach((task) => {
-			if (!options.dontUseDataValues && task.dataValues) {
-				task = task.dataValues;
-			};
-			if (task.done) {
-				completedTasks.push(task);
-			} else {
-				remainingTasks.push(task);
-			}
-		});
-
-		if (newTasks) {
-			newTasks.forEach((newTask) => {
-				remainingTasks.push(newTask);
-			})
+	taskArray.forEach((task) => {
+		if (!options.dontUseDataValues && task.dataValues) {
+			task = task.dataValues;
+		};
+		if (task.done) {
+			completedTasks.push(task);
+		} else {
+			remainingTasks.push(task);
 		}
+	});
 
-
-		// add completed tasks to right place
-		var taskListMessageBody = '';
-		if (completedTasks.length > 0) {
-			taskListMessage = (options.noKarets ? `*Completed Tasks:*\n` : `> *Completed Tasks:*\n`);
-			taskListMessageBody = createTaskListMessageBody(completedTasks, options);
-			taskListMessage += taskListMessageBody;
-		}
-			
-
-		if (remainingTasks.length > 0) {
-			// add remaining tasks to right place
-			if (completedTasks.length == 0) {
-				// only remaining tasks, no completed tasks
-				taskListMessage += (options.noKarets ? `*Remaining Tasks:*\n` : `> *Remaining Tasks:*\n`);
-			} else {
-				taskListMessage += (options.noKarets ? `\n*Remaining Tasks:*\n` : `>\n>*Remaining Tasks:*\n`);
-			}
-			taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
-			taskListMessage += taskListMessageBody;
-		}
-		
-
-	} else {
-		var taskListMessageBody = createTaskListMessageBody(taskArray, options);
-		taskListMessage += taskListMessageBody;
-
+	if (newTasks) {
+		newTasks.forEach((newTask) => {
+			remainingTasks.push(newTask);
+		})
 	}
 
-	if (!options.dontCalculateMinutes && remainingTasks.length > 0) { // taskListMessages default to show calculated minutes
+
+	// add completed tasks to right place
+	var taskListMessageBody = '';
+	if (completedTasks.length > 0) {
+		taskListMessage = (options.noKarets ? `*Completed Tasks:*\n` : `> *Completed Tasks:*\n`);
+		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
+		taskListMessage += taskListMessageBody;
+	}
+		
+	if (remainingTasks.length > 0) {
+		// add remaining tasks to right place
+		if (completedTasks.length > 0) {
+			// only remaining tasks, no completed tasks
+			taskListMessage += (options.noKarets ? `\n*Remaining Tasks:*\n` : `>\n>*Remaining Tasks:*\n`);
+		}
+		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
+		taskListMessage += taskListMessageBody;
+	}
+	
+	
+
+	// plan has no remaining tasks but we want minutes to get calculated, so we need to forceCalculateMinutes for it
+	if ((!options.dontCalculateMinutes && remainingTasks.length > 0) || options.forceCalculateMinutes) { // taskListMessages default to show calculated minutes
 		var { totalMinutes } = options;
 		var timeString = convertMinutesToHoursString(totalMinutes);
 		var totalMinutesContent = `\n*Total time estimate: ${timeString} :clock730:*`;
@@ -427,34 +418,6 @@ export function commaSeparateOutTaskArray(a) {
 	return string;
 }
 
-// match the closest message that matches the CHANNEL_ID of this response to the CHANNEL_ID that the bot is speaking to
-export function getUpdateTaskListMessageObject(userChannel, bot) {
-	
-	var { sentMessages } = bot;
-
-	var updateTaskListMessageObject = false;
-	if (sentMessages) {
-		// loop backwards to find the most recent message that matches
-		// this convo ChannelId w/ the bot's sentMessage ChannelId
-		for (var i = sentMessages.length - 1; i >= 0; i--) {
-
-			var message           = sentMessages[i];
-			const { channel, ts } = message;
-			if (channel == userChannel) {
-				updateTaskListMessageObject = {
-					channel,
-					ts
-				};
-				break;
-			}
-		}
-	}
-
-	return updateTaskListMessageObject;
-
-}
-
-
 // new function to ensure you are getting a task list message to update
 export function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
 	
@@ -483,5 +446,4 @@ export function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
 	return updateTaskListMessageObject;
 
 }
-
 

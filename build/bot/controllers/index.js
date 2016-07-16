@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 exports.bots = exports.controller = exports.wit = undefined;
+exports.resumeQueuedReachouts = resumeQueuedReachouts;
 exports.customConfigBot = customConfigBot;
 exports.trackBot = trackBot;
 exports.connectOnInstall = connectOnInstall;
@@ -179,6 +180,51 @@ var bots = exports.bots = {};
 if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT) {
 	console.log('Error: Specify SLACK_ID SLACK_SECRET and HTTP_PORT in environment');
 	process.exit(1);
+}
+
+/**
+ * 		The master controller to handle all double conversations
+ * 		This function is what turns back on the necessary functions
+ */
+function resumeQueuedReachouts(bot, config) {
+
+	// necessary config
+	var now = (0, _momentTimezone2.default)();
+	var SlackUserId = config.SlackUserId;
+	var queuedReachouts = bot.queuedReachouts;
+
+
+	if (queuedReachouts && SlackUserId && queuedReachouts[SlackUserId]) {
+
+		var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
+
+		console.log("\n\n ~~ looking to resume bot's queuedReachouts ~~:");
+
+		if (queuedWorkSessions && queuedWorkSessions.length > 0) {
+
+			var queuedWorkSessionIds = [];
+			queuedWorkSessions.forEach(function (workSession) {
+				var endTime = (0, _momentTimezone2.default)(workSession.endTime);
+				if (endTime > now && workSession.dataValues.open == true) {
+					console.log("resuming this queuedSession:");
+					console.log(workSession);
+					console.log("\n\n");
+					queuedWorkSessionIds.push(workSession.dataValues.id);
+				}
+			});
+
+			if (queuedWorkSessionIds.length > 0) {
+				_models2.default.WorkSession.update({
+					live: true
+				}, {
+					where: ['"WorkSessions"."id" IN (?) ', queuedWorkSessionIds]
+				});
+			}
+		}
+
+		// "popping our queue" for the user
+		bot.queuedReachouts[SlackUserId].workSessions = [];
+	}
 }
 
 // Custom Toki Config
@@ -449,6 +495,7 @@ function triggerIntent(intent, config) {
 			controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
 			break;
 		default:
+			resumeQueuedReachouts(bot, { SlackUserId: SlackUserId });
 			break;
 	}
 }

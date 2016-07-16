@@ -22,7 +22,7 @@ export default function() {
 var checkForSessions = () => {
 
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
-	var now = moment.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
+	var now = moment().format("YYYY-MM-DD HH:mm:ss Z");
 
 	// get the most recent work session! assume this is the one user is working on
 	models.WorkSession.findAll({
@@ -89,7 +89,7 @@ var checkForSessions = () => {
 var checkForReminders = () => {
 
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
-	var now = moment.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
+	var now = moment().format("YYYY-MM-DD HH:mm:ss Z");
 
 	models.Reminder.findAll({
 		where: [`"remindTime" < ? AND open = ?`, now, true]

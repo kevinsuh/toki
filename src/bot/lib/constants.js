@@ -205,10 +205,6 @@ export const buttonValues ={
 		name: "RESET_TIMES",
 		value: "RESET_TIMES"
 	},
-	resetTimesPersistent: {
-		name: "RESET_TIMES_PERSISTENT",
-		value: "RESET_TIMES_PERSISTENT"
-	},
 	doneSessionTimeoutSnooze: {
 		name: "DONE_SESSION_TIMEOUT_SNOOZE",
 		value: "DONE_SESSION_TIMEOUT_SNOOZE"
@@ -296,6 +292,10 @@ export const buttonValues ={
 	cancelSession: {
 		value: "CANCEL_SESSION",
 		name: "CANCEL_SESSION"
+	},
+	doneAddingTasks: {
+		value: "DONE_ADDING_TASKS",
+		name: "DONE_ADDING_TASKS"
 	}
 }
 
@@ -410,7 +410,64 @@ export const sessionTimerDecisions = {
 	cancelSession: "CANCEL_SESSION"
 }
 
+export const taskListMessageDoneButtonAttachment = [
+	{
+		attachment_type: 'default',
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "Which additional tasks do you want to work on?",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+					name: buttonValues.doneAddingTasks.name,
+					text: "Done",
+					value: buttonValues.doneAddingTasks.value,
+					type: "button",
+					style: "primary"
+			}
+		]
+	}
+];
 
+export const taskListMessageAddMoreTasksAndResetTimesButtonAttachment = [
+	{
+		attachment_type: 'default',
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "How much time would you like to allocate to your tasks?",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+					name: buttonValues.actuallyWantToAddATask.name,
+					text: "Add more tasks!",
+					value: buttonValues.actuallyWantToAddATask.value,
+					type: "button"
+			},
+			{
+					name: buttonValues.resetTimes.name,
+					text: "Reset times",
+					value: buttonValues.resetTimes.value,
+					type: "button",
+					style: "danger"
+			}
+		]
+	}
+];
+
+export const taskListMessageResetTimesButtonAttachment = [
+	{
+		attachment_type: 'default',
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "How much time would you like to allocate to your tasks?",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+					name: buttonValues.actuallyWantToAddATask.name,
+					text: "Add more tasks!",
+					value: buttonValues.actuallyWantToAddATask.value,
+					type: "button"
+			}
+		]
+	}
+];
 
 
 

@@ -12,6 +12,8 @@ import { colorsArray, THANK_YOU, buttonValues, colorsHash } from '../../lib/cons
 
 import { startSessionStartConversation } from './startWorkSessionFunctions';
 
+import { resumeQueuedReachouts } from '../index';
+
 // START OF A WORK SESSION
 export default function(controller) {
 
@@ -70,8 +72,9 @@ export default function(controller) {
 		})
 		.then((user) => {
 
+			var now = moment().format("YYYY-MM-DD HH:mm:ss Z");
 			user.getWorkSessions({
-				where: [`"live" = ?`, true ]
+				where: [`"open" = ? AND "endTime" > ?`, true, now ]
 			})
 			.then((workSessions) => {
 
@@ -185,9 +188,11 @@ export default function(controller) {
 									});
 								})
 							});
-
 							controller.trigger(`begin_session`, [ bot, { SlackUserId }]);
+						} else {
+							resumeQueuedReachouts(bot, { SlackUserId });
 						}
+
 					});
 				});
 			});
@@ -234,7 +239,8 @@ export default function(controller) {
 					UserId: user.id,
 					SlackUserId,
 					tasksToWorkOnHash: {},
-					tz
+					tz,
+					newTask: {}
 				};
 
 				// FIND DAILY TASKS, THEN START THE CONVERSATION
@@ -353,7 +359,7 @@ export default function(controller) {
 									workSession.setDailyTasks(dailyTaskIds);
 
 									// if new task, insert that into DB and attach to work session
-									if (newTask) {
+									if (newTask.text && newTask.minutes) {
 
 										const priority          = (dailyTasks.length+1);
 										const { text, minutes } = newTask;

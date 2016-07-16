@@ -15,7 +15,7 @@ exports.default = function (controller) {
 	controller.on('trigger_day_start', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
 
-		controller.trigger('user_confirm_new_day', [bot, { SlackUserId: SlackUserId }]);
+		controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
 	});
 
 	/**
@@ -35,15 +35,15 @@ exports.default = function (controller) {
 				where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 				include: [_models2.default.SlackUser]
 			}).then(function (user) {
-				controller.trigger('user_confirm_new_day', [bot, { SlackUserId: SlackUserId }]);
 
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 					convo.config = { SlackUserId: SlackUserId };
 					var name = user.nickName || user.email;
-					convo.say('Hey, ' + name + '!');
+					convo.say('Hey, ' + name + '! Let\'s make a plan :memo:');
 					convo.on('end', function (convo) {
-						console.log(convo);
 						var SlackUserId = convo.config.SlackUserId;
+
+						controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
 					});
 				});
 			});
@@ -69,15 +69,6 @@ exports.default = function (controller) {
 				limit: 5,
 				where: ['"SessionGroup"."type" = ?', "start_work"]
 			}).then(function (sessionGroups) {
-
-				var useHelperText = false;
-				if (sessionGroups.length == 0) {
-					// if user has 0 start days, then we will trigger helper text flow
-					useHelperText = true;
-				}
-
-				// testing for now
-				// useHelperText = true;
 
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
@@ -107,7 +98,9 @@ exports.default = function (controller) {
 					}]);
 					convo.on('end', function (convo) {
 						if (convo.readyToStartDay) {
-							controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId, useHelperText: useHelperText }]);
+							controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
+						} else {
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						}
 					});
 				});
@@ -125,7 +118,6 @@ exports.default = function (controller) {
  */
 	controller.on('begin_day_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
-		var useHelperText = config.useHelperText;
 
 
 		_models2.default.User.find({
@@ -140,8 +132,8 @@ exports.default = function (controller) {
 
 				convo.dayStart = {
 					bot: bot,
+					taskArray: [],
 					UserId: user.id,
-					useHelperText: useHelperText,
 					startDayDecision: false, // what does user want to do with day
 					prioritizedTaskArray: [] // the final tasks to do for the day
 				};
@@ -262,13 +254,16 @@ exports.default = function (controller) {
 									v: void 0
 								};
 							}
+
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						}();
 
 						if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
 					} else {
 						// default premature end
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-							convo.say("Okay! Exiting now. Let me know when you want to start your day!");
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+							convo.say("Okay! Let me know when you want to make a `new plan`");
 							convo.next();
 						});
 					}

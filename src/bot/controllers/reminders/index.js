@@ -8,6 +8,8 @@ import { witTimeResponseToTimeZoneObject, witDurationToTimeZoneObject, dateStrin
 import { convertTimeStringToMinutes } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 
+import { resumeQueuedReachouts } from '../index';
+
 // base controller for reminders
 export default function(controller) {
 
@@ -152,6 +154,8 @@ export default function(controller) {
 
 							controller.trigger(`done_session_snooze_button_flow`, [ bot, { SlackUserId, remindTimeStampObject }]);
 
+						} else {
+							resumeQueuedReachouts(bot, { SlackUserId });
 						}
 
 					})
@@ -324,6 +328,8 @@ export default function(controller) {
 							customNote
 						});
 					}
+
+					resumeQueuedReachouts(bot, { SlackUserId });
 
 				});
 			});

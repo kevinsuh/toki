@@ -58,8 +58,9 @@ exports.default = function (controller) {
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 
+			var now = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss Z");
 			user.getWorkSessions({
-				where: ['"live" = ?', true]
+				where: ['"open" = ? AND "endTime" > ?', true, now]
 			}).then(function (workSessions) {
 				var tz = user.SlackUser.tz;
 
@@ -167,8 +168,9 @@ exports.default = function (controller) {
 									});
 								});
 							});
-
 							controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+						} else {
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						}
 					});
 				});
@@ -217,7 +219,8 @@ exports.default = function (controller) {
 					UserId: user.id,
 					SlackUserId: SlackUserId,
 					tasksToWorkOnHash: {},
-					tz: tz
+					tz: tz,
+					newTask: {}
 				};
 
 				// FIND DAILY TASKS, THEN START THE CONVERSATION
@@ -343,7 +346,7 @@ exports.default = function (controller) {
 									workSession.setDailyTasks(dailyTaskIds);
 
 									// if new task, insert that into DB and attach to work session
-									if (newTask) {
+									if (newTask.text && newTask.minutes) {
 										(function () {
 
 											var priority = dailyTasks.length + 1;

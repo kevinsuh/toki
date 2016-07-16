@@ -1,4 +1,5 @@
 import { wit } from '../controllers/index';
+import models from '../../app/models';
 
 // add receive middleware to controller
 export default (controller) => {
@@ -20,6 +21,82 @@ export default (controller) => {
 		
 		next();
 
-});
+	});
+
+	// middleware to handle the pausing of cron jobs
+	// this middleware will turn off all existing work sessions
+	// then add them to bot.queuedReachouts, which will be called
+	// at the end of each conversation to turn back on
+	controller.middleware.receive.use((bot, message, next) => {
+
+		if (!bot.queuedReachouts) {
+			bot.queuedReachouts = {};
+		}
+
+		if (message.type && message.type == "user_typing") {
+			console.log(`\n ~~ user typing middleware ~~ \n`);
+			next();
+		} else if (message.user) {
+
+			console.log(`\n ~~ in pauseWorkSession middleware ~~ \n`);
+
+			const SlackUserId = message.user;
+
+			// if found user, find the user
+			models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+				include: [
+					models.SlackUser
+				]
+			})
+			.then((user) => {
+
+				if (user) {
+
+					user.getWorkSessions({
+						where: [`"live" = ?`, true ]
+					})
+					.then((workSessions) => {
+
+						// found a work session! (should be <= 1 per user)
+						if (workSessions.length > 0) {
+
+							var pausedWorkSessions = [];
+							workSessions.forEach((workSession) => {
+
+								workSession.update({
+									live: false
+								});
+
+								pausedWorkSessions.push(workSession);
+
+							});
+
+							// queued reachout has been created for this user
+							if (bot.queuedReachouts[SlackUserId] && bot.queuedReachouts[SlackUserId].workSessions) {
+								pausedWorkSessions.forEach((workSession) => {
+									bot.queuedReachouts[SlackUserId].workSessions.push(workSession);
+								});
+							} else {
+								bot.queuedReachouts[SlackUserId] = {
+									workSessions: pausedWorkSessions
+								}
+							}
+						}
+
+						next();
+
+					})
+				} else {
+					next();
+				}
+
+			});
+
+		} else {
+			next();
+		}
+
+	})
 
 }

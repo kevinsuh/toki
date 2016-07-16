@@ -99,6 +99,7 @@ exports.default = function (controller) {
 						convo.say("Hey! You haven't `started a day` yet, let's do that first");
 						convo.next();
 					});
+					(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 					return;
 				}
 
@@ -159,6 +160,8 @@ exports.default = function (controller) {
 									// if user did not add a task, then we can go straight to editing task list
 									if (editTaskList) {
 										controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
+									} else {
+										(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 									}
 								}
 							} else {
@@ -167,6 +170,7 @@ exports.default = function (controller) {
 									convo.say("Okay! I didn't add any tasks. I'll be here whenever you want to do that :smile:");
 									convo.next();
 								});
+								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 							}
 						});
 					});

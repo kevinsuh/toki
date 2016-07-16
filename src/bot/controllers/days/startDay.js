@@ -12,6 +12,8 @@ import { FINISH_WORD, EXIT_EARLY_WORDS, NONE } from '../../lib/constants';
 
 import { showPendingTasks, askForDayTasks } from '../modules/plan';
 
+import { resumeQueuedReachouts } from '../index';
+
 // base controller for start day
 export default function(controller) {
 
@@ -19,7 +21,7 @@ export default function(controller) {
 	controller.on('trigger_day_start', (bot, config) => {
 
 		const { SlackUserId } = config;
-		controller.trigger(`user_confirm_new_day`, [ bot, { SlackUserId } ]);
+		controller.trigger(`begin_day_flow`, [ bot, { SlackUserId } ]);
 
 	})
 
@@ -43,16 +45,14 @@ export default function(controller) {
 				]
 			})
 			.then((user) => {
-				controller.trigger(`user_confirm_new_day`, [ bot, { SlackUserId }]);
 
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 					convo.config = { SlackUserId };
 					var name = user.nickName || user.email;
-					convo.say(`Hey, ${name}!`);
+					convo.say(`Hey, ${name}! Let's make a plan :memo:`);
 					convo.on('end', (convo) => {
-						console.log(convo);
 						const { SlackUserId } = convo.config;
-						
+						controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
 					})
 				});
 			})
@@ -82,15 +82,6 @@ export default function(controller) {
 				where: [ `"SessionGroup"."type" = ?`, "start_work"]
 			})
 			.then((sessionGroups) => {
-
-				var useHelperText = false;
-				if (sessionGroups.length == 0) {
-					// if user has 0 start days, then we will trigger helper text flow
-					useHelperText = true;
-				}
-
-				// testing for now
-				// useHelperText = true;
 
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
@@ -124,7 +115,9 @@ export default function(controller) {
 					]);
 					convo.on('end', (convo) => {
 						if (convo.readyToStartDay) {
-							controller.trigger(`begin_day_flow`, [ bot, { SlackUserId, useHelperText }]);
+							controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
+						} else {
+							resumeQueuedReachouts(bot, { SlackUserId });
 						}
 					});
 				
@@ -146,7 +139,7 @@ export default function(controller) {
 	*/
 	controller.on('begin_day_flow', (bot, config) => {
 
-		const { SlackUserId, useHelperText } = config;
+		const { SlackUserId } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -163,8 +156,8 @@ export default function(controller) {
 
 				convo.dayStart = {
 					bot,
+					taskArray: [],
 					UserId: user.id,
-					useHelperText,
 					startDayDecision: false, // what does user want to do with day
 					prioritizedTaskArray: [] // the final tasks to do for the day
 				}
@@ -286,10 +279,13 @@ export default function(controller) {
 							return;
 						}
 
+						resumeQueuedReachouts(bot, { SlackUserId });
+
 					} else {
 						// default premature end
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-							convo.say("Okay! Exiting now. Let me know when you want to start your day!");
+							resumeQueuedReachouts(bot, { SlackUserId });
+							convo.say("Okay! Let me know when you want to make a `new plan`");
 							convo.next();
 						});
 					}
