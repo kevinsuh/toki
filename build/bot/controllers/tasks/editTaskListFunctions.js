@@ -251,7 +251,7 @@ function askForTaskListOptions(convo) {
 			// delete button when answered with NL
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
-			convo.say("Okay! No worries :wave:");
+			convo.say("Okay! No worries. Talk soon :wave:");
 			convo.next();
 		}
 	}, { // this is failure point. restart with question

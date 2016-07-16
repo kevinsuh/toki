@@ -240,7 +240,7 @@ function askForTaskListOptions(convo) {
 				// delete button when answered with NL
 				deleteConvoAskMessage(response.channel, bot);
 
-				convo.say("Okay! No worries :wave:");
+				convo.say("Okay! No worries. Talk soon :wave:");
 				convo.next();
 			}
 		},
