@@ -58,7 +58,6 @@ function startEditTaskListMessage(convo) {
 			});
 
 			var sessionTasks = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
-			convo.say('You\'re currently in a session for ' + sessionTasks + ' until *' + endTimeString + '* (' + minutesString + ' left)');
 			// convo.say({
 			// 	attachments: [
 			// 		{
@@ -69,6 +68,7 @@ function startEditTaskListMessage(convo) {
 			// });
 
 			sayTasksForToday(convo);
+			convo.say('You\'re currently in a session for ' + sessionTasks + ' until *' + endTimeString + '* (' + minutesString + ' left)');
 			askForTaskListOptions(convo);
 			convo.next();
 		});

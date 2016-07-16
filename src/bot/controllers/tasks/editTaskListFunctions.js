@@ -31,7 +31,6 @@ export function startEditTaskListMessage(convo) {
 			})
 
 			var sessionTasks = commaSeparateOutTaskArray(dailyTaskTexts);
-			convo.say(`You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`);
 			// convo.say({
 			// 	attachments: [
 			// 		{
@@ -42,6 +41,7 @@ export function startEditTaskListMessage(convo) {
 			// });
 
 			sayTasksForToday(convo);
+			convo.say(`You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`);
 			askForTaskListOptions(convo);
 			convo.next();
 		})
