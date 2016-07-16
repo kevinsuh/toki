@@ -24,8 +24,8 @@ export default function(controller) {
 		});
 		setTimeout(() => {
 			bot.reply(message, "You're welcome!! :smile:");
+			resumeQueuedReachouts(bot, { SlackUserId });
 		}, 500);
-		resumeQueuedReachouts(bot, { SlackUserId });
 	})
 
 	// this will send message if no other intent gets picked up
