@@ -571,6 +571,8 @@ function checkWorkSessionForLiveTasks(config) {
 
 							convo.say('Good luck finishing ' + liveTasksString + '!');
 						});
+
+						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 					}
 				});
 			} else {

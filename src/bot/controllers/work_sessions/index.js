@@ -594,6 +594,8 @@ export function checkWorkSessionForLiveTasks(config) {
 
 							});
 
+							resumeQueuedReachouts(bot, { SlackUserId });
+
 						}
 
 					});
