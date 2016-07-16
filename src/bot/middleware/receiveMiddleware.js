@@ -81,9 +81,6 @@ export default (controller) => {
 							}
 						}
 
-						console.log(`\n\n ~~ queuedReachouts for User (${SlackUserId}): ~~`);
-						console.log(bot.queuedReachouts);
-
 						next();
 
 					})
