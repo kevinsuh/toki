@@ -6,7 +6,6 @@ import moment from 'moment-timezone';
 
 import endWorkSessionController from './endWorkSession';
 import endWorkSessionTimeoutsController from './endWorkSessionTimeouts';
-import middleWorkSessionController from './middleWorkSession';
 import startWorKSessionController from './startWorkSession';
 
 import intentConfig from '../../lib/intents';
@@ -26,7 +25,6 @@ export default function(controller) {
 	 */
 	
 	startWorKSessionController(controller);
-	middleWorkSessionController(controller);
 	endWorkSessionController(controller);
 	endWorkSessionTimeoutsController(controller);
 
@@ -592,8 +590,7 @@ export function checkWorkSessionForLiveTasks(config) {
 
 							bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
-								convo.say(`Good luck with ${liveTasksString}!`);
-								convo.say(`I'll see you in ${minutesString} at *${endTimeString}*. Keep crushing :muscle:`)
+								convo.say(`Good luck finishing ${liveTasksString}!`);
 
 							});
 

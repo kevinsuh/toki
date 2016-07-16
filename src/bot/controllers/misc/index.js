@@ -16,6 +16,15 @@ import { resumeQueuedReachouts } from '../index';
 
 export default function(controller) {
 
+	controller.on(`user_typing`, (bot, message) => {
+		const SlackUserId = message.user;
+		if (SlackUserId) {
+			setTimeout(()=> {
+				resumeQueuedReachouts(bot, { SlackUserId });
+			}, 1500);
+		}
+	})
+
 	controller.hears([THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
 		const SlackUserId = message.user;
 		bot.send({

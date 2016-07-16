@@ -716,6 +716,7 @@ exports.default = function (controller) {
 				convo.sessionEnd.UserId = user.id;
 				convo.sessionEnd.tz = tz;
 
+				// this will close all sessions < now (as it should)!
 				(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 
 				return user.getDailyTasks({

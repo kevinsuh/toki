@@ -11,7 +11,6 @@ exports.default = function (controller) {
   */
 
 	(0, _startWorkSession2.default)(controller);
-	(0, _middleWorkSession2.default)(controller);
 	(0, _endWorkSession2.default)(controller);
 	(0, _endWorkSessionTimeouts2.default)(controller);
 
@@ -221,10 +220,6 @@ var _endWorkSession2 = _interopRequireDefault(_endWorkSession);
 var _endWorkSessionTimeouts = require('./endWorkSessionTimeouts');
 
 var _endWorkSessionTimeouts2 = _interopRequireDefault(_endWorkSessionTimeouts);
-
-var _middleWorkSession = require('./middleWorkSession');
-
-var _middleWorkSession2 = _interopRequireDefault(_middleWorkSession);
 
 var _startWorkSession = require('./startWorkSession');
 
@@ -574,8 +569,7 @@ function checkWorkSessionForLiveTasks(config) {
 
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-							convo.say('Good luck with ' + liveTasksString + '!');
-							convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*. Keep crushing :muscle:');
+							convo.say('Good luck finishing ' + liveTasksString + '!');
 						});
 					}
 				});
