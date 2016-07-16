@@ -14,21 +14,6 @@ export function startEditTaskListMessage(convo) {
 
 	const { tasksEdit: { dailyTasks, bot, openWorkSession } } = convo;
 
-	var options = { segmentCompleted: true }
-	var taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
-
-	convo.say("Here are your tasks for today :memo::");
-	convo.say({
-		text: taskListMessage,
-		attachments:[
-			{
-				attachment_type: 'default',
-				callback_id: "TASK_LIST_MESSAGE",
-				fallback: "Here's your task list!"
-			}
-		]
-	});
-
 	if (openWorkSession) {
 		openWorkSession.getDailyTasks({
 			include: [ models.Task ]
@@ -46,23 +31,46 @@ export function startEditTaskListMessage(convo) {
 			})
 
 			var sessionTasks = commaSeparateOutTaskArray(dailyTaskTexts);
-			convo.say({
-				attachments: [
-					{
-						text: `You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`,
-						mrkdwn_in: [ "text" ],
-						color: colorsHash.salmon.hex
-					}
-				]
-			});
+			convo.say(`You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`);
+			// convo.say({
+			// 	attachments: [
+			// 		{
+			// 			text: `You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`,
+			// 			mrkdwn_in: [ "text" ]
+			// 		}
+			// 	]
+			// });
 
+			sayTasksForToday(convo);
 			askForTaskListOptions(convo);
 			convo.next();
 		})
 	} else {
+		sayTasksForToday(convo);
 		askForTaskListOptions(convo);
 		convo.next();
 	}
+
+}
+
+function sayTasksForToday(convo) {
+
+	const { tasksEdit: { dailyTasks, bot, openWorkSession } } = convo;
+
+	var options = { segmentCompleted: true }
+	var taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
+
+	convo.say("Here are your tasks for today :memo::");
+	convo.say({
+		text: taskListMessage,
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "TASK_LIST_MESSAGE",
+				fallback: "Here's your task list!"
+			}
+		]
+	});
 
 }
 

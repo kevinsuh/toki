@@ -83,6 +83,8 @@ exports.default = function (controller) {
 							if (convo.readyToEndDay) {
 								(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 								controller.trigger('end_day_flow', [bot, { SlackUserId: SlackUserId }]);
+							} else {
+								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 							}
 						});
 					});

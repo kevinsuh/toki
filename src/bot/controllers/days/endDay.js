@@ -102,6 +102,8 @@ export default function(controller) {
 							if (convo.readyToEndDay) {
 								closeOldRemindersAndSessions(user);
 								controller.trigger(`end_day_flow`, [ bot, { SlackUserId }]);
+							} else {
+								resumeQueuedReachouts(bot, { SlackUserId });
 							}
 						})
 					
