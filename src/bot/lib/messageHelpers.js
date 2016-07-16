@@ -53,6 +53,9 @@ export function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 	const splitter            = RegExp(/(,|\ba[and]{1,}\b)/);
 	var taskNumbersSplitArray = taskNumbersString.split(splitter);
 
+	// let's get task array of only remaining tasks
+	var remainingTasks = getRemainingTasksFromTaskArray(taskArray);
+
 	// if we capture 0 valid tasks from string, then we start over
 	var numberRegEx          = new RegExp(/[\d]+/);
 	var validTaskNumberArray = [];
@@ -61,10 +64,10 @@ export function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 		console.log(`task string: ${taskString}`);
 		var taskNumber = taskString.match(numberRegEx);
 
-		// if it's a valid number and within the taskArray length
+		// if it's a valid number and within the remainingTasks length
 		if (taskNumber) {
 			taskNumber = parseInt(taskNumber[0]);
-			if (taskNumber <= taskArray.length) {
+			if (taskNumber <= remainingTasks.length) {
 				validTaskNumberArray.push(taskNumber);
 			}
 		}
@@ -77,6 +80,54 @@ export function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 		return validTaskNumberArray;
 	}
 
+}
+
+function getRemainingTasksFromTaskArray(taskArray, options = {}) {
+	
+	var remainingTasks = [];
+	var { newTasks } = options;
+
+	taskArray.forEach((task) => {
+		if (!options.dontUseDataValues && task.dataValues) {
+			task = task.dataValues;
+		};
+
+		// only live tasks when dealing with existing tasks! (so deleted tasks get ignored)
+		if (!task.type || task.type ==  "live") {
+			if (!task.done) {
+				remainingTasks.push(task);
+			}
+		}
+	});
+
+	if (newTasks) {
+		newTasks.forEach((newTask) => {
+			remainingTasks.push(newTask);
+		})
+	}
+
+	return remainingTasks;
+
+}
+
+function getCompletedTasksFromTaskArray(taskArray, options = {}) {
+
+	var completedTasks = [];
+
+	taskArray.forEach((task) => {
+		if (!options.dontUseDataValues && task.dataValues) {
+			task = task.dataValues;
+		};
+
+		// only live tasks when dealing with existing tasks! (so deleted tasks get ignored)
+		if (!task.type || task.type ==  "live") {
+			if (task.done) {
+				completedTasks.push(task);
+			}
+		}
+	});
+
+	return completedTasks;
 }
 
 // this should be called after you `convertToSingleTaskObjectArray`
@@ -113,30 +164,8 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		segmentCompleted = false;
 	}
 
-	var remainingTasks = [];
-	var completedTasks = [];
-
-	taskArray.forEach((task) => {
-		if (!options.dontUseDataValues && task.dataValues) {
-			task = task.dataValues;
-		};
-
-		// only live tasks when dealing with existing tasks! (so deleted tasks get ignored)
-		if (!task.type || task.type ==  "live") {
-			if (task.done) {
-				completedTasks.push(task);
-			} else {
-				remainingTasks.push(task);
-			}
-		}
-	});
-
-	if (newTasks) {
-		newTasks.forEach((newTask) => {
-			remainingTasks.push(newTask);
-		})
-	}
-
+	var remainingTasks = getRemainingTasksFromTaskArray(taskArray, options);
+	var completedTasks = getCompletedTasksFromTaskArray(taskArray, options);
 
 	// add completed tasks to right place
 	var taskListMessageBody = '';

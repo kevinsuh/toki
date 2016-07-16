@@ -240,7 +240,7 @@ function askForTaskListOptions(convo) {
 				// delete button when answered with NL
 				deleteConvoAskMessage(response.channel, bot);
 
-				convo.say("Okay! No worries");
+				convo.say("Okay! No worries :wave:");
 				convo.next();
 			}
 		},
@@ -695,7 +695,7 @@ function completeTasksFlow(response, convo) {
 		{
 			pattern: utterances.no,
 			callback: (response, convo) => {
-				convo.say("Okay, let me know if you still want to `edit tasks`");
+				convo.say("Okay, let me know if you still want to `edit tasks`! :wave: ");
 				convo.next();
 			}
 		},
@@ -720,7 +720,7 @@ function confirmCompleteTasks(response, convo) {
 	var taskNumbersToCompleteArray = convertTaskNumberStringToArray(tasksToCompleteString, dailyTasks);
 	if (!taskNumbersToCompleteArray) {
 		convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-		convo.say("Please pick tasks from your list like `tasks 1, 3 and 4` or say `never mind`");
+		convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
 		var options = { segmentCompleted: true };
 		var taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
 		convo.say({
@@ -771,7 +771,7 @@ function confirmCompleteTasks(response, convo) {
 		{
 			pattern: utterances.no,
 			callback: (response, convo) => {
-				convo.say("Okay, let me know if you still want to `edit tasks`");
+				convo.say("Okay, let me know if you still want to `edit tasks`! :wave: ");
 				convo.next();
 			}
 		},
@@ -844,7 +844,7 @@ function deleteTasksFlow(response, convo) {
 		{
 			pattern: utterances.no,
 			callback: (response, convo) => {
-				convo.say("Okay, let me know if you still want to `edit tasks`");
+				convo.say("Okay, let me know if you still want to `edit tasks`! :wave: ");
 				convo.next();
 			}
 		},
@@ -869,7 +869,7 @@ function confirmDeleteTasks(response, convo) {
 	var taskNumbersToDeleteArray = convertTaskNumberStringToArray(tasksToDeleteString, dailyTasks);
 	if (!taskNumbersToDeleteArray) {
 		convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-		convo.say("Please pick tasks from your list like `tasks 1, 3 and 4` or say `never mind`");
+		convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
 		var options = { segmentCompleted: true };
 		var taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
 		convo.say({
@@ -921,7 +921,7 @@ function confirmDeleteTasks(response, convo) {
 		{
 			pattern: utterances.no,
 			callback: (response, convo) => {
-				convo.say("Okay, let me know if you still want to `edit tasks`");
+				convo.say("Okay, let me know if you still want to `edit tasks`! :wave: ");
 				convo.next();
 			}
 		},

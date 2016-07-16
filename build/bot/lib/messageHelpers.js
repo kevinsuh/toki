@@ -71,6 +71,9 @@ function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 	var splitter = RegExp(/(,|\ba[and]{1,}\b)/);
 	var taskNumbersSplitArray = taskNumbersString.split(splitter);
 
+	// let's get task array of only remaining tasks
+	var remainingTasks = getRemainingTasksFromTaskArray(taskArray);
+
 	// if we capture 0 valid tasks from string, then we start over
 	var numberRegEx = new RegExp(/[\d]+/);
 	var validTaskNumberArray = [];
@@ -79,10 +82,10 @@ function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 		console.log('task string: ' + taskString);
 		var taskNumber = taskString.match(numberRegEx);
 
-		// if it's a valid number and within the taskArray length
+		// if it's a valid number and within the remainingTasks length
 		if (taskNumber) {
 			taskNumber = parseInt(taskNumber[0]);
-			if (taskNumber <= taskArray.length) {
+			if (taskNumber <= remainingTasks.length) {
 				validTaskNumberArray.push(taskNumber);
 			}
 		}
@@ -93,6 +96,58 @@ function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 	} else {
 		return validTaskNumberArray;
 	}
+}
+
+function getRemainingTasksFromTaskArray(taskArray) {
+	var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+
+	var remainingTasks = [];
+	var newTasks = options.newTasks;
+
+
+	taskArray.forEach(function (task) {
+		if (!options.dontUseDataValues && task.dataValues) {
+			task = task.dataValues;
+		};
+
+		// only live tasks when dealing with existing tasks! (so deleted tasks get ignored)
+		if (!task.type || task.type == "live") {
+			if (!task.done) {
+				remainingTasks.push(task);
+			}
+		}
+	});
+
+	if (newTasks) {
+		newTasks.forEach(function (newTask) {
+			remainingTasks.push(newTask);
+		});
+	}
+
+	return remainingTasks;
+}
+
+function getCompletedTasksFromTaskArray(taskArray) {
+	var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+
+	var completedTasks = [];
+
+	taskArray.forEach(function (task) {
+		if (!options.dontUseDataValues && task.dataValues) {
+			task = task.dataValues;
+		};
+
+		// only live tasks when dealing with existing tasks! (so deleted tasks get ignored)
+		if (!task.type || task.type == "live") {
+			if (task.done) {
+				completedTasks.push(task);
+			}
+		}
+	});
+
+	return completedTasks;
 }
 
 // this should be called after you `convertToSingleTaskObjectArray`
@@ -133,29 +188,8 @@ function convertArrayToTaskListMessage(taskArray) {
 		segmentCompleted = false;
 	}
 
-	var remainingTasks = [];
-	var completedTasks = [];
-
-	taskArray.forEach(function (task) {
-		if (!options.dontUseDataValues && task.dataValues) {
-			task = task.dataValues;
-		};
-
-		// only live tasks when dealing with existing tasks! (so deleted tasks get ignored)
-		if (!task.type || task.type == "live") {
-			if (task.done) {
-				completedTasks.push(task);
-			} else {
-				remainingTasks.push(task);
-			}
-		}
-	});
-
-	if (newTasks) {
-		newTasks.forEach(function (newTask) {
-			remainingTasks.push(newTask);
-		});
-	}
+	var remainingTasks = getRemainingTasksFromTaskArray(taskArray, options);
+	var completedTasks = getCompletedTasksFromTaskArray(taskArray, options);
 
 	// add completed tasks to right place
 	var taskListMessageBody = '';

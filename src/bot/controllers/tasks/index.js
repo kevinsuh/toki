@@ -210,7 +210,10 @@ export default function(controller) {
 							}
 
 							setTimeout(() => {
-								checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
+								// only check for live tasks if SOME action took place
+								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
+									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
+								}
 							}, 750);
 
 						});
