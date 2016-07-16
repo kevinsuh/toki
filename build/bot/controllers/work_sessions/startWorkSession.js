@@ -58,8 +58,9 @@ exports.default = function (controller) {
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 
+			var now = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss Z");
 			user.getWorkSessions({
-				where: ['"live" = ? AND "open" = ?', true, true]
+				where: ['"open" = ? AND "endTime" > ?', true, now]
 			}).then(function (workSessions) {
 				var tz = user.SlackUser.tz;
 
@@ -167,8 +168,9 @@ exports.default = function (controller) {
 									});
 								});
 							});
-
 							controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+						} else {
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						}
 					});
 				});

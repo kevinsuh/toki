@@ -72,8 +72,9 @@ export default function(controller) {
 		})
 		.then((user) => {
 
+			var now = moment().format("YYYY-MM-DD HH:mm:ss Z");
 			user.getWorkSessions({
-				where: [`"live" = ? AND "open" = ?`, true, true ]
+				where: [`"open" = ? AND "endTime" > ?`, true, now ]
 			})
 			.then((workSessions) => {
 
@@ -187,9 +188,11 @@ export default function(controller) {
 									});
 								})
 							});
-
 							controller.trigger(`begin_session`, [ bot, { SlackUserId }]);
+						} else {
+							resumeQueuedReachouts(bot, { SlackUserId });
 						}
+
 					});
 				});
 			});

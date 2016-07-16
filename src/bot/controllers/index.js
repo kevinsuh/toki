@@ -137,9 +137,7 @@ export function resumeQueuedReachouts(bot, config) {
 
 		var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
 
-		console.log("\n\n ~~ resuming these bot's queuedReachouts ~~:");
-		console.log(queuedWorkSessions);
-		console.log("\n\n");
+		console.log("\n\n ~~ looking to resume bot's queuedReachouts ~~:");
 
 		if (queuedWorkSessions && queuedWorkSessions.length > 0) {
 
@@ -147,6 +145,9 @@ export function resumeQueuedReachouts(bot, config) {
 			queuedWorkSessions.forEach((workSession) => {
 				var endTime = moment(workSession.endTime);
 				if (endTime > now && workSession.dataValues.open == true) {
+					console.log("resuming this queuedSession:");
+					console.log(workSession);
+					console.log("\n\n");
 					queuedWorkSessionIds.push(workSession.dataValues.id);
 				}
 			})

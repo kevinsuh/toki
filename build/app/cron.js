@@ -31,7 +31,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var checkForSessions = function checkForSessions() {
 
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
-	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
+	var now = (0, _moment2.default)().format("YYYY-MM-DD HH:mm:ss Z");
 
 	// get the most recent work session! assume this is the one user is working on
 	_models2.default.WorkSession.findAll({
@@ -101,7 +101,7 @@ var checkForSessions = function checkForSessions() {
 var checkForReminders = function checkForReminders() {
 
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
-	var now = _moment2.default.tz("America/New_York").format("YYYY-MM-DD HH:mm:ss Z");
+	var now = (0, _moment2.default)().format("YYYY-MM-DD HH:mm:ss Z");
 
 	_models2.default.Reminder.findAll({
 		where: ['"remindTime" < ? AND open = ?', now, true]
