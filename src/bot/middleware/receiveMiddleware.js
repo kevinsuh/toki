@@ -33,7 +33,9 @@ export default (controller) => {
 			bot.queuedReachouts = {};
 		}
 
-		if (message.user) {
+		if (message.user && message.type && message.type != "user_typing") {
+
+			console.log(`\n ~~ in pauseWorkSession middleware ~~ \n`);
 
 			const SlackUserId = message.user;
 

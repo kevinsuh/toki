@@ -328,6 +328,7 @@ export default function(controller) {
 							customNote
 						});
 					}
+
 					resumeQueuedReachouts(bot, { SlackUserId });
 
 				});

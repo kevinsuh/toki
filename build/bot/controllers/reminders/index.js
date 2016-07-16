@@ -316,6 +316,7 @@ exports.default = function (controller) {
 							customNote: customNote
 						});
 					}
+
 					(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 				});
 			});

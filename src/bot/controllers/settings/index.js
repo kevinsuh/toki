@@ -69,6 +69,7 @@ export default function(controller) {
 				}
 
 				startSettingsConversation(err, convo);
+				convo.next();
 
 				convo.on('end', (convo) => {
 
@@ -92,6 +93,7 @@ export default function(controller) {
 						});
 
 					}
+
 					resumeQueuedReachouts(bot, { SlackUserId });
 
 				});

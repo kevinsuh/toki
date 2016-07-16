@@ -6,15 +6,6 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
-	controller.on('user_typing', function (bot, message) {
-		var SlackUserId = message.user;
-		if (SlackUserId) {
-			setTimeout(function () {
-				(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-			}, 1500);
-		}
-	});
-
 	controller.hears([_constants.THANK_YOU.reg_exp], 'direct_message', function (bot, message) {
 		var SlackUserId = message.user;
 		bot.send({
