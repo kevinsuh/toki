@@ -98,6 +98,8 @@ export default function(controller) {
 									var startDaySessionTime = moment(sessionGroups[0].createdAt);
 									var now                 = moment();
 									var hoursSinceStartDay  = moment.duration(now.diff(startDaySessionTime)).asHours();
+									console.log(`hours since start day: ${hoursSinceStartDay}`);
+									console.log(`hours for expiration time: ${hoursForExpirationTime}`);
 									if (hoursSinceStartDay > hoursForExpirationTime) {
 										shouldStartNewDay = true;
 									}

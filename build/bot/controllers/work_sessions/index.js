@@ -80,6 +80,8 @@ exports.default = function (controller) {
 									var startDaySessionTime = (0, _momentTimezone2.default)(sessionGroups[0].createdAt);
 									var now = (0, _momentTimezone2.default)();
 									var hoursSinceStartDay = _momentTimezone2.default.duration(now.diff(startDaySessionTime)).asHours();
+									console.log('hours since start day: ' + hoursSinceStartDay);
+									console.log('hours for expiration time: ' + _constants.hoursForExpirationTime);
 									if (hoursSinceStartDay > _constants.hoursForExpirationTime) {
 										shouldStartNewDay = true;
 									}
