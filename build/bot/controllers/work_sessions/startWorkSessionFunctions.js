@@ -635,6 +635,57 @@ function addTimeToNewTask(response, convo) {
 }
 
 /**
+ *      WANTS CUSTOM TIME TO TASKS
+ */
+
+// ask for custom amount of time to work on
+function askForCustomTotalMinutes(response, convo) {
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
+
+	var SlackUserId = response.user;
+
+	convo.ask("How long, or until what time, would you like to work?", function (response, convo) {
+		var entities = response.intentObject.entities;
+		// for time to tasks, these wit intents are the only ones that makes sense
+
+		if (entities.duration || entities.datetime) {
+			confirmCustomTotalMinutes(response, convo);
+		} else {
+			// invalid
+			convo.say("I'm sorry, I didn't catch that :dog:");
+			convo.repeat();
+		}
+
+		convo.next();
+	});
+};
+
+function confirmCustomTotalMinutes(response, convo) {
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
+
+	var SlackUserId = response.user;
+	var tz = convo.sessionStart.tz;
+
+	var now = (0, _momentTimezone2.default)().tz(tz);
+
+	// use Wit to understand the message in natural language!
+	var entities = response.intentObject.entities;
+
+
+	var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+	var customTimeString = customTimeObject.format("h:mm a");
+
+	convo.sessionStart.calculatedTime = customTimeString;
+	convo.sessionStart.calculatedTimeObject = customTimeObject;
+
+	finalizeTimeAndTasksToStart(response, convo);
+}
+
+/**
  *      WANTS CHECKIN TO TASKS
  */
 
