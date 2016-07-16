@@ -17,6 +17,8 @@ exports.convertToSingleTaskObjectArray = convertToSingleTaskObjectArray;
 exports.prioritizeTaskArrayFromUserInput = prioritizeTaskArrayFromUserInput;
 exports.commaSeparateOutTaskArray = commaSeparateOutTaskArray;
 exports.getMostRecentTaskListMessageToUpdate = getMostRecentTaskListMessageToUpdate;
+exports.getMostRecentMessageToUpdate = getMostRecentMessageToUpdate;
+exports.deleteConvoAskMessage = deleteConvoAskMessage;
 
 var _constants = require('./constants');
 
@@ -138,10 +140,14 @@ function convertArrayToTaskListMessage(taskArray) {
 		if (!options.dontUseDataValues && task.dataValues) {
 			task = task.dataValues;
 		};
-		if (task.done) {
-			completedTasks.push(task);
-		} else {
-			remainingTasks.push(task);
+
+		// only live tasks when dealing with existing tasks! (so deleted tasks get ignored)
+		if (!task.type || task.type == "live") {
+			if (task.done) {
+				completedTasks.push(task);
+			} else {
+				remainingTasks.push(task);
+			}
 		}
 	});
 
@@ -459,5 +465,43 @@ function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
 	}
 
 	return updateTaskListMessageObject;
+}
+
+// this is for deleting the most recent message!
+// mainly used for convo.ask, when you do natural language instead
+// of clicking the button
+function getMostRecentMessageToUpdate(userChannel, bot) {
+	var sentMessages = bot.sentMessages;
+
+
+	var updateTaskListMessageObject = false;
+	if (sentMessages) {
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (var i = sentMessages.length - 1; i >= 0; i--) {
+
+			var message = sentMessages[i];
+			var channel = message.channel;
+			var ts = message.ts;
+			var attachments = message.attachments;
+
+			if (channel == userChannel) {
+				updateTaskListMessageObject = {
+					channel: channel,
+					ts: ts
+				};
+				break;
+			}
+		}
+	}
+
+	return updateTaskListMessageObject;
+}
+
+// another level of abstraction for this
+function deleteConvoAskMessage(userChannel, bot) {
+	// used mostly to delete the button options when answered with NL
+	var convoAskMessage = getMostRecentMessageToUpdate(userChannel, bot);
+	bot.api.chat.delete(convoAskMessage);
 }
 //# sourceMappingURL=messageHelpers.js.map

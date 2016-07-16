@@ -120,10 +120,14 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		if (!options.dontUseDataValues && task.dataValues) {
 			task = task.dataValues;
 		};
-		if (task.done) {
-			completedTasks.push(task);
-		} else {
-			remainingTasks.push(task);
+
+		// only live tasks when dealing with existing tasks! (so deleted tasks get ignored)
+		if (!task.type || task.type ==  "live") {
+			if (task.done) {
+				completedTasks.push(task);
+			} else {
+				remainingTasks.push(task);
+			}
 		}
 	});
 
@@ -445,5 +449,41 @@ export function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
 
 	return updateTaskListMessageObject;
 
+}
+
+// this is for deleting the most recent message!
+// mainly used for convo.ask, when you do natural language instead
+// of clicking the button
+export function getMostRecentMessageToUpdate(userChannel, bot) {
+	
+	var { sentMessages } = bot;
+
+	var updateTaskListMessageObject = false;
+	if (sentMessages) {
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (var i = sentMessages.length - 1; i >= 0; i--) {
+
+			var message           = sentMessages[i];
+			const { channel, ts, attachments } = message;
+			if (channel == userChannel) {
+				updateTaskListMessageObject = {
+					channel,
+					ts
+				};
+				break;
+			}
+		}
+	}
+
+	return updateTaskListMessageObject;
+
+}
+
+// another level of abstraction for this
+export function deleteConvoAskMessage(userChannel, bot) {
+	// used mostly to delete the button options when answered with NL
+	var convoAskMessage = getMostRecentMessageToUpdate(userChannel, bot);
+	bot.api.chat.delete(convoAskMessage);
 }
 

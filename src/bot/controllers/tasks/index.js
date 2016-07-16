@@ -163,11 +163,6 @@ export default function(controller) {
 										});
 									}
 								})
-								setTimeout(() => {
-									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
-								}, 200);
-								
-								return;
 							}
 
 							// delete tasks if requested
@@ -177,10 +172,6 @@ export default function(controller) {
 								}, {
 									where: [`"DailyTasks"."id" in (?)`, dailyTaskIdsToDelete]
 								})
-								.then(() => {
-									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
-								})
-								return;
 							}
 
 							// complete tasks if requested
@@ -200,12 +191,7 @@ export default function(controller) {
 									}, {
 										where: [`"Tasks"."id" in (?)`, completedTaskIds]
 									})
-									.then(() => {
-										checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
-									})
-
 								})
-								return;
 							}
 
 							// update daily tasks if requested
@@ -221,16 +207,11 @@ export default function(controller) {
 										})
 									}
 								})
-								setTimeout(() => {
-									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
-								}, 200);
-								return;
 							}
 
-							// fall back
 							setTimeout(() => {
 								checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
-							}, 200);
+							}, 750);
 
 						});
 					});
