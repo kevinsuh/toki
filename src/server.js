@@ -120,8 +120,8 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 							convo.say("Good morning Kevin, I'm ready for you :robot_face:");
 						})
 						if (env == "production" && process.env.CHIP_SLACK_USER_ID) {
-							bot.startPrivateConversation({user: process.env.CHIP_SLACK_USER_ID}, (err, convo) => {
-								convo.say("Good morning Kevin, I'm ready for you :robot_face:");
+							bot.startPrivateConversation({ user: process.env.CHIP_SLACK_USER_ID}, (err, convo) => {
+								convo.say("Hello Chip, I'm ready for you :robot_face:");
 							})
 						}
 					}
