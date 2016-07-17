@@ -1,68 +1,82 @@
+#logo {
+  height: 75px; }
+
 .splash .color-gradient {
-  background: repeating-linear-gradient(45deg, rgba(94, 160, 202, 0.6), rgba(94, 160, 202, 0.6) 160px, rgba(8, 90, 144, 0.6) 160px, rgba(8, 90, 144, 0.6) 320px); }
+  background: radial-gradient(circle at 100% 50%, transparent 20%, rgba(255, 255, 255, 0.3) 21%, rgba(255, 255, 255, 0.3) 34%, transparent 35%, transparent), radial-gradient(circle at 0% 50%, transparent 20%, rgba(255, 255, 255, 0.3) 21%, rgba(255, 255, 255, 0.3) 34%, transparent 35%, transparent) 0 -99px;
+  background-color: #8F00FF;
+  background-size: 150px 199px; }
 
 .splash .bottom-landing, .splash .main-landing {
+  display: block;
+  padding: 60px 0 100px 0;
   border-bottom: 1px solid #e5e5e5;
   vertical-align: middle;
   text-align: center; }
-  .splash .bottom-landing .container, .splash .main-landing .container {
-    display: inline-block;
-    padding: 45px; }
   .splash .bottom-landing .main-title, .splash .main-landing .main-title {
-    font-size: 70px;
-    padding: 0 20px;
-    font-weight: 600; }
-  .splash .bottom-landing .subtitle, .splash .main-landing .subtitle {
-    font-size: 20px;
-    margin: 25px 0;
-    line-height: 22px; }
+    color: white;
+    font-size: 50px;
+    font-weight: 600;
+    padding-bottom: 25px;
+    border-bottom: 2.5pt solid #FFA819; }
+  .splash .bottom-landing .main-body, .splash .main-landing .main-body {
+    padding: 0 15px; }
+    .splash .bottom-landing .main-body .subtitle, .splash .main-landing .main-body .subtitle {
+      font-size: 25px;
+      margin: 25px 0;
+      line-height: 30px;
+      color: white; }
+    .splash .bottom-landing .main-body .gif, .splash .main-landing .main-body .gif {
+      margin: 10px auto; }
   .splash .bottom-landing form.invite, .splash .main-landing form.invite {
-    height: 40px; }
-    .splash .bottom-landing form.invite .email-input, .splash .main-landing form.invite .email-input {
-      height: 40px;
-      min-width: 40%; }
-    .splash .bottom-landing form.invite .submit-div, .splash .main-landing form.invite .submit-div {
-      display: inline-block;
-      background-color: white;
-      border: 1pt solid lightgrey;
-      text-align: center;
-      height: 40px;
-      line-height: 40px;
-      padding: 0 10px;
-      margin-left: 5px;
-      vertical-align: middle;
-      border-radius: 6px;
-      background-image: url("../images/slack_logo.png");
-      background-repeat: no-repeat;
-      background-position: center right 10px;
-      background-size: 22px;
-      padding-right: 41px;
-      padding-left: 13px;
-      font-weight: 600; }
+    padding: 0 10%; }
+    .splash .bottom-landing form.invite .input-container, .splash .main-landing form.invite .input-container {
+      text-align: left; }
+      .splash .bottom-landing form.invite .input-container .email-input, .splash .main-landing form.invite .input-container .email-input {
+        height: 40px;
+        padding-left: 6px;
+        width: 100%; }
+      .splash .bottom-landing form.invite .input-container .submit-btn, .splash .main-landing form.invite .input-container .submit-btn {
+        display: inline-block;
+        background-color: white;
+        border: 1pt solid lightgrey;
+        text-align: center;
+        height: 40px;
+        line-height: 40px;
+        padding: 0 10px;
+        vertical-align: middle;
+        border-radius: 6px;
+        background-image: url("../images/slack_logo.png");
+        background-repeat: no-repeat;
+        background-position: center right 10px;
+        background-size: 22px;
+        padding-right: 41px;
+        padding-left: 13px;
+        font-weight: 600;
+        width: 100%; }
+    .splash .bottom-landing form.invite .description, .splash .main-landing form.invite .description {
+      font-weight: inherit;
+      color: white;
+      font-size: 18px;
+      text-align: left;
+      margin: 25px 0 10px 0; }
+      .splash .bottom-landing form.invite .description .link-emphasize, .splash .main-landing form.invite .description .link-emphasize {
+        color: white;
+        font-style: italic; }
+    .splash .bottom-landing form.invite .beta, .splash .main-landing form.invite .beta {
+      color: white;
+      font-style: italic;
+      padding-top: 5px;
+      font-size: 15px; }
 
 .splash .bottom-landing {
   width: 100vw; }
   .splash .bottom-landing .subtitle {
     font-weight: 600; }
 
-.splash .main-landing {
-  display: block;
-  width: 100vw;
-  height: 100vh;
-  display: table-cell;
-  padding-bottom: 45px; }
-
-.splash .header-container {
-  padding-top: 17px;
-  margin-bottom: 25px;
-  border-bottom: 1px solid rgba(255, 191, 110, 0.6); }
-  .splash .header-container .title {
-    margin: 0;
-    padding: 0 0 15px 20px; }
+.splash .header-container .title {
+  margin: 0;
+  padding: 0 0 15px 20px; }
 
 .splash .body-container {
   padding: 20px 0;
   border-bottom: 5px solid rgba(255, 191, 110, 0.6); }
-
-.splash img.example {
-  margin: 10px auto; }

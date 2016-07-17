@@ -1,32 +1,43 @@
 @import "modules/all";
 @import "modules/constants";
 
+#logo {
+	height: 75px;
+}
+
 .splash { 
 
 	.color-gradient {
-		background: repeating-linear-gradient(
-			45deg,
-			$light-blue-gradient,
-			$light-blue-gradient 160px,
-			$dark-blue-gradient 160px,
-			$dark-blue-gradient 320px
-		);
+		background: 
+			radial-gradient(circle at 100% 50%, transparent 20%, rgba(255,255,255,.3) 21%, rgba(255,255,255,.3) 34%, transparent 35%, transparent),
+			radial-gradient(circle at 0% 50%, transparent 20%, rgba(255,255,255,.3) 21%, rgba(255,255,255,.3) 34%, transparent 35%, transparent) 0 -99px;
+		background-color: $electric-violet;
+		background-size: 150px 199px;
 	}
 
 	.bottom-landing, .main-landing {
-		.container {
-			display: inline-block;
-			padding: 45px;
-		}
+		display: block;
+		padding: 60px 0 100px 0;
+
 		.main-title {
-			font-size: 70px;
-			padding: 0 20px;
+			color: white;
+			font-size: 50px;
 			font-weight: 600;
+
+			padding-bottom: 25px;
+			border-bottom: 2.5pt solid $orange;
 		}
-		.subtitle {
-			font-size: 20px;
-			margin: 25px 0;
-			line-height: 22px;
+		.main-body {
+			padding: 0 15px;
+			.subtitle {
+				font-size: 25px;
+				margin: 25px 0;
+				line-height: 30px;
+				color: white;
+			}
+			.gif {
+				margin: 10px auto;
+			}
 		}
 
 		border-bottom: 1px solid #e5e5e5;
@@ -36,31 +47,52 @@
 		
 		form.invite {
 			$form-height: 40px;
-			height: $form-height;
-			.email-input {
-				height: $form-height;
-				min-width: 40%;
+			padding: 0 10%;
+			.input-container {
+				text-align: left;
+				.email-input {
+					height: $form-height;
+					padding-left: 6px;
+					width: 100%;
+				}
+				.submit-btn {
+					display: inline-block;
+					background-color: white;
+					border: 1pt solid lightgrey;
+					text-align: center;
+					height: $form-height;
+					line-height: $form-height;
+					padding: 0 10px;
+					vertical-align: middle;
+					border-radius: 6px;
+
+					background-image: url('../images/slack_logo.png');
+					background-repeat: no-repeat;
+					background-position: center right 10px;
+					background-size: 22px;
+					padding-right: 41px;
+					padding-left: 13px;
+
+					font-weight: 600;
+					width: 100%;
+				}
 			}
-			.submit-div {
-				display: inline-block;
-				background-color: white;
-				border: 1pt solid lightgrey;
-				text-align: center;
-				height: $form-height;
-				line-height: $form-height;
-				padding: 0 10px;
-				margin-left: 5px;
-				vertical-align: middle;
-				border-radius: 6px;
-
-				background-image: url('../images/slack_logo.png');
-				background-repeat: no-repeat;
-				background-position: center right 10px;
-				background-size: 22px;
-				padding-right: 41px;
-				padding-left: 13px;
-
-				font-weight: 600;
+			.description {
+				font-weight: inherit;
+				color: white;
+				font-size: 18px;
+				text-align: left;
+				margin: 25px 0 10px 0;
+				.link-emphasize {
+					color: white;
+					font-style: italic;
+				}
+			}
+			.beta {
+				color: white;
+				font-style: italic;
+				padding-top: 5px;
+				font-size: 15px;
 			}
 		}
 
@@ -73,20 +105,7 @@
 		}
 	}
 
-	.main-landing {
-
-		display: block;
-		width: 100vw;
-		height: 100vh;
-		display: table-cell;
-		padding-bottom: 45px;
-
-	}
-
 	.header-container {
-		padding-top: 17px;
-		margin-bottom: 25px;
-		border-bottom: 1px solid $light-orange;
 		.title {
 			margin: 0;
 			padding: 0 0 15px 20px;
@@ -96,12 +115,6 @@
 	.body-container {
 		padding: 20px 0;
 		border-bottom: 5px solid $light-orange;
-	}
-
-	img {
-		&.example {
-			margin: 10px auto;
-		}
 	}
 
 }
