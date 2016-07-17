@@ -149,11 +149,6 @@ exports.default = function (controller) {
 										});
 									}
 								});
-								setTimeout(function () {
-									(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
-								}, 200);
-
-								return;
 							}
 
 							// delete tasks if requested
@@ -162,10 +157,7 @@ exports.default = function (controller) {
 									type: "deleted"
 								}, {
 									where: ['"DailyTasks"."id" in (?)', dailyTaskIdsToDelete]
-								}).then(function () {
-									(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
 								});
-								return;
 							}
 
 							// complete tasks if requested
@@ -183,11 +175,8 @@ exports.default = function (controller) {
 										done: true
 									}, {
 										where: ['"Tasks"."id" in (?)', completedTaskIds]
-									}).then(function () {
-										(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
 									});
 								});
-								return;
 							}
 
 							// update daily tasks if requested
@@ -205,16 +194,14 @@ exports.default = function (controller) {
 										});
 									}
 								});
-								setTimeout(function () {
-									(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
-								}, 200);
-								return;
 							}
 
-							// fall back
 							setTimeout(function () {
-								(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
-							}, 200);
+								// only check for live tasks if SOME action took place
+								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
+									(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
+								}
+							}, 750);
 						});
 					});
 				});
