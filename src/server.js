@@ -115,10 +115,15 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 				if (err) {
 					consoleLog(`'Error connecting to slack... :' ${err}`);
 				} else {
-					if (token == process.env.BOT_TOKEN) {
-						bot.startPrivateConversation({user: "U121ZK15J"}, (err, convo) => {
+					if (token == process.env.BOT_TOKEN && process.env.KEVIN_SLACK_USER_ID) {
+						bot.startPrivateConversation({user: process.env.KEVIN_SLACK_USER_ID}, (err, convo) => {
 							convo.say("Good morning Kevin, I'm ready for you :robot_face:");
 						})
+						if (env == "production" && process.env.CHIP_SLACK_USER_ID) {
+							bot.startPrivateConversation({user: process.env.CHIP_SLACK_USER_ID}, (err, convo) => {
+								convo.say("Good morning Kevin, I'm ready for you :robot_face:");
+							})
+						}
 					}
 					trackBot(bot); // this is where we store all ze bots
 				}
