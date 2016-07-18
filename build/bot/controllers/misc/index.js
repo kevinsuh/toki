@@ -94,7 +94,17 @@ exports.default = function (controller) {
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 
+			if (!user) {
+				console.log('USER NOT FOUND: ' + SlackUserId);
+				return;
+			}
+
 			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+				if (!convo) {
+					console.log("convo not working\n\n\n");
+					return;
+				}
 
 				var name = user.nickName || user.email;
 				convo.name = name;
