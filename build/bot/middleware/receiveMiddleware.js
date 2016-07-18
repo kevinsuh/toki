@@ -50,6 +50,9 @@ exports.default = function (controller) {
 		if (message.type && (message.type == "user_typing" || message.type == "team_join")) {
 			console.log('\n ~~ user_typing or team_join middleware ~~ \n');
 			next();
+		} else if (!message.text) {
+			console.log('\n ~~ this is an event with no text in middleware ~~ \n');
+			next();
 		} else if (message.user) {
 			var _ret = function () {
 
