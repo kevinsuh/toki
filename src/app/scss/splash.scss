@@ -5,7 +5,11 @@
 	height: 75px;
 }
 
-.splash { 
+.splash {
+
+	// relevant variables
+	$circle-button-diameter: 100px;
+	$hover-time: 0.3s;
 
 	.color-gradient {
 		background: 
@@ -15,6 +19,9 @@
 		background-size: 150px 199px;
 	}
 
+	/**
+	 * 		~~ LANDING PAGE OF CSS ~~
+	 */
 	.bottom-landing, .main-landing {
 		display: block;
 		padding: 60px 0 100px 0;
@@ -112,7 +119,11 @@
 		}
 	}
 
+	/**
+	 * 		~~ MAIN BODY OF CSS ~~
+	 */
 	.body-container {
+
 		.body-title {
 			text-align: center;
 			font-size: 25px;
@@ -120,8 +131,6 @@
 		}
 
 		.benefit-box {
-
-			$circle-button-diameter: 100px;
 
 			margin: 0 auto;
 			padding: 20px;
@@ -131,7 +140,6 @@
 			height: 250px;
 			cursor: pointer;
 
-			$hover-time: 0.3s;
 			-o-transition: $hover-time;
 			-ms-transition: $hover-time;
 			-moz-transition: $hover-time;
@@ -151,30 +159,58 @@
 			.description {
 				font-size: 18px;
 			}
-
-			.circle {
-				width: $circle-button-diameter;
-				height: $circle-button-diameter;
-				border-radius: 50%;
-				border: 1.5pt solid $grey;
-				background: $orange;
-				text-align: center;
-				line-height: $circle-button-diameter;
-				position: absolute;
-				top: 20px;
-				right: 45px;
-				font-size: 17px;
-				font-weight: 800;
-
+			.benefit-circle {
 				-o-transition: $hover-time;
 				-ms-transition: $hover-time;
 				-moz-transition: $hover-time;
 				-webkit-transition: $hover-time;
 				transition: $hover-time;
-
 			}
 		}
 
 	}
 
+	/**
+	 * 		~~ HOVER OVER DEMO ~~ 
+	 */
+	#demo-display {
+		// display: none;
+		position: fixed;
+		width: 100%;
+		height: 100%;
+		background-color: white;
+		z-index: 999;
+		top: 0;
+		left: 0;
+
+		.logo-container {
+			padding-top: 20px;
+			padding-left: 10px;
+		}
+
+		.circle {
+			cursor: pointer;
+			border: 1.5pt solid black;
+		}
+	}
+
+	/**
+	 * 		~~ UTILITY CLASSES FOR SPLASH ~~
+	 */
+
+	.circle {
+		width: $circle-button-diameter;
+		height: $circle-button-diameter;
+		border-radius: 50%;
+		border: 1.5pt solid $grey;
+		background: $orange;
+		text-align: center;
+		line-height: $circle-button-diameter;
+		position: absolute;
+		top: 20px;
+		right: 45px;
+		font-size: 17px;
+		font-weight: 800;
+
+	}
 }
