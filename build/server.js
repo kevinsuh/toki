@@ -148,7 +148,7 @@ _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
 						});
 						if (env == "production" && process.env.CHIP_SLACK_USER_ID) {
 							bot.startPrivateConversation({ user: process.env.CHIP_SLACK_USER_ID }, function (err, convo) {
-								convo.say("Good morning Kevin, I'm ready for you :robot_face:");
+								convo.say("Hello Chip, I'm ready for you :robot_face:");
 							});
 						}
 					}
