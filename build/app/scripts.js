@@ -38,6 +38,8 @@ function updateUsers() {
 	if (env == 'development') {
 		(0, _miscHelpers.consoleLog)("In development server of Toki");
 		process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
+	} else {
+		(0, _miscHelpers.consoleLog)('currently in ' + env + ' environment');
 	}
 
 	for (var token in _controllers.bots) {

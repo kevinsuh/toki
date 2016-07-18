@@ -19,6 +19,8 @@ export function updateUsers() {
 	if (env == 'development') {
 		consoleLog("In development server of Toki");
 	  process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
+	} else {
+		consoleLog(`currently in ${env} environment`);
 	}
 
 	for (var token in bots) {
