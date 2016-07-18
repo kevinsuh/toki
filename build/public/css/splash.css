@@ -150,8 +150,8 @@
     position: relative;
     overflow: hidden; }
   #demo-display section {
-    max-width: 700px;
-    width: 60%;
+    max-width: 720px;
+    width: 80%;
     position: absolute;
     height: auto;
     left: 50%;
@@ -159,6 +159,12 @@
     max-height: 600px;
     overflow: hidden;
     bottom: 0; }
+    #demo-display section .gif {
+      margin: 0 auto; }
+  @media (max-width: 700px) {
+    #demo-display section {
+      width: 100%;
+      bottom: 20%; } }
   #demo-display .logo-container {
     padding-top: 20px;
     padding-left: 10px; }
@@ -182,8 +188,6 @@
       margin: 0; }
     #demo-display .demo-body .counter {
       text-align: center; }
-    #demo-display .demo-body .gif {
-      margin: 0 auto; }
     #demo-display .demo-body .main {
       margin-top: 40px; }
 

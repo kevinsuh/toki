@@ -222,8 +222,8 @@ $hover-time: 0.3s;
 	}
 
 	section {
-		max-width: 700px;
-		width: 60%;
+		max-width: 720px;
+		width: 80%;
 		position: absolute;
 		height: auto;
 		left: 50%;
@@ -231,6 +231,18 @@ $hover-time: 0.3s;
 		max-height: 600px;
 		overflow: hidden;
 		bottom: 0;
+
+		.gif {
+			margin: 0 auto;
+		}
+
+	}
+
+	@media (max-width: 700px) {
+		section {
+			width: 100%;
+			bottom: 20%;
+		}
 	}
 
 	.logo-container {
@@ -271,9 +283,6 @@ $hover-time: 0.3s;
 		}
 		.counter {
 			text-align: center;
-		}
-		.gif {
-			margin: 0 auto;
 		}
 		.main {
 			margin-top: 40px;
