@@ -1,15 +1,17 @@
 @import "modules/all";
 @import "modules/constants";
 
+// relevant variables
+$circle-button-diameter: 100px;
+$hover-time: 0.3s;
+
 #logo {
 	height: 75px;
 }
 
 .splash {
 
-	// relevant variables
-	$circle-button-diameter: 100px;
-	$hover-time: 0.3s;
+	$subtitle-font-size: 25px;
 
 	.color-gradient {
 		background: 
@@ -24,7 +26,7 @@
 	 */
 	.bottom-landing, .main-landing {
 		display: block;
-		padding: 60px 0 100px 0;
+		padding: 60px 0 30px 0;
 
 		.main-title {
 			color: white;
@@ -37,7 +39,7 @@
 		.main-body {
 			padding: 0 15px;
 			.subtitle {
-				font-size: 25px;
+				font-size: $subtitle-font-size;
 				margin: 25px 0;
 				line-height: 30px;
 				color: white;
@@ -106,9 +108,30 @@
 	}
 
 	.bottom-landing {
-		width: 100vw;
+		color: white;
+		.title {
+			margin-bottom: 20px;
+			font-size: 45px;
+		}
 		.subtitle {
-			font-weight: 600;
+			font-size: $subtitle-font-size;
+		}
+		.video-container {
+
+			margin-top: 35px;
+			margin-bottom: 35px;
+
+			.subtitle {
+				font-size: 22px;
+			}
+		}
+		.signup-steps {
+			text-align: center;
+			padding-left: 40px;
+			li {
+				margin: 10px 0;
+				font-size: 22px;
+			}
 		}
 	}
 
@@ -124,10 +147,12 @@
 	 */
 	.body-container {
 
+		padding-bottom: 50px;
+
 		.body-title {
 			text-align: center;
-			font-size: 25px;
-			margin: 30px 0;
+			font-size: $subtitle-font-size;
+			margin: 50px 0;
 		}
 
 		.benefit-box {
@@ -166,51 +191,114 @@
 				-webkit-transition: $hover-time;
 				transition: $hover-time;
 			}
+
+			@media (max-width: 400px) {
+				padding: 10px;
+				.circle {
+					display: none;
+				}
+			}
 		}
 
 	}
+}
 
-	/**
-	 * 		~~ HOVER OVER DEMO ~~ 
-	 */
-	#demo-display {
-		display: none;
-		position: fixed;
-		width: 100%;
-		height: 100%;
-		background-color: white;
-		z-index: 999;
-		top: 0;
-		left: 0;
+/**
+ * 		~~ HOVER OVER DEMO ~~ 
+ */
+#demo-display {
+	display: none;
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	background-color: white;
+	z-index: 999;
+	top: 0;
+	left: 0;
 
-		.logo-container {
-			padding-top: 20px;
-			padding-left: 10px;
-		}
-
-		.circle {
-			cursor: pointer;
-			border: 1.5pt solid black;
-		}
+	.body-wrapper {
+		position: relative;
+		overflow: hidden;
 	}
 
-	/**
-	 * 		~~ UTILITY CLASSES FOR SPLASH ~~
-	 */
+	section {
+		max-width: 700px;
+		width: 60%;
+		position: absolute;
+		height: auto;
+		left: 50%;
+		transform: translateX(-50%);
+		max-height: 600px;
+		overflow: hidden;
+		bottom: 0;
+	}
+
+	.logo-container {
+		padding-top: 20px;
+		padding-left: 10px;
+	}
 
 	.circle {
-		width: $circle-button-diameter;
-		height: $circle-button-diameter;
-		border-radius: 50%;
-		border: 1.5pt solid $grey;
-		background: $orange;
-		text-align: center;
-		line-height: $circle-button-diameter;
-		position: absolute;
-		top: 20px;
-		right: 45px;
-		font-size: 17px;
-		font-weight: 800;
+		cursor: pointer;
+		border: 1.5pt solid black;
+	}
+
+	@media (max-width: 400px) {
+		.circle {
+			display: none;
+		}
+	}
+
+	// body of the demo
+	.demo-body {
+
+		padding: 30px;
+		padding-bottom: 0;
+		margin-top: 25px;
+
+		$title-size: 3.5vw;
+
+		.glyphicon {
+			font-size: $title-size;
+			&.button {
+				cursor: pointer;
+			}
+		}
+		.title {
+			font-size: $title-size;
+			text-align: center;
+			margin: 0;
+		}
+		.counter {
+			text-align: center;
+		}
+		.gif {
+			margin: 0 auto;
+		}
+		.main {
+			margin-top: 40px;
+		}
 
 	}
+}
+
+
+/**
+ * 		~~ UTILITY CLASSES FOR SPLASH ~~
+ */
+
+.circle {
+	width: $circle-button-diameter;
+	height: $circle-button-diameter;
+	border-radius: 50%;
+	border: 1.5pt solid $grey;
+	background: $orange;
+	text-align: center;
+	line-height: $circle-button-diameter;
+	position: absolute;
+	top: 20px;
+	right: 45px;
+	font-size: 17px;
+	font-weight: 800;
+
 }

@@ -63,6 +63,7 @@ app.use(_bodyParser2.default.urlencoded({ extended: true })); //for parsing url 
 app.use('/js', _express2.default.static(__dirname + '/../node_modules/bootstrap/dist/js'));
 app.use('/js', _express2.default.static(__dirname + '/../node_modules/jquery/dist'));
 app.use('/css', _express2.default.static(__dirname + '/../node_modules/bootstrap/dist/css'));
+app.use('/fonts', _express2.default.static(__dirname + '/../node_modules/bootstrap/dist/fonts'));
 
 // view engine ejs
 app.set('view engine', 'ejs');

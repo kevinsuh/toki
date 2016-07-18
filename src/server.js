@@ -35,6 +35,7 @@ app.use(bodyParser.urlencoded({ extended: true })); //for parsing url encoded
 app.use('/js', express.static(`${__dirname}/../node_modules/bootstrap/dist/js`));
 app.use('/js', express.static(`${__dirname}/../node_modules/jquery/dist`));
 app.use('/css', express.static(`${__dirname}/../node_modules/bootstrap/dist/css`));
+app.use('/fonts', express.static(`${__dirname}/../node_modules/bootstrap/dist/fonts`));
 
 // view engine ejs
 app.set('view engine', 'ejs');
