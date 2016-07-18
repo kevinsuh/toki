@@ -1,6 +1,6 @@
 import moment from 'moment';
 
-export const TOKI_DEFAULT_SNOOZE_TIME = 9;
+export const TOKI_DEFAULT_SNOOZE_TIME = 15;
 
 export const hoursForExpirationTime = 6;
 

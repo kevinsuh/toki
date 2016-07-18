@@ -406,7 +406,7 @@ exports.default = function (controller) {
 								style: "primary"
 							}, {
 								name: _constants.buttonValues.doneSessionSnooze.name,
-								text: "Snooze :timer_clock:",
+								text: "Extend Session :timer_clock:",
 								value: _constants.buttonValues.doneSessionSnooze.value,
 								type: "button"
 							}, {
@@ -590,9 +590,9 @@ exports.default = function (controller) {
 												var text = customSnooze.text;
 												var duration = customSnooze.duration;
 
-												// user only said `snooze`
+												// user only said `snooze` or `extend`
 
-												if (_botResponses.utterances.onlyContainsSnooze.test(text)) {
+												if (_botResponses.utterances.onlyContainsSnooze.test(text) || _botResponses.utterances.onlyContainsExtend.test(text)) {
 													// automatically do default snooze here then
 													controller.trigger('done_session_snooze_button_flow', [bot, { SlackUserId: SlackUserId }]);
 												} else {

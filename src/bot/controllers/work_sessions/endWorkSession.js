@@ -443,7 +443,7 @@ export default function(controller) {
 									},
 									{
 											name: buttonValues.doneSessionSnooze.name,
-											text: "Snooze :timer_clock:",
+											text: "Extend Session :timer_clock:",
 											value: buttonValues.doneSessionSnooze.value,
 											type: "button"
 									},
@@ -635,8 +635,8 @@ export default function(controller) {
 
 											const { text, duration } = customSnooze;
 
-											// user only said `snooze`
-											if (utterances.onlyContainsSnooze.test(text)) {
+											// user only said `snooze` or `extend`
+											if (utterances.onlyContainsSnooze.test(text) || utterances.onlyContainsExtend.test(text)) {
 												// automatically do default snooze here then
 												controller.trigger(`done_session_snooze_button_flow`, [ bot, { SlackUserId }]);
 											} else {
