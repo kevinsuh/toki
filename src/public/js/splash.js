@@ -65,7 +65,10 @@ function updateDemoDivOnIndex(index) {
 			break;
 	}
 
+	var counter = index + 1;
+
 	demoDisplay.find(".title").text(title);
+	demoDisplay.find(".index-counter").text(counter);
 	demoDisplay.find(".button.left").data("index", leftIndex);
 	demoDisplay.find(".button.right").data("index", rightIndex);
 

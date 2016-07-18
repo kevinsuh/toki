@@ -143,6 +143,8 @@
         font-size: 5vw;
         text-align: center;
         margin: 0; }
+      .splash #demo-display .demo-body .counter {
+        text-align: center; }
   .splash .circle {
     width: 100px;
     height: 100px;
