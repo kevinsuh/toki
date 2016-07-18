@@ -119,6 +119,7 @@
       -webkit-transition: 0.3s;
       transition: 0.3s; }
   .splash #demo-display {
+    display: none;
     position: fixed;
     width: 100%;
     height: 100%;
