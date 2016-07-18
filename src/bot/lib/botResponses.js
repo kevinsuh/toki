@@ -55,8 +55,9 @@ export const utterances = {
 	containsTimeZone: new RegExp(/t[timezone ]{4,}/i),
 	containsPlan: new RegExp(/p[plan ]{2,}/i),
 	containsAdditional: new RegExp(/\ba[additional]{4,}/i),
-	containsSnooze: new RegExp(/\bs[snooze]{4,}/i),
+	containsSnooze: new RegExp(/(\bs[snooze]{4,}|\be[extend]{4,})/i),
 	onlyContainsSnooze: new RegExp(/^s[snooze]{4,}$/i),
+	onlyContainsExtend: new RegExp(/^e[extend]{4,}$/i),
 	containsElse: new RegExp(/\be[else]{2,}/i),
 	containsShowCommands: new RegExp(/(\bs[show]{2,}|\bc[commands]{4,})/i),
 	containsStartDay: new RegExp(/(\bs[start]{3,}|\bd[day]{2,})/i),
@@ -65,5 +66,6 @@ export const utterances = {
 	containsCompleteOrCheckOrCross: new RegExp(/(\bc[complete]{5,}|\bc[check]{3,}|\bc[cross]{3,})/i),
 	containsDeleteOrRemove: new RegExp(/(\bd[delete]{4,}|\br[remove]{3,})/i),
 	containsTime: new RegExp(/(\bt[time]{2,})/i),
-	containsCancel: new RegExp(/(\bc[cancel]{4,})/i)
+	containsCancel: new RegExp(/(\bc[cancel]{4,})/i),
+	containsContinue: new RegExp(/(\bc[continue]{5,})/i)
 }

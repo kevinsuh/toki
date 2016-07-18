@@ -114,16 +114,15 @@ exports.default = function (controller) {
 											value: _constants.buttonValues.doneSessionDidSomethingElse.value,
 											type: "button"
 										}, {
-											name: _constants.buttonValues.doneSessionEarlyNo.name,
+											name: _constants.buttonValues.cancelSession.name,
 											text: "Nope",
-											value: _constants.buttonValues.doneSessionEarlyNo.value,
+											value: _constants.buttonValues.cancelSession.value,
 											type: "button"
 										}, {
-											name: _constants.buttonValues.newSession.name,
-											text: "Cancel session",
-											value: _constants.buttonValues.newSession.value,
-											type: "button",
-											style: "danger"
+											name: _constants.buttonValues.doneSessionEarlyNo.name,
+											text: "Continue session",
+											value: _constants.buttonValues.doneSessionEarlyNo.value,
+											type: "button"
 										}]
 									}]
 								}, [{
@@ -136,6 +135,10 @@ exports.default = function (controller) {
 								}, { // same as buttonValues.doneSessionYes.value
 									pattern: _botResponses.utterances.yes,
 									callback: function callback(response, convo) {
+
+										// delete button when answered with NL
+										(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 										convo.say("Great work :raised_hands:");
 										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didTask;
 										askUserPostSessionOptions(response, convo);
@@ -150,6 +153,10 @@ exports.default = function (controller) {
 								}, { // same as buttonValues.doneSessionDidSomethingElse.value
 									pattern: _botResponses.utterances.containsElse,
 									callback: function callback(response, convo) {
+
+										// delete button when answered with NL
+										(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didSomethingElse;
 										convo.say(':ocean: Woo!');
 										convo.next();
@@ -158,24 +165,34 @@ exports.default = function (controller) {
 									pattern: _constants.buttonValues.cancelSession.value,
 									callback: function callback(response, convo) {
 										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.cancelSession;
+										askUserPostSessionOptions(response, convo);
 										convo.next();
 									}
 								}, { // same as buttonValues.cancelSession.value
-									pattern: _botResponses.utterances.containsCancel,
+									pattern: _botResponses.utterances.no,
 									callback: function callback(response, convo) {
+
+										// delete button when answered with NL
+										(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.cancelSession;
-										convo.say("Okay! I canceled this session. Let me know when you're ready to `start a session` :punch:");
+										convo.say("No worries! We'll get that done soon");
+										askUserPostSessionOptions(response, convo);
 										convo.next();
 									}
-								}, {
+								}, { // continue session
 									pattern: _constants.buttonValues.doneSessionEarlyNo.value,
 									callback: function callback(response, convo) {
 										convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
 										convo.next();
 									}
 								}, { // same as buttonValues.doneSessionNo.value
-									pattern: _botResponses.utterances.no,
+									pattern: _botResponses.utterances.containsContinue,
 									callback: function callback(response, convo) {
+
+										// delete button when answered with NL
+										(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 										convo.say('Got it');
 										convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
 										convo.next();
@@ -229,8 +246,7 @@ exports.default = function (controller) {
 												controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
 												return;
 											case _constants.sessionTimerDecisions.cancelSession:
-												// session canceled. (from earlier `closeOldRemindersAndSessions`)
-												return;
+												break;
 											case _constants.sessionTimerDecisions.newSession:
 												controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
 												return;
@@ -397,7 +413,7 @@ exports.default = function (controller) {
 						attachments: [{
 							attachment_type: 'default',
 							callback_id: "DONE_SESSION",
-							fallback: "I was unable to process your decision",
+							fallback: "Did you finish your session?",
 							actions: [{
 								name: _constants.buttonValues.doneSessionYes.name,
 								text: "Yes! :punch:",
@@ -406,7 +422,7 @@ exports.default = function (controller) {
 								style: "primary"
 							}, {
 								name: _constants.buttonValues.doneSessionSnooze.name,
-								text: "Snooze :timer_clock:",
+								text: "Extend Session :timer_clock:",
 								value: _constants.buttonValues.doneSessionSnooze.value,
 								type: "button"
 							}, {
@@ -431,6 +447,10 @@ exports.default = function (controller) {
 					}, { // same as buttonValues.doneSessionYes.value
 						pattern: _botResponses.utterances.yes,
 						callback: function callback(response, convo) {
+
+							// delete button when answered with NL
+							(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 							convo.say("Great work :raised_hands:");
 							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.didTask;
 							askUserPostSessionOptions(response, convo);
@@ -445,6 +465,10 @@ exports.default = function (controller) {
 					}, { // same as buttonValues.doneSessionSnooze.value
 						pattern: _botResponses.utterances.containsSnooze,
 						callback: function callback(response, convo) {
+
+							// delete button when answered with NL
+							(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 							convo.say('Keep at it!');
 							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.snooze;
 
@@ -468,6 +492,10 @@ exports.default = function (controller) {
 					}, { // same as buttonValues.doneSessionDidSomethingElse.value
 						pattern: _botResponses.utterances.containsElse,
 						callback: function callback(response, convo) {
+
+							// delete button when answered with NL
+							(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.didSomethingElse;
 							convo.say(':ocean: Woo!');
 							convo.next();
@@ -482,6 +510,10 @@ exports.default = function (controller) {
 					}, { // same as buttonValues.doneSessionNo.value
 						pattern: _botResponses.utterances.no,
 						callback: function callback(response, convo) {
+
+							// delete button when answered with NL
+							(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 							convo.say('That\'s okay! You can keep chipping away and you\'ll get there :pick:');
 							convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.noTasks;
 							askUserPostSessionOptions(response, convo);
@@ -590,9 +622,9 @@ exports.default = function (controller) {
 												var text = customSnooze.text;
 												var duration = customSnooze.duration;
 
-												// user only said `snooze`
+												// user only said `snooze` or `extend`
 
-												if (_botResponses.utterances.onlyContainsSnooze.test(text)) {
+												if (_botResponses.utterances.onlyContainsSnooze.test(text) || _botResponses.utterances.onlyContainsExtend.test(text)) {
 													// automatically do default snooze here then
 													controller.trigger('done_session_snooze_button_flow', [bot, { SlackUserId: SlackUserId }]);
 												} else {
@@ -765,6 +797,10 @@ exports.default = function (controller) {
 					}, { // same as clicking buttonValues.noTasks.value
 						pattern: _botResponses.utterances.containsNone,
 						callback: function callback(response, convo) {
+
+							// delete button when answered with NL
+							(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 							convo.say("No worries! :smile_cat:");
 							askUserPostSessionOptions(response, convo);
 							convo.next();
@@ -778,6 +814,10 @@ exports.default = function (controller) {
 					}, { // same as clicking buttonValues.differentTask.value
 						pattern: _botResponses.utterances.containsDifferent,
 						callback: function callback(response, convo) {
+
+							// delete button when answered with NL
+							(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 							convo.say("What did you get done instead?");
 							askForDifferentCompletedTask(response, convo);
 							convo.next();
@@ -1041,7 +1081,10 @@ function askUserPostSessionOptions(response, convo) {
 	}, { // NL equivalent to buttonValues.takeBreak.value
 		pattern: _botResponses.utterances.containsBreak,
 		callback: function callback(response, convo) {
-			console.log(_botResponses.utterances.containsBreak);
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			getBreakTime(response, convo);
 			convo.next();
 		}
@@ -1054,6 +1097,10 @@ function askUserPostSessionOptions(response, convo) {
 	}, { // NL equivalent to buttonValues.startSession.value
 		pattern: _botResponses.utterances.startSession,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.sessionEnd.postSessionDecision = _intents2.default.START_SESSION;
 			convo.next();
 		}
@@ -1066,6 +1113,10 @@ function askUserPostSessionOptions(response, convo) {
 	}, { // NL equivalent to buttonValues.endDay.value
 		pattern: _botResponses.utterances.containsEnd,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.sessionEnd.postSessionDecision = _intents2.default.END_DAY;
 			convo.next();
 		}
@@ -1078,6 +1129,10 @@ function askUserPostSessionOptions(response, convo) {
 	}, { // NL equivalent to buttonValues.backLater.value
 		pattern: _botResponses.utterances.containsBackLater,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.say("Okay! I'll be here when you get back");
 			handleBeBackLater(response, convo);
 			convo.next();
