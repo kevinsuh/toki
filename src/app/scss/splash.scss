@@ -1,15 +1,15 @@
 @import "modules/all";
 @import "modules/constants";
 
+// relevant variables
+$circle-button-diameter: 100px;
+$hover-time: 0.3s;
+
 #logo {
 	height: 75px;
 }
 
 .splash {
-
-	// relevant variables
-	$circle-button-diameter: 100px;
-	$hover-time: 0.3s;
 
 	.color-gradient {
 		background: 
@@ -169,71 +169,79 @@
 		}
 
 	}
+}
 
-	/**
-	 * 		~~ HOVER OVER DEMO ~~ 
-	 */
-	#demo-display {
-		// display: none;
-		position: fixed;
-		width: 100%;
-		height: 100%;
-		background-color: white;
-		z-index: 999;
-		top: 0;
-		left: 0;
+/**
+ * 		~~ HOVER OVER DEMO ~~ 
+ */
+#demo-display {
+	display: none;
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	background-color: white;
+	z-index: 999;
+	top: 0;
+	left: 0;
 
-		.logo-container {
-			padding-top: 20px;
-			padding-left: 10px;
-		}
-
-		.circle {
-			cursor: pointer;
-			border: 1.5pt solid black;
-		}
-
-		// body of the demo
-		.demo-body {
-			padding: 30px;
-
-			$title-size: 5vw;
-			.glyphicon {
-				font-size: $title-size;
-				&.button {
-					cursor: pointer;
-				}
-			}
-			.title {
-				font-size: $title-size;
-				text-align: center;
-				margin: 0;
-			}
-			.counter {
-				text-align: center;
-			}
-			margin-top: 25px;
-
-		}
+	.logo-container {
+		padding-top: 20px;
+		padding-left: 10px;
 	}
-
-	/**
-	 * 		~~ UTILITY CLASSES FOR SPLASH ~~
-	 */
 
 	.circle {
-		width: $circle-button-diameter;
-		height: $circle-button-diameter;
-		border-radius: 50%;
-		border: 1.5pt solid $grey;
-		background: $orange;
-		text-align: center;
-		line-height: $circle-button-diameter;
-		position: absolute;
-		top: 20px;
-		right: 45px;
-		font-size: 17px;
-		font-weight: 800;
+		cursor: pointer;
+		border: 1.5pt solid black;
+	}
+
+	// body of the demo
+	.demo-body {
+
+		padding: 30px;
+		margin-top: 25px;
+
+		$title-size: 4.5vw;
+		.glyphicon {
+			font-size: $title-size;
+			&.button {
+				cursor: pointer;
+			}
+		}
+		.title {
+			font-size: $title-size;
+			text-align: center;
+			margin: 0;
+		}
+		.counter {
+			text-align: center;
+		}
+		.gif {
+			margin: 0 auto;
+		}
+		.main {
+			margin-top: 40px;
+		}
 
 	}
+}
+
+
+/**
+ * 		~~ UTILITY CLASSES FOR SPLASH ~~
+ */
+
+.circle {
+	width: $circle-button-diameter;
+	height: $circle-button-diameter;
+	border-radius: 50%;
+	border: 1.5pt solid $grey;
+	background: $orange;
+	text-align: center;
+	line-height: $circle-button-diameter;
+	position: absolute;
+	top: 20px;
+	right: 45px;
+	font-size: 17px;
+	font-weight: 800;
+
 }

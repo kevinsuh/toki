@@ -20,7 +20,7 @@
 	</head>
 
 	<body>
-		<div class="splash container-fluid">
+		<div class="splash container-fluid" id="splash-main-display">
 
 			<div class="header-container clearfix row">
 				<a href="/"><img src="/assets/images/toki_logo.png" id="logo"></a>
@@ -127,28 +127,6 @@
 				</div>
 			</div>
 
-			<div id="demo-display">
-				<div class="demo-header">
-					<div class="logo-container">
-						<img src="/assets/images/toki_logo.png" id="logo">
-					</div>
-					<div class="circle">
-						CLOSE
-					</div>
-				</div>
-
-				<div class="demo-body">
-					<div class="col-xs-1 glyphicon glyphicon-arrow-left button left" data-index="0"></div>
-					<div class="col-xs-10">
-						<h2 class="title">Demo</h2>
-						<p class="counter"><span class="index-counter">1</span> of 4</p>
-					</div>
-					<div class="col-xs-1 glyphicon glyphicon-arrow-right button right" data-index="1"></div>
-					</div>
-				</div>
-
-			</div>
-
 			<!-- section 2 -->
 			<div class="row body-container">
 				<div class="container">
@@ -187,6 +165,35 @@
 				</div>
 			</div>
 
+		</div>
+
+		<div id="demo-display">
+			<div class="demo-header row">
+				<div class="logo-container">
+					<img src="/assets/images/toki_logo.png" id="logo">
+				</div>
+				<div class="circle">
+					CLOSE
+				</div>
+			</div>
+
+			<div class="demo-body row">
+
+				<div class="header col-xs-12">
+					<div class="col-xs-1 glyphicon glyphicon-arrow-left button left" data-index="0"></div>
+					<div class="col-xs-10">
+						<h2 class="title">Demo</h2>
+						<p class="counter"><span class="index-counter">1</span> of 4</p>
+					</div>
+					<div class="col-xs-1 glyphicon glyphicon-arrow-right button right" data-index="1"></div>
+				</div>
+					
+				<div class="main col-xs-12">
+					<img src="/assets/gifs/clearobjectives.gif" class="img-responsive gif" alt="Clear Objectives" />
+				</div>
+
+			</div>
+		</div>
 
 		<% if (false) { %>
 		<a href=<%= "https://"+org+".slack.com" %> target="_top">
@@ -201,5 +208,7 @@
 		</center>
 		<% } %>
 		</div>
+
+
 	</body>
 </html>
