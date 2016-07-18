@@ -4,6 +4,8 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 var _index = require('../controllers/index');
 
 var _models = require('../../app/models');
@@ -45,16 +47,23 @@ exports.default = function (controller) {
 			bot.queuedReachouts = {};
 		}
 
-		if (message.type && message.type == "user_typing") {
-			console.log('\n ~~ user typing middleware ~~ \n');
+		if (message.type && (message.type == "user_typing" || message.type == "team_join")) {
+			console.log('\n ~~ user_typing or team_join middleware ~~ \n');
 			next();
 		} else if (message.user) {
-			(function () {
-
-				console.log('\n ~~ in pauseWorkSession middleware ~~ \n');
-				console.log(message);
+			var _ret = function () {
 
 				var SlackUserId = message.user;
+				// another safe measure
+				if (typeof SlackUserId != "string") {
+					console.log('SlackUserId is not a string: ' + SlackUserId);
+					next();
+					return {
+						v: void 0
+					};
+				}
+
+				console.log('\n ~~ in pauseWorkSession middleware ~~ \n');
 
 				// if found user, find the user
 				_models2.default.User.find({
@@ -99,7 +108,9 @@ exports.default = function (controller) {
 						next();
 					}
 				});
-			})();
+			}();
+
+			if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
 		} else {
 			next();
 		}
