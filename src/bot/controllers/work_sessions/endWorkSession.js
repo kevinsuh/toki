@@ -6,7 +6,7 @@ import http from 'http';
 import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, convertMinutesToHoursString } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, convertMinutesToHoursString, deleteConvoAskMessage } from '../../lib/messageHelpers';
 import { closeOldRemindersAndSessions } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
@@ -157,6 +157,10 @@ export default function(controller) {
 									{ // same as buttonValues.doneSessionYes.value
 										pattern: utterances.yes,
 										callback: (response, convo) => {
+
+											// delete button when answered with NL
+											deleteConvoAskMessage(response.channel, bot);
+
 											convo.say("Great work :raised_hands:");
 											convo.doneSessionEarly.doneEarlyDecision = sessionTimerDecisions.didTask;
 											askUserPostSessionOptions(response, convo);
@@ -173,6 +177,10 @@ export default function(controller) {
 									{ // same as buttonValues.doneSessionDidSomethingElse.value
 										pattern: utterances.containsElse,
 										callback: (response, convo) => {
+
+											// delete button when answered with NL
+											deleteConvoAskMessage(response.channel, bot);
+
 											convo.doneSessionEarly.doneEarlyDecision = sessionTimerDecisions.didSomethingElse;
 											convo.say(`:ocean: Woo!`);
 											convo.next();
@@ -188,6 +196,10 @@ export default function(controller) {
 									{ // same as buttonValues.cancelSession.value
 										pattern: utterances.containsCancel,
 										callback: (response, convo) => {
+
+											// delete button when answered with NL
+											deleteConvoAskMessage(response.channel, bot);
+
 											convo.doneSessionEarly.doneEarlyDecision = sessionTimerDecisions.cancelSession;
 											convo.say("Okay! I canceled this session. Let me know when you're ready to `start a session` :punch:");
 											convo.next();
@@ -203,6 +215,10 @@ export default function(controller) {
 									{ // same as buttonValues.doneSessionNo.value
 										pattern: utterances.no,
 										callback: (response, convo) => {
+
+											// delete button when answered with NL
+											deleteConvoAskMessage(response.channel, bot);
+
 											convo.say(`Got it`);
 											convo.say(`I'll see you in ${minutesString} at *${endTimeString}*! Keep crushing :muscle:`);
 											convo.next();
@@ -432,7 +448,7 @@ export default function(controller) {
 							{
 								attachment_type: 'default',
 								callback_id: "DONE_SESSION",
-								fallback: "I was unable to process your decision",
+								fallback: "Did you finish your session?",
 								actions: [
 									{
 											name: buttonValues.doneSessionYes.name,
@@ -475,6 +491,10 @@ export default function(controller) {
 						{ // same as buttonValues.doneSessionYes.value
 							pattern: utterances.yes,
 							callback: (response, convo) => {
+
+								// delete button when answered with NL
+								deleteConvoAskMessage(response.channel, bot);
+
 								convo.say("Great work :raised_hands:");
 								convo.doneSessionTimerObject.sessionTimerDecision = sessionTimerDecisions.didTask;
 								askUserPostSessionOptions(response, convo);
@@ -491,6 +511,10 @@ export default function(controller) {
 						{ // same as buttonValues.doneSessionSnooze.value
 							pattern: utterances.containsSnooze,
 							callback: (response, convo) => {
+
+								// delete button when answered with NL
+								deleteConvoAskMessage(response.channel, bot);
+
 								convo.say(`Keep at it!`);
 								convo.doneSessionTimerObject.sessionTimerDecision = sessionTimerDecisions.snooze;
 								
@@ -514,6 +538,10 @@ export default function(controller) {
 						{ // same as buttonValues.doneSessionDidSomethingElse.value
 							pattern: utterances.containsElse,
 							callback: (response, convo) => {
+
+								// delete button when answered with NL
+								deleteConvoAskMessage(response.channel, bot);
+
 								convo.doneSessionTimerObject.sessionTimerDecision = sessionTimerDecisions.didSomethingElse;
 								convo.say(`:ocean: Woo!`);
 								convo.next();
@@ -530,6 +558,10 @@ export default function(controller) {
 						{ // same as buttonValues.doneSessionNo.value
 							pattern: utterances.no,
 							callback: (response, convo) => {
+
+								// delete button when answered with NL
+								deleteConvoAskMessage(response.channel, bot);
+
 								convo.say(`That's okay! You can keep chipping away and you'll get there :pick:`);
 								convo.doneSessionTimerObject.sessionTimerDecision = sessionTimerDecisions.noTasks;
 								askUserPostSessionOptions(response, convo);
@@ -809,6 +841,10 @@ export default function(controller) {
 						{ // same as clicking buttonValues.noTasks.value
 							pattern: utterances.containsNone,
 							callback: (response, convo) => {
+
+								// delete button when answered with NL
+								deleteConvoAskMessage(response.channel, bot);
+
 								convo.say("No worries! :smile_cat:");
 								askUserPostSessionOptions(response, convo);
 								convo.next();
@@ -824,6 +860,10 @@ export default function(controller) {
 						{ // same as clicking buttonValues.differentTask.value
 							pattern: utterances.containsDifferent,
 							callback: (response, convo) => {
+
+								// delete button when answered with NL
+								deleteConvoAskMessage(response.channel, bot);
+
 								convo.say("What did you get done instead?")
 								askForDifferentCompletedTask(response, convo);
 								convo.next();
@@ -1058,7 +1098,10 @@ export function askUserPostSessionOptions(response, convo) {
     { // NL equivalent to buttonValues.takeBreak.value
       pattern: utterances.containsBreak,
       callback: function(response, convo) {
-      	console.log(utterances.containsBreak);
+      	
+      	// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
         getBreakTime(response, convo);
         convo.next();
       }
@@ -1073,6 +1116,10 @@ export function askUserPostSessionOptions(response, convo) {
     { // NL equivalent to buttonValues.startSession.value
       pattern: utterances.startSession,
       callback: function(response, convo) {
+
+      	// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
       	convo.sessionEnd.postSessionDecision = intentConfig.START_SESSION;
         convo.next();
       }
@@ -1087,6 +1134,10 @@ export function askUserPostSessionOptions(response, convo) {
     { // NL equivalent to buttonValues.endDay.value
       pattern: utterances.containsEnd,
       callback: function(response, convo) {
+
+      	// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
         convo.sessionEnd.postSessionDecision = intentConfig.END_DAY;
         convo.next();
       }
@@ -1101,6 +1152,10 @@ export function askUserPostSessionOptions(response, convo) {
     { // NL equivalent to buttonValues.backLater.value
       pattern: utterances.containsBackLater,
       callback: function(response, convo) {
+
+      	// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+				
       	convo.say("Okay! I'll be here when you get back");
       	handleBeBackLater(response, convo)
         convo.next();
