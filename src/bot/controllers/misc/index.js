@@ -113,7 +113,17 @@ export default function(controller) {
 		})
 		.then((user) => {
 
+			if (!user) {
+				console.log(`USER NOT FOUND: ${SlackUserId}`);
+				return;
+			}
+
 			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+				if (!convo) {
+					console.log("convo not working\n\n\n");
+					return;
+				}
 
 				var name   = user.nickName || user.email;
 				convo.name = name;
