@@ -120,19 +120,58 @@
 		}
 
 		.benefit-box {
+
+			$circle-button-diameter: 100px;
+
 			margin: 0 auto;
-			padding: 25px;
+			padding: 20px;
+			padding-right: $circle-button-diameter + 50;
 			margin-bottom: 25px;
 			border: 4pt solid $blue;
-			height: 200px;
+			height: 250px;
 			cursor: pointer;
+
+			$hover-time: 0.3s;
+			-o-transition: $hover-time;
+			-ms-transition: $hover-time;
+			-moz-transition: $hover-time;
+			-webkit-transition: $hover-time;
+			transition: $hover-time;
 
 			&:hover {
 				border: 4pt solid $orange;
+				.circle {
+					border: 1.5pt solid blue;
+				}
 			}
 			.title {
 				font-weight: 700;
-				font-size: 20px;
+				font-size: 22px;
+			}
+			.description {
+				font-size: 18px;
+			}
+
+			.circle {
+				width: $circle-button-diameter;
+				height: $circle-button-diameter;
+				border-radius: 50%;
+				border: 1.5pt solid $grey;
+				background: $orange;
+				text-align: center;
+				line-height: $circle-button-diameter;
+				position: absolute;
+				top: 20px;
+				right: 45px;
+				font-size: 17px;
+				font-weight: 800;
+
+				-o-transition: $hover-time;
+				-ms-transition: $hover-time;
+				-moz-transition: $hover-time;
+				-webkit-transition: $hover-time;
+				transition: $hover-time;
+
 			}
 		}
 

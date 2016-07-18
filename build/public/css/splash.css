@@ -84,13 +84,41 @@
 
 .splash .body-container .benefit-box {
   margin: 0 auto;
-  padding: 25px;
+  padding: 20px;
+  padding-right: 150px;
   margin-bottom: 25px;
   border: 4pt solid #3F76FF;
-  height: 200px;
-  cursor: pointer; }
+  height: 250px;
+  cursor: pointer;
+  -o-transition: 0.3s;
+  -ms-transition: 0.3s;
+  -moz-transition: 0.3s;
+  -webkit-transition: 0.3s;
+  transition: 0.3s; }
   .splash .body-container .benefit-box:hover {
     border: 4pt solid #FFA819; }
+    .splash .body-container .benefit-box:hover .circle {
+      border: 1.5pt solid blue; }
   .splash .body-container .benefit-box .title {
     font-weight: 700;
-    font-size: 20px; }
+    font-size: 22px; }
+  .splash .body-container .benefit-box .description {
+    font-size: 18px; }
+  .splash .body-container .benefit-box .circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 1.5pt solid #A3A3A1;
+    background: #FFA819;
+    text-align: center;
+    line-height: 100px;
+    position: absolute;
+    top: 20px;
+    right: 45px;
+    font-size: 17px;
+    font-weight: 800;
+    -o-transition: 0.3s;
+    -ms-transition: 0.3s;
+    -moz-transition: 0.3s;
+    -webkit-transition: 0.3s;
+    transition: 0.3s; }
