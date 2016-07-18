@@ -129,6 +129,8 @@ controller.on('team_join', function (bot, message) {
 	console.log("\n\n\n ~~ joined the team ~~ \n\n\n");
 	var SlackUserId = message.user.id;
 
+	console.log(message.user.id);
+
 	bot.api.users.info({ user: SlackUserId }, function (err, response) {
 
 		if (response.ok) {
