@@ -114,16 +114,15 @@ exports.default = function (controller) {
 											value: _constants.buttonValues.doneSessionDidSomethingElse.value,
 											type: "button"
 										}, {
-											name: _constants.buttonValues.doneSessionEarlyNo.name,
+											name: _constants.buttonValues.cancelSession.name,
 											text: "Nope",
-											value: _constants.buttonValues.doneSessionEarlyNo.value,
+											value: _constants.buttonValues.cancelSession.value,
 											type: "button"
 										}, {
-											name: _constants.buttonValues.newSession.name,
-											text: "Cancel session",
-											value: _constants.buttonValues.newSession.value,
-											type: "button",
-											style: "danger"
+											name: _constants.buttonValues.doneSessionEarlyNo.name,
+											text: "Continue session",
+											value: _constants.buttonValues.doneSessionEarlyNo.value,
+											type: "button"
 										}]
 									}]
 								}, [{
@@ -166,27 +165,29 @@ exports.default = function (controller) {
 									pattern: _constants.buttonValues.cancelSession.value,
 									callback: function callback(response, convo) {
 										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.cancelSession;
+										askUserPostSessionOptions(response, convo);
 										convo.next();
 									}
 								}, { // same as buttonValues.cancelSession.value
-									pattern: _botResponses.utterances.containsCancel,
+									pattern: _botResponses.utterances.no,
 									callback: function callback(response, convo) {
 
 										// delete button when answered with NL
 										(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
 										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.cancelSession;
-										convo.say("Okay! I canceled this session. Let me know when you're ready to `start a session` :punch:");
+										convo.say("No worries! We'll get that done soon");
+										askUserPostSessionOptions(response, convo);
 										convo.next();
 									}
-								}, {
+								}, { // continue session
 									pattern: _constants.buttonValues.doneSessionEarlyNo.value,
 									callback: function callback(response, convo) {
 										convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
 										convo.next();
 									}
 								}, { // same as buttonValues.doneSessionNo.value
-									pattern: _botResponses.utterances.no,
+									pattern: _botResponses.utterances.containsContinue,
 									callback: function callback(response, convo) {
 
 										// delete button when answered with NL
@@ -245,8 +246,7 @@ exports.default = function (controller) {
 												controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
 												return;
 											case _constants.sessionTimerDecisions.cancelSession:
-												// session canceled. (from earlier `closeOldRemindersAndSessions`)
-												return;
+												break;
 											case _constants.sessionTimerDecisions.newSession:
 												controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
 												return;

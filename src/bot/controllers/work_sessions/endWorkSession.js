@@ -129,17 +129,16 @@ export default function(controller) {
 														type: "button"
 												},
 												{
-														name: buttonValues.doneSessionEarlyNo.name,
+														name: buttonValues.cancelSession.name,
 														text: "Nope",
-														value: buttonValues.doneSessionEarlyNo.value,
+														value: buttonValues.cancelSession.value,
 														type: "button"
 												},
 												{
-														name: buttonValues.newSession.name,
-														text: "Cancel session",
-														value: buttonValues.newSession.value,
-														type: "button",
-														style: "danger"
+														name: buttonValues.doneSessionEarlyNo.name,
+														text: "Continue session",
+														value: buttonValues.doneSessionEarlyNo.value,
+														type: "button"
 												}
 											]
 										}
@@ -190,22 +189,24 @@ export default function(controller) {
 										pattern: buttonValues.cancelSession.value,
 										callback: (response, convo) => {
 											convo.doneSessionEarly.doneEarlyDecision = sessionTimerDecisions.cancelSession;
+											askUserPostSessionOptions(response, convo);
 											convo.next();
 										}
 									},
 									{ // same as buttonValues.cancelSession.value
-										pattern: utterances.containsCancel,
+										pattern: utterances.no,
 										callback: (response, convo) => {
 
 											// delete button when answered with NL
 											deleteConvoAskMessage(response.channel, bot);
 
 											convo.doneSessionEarly.doneEarlyDecision = sessionTimerDecisions.cancelSession;
-											convo.say("Okay! I canceled this session. Let me know when you're ready to `start a session` :punch:");
+											convo.say("No worries! We'll get that done soon");
+											askUserPostSessionOptions(response, convo);
 											convo.next();
 										}
 									},
-									{
+									{ // continue session
 										pattern: buttonValues.doneSessionEarlyNo.value,
 										callback: (response, convo) => {
 											convo.say(`I'll see you in ${minutesString} at *${endTimeString}*! Keep crushing :muscle:`);
@@ -213,7 +214,7 @@ export default function(controller) {
 										}
 									},
 									{ // same as buttonValues.doneSessionNo.value
-										pattern: utterances.no,
+										pattern: utterances.containsContinue,
 										callback: (response, convo) => {
 
 											// delete button when answered with NL
@@ -270,8 +271,7 @@ export default function(controller) {
 												controller.trigger(`end_session`, [ bot, { SlackUserId }])
 												return;
 											case sessionTimerDecisions.cancelSession:
-												// session canceled. (from earlier `closeOldRemindersAndSessions`)
-												return;
+												break;
 											case sessionTimerDecisions.newSession:
 												controller.trigger(`begin_session`, [ bot, { SlackUserId }]);
 												return;

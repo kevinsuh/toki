@@ -165,7 +165,7 @@ exports.default = function (controller) {
 					bot.replyInteractive(message, "Let's do this :baby:");
 					break;
 				case _constants.buttonValues.cancelSession.value:
-					bot.replyInteractive(message, "Okay! I canceled this session. Let me know when you're ready to `start a session` :punch:");
+					bot.replyInteractive(message, "No worries! We'll get that done soon");
 					break;
 				default:
 					// some default to replace button no matter what

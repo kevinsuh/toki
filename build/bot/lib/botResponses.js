@@ -65,6 +65,7 @@ var utterances = exports.utterances = {
 	containsCompleteOrCheckOrCross: new RegExp(/(\bc[complete]{5,}|\bc[check]{3,}|\bc[cross]{3,})/i),
 	containsDeleteOrRemove: new RegExp(/(\bd[delete]{4,}|\br[remove]{3,})/i),
 	containsTime: new RegExp(/(\bt[time]{2,})/i),
-	containsCancel: new RegExp(/(\bc[cancel]{4,})/i)
+	containsCancel: new RegExp(/(\bc[cancel]{4,})/i),
+	containsContinue: new RegExp(/(\bc[continue]{5,})/i)
 };
 //# sourceMappingURL=botResponses.js.map
