@@ -119,7 +119,6 @@
       -webkit-transition: 0.3s;
       transition: 0.3s; }
   .splash #demo-display {
-    display: none;
     position: fixed;
     width: 100%;
     height: 100%;
@@ -133,6 +132,17 @@
     .splash #demo-display .circle {
       cursor: pointer;
       border: 1.5pt solid black; }
+    .splash #demo-display .demo-body {
+      padding: 30px;
+      margin-top: 25px; }
+      .splash #demo-display .demo-body .glyphicon {
+        font-size: 5vw; }
+        .splash #demo-display .demo-body .glyphicon.button {
+          cursor: pointer; }
+      .splash #demo-display .demo-body .title {
+        font-size: 5vw;
+        text-align: center;
+        margin: 0; }
   .splash .circle {
     width: 100px;
     height: 100px;
