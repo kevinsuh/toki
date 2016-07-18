@@ -14,7 +14,7 @@
     background-size: 150px 199px; }
   .splash .bottom-landing, .splash .main-landing {
     display: block;
-    padding: 60px 0 100px 0;
+    padding: 60px 0 30px 0;
     border-bottom: 1px solid #e5e5e5;
     vertical-align: middle;
     text-align: center; }
@@ -74,49 +74,65 @@
         padding-top: 5px;
         font-size: 15px; }
   .splash .bottom-landing {
-    width: 100vw; }
+    color: white; }
+    .splash .bottom-landing .title {
+      margin-bottom: 20px;
+      font-size: 45px; }
     .splash .bottom-landing .subtitle {
-      font-weight: 600; }
+      font-size: 25px; }
+    .splash .bottom-landing .video-container {
+      margin-top: 35px;
+      margin-bottom: 35px; }
+      .splash .bottom-landing .video-container .subtitle {
+        font-size: 22px; }
+    .splash .bottom-landing .signup-steps {
+      text-align: center;
+      padding-left: 40px; }
+      .splash .bottom-landing .signup-steps li {
+        margin: 10px 0;
+        font-size: 22px; }
   .splash .header-container .title {
     margin: 0;
     padding: 0 0 15px 20px; }
-  .splash .body-container .body-title {
-    text-align: center;
-    font-size: 25px;
-    margin: 30px 0; }
-  .splash .body-container .benefit-box {
-    margin: 0 auto;
-    padding: 20px;
-    padding-right: 150px;
-    margin-bottom: 25px;
-    border: 4pt solid #3F76FF;
-    height: 250px;
-    cursor: pointer;
-    -o-transition: 0.3s;
-    -ms-transition: 0.3s;
-    -moz-transition: 0.3s;
-    -webkit-transition: 0.3s;
-    transition: 0.3s; }
-    .splash .body-container .benefit-box:hover {
-      border: 4pt solid #FFA819; }
-      .splash .body-container .benefit-box:hover .circle {
-        border: 1.5pt solid blue; }
-    .splash .body-container .benefit-box .title {
-      font-weight: 700;
-      font-size: 22px; }
-    .splash .body-container .benefit-box .description {
-      font-size: 18px; }
-    .splash .body-container .benefit-box .benefit-circle {
+  .splash .body-container {
+    padding-bottom: 50px; }
+    .splash .body-container .body-title {
+      text-align: center;
+      font-size: 25px;
+      margin: 50px 0; }
+    .splash .body-container .benefit-box {
+      margin: 0 auto;
+      padding: 20px;
+      padding-right: 150px;
+      margin-bottom: 25px;
+      border: 4pt solid #3F76FF;
+      height: 250px;
+      cursor: pointer;
       -o-transition: 0.3s;
       -ms-transition: 0.3s;
       -moz-transition: 0.3s;
       -webkit-transition: 0.3s;
       transition: 0.3s; }
-    @media (max-width: 400px) {
-      .splash .body-container .benefit-box {
-        padding: 10px; }
-        .splash .body-container .benefit-box .circle {
-          display: none; } }
+      .splash .body-container .benefit-box:hover {
+        border: 4pt solid #FFA819; }
+        .splash .body-container .benefit-box:hover .circle {
+          border: 1.5pt solid blue; }
+      .splash .body-container .benefit-box .title {
+        font-weight: 700;
+        font-size: 22px; }
+      .splash .body-container .benefit-box .description {
+        font-size: 18px; }
+      .splash .body-container .benefit-box .benefit-circle {
+        -o-transition: 0.3s;
+        -ms-transition: 0.3s;
+        -moz-transition: 0.3s;
+        -webkit-transition: 0.3s;
+        transition: 0.3s; }
+      @media (max-width: 400px) {
+        .splash .body-container .benefit-box {
+          padding: 10px; }
+          .splash .body-container .benefit-box .circle {
+            display: none; } }
 
 /**
  * 		~~ HOVER OVER DEMO ~~ 
@@ -130,6 +146,19 @@
   z-index: 999;
   top: 0;
   left: 0; }
+  #demo-display .body-wrapper {
+    position: relative;
+    overflow: hidden; }
+  #demo-display section {
+    max-width: 700px;
+    width: 60%;
+    position: absolute;
+    height: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    max-height: 600px;
+    overflow: hidden;
+    bottom: 0; }
   #demo-display .logo-container {
     padding-top: 20px;
     padding-left: 10px; }
@@ -141,13 +170,14 @@
       display: none; } }
   #demo-display .demo-body {
     padding: 30px;
+    padding-bottom: 0;
     margin-top: 25px; }
     #demo-display .demo-body .glyphicon {
-      font-size: 4.5vw; }
+      font-size: 3.5vw; }
       #demo-display .demo-body .glyphicon.button {
         cursor: pointer; }
     #demo-display .demo-body .title {
-      font-size: 4.5vw;
+      font-size: 3.5vw;
       text-align: center;
       margin: 0; }
     #demo-display .demo-body .counter {

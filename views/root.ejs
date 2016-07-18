@@ -127,72 +127,81 @@
 				</div>
 			</div>
 
-			<!-- section 2 -->
-			<div class="row body-container">
-				<div class="container">
-					<h2>This sounds great, but I have a few questions...</h2>
-					<div class="row">
-						<h4>What is a bot?</h4>
-						<p>Toki is a chat bot, which is a virtual assistant that guides you through your day. Toki is always on and always ready to help you with your time!</p>
-					</div>
-					<div class="row">
-						<h4>What is Slack?</h4>
-						<p>Toki works in <a href="https://slack.com/">Slack</a>, the brilliant team messaging tool. To use Toki, you direct message Toki through Slack, so it feels like your team member, whether you're working with a large team or just installing Slack for the first time!</p>
-					</div>
-					<div class="row">
-						<h4>So do I install anything?</h4>
-						<p>If you already have Slack, signing up will add you to Toki's Slack organization, so there's nothing to install. If you don't have Slack installed, you can use Toki in Slack's web application, but we recommend installing Slack. You'll receive instructions in the email after you sign up!</p>
-					</div>
-				</div>
-			</div>
-
 			<!-- final signup section -->
-			<div class="color-gradient bottom-landing">
+			<div class="color-gradient bottom-landing row">
 
-				<div class="container">
+				<div class="main col-xs-12">
+					<p class="title">Getting started with Toki</p>
+					<ol class="signup-steps col-xs-12 col-md-8 col-md-offset-2">
+						<li>
+							sign up on tokibot.com
+						</li>
+						<li>
+							receive an email to join Toki's Slack channel
+						</li>
+						<li>
+							click on "Join Toki" in the email
+						</li>
+						<li>
+							create an account and sign in!
+						</li>
+					</ol>
 
-					<div class="main">
-						<p class="subtitle">Don't forget to sign up!</p>
+					<div class="video-container col-xs-12 col-md-8 col-md-offset-2">
+						<p class="subtitle">Don't just take our word for it -- here's a walkthrough:</p>
+						<div class="embed-responsive embed-responsive-16by9">
+					    <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/EKm6bG0Qomo"></iframe>
 					</div>
-
-					<div class="form-group">
-						<form id="invite" method="post" action="/invite" class="invite form-inline">
-							<input class="email-input form-control col-xs-12 col-md-8" type="email" name="email" placeholder="joeguy@example.com" required />
-							<input type="submit" class="submit-div col-xs-12 col-md-4" value="Join with Slack" />
-						</form>
 					</div>
-
 				</div>
+
+				<div class="form-group">
+					<form id="invite" method="post" action="/invite" class="invite form-inline">
+						<div class="input-container">
+							<div class="col-xs-12 col-sm-7" style="padding-left: 0; margin-top: 5px;">
+								<input class="email-input " type="email" name="email" placeholder="joeguy@example.com" required />
+							</div>
+							<div class="col-xs-12 col-sm-5" style="padding-left: 0; margin-top: 5px;">
+								<input type="submit" class="submit-btn" style="color: black;" value="Join in Slack" />
+							</div>
+						</div>
+					</form>
+				</div>
+
 			</div>
 
 		</div>
 
+		<!-- DEMO DISPLAY FOR HOVER OVER SITUATIONS -->
 		<div id="demo-display">
-			<div class="demo-header row">
-				<div class="logo-container">
-					<img src="/assets/images/toki_logo.png" id="logo">
+			<div class="body-wrapper">
+				<div class="demo-header row">
+					<div class="logo-container">
+						<img src="/assets/images/toki_logo.png" id="logo">
+					</div>
+					<div class="circle">
+						CLOSE
+					</div>
 				</div>
-				<div class="circle">
-					CLOSE
+
+				<div class="demo-body row">
+
+					<div class="header col-xs-12">
+						<div class="col-xs-1 glyphicon glyphicon-arrow-left button left" data-index="0"></div>
+						<div class="col-xs-10">
+							<h2 class="title">Demo</h2>
+							<p class="counter"><span class="index-counter">1</span> of 4</p>
+						</div>
+						<div class="col-xs-1 glyphicon glyphicon-arrow-right button right" data-index="1"></div>
+					</div>
+
 				</div>
 			</div>
-
-			<div class="demo-body row">
-
-				<div class="header col-xs-12">
-					<div class="col-xs-1 glyphicon glyphicon-arrow-left button left" data-index="0"></div>
-					<div class="col-xs-10">
-						<h2 class="title">Demo</h2>
-						<p class="counter"><span class="index-counter">1</span> of 4</p>
-					</div>
-					<div class="col-xs-1 glyphicon glyphicon-arrow-right button right" data-index="1"></div>
-				</div>
-					
+			<section>
 				<div class="main col-xs-12">
 					<img src="/assets/gifs/clearobjectives.gif" class="img-responsive gif" alt="Clear Objectives" />
 				</div>
-
-			</div>
+			</section>
 		</div>
 
 		<% if (false) { %>
