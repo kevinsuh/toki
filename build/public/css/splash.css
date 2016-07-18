@@ -1,82 +1,148 @@
 #logo {
   height: 75px; }
 
-.splash .color-gradient {
-  background: radial-gradient(circle at 100% 50%, transparent 20%, rgba(255, 255, 255, 0.3) 21%, rgba(255, 255, 255, 0.3) 34%, transparent 35%, transparent), radial-gradient(circle at 0% 50%, transparent 20%, rgba(255, 255, 255, 0.3) 21%, rgba(255, 255, 255, 0.3) 34%, transparent 35%, transparent) 0 -99px;
-  background-color: #8F00FF;
-  background-size: 150px 199px; }
-
-.splash .bottom-landing, .splash .main-landing {
-  display: block;
-  padding: 60px 0 100px 0;
-  border-bottom: 1px solid #e5e5e5;
-  vertical-align: middle;
-  text-align: center; }
-  .splash .bottom-landing .main-title, .splash .main-landing .main-title {
-    color: white;
-    font-size: 50px;
-    font-weight: 600;
-    padding-bottom: 25px;
-    border-bottom: 2.5pt solid #FFA819; }
-  .splash .bottom-landing .main-body, .splash .main-landing .main-body {
-    padding: 0 15px; }
-    .splash .bottom-landing .main-body .subtitle, .splash .main-landing .main-body .subtitle {
-      font-size: 25px;
-      margin: 25px 0;
-      line-height: 30px;
-      color: white; }
-    .splash .bottom-landing .main-body .gif, .splash .main-landing .main-body .gif {
-      margin: 10px auto; }
-  .splash .bottom-landing form.invite, .splash .main-landing form.invite {
-    padding: 0 10%; }
-    .splash .bottom-landing form.invite .input-container, .splash .main-landing form.invite .input-container {
-      text-align: left; }
-      .splash .bottom-landing form.invite .input-container .email-input, .splash .main-landing form.invite .input-container .email-input {
-        height: 40px;
-        padding-left: 6px;
-        width: 100%; }
-      .splash .bottom-landing form.invite .input-container .submit-btn, .splash .main-landing form.invite .input-container .submit-btn {
-        display: inline-block;
-        background-color: white;
-        border: 1pt solid lightgrey;
-        text-align: center;
-        height: 40px;
-        line-height: 40px;
-        padding: 0 10px;
-        vertical-align: middle;
-        border-radius: 6px;
-        background-image: url("../images/slack_logo.png");
-        background-repeat: no-repeat;
-        background-position: center right 10px;
-        background-size: 22px;
-        padding-right: 41px;
-        padding-left: 13px;
-        font-weight: 600;
-        width: 100%; }
-    .splash .bottom-landing form.invite .description, .splash .main-landing form.invite .description {
-      font-weight: inherit;
+.splash {
+  /**
+	 * 		~~ LANDING PAGE OF CSS ~~
+	 */
+  /**
+	 * 		~~ MAIN BODY OF CSS ~~
+	 */
+  /**
+	 * 		~~ HOVER OVER DEMO ~~ 
+	 */
+  /**
+	 * 		~~ UTILITY CLASSES FOR SPLASH ~~
+	 */ }
+  .splash .color-gradient {
+    background: radial-gradient(circle at 100% 50%, transparent 20%, rgba(255, 255, 255, 0.3) 21%, rgba(255, 255, 255, 0.3) 34%, transparent 35%, transparent), radial-gradient(circle at 0% 50%, transparent 20%, rgba(255, 255, 255, 0.3) 21%, rgba(255, 255, 255, 0.3) 34%, transparent 35%, transparent) 0 -99px;
+    background-color: #8F00FF;
+    background-size: 150px 199px; }
+  .splash .bottom-landing, .splash .main-landing {
+    display: block;
+    padding: 60px 0 100px 0;
+    border-bottom: 1px solid #e5e5e5;
+    vertical-align: middle;
+    text-align: center; }
+    .splash .bottom-landing .main-title, .splash .main-landing .main-title {
       color: white;
-      font-size: 18px;
-      text-align: left;
-      margin: 25px 0 10px 0; }
-      .splash .bottom-landing form.invite .description .link-emphasize, .splash .main-landing form.invite .description .link-emphasize {
+      font-size: 50px;
+      font-weight: 600;
+      padding-bottom: 25px;
+      border-bottom: 2.5pt solid #FFA819; }
+    .splash .bottom-landing .main-body, .splash .main-landing .main-body {
+      padding: 0 15px; }
+      .splash .bottom-landing .main-body .subtitle, .splash .main-landing .main-body .subtitle {
+        font-size: 25px;
+        margin: 25px 0;
+        line-height: 30px;
+        color: white; }
+      .splash .bottom-landing .main-body .gif, .splash .main-landing .main-body .gif {
+        margin: 10px auto; }
+    .splash .bottom-landing form.invite, .splash .main-landing form.invite {
+      padding: 0 10%; }
+      .splash .bottom-landing form.invite .input-container, .splash .main-landing form.invite .input-container {
+        text-align: left; }
+        .splash .bottom-landing form.invite .input-container .email-input, .splash .main-landing form.invite .input-container .email-input {
+          height: 40px;
+          padding-left: 6px;
+          width: 100%; }
+        .splash .bottom-landing form.invite .input-container .submit-btn, .splash .main-landing form.invite .input-container .submit-btn {
+          display: inline-block;
+          background-color: white;
+          border: 1pt solid lightgrey;
+          text-align: center;
+          height: 40px;
+          line-height: 40px;
+          padding: 0 10px;
+          vertical-align: middle;
+          border-radius: 6px;
+          background-image: url("../images/slack_logo.png");
+          background-repeat: no-repeat;
+          background-position: center right 10px;
+          background-size: 22px;
+          padding-right: 41px;
+          padding-left: 13px;
+          font-weight: 600;
+          width: 100%; }
+      .splash .bottom-landing form.invite .description, .splash .main-landing form.invite .description {
+        font-weight: inherit;
         color: white;
-        font-style: italic; }
-    .splash .bottom-landing form.invite .beta, .splash .main-landing form.invite .beta {
-      color: white;
-      font-style: italic;
-      padding-top: 5px;
-      font-size: 15px; }
-
-.splash .bottom-landing {
-  width: 100vw; }
-  .splash .bottom-landing .subtitle {
-    font-weight: 600; }
-
-.splash .header-container .title {
-  margin: 0;
-  padding: 0 0 15px 20px; }
-
-.splash .body-container {
-  padding: 20px 0;
-  border-bottom: 5px solid rgba(255, 191, 110, 0.6); }
+        font-size: 18px;
+        text-align: left;
+        margin: 25px 0 10px 0; }
+        .splash .bottom-landing form.invite .description .link-emphasize, .splash .main-landing form.invite .description .link-emphasize {
+          color: white;
+          font-style: italic; }
+      .splash .bottom-landing form.invite .beta, .splash .main-landing form.invite .beta {
+        color: white;
+        font-style: italic;
+        padding-top: 5px;
+        font-size: 15px; }
+  .splash .bottom-landing {
+    width: 100vw; }
+    .splash .bottom-landing .subtitle {
+      font-weight: 600; }
+  .splash .header-container .title {
+    margin: 0;
+    padding: 0 0 15px 20px; }
+  .splash .body-container .body-title {
+    text-align: center;
+    font-size: 25px;
+    margin: 30px 0; }
+  .splash .body-container .benefit-box {
+    margin: 0 auto;
+    padding: 20px;
+    padding-right: 150px;
+    margin-bottom: 25px;
+    border: 4pt solid #3F76FF;
+    height: 250px;
+    cursor: pointer;
+    -o-transition: 0.3s;
+    -ms-transition: 0.3s;
+    -moz-transition: 0.3s;
+    -webkit-transition: 0.3s;
+    transition: 0.3s; }
+    .splash .body-container .benefit-box:hover {
+      border: 4pt solid #FFA819; }
+      .splash .body-container .benefit-box:hover .circle {
+        border: 1.5pt solid blue; }
+    .splash .body-container .benefit-box .title {
+      font-weight: 700;
+      font-size: 22px; }
+    .splash .body-container .benefit-box .description {
+      font-size: 18px; }
+    .splash .body-container .benefit-box .benefit-circle {
+      -o-transition: 0.3s;
+      -ms-transition: 0.3s;
+      -moz-transition: 0.3s;
+      -webkit-transition: 0.3s;
+      transition: 0.3s; }
+  .splash #demo-display {
+    display: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    z-index: 999;
+    top: 0;
+    left: 0; }
+    .splash #demo-display .logo-container {
+      padding-top: 20px;
+      padding-left: 10px; }
+    .splash #demo-display .circle {
+      cursor: pointer;
+      border: 1.5pt solid black; }
+  .splash .circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 1.5pt solid #A3A3A1;
+    background: #FFA819;
+    text-align: center;
+    line-height: 100px;
+    position: absolute;
+    top: 20px;
+    right: 45px;
+    font-size: 17px;
+    font-weight: 800; }
