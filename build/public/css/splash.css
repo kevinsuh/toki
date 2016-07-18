@@ -77,6 +77,7 @@
   margin: 0;
   padding: 0 0 15px 20px; }
 
-.splash .body-container {
-  padding: 20px 0;
-  border-bottom: 5px solid rgba(255, 191, 110, 0.6); }
+.splash .body-container .body-title {
+  text-align: center;
+  font-size: 25px;
+  margin: 30px 0; }
