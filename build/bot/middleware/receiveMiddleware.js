@@ -55,49 +55,51 @@ exports.default = function (controller) {
 
 				var SlackUserId = message.user;
 
-				// if found user, find the user
-				_models2.default.User.find({
-					where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
-					include: [_models2.default.SlackUser]
-				}).then(function (user) {
+				if (SlackUserId) {
+					// if found user, find the user
+					_models2.default.User.find({
+						where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+						include: [_models2.default.SlackUser]
+					}).then(function (user) {
 
-					if (user) {
+						if (user) {
 
-						user.getWorkSessions({
-							where: ['"live" = ?', true]
-						}).then(function (workSessions) {
+							user.getWorkSessions({
+								where: ['"live" = ?', true]
+							}).then(function (workSessions) {
 
-							// found a work session! (should be <= 1 per user)
-							if (workSessions.length > 0) {
+								// found a work session! (should be <= 1 per user)
+								if (workSessions.length > 0) {
 
-								var pausedWorkSessions = [];
-								workSessions.forEach(function (workSession) {
+									var pausedWorkSessions = [];
+									workSessions.forEach(function (workSession) {
 
-									workSession.update({
-										live: false
+										workSession.update({
+											live: false
+										});
+
+										pausedWorkSessions.push(workSession);
 									});
 
-									pausedWorkSessions.push(workSession);
-								});
-
-								// queued reachout has been created for this user
-								if (bot.queuedReachouts[SlackUserId] && bot.queuedReachouts[SlackUserId].workSessions) {
-									pausedWorkSessions.forEach(function (workSession) {
-										bot.queuedReachouts[SlackUserId].workSessions.push(workSession);
-									});
-								} else {
-									bot.queuedReachouts[SlackUserId] = {
-										workSessions: pausedWorkSessions
-									};
+									// queued reachout has been created for this user
+									if (bot.queuedReachouts[SlackUserId] && bot.queuedReachouts[SlackUserId].workSessions) {
+										pausedWorkSessions.forEach(function (workSession) {
+											bot.queuedReachouts[SlackUserId].workSessions.push(workSession);
+										});
+									} else {
+										bot.queuedReachouts[SlackUserId] = {
+											workSessions: pausedWorkSessions
+										};
+									}
 								}
-							}
 
+								next();
+							});
+						} else {
 							next();
-						});
-					} else {
-						next();
-					}
-				});
+						}
+					});
+				}
 			})();
 		} else {
 			next();
