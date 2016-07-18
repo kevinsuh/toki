@@ -148,10 +148,11 @@
   left: 0; }
   #demo-display .body-wrapper {
     position: relative;
-    overflow: hidden; }
+    overflow: hidden;
+    background-color: white; }
   #demo-display section {
-    max-width: 720px;
-    width: 80%;
+    z-index: -1;
+    width: 100%;
     position: absolute;
     height: auto;
     left: 50%;
