@@ -112,6 +112,11 @@
       -moz-transition: 0.3s;
       -webkit-transition: 0.3s;
       transition: 0.3s; }
+    @media (max-width: 400px) {
+      .splash .body-container .benefit-box {
+        padding: 10px; }
+        .splash .body-container .benefit-box .circle {
+          display: none; } }
 
 /**
  * 		~~ HOVER OVER DEMO ~~ 
@@ -131,6 +136,9 @@
   #demo-display .circle {
     cursor: pointer;
     border: 1.5pt solid black; }
+  @media (max-width: 400px) {
+    #demo-display .circle {
+      display: none; } }
   #demo-display .demo-body {
     padding: 30px;
     margin-top: 25px; }
