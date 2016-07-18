@@ -1,7 +1,7 @@
 import moment from 'moment-timezone';
 
 import models from '../../../app/models';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, deleteConvoAskMessage } from '../../lib/messageHelpers';
 import { dateStringToMomentTimeZone, witTimeResponseToTimeZoneObject, witDurationToMinutes} from '../../lib/miscHelpers';
 
 import intentConfig from '../../lib/intents';
@@ -33,7 +33,7 @@ export function startSessionStartConversation(response, convo) {
 // confirm task and time in one place and start if it's good
 function finalizeTimeAndTasksToStart(response, convo) {
 
-	const { sessionStart: { totalMinutes, calculatedTimeObject, calculatedTime, tasksToWorkOnHash, dailyTasks } } = convo;
+	const { sessionStart: { totalMinutes, calculatedTimeObject, calculatedTime, tasksToWorkOnHash, dailyTasks }, task: { bot } } = convo;
 
 	// convert hash to array
 	var tasksToWorkOnArray = [];
@@ -98,6 +98,10 @@ function finalizeTimeAndTasksToStart(response, convo) {
 		{ // NL equivalent to buttonValues.startNow.value
 			pattern: utterances.yes,
 			callback: function(response, convo) {
+				
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				convo.sessionStart.confirmStart = true;
 				convo.stop();
 				convo.next();
@@ -113,6 +117,10 @@ function finalizeTimeAndTasksToStart(response, convo) {
 		{ // NL equivalent to buttonValues.checkIn.value
 			pattern: utterances.containsCheckin,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				askForCheckIn(response, convo);
 				convo.next();
 			}
@@ -127,6 +135,10 @@ function finalizeTimeAndTasksToStart(response, convo) {
 		{ // NL equivalent to buttonValues.changeTask.value
 			pattern: utterances.containsChangeTask,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				askWhichTasksToWorkOn(response, convo);
 				convo.next();
 			}
@@ -141,6 +153,10 @@ function finalizeTimeAndTasksToStart(response, convo) {
 		{ // NL equivalent to buttonValues.changeSessionTime.value
 			pattern: utterances.containsChangeTime,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				askForCustomTotalMinutes(response, convo);
 				convo.next();
 			}
@@ -148,6 +164,10 @@ function finalizeTimeAndTasksToStart(response, convo) {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 				convo.next();
 			}
@@ -167,7 +187,7 @@ function finalizeTimeAndTasksToStart(response, convo) {
 function finalizeNewTaskToStart(response, convo) {
 
 	// here we add this task to dailyTasks
-	var { sessionStart: { totalMinutes, calculatedTimeObject, calculatedTime, tasksToWorkOnHash, dailyTasks, newTask } } = convo;
+	var { sessionStart: { totalMinutes, calculatedTimeObject, calculatedTime, tasksToWorkOnHash, dailyTasks, newTask }, task: { bot } } = convo;
 
 	convo.ask({
 		text: `Ready to work on \`${newTask.text}\` until *${calculatedTime}*?`,
@@ -226,6 +246,9 @@ function finalizeNewTaskToStart(response, convo) {
 			pattern: utterances.yes,
 			callback: function(response, convo) {
 
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				tasksToWorkOnHash[1]                 = newTask;
 				convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
 				convo.sessionStart.confirmStart      = true;
@@ -251,6 +274,9 @@ function finalizeNewTaskToStart(response, convo) {
 			pattern: utterances.containsCheckin,
 			callback: function(response, convo) {
 
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				tasksToWorkOnHash[1]                 = newTask;
 				convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
 				convo.sessionStart.confirmStart      = true;
@@ -271,6 +297,10 @@ function finalizeNewTaskToStart(response, convo) {
 		{ // NL equivalent to buttonValues.changeTask.value
 			pattern: utterances.containsChangeTask,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				convo.addNewTaskCustomMessage = `What is it? \`i.e. clean up market report\` `;
 				convo.sessionStart.newTask.text = false;
 				addNewTask(response, convo);
@@ -295,6 +325,9 @@ function finalizeNewTaskToStart(response, convo) {
 			pattern: utterances.containsChangeTime,
 			callback: function(response, convo) {
 
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				tasksToWorkOnHash[1]                 = newTask;
 				convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
 				convo.sessionStart.confirmStart      = true;
@@ -308,6 +341,10 @@ function finalizeNewTaskToStart(response, convo) {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 				convo.next();
 			}
@@ -330,7 +367,7 @@ function finalizeCheckinTimeToStart(response, convo) {
 
 	console.log("\n\n ~~ in finalizeCheckinTimeToStart ~~ \n\n");
 
-	const { sessionStart: { checkinTimeString, checkinTimeObject, reminderNote, tasksToWorkOnHash, calculatedTime } } = convo;
+	const { sessionStart: { checkinTimeString, checkinTimeObject, reminderNote, tasksToWorkOnHash, calculatedTime }, task: { bot } } = convo;
 
 	var confirmCheckinMessage = '';
 	if (checkinTimeString) {
@@ -396,6 +433,10 @@ function finalizeCheckinTimeToStart(response, convo) {
 		{ // NL equivalent to buttonValues.startNow.value
 			pattern: utterances.yes,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				convo.sessionStart.confirmStart = true;
 				convo.stop();
 				convo.next();
@@ -411,6 +452,10 @@ function finalizeCheckinTimeToStart(response, convo) {
 		{ // NL equivalent to buttonValues.changeCheckinTime.value
 			pattern: utterances.containsChangeTime,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				askForCheckIn(response, convo);
 				convo.next();
 			}
@@ -425,6 +470,10 @@ function finalizeCheckinTimeToStart(response, convo) {
 		{ // NL equivalent to buttonValues.addCheckinNote.value
 			pattern: utterances.containsAddNote,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				askForReminderDuringCheckin(response, convo);
 				convo.next();
 			}
@@ -432,6 +481,10 @@ function finalizeCheckinTimeToStart(response, convo) {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 				convo.next();
 			}
@@ -459,6 +512,7 @@ function askWhichTasksToWorkOn(response, convo) {
 	// convo.say("I recommend working for at least 30 minutes at a time, so if you want to work on shorter tasks, try to pick several to get over that 30 minute threshold :smiley:");
 
 	const { UserId, dailyTasks }  = convo.sessionStart;
+	const { task: { bot } } = convo;
 	var taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 	var message = `Which task(s) would you like to work on?\n${taskListMessage}`;
 	convo.ask({
@@ -490,6 +544,11 @@ function askWhichTasksToWorkOn(response, convo) {
 		{
 			pattern: utterances.containsNew,
 			callback: (response, convo) => {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+				convo.say("Okay! Let's work on a new task");
+
 				// NL contains "new" (i.e. "i'll do a new task")
 				addNewTask(response, convo);
 				convo.next();
@@ -498,6 +557,10 @@ function askWhichTasksToWorkOn(response, convo) {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 				convo.next();
 			}

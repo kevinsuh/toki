@@ -56,6 +56,7 @@ function finalizeTimeAndTasksToStart(response, convo) {
 	var calculatedTime = _convo$sessionStart.calculatedTime;
 	var tasksToWorkOnHash = _convo$sessionStart.tasksToWorkOnHash;
 	var dailyTasks = _convo$sessionStart.dailyTasks;
+	var bot = convo.task.bot;
 
 	// convert hash to array
 
@@ -111,6 +112,10 @@ function finalizeTimeAndTasksToStart(response, convo) {
 	}, { // NL equivalent to buttonValues.startNow.value
 		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.sessionStart.confirmStart = true;
 			convo.stop();
 			convo.next();
@@ -124,6 +129,10 @@ function finalizeTimeAndTasksToStart(response, convo) {
 	}, { // NL equivalent to buttonValues.checkIn.value
 		pattern: _botResponses.utterances.containsCheckin,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			askForCheckIn(response, convo);
 			convo.next();
 		}
@@ -136,6 +145,10 @@ function finalizeTimeAndTasksToStart(response, convo) {
 	}, { // NL equivalent to buttonValues.changeTask.value
 		pattern: _botResponses.utterances.containsChangeTask,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			askWhichTasksToWorkOn(response, convo);
 			convo.next();
 		}
@@ -148,12 +161,20 @@ function finalizeTimeAndTasksToStart(response, convo) {
 	}, { // NL equivalent to buttonValues.changeSessionTime.value
 		pattern: _botResponses.utterances.containsChangeTime,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			askForCustomTotalMinutes(response, convo);
 			convo.next();
 		}
 	}, {
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 			convo.next();
 		}
@@ -178,6 +199,7 @@ function finalizeNewTaskToStart(response, convo) {
 	var tasksToWorkOnHash = _convo$sessionStart2.tasksToWorkOnHash;
 	var dailyTasks = _convo$sessionStart2.dailyTasks;
 	var newTask = _convo$sessionStart2.newTask;
+	var bot = convo.task.bot;
 
 
 	convo.ask({
@@ -227,6 +249,9 @@ function finalizeNewTaskToStart(response, convo) {
 		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			tasksToWorkOnHash[1] = newTask;
 			convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
 			convo.sessionStart.confirmStart = true;
@@ -249,6 +274,9 @@ function finalizeNewTaskToStart(response, convo) {
 		pattern: _botResponses.utterances.containsCheckin,
 		callback: function callback(response, convo) {
 
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			tasksToWorkOnHash[1] = newTask;
 			convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
 			convo.sessionStart.confirmStart = true;
@@ -267,6 +295,10 @@ function finalizeNewTaskToStart(response, convo) {
 	}, { // NL equivalent to buttonValues.changeTask.value
 		pattern: _botResponses.utterances.containsChangeTask,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.addNewTaskCustomMessage = 'What is it? `i.e. clean up market report` ';
 			convo.sessionStart.newTask.text = false;
 			addNewTask(response, convo);
@@ -289,6 +321,9 @@ function finalizeNewTaskToStart(response, convo) {
 		pattern: _botResponses.utterances.containsChangeTime,
 		callback: function callback(response, convo) {
 
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			tasksToWorkOnHash[1] = newTask;
 			convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
 			convo.sessionStart.confirmStart = true;
@@ -301,6 +336,10 @@ function finalizeNewTaskToStart(response, convo) {
 	}, {
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 			convo.next();
 		}
@@ -326,6 +365,7 @@ function finalizeCheckinTimeToStart(response, convo) {
 	var reminderNote = _convo$sessionStart3.reminderNote;
 	var tasksToWorkOnHash = _convo$sessionStart3.tasksToWorkOnHash;
 	var calculatedTime = _convo$sessionStart3.calculatedTime;
+	var bot = convo.task.bot;
 
 
 	var confirmCheckinMessage = '';
@@ -383,6 +423,10 @@ function finalizeCheckinTimeToStart(response, convo) {
 	}, { // NL equivalent to buttonValues.startNow.value
 		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.sessionStart.confirmStart = true;
 			convo.stop();
 			convo.next();
@@ -396,6 +440,10 @@ function finalizeCheckinTimeToStart(response, convo) {
 	}, { // NL equivalent to buttonValues.changeCheckinTime.value
 		pattern: _botResponses.utterances.containsChangeTime,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			askForCheckIn(response, convo);
 			convo.next();
 		}
@@ -408,12 +456,20 @@ function finalizeCheckinTimeToStart(response, convo) {
 	}, { // NL equivalent to buttonValues.addCheckinNote.value
 		pattern: _botResponses.utterances.containsAddNote,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			askForReminderDuringCheckin(response, convo);
 			convo.next();
 		}
 	}, {
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 			convo.next();
 		}
@@ -439,6 +495,7 @@ function askWhichTasksToWorkOn(response, convo) {
 	var _convo$sessionStart4 = convo.sessionStart;
 	var UserId = _convo$sessionStart4.UserId;
 	var dailyTasks = _convo$sessionStart4.dailyTasks;
+	var bot = convo.task.bot;
 
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
 	var message = 'Which task(s) would you like to work on?\n' + taskListMessage;
@@ -465,6 +522,11 @@ function askWhichTasksToWorkOn(response, convo) {
 	}, {
 		pattern: _botResponses.utterances.containsNew,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+			convo.say("Okay! Let's work on a new task");
+
 			// NL contains "new" (i.e. "i'll do a new task")
 			addNewTask(response, convo);
 			convo.next();
@@ -472,6 +534,10 @@ function askWhichTasksToWorkOn(response, convo) {
 	}, {
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 			convo.next();
 		}
