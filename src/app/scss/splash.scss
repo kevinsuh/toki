@@ -118,6 +118,24 @@
 			font-size: 25px;
 			margin: 30px 0;
 		}
+
+		.benefit-box {
+			margin: 0 auto;
+			padding: 25px;
+			margin-bottom: 25px;
+			border: 4pt solid $blue;
+			height: 200px;
+			cursor: pointer;
+
+			&:hover {
+				border: 4pt solid $orange;
+			}
+			.title {
+				font-weight: 700;
+				font-size: 20px;
+			}
+		}
+
 	}
 
 }

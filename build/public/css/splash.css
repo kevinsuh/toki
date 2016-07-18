@@ -81,3 +81,16 @@
   text-align: center;
   font-size: 25px;
   margin: 30px 0; }
+
+.splash .body-container .benefit-box {
+  margin: 0 auto;
+  padding: 25px;
+  margin-bottom: 25px;
+  border: 4pt solid #3F76FF;
+  height: 200px;
+  cursor: pointer; }
+  .splash .body-container .benefit-box:hover {
+    border: 4pt solid #FFA819; }
+  .splash .body-container .benefit-box .title {
+    font-weight: 700;
+    font-size: 20px; }
