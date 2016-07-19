@@ -450,11 +450,7 @@ function getTimeToTasks(response, convo) {
 
 				taskArray = taskArray.map(function (task, index) {
 					if (task.dataValues) {
-						// task from DB
-						return _extends({}, task, {
-							minutes: timeToTasksArray[index],
-							text: task.dataValues.text
-						});
+						task = task.dataValues;
 					}
 					return _extends({}, task, {
 						minutes: timeToTasksArray[index]

@@ -466,14 +466,10 @@ function getTimeToTasks(response, convo) {
 					});
 
 					taskArray = taskArray.map((task, index) => {
-						if (task.dataValues) { // task from DB
-							return {
-								...task,
-								minutes: timeToTasksArray[index],
-								text: task.dataValues.text
-							}
+						if (task.dataValues) {
+							task = task.dataValues;
 						}
-						return { // newly created task
+						return {
 							...task,
 							minutes: timeToTasksArray[index]
 						}
