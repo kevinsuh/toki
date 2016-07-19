@@ -231,8 +231,8 @@ exports.default = function (controller) {
 							};
 
 							if (!defaultSnoozeTime && !remindTimeStampObject) {
-								convo.say('Wait, this is your first time hitting snooze! The default snooze is *' + _constants.TOKI_DEFAULT_SNOOZE_TIME + ' minutes*, but you can change it in your settings by telling me to `show settings`');
-								convo.say("You can also specify a custom snooze by saying `snooze for 20 minutes` or something like that :grinning:");
+								convo.say('Wait, this is your first time hitting extend session! The default extend time is *' + _constants.TOKI_DEFAULT_SNOOZE_TIME + ' minutes*, but you can change it in your settings by telling me to `show settings`');
+								convo.say("You can also specify a custom extend time by saying `extend for 20 minutes` or something like that :grinning:");
 							}
 
 							convo.say('I\'ll check in with you at ' + snoozeTimeString + ' :fist:');
