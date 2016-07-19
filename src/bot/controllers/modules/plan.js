@@ -6,7 +6,7 @@ import bodyParser from 'body-parser';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, getMostRecentTaskListMessageToUpdate } from '../../lib/messageHelpers';
+import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, convertTaskNumberStringToArray, getMostRecentTaskListMessageToUpdate } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 import { FINISH_WORD, EXIT_EARLY_WORDS, NONE, RESET, colorsHash, buttonValues, taskListMessageDoneButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment } from '../../lib/constants';
 import { consoleLog } from '../../lib/miscHelpers';
@@ -68,7 +68,8 @@ export function showPendingTasks(response, convo) {
 		{
 			pattern: buttonValues.allPendingTasks.value,
 			callback: function(response, convo) {
-				
+				convo.dayStart.taskArray = pendingTasks;
+				askForAdditionalTasks(response, convo);
 				convo.next();
 			}
 		},
@@ -76,7 +77,8 @@ export function showPendingTasks(response, convo) {
 			pattern: utterances.containsAll,
 			callback: function(response, convo) {
 				convo.say("I like all those tasks too :open_hands:");
-				
+				convo.dayStart.taskArray = pendingTasks;
+				askForAdditionalTasks(response, convo);
 				convo.next();
 			}
 		},
@@ -135,16 +137,22 @@ function savePendingTasksToWorkOn(response, convo) {
 	var { pendingTasks }          = convo.dayStart; // ported from beginning of convo flow
 
 	// get tasks from array
-	var userInput = response.text; // i.e. `1, 3, 4, 2`
-	var taskArray = prioritizeTaskArrayFromUserInput(pendingTasks, userInput)
+	var userInput                = response.text; // i.e. `1, 3, 4, 2`
+	var taskNumbersToWorkOnArray = convertTaskNumberStringToArray(userInput, pendingTasks);
 
 	// means user input is invalid
-	if (!taskArray) {
+	if (!taskNumbersToWorkOnArray) {
 		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
 		showPendingTasks(response, convo);
 		return;
 	} else {
+		var taskArray = [];
 		// save this to keep moving on!
+		taskNumbersToWorkOnArray.forEach((taskNumber) => {
+			var index = taskNumber - 1; // make this 0-index based
+			if (pendingTasks[index])
+				taskArray.push(pendingTasks[index]);
+		});
 		convo.dayStart.taskArray = taskArray;
 	}
 
@@ -163,6 +171,7 @@ function askForAdditionalTasks(response, convo) {
 		dontShowMinutes: true,
 		dontCalculateMinutes: true
 	}
+
 	var taskListMessage = convertArrayToTaskListMessage(taskArray, options);
 
 	var tasks = [];

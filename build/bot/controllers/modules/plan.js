@@ -87,14 +87,16 @@ function showPendingTasks(response, convo) {
 	}, [{
 		pattern: _constants.buttonValues.allPendingTasks.value,
 		callback: function callback(response, convo) {
-
+			convo.dayStart.taskArray = pendingTasks;
+			askForAdditionalTasks(response, convo);
 			convo.next();
 		}
 	}, { // NL equivalent to buttonValues.allPendingTasks.value
 		pattern: _botResponses.utterances.containsAll,
 		callback: function callback(response, convo) {
 			convo.say("I like all those tasks too :open_hands:");
-
+			convo.dayStart.taskArray = pendingTasks;
+			askForAdditionalTasks(response, convo);
 			convo.next();
 		}
 	}, {
@@ -147,15 +149,20 @@ function savePendingTasksToWorkOn(response, convo) {
 	// get tasks from array
 
 	var userInput = response.text; // i.e. `1, 3, 4, 2`
-	var taskArray = (0, _messageHelpers.prioritizeTaskArrayFromUserInput)(pendingTasks, userInput);
+	var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(userInput, pendingTasks);
 
 	// means user input is invalid
-	if (!taskArray) {
+	if (!taskNumbersToWorkOnArray) {
 		convo.say("Oops, looks like you didn't put in valid numbers :thinking_face:. Let's try this again");
 		showPendingTasks(response, convo);
 		return;
 	} else {
+		var taskArray = [];
 		// save this to keep moving on!
+		taskNumbersToWorkOnArray.forEach(function (taskNumber) {
+			var index = taskNumber - 1; // make this 0-index based
+			if (pendingTasks[index]) taskArray.push(pendingTasks[index]);
+		});
 		convo.dayStart.taskArray = taskArray;
 	}
 
@@ -175,6 +182,7 @@ function askForAdditionalTasks(response, convo) {
 		dontShowMinutes: true,
 		dontCalculateMinutes: true
 	};
+
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 
 	var tasks = [];
