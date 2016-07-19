@@ -8,6 +8,7 @@ import models from '../../../app/models';
 
 import { randomInt } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
+import intentConfig from '../../lib/intents';
 
 import addTaskController from './add';
 import completeTasksController from './complete';
@@ -130,9 +131,19 @@ export default function(controller) {
 							console.log("\n\n ~ edit tasks finished ~ \n\n");
 							console.log(convo.tasksEdit);
 							
-							var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate } = convo.tasksEdit;
+							var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate, startSession, dailyTasksToWorkOn } = convo.tasksEdit;
 
 							resumeQueuedReachouts(bot, { SlackUserId });
+
+							if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
+								var config = {
+									SlackUserId,
+									dailyTasksToWorkOn
+								}
+								config.intent = intentConfig.START_SESSION;
+								controller.trigger(`new_session_group_decision`, [ bot, config ]);
+								return;
+							}
 
 							// add new tasks if they got added
 							if (newTasks.length > 0) {

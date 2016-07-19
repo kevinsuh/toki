@@ -7,6 +7,7 @@ import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
 import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput } from '../../lib/messageHelpers';
+import { closeOldRemindersAndSessions } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 import { FINISH_WORD, EXIT_EARLY_WORDS, NONE } from '../../lib/constants';
 
@@ -195,6 +196,8 @@ export default function(controller) {
 					if (convo.status == 'completed') {
 
 						const { UserId, taskArray } = dayStart;
+
+						closeOldRemindersAndSessions(user);
 
 						// log `start_work` in SessionGroups
 						// and all other relevant DB inserts

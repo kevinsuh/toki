@@ -137,6 +137,37 @@ function askForTaskListOptions(convo) {
 		]
 	},
 	[
+		{ // if user lists tasks, we can infer user wants to start a specific session
+			pattern: utterances.containsNumber,
+			callback: (response, convo) => {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
+				var tasksToWorkOnString      = response.text;
+				var taskNumbersToWorkOnArray = convertTaskNumberStringToArray(tasksToWorkOnString, dailyTasks);
+
+				if (!taskNumbersToWorkOnArray) {
+					convo.say("You didn't pick a valid task to work on :thinking_face:");
+					convo.say("You can pick a task from your list `i.e. tasks 1, 3` to work on");
+					askForTaskListOptions(response, convo);
+					return;
+				}
+
+				var dailyTasksToWorkOn = [];
+				dailyTasks.forEach((dailyTask, index) => {
+					var taskNumber = index + 1; // b/c index is 0-based
+					if (taskNumbersToWorkOnArray.indexOf(taskNumber) > -1) {
+						dailyTasksToWorkOn.push(dailyTask);
+					}
+				});
+
+				convo.tasksEdit.dailyTasksToWorkOn = dailyTasksToWorkOn;
+				confirmWorkSession(convo);
+
+				convo.next();
+			}
+		},
 		{
 			pattern: buttonValues.addTasks.value,
 			callback: function(response, convo) {
@@ -248,6 +279,43 @@ function askForTaskListOptions(convo) {
 			default: true,
 			callback: function(response, convo) {
 				convo.say("I didn't quite get that :thinking_face:");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
+}
+
+// confirm user wants to do work session
+function confirmWorkSession(convo) {
+
+	var { tasksEdit: { dailyTasksToWorkOn } } = convo;
+	var taskTextsToWorkOnArray = dailyTasksToWorkOn.map((task) => {
+		var text = task.dataValues ? task.dataValues.text : task.text;
+		return text;
+	});
+	var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
+
+	convo.ask(`Would you like to work on ${tasksToWorkOnString}?`, [
+		{
+			pattern: utterances.yes,
+			callback: (response, convo) => {
+				convo.tasksEdit.startSession = true;
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				convo.say("Okay!");
+				askForTaskListOptions(convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				convo.say("Sorry, I didn't catch that");
 				convo.repeat();
 				convo.next();
 			}
@@ -469,7 +537,7 @@ function saveNewTaskResponses(tasksToAdd, convo) {
 function getTimeToNewTasks(response, convo) {
 
 	var { bot, dailyTasks, newTasks } = convo.tasksEdit;
-	var options                    = { dontShowMinutes: true, forceCalculateMinutes: true };
+	var options                    = { dontShowMinutes: true };
 	var taskListMessage            = convertArrayToTaskListMessage(newTasks, options);
 
 	console.log(`\n\n\nnew tasks that you're adding:`);

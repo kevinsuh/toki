@@ -50,6 +50,7 @@ exports.default = function (controller) {
    */
 
 		var SlackUserId = config.SlackUserId;
+		var dailyTasksToWorkOn = config.dailyTasksToWorkOn;
 
 		console.log("\n\n\n\n\nin `confirm_new_session` before entering begin_session flow!\n\n\n\n\n");
 
@@ -67,7 +68,7 @@ exports.default = function (controller) {
 				// no live work sessions => you're good to go!
 
 				if (workSessions.length == 0) {
-					controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+					controller.trigger('begin_session', [bot, config]);
 					return;
 				}
 
@@ -168,7 +169,7 @@ exports.default = function (controller) {
 									});
 								});
 							});
-							controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+							controller.trigger('begin_session', [bot, config]);
 						} else {
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						}
@@ -188,7 +189,12 @@ exports.default = function (controller) {
   */
 	controller.on('begin_session', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
+		var dailyTasksToWorkOn = config.dailyTasksToWorkOn;
 
+
+		console.log("in begin session:");
+		console.log(config);
+		console.log("\n\n");
 
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
@@ -238,6 +244,22 @@ exports.default = function (controller) {
 					if (dailyTasks.length == 0) {
 						convo.sessionStart.noDailyTasks = true;
 						convo.stop();
+					} else if (dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
+
+						/**
+       * ~~ USER HAS PASSED IN DAILY TASKS TO WORK ON FOR THIS SESSION ~~
+       */
+						dailyTasksToWorkOn = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasksToWorkOn, "daily");
+
+						var tasksToWorkOnHash = {};
+						dailyTasksToWorkOn.forEach(function (dailyTask, index) {
+							tasksToWorkOnHash[index] = dailyTask;
+						});
+
+						convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
+
+						(0, _startWorkSessionFunctions.confirmTimeForTasks)(err, convo);
+						convo.next();
 					} else {
 
 						// let's turn off sessions and reminders here

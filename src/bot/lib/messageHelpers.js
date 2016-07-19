@@ -185,10 +185,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		taskListMessage += taskListMessageBody;
 	}
 	
-	
-
-	// plan has no remaining tasks but we want minutes to get calculated, so we need to forceCalculateMinutes for it
-	if ((!options.dontCalculateMinutes && remainingTasks.length > 0) || options.forceCalculateMinutes) { // taskListMessages default to show calculated minutes
+	if (!options.dontCalculateMinutes && remainingTasks.length > 0) { // taskListMessages default to show calculated minutes
 		var { totalMinutes } = options;
 		var timeString = convertMinutesToHoursString(totalMinutes);
 		var totalMinutesContent = `\n*Total time estimate: ${timeString} :clock730:*`;

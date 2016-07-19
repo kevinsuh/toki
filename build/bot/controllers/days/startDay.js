@@ -172,9 +172,11 @@ exports.default = function (controller) {
 							var UserId = dayStart.UserId;
 							var taskArray = dayStart.taskArray;
 
+
+							(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+
 							// log `start_work` in SessionGroups
 							// and all other relevant DB inserts
-
 							_models2.default.SessionGroup.create({
 								type: "start_work",
 								UserId: UserId
@@ -294,6 +296,8 @@ var _models2 = _interopRequireDefault(_models);
 var _botResponses = require('../../lib/botResponses');
 
 var _messageHelpers = require('../../lib/messageHelpers');
+
+var _miscHelpers = require('../../lib/miscHelpers');
 
 var _intents = require('../../lib/intents');
 
