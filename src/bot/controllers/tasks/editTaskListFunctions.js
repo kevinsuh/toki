@@ -537,7 +537,7 @@ function saveNewTaskResponses(tasksToAdd, convo) {
 function getTimeToNewTasks(response, convo) {
 
 	var { bot, dailyTasks, newTasks } = convo.tasksEdit;
-	var options                    = { dontShowMinutes: true, forceCalculateMinutes: true };
+	var options                    = { dontShowMinutes: true };
 	var taskListMessage            = convertArrayToTaskListMessage(newTasks, options);
 
 	console.log(`\n\n\nnew tasks that you're adding:`);

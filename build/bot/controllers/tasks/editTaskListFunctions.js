@@ -524,7 +524,7 @@ function getTimeToNewTasks(response, convo) {
 	var dailyTasks = _convo$tasksEdit6.dailyTasks;
 	var newTasks = _convo$tasksEdit6.newTasks;
 
-	var options = { dontShowMinutes: true, forceCalculateMinutes: true };
+	var options = { dontShowMinutes: true };
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(newTasks, options);
 
 	console.log('\n\n\nnew tasks that you\'re adding:');

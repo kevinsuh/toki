@@ -29,304 +29,310 @@ exports.default = function (controller) {
 		});
 
 		setTimeout(function () {
+			controller.trigger('done_session_flow', [bot, { SlackUserId: SlackUserId }]);
+		}, 800);
+	});
 
-			_models2.default.User.find({
-				where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
-				include: [_models2.default.SlackUser]
-			}).then(function (user) {
-				user.getWorkSessions({
-					where: ['"open" = ?', true],
-					order: '"WorkSession"."createdAt" DESC',
-					include: [_models2.default.DailyTask]
-				}).then(function (workSessions) {
+	controller.on('done_session_flow', function (bot, config) {
+		var SlackUserId = config.SlackUserId;
 
-					var UserId = user.id;
 
-					// if live work session, confirm end early
-					// else, user MUST say `done` to trigger end (this properly simulates user is done with that session)
-					if (workSessions.length > 0) {
+		_models2.default.User.find({
+			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+			include: [_models2.default.SlackUser]
+		}).then(function (user) {
+			user.getWorkSessions({
+				where: ['"open" = ?', true],
+				order: '"WorkSession"."createdAt" DESC',
+				include: [_models2.default.DailyTask]
+			}).then(function (workSessions) {
 
-						var workSession = workSessions[0]; // only deal with most recent one
-						var dailyTaskIds = workSession.DailyTasks.map(function (dailyTask) {
-							return dailyTask.id;
+				var UserId = user.id;
+
+				// if live work session, confirm end early
+				// else, user MUST say `done` to trigger end (this properly simulates user is done with that session)
+				if (workSessions.length > 0) {
+
+					var workSession = workSessions[0]; // only deal with most recent one
+					var dailyTaskIds = workSession.DailyTasks.map(function (dailyTask) {
+						return dailyTask.id;
+					});
+
+					user.getDailyTasks({
+						where: ['"DailyTask"."id" IN (?) AND "Task"."done" = ?', dailyTaskIds, false],
+						include: [_models2.default.Task]
+					}).then(function (dailyTasks) {
+
+						var taskTextsToWorkOnArray = dailyTasks.map(function (dailyTask) {
+							var text = dailyTask.Task.dataValues.text;
+							return text;
 						});
+						var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
 
-						user.getDailyTasks({
-							where: ['"DailyTask"."id" IN (?) AND "Task"."done" = ?', dailyTaskIds, false],
-							include: [_models2.default.Task]
-						}).then(function (dailyTasks) {
-
-							var taskTextsToWorkOnArray = dailyTasks.map(function (dailyTask) {
-								var text = dailyTask.Task.dataValues.text;
-								return text;
-							});
-							var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
-
-							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-								var tz = user.SlackUser.tz;
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+							var tz = user.SlackUser.tz;
 
 
-								convo.doneSessionEarly = {
-									SlackUserId: SlackUserId,
-									dailyTaskIds: dailyTaskIds,
-									workSession: workSession,
-									doneEarlyDecision: false
-								};
+							convo.doneSessionEarly = {
+								SlackUserId: SlackUserId,
+								dailyTaskIds: dailyTaskIds,
+								workSession: workSession,
+								doneEarlyDecision: false
+							};
 
-								convo.sessionEnd = {
-									UserId: user.id,
-									tz: tz,
-									postSessionDecision: false,
-									reminders: [],
-									tasksCompleted: [],
-									SlackUserId: SlackUserId
-								};
+							convo.sessionEnd = {
+								UserId: user.id,
+								tz: tz,
+								postSessionDecision: false,
+								reminders: [],
+								tasksCompleted: [],
+								SlackUserId: SlackUserId
+							};
 
-								// get times for user
-								var now = (0, _momentTimezone2.default)();
-								var endTime = (0, _momentTimezone2.default)(workSession.dataValues.endTime).tz(tz);
-								var endTimeString = endTime.format("h:mm a");
-								var minutes = _momentTimezone2.default.duration(endTime.diff(now)).asMinutes();
-								var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+							// get times for user
+							var now = (0, _momentTimezone2.default)();
+							var endTime = (0, _momentTimezone2.default)(workSession.dataValues.endTime).tz(tz);
+							var endTimeString = endTime.format("h:mm a");
+							var minutes = _momentTimezone2.default.duration(endTime.diff(now)).asMinutes();
+							var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
 
-								var message = '';
-								if (dailyTasks.length == 0) {
-									message = 'Did you finish your tasks for this session?';
-								} else {
-									message = 'Did you finish ' + tasksToWorkOnString + '?';
-								}
+							var message = '';
+							if (dailyTasks.length == 0) {
+								message = 'Did you finish your tasks for this session?';
+							} else {
+								message = 'Did you finish ' + tasksToWorkOnString + '?';
+							}
 
-								convo.ask({
-									text: message,
-									attachments: [{
-										attachment_type: 'default',
-										callback_id: "DONE_SESSION",
-										fallback: "Are you done with your session?",
-										actions: [{
-											name: _constants.buttonValues.doneSessionYes.name,
-											text: "Yes! :punch:",
-											value: _constants.buttonValues.doneSessionYes.value,
-											type: "button",
-											style: "primary"
-										}, {
-											name: _constants.buttonValues.doneSessionDidSomethingElse.name,
-											text: "Did something else",
-											value: _constants.buttonValues.doneSessionDidSomethingElse.value,
-											type: "button"
-										}, {
-											name: _constants.buttonValues.cancelSession.name,
-											text: "Nope",
-											value: _constants.buttonValues.cancelSession.value,
-											type: "button"
-										}, {
-											name: _constants.buttonValues.doneSessionEarlyNo.name,
-											text: "Continue session",
-											value: _constants.buttonValues.doneSessionEarlyNo.value,
-											type: "button"
-										}]
+							convo.ask({
+								text: message,
+								attachments: [{
+									attachment_type: 'default',
+									callback_id: "DONE_SESSION",
+									fallback: "Are you done with your session?",
+									actions: [{
+										name: _constants.buttonValues.doneSessionYes.name,
+										text: "Yes! :punch:",
+										value: _constants.buttonValues.doneSessionYes.value,
+										type: "button",
+										style: "primary"
+									}, {
+										name: _constants.buttonValues.doneSessionDidSomethingElse.name,
+										text: "Did something else",
+										value: _constants.buttonValues.doneSessionDidSomethingElse.value,
+										type: "button"
+									}, {
+										name: _constants.buttonValues.cancelSession.name,
+										text: "Nope",
+										value: _constants.buttonValues.cancelSession.value,
+										type: "button"
+									}, {
+										name: _constants.buttonValues.doneSessionEarlyNo.name,
+										text: "Continue session",
+										value: _constants.buttonValues.doneSessionEarlyNo.value,
+										type: "button"
 									}]
-								}, [{
-									pattern: _constants.buttonValues.doneSessionYes.value,
-									callback: function callback(response, convo) {
-										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didTask;
-										askUserPostSessionOptions(response, convo);
-										convo.next();
-									}
-								}, { // same as buttonValues.doneSessionYes.value
-									pattern: _botResponses.utterances.yes,
-									callback: function callback(response, convo) {
+								}]
+							}, [{
+								pattern: _constants.buttonValues.doneSessionYes.value,
+								callback: function callback(response, convo) {
+									convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didTask;
+									askUserPostSessionOptions(response, convo);
+									convo.next();
+								}
+							}, { // same as buttonValues.doneSessionYes.value
+								pattern: _botResponses.utterances.yes,
+								callback: function callback(response, convo) {
 
-										// delete button when answered with NL
-										(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+									// delete button when answered with NL
+									(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
-										convo.say("Great work :raised_hands:");
-										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didTask;
-										askUserPostSessionOptions(response, convo);
-										convo.next();
-									}
-								}, { // this just triggers `end_session` flow
-									pattern: _constants.buttonValues.doneSessionDidSomethingElse.value,
-									callback: function callback(response, convo) {
-										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didSomethingElse;
-										convo.next();
-									}
-								}, { // same as buttonValues.doneSessionDidSomethingElse.value
-									pattern: _botResponses.utterances.containsElse,
-									callback: function callback(response, convo) {
+									convo.say("Great work :raised_hands:");
+									convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didTask;
+									askUserPostSessionOptions(response, convo);
+									convo.next();
+								}
+							}, { // this just triggers `end_session` flow
+								pattern: _constants.buttonValues.doneSessionDidSomethingElse.value,
+								callback: function callback(response, convo) {
+									convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didSomethingElse;
+									convo.next();
+								}
+							}, { // same as buttonValues.doneSessionDidSomethingElse.value
+								pattern: _botResponses.utterances.containsElse,
+								callback: function callback(response, convo) {
 
-										// delete button when answered with NL
-										(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+									// delete button when answered with NL
+									(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
-										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didSomethingElse;
-										convo.say(':ocean: Woo!');
-										convo.next();
-									}
-								}, {
-									pattern: _constants.buttonValues.cancelSession.value,
-									callback: function callback(response, convo) {
-										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.cancelSession;
-										askUserPostSessionOptions(response, convo);
-										convo.next();
-									}
-								}, { // same as buttonValues.cancelSession.value
-									pattern: _botResponses.utterances.no,
-									callback: function callback(response, convo) {
+									convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.didSomethingElse;
+									convo.say(':ocean: Woo!');
+									convo.next();
+								}
+							}, {
+								pattern: _constants.buttonValues.cancelSession.value,
+								callback: function callback(response, convo) {
+									convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.cancelSession;
+									askUserPostSessionOptions(response, convo);
+									convo.next();
+								}
+							}, { // same as buttonValues.cancelSession.value
+								pattern: _botResponses.utterances.no,
+								callback: function callback(response, convo) {
 
-										// delete button when answered with NL
-										(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+									// delete button when answered with NL
+									(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
-										convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.cancelSession;
-										convo.say("No worries! We'll get that done soon");
-										askUserPostSessionOptions(response, convo);
-										convo.next();
-									}
-								}, { // continue session
-									pattern: _constants.buttonValues.doneSessionEarlyNo.value,
-									callback: function callback(response, convo) {
-										convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
-										convo.next();
-									}
-								}, { // same as buttonValues.doneSessionNo.value
-									pattern: _botResponses.utterances.containsContinue,
-									callback: function callback(response, convo) {
+									convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.cancelSession;
+									convo.say("No worries! We'll get that done soon");
+									askUserPostSessionOptions(response, convo);
+									convo.next();
+								}
+							}, { // continue session
+								pattern: _constants.buttonValues.doneSessionEarlyNo.value,
+								callback: function callback(response, convo) {
+									convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
+									convo.next();
+								}
+							}, { // same as buttonValues.doneSessionNo.value
+								pattern: _botResponses.utterances.containsContinue,
+								callback: function callback(response, convo) {
 
-										// delete button when answered with NL
-										(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+									// delete button when answered with NL
+									(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
-										convo.say('Got it');
-										convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
-										convo.next();
-									}
-								}, { // this is failure point. restart with question
-									default: true,
-									callback: function callback(response, convo) {
-										convo.say("I didn't quite get that :thinking_face:");
-										convo.repeat();
-										convo.next();
-									}
-								}]);
-								convo.next();
+									convo.say('Got it');
+									convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
+									convo.next();
+								}
+							}, { // this is failure point. restart with question
+								default: true,
+								callback: function callback(response, convo) {
+									convo.say("I didn't quite get that :thinking_face:");
+									convo.repeat();
+									convo.next();
+								}
+							}]);
+							convo.next();
 
-								/**
-         * 		~~ END OF THIS CONVO ~~
-         */
+							/**
+        * 		~~ END OF THIS CONVO ~~
+        */
 
-								convo.on('end', function (convo) {
-									var _convo$doneSessionEar = convo.doneSessionEarly;
-									var SlackUserId = _convo$doneSessionEar.SlackUserId;
-									var dailyTaskIds = _convo$doneSessionEar.dailyTaskIds;
-									var doneEarlyDecision = _convo$doneSessionEar.doneEarlyDecision;
-									var _convo$sessionEnd = convo.sessionEnd;
-									var postSessionDecision = _convo$sessionEnd.postSessionDecision;
-									var reminders = _convo$sessionEnd.reminders;
+							convo.on('end', function (convo) {
+								var _convo$doneSessionEar = convo.doneSessionEarly;
+								var SlackUserId = _convo$doneSessionEar.SlackUserId;
+								var dailyTaskIds = _convo$doneSessionEar.dailyTaskIds;
+								var doneEarlyDecision = _convo$doneSessionEar.doneEarlyDecision;
+								var _convo$sessionEnd = convo.sessionEnd;
+								var postSessionDecision = _convo$sessionEnd.postSessionDecision;
+								var reminders = _convo$sessionEnd.reminders;
 
 
-									if (doneEarlyDecision) {
+								if (doneEarlyDecision) {
 
-										(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+									(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 
-										switch (doneEarlyDecision) {
-											case _constants.sessionTimerDecisions.didTask:
-												// update the specific task finished
-												user.getDailyTasks({
-													where: ['"DailyTask"."id" IN (?)', dailyTaskIds],
-													include: [_models2.default.Task]
-												}).then(function (dailyTasks) {
-													var completedTaskIds = dailyTasks.map(function (dailyTask) {
-														return dailyTask.TaskId;
-													});
-													_models2.default.Task.update({
-														done: true
-													}, {
-														where: ['"Tasks"."id" in (?)', completedTaskIds]
-													});
+									switch (doneEarlyDecision) {
+										case _constants.sessionTimerDecisions.didTask:
+											// update the specific task finished
+											user.getDailyTasks({
+												where: ['"DailyTask"."id" IN (?)', dailyTaskIds],
+												include: [_models2.default.Task]
+											}).then(function (dailyTasks) {
+												var completedTaskIds = dailyTasks.map(function (dailyTask) {
+													return dailyTask.TaskId;
 												});
-												break;
-											case _constants.sessionTimerDecisions.didSomethingElse:
-												controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
-												return;
-											case _constants.sessionTimerDecisions.cancelSession:
-												break;
-											case _constants.sessionTimerDecisions.newSession:
-												controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
-												return;
-											default:
-												break;
-										}
-
-										/**
-           * 		~~ THIS IS SIMULATION OF `session_end` FLOW
-           * 		essentially figuring out postSessionDecision
-           */
-
-										// then from here, active the postSessionDecisions
-										setTimeout(function () {
-											handlePostSessionDecision(postSessionDecision, { controller: controller, bot: bot, SlackUserId: SlackUserId });
-										}, 500);
-
-										// set reminders (usually a break)
-										reminders.forEach(function (reminder) {
-											var remindTime = reminder.remindTime;
-											var customNote = reminder.customNote;
-											var type = reminder.type;
-
-											_models2.default.Reminder.create({
-												UserId: UserId,
-												remindTime: remindTime,
-												customNote: customNote,
-												type: type
+												_models2.default.Task.update({
+													done: true
+												}, {
+													where: ['"Tasks"."id" in (?)', completedTaskIds]
+												});
 											});
-										});
-									} else {
-										(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+											break;
+										case _constants.sessionTimerDecisions.didSomethingElse:
+											controller.trigger('end_session', [bot, { SlackUserId: SlackUserId }]);
+											return;
+										case _constants.sessionTimerDecisions.cancelSession:
+											break;
+										case _constants.sessionTimerDecisions.newSession:
+											controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+											return;
+										default:
+											break;
 									}
-								});
+
+									/**
+          * 		~~ THIS IS SIMULATION OF `session_end` FLOW
+          * 		essentially figuring out postSessionDecision
+          */
+
+									// then from here, active the postSessionDecisions
+									setTimeout(function () {
+										handlePostSessionDecision(postSessionDecision, { controller: controller, bot: bot, SlackUserId: SlackUserId });
+									}, 500);
+
+									// set reminders (usually a break)
+									reminders.forEach(function (reminder) {
+										var remindTime = reminder.remindTime;
+										var customNote = reminder.customNote;
+										var type = reminder.type;
+
+										_models2.default.Reminder.create({
+											UserId: UserId,
+											remindTime: remindTime,
+											customNote: customNote,
+											type: type
+										});
+									});
+								} else {
+									(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+								}
 							});
 						});
+					});
+				} else {
+
+					if (_botResponses.utterances.containsTask.test(message.text)) {
+
+						// want to finish off some tasks
+						controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
 					} else {
 
-						if (_botResponses.utterances.containsTask.test(message.text)) {
-
-							// want to finish off some tasks
-							controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
-						} else {
-
-							// want to be end a session when they arent currently in one
-							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-								convo.ask('You aren\'t in a session right now! Would you like to start one?', [{
-									pattern: _botResponses.utterances.yes,
-									callback: function callback(response, convo) {
-										convo.startSession = true;
-										convo.next();
-									}
-								}, {
-									pattern: _botResponses.utterances.no,
-									callback: function callback(response, convo) {
-										convo.say('Okay! I\'ll be here when you\'re ready to crank again :wrench: ');
-										convo.next();
-									}
-								}, {
-									default: true,
-									callback: function callback(response, convo) {
-										convo.say("Sorry, I didn't get that. Please tell me `yes` or `no` to the question!");
-										convo.repeat();
-										convo.next();
-									}
-								}]);
-								convo.next();
-								convo.on('end', function (convo) {
-									if (convo.startSession) {
-										controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
-									} else {
-										(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-									}
-								});
+						// want to be end a session when they arent currently in one
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+							convo.ask('You aren\'t in a session right now! Would you like to start one?', [{
+								pattern: _botResponses.utterances.yes,
+								callback: function callback(response, convo) {
+									convo.startSession = true;
+									convo.next();
+								}
+							}, {
+								pattern: _botResponses.utterances.no,
+								callback: function callback(response, convo) {
+									convo.say('Okay! I\'ll be here when you\'re ready to crank again :wrench: ');
+									convo.next();
+								}
+							}, {
+								default: true,
+								callback: function callback(response, convo) {
+									convo.say("Sorry, I didn't get that. Please tell me `yes` or `no` to the question!");
+									convo.repeat();
+									convo.next();
+								}
+							}]);
+							convo.next();
+							convo.on('end', function (convo) {
+								if (convo.startSession) {
+									controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+								} else {
+									(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+								}
 							});
-						}
+						});
 					}
-				});
+				}
 			});
-		}, 1250);
+		});
 	});
 
 	/**
