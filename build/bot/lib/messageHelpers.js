@@ -24,6 +24,12 @@ var _constants = require('./constants');
 
 var _botResponses = require('./botResponses');
 
+var _nlp_compromise = require('nlp_compromise');
+
+var _nlp_compromise2 = _interopRequireDefault(_nlp_compromise);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 /**
  * takes array of tasks and converts to array of task STRINGS
  * these "response objects" are botkit MESSAGE response
@@ -323,13 +329,35 @@ function convertTimeStringToMinutes(timeString) {
 	var totalMinutes = 0;
 	var timeArray = timeString.split(" ");
 
+	var aOrAnRegExp = new RegExp(/\b[an]{1,3}/i);
+	var parsedNumberValue = false;
+
+	if (_nlp_compromise2.default.value(timeString).number) {
+		parsedNumberValue = '' + _nlp_compromise2.default.value(timeString).number;
+	} else if (aOrAnRegExp.test(timeString)) {
+		parsedNumberValue = "1";
+	}
+
 	var totalMinutesCount = 0; // max of 1
 	var totalHoursCount = 0; // max of 1
 	for (var i = 0; i < timeArray.length; i++) {
 
+		var aOrAnRegExp = new RegExp(/\b[an]{1,3}/i);
+
+		if (_nlp_compromise2.default.value(timeArray[i]).number) {
+			timeArray[i] = '' + _nlp_compromise2.default.value(timeArray[i]).number;
+		} else if (aOrAnRegExp.test(timeArray[i])) {
+			timeArray[i] = "1";
+		}
+
 		var numberValue = timeArray[i].match(/\d+/);
 		if (!numberValue) {
 			continue;
+		}
+
+		// possible we get the number value from outside the split loop
+		if (parsedNumberValue) {
+			timeArray[i] = parsedNumberValue;
 		}
 
 		var minutes = 0;

@@ -36,7 +36,12 @@ export default function(controller) {
 		});
 
 		setTimeout(() => {
-			controller.trigger(`done_session_flow`, [bot, { SlackUserId }]);
+			if (utterances.containsTask.test(message.text)) {
+				// want to finish off some tasks
+				controller.trigger(`edit_tasks_flow`, [bot, { SlackUserId }]);
+			} else {
+				controller.trigger(`done_session_flow`, [bot, { SlackUserId }]);
+			}
 		}, 800);
 	});
 
@@ -317,49 +322,42 @@ export default function(controller) {
 
 				} else {
 
-					if (utterances.containsTask.test(message.text)) {
-
-						// want to finish off some tasks
-						controller.trigger(`edit_tasks_flow`, [bot, { SlackUserId }]);
-
-					} else {
-
-						// want to be end a session when they arent currently in one
-						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-							convo.ask(`You aren't in a session right now! Would you like to start one?`, [
-								{
-									pattern: utterances.yes,
-									callback: (response, convo) => {
-										convo.startSession = true;
-										convo.next();
-									}
-								},
-								{
-									pattern: utterances.no,
-									callback: (response, convo) => {
-										convo.say(`Okay! I'll be here when you're ready to crank again :wrench: `);
-										convo.next();
-									}
-								},
-								{
-									default: true,
-									callback: (response, convo) => {
-										convo.say("Sorry, I didn't get that. Please tell me `yes` or `no` to the question!");
-										convo.repeat();
-										convo.next();
-									}
+					// want to be end a session when they arent currently in one
+					bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+						convo.ask(`You aren't in a session right now! Would you like to start one?`, [
+							{
+								pattern: utterances.yes,
+								callback: (response, convo) => {
+									convo.startSession = true;
+									convo.next();
 								}
-							]);
-							convo.next();
-							convo.on('end', (convo) => {
-								if (convo.startSession) {
-									controller.trigger('confirm_new_session', [bot, { SlackUserId }]);
-								} else {
-									resumeQueuedReachouts(bot, { SlackUserId });
+							},
+							{
+								pattern: utterances.no,
+								callback: (response, convo) => {
+									convo.say(`Okay! I'll be here when you're ready to crank again :wrench: `);
+									convo.next();
 								}
-							});
+							},
+							{
+								default: true,
+								callback: (response, convo) => {
+									convo.say("Sorry, I didn't get that. Please tell me `yes` or `no` to the question!");
+									convo.repeat();
+									convo.next();
+								}
+							}
+						]);
+						convo.next();
+						convo.on('end', (convo) => {
+							if (convo.startSession) {
+								controller.trigger('confirm_new_session', [bot, { SlackUserId }]);
+							} else {
+								resumeQueuedReachouts(bot, { SlackUserId });
+							}
 						});
-					}
+					});
+					
 				}
 			});
 		})

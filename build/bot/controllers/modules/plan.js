@@ -438,14 +438,11 @@ function getTimeToTasks(response, convo) {
 			if (updateTaskListMessageObject) {
 				convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 				var comma = new RegExp(/[,]/);
-				var validMinutesTester = new RegExp(/[\dh]/);
 				var timeToTasks = response.text.split(comma);
 
 				timeToTasks.forEach(function (time) {
-					if (validMinutesTester.test(time)) {
-						var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(time);
-						timeToTasksArray.push(minutes);
-					}
+					var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(time);
+					if (minutes > 0) timeToTasksArray.push(minutes);
 				});
 
 				taskArray = taskArray.map(function (task, index) {

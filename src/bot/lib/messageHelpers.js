@@ -5,6 +5,8 @@
 import { FINISH_WORD } from './constants';
 import { utterances } from './botResponses';
 
+import nlp from 'nlp_compromise';
+
 /**
  * takes array of tasks and converts to array of task STRINGS
  * these "response objects" are botkit MESSAGE response
@@ -296,15 +298,37 @@ export function convertTimeStringToMinutes(timeString) {
 	var totalMinutes = 0;
 	var timeArray = timeString.split(" ");
 
+	var aOrAnRegExp       = new RegExp(/\b[an]{1,3}/i);
+	var parsedNumberValue = false;
+
+	if (nlp.value(timeString).number) {
+		parsedNumberValue = `${nlp.value(timeString).number}`;
+	} else if (aOrAnRegExp.test(timeString)) {
+		parsedNumberValue = "1";
+	}
+
 	var totalMinutesCount = 0; // max of 1
 	var totalHoursCount = 0; // max of 1
 	for (var i = 0; i < timeArray.length; i++) {
+
+		var aOrAnRegExp = new RegExp(/\b[an]{1,3}/i);
+
+		if (nlp.value(timeArray[i]).number) {
+			timeArray[i] = `${nlp.value(timeArray[i]).number}`;
+		} else if (aOrAnRegExp.test(timeArray[i])) {
+			timeArray[i] = "1";
+		}
 		
 		var numberValue = timeArray[i].match(/\d+/);
 		if (!numberValue) {
 			continue;
 		}
-			
+
+		// possible we get the number value from outside the split loop
+		if (parsedNumberValue) {
+			timeArray[i] = parsedNumberValue;
+		}
+
 		var minutes = 0;
 
 		// OPTION 1: int with space (i.e. `1 hr`)
