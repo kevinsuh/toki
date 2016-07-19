@@ -374,9 +374,9 @@ function getTimeToTasks(response, convo) {
 
 	var timeToTasksArray = [];
 
-	convo.say("How much time would you like to allocate to each task?");
+	var message = "How much time would you like to allocate to your *first task?* Please enter one by one!";
 	convo.ask({
-		text: taskListMessage,
+		text: message + '\n' + taskListMessage,
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "TASK_LIST_MESSAGE",
@@ -405,7 +405,11 @@ function getTimeToTasks(response, convo) {
 				// reset ze task list message
 				timeToTasksArray = [];
 				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontShowMinutes: true });
-				updateTaskListMessageObject.text = taskListMessage;
+
+				var message = timeToTasksArray.length == 0 ? "How much time would you like to allocate to your *first task?* Please enter one by one!" : "How much time would you like to allocate to your *next task?* Please enter one by one!";
+				message = message + '\n' + taskListMessage;
+
+				updateTaskListMessageObject.text = message;
 				updateTaskListMessageObject.attachments = JSON.stringify(_constants.taskListMessageAddMoreTasksButtonAttachment);
 				bot.api.chat.update(updateTaskListMessageObject);
 			}
@@ -422,7 +426,11 @@ function getTimeToTasks(response, convo) {
 				// reset ze task list message
 				timeToTasksArray = [];
 				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontShowMinutes: true });
-				updateTaskListMessageObject.text = taskListMessage;
+
+				var message = timeToTasksArray.length == 0 ? "How much time would you like to allocate to your *first task?* Please enter one by one!" : "How much time would you like to allocate to your *next task?* Please enter one by one!";
+				message = message + '\n' + taskListMessage;
+
+				updateTaskListMessageObject.text = message;
 				updateTaskListMessageObject.attachments = JSON.stringify(_constants.taskListMessageAddMoreTasksButtonAttachment);
 				bot.api.chat.update(updateTaskListMessageObject);
 			}
@@ -437,8 +445,8 @@ function getTimeToTasks(response, convo) {
 
 			if (updateTaskListMessageObject) {
 				convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
-				var comma = new RegExp(/[,]/);
-				var timeToTasks = response.text.split(comma);
+				var commaOrNewLine = new RegExp(/[,\n]/);
+				var timeToTasks = response.text.split(commaOrNewLine);
 
 				timeToTasks.forEach(function (time) {
 					var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(time);
@@ -456,7 +464,10 @@ function getTimeToTasks(response, convo) {
 
 				var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontUseDataValues: true, emphasizeMinutes: true });
 
-				updateTaskListMessageObject.text = taskListMessage;
+				var message = timeToTasksArray.length == 0 ? "How much time would you like to allocate to your *first task?* Please enter one by one!" : "How much time would you like to allocate to your *next task?* Please enter one by one!";
+				message = message + '\n' + taskListMessage;
+
+				updateTaskListMessageObject.text = message;
 				updateTaskListMessageObject.attachments = JSON.stringify(_constants.taskListMessageAddMoreTasksAndResetTimesButtonAttachment);
 
 				bot.api.chat.update(updateTaskListMessageObject);
