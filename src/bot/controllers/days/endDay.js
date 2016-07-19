@@ -260,7 +260,7 @@ function startEndDayFlow(response, convo) {
 	var sessionGroupStartTime       = moment(startSessionGroup.dataValues.createdAt).tz(tz);
 	var sessionGroupStartTimeString = sessionGroupStartTime.format("h:mm a");
 	if (shouldStartDay) {
-		message = `You started your day on ${sessionGroupStartTime.format('dddd')}, (${sessionGroupStartTime.format("MMMM Do YYYY")}) at ${sessionGroupStartTimeString}`;
+		message = `You started your day on ${sessionGroupStartTime.format('dddd')} (${sessionGroupStartTime.format("MMMM Do YYYY")}) at ${sessionGroupStartTimeString}`;
 	} else {
 		message = `You started your day at ${sessionGroupStartTimeString}`
 	}
