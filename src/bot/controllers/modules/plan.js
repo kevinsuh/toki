@@ -31,7 +31,7 @@ export function showPendingTasks(response, convo) {
 		dontCalculateMinutes: true
 	}
 	var taskListMessage = convertArrayToTaskListMessage(pendingTasks, options);
-	convo.say("Which of these outstanding tasks would you still like to work on? Just tell me the numbers :1234:");
+	convo.say("Which of these outstanding tasks would you still like to work on? Just tell me the numbers `i.e. tasks 1, 3 and 4`");
 	convo.ask({
 		text: taskListMessage,
 		attachments:[
@@ -41,6 +41,12 @@ export function showPendingTasks(response, convo) {
 				fallback: "Which tasks do you want to work on today?",
 				color: colorsHash.grey.hex,
 				actions: [
+					{
+							name: buttonValues.allPendingTasks.name,
+							text: "All of them",
+							value: buttonValues.allPendingTasks.value,
+							type: "button"
+					},
 					{
 							name: buttonValues.noPendingTasks.name,
 							text: "None of these",
@@ -59,6 +65,21 @@ export function showPendingTasks(response, convo) {
 		]
 	},
 	[
+		{
+			pattern: buttonValues.allPendingTasks.value,
+			callback: function(response, convo) {
+				
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.allPendingTasks.value
+			pattern: utterances.containsAll,
+			callback: function(response, convo) {
+				convo.say("I like all those tasks too :open_hands:");
+				
+				convo.next();
+			}
+		},
 		{
 			pattern: buttonValues.noPendingTasks.value,
 			callback: function(response, convo) {
@@ -127,6 +148,17 @@ function savePendingTasksToWorkOn(response, convo) {
 		convo.dayStart.taskArray = taskArray;
 	}
 
+	convo.say("This is starting to look good :sunglasses:");
+	askForAdditionalTasks(response, convo);
+
+}
+
+function askForAdditionalTasks(response, convo) {
+
+	const { task }                  = convo;
+	const { bot, source_message }   = task;
+	var { pendingTasks, taskArray } = convo.dayStart; // ported from beginning of convo flow
+
 	var options = {
 		dontShowMinutes: true,
 		dontCalculateMinutes: true
@@ -138,7 +170,6 @@ function savePendingTasksToWorkOn(response, convo) {
 		tasks.push(task);
 	});
 
-	convo.say("This is starting to look good :sunglasses:");
 	convo.say("Which additional tasks would you like to work on with me today? Please send me each task in a separate line");
 	convo.ask({
 		text: taskListMessage,

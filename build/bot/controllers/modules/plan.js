@@ -58,7 +58,7 @@ function showPendingTasks(response, convo) {
 		dontCalculateMinutes: true
 	};
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(pendingTasks, options);
-	convo.say("Which of these outstanding tasks would you still like to work on? Just tell me the numbers :1234:");
+	convo.say("Which of these outstanding tasks would you still like to work on? Just tell me the numbers `i.e. tasks 1, 3 and 4`");
 	convo.ask({
 		text: taskListMessage,
 		attachments: [{
@@ -67,6 +67,11 @@ function showPendingTasks(response, convo) {
 			fallback: "Which tasks do you want to work on today?",
 			color: _constants.colorsHash.grey.hex,
 			actions: [{
+				name: _constants.buttonValues.allPendingTasks.name,
+				text: "All of them",
+				value: _constants.buttonValues.allPendingTasks.value,
+				type: "button"
+			}, {
 				name: _constants.buttonValues.noPendingTasks.name,
 				text: "None of these",
 				value: _constants.buttonValues.noPendingTasks.value,
@@ -80,6 +85,19 @@ function showPendingTasks(response, convo) {
 			}]
 		}]
 	}, [{
+		pattern: _constants.buttonValues.allPendingTasks.value,
+		callback: function callback(response, convo) {
+
+			convo.next();
+		}
+	}, { // NL equivalent to buttonValues.allPendingTasks.value
+		pattern: _botResponses.utterances.containsAll,
+		callback: function callback(response, convo) {
+			convo.say("I like all those tasks too :open_hands:");
+
+			convo.next();
+		}
+	}, {
 		pattern: _constants.buttonValues.noPendingTasks.value,
 		callback: function callback(response, convo) {
 			askForDayTasks(response, convo);
@@ -141,6 +159,18 @@ function savePendingTasksToWorkOn(response, convo) {
 		convo.dayStart.taskArray = taskArray;
 	}
 
+	convo.say("This is starting to look good :sunglasses:");
+	askForAdditionalTasks(response, convo);
+}
+
+function askForAdditionalTasks(response, convo) {
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
+	var _convo$dayStart = convo.dayStart;
+	var pendingTasks = _convo$dayStart.pendingTasks;
+	var taskArray = _convo$dayStart.taskArray; // ported from beginning of convo flow
+
 	var options = {
 		dontShowMinutes: true,
 		dontCalculateMinutes: true
@@ -152,7 +182,6 @@ function savePendingTasksToWorkOn(response, convo) {
 		tasks.push(task);
 	});
 
-	convo.say("This is starting to look good :sunglasses:");
 	convo.say("Which additional tasks would you like to work on with me today? Please send me each task in a separate line");
 	convo.ask({
 		text: taskListMessage,
@@ -328,9 +357,9 @@ function addMoreTasks(response, convo) {
 
 // ask the question to get time to tasks
 function getTimeToTasks(response, convo) {
-	var _convo$dayStart = convo.dayStart;
-	var taskArray = _convo$dayStart.taskArray;
-	var bot = _convo$dayStart.bot;
+	var _convo$dayStart2 = convo.dayStart;
+	var taskArray = _convo$dayStart2.taskArray;
+	var bot = _convo$dayStart2.bot;
 
 	var options = { dontShowMinutes: true };
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
