@@ -310,7 +310,7 @@ function shouldStartNewDayFlow(err, convo) {
 
 	var message = '*Ready to make a plan for today?*';
 	if (dailyTasks.length > 0) {
-		message = message + ' If the above tasks are what you want to work on, we can start a session with those instead :pick:';
+		message = message + ' If the above tasks are what you want to work on, we can start a session instead `i.e. lets do task 2` :pick:';
 	}
 	convo.ask({
 		text: message,
@@ -341,7 +341,37 @@ function shouldStartNewDayFlow(err, convo) {
 				type: "button"
 			}]
 		}]
-	}, [{ // user does not want any of the options
+	}, [{ // if user lists tasks, we can infer user wants to start a specific session
+		pattern: _botResponses.utterances.containsNumber,
+		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
+			var tasksToWorkOnString = response.text;
+			var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(tasksToWorkOnString, dailyTasks);
+
+			if (!taskNumbersToWorkOnArray) {
+				convo.say("You didn't pick a valid task to work on :thinking_face:");
+				convo.say("You can pick a task from your list `i.e. tasks 1, 3` to work on");
+				shouldStartNewDayFlow(response, convo);
+				return;
+			}
+
+			var dailyTasksToWorkOn = [];
+			dailyTasks.forEach(function (dailyTask, index) {
+				var taskNumber = index + 1; // b/c index is 0-based
+				if (taskNumbersToWorkOnArray.indexOf(taskNumber) > -1) {
+					dailyTasksToWorkOn.push(dailyTask);
+				}
+			});
+
+			convo.isBack.dailyTasksToWorkOn = dailyTasksToWorkOn;
+			convo.isBackDecision = _intents2.default.START_SESSION;
+
+			convo.next();
+		}
+	}, { // user does not want any of the options
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
 
