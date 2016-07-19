@@ -35,66 +35,42 @@ exports.default = function (controller) {
 
 				var shouldStartNewDay = false;
 
-				// is user already in a work session?
-				user.getWorkSessions({
-					where: ['"live" = ?', true]
-				}).then(function (workSessions) {
+				// otherwise, do normal flow
+				// 1. has user started day yet?
+				user.getSessionGroups({
+					order: '"SessionGroup"."createdAt" DESC',
+					limit: 1
+				}).then(function (sessionGroups) {
 
-					if (workSessions.length > 0) {
-						// user is in a work session
-						var config = { SlackUserId: SlackUserId };
-						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-
-							var name = user.nickName || user.email;
-							var message = 'Welcome back, ' + name + '!';
-							convo.say(message);
-
-							convo.on('end', function (convo) {
-								controller.trigger('confirm_new_session', [bot, config]);
-							});
-						});
-						return;
+					if (sessionGroups.length == 0) {
+						shouldStartNewDay = true;
+					} else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
+						shouldStartNewDay = true;
 					}
 
-					// otherwise, do normal flow
-					// 1. has user started day yet?
-					user.getSessionGroups({
-						order: '"SessionGroup"."createdAt" DESC',
-						limit: 1
-					}).then(function (sessionGroups) {
+					user.getWorkSessions({
+						where: ['"WorkSession"."endTime" > ? ', _constants.startDayExpirationTime]
+					}).then(function (workSessions) {
 
-						if (sessionGroups.length == 0) {
-							shouldStartNewDay = true;
-						} else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
-							shouldStartNewDay = true;
-						}
+						if (workSessions.length == 0) {
 
-						user.getWorkSessions({
-							where: ['"WorkSession"."endTime" > ? ', _constants.startDayExpirationTime]
-						}).then(function (workSessions) {
-
-							if (workSessions.length == 0) {
-
-								if (sessionGroups[0] && sessionGroups[0].type == "start_work") {
-									// if you started a day recently, this can be used as proxy instead of a session
-									var startDaySessionTime = (0, _momentTimezone2.default)(sessionGroups[0].createdAt);
-									var now = (0, _momentTimezone2.default)();
-									var hoursSinceStartDay = _momentTimezone2.default.duration(now.diff(startDaySessionTime)).asHours();
-									console.log('hours since start day: ' + hoursSinceStartDay);
-									console.log('hours for expiration time: ' + _constants.hoursForExpirationTime);
-									if (hoursSinceStartDay > _constants.hoursForExpirationTime) {
-										shouldStartNewDay = true;
-									}
-								} else {
+							if (sessionGroups[0] && sessionGroups[0].type == "start_work") {
+								// if you started a day recently, this can be used as proxy instead of a session
+								var startDaySessionTime = (0, _momentTimezone2.default)(sessionGroups[0].createdAt);
+								var now = (0, _momentTimezone2.default)();
+								var hoursSinceStartDay = _momentTimezone2.default.duration(now.diff(startDaySessionTime)).asHours();
+								console.log('hours since start day: ' + hoursSinceStartDay);
+								console.log('hours for expiration time: ' + _constants.hoursForExpirationTime);
+								if (hoursSinceStartDay > _constants.hoursForExpirationTime) {
 									shouldStartNewDay = true;
 								}
+							} else {
+								shouldStartNewDay = true;
 							}
+						}
 
-							var config = { SlackUserId: SlackUserId, shouldStartNewDay: shouldStartNewDay };
-							console.log('Config: \n');
-							console.log(config);
-							controller.trigger('is_back_flow', [bot, config]);
-						});
+						var config = { SlackUserId: SlackUserId, shouldStartNewDay: shouldStartNewDay };
+						controller.trigger('is_back_flow', [bot, config]);
 					});
 				});
 			});
@@ -111,7 +87,8 @@ exports.default = function (controller) {
 		}).then(function (user) {
 
 			user.getWorkSessions({
-				where: ['"open" = ?', true]
+				where: ['"open" = ?', true],
+				order: '"WorkSession"."createdAt" DESC'
 			}).then(function (workSessions) {
 
 				var openWorkSession = false;
@@ -146,45 +123,52 @@ exports.default = function (controller) {
 
 						// give response based on state user is in
 						var message = 'Hey, ' + name + '!';
-						if (shouldStartNewDay) {
-							if (dailyTasks.length > 0) {
-								message = message + ' Here are your priorities from our last time together:\n' + taskListMessage;
-							}
-							convo.say(message);
-							shouldStartNewDayFlow(err, convo);
+
+						if (openWorkSession) {
+
+							openWorkSession.getDailyTasks({
+								include: [_models2.default.Task]
+							}).then(function (dailyTasks) {
+
+								var now = (0, _momentTimezone2.default)();
+								var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime);
+								var endTimeString = endTime.format("h:mm a");
+								var minutes = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
+								var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+
+								var dailyTaskTexts = dailyTasks.map(function (dailyTask) {
+									return dailyTask.dataValues.Task.text;
+								});
+
+								var sessionTasks = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
+								message = message + ' You\'re currently in a session for ' + sessionTasks + ' until *' + endTimeString + '* (' + minutesString + ' left)';
+								convo.say(message);
+
+								convo.isBack.currentSession = {
+									endTime: endTime,
+									endTimeString: endTimeString,
+									minutesString: minutesString
+								};
+
+								currentlyInSessionFlow(err, convo);
+								convo.next();
+							});
 						} else {
 
-							if (dailyTasks.length > 0) {
-								if (!openWorkSession) {
-									// only show tasks when not in a session
+							// no currently open sessions
+							if (shouldStartNewDay) {
+								// start new day!
+								if (dailyTasks.length > 0) {
+									message = message + ' Here are your priorities from our last time together:\n' + taskListMessage;
+								}
+								convo.say(message);
+								shouldStartNewDayFlow(err, convo);
+							} else {
+								// start new session!
+								if (dailyTasks.length > 0) {
 									message = message + ' Here are your current priorities:\n' + taskListMessage;
 								}
-							}
-
-							convo.say(message);
-
-							if (openWorkSession) {
-								openWorkSession.getDailyTasks({
-									include: [_models2.default.Task]
-								}).then(function (dailyTasks) {
-
-									var now = (0, _momentTimezone2.default)();
-									var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime);
-									var endTimeString = endTime.format("h:mm a");
-									var minutes = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
-									var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
-
-									var dailyTaskTexts = dailyTasks.map(function (dailyTask) {
-										return dailyTask.dataValues.Task.text;
-									});
-
-									var sessionTasks = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
-									convo.say('You\'re currently in a session for ' + sessionTasks + ' until *' + endTimeString + '* (' + minutesString + ' left)');
-
-									currentlyInSessionFlow(err, convo);
-									convo.next();
-								});
-							} else {
+								convo.say(message);
 								shouldStartSessionFlow(err, convo);
 							}
 						}
@@ -546,7 +530,13 @@ function currentlyInSessionFlow(err, convo) {
 	}, { // continue session
 		pattern: _constants.buttonValues.doneSessionEarlyNo.value,
 		callback: function callback(response, convo) {
-			convo.say('Keep crushing :muscle:');
+
+			var message = 'Keep crushing :muscle:';
+			var currentSession = convo.isBack.currentSession;
+
+			if (currentSession && currentSession.endTimeString) message = 'I\'ll see you at *' + currentSession.endTimeString + '*! ' + message;
+
+			convo.say(message);
 			convo.next();
 		}
 	}, { // same as buttonValues.doneSessionNo.value
@@ -557,7 +547,12 @@ function currentlyInSessionFlow(err, convo) {
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
 			convo.say('Got it');
-			convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
+			var message = 'Keep crushing :muscle:';
+			var currentSession = convo.isBack.currentSession;
+
+			if (currentSession && currentSession.endTimeString) message = 'I\'ll see you at *' + currentSession.endTimeString + '*! ' + message;
+
+			convo.say(message);
 			convo.next();
 		}
 	}, {
