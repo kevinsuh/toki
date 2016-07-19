@@ -50,72 +50,45 @@ export default function(controller) {
 
 				var shouldStartNewDay = false;
 
-				// is user already in a work session?
-				user.getWorkSessions({
-					where: [`"live" = ?`, true ]
+				// otherwise, do normal flow
+				// 1. has user started day yet?
+				user.getSessionGroups({
+					order: `"SessionGroup"."createdAt" DESC`,
+					limit: 1
 				})
-				.then((workSessions) => {
+				.then((sessionGroups) => {
 
-					if (workSessions.length > 0) {
-						// user is in a work session
-						var config = { SlackUserId };
-						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-
-							var name = user.nickName || user.email;
-							var message = `Welcome back, ${name}!`;
-							convo.say(message);
-
-							convo.on(`end`, (convo) => {
-								controller.trigger(`confirm_new_session`, [ bot, config ]);
-							});
-						});
-						return;
+					if (sessionGroups.length == 0) {
+						shouldStartNewDay = true;
+					} else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
+						shouldStartNewDay = true;
 					}
 
-					// otherwise, do normal flow
-						// 1. has user started day yet?
-					user.getSessionGroups({
-						order: `"SessionGroup"."createdAt" DESC`,
-						limit: 1
+					user.getWorkSessions({
+						where: [`"WorkSession"."endTime" > ? `, startDayExpirationTime]
 					})
-					.then((sessionGroups) => {
+					.then((workSessions) => {
 
-						if (sessionGroups.length == 0) {
-							shouldStartNewDay = true;
-						} else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
-							shouldStartNewDay = true;
-						}
+						if (workSessions.length == 0) {
 
-						user.getWorkSessions({
-							where: [`"WorkSession"."endTime" > ? `, startDayExpirationTime]
-						})
-						.then((workSessions) => {
-
-							if (workSessions.length == 0) {
-
-								if (sessionGroups[0] && sessionGroups[0].type == "start_work") {
-									// if you started a day recently, this can be used as proxy instead of a session
-									var startDaySessionTime = moment(sessionGroups[0].createdAt);
-									var now                 = moment();
-									var hoursSinceStartDay  = moment.duration(now.diff(startDaySessionTime)).asHours();
-									console.log(`hours since start day: ${hoursSinceStartDay}`);
-									console.log(`hours for expiration time: ${hoursForExpirationTime}`);
-									if (hoursSinceStartDay > hoursForExpirationTime) {
-										shouldStartNewDay = true;
-									}
-								} else {
+							if (sessionGroups[0] && sessionGroups[0].type == "start_work") {
+								// if you started a day recently, this can be used as proxy instead of a session
+								var startDaySessionTime = moment(sessionGroups[0].createdAt);
+								var now                 = moment();
+								var hoursSinceStartDay  = moment.duration(now.diff(startDaySessionTime)).asHours();
+								console.log(`hours since start day: ${hoursSinceStartDay}`);
+								console.log(`hours for expiration time: ${hoursForExpirationTime}`);
+								if (hoursSinceStartDay > hoursForExpirationTime) {
 									shouldStartNewDay = true;
 								}
+							} else {
+								shouldStartNewDay = true;
 							}
 
+						}
 
-
-							var config = { SlackUserId, shouldStartNewDay };
-							console.log(`Config: \n`);
-							console.log(config);
-							controller.trigger(`is_back_flow`, [ bot, config ]);
-
-						});
+						var config = { SlackUserId, shouldStartNewDay };
+						controller.trigger(`is_back_flow`, [ bot, config ]);
 
 					});
 
@@ -135,7 +108,8 @@ export default function(controller) {
 		.then((user) => {
 
 			user.getWorkSessions({
-				where: [`"open" = ?`, true]
+				where: [`"open" = ?`, true],
+				order: `"WorkSession"."createdAt" DESC`
 			})
 			.then((workSessions) => {
 
@@ -172,48 +146,58 @@ export default function(controller) {
 
 						// give response based on state user is in
 						var message = `Hey, ${name}!`;
-						if (shouldStartNewDay) {
-							if (dailyTasks.length > 0) {
-								message = `${message} Here are your priorities from our last time together:\n${taskListMessage}`;
-							}
-							convo.say(message);
-							shouldStartNewDayFlow(err, convo);
+
+						if (openWorkSession) {
+
+							openWorkSession.getDailyTasks({
+								include: [ models.Task ]
+							})
+							.then((dailyTasks) => {
+
+								var now           = moment();
+								var endTime       = moment(openWorkSession.endTime);
+								var endTimeString = endTime.format("h:mm a");
+								var minutes       = Math.round(moment.duration(endTime.diff(now)).asMinutes());
+								var minutesString = convertMinutesToHoursString(minutes);
+
+								var dailyTaskTexts = dailyTasks.map((dailyTask) => {
+									return dailyTask.dataValues.Task.text;
+								});
+
+								var sessionTasks = commaSeparateOutTaskArray(dailyTaskTexts);
+								message = `${message} You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`
+								convo.say(message);
+
+								convo.isBack.currentSession = {
+									endTime,
+									endTimeString,
+									minutesString
+								}
+
+								currentlyInSessionFlow(err, convo);
+								convo.next();
+
+							})
+
 						} else {
 
-							if (dailyTasks.length > 0) {
-								if (!openWorkSession) {
-									// only show tasks when not in a session
+							// no currently open sessions
+							if (shouldStartNewDay) {
+								// start new day!
+								if (dailyTasks.length > 0) {
+									message = `${message} Here are your priorities from our last time together:\n${taskListMessage}`;
+								}
+								convo.say(message);
+								shouldStartNewDayFlow(err, convo);
+							} else {
+								// start new session!
+								if (dailyTasks.length > 0) {
 									message = `${message} Here are your current priorities:\n${taskListMessage}`;
 								}
-							}
-
-							convo.say(message);
-
-							if (openWorkSession) {
-								openWorkSession.getDailyTasks({
-									include: [ models.Task ]
-								})
-								.then((dailyTasks) => {
-
-									var now           = moment();
-									var endTime       = moment(openWorkSession.endTime);
-									var endTimeString = endTime.format("h:mm a");
-									var minutes       = Math.round(moment.duration(endTime.diff(now)).asMinutes());
-									var minutesString = convertMinutesToHoursString(minutes);
-
-									var dailyTaskTexts = dailyTasks.map((dailyTask) => {
-										return dailyTask.dataValues.Task.text;
-									})
-
-									var sessionTasks = commaSeparateOutTaskArray(dailyTaskTexts);
-									convo.say(`You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`);
-
-									currentlyInSessionFlow(err, convo);
-									convo.next();
-								})
-							} else {
+								convo.say(message);
 								shouldStartSessionFlow(err, convo);
 							}
+
 						}
 
 						convo.on(`end`, (convo) => {
@@ -276,6 +260,7 @@ export default function(controller) {
 								resumeQueuedReachouts(bot, { SlackUserId });
 							}
 						});
+
 					});
 				})
 			});
@@ -294,7 +279,7 @@ function shouldStartNewDayFlow(err, convo) {
 
 	var message = `*Ready to make a plan for today?*`;
 	if (dailyTasks.length > 0) {
-		message = `${message} If the above tasks are what you want to work on, we can start a session with those instead :pick:`;
+		message = `${message} If the above tasks are what you want to work on, we can start a session instead \`i.e. lets do task 2\` :pick:`;
 	}
 	convo.ask({
 		text: message,
@@ -334,6 +319,37 @@ function shouldStartNewDayFlow(err, convo) {
 		]
 	},
 	[
+		{ // if user lists tasks, we can infer user wants to start a specific session
+			pattern: utterances.containsNumber,
+			callback: (response, convo) => {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
+				var tasksToWorkOnString      = response.text;
+				var taskNumbersToWorkOnArray = convertTaskNumberStringToArray(tasksToWorkOnString, dailyTasks);
+
+				if (!taskNumbersToWorkOnArray) {
+					convo.say("You didn't pick a valid task to work on :thinking_face:");
+					convo.say("You can pick a task from your list `i.e. tasks 1, 3` to work on");
+					shouldStartNewDayFlow(response, convo);
+					return;
+				}
+
+				var dailyTasksToWorkOn = [];
+				dailyTasks.forEach((dailyTask, index) => {
+					var taskNumber = index + 1; // b/c index is 0-based
+					if (taskNumbersToWorkOnArray.indexOf(taskNumber) > -1) {
+						dailyTasksToWorkOn.push(dailyTask);
+					}
+				});
+
+				convo.isBack.dailyTasksToWorkOn = dailyTasksToWorkOn;
+				convo.isBackDecision            = intentConfig.START_SESSION;
+
+				convo.next();
+			}
+		},
 		{ // user does not want any of the options
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
@@ -341,7 +357,7 @@ function shouldStartNewDayFlow(err, convo) {
 				// delete button when answered with NL
 				deleteConvoAskMessage(response.channel, bot);
 
-				convo.say(`Okay! I'll be here whenever you're ready to \`plan\` :hand:`);
+				convo.say(`Okay! I'll be here whenever you're ready to \`plan\` :wave:`);
 				convo.next();
 			}
 		},
@@ -464,6 +480,12 @@ function currentlyInSessionFlow(err, convo) {
 							type: "button"
 					},
 					{
+							name: buttonValues.doneSessionEarlyNo.name,
+							text: "Continue Session",
+							value: buttonValues.doneSessionEarlyNo.value,
+							type: "button"
+					},
+					{
 							name: buttonValues.editTaskList.name,
 							text: "Edit tasks :memo:",
 							value: buttonValues.editTaskList.value,
@@ -523,6 +545,36 @@ function currentlyInSessionFlow(err, convo) {
 				deleteConvoAskMessage(response.channel, bot);
 
 				convo.isBackDecision = intentConfig.END_SESSION;
+				convo.next();
+			}
+		},
+		{ // continue session
+			pattern: buttonValues.doneSessionEarlyNo.value,
+			callback: (response, convo) => {
+
+				var message = `Keep crushing :muscle:`
+				var { isBack: { currentSession } } = convo;
+				if (currentSession && currentSession.endTimeString)
+					message = `I'll see you at *${currentSession.endTimeString}*! ${message}`;
+
+				convo.say(message);
+				convo.next();
+			}
+		},
+		{ // same as buttonValues.doneSessionNo.value
+			pattern: utterances.containsContinue,
+			callback: (response, convo) => {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
+				convo.say(`Got it`);
+				var message = `Keep crushing :muscle:`
+				var { isBack: { currentSession } } = convo;
+				if (currentSession && currentSession.endTimeString)
+					message = `I'll see you at *${currentSession.endTimeString}*! ${message}`;
+
+				convo.say(message);
 				convo.next();
 			}
 		},

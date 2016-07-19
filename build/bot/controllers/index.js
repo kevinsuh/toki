@@ -365,6 +365,27 @@ controller.on('new_session_group_decision', function (bot, config) {
 		var name = user.nickName || user.email;
 		var UserId = user.id;
 
+		/**
+   *    ~~ THIS SKIPS EVERYTHING ELSE NOW ~~
+   *    	user is no longer required to have 
+   *    to start day, even though we encourage it
+   * 										07/19/16
+   */
+		var config = {
+			SlackUserId: SlackUserId,
+			message: message,
+			controller: controller,
+			bot: bot,
+			dailyTasksToWorkOn: dailyTasksToWorkOn
+		};
+		triggerIntent(intent, config);
+		return;
+
+		/**
+   * 		~~ END OF TEMPORARY SKIPPER INPUTTED CODE ~~
+   * 										07/19/16
+   */
+
 		// 1. has user started day yet?
 		user.getSessionGroups({
 			order: '"SessionGroup"."createdAt" DESC',

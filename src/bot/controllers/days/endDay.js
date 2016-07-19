@@ -47,35 +47,34 @@ export default function(controller) {
 			})
 			.then((user) => {
 
-				// ping to start a day if they have not yet
 				user.getSessionGroups({
-			    order: `"SessionGroup"."createdAt" DESC`,
-			    limit: 1
-		    })
-		    .then((sessionGroups) => {
+					order: `"SessionGroup"."createdAt" DESC`,
+					limit: 1
+				})
+				.then((sessionGroups) => {
 
-		      // should start day
-		      var shouldStartDay = false;
-		      if (sessionGroups.length == 0) {
-		      	shouldStartDay = true;
-		      } else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
-		      	shouldStartDay = true;
-		      }
-		      if (shouldStartDay) {
-		      	bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-							convo.say("You have not started a day yet! Let me know when you want to `start a day` together :smile:");
-							convo.next();
-						});
-						return;
-		      }
+					// should start day
+					var shouldStartDay = false;
+					if (sessionGroups.length == 0) {
+						shouldStartDay = true;
+					} else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
+						shouldStartDay = true;
+					}
 
-		      bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
 						var name              = user.nickName || user.email;
 						convo.name            = name;
 						convo.readyToEndDay = false;
 
-						convo.ask(`Hey ${name}! Would you like to end your day?`, [
+						var message = `Hey ${name}!`;
+						if (shouldStartDay) {
+							message = `${message} You haven't started a day since last time. Would you still like to end your day?`
+						} else {
+							message = `${message} Would you like to end your day?`
+						}
+
+						convo.ask(message, [
 							{
 								pattern: utterances.yes,
 								callback: (response, convo) => {
@@ -98,18 +97,19 @@ export default function(controller) {
 								}
 							}
 						]);
+
 						convo.on('end', (convo) => {
 							if (convo.readyToEndDay) {
 								closeOldRemindersAndSessions(user);
-								controller.trigger(`end_day_flow`, [ bot, { SlackUserId }]);
+								controller.trigger(`end_day_flow`, [ bot, { SlackUserId, shouldStartDay }]);
 							} else {
 								resumeQueuedReachouts(bot, { SlackUserId });
 							}
 						})
-					
+
 					});
 
-		    });
+				});
 
 					
 			});
@@ -126,7 +126,7 @@ export default function(controller) {
 	*/
 	controller.on('end_day_flow', (bot, config) => {
 
-		const { SlackUserId } = config;
+		const { SlackUserId, shouldStartDay } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -139,30 +139,15 @@ export default function(controller) {
 			// get the most recent start_work session group to measure
 			// a day's worth of work
 			user.getSessionGroups({
-		    order: `"SessionGroup"."createdAt" DESC`,
-		    limit: 1
-	    })
-	    .then((sessionGroups) => {
-
-	      // should start day
-	      var shouldStartDay = false;
-	      if (sessionGroups.length == 0) {
-	      	shouldStartDay = true;
-	      } else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
-	      	shouldStartDay = true;
-	      }
-	      if (shouldStartDay) {
-	      	bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-						convo.say("You have not started a day yet! Let's `start a day` together :smile:");
-						convo.next();
-					});
-					resumeQueuedReachouts(bot, { SlackUserId });
-					return;
-	      }
-	      
+				order: `"SessionGroup"."createdAt" DESC`,
+				where: [`"SessionGroup"."type" = ?`, "start_work"],
+				limit: 1
+			})
+			.then((sessionGroups) => {
+				
 				const startSessionGroup   = sessionGroups[0]; // the start day
 
-	      user.getDailyTasks({
+				user.getDailyTasks({
 					where: [`"DailyTask"."createdAt" > ? AND "Task"."done" = ? AND "DailyTask"."type" = ?`, startSessionGroup.dataValues.createdAt, true, "live"],
 					include: [ models.Task ],
 					order: `"DailyTask"."priority" ASC`
@@ -171,10 +156,14 @@ export default function(controller) {
 
 					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
+						const { SlackUser: { tz } } = user;
+
 						var name   = user.nickName || user.email;
 						convo.name = name;
 
 						convo.dayEnd = {
+							shouldStartDay,
+							tz,
 							UserId: user.id,
 							endDayDecision: false // what does user want to do with day
 						}
@@ -185,28 +174,27 @@ export default function(controller) {
 
 						startEndDayFlow(err, convo);
 
-		    		// on finish conversation
-		    		convo.on('end', (convo) => {
+						// on finish conversation
+						convo.on('end', (convo) => {
 
-		  				var responses = convo.extractResponses();
+							var responses = convo.extractResponses();
 
+							if (convo.status == 'completed') {
 
-		    			if (convo.status == 'completed') {
+								const { UserId, reflection, dailyTasks, startSessionGroup } = convo.dayEnd;
+								const startSessionGroupTime = moment(startSessionGroup.dataValues.createdAt);
 
-		    				const { UserId, reflection, dailyTasks, startSessionGroup } = convo.dayEnd;
-		  					const startSessionGroupTime = moment(startSessionGroup.dataValues.createdAt);
+								var now = moment();
 
-		    				var now = moment();
+								// log `end_work` and reflection
+								models.SessionGroup.create({
+									type: "end_work",
+									UserId,
+									reflection
+								});
 
-		    				// log `end_work` and reflection
-		    				models.SessionGroup.create({
-		    					type: "end_work",
-		    					UserId,
-		    					reflection
-		    				});
-
-		    				// end all open work sessions. should only be one for the user
-		    				user.getWorkSessions({
+								// end all open work sessions. should only be one for the user
+								user.getWorkSessions({
 									where: [ `"open" = ? OR "live" = ?`, true, true ]
 								})
 								.then((workSessions) => {
@@ -221,40 +209,40 @@ export default function(controller) {
 
 								// put all of user's `live` tasks to pending
 								// make all pending tasks => archived, then all live tasks => pending
-		    				user.getDailyTasks({
-		    					where: [`"DailyTask"."type" = ?`, "pending"]
-		    				})
-		    				.then((dailyTasks) => {
-		    					dailyTasks.forEach((dailyTask) => {
-						        dailyTask.update({
-						          type: "archived"
-						        });
-						      });
-						      user.getDailyTasks({
-			    					where: [`"DailyTask"."type" = ?`, "live"]
-			    				})
-			    				.then((dailyTasks) => {
-			    					dailyTasks.forEach((dailyTask) => {
-							        dailyTask.update({
-							          type: "pending"
-							        });
-							      });
-			    				});
-		    				});
-		    				resumeQueuedReachouts(bot, { SlackUserId });
+								user.getDailyTasks({
+									where: [`"DailyTask"."type" = ?`, "pending"]
+								})
+								.then((dailyTasks) => {
+									dailyTasks.forEach((dailyTask) => {
+										dailyTask.update({
+											type: "archived"
+										});
+									});
+									user.getDailyTasks({
+										where: [`"DailyTask"."type" = ?`, "live"]
+									})
+									.then((dailyTasks) => {
+										dailyTasks.forEach((dailyTask) => {
+											dailyTask.update({
+												type: "pending"
+											});
+										});
+									});
+								});
+								resumeQueuedReachouts(bot, { SlackUserId });
 
-		    			} else {
-		    				// default premature end
+							} else {
+								// default premature end
 								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 									resumeQueuedReachouts(bot, { SlackUserId });
 									convo.say("Okay! Exiting now. Let me know when you want to start your day!");
 									convo.next();
 								});
-		    			}
-		    		});
+							}
+						});
 					});
 				})
-	    });
+			});
 		})
 	});
 };
@@ -262,11 +250,21 @@ export default function(controller) {
 // start of end day flow
 function startEndDayFlow(response, convo) {
 
-	const { task, name }          = convo;
-	const { bot, source_message } = task;
-	const { dailyTasks }          = convo.dayEnd
+	const { task, name }                        = convo;
+	const { bot, source_message }               = task;
+	const { dailyTasks, startSessionGroup, tz, shouldStartDay } = convo.dayEnd
 
 	convo.say(`Let's wrap up for the day :package:`);
+	var message = '';
+
+	var sessionGroupStartTime       = moment(startSessionGroup.dataValues.createdAt).tz(tz);
+	var sessionGroupStartTimeString = sessionGroupStartTime.format("h:mm a");
+	if (shouldStartDay) {
+		message = `You started your day on ${sessionGroupStartTime.format('dddd')} (${sessionGroupStartTime.format("MMMM Do YYYY")}) at ${sessionGroupStartTimeString}`;
+	} else {
+		message = `You started your day at ${sessionGroupStartTimeString}`
+	}
+	convo.say(message);
 
 	if (dailyTasks.length > 0) {
 		convo.say(`Here are the tasks you completed today:`);

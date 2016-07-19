@@ -125,7 +125,7 @@ export default function(controller) {
 						tz
 					};
 
-					convo.ask("How long would you like to snooze?", (response, convo) => {
+					convo.ask("How long would you like to extend your session?", (response, convo) => {
 
 						var time    = response.text;
 						var minutes = false;
@@ -138,7 +138,7 @@ export default function(controller) {
 						if (minutes) {
 							convo.snoozeConfig.minutes = minutes;
 						} else {
-							convo.say("Sorry, still learning :dog:. Let me know how long you want to snooze for `i.e. 10 min`");
+							convo.say("Sorry, still learning :dog:. Let me know how long you want to extend your session `i.e. 10 min`");
 							convo.repeat();
 						}
 						convo.next();
