@@ -33,13 +33,7 @@ export default (controller) => {
 			bot.queuedReachouts = {};
 		}
 
-		if (message.type && (message.type == "user_typing" || message.type == "team_join")) {
-			console.log(`\n ~~ user_typing or team_join middleware ~~ \n`);
-			next();
-		} else if (!message.text) {
-			console.log(`\n ~~ this is an event with no text in middleware ~~ \n`);
-			next();
-		} else if (message.user) {
+		if (message.user && message.type) {
 
 			const SlackUserId = message.user;
 			// another safe measure
@@ -49,61 +43,65 @@ export default (controller) => {
 				return;
 			}
 
-			console.log(`\n ~~ in pauseWorkSession middleware ~~ \n`);
+			if (message.type == "message" && message.text) {
 
-			// if found user, find the user
-			models.User.find({
-				where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-				include: [
-					models.SlackUser
-				]
-			})
-			.then((user) => {
+				console.log(`\n ~~ this message affects pauseWorkSession middleware ~~ \n`);
 
-				if (user) {
+				// if found user, find the user
+				models.User.find({
+					where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+					include: [
+						models.SlackUser
+					]
+				})
+				.then((user) => {
 
-					user.getWorkSessions({
-						where: [`"live" = ?`, true ]
-					})
-					.then((workSessions) => {
+					if (user) {
 
-						// found a work session! (should be <= 1 per user)
-						if (workSessions.length > 0) {
+						user.getWorkSessions({
+							where: [`"live" = ?`, true ]
+						})
+						.then((workSessions) => {
 
-							var pausedWorkSessions = [];
-							workSessions.forEach((workSession) => {
+							// found a work session! (should be <= 1 per user)
+							if (workSessions.length > 0) {
 
-								workSession.update({
-									live: false
+								var pausedWorkSessions = [];
+								workSessions.forEach((workSession) => {
+
+									workSession.update({
+										live: false
+									});
+
+									pausedWorkSessions.push(workSession);
+
 								});
 
-								pausedWorkSessions.push(workSession);
-
-							});
-
-							// queued reachout has been created for this user
-							if (bot.queuedReachouts[SlackUserId] && bot.queuedReachouts[SlackUserId].workSessions) {
-								pausedWorkSessions.forEach((workSession) => {
-									bot.queuedReachouts[SlackUserId].workSessions.push(workSession);
-								});
-							} else {
-								bot.queuedReachouts[SlackUserId] = {
-									workSessions: pausedWorkSessions
+								// queued reachout has been created for this user
+								if (bot.queuedReachouts[SlackUserId] && bot.queuedReachouts[SlackUserId].workSessions) {
+									pausedWorkSessions.forEach((workSession) => {
+										bot.queuedReachouts[SlackUserId].workSessions.push(workSession);
+									});
+								} else {
+									bot.queuedReachouts[SlackUserId] = {
+										workSessions: pausedWorkSessions
+									}
 								}
 							}
-						}
 
+							next();
+
+						})
+					} else {
 						next();
+					}
 
-					})
-				} else {
-					next();
-				}
+				});
+			} else {
+				console.log(`\n ~~ this event did not affect pause middleware ~~ \n`);
+				next();
+			}
 
-			});
-
-		} else {
-			next();
 		}
 
 	})
