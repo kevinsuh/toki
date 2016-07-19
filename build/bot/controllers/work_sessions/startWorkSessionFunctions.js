@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 exports.startSessionStartConversation = startSessionStartConversation;
+exports.confirmTimeForTasks = confirmTimeForTasks;
 
 var _momentTimezone = require('moment-timezone');
 
@@ -593,7 +594,6 @@ function confirmTimeForTasks(response, convo) {
 	var dailyTasks = _convo$sessionStart6.dailyTasks;
 	var tz = _convo$sessionStart6.tz;
 
-	var SlackUserId = response.user;
 
 	var totalMinutes = 0;
 	for (var key in tasksToWorkOnHash) {

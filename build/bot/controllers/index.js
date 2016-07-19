@@ -354,6 +354,7 @@ controller.on('new_session_group_decision', function (bot, config) {
 	var SlackUserId = config.SlackUserId;
 	var intent = config.intent;
 	var message = config.message;
+	var dailyTasksToWorkOn = config.dailyTasksToWorkOn;
 
 
 	_models2.default.User.find({
@@ -408,7 +409,8 @@ controller.on('new_session_group_decision', function (bot, config) {
 						SlackUserId: SlackUserId,
 						message: message,
 						controller: controller,
-						bot: bot
+						bot: bot,
+						dailyTasksToWorkOn: dailyTasksToWorkOn
 					};
 					triggerIntent(intent, config);
 					return;
@@ -463,7 +465,8 @@ controller.on('new_session_group_decision', function (bot, config) {
 								SlackUserId: SlackUserId,
 								message: message,
 								controller: controller,
-								bot: bot
+								bot: bot,
+								dailyTasksToWorkOn: dailyTasksToWorkOn
 							};
 							triggerIntent(intent, config);
 						}
@@ -479,13 +482,14 @@ function triggerIntent(intent, config) {
 	var controller = config.controller;
 	var SlackUserId = config.SlackUserId;
 	var message = config.message;
+	var dailyTasksToWorkOn = config.dailyTasksToWorkOn;
 
 	switch (intent) {
 		case _intents2.default.ADD_TASK:
 			controller.trigger('add_task_flow', [bot, { SlackUserId: SlackUserId, message: message }]);
 			break;
 		case _intents2.default.START_SESSION:
-			controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+			controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId, dailyTasksToWorkOn: dailyTasksToWorkOn }]);
 			break;
 		case _intents2.default.VIEW_TASKS:
 			controller.trigger('view_daily_tasks_flow', [bot, { SlackUserId: SlackUserId, message: message }]);

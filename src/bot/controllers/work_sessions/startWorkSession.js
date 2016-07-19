@@ -10,7 +10,7 @@ import intentConfig from '../../lib/intents';
 import { randomInt, utterances } from '../../lib/botResponses';
 import { colorsArray, THANK_YOU, buttonValues, colorsHash } from '../../lib/constants';
 
-import { startSessionStartConversation } from './startWorkSessionFunctions';
+import { startSessionStartConversation, confirmTimeForTasks } from './startWorkSessionFunctions';
 
 import { resumeQueuedReachouts } from '../index';
 
@@ -61,7 +61,7 @@ export default function(controller) {
 		 * 					- mark it as done and re-enter `begin_session`
 		 */
 
-		const { SlackUserId } = config;
+		const { SlackUserId, dailyTasksToWorkOn } = config;
 		console.log("\n\n\n\n\nin `confirm_new_session` before entering begin_session flow!\n\n\n\n\n");
 
 		models.User.find({
@@ -82,7 +82,7 @@ export default function(controller) {
 
 				// no live work sessions => you're good to go!
 				if (workSessions.length == 0) {
-					controller.trigger(`begin_session`, [ bot, { SlackUserId }]);
+					controller.trigger(`begin_session`, [ bot, config]);
 					return;
 				}
 
@@ -188,7 +188,7 @@ export default function(controller) {
 									});
 								})
 							});
-							controller.trigger(`begin_session`, [ bot, { SlackUserId }]);
+							controller.trigger(`begin_session`, [ bot, config ]);
 						} else {
 							resumeQueuedReachouts(bot, { SlackUserId });
 						}
@@ -209,7 +209,12 @@ export default function(controller) {
 	 */
 	controller.on('begin_session', (bot, config) => {
 
-		const { SlackUserId } = config;
+		const { SlackUserId  }     = config;
+		var { dailyTasksToWorkOn } = config;
+
+		console.log("in begin session:");
+		console.log(config);
+		console.log("\n\n")
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -258,6 +263,23 @@ export default function(controller) {
 					if (dailyTasks.length == 0) {
 						convo.sessionStart.noDailyTasks = true;
 						convo.stop();
+					} else if (dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
+
+						/**
+						 * ~~ USER HAS PASSED IN DAILY TASKS TO WORK ON FOR THIS SESSION ~~
+						 */
+						dailyTasksToWorkOn = convertToSingleTaskObjectArray(dailyTasksToWorkOn, "daily");
+
+						var tasksToWorkOnHash = {};
+						dailyTasksToWorkOn.forEach((dailyTask, index) => {
+							tasksToWorkOnHash[index] = dailyTask;
+						});
+
+						convo.sessionStart.tasksToWorkOnHash  = tasksToWorkOnHash;
+
+						confirmTimeForTasks(err, convo);
+						convo.next();
+
 					} else {
 						
 						// let's turn off sessions and reminders here

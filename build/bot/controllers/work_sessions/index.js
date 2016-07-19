@@ -159,6 +159,8 @@ exports.default = function (controller) {
 						});
 
 						var isBackDecision = convo.isBackDecision;
+						var dailyTasksToWorkOn = convo.isBack.dailyTasksToWorkOn;
+
 
 						var config = { SlackUserId: SlackUserId };
 						if (convo.status == 'completed') {
@@ -167,6 +169,9 @@ exports.default = function (controller) {
 									controller.trigger('begin_day_flow', [bot, config]);
 									break;
 								case _intents2.default.START_SESSION:
+									if (dailyTasksToWorkOn) {
+										config.dailyTasksToWorkOn = dailyTasksToWorkOn;
+									}
 									config.intent = _intents2.default.START_SESSION;
 									controller.trigger('new_session_group_decision', [bot, config]);
 									break;
@@ -247,6 +252,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // base controller for work sessions!
 function shouldStartNewDayFlow(err, convo) {
 	var dailyTasks = convo.isBack.dailyTasks;
+	var bot = convo.task.bot;
 
 
 	var message = '*Ready to make a plan for today?*';
@@ -285,7 +291,11 @@ function shouldStartNewDayFlow(err, convo) {
 	}, [{ // user does not want any of the options
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.say('Okay! I\'ll be here whenever you\'re ready :hand:');
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
+			convo.say('Okay! I\'ll be here whenever you\'re ready to `plan` :hand:');
 			convo.next();
 		}
 	}, {
@@ -297,6 +307,10 @@ function shouldStartNewDayFlow(err, convo) {
 	}, { // NL equivalent to buttonValues.startDay.value
 		pattern: _botResponses.utterances.containsPlan,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.say('Let\'s do it!');
 			convo.isBackDecision = _intents2.default.START_DAY;
 			convo.next();
@@ -304,6 +318,10 @@ function shouldStartNewDayFlow(err, convo) {
 	}, { // NL equivalent to buttonValues.startDay.value
 		pattern: _botResponses.utterances.specificYes,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.say('Let\'s do it!');
 			convo.isBackDecision = _intents2.default.START_DAY;
 			convo.next();
@@ -317,6 +335,10 @@ function shouldStartNewDayFlow(err, convo) {
 	}, { // NL equivalent to buttonValues.startSession.value
 		pattern: _botResponses.utterances.startSession,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.isBackDecision = _intents2.default.START_SESSION;
 			convo.next();
 		}
@@ -329,6 +351,10 @@ function shouldStartNewDayFlow(err, convo) {
 	}, { // NL equivalent to buttonValues.createReminder.value
 		pattern: _botResponses.utterances.containsCheckin,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.isBackDecision = _intents2.default.REMINDER;
 			convo.next();
 		}
@@ -341,6 +367,10 @@ function shouldStartNewDayFlow(err, convo) {
 	}, { // NL equivalent to buttonValues.endDay.value
 		pattern: _botResponses.utterances.containsEnd,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.say('It\'s about that time, isn\'t it?');
 			convo.isBackDecision = _intents2.default.END_DAY;
 			convo.next();
@@ -357,6 +387,9 @@ function shouldStartNewDayFlow(err, convo) {
 
 // user should start a session
 function shouldStartSessionFlow(err, convo) {
+	var dailyTasks = convo.isBack.dailyTasks;
+	var bot = convo.task.bot;
+
 
 	convo.ask({
 		text: '*Ready to start another session?*',
@@ -387,10 +420,44 @@ function shouldStartSessionFlow(err, convo) {
 				type: "button"
 			}]
 		}]
-	}, [{ // user does not want any of the options
+	}, [{ // if user lists tasks, we can infer user wants to start a specific session
+		pattern: _botResponses.utterances.containsNumber,
+		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
+			var tasksToWorkOnString = response.text;
+			var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(tasksToWorkOnString, dailyTasks);
+
+			if (!taskNumbersToWorkOnArray) {
+				convo.say("You didn't pick a valid task to work on :thinking_face:");
+				convo.say("You can pick a task from your list `i.e. tasks 1, 3` to work on");
+				shouldStartSessionFlow(response, convo);
+				return;
+			}
+
+			var dailyTasksToWorkOn = [];
+			dailyTasks.forEach(function (dailyTask, index) {
+				var taskNumber = index + 1; // b/c index is 0-based
+				if (taskNumbersToWorkOnArray.indexOf(taskNumber) > -1) {
+					dailyTasksToWorkOn.push(dailyTask);
+				}
+			});
+
+			convo.isBack.dailyTasksToWorkOn = dailyTasksToWorkOn;
+			convo.isBackDecision = _intents2.default.START_SESSION;
+
+			convo.next();
+		}
+	}, { // user does not want any of the options
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.say('Okay! I\'ll be here whenever you\'re ready :hand:');
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
+			convo.say('Okay! I\'ll be here whenever you\'re ready to `start a session` :hand:');
 			convo.next();
 		}
 	}, {
@@ -402,6 +469,10 @@ function shouldStartSessionFlow(err, convo) {
 	}, { // NL equivalent to buttonValues.startDay.value
 		pattern: _botResponses.utterances.containsPlan,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.say('Let\'s do it!');
 			convo.isBackDecision = _intents2.default.START_DAY;
 			convo.next();
@@ -415,18 +486,30 @@ function shouldStartSessionFlow(err, convo) {
 	}, { // NL equivalent to buttonValues.startSession.value
 		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.isBackDecision = _intents2.default.START_SESSION;
 			convo.next();
 		}
 	}, {
 		pattern: _constants.buttonValues.createReminder.value,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.isBackDecision = _intents2.default.REMINDER;
 			convo.next();
 		}
 	}, { // NL equivalent to buttonValues.createReminder.value
 		pattern: _botResponses.utterances.containsCheckin,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.isBackDecision = _intents2.default.REMINDER;
 			convo.next();
 		}
@@ -439,6 +522,10 @@ function shouldStartSessionFlow(err, convo) {
 	}, { // NL equivalent to buttonValues.endDay.value
 		pattern: _botResponses.utterances.containsEnd,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			convo.say('It\'s about that time, isn\'t it?');
 			convo.isBackDecision = _intents2.default.END_DAY;
 			convo.next();

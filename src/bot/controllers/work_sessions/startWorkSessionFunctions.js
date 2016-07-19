@@ -608,12 +608,11 @@ function confirmTasks(response, convo) {
 }
 
 // calculate ask about the time to the existing tasks user chose
-function confirmTimeForTasks(response, convo) {
+export function confirmTimeForTasks(response, convo) {
 
 	const { task }                = convo;
 	const { bot, source_message } = task;
 	const { tasksToWorkOnHash, dailyTasks, tz }  = convo.sessionStart;
-	const SlackUserId = response.user;
 
 	var totalMinutes = 0;
 	for (var key in tasksToWorkOnHash) {
