@@ -35,15 +35,25 @@ export default (controller) => {
 
 		if (message.user && message.type) {
 
-			const SlackUserId = message.user;
-			// another safe measure
-			if (typeof SlackUserId != "string") {
-				console.log(`SlackUserId is not a string: ${SlackUserId}`);
-				next();
-				return;
+			// safeguard to prevent messages being sent by bot
+			var botSlackUserId = false;
+			if (bot.identity && bot.identity.id) {
+				botSlackUserId = bot.identity.id;
 			}
 
-			if (message.type == "message" && message.text) {
+			const SlackUserId = message.user;
+
+			// various safe measures against running pauseWorkSession functionality
+			var valid = true;
+			if (typeof SlackUserId != "string") {
+				console.log(`SlackUserId is not a string: ${SlackUserId}`);
+				valid = false;
+			} else if (botSlackUserId == SlackUserId) {
+				console.log(`This message is being sent by bot: ${SlackUserId}`);
+				valid = false;
+			}
+
+			if (message.type == "message" && message.text && valid) {
 
 				console.log(`\n ~~ this message affects pauseWorkSession middleware ~~ \n`);
 

@@ -4,8 +4,6 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-
 var _index = require('../controllers/index');
 
 var _models = require('../../app/models');
@@ -48,19 +46,32 @@ exports.default = function (controller) {
 		}
 
 		if (message.user && message.type) {
-			var _ret = function () {
+			var botSlackUserId;
+			var valid;
 
-				var SlackUserId = message.user;
-				// another safe measure
-				if (typeof SlackUserId != "string") {
-					console.log('SlackUserId is not a string: ' + SlackUserId);
-					next();
-					return {
-						v: void 0
-					};
+			(function () {
+
+				// safeguard to prevent messages being sent by bot
+				botSlackUserId = false;
+
+				if (bot.identity && bot.identity.id) {
+					botSlackUserId = bot.identity.id;
 				}
 
-				if (message.type == "message" && message.text) {
+				var SlackUserId = message.user;
+
+				// various safe measures against running pauseWorkSession functionality
+				valid = true;
+
+				if (typeof SlackUserId != "string") {
+					console.log('SlackUserId is not a string: ' + SlackUserId);
+					valid = false;
+				} else if (botSlackUserId == SlackUserId) {
+					console.log('This message is being sent by bot: ' + SlackUserId);
+					valid = false;
+				}
+
+				if (message.type == "message" && message.text && valid) {
 
 					console.log('\n ~~ this message affects pauseWorkSession middleware ~~ \n');
 
@@ -111,9 +122,7 @@ exports.default = function (controller) {
 					console.log('\n ~~ this event did not affect pause middleware ~~ \n');
 					next();
 				}
-			}();
-
-			if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+			})();
 		}
 	});
 };
