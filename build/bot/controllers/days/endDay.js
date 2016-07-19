@@ -33,7 +33,6 @@ exports.default = function (controller) {
 				include: [_models2.default.SlackUser]
 			}).then(function (user) {
 
-				// ping to start a day if they have not yet
 				user.getSessionGroups({
 					order: '"SessionGroup"."createdAt" DESC',
 					limit: 1
@@ -46,13 +45,6 @@ exports.default = function (controller) {
 					} else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
 						shouldStartDay = true;
 					}
-					if (shouldStartDay) {
-						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-							convo.say("You have not started a day yet! Let me know when you want to `start a day` together :smile:");
-							convo.next();
-						});
-						return;
-					}
 
 					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
@@ -60,7 +52,14 @@ exports.default = function (controller) {
 						convo.name = name;
 						convo.readyToEndDay = false;
 
-						convo.ask('Hey ' + name + '! Would you like to end your day?', [{
+						var message = 'Hey ' + name + '!';
+						if (shouldStartDay) {
+							message = message + ' You haven\'t started a day since last time. Would you still like to end your day?';
+						} else {
+							message = message + ' Would you like to end your day?';
+						}
+
+						convo.ask(message, [{
 							pattern: _botResponses.utterances.yes,
 							callback: function callback(response, convo) {
 								convo.readyToEndDay = true;
@@ -79,10 +78,11 @@ exports.default = function (controller) {
 								convo.next();
 							}
 						}]);
+
 						convo.on('end', function (convo) {
 							if (convo.readyToEndDay) {
 								(0, _miscHelpers.closeOldRemindersAndSessions)(user);
-								controller.trigger('end_day_flow', [bot, { SlackUserId: SlackUserId }]);
+								controller.trigger('end_day_flow', [bot, { SlackUserId: SlackUserId, shouldStartDay: shouldStartDay }]);
 							} else {
 								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 							}
@@ -103,6 +103,7 @@ exports.default = function (controller) {
  */
 	controller.on('end_day_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
+		var shouldStartDay = config.shouldStartDay;
 
 
 		_models2.default.User.find({
@@ -114,24 +115,9 @@ exports.default = function (controller) {
 			// a day's worth of work
 			user.getSessionGroups({
 				order: '"SessionGroup"."createdAt" DESC',
+				where: ['"SessionGroup"."type" = ?', "start_work"],
 				limit: 1
 			}).then(function (sessionGroups) {
-
-				// should start day
-				var shouldStartDay = false;
-				if (sessionGroups.length == 0) {
-					shouldStartDay = true;
-				} else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
-					shouldStartDay = true;
-				}
-				if (shouldStartDay) {
-					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-						convo.say("You have not started a day yet! Let's `start a day` together :smile:");
-						convo.next();
-					});
-					(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-					return;
-				}
 
 				var startSessionGroup = sessionGroups[0]; // the start day
 
@@ -142,11 +128,15 @@ exports.default = function (controller) {
 				}).then(function (dailyTasks) {
 
 					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+						var tz = user.SlackUser.tz;
+
 
 						var name = user.nickName || user.email;
 						convo.name = name;
 
 						convo.dayEnd = {
+							shouldStartDay: shouldStartDay,
+							tz: tz,
 							UserId: user.id,
 							endDayDecision: false // what does user want to do with day
 						};
@@ -275,10 +265,24 @@ function startEndDayFlow(response, convo) {
 	var name = convo.name;
 	var bot = task.bot;
 	var source_message = task.source_message;
-	var dailyTasks = convo.dayEnd.dailyTasks;
+	var _convo$dayEnd2 = convo.dayEnd;
+	var dailyTasks = _convo$dayEnd2.dailyTasks;
+	var startSessionGroup = _convo$dayEnd2.startSessionGroup;
+	var tz = _convo$dayEnd2.tz;
+	var shouldStartDay = _convo$dayEnd2.shouldStartDay;
 
 
 	convo.say('Let\'s wrap up for the day :package:');
+	var message = '';
+
+	var sessionGroupStartTime = (0, _momentTimezone2.default)(startSessionGroup.dataValues.createdAt).tz(tz);
+	var sessionGroupStartTimeString = sessionGroupStartTime.format("h:mm a");
+	if (shouldStartDay) {
+		message = 'You started your day on ' + sessionGroupStartTime.format('dddd') + ', (' + sessionGroupStartTime.format("MMMM Do YYYY") + ') at ' + sessionGroupStartTimeString;
+	} else {
+		message = 'You started your day at ' + sessionGroupStartTimeString;
+	}
+	convo.say(message);
 
 	if (dailyTasks.length > 0) {
 		convo.say('Here are the tasks you completed today:');
@@ -295,10 +299,10 @@ function getTotalWorkSessionTime(response, convo) {
 	var name = convo.name;
 	var bot = task.bot;
 	var source_message = task.source_message;
-	var _convo$dayEnd2 = convo.dayEnd;
-	var UserId = _convo$dayEnd2.UserId;
-	var dailyTasks = _convo$dayEnd2.dailyTasks;
-	var startSessionGroup = _convo$dayEnd2.startSessionGroup;
+	var _convo$dayEnd3 = convo.dayEnd;
+	var UserId = _convo$dayEnd3.UserId;
+	var dailyTasks = _convo$dayEnd3.dailyTasks;
+	var startSessionGroup = _convo$dayEnd3.startSessionGroup;
 
 
 	var now = (0, _momentTimezone2.default)();
@@ -334,9 +338,9 @@ function askForReflection(response, convo) {
 	var name = convo.name;
 	var bot = task.bot;
 	var source_message = task.source_message;
-	var _convo$dayEnd3 = convo.dayEnd;
-	var dailyTasks = _convo$dayEnd3.dailyTasks;
-	var startSessionGroup = _convo$dayEnd3.startSessionGroup;
+	var _convo$dayEnd4 = convo.dayEnd;
+	var dailyTasks = _convo$dayEnd4.dailyTasks;
+	var startSessionGroup = _convo$dayEnd4.startSessionGroup;
 
 
 	convo.say('Is there anything specific you\'d like to remember about your work day? :pencil:');
@@ -374,9 +378,9 @@ function getReflectionText(response, convo) {
 	var name = convo.name;
 	var bot = task.bot;
 	var source_message = task.source_message;
-	var _convo$dayEnd4 = convo.dayEnd;
-	var dailyTasks = _convo$dayEnd4.dailyTasks;
-	var startSessionGroup = _convo$dayEnd4.startSessionGroup;
+	var _convo$dayEnd5 = convo.dayEnd;
+	var dailyTasks = _convo$dayEnd5.dailyTasks;
+	var startSessionGroup = _convo$dayEnd5.startSessionGroup;
 
 	var responseMessage = response.text;
 

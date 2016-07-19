@@ -47,7 +47,6 @@ export default function(controller) {
 			})
 			.then((user) => {
 
-				// ping to start a day if they have not yet
 				user.getSessionGroups({
 					order: `"SessionGroup"."createdAt" DESC`,
 					limit: 1
@@ -61,13 +60,6 @@ export default function(controller) {
 					} else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
 						shouldStartDay = true;
 					}
-					if (shouldStartDay) {
-						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-							convo.say("You have not started a day yet! Let me know when you want to `start a day` together :smile:");
-							convo.next();
-						});
-						return;
-					}
 
 					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
@@ -75,7 +67,14 @@ export default function(controller) {
 						convo.name            = name;
 						convo.readyToEndDay = false;
 
-						convo.ask(`Hey ${name}! Would you like to end your day?`, [
+						var message = `Hey ${name}!`;
+						if (shouldStartDay) {
+							message = `${message} You haven't started a day since last time. Would you still like to end your day?`
+						} else {
+							message = `${message} Would you like to end your day?`
+						}
+
+						convo.ask(message, [
 							{
 								pattern: utterances.yes,
 								callback: (response, convo) => {
@@ -98,15 +97,16 @@ export default function(controller) {
 								}
 							}
 						]);
+
 						convo.on('end', (convo) => {
 							if (convo.readyToEndDay) {
 								closeOldRemindersAndSessions(user);
-								controller.trigger(`end_day_flow`, [ bot, { SlackUserId }]);
+								controller.trigger(`end_day_flow`, [ bot, { SlackUserId, shouldStartDay }]);
 							} else {
 								resumeQueuedReachouts(bot, { SlackUserId });
 							}
 						})
-					
+
 					});
 
 				});
@@ -126,7 +126,7 @@ export default function(controller) {
 	*/
 	controller.on('end_day_flow', (bot, config) => {
 
-		const { SlackUserId } = config;
+		const { SlackUserId, shouldStartDay } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -140,25 +140,10 @@ export default function(controller) {
 			// a day's worth of work
 			user.getSessionGroups({
 				order: `"SessionGroup"."createdAt" DESC`,
+				where: [`"SessionGroup"."type" = ?`, "start_work"],
 				limit: 1
 			})
 			.then((sessionGroups) => {
-
-				// should start day
-				var shouldStartDay = false;
-				if (sessionGroups.length == 0) {
-					shouldStartDay = true;
-				} else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
-					shouldStartDay = true;
-				}
-				if (shouldStartDay) {
-					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-						convo.say("You have not started a day yet! Let's `start a day` together :smile:");
-						convo.next();
-					});
-					resumeQueuedReachouts(bot, { SlackUserId });
-					return;
-				}
 				
 				const startSessionGroup   = sessionGroups[0]; // the start day
 
@@ -171,10 +156,14 @@ export default function(controller) {
 
 					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
+						const { SlackUser: { tz } } = user;
+
 						var name   = user.nickName || user.email;
 						convo.name = name;
 
 						convo.dayEnd = {
+							shouldStartDay,
+							tz,
 							UserId: user.id,
 							endDayDecision: false // what does user want to do with day
 						}
@@ -189,7 +178,6 @@ export default function(controller) {
 						convo.on('end', (convo) => {
 
 							var responses = convo.extractResponses();
-
 
 							if (convo.status == 'completed') {
 
@@ -262,11 +250,21 @@ export default function(controller) {
 // start of end day flow
 function startEndDayFlow(response, convo) {
 
-	const { task, name }          = convo;
-	const { bot, source_message } = task;
-	const { dailyTasks }          = convo.dayEnd
+	const { task, name }                        = convo;
+	const { bot, source_message }               = task;
+	const { dailyTasks, startSessionGroup, tz, shouldStartDay } = convo.dayEnd
 
 	convo.say(`Let's wrap up for the day :package:`);
+	var message = '';
+
+	var sessionGroupStartTime       = moment(startSessionGroup.dataValues.createdAt).tz(tz);
+	var sessionGroupStartTimeString = sessionGroupStartTime.format("h:mm a");
+	if (shouldStartDay) {
+		message = `You started your day on ${sessionGroupStartTime.format('dddd')}, (${sessionGroupStartTime.format("MMMM Do YYYY")}) at ${sessionGroupStartTimeString}`;
+	} else {
+		message = `You started your day at ${sessionGroupStartTimeString}`
+	}
+	convo.say(message);
 
 	if (dailyTasks.length > 0) {
 		convo.say(`Here are the tasks you completed today:`);
