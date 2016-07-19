@@ -45,6 +45,14 @@ exports.default = function (controller) {
 			bot.queuedReachouts = {};
 		}
 
+		if (!bot || !message) {
+			console.log('~~ Weird bug where bot or message not found ~~\n:');
+			console.log(bot);
+			console.log(message);
+			next();
+			return;
+		}
+
 		if (message.user && message.type) {
 			var botSlackUserId;
 			var valid;
@@ -54,7 +62,7 @@ exports.default = function (controller) {
 				// safeguard to prevent messages being sent by bot
 				botSlackUserId = false;
 
-				if (bot.identity && bot.identity.id) {
+				if (bot && bot.identity && bot.identity.id) {
 					botSlackUserId = bot.identity.id;
 				}
 
