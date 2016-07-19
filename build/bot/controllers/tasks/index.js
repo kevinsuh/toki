@@ -115,9 +115,21 @@ exports.default = function (controller) {
 							var dailyTaskIdsToDelete = _convo$tasksEdit.dailyTaskIdsToDelete;
 							var dailyTaskIdsToComplete = _convo$tasksEdit.dailyTaskIdsToComplete;
 							var dailyTasksToUpdate = _convo$tasksEdit.dailyTasksToUpdate;
+							var startSession = _convo$tasksEdit.startSession;
+							var dailyTasksToWorkOn = _convo$tasksEdit.dailyTasksToWorkOn;
 
 
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+
+							if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
+								var config = {
+									SlackUserId: SlackUserId,
+									dailyTasksToWorkOn: dailyTasksToWorkOn
+								};
+								config.intent = _intents2.default.START_SESSION;
+								controller.trigger('new_session_group_decision', [bot, config]);
+								return;
+							}
 
 							// add new tasks if they got added
 							if (newTasks.length > 0) {
@@ -250,6 +262,10 @@ var _models2 = _interopRequireDefault(_models);
 var _botResponses = require('../../lib/botResponses');
 
 var _messageHelpers = require('../../lib/messageHelpers');
+
+var _intents = require('../../lib/intents');
+
+var _intents2 = _interopRequireDefault(_intents);
 
 var _add = require('./add');
 
