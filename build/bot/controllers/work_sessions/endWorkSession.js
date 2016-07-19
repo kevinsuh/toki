@@ -29,7 +29,12 @@ exports.default = function (controller) {
 		});
 
 		setTimeout(function () {
-			controller.trigger('done_session_flow', [bot, { SlackUserId: SlackUserId }]);
+			if (_botResponses.utterances.containsTask.test(message.text)) {
+				// want to finish off some tasks
+				controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
+			} else {
+				controller.trigger('done_session_flow', [bot, { SlackUserId: SlackUserId }]);
+			}
 		}, 800);
 	});
 
@@ -292,44 +297,37 @@ exports.default = function (controller) {
 					});
 				} else {
 
-					if (_botResponses.utterances.containsTask.test(message.text)) {
-
-						// want to finish off some tasks
-						controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
-					} else {
-
-						// want to be end a session when they arent currently in one
-						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-							convo.ask('You aren\'t in a session right now! Would you like to start one?', [{
-								pattern: _botResponses.utterances.yes,
-								callback: function callback(response, convo) {
-									convo.startSession = true;
-									convo.next();
-								}
-							}, {
-								pattern: _botResponses.utterances.no,
-								callback: function callback(response, convo) {
-									convo.say('Okay! I\'ll be here when you\'re ready to crank again :wrench: ');
-									convo.next();
-								}
-							}, {
-								default: true,
-								callback: function callback(response, convo) {
-									convo.say("Sorry, I didn't get that. Please tell me `yes` or `no` to the question!");
-									convo.repeat();
-									convo.next();
-								}
-							}]);
-							convo.next();
-							convo.on('end', function (convo) {
-								if (convo.startSession) {
-									controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
-								} else {
-									(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-								}
-							});
+					// want to be end a session when they arent currently in one
+					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+						convo.ask('You aren\'t in a session right now! Would you like to start one?', [{
+							pattern: _botResponses.utterances.yes,
+							callback: function callback(response, convo) {
+								convo.startSession = true;
+								convo.next();
+							}
+						}, {
+							pattern: _botResponses.utterances.no,
+							callback: function callback(response, convo) {
+								convo.say('Okay! I\'ll be here when you\'re ready to crank again :wrench: ');
+								convo.next();
+							}
+						}, {
+							default: true,
+							callback: function callback(response, convo) {
+								convo.say("Sorry, I didn't get that. Please tell me `yes` or `no` to the question!");
+								convo.repeat();
+								convo.next();
+							}
+						}]);
+						convo.next();
+						convo.on('end', function (convo) {
+							if (convo.startSession) {
+								controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+							} else {
+								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+							}
 						});
-					}
+					});
 				}
 			});
 		});

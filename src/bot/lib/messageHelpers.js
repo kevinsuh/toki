@@ -5,6 +5,8 @@
 import { FINISH_WORD } from './constants';
 import { utterances } from './botResponses';
 
+import nlp from 'nlp_compromise';
+
 /**
  * takes array of tasks and converts to array of task STRINGS
  * these "response objects" are botkit MESSAGE response
@@ -88,15 +90,8 @@ function getRemainingTasksFromTaskArray(taskArray, options = {}) {
 	var { newTasks } = options;
 
 	taskArray.forEach((task) => {
-		if (!options.dontUseDataValues && task.dataValues) {
-			task = task.dataValues;
-		};
-
-		// only live tasks when dealing with existing tasks! (so deleted tasks get ignored)
-		if (!task.type || task.type ==  "live") {
-			if (!task.done) {
-				remainingTasks.push(task);
-			}
+		if (!task.done) {
+			remainingTasks.push(task);
 		}
 	});
 
@@ -115,19 +110,35 @@ function getCompletedTasksFromTaskArray(taskArray, options = {}) {
 	var completedTasks = [];
 
 	taskArray.forEach((task) => {
-		if (!options.dontUseDataValues && task.dataValues) {
-			task = task.dataValues;
-		};
-
 		// only live tasks when dealing with existing tasks! (so deleted tasks get ignored)
-		if (!task.type || task.type ==  "live") {
-			if (task.done) {
-				completedTasks.push(task);
-			}
+		if (task.done) {
+			completedTasks.push(task);
 		}
 	});
 
 	return completedTasks;
+}
+
+function cleanTaskArray(taskArray) {
+	var cleanTaskArray = [];
+	taskArray.forEach((task) => {
+
+		if (task.dataValues) {
+			task = task.dataValues;
+		}
+
+		if (!task.type) {
+			// this is a newly created task
+			cleanTaskArray.push(task);
+		} else {
+			// existing task
+			// right now, do not show deleted and archived tasks
+			if (task.type != "deleted" && task.type != "archived") {
+				cleanTaskArray.push(task);
+			}
+		}
+	});
+	return cleanTaskArray;
 }
 
 // this should be called after you `convertToSingleTaskObjectArray`
@@ -163,6 +174,9 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 	if (!hasCompletedTasks) {
 		segmentCompleted = false;
 	}
+
+	// dont get deleted tasks
+	taskArray = cleanTaskArray(taskArray);
 
 	var remainingTasks = getRemainingTasksFromTaskArray(taskArray, options);
 	var completedTasks = getCompletedTasksFromTaskArray(taskArray, options);
@@ -284,15 +298,37 @@ export function convertTimeStringToMinutes(timeString) {
 	var totalMinutes = 0;
 	var timeArray = timeString.split(" ");
 
+	var aOrAnRegExp       = new RegExp(/\b[an]{1,3}/i);
+	var parsedNumberValue = false;
+
+	if (nlp.value(timeString).number) {
+		parsedNumberValue = `${nlp.value(timeString).number}`;
+	} else if (aOrAnRegExp.test(timeString)) {
+		parsedNumberValue = "1";
+	}
+
 	var totalMinutesCount = 0; // max of 1
 	var totalHoursCount = 0; // max of 1
 	for (var i = 0; i < timeArray.length; i++) {
+
+		var aOrAnRegExp = new RegExp(/\b[an]{1,3}/i);
+
+		if (nlp.value(timeArray[i]).number) {
+			timeArray[i] = `${nlp.value(timeArray[i]).number}`;
+		} else if (aOrAnRegExp.test(timeArray[i])) {
+			timeArray[i] = "1";
+		}
 		
 		var numberValue = timeArray[i].match(/\d+/);
 		if (!numberValue) {
 			continue;
 		}
-			
+
+		// possible we get the number value from outside the split loop
+		if (parsedNumberValue) {
+			timeArray[i] = parsedNumberValue;
+		}
+
 		var minutes = 0;
 
 		// OPTION 1: int with space (i.e. `1 hr`)

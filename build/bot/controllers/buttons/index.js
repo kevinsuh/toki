@@ -170,6 +170,9 @@ exports.default = function (controller) {
 				case _constants.buttonValues.endSessionYes.value:
 					bot.replyInteractive(message, "Woo! :horse_racing:");
 					break;
+				case _constants.buttonValues.allPendingTasks.value:
+					bot.replyInteractive(message, "I like all those tasks too :open_hands:");
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");
