@@ -486,6 +486,11 @@ function currentlyInSessionFlow(err, convo) {
 				value: _constants.buttonValues.endSessionYes.value,
 				type: "button"
 			}, {
+				name: _constants.buttonValues.doneSessionEarlyNo.name,
+				text: "Continue Session",
+				value: _constants.buttonValues.doneSessionEarlyNo.value,
+				type: "button"
+			}, {
 				name: _constants.buttonValues.editTaskList.name,
 				text: "Edit tasks :memo:",
 				value: _constants.buttonValues.editTaskList.value,
@@ -536,6 +541,23 @@ function currentlyInSessionFlow(err, convo) {
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
 			convo.isBackDecision = _intents2.default.END_SESSION;
+			convo.next();
+		}
+	}, { // continue session
+		pattern: _constants.buttonValues.doneSessionEarlyNo.value,
+		callback: function callback(response, convo) {
+			convo.say('Keep crushing :muscle:');
+			convo.next();
+		}
+	}, { // same as buttonValues.doneSessionNo.value
+		pattern: _botResponses.utterances.containsContinue,
+		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
+			convo.say('Got it');
+			convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
 			convo.next();
 		}
 	}, {

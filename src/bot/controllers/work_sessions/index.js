@@ -495,6 +495,12 @@ function currentlyInSessionFlow(err, convo) {
 							type: "button"
 					},
 					{
+							name: buttonValues.doneSessionEarlyNo.name,
+							text: "Continue Session",
+							value: buttonValues.doneSessionEarlyNo.value,
+							type: "button"
+					},
+					{
 							name: buttonValues.editTaskList.name,
 							text: "Edit tasks :memo:",
 							value: buttonValues.editTaskList.value,
@@ -554,6 +560,25 @@ function currentlyInSessionFlow(err, convo) {
 				deleteConvoAskMessage(response.channel, bot);
 
 				convo.isBackDecision = intentConfig.END_SESSION;
+				convo.next();
+			}
+		},
+		{ // continue session
+			pattern: buttonValues.doneSessionEarlyNo.value,
+			callback: (response, convo) => {
+				convo.say(`Keep crushing :muscle:`);
+				convo.next();
+			}
+		},
+		{ // same as buttonValues.doneSessionNo.value
+			pattern: utterances.containsContinue,
+			callback: (response, convo) => {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
+				convo.say(`Got it`);
+				convo.say(`I'll see you in ${minutesString} at *${endTimeString}*! Keep crushing :muscle:`);
 				convo.next();
 			}
 		},
