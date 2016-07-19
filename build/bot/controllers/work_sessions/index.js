@@ -378,7 +378,7 @@ function shouldStartNewDayFlow(err, convo) {
 			// delete button when answered with NL
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
-			convo.say('Okay! I\'ll be here whenever you\'re ready to `plan` :hand:');
+			convo.say('Okay! I\'ll be here whenever you\'re ready to `plan` :wave:');
 			convo.next();
 		}
 	}, {
