@@ -306,6 +306,10 @@ var buttonValues = exports.buttonValues = {
 	doneAddingTasks: {
 		value: "DONE_ADDING_TASKS",
 		name: "DONE_ADDING_TASKS"
+	},
+	endSessionYes: {
+		value: "END_SESSION_YES",
+		name: "END_SESSION_YES"
 	}
 };
 

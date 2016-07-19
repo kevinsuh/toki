@@ -172,6 +172,9 @@ export default function(controller) {
 				case buttonValues.cancelSession.value:
 					bot.replyInteractive(message, "No worries! We'll get that done soon");
 					break;
+				case buttonValues.endSessionYes.value:
+					bot.replyInteractive(message, "Woo! :horse_racing:");
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");

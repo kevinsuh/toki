@@ -458,9 +458,9 @@ function currentlyInSessionFlow(err, convo) {
 				fallback: "What would you like to do?",
 				actions: [
 					{
-							name: buttonValues.doneSessionYes.name,
+							name: buttonValues.endSessionYes.name,
 							text: "End session :punch:",
-							value: buttonValues.doneSessionYes.value,
+							value: buttonValues.endSessionYes.value,
 							type: "button"
 					},
 					{
@@ -509,7 +509,7 @@ function currentlyInSessionFlow(err, convo) {
 			}
 		},
 		{
-			pattern: buttonValues.doneSessionYes.value,
+			pattern: buttonValues.endSessionYes.value,
 			callback: function(response, convo) {
 				convo.isBackDecision = intentConfig.END_SESSION;
 				convo.next();

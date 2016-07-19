@@ -451,9 +451,9 @@ function currentlyInSessionFlow(err, convo) {
 			callback_id: "IS_BACK_IN_SESSION",
 			fallback: "What would you like to do?",
 			actions: [{
-				name: _constants.buttonValues.doneSessionYes.name,
+				name: _constants.buttonValues.endSessionYes.name,
 				text: "End session :punch:",
-				value: _constants.buttonValues.doneSessionYes.value,
+				value: _constants.buttonValues.endSessionYes.value,
 				type: "button"
 			}, {
 				name: _constants.buttonValues.editTaskList.name,
@@ -493,7 +493,7 @@ function currentlyInSessionFlow(err, convo) {
 			convo.next();
 		}
 	}, {
-		pattern: _constants.buttonValues.doneSessionYes.value,
+		pattern: _constants.buttonValues.endSessionYes.value,
 		callback: function callback(response, convo) {
 			convo.isBackDecision = _intents2.default.END_SESSION;
 			convo.next();
