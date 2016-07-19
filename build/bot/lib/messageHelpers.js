@@ -107,15 +107,8 @@ function getRemainingTasksFromTaskArray(taskArray) {
 
 
 	taskArray.forEach(function (task) {
-		if (!options.dontUseDataValues && task.dataValues) {
-			task = task.dataValues;
-		};
-
-		// only live tasks when dealing with existing tasks! (so deleted tasks get ignored)
-		if (!task.type || task.type == "live") {
-			if (!task.done) {
-				remainingTasks.push(task);
-			}
+		if (!task.done) {
+			remainingTasks.push(task);
 		}
 	});
 
@@ -135,19 +128,35 @@ function getCompletedTasksFromTaskArray(taskArray) {
 	var completedTasks = [];
 
 	taskArray.forEach(function (task) {
-		if (!options.dontUseDataValues && task.dataValues) {
-			task = task.dataValues;
-		};
-
 		// only live tasks when dealing with existing tasks! (so deleted tasks get ignored)
-		if (!task.type || task.type == "live") {
-			if (task.done) {
-				completedTasks.push(task);
-			}
+		if (task.done) {
+			completedTasks.push(task);
 		}
 	});
 
 	return completedTasks;
+}
+
+function cleanTaskArray(taskArray) {
+	var cleanTaskArray = [];
+	taskArray.forEach(function (task) {
+
+		if (task.dataValues) {
+			task = task.dataValues;
+		}
+
+		if (!task.type) {
+			// this is a newly created task
+			cleanTaskArray.push(task);
+		} else {
+			// existing task
+			// right now, do not show deleted and archived tasks
+			if (task.type != "deleted" && task.type != "archived") {
+				cleanTaskArray.push(task);
+			}
+		}
+	});
+	return cleanTaskArray;
 }
 
 // this should be called after you `convertToSingleTaskObjectArray`
@@ -187,6 +196,9 @@ function convertArrayToTaskListMessage(taskArray) {
 	if (!hasCompletedTasks) {
 		segmentCompleted = false;
 	}
+
+	// dont get deleted tasks
+	taskArray = cleanTaskArray(taskArray);
 
 	var remainingTasks = getRemainingTasksFromTaskArray(taskArray, options);
 	var completedTasks = getCompletedTasksFromTaskArray(taskArray, options);
