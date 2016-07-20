@@ -43,9 +43,6 @@ export default function(controller) {
 					 _text: 'clean up room for 30 minutes',
 				 entities: { reminder: [Object], duration: [Object] } } }
 	  */
-		/*
-			{"msg_id":"c02a017f-10d5-4b24-ab74-ee85c8955b42","_text":"clean up room for 30 minutes","entities":{"reminder":[{"confidence":0.9462485198304393,"entities":{},"type":"value","value":"clean up room","suggested":true}],"duration":[{"confidence":0.9997298403843689,"minute":30,"value":30,"unit":"minute","normalized":{"value":1800,"unit":"second"}}]}}
-		 */
 
 		const SlackUserId = message.user;
 
@@ -80,6 +77,9 @@ export default function(controller) {
 
 				switch (message.command) {
 					case "/add":
+						/*
+						{"msg_id":"c02a017f-10d5-4b24-ab74-ee85c8955b42","_text":"clean up room for 30 minutes","entities":{"reminder":[{"confidence":0.9462485198304393,"entities":{},"type":"value","value":"clean up room","suggested":true}],"duration":[{"confidence":0.9997298403843689,"minute":30,"value":30,"unit":"minute","normalized":{"value":1800,"unit":"second"}}]}}
+					 */
 						const { intentObject: { entities: { reminder, duration, datetime } } } = message;
 
 						var totalMinutes = 0;
@@ -94,6 +94,9 @@ export default function(controller) {
 						var customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
 
 						if (customTimeObject) {
+
+							// quick adding a task requires both text + time!
+							
 							var minutes;
 							if (duration) {
 								minutes = witDurationToMinutes(duration);
@@ -126,6 +129,33 @@ export default function(controller) {
 							bot.replyPublic(message, responseObject);
 						}
 
+						break;
+					case "/note":
+						/*
+						{"msg_id":"5ab30b9d-4f4c-4f13-8d32-f8934f6af538","_text":"eat food at 10pm","entities":{"reminder":[{"confidence":0.9931340886330486,"entities":{},"type":"value","value":"eat food","suggested":true}],"datetime":[{"confidence":0.9516938049181851,"type":"value","value":"2016-07-20T22:00:00.000-04:00","grain":"hour","values":[{"type":"value","value":"2016-07-20T22:00:00.000-04:00","grain":"hour"},{"type":"value","value":"2016-07-21T22:00:00.000-04:00","grain":"hour"},{"type":"value","value":"2016-07-22T22:00:00.000-04:00","grain":"hour"}]}]}}
+						 */
+						const { intentObject: { entities: { reminder, duration, datetime } } } = message;
+
+						var text = reminder ? reminder[0].value : message.text;
+
+						var customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
+
+						if (customTimeObject) {
+
+							// quick adding a reminder requires both text + time!
+							
+							
+							var customTimeString = customTimeObject.format('h:mm a');
+							responseObject.text=`Nice, I'll remind you at ${customTimeString} about \`${text}\``;
+							bot.replyPublic(message, responseObject);
+
+						} else {
+							responseObject.text = `Hey, I need to know how long you want to work on \`${text}\` for, either \`for 30 min\` or \`until 3pm\`!`;
+							bot.replyPublic(message, responseObject);
+						}
+
+						responseObject.text = `I'm sorry, still learning how to \`${message.command}\`! :dog:`;
+						bot.replyPublic(message, responseObject);
 						break;
 					case "/help":
 					default:

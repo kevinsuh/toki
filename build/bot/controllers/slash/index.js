@@ -31,9 +31,6 @@ exports.default = function (controller) {
   			 _text: 'clean up room for 30 minutes',
   		 entities: { reminder: [Object], duration: [Object] } } }
    */
-		/*
-  	{"msg_id":"c02a017f-10d5-4b24-ab74-ee85c8955b42","_text":"clean up room for 30 minutes","entities":{"reminder":[{"confidence":0.9462485198304393,"entities":{},"type":"value","value":"clean up room","suggested":true}],"duration":[{"confidence":0.9997298403843689,"minute":30,"value":30,"unit":"minute","normalized":{"value":1800,"unit":"second"}}]}}
-   */
 
 		var SlackUserId = message.user;
 
@@ -65,6 +62,9 @@ exports.default = function (controller) {
 
 				switch (message.command) {
 					case "/add":
+						/*
+      {"msg_id":"c02a017f-10d5-4b24-ab74-ee85c8955b42","_text":"clean up room for 30 minutes","entities":{"reminder":[{"confidence":0.9462485198304393,"entities":{},"type":"value","value":"clean up room","suggested":true}],"duration":[{"confidence":0.9997298403843689,"minute":30,"value":30,"unit":"minute","normalized":{"value":1800,"unit":"second"}}]}}
+      */
 						var _message$intentObject = message.intentObject.entities;
 						var reminder = _message$intentObject.reminder;
 						var duration = _message$intentObject.duration;
@@ -84,6 +84,9 @@ exports.default = function (controller) {
 						var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(message, tz);
 
 						if (customTimeObject) {
+
+							// quick adding a task requires both text + time!
+
 							var minutes;
 							if (duration) {
 								minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
@@ -112,6 +115,14 @@ exports.default = function (controller) {
 							bot.replyPublic(message, responseObject);
 						}
 
+						break;
+					case "/note":
+						/*
+      {"msg_id":"5ab30b9d-4f4c-4f13-8d32-f8934f6af538","_text":"eat food at 10pm","entities":{"reminder":[{"confidence":0.9931340886330486,"entities":{},"type":"value","value":"eat food","suggested":true}],"datetime":[{"confidence":0.9516938049181851,"type":"value","value":"2016-07-20T22:00:00.000-04:00","grain":"hour","values":[{"type":"value","value":"2016-07-20T22:00:00.000-04:00","grain":"hour"},{"type":"value","value":"2016-07-21T22:00:00.000-04:00","grain":"hour"},{"type":"value","value":"2016-07-22T22:00:00.000-04:00","grain":"hour"}]}]}}
+       */
+						// reminder needs time
+						responseObject.text = 'I\'m sorry, still learning how to `' + message.command + '`! :dog:';
+						bot.replyPublic(message, responseObject);
 						break;
 					case "/help":
 					default:
