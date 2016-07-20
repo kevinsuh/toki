@@ -175,6 +175,7 @@ function finalizeTimeAndTasksToStart(response, convo) {
 
 			// delete button when answered with NL
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+			convo.sessionStart.confirmStart = false;
 
 			convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 			convo.next();
@@ -340,6 +341,7 @@ function finalizeNewTaskToStart(response, convo) {
 
 			// delete button when answered with NL
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+			convo.sessionStart.confirmStart = false;
 
 			convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 			convo.next();
@@ -470,6 +472,7 @@ function finalizeCheckinTimeToStart(response, convo) {
 
 			// delete button when answered with NL
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+			convo.sessionStart.confirmStart = false;
 
 			convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
 			convo.next();
@@ -622,6 +625,8 @@ function confirmTimeForTasks(response, convo) {
 // if user wants to add a new task instead
 function addNewTask(response, convo) {
 
+	var now = (0, _momentTimezone2.default)();
+
 	var message = 'What is it? `i.e. clean up market report for 45 minutes` ';
 	if (convo.addNewTaskCustomMessage) {
 		message = convo.addNewTaskCustomMessage;
@@ -634,22 +639,42 @@ function addNewTask(response, convo) {
 
 		var SlackUserId = response.user;
 		var tz = convo.sessionStart.tz;
-		var entities = response.intentObject.entities;
+
+		// let's try and use wit first, if no wit then use our reg ex tester
+
+		var text = response.text;
+		var _response$intentObjec = response.intentObject.entities;
+		var reminder = _response$intentObjec.reminder;
+		var datetime = _response$intentObjec.datetime;
+		var duration = _response$intentObjec.duration;
+
+
+		var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+		var customTimeString;
+		var minutes;
+
+		console.log("\n\n\nnot working in add new task?\n\n\n");
+		console.log(customTimeObject);
 
 		// create new task
-
 		convo.sessionStart.newTask.text = response.text;
 
-		if (entities.duration && entities.reminder) {
-			convo.sessionStart.newTask.minutes = (0, _miscHelpers.witDurationToMinutes)(entities.duration);
-			convo.sessionStart.newTask.text = entities.reminder[0].value;
+		if (customTimeObject && reminder) {
 
-			var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
-			if (customTimeObject) {
-				var customTimeString = customTimeObject.format("h:mm a");
-				convo.sessionStart.calculatedTime = customTimeString;
-				convo.sessionStart.calculatedTimeObject = customTimeObject;
+			// ~~ wit picked up datetime in the sentence! ~~
+
+			convo.sessionStart.newTask.text = reminder[0].value;
+			if (duration) {
+				minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
+			} else {
+				minutes = _momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes();
 			}
+
+			customTimeString = customTimeObject.format("h:mm a");
+
+			convo.sessionStart.newTask.minutes = minutes;
+			convo.sessionStart.calculatedTime = customTimeString;
+			convo.sessionStart.calculatedTimeObject = customTimeObject;
 		}
 
 		addTimeToNewTask(response, convo);
@@ -665,35 +690,68 @@ function addTimeToNewTask(response, convo) {
 	var tz = convo.sessionStart.tz;
 
 
+	var now = (0, _momentTimezone2.default)();
+
 	if (convo.sessionStart.newTask.minutes) {
 		finalizeNewTaskToStart(response, convo);
 	} else {
 		convo.ask('How long would you like to work on `' + convo.sessionStart.newTask.text + '`?', function (response, convo) {
 
-			var timeToTask = response.text;
+			// let's try and use wit first, if no wit then use our reg ex tester
+			var text = response.text;
+			var _response$intentObjec2 = response.intentObject.entities;
+			var datetime = _response$intentObjec2.datetime;
+			var duration = _response$intentObjec2.duration;
 
-			var validMinutesTester = new RegExp(/[\dh]/);
-			var isInvalid = false;
-			if (!validMinutesTester.test(timeToTask)) {
-				isInvalid = true;
-			}
 
-			// INVALID tester
-			if (isInvalid) {
-				convo.say("Oops, looks like you didn't put in valid minutes :thinking_face:. Let's try this again");
-				convo.say("I'll assume you mean minutes - like `30` would be 30 minutes - unless you specify hours - like `1 hour 15 min`");
-				convo.repeat();
-			} else {
+			var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+			var customTimeString;
+			var minutes;
+			if (customTimeObject) {
 
-				var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(timeToTask);
-				var customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(minutes, 'minutes');
-				var customTimeString = customTimeObject.format("h:mm a");
+				if (duration) {
+					minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
+				} else {
+					minutes = _momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes();
+				}
+
+				customTimeString = customTimeObject.format("h:mm a");
 
 				convo.sessionStart.newTask.minutes = minutes;
 				convo.sessionStart.calculatedTime = customTimeString;
 				convo.sessionStart.calculatedTimeObject = customTimeObject;
 
 				finalizeNewTaskToStart(response, convo);
+			} else {
+
+				// regex flow as back up
+				// ~~ HOPEFULLY WIT PICKS UP EVERYTHING THO ~~
+
+				var timeToTask = response.text;
+
+				var validMinutesTester = new RegExp(/[\dh]/);
+				var isInvalid = false;
+				if (!validMinutesTester.test(timeToTask)) {
+					isInvalid = true;
+				}
+
+				// INVALID tester
+				if (isInvalid) {
+					convo.say("Oops, looks like you didn't put in valid minutes :thinking_face:. Let's try this again");
+					convo.say("I'll assume you mean minutes - like `30` would be 30 minutes - unless you specify hours - like `1 hour 15 min`");
+					convo.repeat();
+				} else {
+
+					minutes = (0, _messageHelpers.convertTimeStringToMinutes)(timeToTask);
+					customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(minutes, 'minutes');
+					customTimeString = customTimeObject.format("h:mm a");
+
+					convo.sessionStart.newTask.minutes = minutes;
+					convo.sessionStart.calculatedTime = customTimeString;
+					convo.sessionStart.calculatedTimeObject = customTimeObject;
+
+					finalizeNewTaskToStart(response, convo);
+				}
 			}
 			convo.next();
 		});
