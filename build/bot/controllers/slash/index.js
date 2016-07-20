@@ -12,10 +12,30 @@ exports.default = function (controller) {
 
 	controller.on('slash_command', function (bot, message) {
 
-		var SlackUserId = message.user;
+		/*
+  	{ token: '1kKzBPfFPOujZiFajN9uRGFe',
+  		team_id: 'T121VLM63',
+  		team_domain: 'tokihq',
+  		channel_id: 'D1J6A98JC',
+  		channel_name: 'directmessage',
+  		user_id: 'U121ZK15J',
+  		user_name: 'kevinsuh',
+  		command: '/add',
+  		text: 'clean up room for 30 minutes',
+  		response_url: 'https://hooks.slack.com/commands/T121VLM63/61639805698/tDr69qc5CsdXdQTaugljw0oP',
+  		user: 'U121ZK15J',
+  		channel: 'D1J6A98JC',
+  		type: 'slash_command',
+  		intentObject:
+  		 { msg_id: 'c02a017f-10d5-4b24-ab74-ee85c8955b42',
+  			 _text: 'clean up room for 30 minutes',
+  		 entities: { reminder: [Object], duration: [Object] } } }
+   */
+		/*
+  	{"msg_id":"c02a017f-10d5-4b24-ab74-ee85c8955b42","_text":"clean up room for 30 minutes","entities":{"reminder":[{"confidence":0.9462485198304393,"entities":{},"type":"value","value":"clean up room","suggested":true}],"duration":[{"confidence":0.9997298403843689,"minute":30,"value":30,"unit":"minute","normalized":{"value":1800,"unit":"second"}}]}}
+   */
 
-		console.log('slash command msg:');
-		console.log(message);
+		var SlackUserId = message.user;
 
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
@@ -24,10 +44,72 @@ exports.default = function (controller) {
 			var nickName = user.nickName;
 			var tz = user.SlackUser.tz;
 
-			// check message.command / message.text
+			var UserId = user.id;
 
-			bot.replyPrivate(message, 'hello your command was : ' + message.command + '!');
-			(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+			// make sure verification token matches!
+			if (message.token !== process.env.VERIFICATION_TOKEN) {
+				console.log('\n ~~ verification token could not be verified ~~ \n');
+				return;
+			}
+
+			user.getDailyTasks({
+				where: ['"Task"."done" = ? AND "DailyTask"."type" = ?', false, "live"],
+				include: [_models2.default.Task],
+				order: '"DailyTask"."priority" ASC'
+			}).then(function (dailyTasks) {
+
+				var now = (0, _momentTimezone2.default)();
+
+				switch (message.command) {
+					case "/add":
+						var _message$intentObject = message.intentObject.entities;
+						var reminder = _message$intentObject.reminder;
+						var duration = _message$intentObject.duration;
+						var datetime = _message$intentObject.datetime;
+
+
+						if (reminder) {
+
+							var text = reminder[0].value;
+							var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(message, tz);
+
+							if (customTimeObject) {
+								var minutes;
+								if (duration) {
+									minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
+								} else {
+									minutes = _momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes();
+								}
+
+								// we have the task and minutes, create task now
+								var newPriority = dailyTasks.length + 1;
+								_models2.default.Task.create({
+									text: text
+								}).then(function (task) {
+									_models2.default.DailyTask.create({
+										TaskId: task.id,
+										priority: newPriority,
+										minutes: minutes,
+										UserId: UserId
+									}).then(function () {
+										bot.replyPrivate(message, 'Nice, I added `' + text + ' (' + minutes + ' min)` to your task list! You have ' + newPriority + ' tasks remaining for today :muscle:');
+									});
+								});
+							} else {
+								bot.replyPrivate(message, 'Hey, I need to know how long you want to work on `' + text + '` for, either `for 30 min` or `until 3pm`!');
+							}
+						} else {
+							bot.replyPrivate(message, "Hey, I need to know what task you want to work on in order to add it!");
+						}
+						break;
+					case "/help":
+					default:
+						bot.replyPrivate(message, "I'm sorry, still learning how to " + message.command + "! :dog:");
+						break;
+				}
+
+				(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+			});
 		});
 	});
 };
@@ -50,6 +132,10 @@ var _momentTimezone = require('moment-timezone');
 
 var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 
+var _dotenv = require('dotenv');
+
+var _dotenv2 = _interopRequireDefault(_dotenv);
+
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
@@ -57,8 +143,6 @@ var _models2 = _interopRequireDefault(_models);
 var _botResponses = require('../../lib/botResponses');
 
 var _constants = require('../../lib/constants');
-
-var _messageHelpers = require('../../lib/messageHelpers');
 
 var _miscHelpers = require('../../lib/miscHelpers');
 
