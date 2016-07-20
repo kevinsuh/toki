@@ -70,7 +70,7 @@ customConfigBot(controller);
 controller.configureSlackApp({
 	clientId: process.env.SLACK_ID,
 	clientSecret: process.env.SLACK_SECRET,
-	scopes: ['bot']
+	scopes: ['bot', 'commands']
 })
 controller.createWebhookEndpoints(app);
 controller.createOauthEndpoints(app,function(err,req,res) {
