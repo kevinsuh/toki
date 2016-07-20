@@ -59,6 +59,9 @@ exports.default = function (controller) {
 			}).then(function (dailyTasks) {
 
 				var now = (0, _momentTimezone2.default)();
+				var responseObject = {
+					response_type: "in_channel"
+				};
 
 				switch (message.command) {
 					case "/add":
@@ -68,43 +71,52 @@ exports.default = function (controller) {
 						var datetime = _message$intentObject.datetime;
 
 
-						if (reminder) {
+						var totalMinutes = 0;
+						dailyTasks.forEach(function (dailyTask) {
+							var minutes = dailyTask.dataValues.minutes;
 
-							var text = reminder[0].value;
-							var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(message, tz);
+							totalMinutes += minutes;
+						});
 
-							if (customTimeObject) {
-								var minutes;
-								if (duration) {
-									minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
-								} else {
-									minutes = _momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes();
-								}
+						var timeString = (0, _messageHelpers.convertMinutesToHoursString)(totalMinutes);
+						var text = reminder ? reminder[0].value : message.text;
 
-								// we have the task and minutes, create task now
-								var newPriority = dailyTasks.length + 1;
-								_models2.default.Task.create({
-									text: text
-								}).then(function (task) {
-									_models2.default.DailyTask.create({
-										TaskId: task.id,
-										priority: newPriority,
-										minutes: minutes,
-										UserId: UserId
-									}).then(function () {
-										bot.replyPrivate(message, 'Nice, I added `' + text + ' (' + minutes + ' min)` to your task list! You have ' + newPriority + ' tasks remaining for today :muscle:');
-									});
-								});
+						var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(message, tz);
+
+						if (customTimeObject) {
+							var minutes;
+							if (duration) {
+								minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
 							} else {
-								bot.replyPrivate(message, 'Hey, I need to know how long you want to work on `' + text + '` for, either `for 30 min` or `until 3pm`!');
+								minutes = parseInt(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
 							}
+
+							// we have the task and minutes, create task now
+							var newPriority = dailyTasks.length + 1;
+							_models2.default.Task.create({
+								text: text
+							}).then(function (task) {
+								_models2.default.DailyTask.create({
+									TaskId: task.id,
+									priority: newPriority,
+									minutes: minutes,
+									UserId: UserId
+								}).then(function () {
+
+									responseObject.text = 'Nice, I added `' + text + ' (' + minutes + ' min)` to your task list! You have ' + timeString + ' of work remaining over ' + newPriority + ' tasks :muscle:';
+									bot.replyPublic(message, responseObject);
+								});
+							});
 						} else {
-							bot.replyPrivate(message, "Hey, I need to know what task you want to work on in order to add it!");
+							responseObject.text = 'Hey, I need to know how long you want to work on `' + text + '` for, either `for 30 min` or `until 3pm`!';
+							bot.replyPublic(message, responseObject);
 						}
+
 						break;
 					case "/help":
 					default:
-						bot.replyPrivate(message, "I'm sorry, still learning how to " + message.command + "! :dog:");
+						responseObject.text = 'I\'m sorry, still learning how to `' + message.command + '`! :dog:';
+						bot.replyPublic(message, responseObject);
 						break;
 				}
 
@@ -145,6 +157,8 @@ var _botResponses = require('../../lib/botResponses');
 var _constants = require('../../lib/constants');
 
 var _miscHelpers = require('../../lib/miscHelpers');
+
+var _messageHelpers = require('../../lib/messageHelpers');
 
 var _intents = require('../../lib/intents');
 

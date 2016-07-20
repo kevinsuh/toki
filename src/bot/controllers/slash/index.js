@@ -10,6 +10,7 @@ import models from '../../../app/models';
 import { randomInt, utterances } from '../../lib/botResponses';
 import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment } from '../../lib/constants';
 import { dateStringToMomentTimeZone, witTimeResponseToTimeZoneObject, witDurationToMinutes, witDurationToTimeZoneObject} from '../../lib/miscHelpers';
+import { convertMinutesToHoursString } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 
 import { resumeQueuedReachouts } from '../index';
@@ -73,52 +74,63 @@ export default function(controller) {
 			.then((dailyTasks) => {
 
 				var now = moment();
+				var responseObject = {
+					response_type: "in_channel"
+				}
 
 				switch (message.command) {
 					case "/add":
 						const { intentObject: { entities: { reminder, duration, datetime } } } = message;
 
-						if (reminder) {
+						var totalMinutes = 0;
+						dailyTasks.forEach((dailyTask) => {
+							var { dataValues: { minutes } } = dailyTask;
+							totalMinutes += minutes;
+						});
 
-							var text = reminder[0].value;
-							var customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
+						var timeString = convertMinutesToHoursString(totalMinutes);
+						var text = reminder ? reminder[0].value : message.text;
 
-							if (customTimeObject) {
-								var minutes;
-								if (duration) {
-									minutes = witDurationToMinutes(duration);
-								} else {
-									minutes = moment.duration(customTimeObject.diff(now)).asMinutes();
-								}
+						var customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
 
-								// we have the task and minutes, create task now
-								var newPriority = dailyTasks.length + 1;
-								models.Task.create({
-									text
-								})
-								.then((task) => {
-									models.DailyTask.create({
-										TaskId: task.id,
-										priority: newPriority,
-										minutes,
-										UserId
-									})
-									.then(() => {
-										bot.replyPrivate(message, `Nice, I added \`${text} (${minutes} min)\` to your task list! You have ${newPriority} tasks remaining for today :muscle:`);
-									})
-								});
-
+						if (customTimeObject) {
+							var minutes;
+							if (duration) {
+								minutes = witDurationToMinutes(duration);
 							} else {
-								bot.replyPrivate(message, `Hey, I need to know how long you want to work on \`${text}\` for, either \`for 30 min\` or \`until 3pm\`!`);
+								minutes = parseInt(moment.duration(customTimeObject.diff(now)).asMinutes());
 							}
 
+							// we have the task and minutes, create task now
+							var newPriority = dailyTasks.length + 1;
+							models.Task.create({
+								text
+							})
+							.then((task) => {
+								models.DailyTask.create({
+									TaskId: task.id,
+									priority: newPriority,
+									minutes,
+									UserId
+								})
+								.then(() => {
+									
+									responseObject.text = `Nice, I added \`${text} (${minutes} min)\` to your task list! You have ${timeString} of work remaining over ${newPriority} tasks :muscle:`;
+									bot.replyPublic(message, responseObject);
+
+								})
+							});
+
 						} else {
-							bot.replyPrivate(message, "Hey, I need to know what task you want to work on in order to add it!");
+							responseObject.text = `Hey, I need to know how long you want to work on \`${text}\` for, either \`for 30 min\` or \`until 3pm\`!`;
+							bot.replyPublic(message, responseObject);
 						}
+
 						break;
 					case "/help":
-					default: 
-						bot.replyPrivate(message, "I'm sorry, still learning how to " + message.command + "! :dog:");
+					default:
+						responseObject.text = `I'm sorry, still learning how to \`${message.command}\`! :dog:`;
+						bot.replyPublic(message, responseObject);
 						break;
 				}
 
