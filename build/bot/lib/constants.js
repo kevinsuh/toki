@@ -343,24 +343,28 @@ var timeZones = exports.timeZones = {
 var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
 	text: "planning which tasks you intend to work on each day",
 	color: colorsHash.blue.hex,
+	mrkdwn_in: ["text"],
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
 	fallback: "Starting your day"
 }, {
 	text: "launching work sessions to get those tasks done",
 	color: colorsHash.green.hex,
+	mrkdwn_in: ["text"],
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
 	fallback: "Launching work sessions"
 }, {
 	text: "setting reminders to keep you on top of your tasks and obligations",
 	color: colorsHash.yellow.hex,
+	mrkdwn_in: ["text"],
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
 	fallback: "Setting reminders"
 }, {
 	text: "adjusting your prioritized tasks on the fly",
 	color: colorsHash.salmon.hex,
+	mrkdwn_in: ["text"],
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
 	fallback: "Starting your day"
@@ -368,7 +372,7 @@ var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
 
 var tokiOptionsExtendedAttachment = exports.tokiOptionsExtendedAttachment = [{
 	title: "Planning the day",
-	text: "Say `lets plan` to plan the tasks you intend to accomplish each day and estimate how long each will take you",
+	text: "Say `lets plan` to set the tasks you intend to accomplish each day and estimate how long each will take you",
 	mrkdwn_in: ["text"],
 	color: colorsHash.blue.hex,
 	attachment_type: "default",
@@ -384,7 +388,7 @@ var tokiOptionsExtendedAttachment = exports.tokiOptionsExtendedAttachment = [{
 	fallback: "Launching work sessions"
 }, {
 	title: "Setting reminders",
-	text: "Say `I'd like a reminder` or use the shorthand `/note` to prompt me to remind you about whatever you'd like at any time or duration",
+	text: "Say `I'd like a reminder` or use the shorthand `/note` if you want me to remind you about whatever you'd like at any time or duration",
 	mrkdwn_in: ["text"],
 	color: colorsHash.yellow.hex,
 	attachment_type: "default",
@@ -392,7 +396,7 @@ var tokiOptionsExtendedAttachment = exports.tokiOptionsExtendedAttachment = [{
 	fallback: "Setting reminders"
 }, {
 	title: "Viewing and editing priorities on the fly",
-	value: "Say `edit tasks` to view and edit your tasks and time estimates throughout each day, and use the shorthand `/add` to quickly write things down",
+	text: "Say `edit tasks` to update your tasks and time estimates throughout the day, and use the shorthand `/add` to quickly write things down",
 	mrkdwn_in: ["text"],
 	color: colorsHash.salmon.hex,
 	attachment_type: "default",

@@ -199,7 +199,7 @@ function askForUserName(err, convo) {
 		text: `Before we begin, would you like me to call you *${name}* or another name?`,
 		attachments: [
 			{
-				text: "*_if you ever don’t want to click buttons, just type the button’s message and I’ll pick it up :nerd_face:_*",
+				text: "*_psst, if you don’t want to click buttons, type the button’s message and I’ll pick it up :nerd_face:_*",
 				"mrkdwn_in": [
 					"text"
 				],
@@ -596,13 +596,12 @@ function confirmTimeZone(response, convo) {
 
 function displayTokiOptions(response, convo) {
 
-	convo.say(`You can change settings like your current timezone and name by telling me to \`show settings\``);
+	convo.say(`You can always change your timezone and name by telling me to \`show settings\``);
 	convo.say({
 		text: "As your personal sidekick, I can help you with your time by:",
 		attachments: tokiOptionsAttachment
 	});
-	convo.say("I'll walk you through you how I can assist you to make the most of each day (but if you ever want to see all the things I can help you with, just say `show commands`!)");
-
+	convo.say("If you want to see how I specifically assist you to make the most of each day, just say `show commands`. Otherwise, let's move on!");
 	askUserToStartDay(response, convo);
 
 	convo.next();
@@ -651,14 +650,13 @@ function askUserToStartDay(response, convo) {
 function showCommands(response, convo) {
 
 	convo.say("I had a feeling you'd do that!");
-	convo.say("First off, whenever you want to get cranking, just call me over `i.e. hey, toki!` at any point and I'll be here for you :wrench:")
+	convo.say("First off, you can call me `hey toki!` at any point in the day and I'll be here to help you get in flow :raised_hands:")
 	convo.say({
-		text: "Here are more specific types of items you can tell me to help you with:",
+		text: "Here are more specific things you can tell me to help you with:",
 		attachments: tokiOptionsExtendedAttachment
 	});
-	convo.say("The specific commands above, like `start my day` are guidelines - I'm able to understand other related commands, like `let's start the day` :smiley:");
-	convo.say("I also have two shortline commands: quickly add tasks with `/add` and quickly set reminders with `/note`");
-	convo.say("For example, you can say `/add send email marketing report for 30 minutes` to add to your tasklist, and `/note grab a glass of water in 30 minutes` or `/note grab a glass of water at 3:30pm` to quickly set those reminders!");
+	convo.say("I'm getting smart in understanding what you want, so the specific commands above are guidlines. I'm able to understand related commands :smile_cat:");
+	convo.say("I also have two shortline commands that allow you to quickly add tasks `/add send email marketing report for 30 minutes` and quickly set reminders `/note grab a glass of water at 3:30pm`");
 	askUserToStartDay(response, convo);
 	convo.next();
 
