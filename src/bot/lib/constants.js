@@ -304,6 +304,10 @@ export const buttonValues ={
 	allPendingTasks: {
 		value: "ALL_PENDING_TASKS",
 		name: "ALL_PENDING_TASKS"
+	},
+	yes: {
+		value: "YES",
+		name: "YES"
 	}
 }
 
@@ -330,6 +334,7 @@ export const tokiOptionsAttachment = [
 	{
 		text: "planning which tasks you intend to work on each day",
 		color: colorsHash.blue.hex,
+		mrkdwn_in: [ "text" ],
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
 		fallback: "Starting your day"
@@ -337,6 +342,7 @@ export const tokiOptionsAttachment = [
 	{
 		text: "launching work sessions to get those tasks done",
 		color: colorsHash.green.hex,
+		mrkdwn_in: [ "text" ],
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
 		fallback: "Launching work sessions"
@@ -344,6 +350,7 @@ export const tokiOptionsAttachment = [
 	{
 		text: "setting reminders to keep you on top of your tasks and obligations",
 		color: colorsHash.yellow.hex,
+		mrkdwn_in: [ "text" ],
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
 		fallback: "Setting reminders"
@@ -351,57 +358,45 @@ export const tokiOptionsAttachment = [
 	{
 		text: "adjusting your prioritized tasks on the fly",
 		color: colorsHash.salmon.hex,
+		mrkdwn_in: [ "text" ],
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
 		fallback: "Starting your day"
 	}
 ]
 
-
 export const tokiOptionsExtendedAttachment = [
 	{
-		fields: [
-			{
-				title: "Starting your day",
-				value: `Say "start my day" to plan the tasks you intend to accomplish each day and estimate how long each will take you`
-			}
-		],
+		title: "Planning the day",
+		text: "Say `lets plan` to set the tasks you intend to accomplish each day and estimate how long each will take you",
+		mrkdwn_in: [ "text" ],
 		color: colorsHash.blue.hex,
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
-		fallback: "Starting your day"
+		fallback: "Planning your day"
 	},
 	{
-		fields: [
-			{
-				title: "Launching work sessions",
-				value: `Say "start a session" to kick off a focused work session to accomplish specific tasks`
-			}
-		],
+		title: "Launching work sessions",
+		text: "Say `start a session` to kick off a focused work session to accomplish specific tasks",
+		mrkdwn_in: [ "text" ],
 		color: colorsHash.green.hex,
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
 		fallback: "Launching work sessions"
 	},
 	{
-		fields: [
-			{
-				title: "Setting reminders",
-				value: `Say "I'd like a reminder" to prompt me to remind you about whatever you'd like at any time or duration`
-			}
-		],
+		title: "Setting reminders",
+		text: "Say `I'd like a reminder` or use the shorthand `/note` if you want me to remind you about whatever you'd like at any time or duration",
+		mrkdwn_in: [ "text" ],
 		color: colorsHash.yellow.hex,
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
 		fallback: "Setting reminders"
 	},
 	{
-		fields: [
-			{
-				title: "Viewing and adjusting priorities on the fly",
-				value: `Say "view tasks" to view your unfinished tasks each day and change your priorities by adding tasks or adjusting time estimates`
-			}
-		],
+		title: "Viewing and editing priorities on the fly",
+		text: "Say `edit tasks` to update your tasks and time estimates throughout the day, and use the shorthand `/add` to quickly write things down",
+		mrkdwn_in: [ "text" ],
 		color: colorsHash.salmon.hex,
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
@@ -433,6 +428,50 @@ export const taskListMessageDoneButtonAttachment = [
 					style: "primary"
 			}
 		]
+	}
+];
+
+export const taskListMessageAddMoreTasksButtonAttachment = [
+	{
+		attachment_type: 'default',
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "How much time would you like to allocate to your tasks?",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+					name: buttonValues.actuallyWantToAddATask.name,
+					text: "Add more tasks!",
+					value: buttonValues.actuallyWantToAddATask.value,
+					type: "button"
+			}
+		]
+	}
+];
+
+export const taskListMessageYesButtonAttachment = [
+	{
+		attachment_type: 'default',
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "Here is your task list",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+					name: buttonValues.yes.name,
+					text: "Yes!",
+					value: buttonValues.yes.value,
+					type: "button",
+					style: "primary"
+			}
+		]
+	}
+];
+
+export const taskListMessageNoButtonsAttachment = [
+	{
+		attachment_type: 'default',
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "Here is your task list",
+		color: colorsHash.grey.hex
 	}
 ];
 

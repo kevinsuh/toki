@@ -31,6 +31,7 @@ function randomInt(min, max) {
 
 var utterances = exports.utterances = {
 	yes: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|(\bd[o ]+[this]{2,})|(\bd[o ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
+	yesOrCorrect: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bc[correct]{4,})/i),
 	no: new RegExp(/((no|nah|nope|^n)\b|\bn[oahpe]{1,4}\b)/i),
 	noAndNeverMind: new RegExp(/(\b(no|nah|nope)|\bn[oahpe]+\b|\bn[never mind]{4,}\b|[nvm]{2,})/i),
 	startsWithNever: new RegExp(/^ne[never]{3,}\b/i),
@@ -70,6 +71,13 @@ var utterances = exports.utterances = {
 	containsCancel: new RegExp(/(\bc[cancel]{4,})/i),
 	containsContinue: new RegExp(/(\bc[continue]{5,})/i),
 	done: new RegExp(/(^d[done]{2,}$)/i),
-	noAdditional: new RegExp(/(\bn[no ]{1,}\ba[additional]{5,}\b)/i)
+	noAdditional: new RegExp(/(\bn[no ]{1,}\ba[additional]{5,}\b)/i),
+	containsKeep: new RegExp(/(\bk[keep]{2,}\b)/i),
+	containsDifferentOrAnother: new RegExp(/\b(d[different]{5,}|a[another]{4,})\b/i),
+	eastern: new RegExp(/\b(e[eastern]{5,})\b/i),
+	central: new RegExp(/\b(c[central]{5,})\b/i),
+	pacific: new RegExp(/\b(p[pacific]{5,})\b/i),
+	mountain: new RegExp(/\b(m[mountain]{5,})\b/i),
+	other: new RegExp(/\b(o[other]{3,})\b/i)
 };
 //# sourceMappingURL=botResponses.js.map
