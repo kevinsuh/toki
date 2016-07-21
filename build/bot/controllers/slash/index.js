@@ -12,26 +12,6 @@ exports.default = function (controller) {
 
 	controller.on('slash_command', function (bot, message) {
 
-		/*
-  	{ token: '1kKzBPfFPOujZiFajN9uRGFe',
-  		team_id: 'T121VLM63',
-  		team_domain: 'tokihq',
-  		channel_id: 'D1J6A98JC',
-  		channel_name: 'directmessage',
-  		user_id: 'U121ZK15J',
-  		user_name: 'kevinsuh',
-  		command: '/add',
-  		text: 'clean up room for 30 minutes',
-  		response_url: 'https://hooks.slack.com/commands/T121VLM63/61639805698/tDr69qc5CsdXdQTaugljw0oP',
-  		user: 'U121ZK15J',
-  		channel: 'D1J6A98JC',
-  		type: 'slash_command',
-  		intentObject:
-  		 { msg_id: 'c02a017f-10d5-4b24-ab74-ee85c8955b42',
-  			 _text: 'clean up room for 30 minutes',
-  		 entities: { reminder: [Object], duration: [Object] } } }
-   */
-
 		var SlackUserId = message.user;
 
 		_models2.default.User.find({
@@ -54,17 +34,16 @@ exports.default = function (controller) {
 				include: [_models2.default.Task],
 				order: '"DailyTask"."priority" ASC'
 			}).then(function (dailyTasks) {
-
-				var now = (0, _momentTimezone2.default)();
-				var responseObject = {
-					response_type: "in_channel"
-				};
-
 				var _message$intentObject = message.intentObject.entities;
 				var reminder = _message$intentObject.reminder;
 				var duration = _message$intentObject.duration;
 				var datetime = _message$intentObject.datetime;
 
+
+				var now = (0, _momentTimezone2.default)();
+				var responseObject = {
+					response_type: "in_channel"
+				};
 
 				switch (message.command) {
 					case "/add":
@@ -82,9 +61,11 @@ exports.default = function (controller) {
 						var timeString = (0, _messageHelpers.convertMinutesToHoursString)(totalMinutes);
 						var text = reminder ? reminder[0].value : message.text;
 
+						if (text == '') text = null; // cant have blank text
+
 						var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(message, tz);
 
-						if (customTimeObject) {
+						if (text && customTimeObject) {
 
 							// quick adding a task requires both text + time!
 
@@ -112,7 +93,14 @@ exports.default = function (controller) {
 								});
 							});
 						} else {
-							responseObject.text = 'Hey, I need to know how long you want to work on `' + text + '` for! (please say `' + text + ' for 30 min` or ` ' + text + ' until 3pm`)';
+
+							var responseText = '';
+							if (text) {
+								responseText = 'Hey, I need to know how long you want to work on `' + text + '` for! (please say `' + text + ' for 30 min` or ` ' + text + ' until 3pm`)';
+							} else {
+								responseText = 'Hey, I need to know what task you want to add `i.e. clean market report for 30 minutes`!';
+							}
+							responseObject.text = responseText;
 							bot.replyPublic(message, responseObject);
 						}
 
@@ -135,16 +123,22 @@ exports.default = function (controller) {
 								customNote: customNote
 							}).then(function (reminder) {
 								var customTimeString = customTimeObject.format('h:mm a');
-								var message = 'Okay, I\'ll remind you at ' + customTimeString;
+								var responseText = 'Okay, I\'ll remind you at ' + customTimeString;
 								if (customNote) {
-									message = message + ' about `' + customNote + '`';
+									responseText = responseText + ' about `' + customNote + '`';
 								}
-								message = message + '! :alarm_clock:';
-								responseObject.text = message;
+								responseText = responseText + '! :alarm_clock:';
+								responseObject.text = responseText;
 								bot.replyPublic(message, responseObject);
 							});
 						} else {
-							responseObject.text = 'Hey, I need to know how long you want to work on `' + text + '` for, either `for 30 min` or `until 3pm`!';
+							var responseText = '';
+							if (customNote) {
+								responseText = 'Hey, I need to know what time you want me to remind you about `' + text + '` (please say `' + text + ' in 30 min` or `' + text + ' at 7pm`)!';
+							} else {
+								responseText = 'Hey, I need to know you want me to remind you about `i.e. pick up laundry at 7pm`!';
+							}
+							responseObject.text = responseText;
 							bot.replyPublic(message, responseObject);
 						}
 
