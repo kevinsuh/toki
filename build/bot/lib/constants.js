@@ -367,37 +367,33 @@ var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
 }];
 
 var tokiOptionsExtendedAttachment = exports.tokiOptionsExtendedAttachment = [{
-	fields: [{
-		title: "Starting your day",
-		value: 'Say "start my day" to plan the tasks you intend to accomplish each day and estimate how long each will take you'
-	}],
+	title: "Planning the day",
+	text: "Say `lets plan` to plan the tasks you intend to accomplish each day and estimate how long each will take you",
+	mrkdwn_in: ["text"],
 	color: colorsHash.blue.hex,
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
-	fallback: "Starting your day"
+	fallback: "Planning your day"
 }, {
-	fields: [{
-		title: "Launching work sessions",
-		value: 'Say "start a session" to kick off a focused work session to accomplish specific tasks'
-	}],
+	title: "Launching work sessions",
+	text: "Say `start a session` to kick off a focused work session to accomplish specific tasks",
+	mrkdwn_in: ["text"],
 	color: colorsHash.green.hex,
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
 	fallback: "Launching work sessions"
 }, {
-	fields: [{
-		title: "Setting reminders",
-		value: 'Say "I\'d like a reminder" to prompt me to remind you about whatever you\'d like at any time or duration'
-	}],
+	title: "Setting reminders",
+	text: "Say `I'd like a reminder` or use the shorthand `/note` to prompt me to remind you about whatever you'd like at any time or duration",
+	mrkdwn_in: ["text"],
 	color: colorsHash.yellow.hex,
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
 	fallback: "Setting reminders"
 }, {
-	fields: [{
-		title: "Viewing and adjusting priorities on the fly",
-		value: 'Say "view tasks" to view your unfinished tasks each day and change your priorities by adding tasks or adjusting time estimates'
-	}],
+	title: "Viewing and editing priorities on the fly",
+	value: "Say `edit tasks` to view and edit your tasks and time estimates throughout each day, and use the shorthand `/add` to quickly write things down",
+	mrkdwn_in: ["text"],
 	color: colorsHash.salmon.hex,
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",

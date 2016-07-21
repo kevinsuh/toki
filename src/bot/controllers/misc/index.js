@@ -650,12 +650,15 @@ function askUserToStartDay(response, convo) {
 // show the more complex version of commands
 function showCommands(response, convo) {
 
+	convo.say("I had a feeling you'd do that!");
+	convo.say("First off, whenever you want to get cranking, just call me over `i.e. hey, toki!` at any point and I'll be here for you :wrench:")
 	convo.say({
-		text: "I had a feeling you'd do that! Here are the different types of items you can tell me to help you with:",
+		text: "Here are more specific types of items you can tell me to help you with:",
 		attachments: tokiOptionsExtendedAttachment
 	});
 	convo.say("The specific commands above, like `start my day` are guidelines - I'm able to understand other related commands, like `let's start the day` :smiley:");
-	convo.say("I can also understand more complicated reminders, like `remind me to grab a glass of water in 5 min` to set a reminder to grab a glass of water for a time 5 minutes from now or `remind me to drink the glass of water at 9am` to set a reminder to grab drink the glass of water at 9am!");
+	convo.say("I also have two shortline commands: quickly add tasks with `/add` and quickly set reminders with `/note`");
+	convo.say("For example, you can say `/add send email marketing report for 30 minutes` to add to your tasklist, and `/note grab a glass of water in 30 minutes` or `/note grab a glass of water at 3:30pm` to quickly set those reminders!");
 	askUserToStartDay(response, convo);
 	convo.next();
 
