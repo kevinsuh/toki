@@ -25,6 +25,11 @@ export default function(controller) {
 	controller.on('slash_command', (bot, message) => {
 
 		const SlackUserId = message.user;
+		var env           = process.env.NODE_ENV || 'development';
+
+		if (env == "development") {
+			message.command = message.command.replace("_dev","");
+		}
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -40,6 +45,7 @@ export default function(controller) {
 			// make sure verification token matches!
 			if (message.token !== process.env.VERIFICATION_TOKEN) {
 				console.log(`\n ~~ verification token could not be verified ~~ \n`)
+				resumeQueuedReachouts(bot, { SlackUserId });
 				return;
 			}
 
@@ -122,9 +128,6 @@ export default function(controller) {
 
 						break;
 					case "/note":
-						/*
-						{"msg_id":"5ab30b9d-4f4c-4f13-8d32-f8934f6af538","_text":"eat food at 10pm","entities":{"reminder":[{"confidence":0.9931340886330486,"entities":{},"type":"value","value":"eat food","suggested":true}],"datetime":[{"confidence":0.9516938049181851,"type":"value","value":"2016-07-20T22:00:00.000-04:00","grain":"hour","values":[{"type":"value","value":"2016-07-20T22:00:00.000-04:00","grain":"hour"},{"type":"value","value":"2016-07-21T22:00:00.000-04:00","grain":"hour"},{"type":"value","value":"2016-07-22T22:00:00.000-04:00","grain":"hour"}]}]}}
-						 */
 
 						var customNote = reminder ? reminder[0].value : null;
 
@@ -154,7 +157,7 @@ export default function(controller) {
 							if (customNote) {
 								responseText = `Hey, I need to know what time you want me to remind you about \`${text}\` (please say \`${text} in 30 min\` or \`${text} at 7pm\`)!`;
 							} else {
-								responseText = `Hey, I need to know you want me to remind you about \`i.e. pick up laundry at 7pm\`!`;
+								responseText = `Hey, I need to know you want me to remind you about \`i.e. pick up clothes at 7pm\`!`;
 							}
 							responseObject.text = responseText;
 							bot.replyPublic(message, responseObject);
@@ -167,9 +170,7 @@ export default function(controller) {
 						bot.replyPublic(message, responseObject);
 						break;
 				}
-
 				resumeQueuedReachouts(bot, { SlackUserId });
-
 			})
 
 

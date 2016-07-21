@@ -29,6 +29,9 @@ export default (controller) => {
 	// at the end of each conversation to turn back on
 	controller.middleware.receive.use((bot, message, next) => {
 
+		console.log("message in middleware:");
+		console.log(message);
+
 		if (!bot.queuedReachouts) {
 			bot.queuedReachouts = {};
 		}
@@ -58,6 +61,9 @@ export default (controller) => {
 				valid = false;
 			} else if (botSlackUserId == SlackUserId) {
 				console.log(`This message is being sent by bot: ${SlackUserId}`);
+				valid = false;
+			} else if (message.text && message.text[0] == "/") {
+				console.log(`This message is a slash command: \`${message.text}\``);
 				valid = false;
 			}
 
