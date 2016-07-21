@@ -408,7 +408,7 @@ function getTimeToTasks(response, convo) {
 
 	var timeToTasksArray = [];
 
-	var message = "How much *time* :timer_clock: would you like to allocate to your *first task?* Please enter one by one!";
+	var message = "How much *time* would you like to allocate to your *first task?* Please enter one by one!";
 	convo.ask({
 		text: `${message}\n${taskListMessage}`,
 		attachments:[
@@ -447,7 +447,7 @@ function getTimeToTasks(response, convo) {
 					timeToTasksArray = [];
 					taskListMessage = convertArrayToTaskListMessage(taskArray, { dontShowMinutes: true, dontCalculateMinutes: true });
 
-					var message = (timeToTasksArray.length == 0 ? "How much time would you like to allocate to your *first task?* Please enter one by one!" : "How much time would you like to allocate to your *next task?* Please enter one by one!");
+					var message = (timeToTasksArray.length == 0 ? "How much *time* would you like to allocate to your *first task?* Please enter one by one!" : "How much *time* would you like to allocate to your *next task?* Please enter one by one!");
 					message = `${message}\n${taskListMessage}`;
 
 					updateTaskListMessageObject.text        = message;
@@ -469,7 +469,7 @@ function getTimeToTasks(response, convo) {
 					timeToTasksArray = [];
 					taskListMessage = convertArrayToTaskListMessage(taskArray, { dontShowMinutes: true, dontCalculateMinutes: true });
 
-					var message = (timeToTasksArray.length == 0 ? "How much time would you like to allocate to your *first task?* Please enter one by one!" : "How much time would you like to allocate to your *next task?* Please enter one by one!");
+					var message = (timeToTasksArray.length == 0 ? "How much *time* would you like to allocate to your *first task?* Please enter one by one!" : "How much *time* would you like to allocate to your *next task?* Please enter one by one!");
 					message = `${message}\n${taskListMessage}`;
 
 					updateTaskListMessageObject.text        = message;
@@ -510,7 +510,7 @@ function getTimeToTasks(response, convo) {
 
 					var taskListMessage = convertArrayToTaskListMessage(taskArray, { dontUseDataValues: true, emphasizeMinutes: true });
 
-					var message = (timeToTasksArray.length == 0 ? "How much time would you like to allocate to your *first task?* Please enter one by one!" : "How much time would you like to allocate to your *next task?* Please enter one by one!");
+					var message = (timeToTasksArray.length == 0 ? "How much *time* would you like to allocate to your *first task?* Please enter one by one!" : "How much *time* would you like to allocate to your *next task?* Please enter one by one!");
 					message = `${message}\n${taskListMessage}`;
 
 					updateTaskListMessageObject.text        = message;
@@ -576,7 +576,7 @@ function confirmTimeToTasks(timeToTasksArray, convo) {
 			pattern: utterances.no,
 			callback: (response, convo) => {
 				convo.say("Let's give this another try :repeat_one:");
-				convo.say("Just say time estimates, like `30, 1 hour, or 15 min` and I'll figure it out and assign times to the tasks above in order :smiley:");
+				convo.say("Just say a time estimate, like `30 min` for each task and I'll assign it to the tasks above in order :smiley:");
 				getTimeToTasks(response, convo);
 				convo.next();
 			}
