@@ -44,6 +44,28 @@ export function convertResponseObjectsToTaskArray(tasks) {
 	return taskArray;
 }
 
+// converts a response to new task array
+// to handle the new lines
+export function convertResponseObjectToNewTaskArray(response) {
+
+	var text = response.text;
+
+	const newLine = /[\n]+/;
+	var taskStringArray = text.split(newLine);
+
+	var taskArray = [];
+	taskStringArray.forEach((taskString) => {
+		taskString = taskString.trim();
+		taskArray.push({
+			text: taskString,
+			newTask: true
+		})
+	});
+
+	return taskArray;
+
+}
+
 /**
  * takes in user input for tasks done `4, 1, 3` and converts it to an array of tasks done. makes sure the task numbers are valid
  * @param  {string} taskCompletedString `4, 1, 3`

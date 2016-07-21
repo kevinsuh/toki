@@ -6,7 +6,7 @@ import bodyParser from 'body-parser';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, convertTaskNumberStringToArray, getMostRecentTaskListMessageToUpdate } from '../../lib/messageHelpers';
+import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, convertTaskNumberStringToArray, getMostRecentTaskListMessageToUpdate, deleteConvoAskMessage, convertResponseObjectToNewTaskArray } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 import { FINISH_WORD, EXIT_EARLY_WORDS, NONE, RESET, colorsHash, buttonValues, taskListMessageDoneButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment } from '../../lib/constants';
 import { consoleLog } from '../../lib/miscHelpers';
@@ -76,6 +76,10 @@ export function showPendingTasks(response, convo) {
 		{ // NL equivalent to buttonValues.allPendingTasks.value
 			pattern: utterances.containsAll,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				convo.say("I like all those tasks too :open_hands:");
 				convo.dayStart.taskArray = pendingTasks;
 				askForAdditionalTasks(response, convo);
@@ -92,6 +96,10 @@ export function showPendingTasks(response, convo) {
 		{ // NL equivalent to buttonValues.noPendingTasks.value
 			pattern: utterances.containsNone,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				convo.say("I like a fresh start each day, too");
 				askForDayTasks(response, convo);
 				convo.next();
@@ -100,6 +108,10 @@ export function showPendingTasks(response, convo) {
 		{ // user inserts some task numbers
 			pattern: utterances.containsNumber,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				savePendingTasksToWorkOn(response, convo);
 				convo.next();
 			}
@@ -114,6 +126,10 @@ export function showPendingTasks(response, convo) {
 		{ // same as never mind button
 			pattern: utterances.startsWithNever,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				convo.stop();
 				convo.next();
 			}
@@ -216,12 +232,29 @@ function askForAdditionalTasks(response, convo) {
 			}
 		},
 		{
-			pattern: FINISH_WORD.reg_exp,
+			pattern: utterances.done,
 			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				convo.say("Excellent!");
 				saveTaskResponsesToDayStartObject(tasks, convo);
 				getTimeToTasks(response, convo);
 				convo.next();
+			}
+		},
+		{
+			pattern: utterances.noAdditional,
+			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
+				convo.say("Excellent!");
+				getTimeToTasks(response, convo);
+				convo.next();
+
 			}
 		},
 		{ // this is additional task added in this case.
@@ -229,29 +262,18 @@ function askForAdditionalTasks(response, convo) {
 			callback: function(response, convo) {
 
 				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
-				const { text } = response;
-				const newTask = {
-					text,
-					newTask: true
-				}
 
-				// should contain none and additional to be
-				// NL equivalent to buttonValues.noAdditionalTasks.value
-				if (utterances.containsNone.test(response.text) && utterances.containsAdditional.test(response.text)) {
-					convo.say("Excellent!");
-					getTimeToTasks(response, convo);
-					convo.next();
-				} else {
-					// you can add tasks here then!
+				var newTaskArray = convertResponseObjectToNewTaskArray(response);
+				newTaskArray.forEach((newTask) => {
 					tasks.push(newTask);
-					tasks = convertResponseObjectsToTaskArray(tasks);
-					taskListMessage = convertArrayToTaskListMessage(tasks, options)
+				});
 
-					updateTaskListMessageObject.text        = taskListMessage;
-					updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageDoneButtonAttachment);;
+				taskListMessage = convertArrayToTaskListMessage(tasks, options)
 
-					bot.api.chat.update(updateTaskListMessageObject);
-				}
+				updateTaskListMessageObject.text        = taskListMessage;
+				updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageDoneButtonAttachment);;
+
+				bot.api.chat.update(updateTaskListMessageObject);
 				
 			}
 		}
@@ -339,8 +361,14 @@ function addMoreTasks(response, convo) {
 			}
 		},
 		{
-			pattern: FINISH_WORD.reg_exp,
+			pattern: utterances.done,
 			callback: (response, convo) => {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
+				console.log(tasks);
+
 				saveTaskResponsesToDayStartObject(tasks, convo);
 				convo.say("Excellent!");
 				getTimeToTasks(response, convo);
@@ -352,15 +380,12 @@ function addMoreTasks(response, convo) {
 			callback: function(response, convo) {
 
 				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
-				const { text } = response;
-				const newTask = {
-					text,
-					newTask: true
-				}
 
-				// you can add tasks here then!
-				tasks.push(newTask);
-				tasks = convertResponseObjectsToTaskArray(tasks);
+				var newTaskArray = convertResponseObjectToNewTaskArray(response);
+				newTaskArray.forEach((newTask) => {
+					tasks.push(newTask);
+				});
+
 				taskListMessage = convertArrayToTaskListMessage(tasks, options)
 
 				updateTaskListMessageObject.text        = taskListMessage;

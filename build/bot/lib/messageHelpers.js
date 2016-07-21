@@ -9,6 +9,7 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
                                                                                                                                                                                                                                                                    */
 
 exports.convertResponseObjectsToTaskArray = convertResponseObjectsToTaskArray;
+exports.convertResponseObjectToNewTaskArray = convertResponseObjectToNewTaskArray;
 exports.convertTaskNumberStringToArray = convertTaskNumberStringToArray;
 exports.convertArrayToTaskListMessage = convertArrayToTaskListMessage;
 exports.convertMinutesToHoursString = convertMinutesToHoursString;
@@ -60,6 +61,27 @@ function convertResponseObjectsToTaskArray(tasks) {
 		taskString = taskString.trim();
 		taskArray.push({
 			text: taskString
+		});
+	});
+
+	return taskArray;
+}
+
+// converts a response to new task array
+// to handle the new lines
+function convertResponseObjectToNewTaskArray(response) {
+
+	var text = response.text;
+
+	var newLine = /[\n]+/;
+	var taskStringArray = text.split(newLine);
+
+	var taskArray = [];
+	taskStringArray.forEach(function (taskString) {
+		taskString = taskString.trim();
+		taskArray.push({
+			text: taskString,
+			newTask: true
 		});
 	});
 

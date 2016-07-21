@@ -68,6 +68,8 @@ var utterances = exports.utterances = {
 	containsDeleteOrRemove: new RegExp(/(\bd[delete]{4,}|\br[remove]{3,})/i),
 	containsTime: new RegExp(/(\bt[time]{2,})/i),
 	containsCancel: new RegExp(/(\bc[cancel]{4,})/i),
-	containsContinue: new RegExp(/(\bc[continue]{5,})/i)
+	containsContinue: new RegExp(/(\bc[continue]{5,})/i),
+	done: new RegExp(/(^d[done]{2,}$)/i),
+	noAdditional: new RegExp(/(\bn[no ]{1,}\ba[additional]{5,}\b)/i)
 };
 //# sourceMappingURL=botResponses.js.map
