@@ -187,6 +187,7 @@ router.get('/', function (req, res) {
   //   })
   // })
 
+
   // seedDatabaseWithExistingSlackUsers(bot);
   console.log("checking session:");
   // checkForSessions();
@@ -212,6 +213,7 @@ var checkForSessions = function checkForSessions() {}
 //      *      1. close it
 //      *      2. find user and start end_work_session flow
 
+
 //     workSession.update({
 //       open: false
 //     })
@@ -224,6 +226,7 @@ var checkForSessions = function checkForSessions() {}
 //     .then((user) => {
 
 //       // start the end session flow!
+
 
 //     })
 

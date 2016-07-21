@@ -13,7 +13,6 @@ var _models2 = _interopRequireDefault(_models);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // add receive middleware to controller
-
 exports.default = function (controller) {
 
 	controller.middleware.receive.use(_index.wit.receive);

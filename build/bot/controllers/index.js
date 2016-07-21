@@ -83,8 +83,6 @@ var _initiation = require('../actions/initiation');
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // config modules
-
-
 require('dotenv').config();
 
 var env = process.env.NODE_ENV || 'development';

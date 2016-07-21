@@ -60,16 +60,17 @@ exports.default = function (controller) {
 					response_type: "in_channel"
 				};
 
+				var _message$intentObject = message.intentObject.entities;
+				var reminder = _message$intentObject.reminder;
+				var duration = _message$intentObject.duration;
+				var datetime = _message$intentObject.datetime;
+
+
 				switch (message.command) {
 					case "/add":
 						/*
       {"msg_id":"c02a017f-10d5-4b24-ab74-ee85c8955b42","_text":"clean up room for 30 minutes","entities":{"reminder":[{"confidence":0.9462485198304393,"entities":{},"type":"value","value":"clean up room","suggested":true}],"duration":[{"confidence":0.9997298403843689,"minute":30,"value":30,"unit":"minute","normalized":{"value":1800,"unit":"second"}}]}}
       */
-						var _message$intentObject = message.intentObject.entities;
-						var reminder = _message$intentObject.reminder;
-						var duration = _message$intentObject.duration;
-						var datetime = _message$intentObject.datetime;
-
 
 						var totalMinutes = 0;
 						dailyTasks.forEach(function (dailyTask) {
@@ -111,7 +112,7 @@ exports.default = function (controller) {
 								});
 							});
 						} else {
-							responseObject.text = 'Hey, I need to know how long you want to work on `' + text + '` for, either `for 30 min` or `until 3pm`!';
+							responseObject.text = 'Hey, I need to know how long you want to work on `' + text + '` for! (please say `' + text + ' for 30 min` or ` ' + text + ' until 3pm`)';
 							bot.replyPublic(message, responseObject);
 						}
 
@@ -120,9 +121,33 @@ exports.default = function (controller) {
 						/*
       {"msg_id":"5ab30b9d-4f4c-4f13-8d32-f8934f6af538","_text":"eat food at 10pm","entities":{"reminder":[{"confidence":0.9931340886330486,"entities":{},"type":"value","value":"eat food","suggested":true}],"datetime":[{"confidence":0.9516938049181851,"type":"value","value":"2016-07-20T22:00:00.000-04:00","grain":"hour","values":[{"type":"value","value":"2016-07-20T22:00:00.000-04:00","grain":"hour"},{"type":"value","value":"2016-07-21T22:00:00.000-04:00","grain":"hour"},{"type":"value","value":"2016-07-22T22:00:00.000-04:00","grain":"hour"}]}]}}
        */
-						// reminder needs time
-						responseObject.text = 'I\'m sorry, still learning how to `' + message.command + '`! :dog:';
-						bot.replyPublic(message, responseObject);
+
+						var customNote = reminder ? reminder[0].value : null;
+
+						var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(message, tz);
+
+						if (customTimeObject) {
+
+							// quick adding a reminder requires both text + time!
+							_models2.default.Reminder.create({
+								remindTime: customTimeObject,
+								UserId: UserId,
+								customNote: customNote
+							}).then(function (reminder) {
+								var customTimeString = customTimeObject.format('h:mm a');
+								var message = 'Okay, I\'ll remind you at ' + customTimeString;
+								if (customNote) {
+									message = message + ' about `' + customNote + '`';
+								}
+								message = message + '! :alarm_clock:';
+								responseObject.text = message;
+								bot.replyPublic(message, responseObject);
+							});
+						} else {
+							responseObject.text = 'Hey, I need to know how long you want to work on `' + text + '` for, either `for 30 min` or `until 3pm`!';
+							bot.replyPublic(message, responseObject);
+						}
+
 						break;
 					case "/help":
 					default:

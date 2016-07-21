@@ -331,7 +331,7 @@ exports.default = function (controller) {
 								}
 							});
 
-							// 1. create work session
+							// 1. create work session 
 							// 2. attach the daily tasks to work on during that work session
 							var startTime = (0, _momentTimezone2.default)();
 							var endTime = calculatedTimeObject;
@@ -402,7 +402,7 @@ exports.default = function (controller) {
 						});
 					} else {
 
-						// ending convo prematurely
+						// ending convo prematurely 
 						if (sessionStart.noDailyTasks) {
 							var fiveHoursAgo;
 

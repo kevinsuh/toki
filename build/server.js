@@ -37,8 +37,7 @@ var _controllers = require('./bot/controllers');
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // CronJob
-
-var CronJob = _cron2.default.CronJob; // modules
+var CronJob = _cron2.default.CronJob; // modules 
 
 
 setTimeout(function () {
@@ -49,7 +48,7 @@ setTimeout(function () {
 
 var app = (0, _express2.default)();
 
-// configuration
+// configuration 
 _dotenv2.default.load();
 
 // public folder for images, css,...
