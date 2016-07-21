@@ -416,7 +416,7 @@ function convertTimeStringToMinutes(timeString) {
 
 // for simplicity, this converts database calls with all the associations
 // into a single JS object for us to decipher as a single task
-//
+// 
 /**
  * converts this into a single task object for consistency sake
  * @param  {[taskObject]} can be DailyTaskArray or TaskArray or WeeklyTaskArray...

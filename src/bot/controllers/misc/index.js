@@ -31,6 +31,12 @@ export default function(controller) {
 	// this will send message if no other intent gets picked up
 	controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
 
+		if (message.text && message.text[0] == "/") {
+			// ignore all slash commands
+			console.log("\n\n ~~ ignoring a slash command ~~ \n\n");
+			return;
+		}
+
 		const SlackUserId = message.user;
 
 		consoleLog("in back up area!!!", message);

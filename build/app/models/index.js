@@ -8,7 +8,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 console.log("in index of sequelize models");
 
-// env configuration
+// env configuration 
 
 _dotenv2.default.load();
 

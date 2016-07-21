@@ -12,6 +12,7 @@ import buttonsController from './buttons';
 import setupReceiveMiddleware from '../middleware/receiveMiddleware';
 import miscController from './misc';
 import settingsController from './settings';
+import slashController from './slash';
 
 import models from '../../app/models';
 import intentConfig from '../lib/intents';
@@ -183,6 +184,7 @@ export function customConfigBot(controller) {
 	remindersController(controller);
 	buttonsController(controller);
 	settingsController(controller);
+	slashController(controller);
 
 }
 

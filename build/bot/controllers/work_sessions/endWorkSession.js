@@ -526,8 +526,28 @@ exports.default = function (controller) {
 					}, { // this is failure point. restart with question
 						default: true,
 						callback: function callback(response, convo) {
-							convo.say("I didn't quite get that :thinking_face:");
-							convo.repeat();
+
+							// wit will pick up duration here
+							var text = response.text;
+							var duration = response.intentObject.entities.duration;
+
+							if (duration) {
+								// allow extend if they just put time
+								convo.doneSessionTimerObject.customSnooze = {
+									text: text,
+									duration: duration
+								};
+								// delete button when answered with NL
+								(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
+								convo.say('Keep at it!');
+								convo.doneSessionTimerObject.sessionTimerDecision = _constants.sessionTimerDecisions.snooze;
+							} else {
+								// otherwise we're confused
+								convo.say("I didn't quite get that :thinking_face:");
+								convo.repeat();
+							}
+
 							convo.next();
 						}
 					}]);
