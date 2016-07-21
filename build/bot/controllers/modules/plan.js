@@ -247,6 +247,7 @@ function askForAdditionalTasks(response, convo) {
 			} else {
 				// you can add tasks here then!
 				tasks.push(newTask);
+				tasks = (0, _messageHelpers.convertResponseObjectsToTaskArray)(tasks);
 				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(tasks, options);
 
 				updateTaskListMessageObject.text = taskListMessage;
@@ -353,6 +354,7 @@ function addMoreTasks(response, convo) {
 
 			// you can add tasks here then!
 			tasks.push(newTask);
+			tasks = (0, _messageHelpers.convertResponseObjectsToTaskArray)(tasks);
 			taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(tasks, options);
 
 			updateTaskListMessageObject.text = taskListMessage;
