@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
@@ -314,6 +314,10 @@ var buttonValues = exports.buttonValues = {
 	allPendingTasks: {
 		value: "ALL_PENDING_TASKS",
 		name: "ALL_PENDING_TASKS"
+	},
+	yes: {
+		value: "YES",
+		name: "YES"
 	}
 };
 
@@ -421,6 +425,40 @@ var taskListMessageDoneButtonAttachment = exports.taskListMessageDoneButtonAttac
 		type: "button",
 		style: "primary"
 	}]
+}];
+
+var taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = [{
+	attachment_type: 'default',
+	callback_id: "TASK_LIST_MESSAGE",
+	fallback: "How much time would you like to allocate to your tasks?",
+	color: colorsHash.grey.hex,
+	actions: [{
+		name: buttonValues.actuallyWantToAddATask.name,
+		text: "Add more tasks!",
+		value: buttonValues.actuallyWantToAddATask.value,
+		type: "button"
+	}]
+}];
+
+var taskListMessageYesButtonAttachment = exports.taskListMessageYesButtonAttachment = [{
+	attachment_type: 'default',
+	callback_id: "TASK_LIST_MESSAGE",
+	fallback: "Here is your task list",
+	color: colorsHash.grey.hex,
+	actions: [{
+		name: buttonValues.yes.name,
+		text: "Yes!",
+		value: buttonValues.yes.value,
+		type: "button",
+		style: "primary"
+	}]
+}];
+
+var taskListMessageNoButtonsAttachment = exports.taskListMessageNoButtonsAttachment = [{
+	attachment_type: 'default',
+	callback_id: "TASK_LIST_MESSAGE",
+	fallback: "Here is your task list",
+	color: colorsHash.grey.hex
 }];
 
 var taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = [{

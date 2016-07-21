@@ -304,6 +304,10 @@ export const buttonValues ={
 	allPendingTasks: {
 		value: "ALL_PENDING_TASKS",
 		name: "ALL_PENDING_TASKS"
+	},
+	yes: {
+		value: "YES",
+		name: "YES"
 	}
 }
 
@@ -433,6 +437,50 @@ export const taskListMessageDoneButtonAttachment = [
 					style: "primary"
 			}
 		]
+	}
+];
+
+export const taskListMessageAddMoreTasksButtonAttachment = [
+	{
+		attachment_type: 'default',
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "How much time would you like to allocate to your tasks?",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+					name: buttonValues.actuallyWantToAddATask.name,
+					text: "Add more tasks!",
+					value: buttonValues.actuallyWantToAddATask.value,
+					type: "button"
+			}
+		]
+	}
+];
+
+export const taskListMessageYesButtonAttachment = [
+	{
+		attachment_type: 'default',
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "Here is your task list",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+					name: buttonValues.yes.name,
+					text: "Yes!",
+					value: buttonValues.yes.value,
+					type: "button",
+					style: "primary"
+			}
+		]
+	}
+];
+
+export const taskListMessageNoButtonsAttachment = [
+	{
+		attachment_type: 'default',
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "Here is your task list",
+		color: colorsHash.grey.hex
 	}
 ];
 
