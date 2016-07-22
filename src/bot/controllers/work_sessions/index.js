@@ -842,7 +842,7 @@ export function checkWorkSessionForLiveTasks(config) {
 		.then((user) => {
 
 			const UserId = user.id;
-			const { SlackUser: { tz } } = user;
+			const { SlackUser: { tz }, defaultBreakTime } = user;
 
 			user.getWorkSessions({
 				where: [`"open" = ?`, true ]
@@ -888,7 +888,8 @@ export function checkWorkSessionForLiveTasks(config) {
 										tz,
 										postSessionDecision: false,
 										reminders: [],
-										SlackUserId
+										SlackUserId,
+										defaultBreakTime
 									}
 
 									var message = `Great job finishing ${finishedTasksString} :raised_hands:!`;

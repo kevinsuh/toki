@@ -7,8 +7,8 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment } from '../../lib/constants';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
+import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, TOKI_DEFAULT_SNOOZE_TIME, TOKI_DEFAULT_BREAK_TIME } from '../../lib/constants';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, deleteConvoAskMessage } from '../../lib/messageHelpers';
 import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
@@ -49,7 +49,7 @@ export default function(controller) {
 		})
 		.then((user) => {
 
-			const { nickName, SlackUser: { tz } } = user;
+			const { nickName, defaultSnoozeTime, defaultBreakTime, SlackUser: { tz } } = user;
 			var userTimeZone = {};
 			for (var key in timeZones) {
 				if (timeZones[key].tz == tz) {
@@ -65,7 +65,9 @@ export default function(controller) {
 				convo.settings = {
 					SlackUserId,
 					timeZone: userTimeZone,
-					nickName: name
+					nickName: name,
+					defaultBreakTime,
+					defaultSnoozeTime
 				}
 
 				startSettingsConversation(err, convo);
@@ -75,23 +77,31 @@ export default function(controller) {
 
 					consoleLog("end of settings for user!!!!", convo.settings);
 
-					const { SlackUserId, nickName, timeZone } = convo.settings;
+					const { SlackUserId, nickName, timeZone, defaultBreakTime, defaultSnoozeTime } = convo.settings;
 
 					if (timeZone) {
 						const { tz } = timeZone;
-
 						user.SlackUser.update({
 							tz
 						});
-
 					}
 
 					if (nickName) {
-
 						user.update({
 							nickName
 						});
+					}
 
+					if (defaultSnoozeTime) {
+						user.update({
+							defaultSnoozeTime
+						})
+					}
+
+					if (defaultBreakTime) {
+						user.update({
+							defaultBreakTime
+						})
 					}
 
 					resumeQueuedReachouts(bot, { SlackUserId });
@@ -108,11 +118,21 @@ export default function(controller) {
 
 function startSettingsConversation(err, convo) {
 	
-	const { settings, settings: { timeZone, nickName } } = convo;
+	const { settings: { nickName } } = convo;
+	convo.say(`Hello ${nickName}!`);
+	showSettingsOptions(convo);
+
+}
+
+function showSettingsOptions(convo) {
+
+	const { settings, settings: { timeZone, nickName, defaultSnoozeTime, defaultBreakTime } } = convo;
+	const { task }                = convo;
+	const { bot, source_message } = task;
 
 	var settingsAttachment = getSettingsAttachment(settings);
 	convo.ask({
-		text: `Hello ${nickName}! Here are your settings:`,
+		text: `Here are your settings:`,
 		attachments: settingsAttachment
 	},
 	[
@@ -126,6 +146,10 @@ function startSettingsConversation(err, convo) {
 		{ // same as buttonValues.changeName.value
 			pattern: utterances.containsName,
 			callback: (response, convo) => {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				changeName(response, convo);
 				convo.next();
 			}
@@ -140,7 +164,47 @@ function startSettingsConversation(err, convo) {
 		{ // same as buttonValues.changeTimeZone.value
 			pattern: utterances.containsTimeZone,
 			callback: (response, convo) => {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
 				changeTimezone(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.changeDefaultSnoozeTime.value,
+			callback: (response, convo) => {
+				changeDefaultSnoozeTime(response, convo);
+				convo.next();
+			}
+		},
+		{ // same as buttonValues.changeDefaultSnoozeTime.value
+			pattern: utterances.containsSnooze,
+			callback: (response, convo) => {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
+				changeDefaultSnoozeTime(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.changeDefaultBreakTime.value,
+			callback: (response, convo) => {
+				changeDefaultBreakTime(response, convo);
+				convo.next();
+			}
+		},
+		{ // same as buttonValues.changeDefaultBreakTime.value
+			pattern: utterances.containsBreak,
+			callback: (response, convo) => {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+				
+				changeDefaultBreakTime(response, convo);
 				convo.next();
 			}
 		},
@@ -154,6 +218,85 @@ function startSettingsConversation(err, convo) {
 		}
 	]);
 
+}
+
+function changeDefaultBreakTime(response, convo) {
+
+	const { settings, settings: { timeZone, nickName, defaultSnoozeTime, defaultBreakTime } } = convo;
+	convo.ask(`How many minutes do you want your default break time to be?`, [
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				convo.say("Okay!");
+				showSettingsOptions(convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+
+				// must be a number
+				var time    = response.text;
+				var minutes = false;
+				var validMinutesTester = new RegExp(/[\dh]/);
+
+				if (validMinutesTester.test(time)) {
+					minutes = convertTimeStringToMinutes(time);
+				}
+
+				if (minutes) {
+					convo.settings.defaultBreakTime = minutes;
+					returnToMainSettings(response, convo);
+				} else {
+					convo.say("Sorry, still learning :dog:. Let me know in terms of minutes `i.e. 10 min`");
+					convo.repeat();
+				}
+				convo.next();
+
+			}
+		}
+	]);
+
+}
+
+function changeDefaultSnoozeTime(response, convo) {
+
+	const { settings, settings: { timeZone, nickName, defaultSnoozeTime, defaultBreakTime } } = convo;
+	convo.ask(`How many minutes do you want your default extend time to be? :timer_clock:`, [
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				convo.say("Okay!");
+				showSettingsOptions(convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+
+				// must be a number
+				var time    = response.text;
+				var minutes = false;
+				var validMinutesTester = new RegExp(/[\dh]/);
+
+				if (validMinutesTester.test(time)) {
+					minutes = convertTimeStringToMinutes(time);
+				}
+
+				if (minutes) {
+					convo.settings.defaultSnoozeTime = minutes;
+					returnToMainSettings(response, convo);
+				} else {
+					convo.say("Sorry, still learning :dog:. Let me know in terms of minutes `i.e. 10 min`");
+					convo.repeat();
+				}
+				convo.next();
+
+			}
+		}
+	]);
 }
 
 // user wants to change time zones
@@ -283,48 +426,8 @@ function returnToMainSettings(response, convo) {
 
 	var settingsAttachment = getSettingsAttachment(settings);
 
-	convo.ask({
-		text: `Here are your updated settings. Is there anything else I can help you with?`,
-		attachments: settingsAttachment
-	},
-	[
-		{
-			pattern: buttonValues.changeName.value,
-			callback: (response, convo) => {
-				changeName(response, convo);
-				convo.next();
-			}
-		},
-		{ // same as buttonValues.changeName.value
-			pattern: utterances.containsName,
-			callback: (response, convo) => {
-				changeName(response, convo);
-				convo.next();
-			}
-		},
-		{
-			pattern: buttonValues.changeTimeZone.value,
-			callback: (response, convo) => {
-				changeTimezone(response, convo);
-				convo.next();
-			}
-		},
-		{ // same as buttonValues.changeTimeZone.value
-			pattern: utterances.containsTimeZone,
-			callback: (response, convo) => {
-				changeTimezone(response, convo);
-				convo.next();
-			}
-		},
-		{
-			default: true,
-			callback: (response, convo) => {
-				// for now this will be where "never mind" goes
-				convo.say("Happy to help! Now let's get back to it :punch:");
-				convo.next();
-			}
-		}
-	]);
+	convo.say(`Got it, I've made those updates!`);
+	showSettingsOptions(convo);
 
 }
 
@@ -375,7 +478,13 @@ function confirmName(name, convo) {
  */
 function getSettingsAttachment(settings) {
 
-	const { timeZone, nickName } = settings;
+	var { timeZone, nickName, defaultSnoozeTime, defaultBreakTime } = settings;
+	if (!defaultSnoozeTime) {
+		defaultSnoozeTime = TOKI_DEFAULT_SNOOZE_TIME;
+	}
+	if (!defaultBreakTime) {
+		defaultBreakTime = TOKI_DEFAULT_BREAK_TIME;
+	}
 
 	var attachment = [
 		{
@@ -399,19 +508,50 @@ function getSettingsAttachment(settings) {
 				{
 					value: timeZone.name,
 					short: true
+				},
+				{
+					title: `Default Extend Time :timer_clock::`,
+					short: true
+				},
+				{
+					value: `${defaultSnoozeTime} min`,
+					short: true
+				},
+				{
+					title: `Default Break Time:`,
+					short: true
+				},
+				{
+					value: `${defaultBreakTime} min`,
+					short: true
+				},
+				{
+					value: "Would you like me to update any of these settings?"
 				}
 			],
 			actions: [
 				{
 					name: buttonValues.changeName.name,
-					text: "Change name",
+					text: "Name",
 					value: buttonValues.changeName.value,
 					type: "button"
 				},
 				{
 					name: buttonValues.changeTimeZone.name,
-					text: "Switch Timezone",
+					text: "Timezone",
 					value: buttonValues.changeTimeZone.value,
+					type: "button"
+				},
+				{
+					name: buttonValues.changeDefaultSnoozeTime.name,
+					text: "Extend Time",
+					value: buttonValues.changeDefaultSnoozeTime.value,
+					type: "button"
+				},
+				{
+					name: buttonValues.changeDefaultBreakTime.name,
+					text: "Break Time",
+					value: buttonValues.changeDefaultBreakTime.value,
 					type: "button"
 				},
 				{

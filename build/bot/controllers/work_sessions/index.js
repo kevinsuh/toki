@@ -790,6 +790,7 @@ function checkWorkSessionForLiveTasks(config) {
 
 		var UserId = user.id;
 		var tz = user.SlackUser.tz;
+		var defaultBreakTime = user.defaultBreakTime;
 
 
 		user.getWorkSessions({
@@ -835,7 +836,8 @@ function checkWorkSessionForLiveTasks(config) {
 									tz: tz,
 									postSessionDecision: false,
 									reminders: [],
-									SlackUserId: SlackUserId
+									SlackUserId: SlackUserId,
+									defaultBreakTime: defaultBreakTime
 								};
 
 								var message = 'Great job finishing ' + finishedTasksString + ' :raised_hands:!';

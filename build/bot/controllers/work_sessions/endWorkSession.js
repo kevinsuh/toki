@@ -76,6 +76,7 @@ exports.default = function (controller) {
 
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 							var tz = user.SlackUser.tz;
+							var defaultBreakTime = user.defaultBreakTime;
 
 
 							convo.doneSessionEarly = {
@@ -91,7 +92,8 @@ exports.default = function (controller) {
 								postSessionDecision: false,
 								reminders: [],
 								tasksCompleted: [],
-								SlackUserId: SlackUserId
+								SlackUserId: SlackUserId,
+								defaultBreakTime: defaultBreakTime
 							};
 
 							// get times for user
@@ -355,6 +357,10 @@ exports.default = function (controller) {
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
+			var defaultSnoozeTime = user.defaultSnoozeTime;
+			var defaultBreakTime = user.defaultBreakTime;
+
+
 			user.getDailyTasks({
 				where: ['"DailyTask"."id" IN (?) AND "Task"."done" = ?', dailyTaskIds, false],
 				include: [_models2.default.Task]
@@ -395,7 +401,9 @@ exports.default = function (controller) {
 						postSessionDecision: false,
 						reminders: [],
 						tasksCompleted: [],
-						SlackUserId: SlackUserId
+						SlackUserId: SlackUserId,
+						defaultBreakTime: defaultBreakTime,
+						defaultSnoozeTime: defaultSnoozeTime
 					};
 
 					var timeOutMinutes = 1000 * 60 * _constants.MINUTES_FOR_DONE_SESSION_TIMEOUT;
@@ -412,6 +420,9 @@ exports.default = function (controller) {
 						message = 'Hey, did you finish ' + tasksToWorkOnString + '?';
 					}
 
+					var extendSessionText = defaultSnoozeTime ? 'Extend by ' + defaultSnoozeTime + ' min' : 'Extend Session';
+					extendSessionText = extendSessionText + ' :timer_clock:';
+
 					convo.ask({
 						text: message,
 						attachments: [{
@@ -426,7 +437,7 @@ exports.default = function (controller) {
 								style: "primary"
 							}, {
 								name: _constants.buttonValues.doneSessionSnooze.name,
-								text: "Extend Session :timer_clock:",
+								text: extendSessionText,
 								value: _constants.buttonValues.doneSessionSnooze.value,
 								type: "button"
 							}, {
@@ -737,6 +748,7 @@ exports.default = function (controller) {
 
 		var SlackUserId = config.SlackUserId;
 		var botCallback = config.botCallback;
+		var defaultBreakTime = config.defaultBreakTime;
 
 		if (botCallback) {
 			// if botCallback, need to get the correct bot
@@ -751,7 +763,8 @@ exports.default = function (controller) {
 				SlackUserId: SlackUserId,
 				postSessionDecision: false, // what is the user's decision? (break, another session, etc.)
 				reminders: [], // there will be lots of potential reminders
-				tasksCompleted: []
+				tasksCompleted: [],
+				defaultBreakTime: defaultBreakTime
 			};
 
 			_models2.default.User.find({
@@ -1059,6 +1072,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // ask user for options after finishing session
 function askUserPostSessionOptions(response, convo) {
 	var task = convo.task;
+
+	var defaultBreakTime = false;
+	if (convo.sessionEnd) {
+		defaultBreakTime = convo.sessionEnd.defaultBreakTime;
+	}
+
+	var breakText = defaultBreakTime ? 'Break for ' + defaultBreakTime + ' min' : 'Take a break';
 	var bot = task.bot;
 	var source_message = task.source_message;
 
@@ -1075,7 +1095,7 @@ function askUserPostSessionOptions(response, convo) {
 			fallback: "I was unable to process your decision",
 			actions: [{
 				name: _constants.buttonValues.takeBreak.name,
-				text: "Take a break",
+				text: breakText,
 				value: _constants.buttonValues.takeBreak.value,
 				type: "button"
 			}, {
@@ -1099,6 +1119,7 @@ function askUserPostSessionOptions(response, convo) {
 	}, [{
 		pattern: _constants.buttonValues.takeBreak.value,
 		callback: function callback(response, convo) {
+
 			getBreakTime(response, convo);
 			convo.next();
 		}
@@ -1109,6 +1130,7 @@ function askUserPostSessionOptions(response, convo) {
 			// delete button when answered with NL
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
+			convo.say('Let\'s take a break!');
 			getBreakTime(response, convo);
 			convo.next();
 		}
@@ -1187,72 +1209,55 @@ function handleBeBackLater(response, convo) {
 }
 
 // handle break time
-// if button click: ask for time, recommend 15 min
-// if NL break w/ no time: ask for time, recommend 15 min
-// if NL break w/ time: streamline break w/ time
+// if button click: default break time
+// if NL, default if no duration or datetime suggested
 function getBreakTime(response, convo) {
-	var entities = response.intentObject.entities;
-	var tz = convo.sessionEnd.tz;
+	var text = response.text;
+	var _response$intentObjec = response.intentObject.entities;
+	var duration = _response$intentObjec.duration;
+	var datetime = _response$intentObjec.datetime;
+	var _convo$sessionEnd4 = convo.sessionEnd;
+	var tz = _convo$sessionEnd4.tz;
+	var defaultBreakTime = _convo$sessionEnd4.defaultBreakTime;
+	var UserId = _convo$sessionEnd4.UserId;
 
+	var now = (0, _momentTimezone2.default)();
 
 	convo.sessionEnd.postSessionDecision = _intents2.default.WANT_BREAK; // user wants a break!
 
-	var durationSeconds = 0;
-	if (entities.duration) {
-		var durationArray = entities.duration;
-		for (var i = 0; i < durationArray.length; i++) {
-			durationSeconds += durationArray[i].normalized.value;
+	var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+	if (!customTimeObject) {
+
+		// use default break time if it doesn't exist!
+		if (!defaultBreakTime && UserId) {
+			convo.say('This is your first time hitting break! The default break time is *' + _constants.TOKI_DEFAULT_BREAK_TIME + ' minutes*, but you can change it in your settings by telling me to `show settings`');
+			convo.say("You can also specify a custom break time by saying `break for 20 minutes` or something like that :grinning:");
+			// first time not updating at convo end...
+			_models2.default.User.update({
+				defaultBreakTime: 10
+			}, {
+				where: ['"Users"."id" = ?', UserId]
+			});
 		}
-		var durationMinutes = Math.floor(durationSeconds / 60);
-		convo.sessionEnd.breakDuration = durationMinutes;
-
-		// calculate break time and add reminder
-		var customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(durationMinutes, 'minutes');
-		var customTimeString = customTimeObject.format("h:mm a");
-
-		convo.say('Great! I\'ll check in with you in ' + durationMinutes + ' minutes at *' + customTimeString + '* :smile:');
-		convo.sessionEnd.reminders.push({
-			customNote: 'It\'s been ' + durationMinutes + ' minutes. Let me know when you\'re ready to start a session',
-			remindTime: customTimeObject,
-			type: "break"
-		});
-	} else {
-
-		convo.ask("How long do you want to take a break? I recommend 15 minutes for every 90 minutes of work :grin:", function (response, convo) {
-
-			var timeToTask = response.text;
-
-			var validMinutesTester = new RegExp(/[\dh]/);
-			var isInvalid = false;
-			if (!validMinutesTester.test(timeToTask)) {
-				isInvalid = true;
-			}
-
-			// INVALID tester
-			if (isInvalid) {
-				convo.say("Oops, looks like you didn't put in valid minutes :thinking_face:. Let's try this again");
-				convo.say("I'll assume you mean minutes - like `30` would be 30 minutes - unless you specify hours - like `1 hour 15 min`");
-				convo.repeat();
-			} else {
-
-				var durationMinutes = (0, _messageHelpers.convertTimeStringToMinutes)(timeToTask);
-				var customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(durationMinutes, 'minutes');
-				var customTimeString = customTimeObject.format("h:mm a");
-
-				convo.sessionEnd.breakDuration = durationMinutes;
-
-				convo.say('Great! I\'ll check in with you in ' + durationMinutes + ' minutes at *' + customTimeString + '* :smile:');
-
-				// calculate break time and add reminder
-				convo.sessionEnd.reminders.push({
-					customNote: 'It\'s been ' + durationMinutes + ' minutes. Let me know when you\'re ready to start a session',
-					remindTime: customTimeObject,
-					type: "break"
-				});
-			}
-			convo.next();
-		});
+		customTimeObject = (0, _momentTimezone2.default)().add(_constants.TOKI_DEFAULT_BREAK_TIME, 'minutes');
 	}
+	var customTimeString = customTimeObject.format("h:mm a");
+	var durationMinutes = parseInt(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+
+	if (!defaultBreakTime && UserId) {
+		convo.say('I set your default break time to ' + _constants.TOKI_DEFAULT_BREAK_TIME + ' minutes and will check with you then. See you at *' + customTimeString + '*!');
+	} else {
+		convo.say('I\'ll check in with you in ' + durationMinutes + ' minutes at *' + customTimeString + '* :smile:');
+	}
+
+	convo.sessionEnd.reminders.push({
+		customNote: 'It\'s been ' + durationMinutes + ' minutes. Let me know when you\'re ready to start a session',
+		remindTime: customTimeObject,
+		type: "break"
+	});
+
+	convo.sessionEnd.breakDuration = durationMinutes;
+	convo.next();
 }
 
 // NEED ALL 3 FOR CONFIG: SlackUserId, controller, bot

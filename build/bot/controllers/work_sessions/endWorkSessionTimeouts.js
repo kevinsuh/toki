@@ -91,6 +91,8 @@ exports.default = function (controller) {
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
+			var defaultBreakTime = user.defaultBreakTime;
+
 
 			if (botCallback) {
 				// if botCallback, need to get the correct bot
@@ -122,7 +124,8 @@ exports.default = function (controller) {
 								SlackUserId: SlackUserId,
 								postSessionDecision: false,
 								reminders: [],
-								completedTaskIds: completedTaskIds
+								completedTaskIds: completedTaskIds,
+								defaultBreakTime: defaultBreakTime
 							};
 
 							(0, _endWorkSession.askUserPostSessionOptions)(err, convo);
@@ -272,6 +275,8 @@ exports.default = function (controller) {
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
+			var defaultBreakTime = user.defaultBreakTime;
+
 
 			if (botCallback) {
 				// if botCallback, need to get the correct bot
@@ -285,7 +290,8 @@ exports.default = function (controller) {
 				convo.sessionEnd = {
 					SlackUserId: SlackUserId,
 					postSessionDecision: false,
-					reminders: []
+					reminders: [],
+					defaultBreakTime: defaultBreakTime
 				};
 
 				(0, _endWorkSession.askUserPostSessionOptions)(err, convo);
