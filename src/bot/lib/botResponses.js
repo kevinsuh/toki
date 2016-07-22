@@ -80,5 +80,5 @@ export const utterances = {
 	pacific: new RegExp(/\b(p[pacific]{5,})\b/i),
 	mountain: new RegExp(/\b(m[mountain]{5,})\b/i),
 	other: new RegExp(/\b(o[other]{3,})\b/i),
-	deleteTasks: new RegExp(/^(d[delete ]{3,}[tasks]{0,})$/i)
+	deleteTasks: new RegExp(/^(d[delete ]{3,}[tasks ]{0,})\b/i)
 }

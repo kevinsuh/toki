@@ -225,13 +225,20 @@ function deleteTasksFromList(response, convo) {
 			}]
 		}]
 	}, [{
+		pattern: _constants.buttonValues.neverMind.value,
+		callback: function callback(response, convo) {
+
+			askForAdditionalTasks(response, convo);
+			convo.next();
+		}
+	}, {
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
 
 			// delete button when answered with NL
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
-			convo.say("Okay, let's get back to your list");
+			convo.say("Okay, let's get back to your list!");
 			askForAdditionalTasks(response, convo);
 			convo.next();
 		}
@@ -280,12 +287,6 @@ function confirmDeleteTasks(response, convo) {
 	var taskTextsToDelete = tasksToDelete.map(function (dailyTask) {
 		return dailyTask.text;
 	});
-
-	console.log('\n\n\ntaskTextsToDelete: ');
-	console.log(taskTextsToDelete);
-
-	console.log('\n\n\ntaskArray: ');
-	console.log(taskArray);
 
 	var tasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToDelete);
 
@@ -460,8 +461,17 @@ function addMoreTasks(response, convo) {
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
 			saveTaskResponsesToDayStartObject(tasks, convo);
-			convo.say("Okay! Let's remove some tasks");
-			deleteTasksFromList(response, convo);
+
+			var taskArray = convo.dayStart.taskArray;
+
+			var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, taskArray);
+			if (taskNumbersToCompleteArray) {
+				// single line complete ability
+				confirmDeleteTasks(response, convo);
+			} else {
+				convo.say("Okay! Let's remove some tasks");
+				deleteTasksFromList(response, convo);
+			}
 
 			convo.next();
 		}
