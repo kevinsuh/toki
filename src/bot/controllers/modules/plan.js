@@ -516,7 +516,11 @@ function getTimeToTasks(response, convo) {
 
 					var taskListMessage = convertArrayToTaskListMessage(taskArray, { dontUseDataValues: true, emphasizeMinutes: true });
 
-					var message = `How much *time* would you like to allocate to \`${taskTextsArray[timeToTasksArray.length]}\`?`;
+					var message = '';
+					if (taskTextsArray[timeToTasksArray.length]) {
+						message = `How much *time* would you like to allocate to \`${taskTextsArray[timeToTasksArray.length]}\`?`;
+					}
+					
 					message = `${message}\n${taskListMessage}`;
 
 					updateTaskListMessageObject.text        = message;
