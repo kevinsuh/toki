@@ -670,22 +670,7 @@ function confirmTimeToTasks(timeToTasksArray, convo) {
 			pattern: utterances.yes,
 			callback: (response, convo) => {
 				convo.say(":boom: This looks great!");
-				convo.ask("Ready to start a work session?", [
-						{
-							pattern: utterances.no,
-							callback: (response, convo) => {
-								convo.say("Great! Let me know when you're ready to `start a session`");
-								convo.next();
-							}
-						},
-						{
-							pattern: utterances.yes,
-							callback: (response, convo) => {
-								convo.dayStart.startDayDecision = intentConfig.START_SESSION;
-								convo.next();
-							}
-						}
-					], { 'key' : 'startFirstSession' })
+				askToStartWorkSession(response, convo);
 				convo.next();
 			}
 		},
@@ -696,6 +681,141 @@ function confirmTimeToTasks(timeToTasksArray, convo) {
 				convo.say("Just say a time estimate, like `30 min` for each task and I'll assign it to the tasks above in order :smiley:");
 				getTimeToTasks(response, convo);
 				convo.next();
+			}
+		}
+	]);
+
+}
+
+function askToStartWorkSession(response, convo) {
+
+	const { task }                = convo;
+	const { bot, source_message } = task;
+
+	convo.ask({
+		text: "Ready to start a work session?",
+		attachments: [
+			{
+				attachment_type: 'default',
+				callback_id: "WORK_SESSION_DECISIONS",
+				fallback: "Ready to start a work session?",
+				color: colorsHash.blue.hex,
+				actions: [
+					{
+							name: buttonValues.startNow.name,
+							text: "Start session now!",
+							value: buttonValues.startNow.value,
+							type: "button",
+							style: "primary"
+					},
+					{
+						name: buttonValues.remindMe.name,
+						text: "Remind me in 10",
+						value: buttonValues.remindMe.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.backLater.name,
+						text: "Be back later",
+						value: buttonValues.backLater.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.editTaskList.name,
+						text: "Edit tasks",
+						value: buttonValues.editTaskList.value,
+						type: "button"
+					}
+				]
+			}
+		]
+	},
+	[
+		{
+			pattern: buttonValues.startNow.value,
+			callback: function(response, convo) {
+				convo.dayStart.startDayDecision = intentConfig.START_SESSION;
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.yes,
+			callback: function(response, convo) {
+				
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+				convo.dayStart.startDayDecision = intentConfig.START_SESSION;
+
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.remindMe.value,
+			callback: function(response, convo) {
+				convo.dayStart.startDayDecision = intentConfig.REMINDER;
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.containsCheckin,
+			callback: function(response, convo) {
+				
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+				convo.say("Great! I'll check in with you in 10 minutes :smiley:");
+				convo.dayStart.startDayDecision = intentConfig.REMINDER;
+
+				convo.next();
+			}
+		},
+		{
+			pattern: buttonValues.backLater.value,
+			callback: function(response, convo) {
+				convo.dayStart.startDayDecision = intentConfig.BACK_LATER;
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.containsBackLater,
+			callback: function(response, convo) {
+				
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
+				convo.dayStart.startDayDecision = intentConfig.BACK_LATER;
+				convo.say("Okay! Call me whenever you want to get productive `hey toki!` :muscle:");
+				convo.next();
+
+			}
+		},
+		{
+			pattern: buttonValues.editTaskList.value,
+			callback: function(response, convo) {
+				
+				convo.dayStart.startDayDecision = intentConfig.EDIT_TASKS;
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.containsEditTaskList,
+			callback: function(response, convo) {
+				
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
+				convo.dayStart.startDayDecision = intentConfig.EDIT_TASKS;
+				convo.next();
+				
+			}
+		},
+		{
+			default: true,
+			callback: function(response, convo) {
+
+				convo.say("I didn't quite get that :thinking_face:");
+				convo.repeat();
+				convo.next();
+				
 			}
 		}
 	]);

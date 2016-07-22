@@ -318,6 +318,10 @@ var buttonValues = exports.buttonValues = {
 	yes: {
 		value: "YES",
 		name: "YES"
+	},
+	remindMe: {
+		value: "REMIND_ME",
+		name: "REMIND_ME"
 	}
 };
 

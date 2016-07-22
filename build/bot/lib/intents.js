@@ -12,7 +12,8 @@ var intentConfig = {
 	ADD_TASK: 'add_daily_task',
 	VIEW_TASKS: 'daily_tasks',
 	EDIT_TASKS: 'edit_tasks',
-	REMINDER: 'reminder'
+	REMINDER: 'reminder',
+	BACK_LATER: 'back_later'
 };
 
 exports.default = intentConfig;
