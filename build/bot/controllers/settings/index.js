@@ -69,11 +69,12 @@ exports.default = function (controller) {
 					var SlackUserId = _convo$settings.SlackUserId;
 					var nickName = _convo$settings.nickName;
 					var timeZone = _convo$settings.timeZone;
+					var defaultBreakTime = _convo$settings.defaultBreakTime;
+					var defaultSnoozeTime = _convo$settings.defaultSnoozeTime;
 
 
 					if (timeZone) {
 						var _tz = timeZone.tz;
-
 
 						user.SlackUser.update({
 							tz: _tz
@@ -81,9 +82,20 @@ exports.default = function (controller) {
 					}
 
 					if (nickName) {
-
 						user.update({
 							nickName: nickName
+						});
+					}
+
+					if (defaultSnoozeTime) {
+						user.update({
+							defaultSnoozeTime: defaultSnoozeTime
+						});
+					}
+
+					if (defaultBreakTime) {
+						user.update({
+							defaultBreakTime: defaultBreakTime
 						});
 					}
 
@@ -147,6 +159,9 @@ function showSettingsOptions(convo) {
 	var nickName = _convo$settings2.nickName;
 	var defaultSnoozeTime = _convo$settings2.defaultSnoozeTime;
 	var defaultBreakTime = _convo$settings2.defaultBreakTime;
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
 
 
 	var settingsAttachment = getSettingsAttachment(settings);
@@ -162,6 +177,10 @@ function showSettingsOptions(convo) {
 	}, { // same as buttonValues.changeName.value
 		pattern: _botResponses.utterances.containsName,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			changeName(response, convo);
 			convo.next();
 		}
@@ -174,6 +193,10 @@ function showSettingsOptions(convo) {
 	}, { // same as buttonValues.changeTimeZone.value
 		pattern: _botResponses.utterances.containsTimeZone,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			changeTimezone(response, convo);
 			convo.next();
 		}
@@ -186,6 +209,10 @@ function showSettingsOptions(convo) {
 	}, { // same as buttonValues.changeDefaultSnoozeTime.value
 		pattern: _botResponses.utterances.containsSnooze,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			changeDefaultSnoozeTime(response, convo);
 			convo.next();
 		}
@@ -198,6 +225,10 @@ function showSettingsOptions(convo) {
 	}, { // same as buttonValues.changeDefaultBreakTime.value
 		pattern: _botResponses.utterances.containsBreak,
 		callback: function callback(response, convo) {
+
+			// delete button when answered with NL
+			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 			changeDefaultBreakTime(response, convo);
 			convo.next();
 		}
