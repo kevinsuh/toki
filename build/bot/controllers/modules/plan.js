@@ -397,7 +397,7 @@ function getTimeToTasks(response, convo) {
 
 	var timeToTasksArray = [];
 
-	var message = "How much *time* would you like to allocate to your *first task?* Please enter one by one!";
+	var message = "How much *time* would you like to allocate to your *first task?* `i.e. 30 min`";
 	convo.ask({
 		text: message + '\n' + taskListMessage,
 		attachments: [{
@@ -429,7 +429,7 @@ function getTimeToTasks(response, convo) {
 				timeToTasksArray = [];
 				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontShowMinutes: true, dontCalculateMinutes: true });
 
-				var message = timeToTasksArray.length == 0 ? "How much *time* would you like to allocate to your *first task?* Please enter one by one!" : "How much *time* would you like to allocate to your *next task?* Please enter one by one!";
+				var message = timeToTasksArray.length == 0 ? "How much *time* would you like to allocate to your *first task?* `i.e. 30 min`" : "How much *time* would you like to allocate to your *next task?* `i.e. 30 min`";
 				message = message + '\n' + taskListMessage;
 
 				updateTaskListMessageObject.text = message;
@@ -450,7 +450,7 @@ function getTimeToTasks(response, convo) {
 				timeToTasksArray = [];
 				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontShowMinutes: true, dontCalculateMinutes: true });
 
-				var message = timeToTasksArray.length == 0 ? "How much *time* would you like to allocate to your *first task?* Please enter one by one!" : "How much *time* would you like to allocate to your *next task?* Please enter one by one!";
+				var message = timeToTasksArray.length == 0 ? "How much *time* would you like to allocate to your *first task?* `i.e. 30 min`" : "How much *time* would you like to allocate to your *next task?* `i.e. 30 min`";
 				message = message + '\n' + taskListMessage;
 
 				updateTaskListMessageObject.text = message;
@@ -487,7 +487,7 @@ function getTimeToTasks(response, convo) {
 
 				var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontUseDataValues: true, emphasizeMinutes: true });
 
-				var message = timeToTasksArray.length == 0 ? "How much *time* would you like to allocate to your *first task?* Please enter one by one!" : "How much *time* would you like to allocate to your *next task?* Please enter one by one!";
+				var message = timeToTasksArray.length == 0 ? "How much *time* would you like to allocate to your *first task?* `i.e. 30 min`" : "How much *time* would you like to allocate to your *next task?* `i.e. 30 min`";
 				message = message + '\n' + taskListMessage;
 
 				updateTaskListMessageObject.text = message;
