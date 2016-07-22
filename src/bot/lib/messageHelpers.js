@@ -2,7 +2,7 @@
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
  */
 
-import { FINISH_WORD } from './constants';
+import { FINISH_WORD, buttonValues, colorsHash, taskListMessageNoButtonsAttachment } from './constants';
 import { utterances } from './botResponses';
 
 import nlp from 'nlp_compromise';
@@ -569,5 +569,73 @@ export function deleteConvoAskMessage(userChannel, bot) {
 	// used mostly to delete the button options when answered with NL
 	var convoAskMessage = getMostRecentMessageToUpdate(userChannel, bot);
 	bot.api.chat.delete(convoAskMessage);
+}
+
+/**
+ * get task list message with updated texts
+ * @param  {[string]} taskTextArray
+ * @param  {int} index  which specific taskText
+ * @param  {string} taskListMessage 
+ * @return {array}                 attachments message
+ */
+export function getTimeToTaskTextAttachmentWithTaskListMessage(taskTextArray, index, taskListMessage) {
+
+	var message = '';
+	var taskText = taskTextArray[index];
+	if (taskText) {
+		message = `How much *time* would you like to allocate to \`${taskText}\`?`;
+	}
+
+	var colors = [
+		"blue",
+		"green",
+		"orange",
+		"yellow",
+		"lavendar"
+	];
+
+	var colorChoice = colors[index % colors.length];
+	console.log(`\n\n\ncolor choice: ${index} / ${colorChoice}`);
+	var color = colorsHash[colorChoice] ? colorsHash[colorChoice].hex : colorsHash.blue.hex;
+
+	var attachments = [
+		{
+			color: colorsHash.grey.hex,
+			attachment_type: "default",
+			callback_id: "TASK_LIST_MESSAGE",
+			fallback: "Here's your task list",
+			mrkdwn_in: ["fields"],
+			fields: [
+				{
+					value: taskListMessage
+				}
+			]
+		}
+	];
+
+	if (taskText) {
+		var addTaskButtonActions = [
+			{
+				name: buttonValues.actuallyWantToAddATask.name,
+				text: "Add more tasks!",
+				value: buttonValues.actuallyWantToAddATask.value,
+				type: "button"
+			}
+		]
+		if (attachments[0])
+			attachments[0].actions = addTaskButtonActions;
+	}
+
+	// the specific question to ask
+	attachments.push({
+		text: message,
+		color,
+		mrkdwn_in: [ "text" ],
+		attachment_type: "default",
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "How long do you want to work on this task?"
+	});
+
+	return attachments;
 }
 

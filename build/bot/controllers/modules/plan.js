@@ -392,7 +392,7 @@ function getTimeToTasks(response, convo) {
 	var taskArray = _convo$dayStart2.taskArray;
 	var bot = _convo$dayStart2.bot;
 
-	var options = { dontShowMinutes: true, dontCalculateMinutes: true };
+	var options = { dontShowMinutes: true, dontCalculateMinutes: true, noKarets: true };
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 
 	var timeToTasksArray = [];
@@ -403,21 +403,12 @@ function getTimeToTasks(response, convo) {
 		return task.text;
 	});
 
-	var message = 'How much *time* would you like to allocate to `' + taskTextsArray[timeToTasksArray.length] + '`?';
+	var mainText = "Let's add time to each of your tasks!";
+
+	var attachments = (0, _messageHelpers.getTimeToTaskTextAttachmentWithTaskListMessage)(taskTextsArray, timeToTasksArray.length, taskListMessage);
 	convo.ask({
-		text: message + '\n' + taskListMessage,
-		attachments: [{
-			attachment_type: 'default',
-			callback_id: "TASK_LIST_MESSAGE",
-			fallback: "How much time would you like to allocate to your tasks?",
-			color: _constants.colorsHash.grey.hex,
-			actions: [{
-				name: _constants.buttonValues.actuallyWantToAddATask.name,
-				text: "Add more tasks!",
-				value: _constants.buttonValues.actuallyWantToAddATask.value,
-				type: "button"
-			}]
-		}]
+		text: mainText,
+		attachments: attachments
 	}, [{
 		pattern: _constants.buttonValues.actuallyWantToAddATask.value,
 		callback: function callback(response, convo) {
@@ -433,12 +424,14 @@ function getTimeToTasks(response, convo) {
 				convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 				// reset ze task list message
 				timeToTasksArray = [];
-				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontShowMinutes: true, dontCalculateMinutes: true });
+
+				var options = { dontShowMinutes: true, dontCalculateMinutes: true, noKarets: true };
+				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 
 				var message = 'How much *time* would you like to allocate to `' + taskTextsArray[timeToTasksArray.length] + '`?';
 				message = message + '\n' + taskListMessage;
 
-				updateTaskListMessageObject.text = message;
+				updateTaskListMessageObject.text = "*Let's add time to each of your tasks!*";
 				updateTaskListMessageObject.attachments = JSON.stringify(_constants.taskListMessageAddMoreTasksButtonAttachment);
 				bot.api.chat.update(updateTaskListMessageObject);
 			}
@@ -454,7 +447,8 @@ function getTimeToTasks(response, convo) {
 				convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 				// reset ze task list message
 				timeToTasksArray = [];
-				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontShowMinutes: true, dontCalculateMinutes: true });
+				var options = { dontShowMinutes: true, dontCalculateMinutes: true, noKarets: true };
+				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 
 				var message = 'How much *time* would you like to allocate to `' + taskTextsArray[timeToTasksArray.length] + '`?';
 				message = message + '\n' + taskListMessage;
@@ -491,34 +485,22 @@ function getTimeToTasks(response, convo) {
 					});
 				});
 
-				var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { dontUseDataValues: true, emphasizeMinutes: true });
+				var options = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
+				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
+				var attachments = (0, _messageHelpers.getTimeToTaskTextAttachmentWithTaskListMessage)(taskTextsArray, timeToTasksArray.length, taskListMessage);
 
-				var message = '';
-				if (taskTextsArray[timeToTasksArray.length]) {
-					message = 'How much *time* would you like to allocate to `' + taskTextsArray[timeToTasksArray.length] + '`?';
-				}
+				updateTaskListMessageObject.text = mainText;
+				updateTaskListMessageObject.attachments = JSON.stringify(attachments);
 
-				message = message + '\n' + taskListMessage;
-
-				updateTaskListMessageObject.text = message;
+				bot.api.chat.update(updateTaskListMessageObject);
 
 				if (timeToTasksArray.length >= taskArray.length) {
-
-					// only ready to go on once enough times have been entered
-
-					updateTaskListMessageObject.attachments = JSON.stringify(_constants.taskListMessageNoButtonsAttachment);
-					bot.api.chat.update(updateTaskListMessageObject);
 
 					console.log("~~finish times:~~ \n\n");
 					console.log(updateTaskListMessageObject);
 					convo.dayStart.taskArray = taskArray;
 					confirmTimeToTasks(timeToTasksArray, convo);
 					convo.next();
-				} else {
-
-					updateTaskListMessageObject.attachments = JSON.stringify(_constants.taskListMessageAddMoreTasksAndResetTimesButtonAttachment);
-
-					bot.api.chat.update(updateTaskListMessageObject);
 				}
 			}
 		}
