@@ -1130,6 +1130,7 @@ function askUserPostSessionOptions(response, convo) {
 			// delete button when answered with NL
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
+			convo.say('Let\'s take a break!');
 			getBreakTime(response, convo);
 			convo.next();
 		}
@@ -1246,7 +1247,7 @@ function getBreakTime(response, convo) {
 	if (!defaultBreakTime && UserId) {
 		convo.say('I set your default break time to ' + _constants.TOKI_DEFAULT_BREAK_TIME + ' minutes and will check with you then. See you at *' + customTimeString + '*!');
 	} else {
-		convo.say('Great! I\'ll check in with you in ' + durationMinutes + ' minutes at *' + customTimeString + '* :smile:');
+		convo.say('I\'ll check in with you in ' + durationMinutes + ' minutes at *' + customTimeString + '* :smile:');
 	}
 
 	convo.sessionEnd.reminders.push({
