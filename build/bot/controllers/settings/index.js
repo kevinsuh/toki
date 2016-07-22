@@ -34,6 +34,8 @@ exports.default = function (controller) {
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 			var nickName = user.nickName;
+			var defaultSnoozeTime = user.defaultSnoozeTime;
+			var defaultBreakTime = user.defaultBreakTime;
 			var tz = user.SlackUser.tz;
 
 			var userTimeZone = {};
@@ -51,7 +53,9 @@ exports.default = function (controller) {
 				convo.settings = {
 					SlackUserId: SlackUserId,
 					timeZone: userTimeZone,
-					nickName: name
+					nickName: name,
+					defaultBreakTime: defaultBreakTime,
+					defaultSnoozeTime: defaultSnoozeTime
 				};
 
 				startSettingsConversation(err, convo);
@@ -127,15 +131,27 @@ var _intents2 = _interopRequireDefault(_intents);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function startSettingsConversation(err, convo) {
+	var nickName = convo.settings.nickName;
+
+	convo.say('Hello ' + nickName + '!');
+	showSettingsOptions(convo);
+}
+
+// user wants to update settings!
+
+
+function showSettingsOptions(convo) {
 	var settings = convo.settings;
 	var _convo$settings2 = convo.settings;
 	var timeZone = _convo$settings2.timeZone;
 	var nickName = _convo$settings2.nickName;
+	var defaultSnoozeTime = _convo$settings2.defaultSnoozeTime;
+	var defaultBreakTime = _convo$settings2.defaultBreakTime;
 
 
 	var settingsAttachment = getSettingsAttachment(settings);
 	convo.ask({
-		text: 'Hello ' + nickName + '! Here are your settings:',
+		text: 'Here are your settings:',
 		attachments: settingsAttachment
 	}, [{
 		pattern: _constants.buttonValues.changeName.value,
@@ -162,6 +178,30 @@ function startSettingsConversation(err, convo) {
 			convo.next();
 		}
 	}, {
+		pattern: _constants.buttonValues.changeDefaultSnoozeTime.value,
+		callback: function callback(response, convo) {
+			changeDefaultSnoozeTime(response, convo);
+			convo.next();
+		}
+	}, { // same as buttonValues.changeDefaultSnoozeTime.value
+		pattern: _botResponses.utterances.containsSnooze,
+		callback: function callback(response, convo) {
+			changeDefaultSnoozeTime(response, convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.buttonValues.changeDefaultBreakTime.value,
+		callback: function callback(response, convo) {
+			changeDefaultBreakTime(response, convo);
+			convo.next();
+		}
+	}, { // same as buttonValues.changeDefaultBreakTime.value
+		pattern: _botResponses.utterances.containsBreak,
+		callback: function callback(response, convo) {
+			changeDefaultBreakTime(response, convo);
+			convo.next();
+		}
+	}, {
 		default: true,
 		callback: function callback(response, convo) {
 			// for now this will be where "never mind" goes
@@ -171,15 +211,92 @@ function startSettingsConversation(err, convo) {
 	}]);
 }
 
-// user wants to change time zones
-
-
-// user wants to update settings!
-function changeTimezone(response, convo) {
+function changeDefaultBreakTime(response, convo) {
 	var settings = convo.settings;
 	var _convo$settings3 = convo.settings;
 	var timeZone = _convo$settings3.timeZone;
 	var nickName = _convo$settings3.nickName;
+	var defaultSnoozeTime = _convo$settings3.defaultSnoozeTime;
+	var defaultBreakTime = _convo$settings3.defaultBreakTime;
+
+	convo.ask('How many minutes do you want your default break time to be?', [{
+		pattern: _botResponses.utterances.no,
+		callback: function callback(response, convo) {
+			convo.say("Okay!");
+			showSettingsOptions(convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+
+			// must be a number
+			var time = response.text;
+			var minutes = false;
+			var validMinutesTester = new RegExp(/[\dh]/);
+
+			if (validMinutesTester.test(time)) {
+				minutes = (0, _messageHelpers.convertTimeStringToMinutes)(time);
+			}
+
+			if (minutes) {
+				convo.settings.defaultBreakTime = minutes;
+				returnToMainSettings(response, convo);
+			} else {
+				convo.say("Sorry, still learning :dog:. Let me know in terms of minutes `i.e. 10 min`");
+				convo.repeat();
+			}
+			convo.next();
+		}
+	}]);
+}
+
+function changeDefaultSnoozeTime(response, convo) {
+	var settings = convo.settings;
+	var _convo$settings4 = convo.settings;
+	var timeZone = _convo$settings4.timeZone;
+	var nickName = _convo$settings4.nickName;
+	var defaultSnoozeTime = _convo$settings4.defaultSnoozeTime;
+	var defaultBreakTime = _convo$settings4.defaultBreakTime;
+
+	convo.ask('How many minutes do you want your default extend time to be? :timer_clock:', [{
+		pattern: _botResponses.utterances.no,
+		callback: function callback(response, convo) {
+			convo.say("Okay!");
+			showSettingsOptions(convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+
+			// must be a number
+			var time = response.text;
+			var minutes = false;
+			var validMinutesTester = new RegExp(/[\dh]/);
+
+			if (validMinutesTester.test(time)) {
+				minutes = (0, _messageHelpers.convertTimeStringToMinutes)(time);
+			}
+
+			if (minutes) {
+				convo.settings.defaultSnoozeTime = minutes;
+				returnToMainSettings(response, convo);
+			} else {
+				convo.say("Sorry, still learning :dog:. Let me know in terms of minutes `i.e. 10 min`");
+				convo.repeat();
+			}
+			convo.next();
+		}
+	}]);
+}
+
+// user wants to change time zones
+function changeTimezone(response, convo) {
+	var settings = convo.settings;
+	var _convo$settings5 = convo.settings;
+	var timeZone = _convo$settings5.timeZone;
+	var nickName = _convo$settings5.nickName;
 
 	convo.ask({
 		text: 'Which timezone are you in now?',
@@ -283,48 +400,15 @@ function askOtherTimeZoneOptions(response, convo) {
 // return after updating statuses
 function returnToMainSettings(response, convo) {
 	var settings = convo.settings;
-	var _convo$settings4 = convo.settings;
-	var timeZone = _convo$settings4.timeZone;
-	var nickName = _convo$settings4.nickName;
+	var _convo$settings6 = convo.settings;
+	var timeZone = _convo$settings6.timeZone;
+	var nickName = _convo$settings6.nickName;
 
 
 	var settingsAttachment = getSettingsAttachment(settings);
 
-	convo.ask({
-		text: 'Here are your updated settings. Is there anything else I can help you with?',
-		attachments: settingsAttachment
-	}, [{
-		pattern: _constants.buttonValues.changeName.value,
-		callback: function callback(response, convo) {
-			changeName(response, convo);
-			convo.next();
-		}
-	}, { // same as buttonValues.changeName.value
-		pattern: _botResponses.utterances.containsName,
-		callback: function callback(response, convo) {
-			changeName(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _constants.buttonValues.changeTimeZone.value,
-		callback: function callback(response, convo) {
-			changeTimezone(response, convo);
-			convo.next();
-		}
-	}, { // same as buttonValues.changeTimeZone.value
-		pattern: _botResponses.utterances.containsTimeZone,
-		callback: function callback(response, convo) {
-			changeTimezone(response, convo);
-			convo.next();
-		}
-	}, {
-		default: true,
-		callback: function callback(response, convo) {
-			// for now this will be where "never mind" goes
-			convo.say("Happy to help! Now let's get back to it :punch:");
-			convo.next();
-		}
-	}]);
+	convo.say('Got it, I\'ve made those updates!');
+	showSettingsOptions(convo);
 }
 
 // user wants to change name
@@ -369,7 +453,15 @@ function confirmName(name, convo) {
 function getSettingsAttachment(settings) {
 	var timeZone = settings.timeZone;
 	var nickName = settings.nickName;
+	var defaultSnoozeTime = settings.defaultSnoozeTime;
+	var defaultBreakTime = settings.defaultBreakTime;
 
+	if (!defaultSnoozeTime) {
+		defaultSnoozeTime = _constants.TOKI_DEFAULT_SNOOZE_TIME;
+	}
+	if (!defaultBreakTime) {
+		defaultBreakTime = _constants.TOKI_DEFAULT_BREAK_TIME;
+	}
 
 	var attachment = [{
 		callback_id: "SETTINGS",
@@ -388,16 +480,40 @@ function getSettingsAttachment(settings) {
 		}, {
 			value: timeZone.name,
 			short: true
+		}, {
+			title: 'Default Extend Time :timer_clock::',
+			short: true
+		}, {
+			value: defaultSnoozeTime + ' min',
+			short: true
+		}, {
+			title: 'Default Break Time:',
+			short: true
+		}, {
+			value: defaultBreakTime + ' min',
+			short: true
+		}, {
+			value: "Would you like me to update any of these settings?"
 		}],
 		actions: [{
 			name: _constants.buttonValues.changeName.name,
-			text: "Change name",
+			text: "Name",
 			value: _constants.buttonValues.changeName.value,
 			type: "button"
 		}, {
 			name: _constants.buttonValues.changeTimeZone.name,
-			text: "Switch Timezone",
+			text: "Timezone",
 			value: _constants.buttonValues.changeTimeZone.value,
+			type: "button"
+		}, {
+			name: _constants.buttonValues.changeDefaultSnoozeTime.name,
+			text: "Extend Time",
+			value: _constants.buttonValues.changeDefaultSnoozeTime.value,
+			type: "button"
+		}, {
+			name: _constants.buttonValues.changeDefaultBreakTime.name,
+			text: "Break Time",
+			value: _constants.buttonValues.changeDefaultBreakTime.value,
 			type: "button"
 		}, {
 			name: _constants.buttonValues.neverMind.name,

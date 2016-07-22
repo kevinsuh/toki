@@ -314,6 +314,14 @@ export const buttonValues ={
 	remindMe: {
 		value: "REMIND_ME",
 		name: "REMIND_ME"
+	},
+	changeDefaultSnoozeTime: {
+		value: "CHANGE_DEFAULT_SNOOZE_TIME",
+		name: "CHANGE_DEFAULT_SNOOZE_TIME"
+	},
+	changeDefaultBreakTime: {
+		value: "CHANGE_DEFAULT_BREAK_TIME",
+		name: "CHANGE_DEFAULT_BREAK_TIME"
 	}
 }
 
