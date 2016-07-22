@@ -248,7 +248,7 @@ exports.default = function (controller) {
 									// create checkin reminder if requested
 									if (dayStart.startDayDecision == _intents2.default.REMINDER) {
 										var tenMinuteReminder = (0, _momentTimezone2.default)().add(10, 'minutes');
-										var customNote = "Hey! Let me know when you're ready to `start a session` :muscle:";
+										var customNote = "Hey! Let me know when you want to start a session :muscle:";
 										_models2.default.Reminder.create({
 											remindTime: tenMinuteReminder,
 											UserId: UserId,
@@ -266,7 +266,10 @@ exports.default = function (controller) {
 							};
 
 
-							(0, _index.triggerIntent)(dayStart.startDayDecision, config);
+							setTimeout(function () {
+								(0, _index.triggerIntent)(dayStart.startDayDecision, config);
+								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+							}, 750);;
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						})();
 					} else {

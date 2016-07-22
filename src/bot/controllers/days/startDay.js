@@ -278,7 +278,7 @@ export default function(controller) {
 								// create checkin reminder if requested
 								if (dayStart.startDayDecision == intentConfig.REMINDER) {
 									var tenMinuteReminder = moment().add(10, 'minutes');
-									var customNote = "Hey! Let me know when you're ready to `start a session` :muscle:";
+									var customNote = "Hey! Let me know when you want to start a session :muscle:";
 									models.Reminder.create({
 										remindTime: tenMinuteReminder,
 										UserId,
@@ -296,7 +296,10 @@ export default function(controller) {
 							bot
 						};
 
-						triggerIntent(dayStart.startDayDecision, config);
+						setTimeout(() => {
+							triggerIntent(dayStart.startDayDecision, config);
+							resumeQueuedReachouts(bot, { SlackUserId });
+						}, 750);;
 						resumeQueuedReachouts(bot, { SlackUserId });
 
 					} else {

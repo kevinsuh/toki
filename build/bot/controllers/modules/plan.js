@@ -150,6 +150,7 @@ function showPendingTasks(response, convo) {
 		default: true,
 		callback: function callback(response, convo) {
 			convo.say("I didn't quite get that :thinking_face:");
+			convo.say("Which of these tasks do you still want to work on?");
 			convo.repeat();
 			convo.next();
 		}
@@ -302,7 +303,7 @@ function confirmDeleteTasks(response, convo) {
 	convo.dayStart.taskArray = newTaskArray;
 
 	// go back to flow
-	convo.say("Sounds great, deleted!");
+	convo.say('Sounds great, I deleted ' + tasksString + '!');
 	askForAdditionalTasks(response, convo);
 	convo.next();
 
