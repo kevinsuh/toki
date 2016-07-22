@@ -431,6 +431,30 @@ export const taskListMessageDoneButtonAttachment = [
 	}
 ];
 
+export const taskListMessageDoneAndDeleteButtonAttachment = [
+	{
+		attachment_type: 'default',
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "Which additional tasks do you want to work on?",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+					name: buttonValues.doneAddingTasks.name,
+					text: "Done",
+					value: buttonValues.doneAddingTasks.value,
+					type: "button",
+					style: "primary"
+			},
+			{
+				name: buttonValues.deleteTasks.name,
+				text: "Delete tasks",
+				value: buttonValues.deleteTasks.value,
+				type: "button"
+			}
+		]
+	}
+];
+
 export const taskListMessageAddMoreTasksButtonAttachment = [
 	{
 		attachment_type: 'default',

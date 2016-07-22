@@ -6,9 +6,9 @@ import bodyParser from 'body-parser';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, convertTaskNumberStringToArray, getMostRecentTaskListMessageToUpdate, deleteConvoAskMessage, convertResponseObjectToNewTaskArray, getTimeToTaskTextAttachmentWithTaskListMessage } from '../../lib/messageHelpers';
+import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, convertTaskNumberStringToArray, getMostRecentTaskListMessageToUpdate, deleteConvoAskMessage, convertResponseObjectToNewTaskArray, getTimeToTaskTextAttachmentWithTaskListMessage, commaSeparateOutTaskArray } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
-import { FINISH_WORD, EXIT_EARLY_WORDS, NONE, RESET, colorsHash, buttonValues, taskListMessageDoneButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment, taskListMessageYesButtonAttachment, taskListMessageNoButtonsAttachment } from '../../lib/constants';
+import { FINISH_WORD, EXIT_EARLY_WORDS, NONE, RESET, colorsHash, buttonValues, taskListMessageDoneButtonAttachment, taskListMessageDoneAndDeleteButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment, taskListMessageYesButtonAttachment, taskListMessageNoButtonsAttachment } from '../../lib/constants';
 import { consoleLog } from '../../lib/miscHelpers';
 
 import { resumeQueuedReachouts } from '../index';
@@ -179,102 +179,146 @@ function savePendingTasksToWorkOn(response, convo) {
 
 function askForAdditionalTasks(response, convo) {
 
-	const { task }                  = convo;
-	const { bot, source_message }   = task;
-	var { pendingTasks, taskArray } = convo.dayStart; // ported from beginning of convo flow
-
-	var options = {
-		dontShowMinutes: true,
-		dontCalculateMinutes: true
-	}
-
-	var taskListMessage = convertArrayToTaskListMessage(taskArray, options);
+	const { task }                = convo;
+	const { bot, source_message } = task;
 
 	var tasks = [];
-	taskArray.forEach((task) => {
-		tasks.push(task);
-	});
 
 	convo.say("Which *additional tasks* would you like to work on with me today? Please send me each task in a separate line");
+	addMoreTasks(response, convo);
+
+}
+
+// convo flow to delete tasks from task list
+function deleteTasksFromList(response, convo) {
+
+	const { task, dayStart: { taskArray } } = convo;
+	const { bot, source_message }           = task;
+
+	var message = `Which of your task(s) would you like to delete?`;
+	var options = { dontShowMinutes: true, dontCalculateMinutes: true };
+	var taskListMessage = convertArrayToTaskListMessage(taskArray, options);
+
 	convo.ask({
-		text: taskListMessage,
+		text: `${message}\n${taskListMessage}`,
 		attachments:[
 			{
 				attachment_type: 'default',
 				callback_id: "TASK_LIST_MESSAGE",
-				fallback: "Which additional tasks do you want to work on?",
+				fallback: "Which tasks do you want to delete?",
 				color: colorsHash.grey.hex,
 				actions: [
 					{
-							name: buttonValues.noAdditionalTasks.name,
-							text: "No additional tasks",
-							value: buttonValues.noAdditionalTasks.value,
-							type: "button"
+						name: buttonValues.neverMind.name,
+						text: "Never mind!",
+						value: buttonValues.neverMind.value,
+						type: "button"
 					}
 				]
 			}
 		]
-	},
-	[
+	}, [
 		{
-			pattern: buttonValues.noAdditionalTasks.value,
-			callback: function(response, convo) {
-				getTimeToTasks(response, convo);
-				convo.next();
-			}
-		},
-		{
-			pattern: buttonValues.doneAddingTasks.value,
-			callback: function(response, convo) {
-				saveTaskResponsesToDayStartObject(tasks, convo);
-				getTimeToTasks(response, convo);
-				convo.next();
-			}
-		},
-		{
-			pattern: utterances.done,
-			callback: function(response, convo) {
+			pattern: utterances.noAndNeverMind,
+			callback: (response, convo) => {
 
 				// delete button when answered with NL
 				deleteConvoAskMessage(response.channel, bot);
 
-				convo.say("Excellent!");
-				saveTaskResponsesToDayStartObject(tasks, convo);
-				getTimeToTasks(response, convo);
+				convo.say("Okay, let's get back to your list");
+				askForAdditionalTasks(response, convo);
 				convo.next();
 			}
 		},
 		{
-			pattern: utterances.noAdditional,
-			callback: function(response, convo) {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
-				convo.say("Excellent!");
-				getTimeToTasks(response, convo);
-				convo.next();
-
-			}
-		},
-		{ // this is additional task added in this case.
 			default: true,
-			callback: function(response, convo) {
+			callback: (response, convo) => {
 
-				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
 
-				var newTaskArray = convertResponseObjectToNewTaskArray(response);
-				newTaskArray.forEach((newTask) => {
-					tasks.push(newTask);
+				confirmDeleteTasks(response, convo, taskArray);
+				convo.next();
+			}
+		}
+	]);
+}
+
+function confirmDeleteTasks(response, convo) {
+
+	const { task, dayStart: { taskArray } } = convo;
+	const { bot, source_message }           = task;
+
+	var tasksToDeleteString = response.text;
+
+	// if we capture 0 valid tasks from string, then we start over
+	var taskNumbersToDeleteArray = convertTaskNumberStringToArray(tasksToDeleteString, taskArray);
+	if (!taskNumbersToDeleteArray) {
+		convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+		convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+		deleteTasksFromList(response, convo);
+		return;
+	}
+
+	var tasksToDelete = [];
+	taskArray.forEach((dailyTask, index) => {
+		var taskNumber = index + 1; // b/c index is 0-based
+		if (taskNumbersToDeleteArray.indexOf(taskNumber) > -1) {
+			if (dailyTask.dataValues) {
+				dailyTask = dailyTask.dataValues;
+			}
+			tasksToDelete.push(dailyTask);
+		}
+	});	
+
+	var taskTextsToDelete = tasksToDelete.map((dailyTask) => {
+		return dailyTask.text;
+	});
+
+	console.log(`\n\n\ntaskTextsToDelete: `);
+	console.log(taskTextsToDelete);
+
+	console.log(`\n\n\ntaskArray: `);
+	console.log(taskArray);
+
+	var tasksString = commaSeparateOutTaskArray(taskTextsToDelete);
+
+	var newTaskArray = [];
+	convo.ask(`So you would like to delete ${tasksString}?`, [
+		{
+			pattern: utterances.yes,
+			callback: (response, convo) => {
+
+				taskArray.forEach((task) => {
+					if (task.dataValues) {
+						task = task.dataValues;
+					}
+					if (taskTextsToDelete.indexOf(task.text) < 0) {
+						newTaskArray.push(task);
+					}
 				});
+				convo.dayStart.taskArray = newTaskArray;
 
-				taskListMessage = convertArrayToTaskListMessage(tasks, options)
-
-				updateTaskListMessageObject.text        = taskListMessage;
-				updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageDoneButtonAttachment);;
-
-				bot.api.chat.update(updateTaskListMessageObject);
-				
+				// go back to flow
+				convo.say("Sounds great, deleted!");
+				askForAdditionalTasks(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				convo.say("Okay, let's try this again!");
+				deleteTasksFromList(response, convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				convo.say("Couldn't quite catch that :thinking_face:");
+				convo.repeat();
+				convo.next();
 			}
 		}
 	]);
@@ -340,18 +384,45 @@ function addMoreTasks(response, convo) {
 		tasks.push(task);
 	});
 
-	convo.ask({
-		text: taskListMessage,
-		attachments:[
+	var attachments = [
+		{
+			attachment_type: 'default',
+			callback_id: "TASK_LIST_MESSAGE",
+			fallback: "Which additional tasks do you want to work on?",
+			color: colorsHash.grey.hex
+		}
+	];
+
+	if (tasks.length > 0 && attachments) {
+		// if greater length, then add these actions
+		attachments[0].actions = [
 			{
-				attachment_type: 'default',
-				callback_id: "TASK_LIST_MESSAGE",
-				fallback: "What tasks do you want to work on?",
-				color: colorsHash.grey.hex
+					name: buttonValues.noAdditionalTasks.name,
+					text: "No additional tasks",
+					value: buttonValues.noAdditionalTasks.value,
+					type: "button"
+			},
+			{
+					name: buttonValues.deleteTasks.name,
+					text: "Delete tasks",
+					value: buttonValues.deleteTasks.value,
+					type: "button"
 			}
 		]
+	}
+
+	convo.ask({
+		text: taskListMessage,
+		attachments
 	},
 	[
+		{
+			pattern: buttonValues.noAdditionalTasks.value,
+			callback: function(response, convo) {
+				getTimeToTasks(response, convo);
+				convo.next();
+			}
+		},
 		{
 			pattern: buttonValues.doneAddingTasks.value,
 			callback: function(response, convo) {
@@ -362,22 +433,70 @@ function addMoreTasks(response, convo) {
 		},
 		{
 			pattern: utterances.done,
-			callback: (response, convo) => {
+			callback: function(response, convo) {
 
 				// delete button when answered with NL
 				deleteConvoAskMessage(response.channel, bot);
 
-				console.log(tasks);
-
-				saveTaskResponsesToDayStartObject(tasks, convo);
 				convo.say("Excellent!");
+				saveTaskResponsesToDayStartObject(tasks, convo);
 				getTimeToTasks(response, convo);
 				convo.next();
 			}
 		},
 		{
+			pattern: utterances.noAdditional,
+			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
+				convo.say("Excellent!");
+				getTimeToTasks(response, convo);
+				convo.next();
+
+			}
+		},
+		{
+			pattern: buttonValues.deleteTasks.value,
+			callback: function(response, convo) {
+				saveTaskResponsesToDayStartObject(tasks, convo);
+				deleteTasksFromList(response, convo);		
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.deleteTasks,
+			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
+				saveTaskResponsesToDayStartObject(tasks, convo);
+				convo.say("Okay! Let's remove some tasks");
+				deleteTasksFromList(response, convo);
+
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.noAdditional,
+			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+
+				convo.say("Excellent!");
+				getTimeToTasks(response, convo);
+				convo.next();
+
+			}
+		},
+		{ // this is additional task added in this case.
 			default: true,
 			callback: function(response, convo) {
+
+				console.log(`~~additional task being added!!!!!~~`);
 
 				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 
@@ -389,8 +508,8 @@ function addMoreTasks(response, convo) {
 				taskListMessage = convertArrayToTaskListMessage(tasks, options)
 
 				updateTaskListMessageObject.text        = taskListMessage;
-				updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageDoneButtonAttachment);;
-				
+				updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageDoneAndDeleteButtonAttachment);
+
 				bot.api.chat.update(updateTaskListMessageObject);
 				
 			}
@@ -414,7 +533,7 @@ function getTimeToTasks(response, convo) {
 		return task.text;
 	})
 
-	var mainText = "Let's add time to each of your tasks!";
+	var mainText = "*Let's add time to each of your tasks:*";
 
 	var attachments = getTimeToTaskTextAttachmentWithTaskListMessage(taskTextsArray, timeToTasksArray.length, taskListMessage);
 	convo.ask({
