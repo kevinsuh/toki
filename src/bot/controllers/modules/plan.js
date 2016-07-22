@@ -286,44 +286,63 @@ function confirmDeleteTasks(response, convo) {
 	var tasksString = commaSeparateOutTaskArray(taskTextsToDelete);
 
 	var newTaskArray = [];
-	convo.ask(`So you would like to delete ${tasksString}?`, [
-		{
-			pattern: utterances.yes,
-			callback: (response, convo) => {
-
-				taskArray.forEach((task) => {
-					if (task.dataValues) {
-						task = task.dataValues;
-					}
-					if (taskTextsToDelete.indexOf(task.text) < 0) {
-						newTaskArray.push(task);
-					}
-				});
-				convo.dayStart.taskArray = newTaskArray;
-
-				// go back to flow
-				convo.say("Sounds great, deleted!");
-				askForAdditionalTasks(response, convo);
-				convo.next();
-			}
-		},
-		{
-			pattern: utterances.no,
-			callback: (response, convo) => {
-				convo.say("Okay, let's try this again!");
-				deleteTasksFromList(response, convo);
-				convo.next();
-			}
-		},
-		{
-			default: true,
-			callback: (response, convo) => {
-				convo.say("Couldn't quite catch that :thinking_face:");
-				convo.repeat();
-				convo.next();
-			}
+	taskArray.forEach((task) => {
+		if (task.dataValues) {
+			task = task.dataValues;
 		}
-	]);
+		if (taskTextsToDelete.indexOf(task.text) < 0) {
+			newTaskArray.push(task);
+		}
+	});
+	convo.dayStart.taskArray = newTaskArray;
+
+	// go back to flow
+	convo.say("Sounds great, deleted!");
+	askForAdditionalTasks(response, convo);
+	convo.next();
+
+	/** WE ARE NOT CONFIRMING FOR NOW */
+	if (false) {
+		convo.ask(`So you would like to delete ${tasksString}?`, [
+			{
+				pattern: utterances.yes,
+				callback: (response, convo) => {
+
+					taskArray.forEach((task) => {
+						if (task.dataValues) {
+							task = task.dataValues;
+						}
+						if (taskTextsToDelete.indexOf(task.text) < 0) {
+							newTaskArray.push(task);
+						}
+					});
+					convo.dayStart.taskArray = newTaskArray;
+
+					// go back to flow
+					convo.say("Sounds great, deleted!");
+					askForAdditionalTasks(response, convo);
+					convo.next();
+				}
+			},
+			{
+				pattern: utterances.no,
+				callback: (response, convo) => {
+					convo.say("Okay, let's try this again!");
+					deleteTasksFromList(response, convo);
+					convo.next();
+				}
+			},
+			{
+				default: true,
+				callback: (response, convo) => {
+					convo.say("Couldn't quite catch that :thinking_face:");
+					convo.repeat();
+					convo.next();
+				}
+			}
+		]);
+	}
+		
 
 }
 
@@ -544,7 +563,7 @@ function getTimeToTasks(response, convo) {
 		return task.text;
 	})
 
-	var mainText = "*Let's add time to each of your tasks:*";
+	var mainText = "Let's add time to each of your tasks:";
 
 	var attachments = getTimeToTaskTextAttachmentWithTaskListMessage(taskTextsArray, timeToTasksArray.length, taskListMessage);
 	convo.ask({
@@ -699,11 +718,10 @@ function askToStartWorkSession(response, convo) {
 				attachment_type: 'default',
 				callback_id: "WORK_SESSION_DECISIONS",
 				fallback: "Ready to start a work session?",
-				color: colorsHash.blue.hex,
 				actions: [
 					{
 							name: buttonValues.startNow.name,
-							text: "Start session now!",
+							text: "Let's start :punch:",
 							value: buttonValues.startNow.value,
 							type: "button",
 							style: "primary"
@@ -752,6 +770,7 @@ function askToStartWorkSession(response, convo) {
 		{
 			pattern: buttonValues.remindMe.value,
 			callback: function(response, convo) {
+				convo.say("I'll check in with you in 10 minutes :wave:");
 				convo.dayStart.startDayDecision = intentConfig.REMINDER;
 				convo.next();
 			}
@@ -762,7 +781,7 @@ function askToStartWorkSession(response, convo) {
 				
 				// delete button when answered with NL
 				deleteConvoAskMessage(response.channel, bot);
-				convo.say("Great! I'll check in with you in 10 minutes :smiley:");
+				convo.say("Awesome! I'll check in with you in 10 minutes :wave:");
 				convo.dayStart.startDayDecision = intentConfig.REMINDER;
 
 				convo.next();

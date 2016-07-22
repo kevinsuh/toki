@@ -4,11 +4,6 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-
-// base controller for start day
-
-
 exports.default = function (controller) {
 
 	// programmatic trigger of actual day start flow: `begin_day_flow`
@@ -125,6 +120,8 @@ exports.default = function (controller) {
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 
+			var UserId = user.id;
+
 			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
 				var name = user.nickName || user.email;
@@ -133,7 +130,7 @@ exports.default = function (controller) {
 				convo.dayStart = {
 					bot: bot,
 					taskArray: [],
-					UserId: user.id,
+					UserId: UserId,
 					startDayDecision: false, // what does user want to do with day
 					prioritizedTaskArray: [] // the final tasks to do for the day
 				};
@@ -168,7 +165,9 @@ exports.default = function (controller) {
 					console.log("\n\n\n");
 
 					if (convo.status == 'completed') {
-						var _ret = function () {
+						var config;
+
+						(function () {
 							var UserId = dayStart.UserId;
 							var taskArray = dayStart.taskArray;
 
@@ -246,21 +245,30 @@ exports.default = function (controller) {
 											"open": false
 										});
 									});
+									// create checkin reminder if requested
+									if (dayStart.startDayDecision == _intents2.default.REMINDER) {
+										var tenMinuteReminder = (0, _momentTimezone2.default)().add(10, 'minutes');
+										var customNote = "Hey! Let me know when you're ready to `start a session` :muscle:";
+										_models2.default.Reminder.create({
+											remindTime: tenMinuteReminder,
+											UserId: UserId,
+											customNote: customNote
+										});
+									}
 								});
 							});
 
 							// TRIGGER SESSION_START HERE
-							if (dayStart.startDayDecision == _intents2.default.START_SESSION) {
-								controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
-								return {
-									v: void 0
-								};
-							}
+							config = {
+								SlackUserId: SlackUserId,
+								controller: controller,
+								bot: bot
+							};
 
+
+							(0, _index.triggerIntent)(dayStart.startDayDecision, config);
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-						}();
-
-						if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+						})();
 					} else {
 						// default premature end
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
@@ -289,6 +297,10 @@ var _bodyParser = require('body-parser');
 
 var _bodyParser2 = _interopRequireDefault(_bodyParser);
 
+var _momentTimezone = require('moment-timezone');
+
+var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
+
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
@@ -310,4 +322,6 @@ var _plan = require('../modules/plan');
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 ;
+
+// base controller for start day
 //# sourceMappingURL=startDay.js.map

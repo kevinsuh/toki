@@ -291,40 +291,58 @@ function confirmDeleteTasks(response, convo) {
 	var tasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToDelete);
 
 	var newTaskArray = [];
-	convo.ask('So you would like to delete ' + tasksString + '?', [{
-		pattern: _botResponses.utterances.yes,
-		callback: function callback(response, convo) {
+	taskArray.forEach(function (task) {
+		if (task.dataValues) {
+			task = task.dataValues;
+		}
+		if (taskTextsToDelete.indexOf(task.text) < 0) {
+			newTaskArray.push(task);
+		}
+	});
+	convo.dayStart.taskArray = newTaskArray;
 
-			taskArray.forEach(function (task) {
-				if (task.dataValues) {
-					task = task.dataValues;
-				}
-				if (taskTextsToDelete.indexOf(task.text) < 0) {
-					newTaskArray.push(task);
-				}
-			});
-			convo.dayStart.taskArray = newTaskArray;
+	// go back to flow
+	convo.say("Sounds great, deleted!");
+	askForAdditionalTasks(response, convo);
+	convo.next();
 
-			// go back to flow
-			convo.say("Sounds great, deleted!");
-			askForAdditionalTasks(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _botResponses.utterances.no,
-		callback: function callback(response, convo) {
-			convo.say("Okay, let's try this again!");
-			deleteTasksFromList(response, convo);
-			convo.next();
-		}
-	}, {
-		default: true,
-		callback: function callback(response, convo) {
-			convo.say("Couldn't quite catch that :thinking_face:");
-			convo.repeat();
-			convo.next();
-		}
-	}]);
+	/** WE ARE NOT CONFIRMING FOR NOW */
+	if (false) {
+		convo.ask('So you would like to delete ' + tasksString + '?', [{
+			pattern: _botResponses.utterances.yes,
+			callback: function callback(response, convo) {
+
+				taskArray.forEach(function (task) {
+					if (task.dataValues) {
+						task = task.dataValues;
+					}
+					if (taskTextsToDelete.indexOf(task.text) < 0) {
+						newTaskArray.push(task);
+					}
+				});
+				convo.dayStart.taskArray = newTaskArray;
+
+				// go back to flow
+				convo.say("Sounds great, deleted!");
+				askForAdditionalTasks(response, convo);
+				convo.next();
+			}
+		}, {
+			pattern: _botResponses.utterances.no,
+			callback: function callback(response, convo) {
+				convo.say("Okay, let's try this again!");
+				deleteTasksFromList(response, convo);
+				convo.next();
+			}
+		}, {
+			default: true,
+			callback: function callback(response, convo) {
+				convo.say("Couldn't quite catch that :thinking_face:");
+				convo.repeat();
+				convo.next();
+			}
+		}]);
+	}
 }
 
 // helper function save convo responses to your taskArray obj
@@ -526,7 +544,7 @@ function getTimeToTasks(response, convo) {
 		return task.text;
 	});
 
-	var mainText = "*Let's add time to each of your tasks:*";
+	var mainText = "Let's add time to each of your tasks:";
 
 	var attachments = (0, _messageHelpers.getTimeToTaskTextAttachmentWithTaskListMessage)(taskTextsArray, timeToTasksArray.length, taskListMessage);
 	convo.ask({
@@ -663,10 +681,9 @@ function askToStartWorkSession(response, convo) {
 			attachment_type: 'default',
 			callback_id: "WORK_SESSION_DECISIONS",
 			fallback: "Ready to start a work session?",
-			color: _constants.colorsHash.blue.hex,
 			actions: [{
 				name: _constants.buttonValues.startNow.name,
-				text: "Start session now!",
+				text: "Let's start :punch:",
 				value: _constants.buttonValues.startNow.value,
 				type: "button",
 				style: "primary"
@@ -706,6 +723,7 @@ function askToStartWorkSession(response, convo) {
 	}, {
 		pattern: _constants.buttonValues.remindMe.value,
 		callback: function callback(response, convo) {
+			convo.say("I'll check in with you in 10 minutes :wave:");
 			convo.dayStart.startDayDecision = _intents2.default.REMINDER;
 			convo.next();
 		}
@@ -715,7 +733,7 @@ function askToStartWorkSession(response, convo) {
 
 			// delete button when answered with NL
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-			convo.say("Great! I'll check in with you in 10 minutes :smiley:");
+			convo.say("Awesome! I'll check in with you in 10 minutes :wave:");
 			convo.dayStart.startDayDecision = _intents2.default.REMINDER;
 
 			convo.next();

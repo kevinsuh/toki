@@ -9,6 +9,7 @@ exports.customConfigBot = customConfigBot;
 exports.trackBot = trackBot;
 exports.connectOnInstall = connectOnInstall;
 exports.connectOnLogin = connectOnLogin;
+exports.triggerIntent = triggerIntent;
 
 var _botkit = require('botkit');
 
