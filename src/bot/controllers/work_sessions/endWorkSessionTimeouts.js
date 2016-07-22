@@ -116,6 +116,8 @@ export default function(controller) {
 		})
 		.then((user) => {
 
+			var { defaultBreakTime } = user;
+
 			if (botCallback) {
 				// if botCallback, need to get the correct bot
 				var botToken = bot.config.token;
@@ -148,7 +150,8 @@ export default function(controller) {
 								SlackUserId,
 								postSessionDecision: false,
 								reminders: [],
-								completedTaskIds
+								completedTaskIds,
+								defaultBreakTime
 							};
 
 							askUserPostSessionOptions(err, convo);
@@ -307,6 +310,8 @@ export default function(controller) {
 		})
 		.then((user) => {
 
+			var { defaultBreakTime } = user;
+
 			if (botCallback) {
 				// if botCallback, need to get the correct bot
 				var botToken = bot.config.token;
@@ -319,7 +324,8 @@ export default function(controller) {
 				convo.sessionEnd = {
 					SlackUserId,
 					postSessionDecision: false,
-					reminders: []
+					reminders: [],
+					defaultBreakTime
 				};
 
 				askUserPostSessionOptions(err, convo);

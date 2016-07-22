@@ -12,7 +12,8 @@ module.exports = function (sequelize, DataTypes) {
       defaultValue: false
     },
     nickName: DataTypes.STRING,
-    defaultSnoozeTime: DataTypes.INTEGER
+    defaultSnoozeTime: DataTypes.INTEGER,
+    defaultBreakTime: DataTypes.INTEGER
   }, {
 
     classMethods: {
