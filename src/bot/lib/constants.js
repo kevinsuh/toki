@@ -308,6 +308,10 @@ export const buttonValues ={
 	yes: {
 		value: "YES",
 		name: "YES"
+	},
+	remindMe: {
+		value: "REMIND_ME",
+		name: "REMIND_ME"
 	}
 }
 
@@ -426,6 +430,30 @@ export const taskListMessageDoneButtonAttachment = [
 					value: buttonValues.doneAddingTasks.value,
 					type: "button",
 					style: "primary"
+			}
+		]
+	}
+];
+
+export const taskListMessageDoneAndDeleteButtonAttachment = [
+	{
+		attachment_type: 'default',
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "Which additional tasks do you want to work on?",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+					name: buttonValues.doneAddingTasks.name,
+					text: "Done",
+					value: buttonValues.doneAddingTasks.value,
+					type: "button",
+					style: "primary"
+			},
+			{
+				name: buttonValues.deleteTasks.name,
+				text: "Delete tasks",
+				value: buttonValues.deleteTasks.value,
+				type: "button"
 			}
 		]
 	}

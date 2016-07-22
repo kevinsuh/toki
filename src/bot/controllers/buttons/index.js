@@ -60,7 +60,7 @@ export default function(controller) {
 					bot.replyInteractive(message, "Sounds good!");
 					break;
 				case buttonValues.backLater.value:
-					bot.replyInteractive(message, "Okay! I'll be here when you get back");
+					bot.replyInteractive(message, "Okay! I'll be here when you get back :wave:");
 					break;
 				case buttonValues.actuallyWantToAddATask.value:
 					bot.replyInteractive(message, "Let's add more tasks! Enter them here separated by new lines");

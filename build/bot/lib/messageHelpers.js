@@ -20,6 +20,7 @@ exports.commaSeparateOutTaskArray = commaSeparateOutTaskArray;
 exports.getMostRecentTaskListMessageToUpdate = getMostRecentTaskListMessageToUpdate;
 exports.getMostRecentMessageToUpdate = getMostRecentMessageToUpdate;
 exports.deleteConvoAskMessage = deleteConvoAskMessage;
+exports.getTimeToTaskTextAttachmentWithTaskListMessage = getTimeToTaskTextAttachmentWithTaskListMessage;
 
 var _constants = require('./constants');
 
@@ -598,5 +599,60 @@ function deleteConvoAskMessage(userChannel, bot) {
 	// used mostly to delete the button options when answered with NL
 	var convoAskMessage = getMostRecentMessageToUpdate(userChannel, bot);
 	bot.api.chat.delete(convoAskMessage);
+}
+
+/**
+ * get task list message with updated texts
+ * @param  {[string]} taskTextArray
+ * @param  {int} index  which specific taskText
+ * @param  {string} taskListMessage 
+ * @return {array}                 attachments message
+ */
+function getTimeToTaskTextAttachmentWithTaskListMessage(taskTextArray, index, taskListMessage) {
+
+	var message = '';
+	var taskText = taskTextArray[index];
+	if (taskText) {
+		message = 'How much *time* would you like to allocate to `' + taskText + '`?';
+	}
+
+	var colors = ["blue", "green", "orange", "yellow", "lavendar"];
+
+	var colorChoice = colors[index % colors.length];
+	console.log('\n\n\ncolor choice: ' + index + ' / ' + colorChoice);
+	var color = _constants.colorsHash[colorChoice] ? _constants.colorsHash[colorChoice].hex : _constants.colorsHash.blue.hex;
+
+	var attachments = [{
+		color: _constants.colorsHash.grey.hex,
+		attachment_type: "default",
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "Here's your task list",
+		mrkdwn_in: ["fields"],
+		fields: [{
+			value: taskListMessage
+		}]
+	}];
+
+	if (taskText) {
+		var addTaskButtonActions = [{
+			name: _constants.buttonValues.actuallyWantToAddATask.name,
+			text: "Add more tasks!",
+			value: _constants.buttonValues.actuallyWantToAddATask.value,
+			type: "button"
+		}];
+		if (attachments[0]) attachments[0].actions = addTaskButtonActions;
+	}
+
+	// the specific question to ask
+	attachments.push({
+		text: message,
+		color: color,
+		mrkdwn_in: ["text"],
+		attachment_type: "default",
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "How long do you want to work on this task?"
+	});
+
+	return attachments;
 }
 //# sourceMappingURL=messageHelpers.js.map

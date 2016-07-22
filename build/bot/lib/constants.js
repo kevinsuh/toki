@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
@@ -318,6 +318,10 @@ var buttonValues = exports.buttonValues = {
 	yes: {
 		value: "YES",
 		name: "YES"
+	},
+	remindMe: {
+		value: "REMIND_ME",
+		name: "REMIND_ME"
 	}
 };
 
@@ -424,6 +428,25 @@ var taskListMessageDoneButtonAttachment = exports.taskListMessageDoneButtonAttac
 		value: buttonValues.doneAddingTasks.value,
 		type: "button",
 		style: "primary"
+	}]
+}];
+
+var taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = [{
+	attachment_type: 'default',
+	callback_id: "TASK_LIST_MESSAGE",
+	fallback: "Which additional tasks do you want to work on?",
+	color: colorsHash.grey.hex,
+	actions: [{
+		name: buttonValues.doneAddingTasks.name,
+		text: "Done",
+		value: buttonValues.doneAddingTasks.value,
+		type: "button",
+		style: "primary"
+	}, {
+		name: buttonValues.deleteTasks.name,
+		text: "Delete tasks",
+		value: buttonValues.deleteTasks.value,
+		type: "button"
 	}]
 }];
 

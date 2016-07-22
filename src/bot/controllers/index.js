@@ -450,7 +450,7 @@ controller.on(`new_session_group_decision`, (bot, config) => {
 	});
 });
 
-function triggerIntent(intent, config) {
+export function triggerIntent(intent, config) {
 	const { bot, controller, SlackUserId, message, dailyTasksToWorkOn } = config;
 	switch (intent) {
 		case intentConfig.ADD_TASK:

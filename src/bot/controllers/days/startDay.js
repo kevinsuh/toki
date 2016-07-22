@@ -2,6 +2,7 @@ import os from 'os';
 import { wit } from '../index';
 import http from 'http';
 import bodyParser from 'body-parser';
+import moment from 'moment-timezone';
 
 import models from '../../../app/models';
 
@@ -13,7 +14,7 @@ import { FINISH_WORD, EXIT_EARLY_WORDS, NONE } from '../../lib/constants';
 
 import { showPendingTasks, askForDayTasks } from '../modules/plan';
 
-import { resumeQueuedReachouts } from '../index';
+import { resumeQueuedReachouts, triggerIntent } from '../index';
 
 // base controller for start day
 export default function(controller) {
@@ -150,6 +151,8 @@ export default function(controller) {
 		})
 		.then((user) => {
 
+			const UserId = user.id;
+
 			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
 				var name   = user.nickName || user.email;
@@ -158,7 +161,7 @@ export default function(controller) {
 				convo.dayStart = {
 					bot,
 					taskArray: [],
-					UserId: user.id,
+					UserId,
 					startDayDecision: false, // what does user want to do with day
 					prioritizedTaskArray: [] // the final tasks to do for the day
 				}
@@ -272,16 +275,31 @@ export default function(controller) {
 										"open": false
 									})
 								});
+								// create checkin reminder if requested
+								if (dayStart.startDayDecision == intentConfig.REMINDER) {
+									var tenMinuteReminder = moment().add(10, 'minutes');
+									var customNote = "Hey! Let me know when you want to start a session :muscle:";
+									models.Reminder.create({
+										remindTime: tenMinuteReminder,
+										UserId,
+										customNote
+									});
+								}
 							})
 
 						});
 
 						// TRIGGER SESSION_START HERE
-						if (dayStart.startDayDecision == intentConfig.START_SESSION) {
-							controller.trigger(`confirm_new_session`, [ bot, { SlackUserId }]);
-							return;
-						}
+						var config = {
+							SlackUserId,
+							controller,
+							bot
+						};
 
+						setTimeout(() => {
+							triggerIntent(dayStart.startDayDecision, config);
+							resumeQueuedReachouts(bot, { SlackUserId });
+						}, 750);;
 						resumeQueuedReachouts(bot, { SlackUserId });
 
 					} else {

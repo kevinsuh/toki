@@ -29,7 +29,7 @@ export default (controller) => {
 	// at the end of each conversation to turn back on
 	controller.middleware.receive.use((bot, message, next) => {
 
-		console.log("message in middleware:");
+		console.log("message in pause session middleware:");
 		console.log(message);
 
 		if (!bot.queuedReachouts) {
