@@ -4,6 +4,8 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 exports.createMomentObjectWithSpecificTimeZone = createMomentObjectWithSpecificTimeZone;
@@ -13,6 +15,7 @@ exports.witDurationToTimeZoneObject = witDurationToTimeZoneObject;
 exports.witDurationToMinutes = witDurationToMinutes;
 exports.consoleLog = consoleLog;
 exports.closeOldRemindersAndSessions = closeOldRemindersAndSessions;
+exports.mapTimeToTaskArray = mapTimeToTaskArray;
 
 var _momentTimezone = require('moment-timezone');
 
@@ -218,5 +221,19 @@ function closeOldRemindersAndSessions(user) {
 			});
 		});
 	});
+}
+
+// helper function to map time to tasks
+function mapTimeToTaskArray(taskArray, timeToTasksArray) {
+	// add time to the tasks
+	taskArray = taskArray.map(function (task, index) {
+		if (task.dataValues) {
+			task = task.dataValues;
+		}
+		return _extends({}, task, {
+			minutes: timeToTasksArray[index]
+		});
+	});
+	return taskArray;
 }
 //# sourceMappingURL=miscHelpers.js.map

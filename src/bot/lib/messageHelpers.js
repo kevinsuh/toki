@@ -602,18 +602,29 @@ export function getTimeToTaskTextAttachmentWithTaskListMessage(taskTextArray, in
 		}
 	];
 
+	var buttonActions = [];
 	if (taskText) {
-		var addTaskButtonActions = [
-			{
-				name: buttonValues.actuallyWantToAddATask.name,
-				text: "Add more tasks!",
-				value: buttonValues.actuallyWantToAddATask.value,
-				type: "button"
-			}
-		]
-		if (attachments[0])
-			attachments[0].actions = addTaskButtonActions;
+		var addTaskButtonAction = {
+			name: buttonValues.actuallyWantToAddATask.name,
+			text: "Add more tasks!",
+			value: buttonValues.actuallyWantToAddATask.value,
+			type: "button"
+		};
+		buttonActions.push(addTaskButtonAction)
 	}
+	if (index > 0 && index < taskTextArray.length) {
+		var resetTimesButtonAction = {
+			name: buttonValues.resetTimes.name,
+			text: "Undo Time",
+			value: buttonValues.resetTimes.name,
+			type: "button",
+			style: "danger"
+		};
+		buttonActions.push(resetTimesButtonAction);
+	}
+	
+	if (attachments[0])
+		attachments[0].actions = buttonActions;
 
 	// the specific question to ask
 	attachments.push({
