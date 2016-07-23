@@ -6,7 +6,7 @@ import http from 'http';
 import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, convertMinutesToHoursString, deleteConvoAskMessage } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, convertMinutesToHoursString, deleteConvoAskMessage, deleteMostRecentDoneSessionMessage } from '../../lib/messageHelpers';
 import { closeOldRemindersAndSessions, witTimeResponseToTimeZoneObject } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
@@ -419,6 +419,8 @@ export default function(controller) {
 				// making this just a reminder now so that user can end his own session as he pleases
 				bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
+					const { source_message } = convo;
+
 					convo.doneSessionTimerObject = {
 						SlackUserId,
 						sessionTimerDecision: false,
@@ -436,6 +438,11 @@ export default function(controller) {
 						SlackUserId,
 						defaultBreakTime,
 						defaultSnoozeTime
+					}
+
+					if (source_message) {
+						convo.doneSessionTimerObject.channel = source_message.channel;
+						convo.sessionEnd.channel = source_message.channel;
 					}
 
 					var timeOutMinutes = 1000 * 60 * MINUTES_FOR_DONE_SESSION_TIMEOUT;
@@ -613,7 +620,7 @@ export default function(controller) {
 
 					convo.on('end', (convo) => {
 
-						const { sessionEnd: { postSessionDecision, reminders }, doneSessionTimerObject: { dailyTaskIds, timeOut, SlackUserId, sessionTimerDecision, customSnooze } } = convo;
+						const { sessionEnd: { postSessionDecision, reminders }, doneSessionTimerObject: { dailyTaskIds, timeOut, SlackUserId, sessionTimerDecision, customSnooze, channel } } = convo;
 
 						models.User.find({
 							where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -636,36 +643,14 @@ export default function(controller) {
 								})
 								.then((workSessions) => {
 									// only if there are still "open" work sessions
+									// this means the user has not closed it in 30 minutes
 									if (workSessions.length > 0) {
 
-										// also, if they did not snooze within the last 30 minutes
-										var mostRecentOpenWorkSession = workSessions[0];
-										user.getReminders({
-											where: [`"Reminder"."type" = ? AND "Reminder"."createdAt" > ?`, "done_session_snooze", mostRecentOpenWorkSession.dataValues.createdAt]
-										})
-										.then((reminders) => {
-											
-											if (reminders.length == 0) {
-												var { sentMessages } = bot;
-												if (sentMessages) {
-													// lastMessage is the one just asked by `convo`
-													// in this case, it is `taskListMessage`
-													var lastMessage = sentMessages.slice(-1)[0];
-													if (lastMessage) {
-														const { channel, ts } = lastMessage;
-														var doneSessionMessageObject = {
-															channel,
-															ts
-														};
-														bot.api.chat.delete(doneSessionMessageObject);
-													}
-												}
+										deleteMostRecentDoneSessionMessage(channel, bot);
 
-												// this was a 30 minute timeout for done_session timer!
-												controller.trigger(`done_session_timeout_flow`, [ bot, { SlackUserId, workSession }])
-											}
-
-										});
+										// this was a 30 minute timeout for done_session timer!
+										controller.trigger(`done_session_timeout_flow`, [ bot, { SlackUserId, workSession }])
+										
 									};
 								});
 							} else {

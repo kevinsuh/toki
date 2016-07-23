@@ -19,7 +19,9 @@ exports.prioritizeTaskArrayFromUserInput = prioritizeTaskArrayFromUserInput;
 exports.commaSeparateOutTaskArray = commaSeparateOutTaskArray;
 exports.getMostRecentTaskListMessageToUpdate = getMostRecentTaskListMessageToUpdate;
 exports.getMostRecentMessageToUpdate = getMostRecentMessageToUpdate;
+exports.getMostRecentDoneSessionMessage = getMostRecentDoneSessionMessage;
 exports.deleteConvoAskMessage = deleteConvoAskMessage;
+exports.deleteMostRecentDoneSessionMessage = deleteMostRecentDoneSessionMessage;
 exports.getTimeToTaskTextAttachmentWithTaskListMessage = getTimeToTaskTextAttachmentWithTaskListMessage;
 
 var _constants = require('./constants');
@@ -527,12 +529,19 @@ function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
 
 
 	var updateTaskListMessageObject = false;
-	if (sentMessages) {
+
+	console.log(sentMessages);
+
+	if (sentMessages && sentMessages[userChannel]) {
+
+		var channelSentMessages = sentMessages[userChannel];
+
 		// loop backwards to find the most recent message that matches
 		// this convo ChannelId w/ the bot's sentMessage ChannelId
-		for (var i = sentMessages.length - 1; i >= 0; i--) {
+		for (var i = channelSentMessages.length - 1; i >= 0; i--) {
 
-			var message = sentMessages[i];
+			var message = channelSentMessages[i];
+
 			var channel = message.channel;
 			var ts = message.ts;
 			var attachments = message.attachments;
@@ -560,12 +569,16 @@ function getMostRecentMessageToUpdate(userChannel, bot) {
 
 
 	var updateTaskListMessageObject = false;
-	if (sentMessages) {
+	if (sentMessages && sentMessages[userChannel]) {
+
+		var channelSentMessages = sentMessages[userChannel];
+
 		// loop backwards to find the most recent message that matches
 		// this convo ChannelId w/ the bot's sentMessage ChannelId
-		for (var i = sentMessages.length - 1; i >= 0; i--) {
+		for (var i = channelSentMessages.length - 1; i >= 0; i--) {
 
-			var message = sentMessages[i];
+			var message = channelSentMessages[i];
+
 			var channel = message.channel;
 			var ts = message.ts;
 			var attachments = message.attachments;
@@ -583,11 +596,57 @@ function getMostRecentMessageToUpdate(userChannel, bot) {
 	return updateTaskListMessageObject;
 }
 
+// this is for deleting the most recent doneSession message!
+// the one that is "hey, did you finish `tasks`"
+function getMostRecentDoneSessionMessage(userChannel, bot) {
+	var sentMessages = bot.sentMessages;
+
+
+	var messageObject = false;
+	if (sentMessages && sentMessages[userChannel]) {
+
+		var channelSentMessages = sentMessages[userChannel];
+
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (var i = channelSentMessages.length - 1; i >= 0; i--) {
+
+			var message = channelSentMessages[i];
+
+			var channel = message.channel;
+			var ts = message.ts;
+			var attachments = message.attachments;
+
+			if (channel == userChannel) {
+
+				if (attachments && attachments[0].callback_id == "DONE_SESSION") {
+					messageObject = {
+						channel: channel,
+						ts: ts
+					};
+					break;
+				}
+			}
+		}
+	}
+
+	return messageObject;
+}
+
 // another level of abstraction for this
 function deleteConvoAskMessage(userChannel, bot) {
 	// used mostly to delete the button options when answered with NL
 	var convoAskMessage = getMostRecentMessageToUpdate(userChannel, bot);
-	bot.api.chat.delete(convoAskMessage);
+	if (convoAskMessage) {
+		bot.api.chat.delete(convoAskMessage);
+	}
+}
+
+function deleteMostRecentDoneSessionMessage(userChannel, bot) {
+	var doneSessionMessage = getMostRecentDoneSessionMessage(userChannel, bot);
+	if (doneSessionMessage) {
+		bot.api.chat.delete(doneSessionMessage);
+	}
 }
 
 /**

@@ -18,16 +18,25 @@ exports.default = function (controller) {
 	controller.middleware.receive.use(_index.wit.receive);
 
 	controller.middleware.receive.use(function (bot, message, next) {
+
+		// sent messages organized by channel, and most recent 25 for them
+		if (!bot.sentMessages) {
+			bot.sentMessages = {};
+		}
 		var bot_id = message.bot_id;
+		var user = message.user;
+		var channel = message.channel;
 
-		if (bot_id) {
-			// attach the message to the bot
-			var sentMessages = bot.sentMessages;
+		if (bot_id && channel) {
 
-			if (sentMessages) {
-				bot.sentMessages.push(message);
+			if (bot.sentMessages[channel]) {
+
+				// only most recent 25 messages per channel
+				while (bot.sentMessages[channel].length > 25) {
+					bot.sentMessages[channel].shift();
+				}bot.sentMessages[channel].push(message);
 			} else {
-				bot.sentMessages = [message];
+				bot.sentMessages[channel] = [message];
 			}
 		}
 
