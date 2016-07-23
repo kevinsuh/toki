@@ -503,16 +503,16 @@ export function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
 	let updateTaskListMessageObject = false;
 
 	console.log(sentMessages);
-	
+
 	if (sentMessages && sentMessages[userChannel]) {
 
 		let channelSentMessages = sentMessages[userChannel];
 
 		// loop backwards to find the most recent message that matches
 		// this convo ChannelId w/ the bot's sentMessage ChannelId
-		for (var i = channelSentMessages.length - 1; i >= 0; i--) {
+		for (let i = channelSentMessages.length - 1; i >= 0; i--) {
 
-			var message = channelSentMessages[i];
+			let message = channelSentMessages[i];
 
 			const { channel, ts, attachments } = message;
 			if (channel == userChannel) {
@@ -536,15 +536,19 @@ export function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
 // of clicking the button
 export function getMostRecentMessageToUpdate(userChannel, bot) {
 	
-	var { sentMessages } = bot;
+	let { sentMessages } = bot;
 
-	var updateTaskListMessageObject = false;
-	if (sentMessages) {
+	let updateTaskListMessageObject = false;
+	if (sentMessages && sentMessages[userChannel]) {
+
+		let channelSentMessages = sentMessages[userChannel];
+
 		// loop backwards to find the most recent message that matches
 		// this convo ChannelId w/ the bot's sentMessage ChannelId
-		for (var i = sentMessages.length - 1; i >= 0; i--) {
+		for (let i = channelSentMessages.length - 1; i >= 0; i--) {
 
-			var message           = sentMessages[i];
+			var message = channelSentMessages[i];
+
 			const { channel, ts, attachments } = message;
 			if (channel == userChannel) {
 				updateTaskListMessageObject = {
@@ -560,11 +564,56 @@ export function getMostRecentMessageToUpdate(userChannel, bot) {
 
 }
 
+// this is for deleting the most recent doneSession message!
+// the one that is "hey, did you finish `tasks`"
+export function getMostRecentDoneSessionMessage(userChannel, bot) {
+	
+	let { sentMessages } = bot;
+
+	let messageObject = false;
+	if (sentMessages && sentMessages[userChannel]) {
+
+		let channelSentMessages = sentMessages[userChannel];
+
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (let i = channelSentMessages.length - 1; i >= 0; i--) {
+
+			var message = channelSentMessages[i];
+			
+			const { channel, ts, attachments } = message;
+			if (channel == userChannel) {
+
+				if (attachments && attachments[0].callback_id == "DONE_SESSION") {
+					messageObject = {
+						channel,
+						ts
+					};
+					break;
+				}
+			}
+		}
+	}
+
+	return messageObject;
+
+}
+
 // another level of abstraction for this
 export function deleteConvoAskMessage(userChannel, bot) {
 	// used mostly to delete the button options when answered with NL
 	var convoAskMessage = getMostRecentMessageToUpdate(userChannel, bot);
-	bot.api.chat.delete(convoAskMessage);
+	if (convoAskMessage) {
+		bot.api.chat.delete(convoAskMessage);
+	}
+	
+}
+
+export function deleteMostRecentDoneSessionMessage(userChannel, bot) {
+	var doneSessionMessage = getMostRecentDoneSessionMessage(userChannel, bot);
+	if (doneSessionMessage) {
+		bot.api.chat.delete(doneSessionMessage);
+	}
 }
 
 /**
