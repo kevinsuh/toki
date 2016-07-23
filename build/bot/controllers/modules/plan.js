@@ -23,6 +23,10 @@ var _bodyParser = require('body-parser');
 
 var _bodyParser2 = _interopRequireDefault(_bodyParser);
 
+var _momentTimezone = require('moment-timezone');
+
+var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
+
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
@@ -533,6 +537,7 @@ function getTimeToTasks(response, convo) {
 	var _convo$dayStart = convo.dayStart;
 	var taskArray = _convo$dayStart.taskArray;
 	var bot = _convo$dayStart.bot;
+	var tz = _convo$dayStart.tz;
 
 	var options = { dontShowMinutes: true, dontCalculateMinutes: true, noKarets: true };
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
@@ -607,17 +612,44 @@ function getTimeToTasks(response, convo) {
 		callback: function callback(response, convo) {
 
 			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
+			var now = (0, _momentTimezone2.default)();
+
+			var _response$intentObjec = response.intentObject.entities;
+			var reminder = _response$intentObjec.reminder;
+			var duration = _response$intentObjec.duration;
+			var datetime = _response$intentObjec.datetime;
+
+			console.log(duration);
 
 			if (updateTaskListMessageObject) {
+
 				convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 				var commaOrNewLine = new RegExp(/[,\n]/);
 				var timeToTasks = response.text.split(commaOrNewLine);
 
-				timeToTasks.forEach(function (time) {
-					var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(time);
-					if (minutes > 0) timeToTasksArray.push(minutes);
-				});
+				if (timeToTasks.length > 1) {
+					// entered via comma or \n (30 min, 45 min) and requires old method
+					timeToTasks.forEach(function (time) {
+						var minutes = (0, _messageHelpers.convertTimeStringToMinutes)(time);
+						if (minutes > 0) timeToTasksArray.push(minutes);
+					});
+				} else {
+					// user entered only one time (1 hr 35 min) and we can use wit intelligence
+					// now that we ask one at a time, we can use wit duration
+					var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+					if (customTimeObject) {
+						var minutes;
+						if (duration) {
+							minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
+						} else {
+							// datetime
+							minutes = parseInt(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+						}
+						if (minutes > 0) timeToTasksArray.push(minutes);
+					}
+				}
 
+				// add time to the tasks
 				taskArray = taskArray.map(function (task, index) {
 					if (task.dataValues) {
 						task = task.dataValues;
@@ -627,6 +659,7 @@ function getTimeToTasks(response, convo) {
 					});
 				});
 
+				// update message for the user
 				var options = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
 				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 				var attachments = (0, _messageHelpers.getTimeToTaskTextAttachmentWithTaskListMessage)(taskTextsArray, timeToTasksArray.length, taskListMessage);

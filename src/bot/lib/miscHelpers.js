@@ -76,7 +76,7 @@ export function witTimeResponseToTimeZoneObject(response, tz) {
 
 	var now = moment();
 	var remindTimeStamp;
-	if (!datetime && !duration) {
+	if ((!datetime && !duration) || !tz) {
 		remindTimeStamp = false; // not valid
 	} else {
 

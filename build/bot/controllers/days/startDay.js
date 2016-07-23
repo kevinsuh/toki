@@ -121,6 +121,8 @@ exports.default = function (controller) {
 		}).then(function (user) {
 
 			var UserId = user.id;
+			var tz = user.SlackUser.tz;
+
 
 			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
@@ -128,6 +130,7 @@ exports.default = function (controller) {
 				convo.name = name;
 
 				convo.dayStart = {
+					tz: tz,
 					bot: bot,
 					taskArray: [],
 					UserId: UserId,

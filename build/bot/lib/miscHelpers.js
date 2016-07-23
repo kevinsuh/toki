@@ -98,7 +98,7 @@ function witTimeResponseToTimeZoneObject(response, tz) {
 
 	var now = (0, _momentTimezone2.default)();
 	var remindTimeStamp;
-	if (!datetime && !duration) {
+	if (!datetime && !duration || !tz) {
 		remindTimeStamp = false; // not valid
 	} else {
 
