@@ -498,15 +498,22 @@ export function commaSeparateOutTaskArray(a) {
 // new function to ensure you are getting a task list message to update
 export function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
 	
-	var { sentMessages } = bot;
+	let { sentMessages } = bot;
 
-	var updateTaskListMessageObject = false;
-	if (sentMessages) {
+	let updateTaskListMessageObject = false;
+
+	console.log(sentMessages);
+	
+	if (sentMessages && sentMessages[userChannel]) {
+
+		let channelSentMessages = sentMessages[userChannel];
+
 		// loop backwards to find the most recent message that matches
 		// this convo ChannelId w/ the bot's sentMessage ChannelId
-		for (var i = sentMessages.length - 1; i >= 0; i--) {
+		for (var i = channelSentMessages.length - 1; i >= 0; i--) {
 
-			var message           = sentMessages[i];
+			var message = channelSentMessages[i];
+
 			const { channel, ts, attachments } = message;
 			if (channel == userChannel) {
 				if (attachments && attachments[0].callback_id == "TASK_LIST_MESSAGE") {

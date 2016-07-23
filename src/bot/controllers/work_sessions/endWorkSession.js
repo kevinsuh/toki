@@ -442,6 +442,20 @@ export default function(controller) {
 
 					setTimeout(() => {
 						convo.doneSessionTimerObject.timeOut = true;
+						var { sentMessages } = bot;
+						if (sentMessages) {
+							// lastMessage is the one just asked by `convo`
+							var lastMessage = sentMessages.slice(-1)[0];
+							if (lastMessage) {
+								const { channel, ts } = lastMessage;
+								// get the message to delete here
+								convo.doneSessionTimerObject.originalMessage = {
+									channel,
+									ts
+								};
+								bot.api.chat.delete(doneSessionMessageObject);
+							}
+						}
 						convo.stop();
 					}, timeOutMinutes);
 
@@ -638,34 +652,11 @@ export default function(controller) {
 									// only if there are still "open" work sessions
 									if (workSessions.length > 0) {
 
-										// also, if they did not snooze within the last 30 minutes
-										var mostRecentOpenWorkSession = workSessions[0];
-										user.getReminders({
-											where: [`"Reminder"."type" = ? AND "Reminder"."createdAt" > ?`, "done_session_snooze", mostRecentOpenWorkSession.dataValues.createdAt]
-										})
-										.then((reminders) => {
-											
-											if (reminders.length == 0) {
-												var { sentMessages } = bot;
-												if (sentMessages) {
-													// lastMessage is the one just asked by `convo`
-													// in this case, it is `taskListMessage`
-													var lastMessage = sentMessages.slice(-1)[0];
-													if (lastMessage) {
-														const { channel, ts } = lastMessage;
-														var doneSessionMessageObject = {
-															channel,
-															ts
-														};
-														bot.api.chat.delete(doneSessionMessageObject);
-													}
-												}
+										asfas
 
-												// this was a 30 minute timeout for done_session timer!
-												controller.trigger(`done_session_timeout_flow`, [ bot, { SlackUserId, workSession }])
-											}
-
-										});
+										// this was a 30 minute timeout for done_session timer!
+										controller.trigger(`done_session_timeout_flow`, [ bot, { SlackUserId, workSession }])
+										
 									};
 								});
 							} else {

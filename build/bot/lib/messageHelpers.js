@@ -527,12 +527,19 @@ function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
 
 
 	var updateTaskListMessageObject = false;
-	if (sentMessages) {
+
+	console.log(sentMessages);
+
+	if (sentMessages && sentMessages[userChannel]) {
+
+		var channelSentMessages = sentMessages[userChannel];
+
 		// loop backwards to find the most recent message that matches
 		// this convo ChannelId w/ the bot's sentMessage ChannelId
-		for (var i = sentMessages.length - 1; i >= 0; i--) {
+		for (var i = channelSentMessages.length - 1; i >= 0; i--) {
 
-			var message = sentMessages[i];
+			var message = channelSentMessages[i];
+
 			var channel = message.channel;
 			var ts = message.ts;
 			var attachments = message.attachments;
