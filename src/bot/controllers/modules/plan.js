@@ -607,7 +607,7 @@ function getTimeToTasks(response, convo) {
 			}
 		},
 		{
-			pattern: RESET.reg_exp,
+			pattern: utterances.containsResetOrUndo,
 			callback: (response, convo) => {
 
 				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
