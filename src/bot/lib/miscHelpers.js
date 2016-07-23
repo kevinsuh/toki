@@ -76,7 +76,7 @@ export function witTimeResponseToTimeZoneObject(response, tz) {
 
 	var now = moment();
 	var remindTimeStamp;
-	if (!datetime && !duration) {
+	if ((!datetime && !duration) || !tz) {
 		remindTimeStamp = false; // not valid
 	} else {
 
@@ -202,5 +202,20 @@ export function closeOldRemindersAndSessions(user) {
 		});
 	});
 
+}
+
+// helper function to map time to tasks
+export function mapTimeToTaskArray(taskArray, timeToTasksArray) {
+	// add time to the tasks
+	taskArray = taskArray.map((task, index) => {
+		if (task.dataValues) {
+			task = task.dataValues;
+		}
+		return {
+			...task,
+			minutes: timeToTasksArray[index]
+		}
+	});
+	return taskArray;
 }
 

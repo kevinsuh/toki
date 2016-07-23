@@ -89,7 +89,7 @@ export default function(controller) {
 							var minutes;
 							if (duration) {
 								minutes = witDurationToMinutes(duration);
-							} else {
+							} else { // datetime
 								minutes = parseInt(moment.duration(customTimeObject.diff(now)).asMinutes());
 							}
 

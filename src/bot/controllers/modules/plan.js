@@ -2,6 +2,7 @@ import os from 'os';
 import { wit } from '../index';
 import http from 'http';
 import bodyParser from 'body-parser';
+import moment from 'moment-timezone';
 
 import models from '../../../app/models';
 
@@ -9,7 +10,7 @@ import { randomInt, utterances } from '../../lib/botResponses';
 import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, convertTaskNumberStringToArray, getMostRecentTaskListMessageToUpdate, deleteConvoAskMessage, convertResponseObjectToNewTaskArray, getTimeToTaskTextAttachmentWithTaskListMessage, commaSeparateOutTaskArray } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 import { FINISH_WORD, EXIT_EARLY_WORDS, NONE, RESET, colorsHash, buttonValues, taskListMessageDoneButtonAttachment, taskListMessageDoneAndDeleteButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment, taskListMessageYesButtonAttachment, taskListMessageNoButtonsAttachment } from '../../lib/constants';
-import { consoleLog } from '../../lib/miscHelpers';
+import { consoleLog, witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray } from '../../lib/miscHelpers';
 
 import { resumeQueuedReachouts } from '../index';
 
@@ -552,7 +553,7 @@ function addMoreTasks(response, convo) {
 // ask the question to get time to tasks
 function getTimeToTasks(response, convo) {
 
-	var { taskArray, bot } = convo.dayStart;
+	var { taskArray, bot, tz } = convo.dayStart;
 	var options            = { dontShowMinutes: true, dontCalculateMinutes: true, noKarets: true };
 	var taskListMessage    = convertArrayToTaskListMessage(taskArray, options);
 
@@ -586,17 +587,19 @@ function getTimeToTasks(response, convo) {
 				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 				if (updateTaskListMessageObject) {
 					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
-					// reset ze task list message
-					timeToTasksArray = [];
 
-					var options = { dontShowMinutes: true, dontCalculateMinutes: true, noKarets: true };
+					timeToTasksArray.pop();
+					taskArray = mapTimeToTaskArray(taskArray, timeToTasksArray);
+
+					var options = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
+
 					taskListMessage = convertArrayToTaskListMessage(taskArray, options);
 
-					var message = `How much *time* would you like to allocate to \`${taskTextsArray[timeToTasksArray.length]}\`?`;
-					message = `${message}\n${taskListMessage}`;
+					attachments     = getTimeToTaskTextAttachmentWithTaskListMessage(taskTextsArray, timeToTasksArray.length, taskListMessage);
 
-					updateTaskListMessageObject.text        = "*Let's add time to each of your tasks!*";
-					updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageAddMoreTasksButtonAttachment);
+					updateTaskListMessageObject.text        = mainText;
+					updateTaskListMessageObject.attachments = JSON.stringify(attachments);
+
 					bot.api.chat.update(updateTaskListMessageObject);
 				}
 
@@ -604,25 +607,28 @@ function getTimeToTasks(response, convo) {
 			}
 		},
 		{
-			pattern: RESET.reg_exp,
+			pattern: utterances.containsResetOrUndo,
 			callback: (response, convo) => {
 
 				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 				if (updateTaskListMessageObject) {
 					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
-					// reset ze task list message
-					timeToTasksArray = [];
-					var options = { dontShowMinutes: true, dontCalculateMinutes: true, noKarets: true };
+
+					timeToTasksArray.pop();
+					taskArray = mapTimeToTaskArray(taskArray, timeToTasksArray);
+
+					var options = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
+
 					taskListMessage = convertArrayToTaskListMessage(taskArray, options);
 
-					var message = `How much *time* would you like to allocate to \`${taskTextsArray[timeToTasksArray.length]}\`?`;
-					message = `${message}\n${taskListMessage}`;
+					attachments     = getTimeToTaskTextAttachmentWithTaskListMessage(taskTextsArray, timeToTasksArray.length, taskListMessage);
 
-					updateTaskListMessageObject.text        = message;
-					updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageAddMoreTasksButtonAttachment);
+					updateTaskListMessageObject.text        = mainText;
+					updateTaskListMessageObject.attachments = JSON.stringify(attachments);
+
 					bot.api.chat.update(updateTaskListMessageObject);
 				}
-				
+
 				convo.silentRepeat();
 
 			}
@@ -632,28 +638,47 @@ function getTimeToTasks(response, convo) {
 			callback: function(response, convo) {
 
 				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
+				var now = moment();
+
+				const { intentObject: { entities: { reminder, duration, datetime } } } = response;
+				console.log(duration);
 
 				if (updateTaskListMessageObject) {
+
 					convo.dayStart.updateTaskListMessageObject = updateTaskListMessageObject;
 					const commaOrNewLine = new RegExp(/[,\n]/);
 					var timeToTasks      = response.text.split(commaOrNewLine);
 
-					timeToTasks.forEach((time) => {
-						var minutes = convertTimeStringToMinutes(time);
-						if (minutes > 0)
-							timeToTasksArray.push(minutes);
-					});
-
-					taskArray = taskArray.map((task, index) => {
-						if (task.dataValues) {
-							task = task.dataValues;
+					// get user string response and convert it to time!
+					if (timeToTasks.length > 1) {
+						// entered via comma or \n (30 min, 45 min) and requires old method
+						timeToTasks.forEach((time) => {
+							var minutes = convertTimeStringToMinutes(time);
+							if (minutes > 0)
+								timeToTasksArray.push(minutes);
+						});
+					} else {
+						// user entered only one time (1 hr 35 min) and we can use wit intelligence
+						// now that we ask one at a time, we can use wit duration
+						var customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+						if (customTimeObject) {
+							var minutes;
+							if (duration) {
+								minutes = witDurationToMinutes(duration);
+							} else { // cant currently handle datetime cuz wit sucks
+								minutes = convertTimeStringToMinutes(response.text);
+								// this should be done through datetime, but only duration for now
+								// minutes = parseInt(moment.duration(customTimeObject.diff(now)).asMinutes());
+							}
+							if (minutes > 0)
+								timeToTasksArray.push(minutes);
 						}
-						return {
-							...task,
-							minutes: timeToTasksArray[index]
-						}
-					});
 
+					}
+
+					taskArray = mapTimeToTaskArray(taskArray, timeToTasksArray);
+
+					// update message for the user
 					var options = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
 					taskListMessage = convertArrayToTaskListMessage(taskArray, options);
 					var attachments = getTimeToTaskTextAttachmentWithTaskListMessage(taskTextsArray, timeToTasksArray.length, taskListMessage);
@@ -665,8 +690,7 @@ function getTimeToTasks(response, convo) {
 
 					if (timeToTasksArray.length >= taskArray.length) {
 
-						console.log("~~finish times:~~ \n\n")
-						console.log(updateTaskListMessageObject);
+						// we have attached times to task appropriately!
 						convo.dayStart.taskArray = taskArray;
 						confirmTimeToTasks(timeToTasksArray, convo);
 						convo.next();
