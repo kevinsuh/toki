@@ -318,16 +318,10 @@ export function convertMinutesToHoursString(minutes) {
 export function convertTimeStringToMinutes(timeString) {
 
 	var totalMinutes = 0;
+	timeString = timeString.split(/(\d+)/).join(' '); // add proper spaces in b/w numbers so we can then split consistently
 	var timeArray = timeString.split(" ");
 
 	var aOrAnRegExp       = new RegExp(/\b[an]{1,3}/i);
-	var parsedNumberValue = false;
-
-	if (nlp.value(timeString).number) {
-		parsedNumberValue = `${nlp.value(timeString).number}`;
-	} else if (aOrAnRegExp.test(timeString)) {
-		parsedNumberValue = "1";
-	}
 
 	var totalMinutesCount = 0; // max of 1
 	var totalHoursCount = 0; // max of 1
@@ -344,11 +338,6 @@ export function convertTimeStringToMinutes(timeString) {
 		var numberValue = timeArray[i].match(/\d+/);
 		if (!numberValue) {
 			continue;
-		}
-
-		// possible we get the number value from outside the split loop
-		if (parsedNumberValue) {
-			timeArray[i] = parsedNumberValue;
 		}
 
 		var minutes = 0;
