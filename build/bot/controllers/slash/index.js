@@ -79,6 +79,7 @@ exports.default = function (controller) {
 							if (duration) {
 								minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
 							} else {
+								// datetime
 								minutes = parseInt(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
 							}
 
