@@ -1,7 +1,7 @@
 'use strict';
 module.exports = function(sequelize, DataTypes) {
   var StoredWorkSession = sequelize.define('StoredWorkSession', {
-    workSessionId: DataTypes.INTEGER,
+    WorkSessionId: DataTypes.INTEGER,
     minutes: DataTypes.DOUBLE
   }, {
     classMethods: {
