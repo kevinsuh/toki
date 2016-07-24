@@ -292,8 +292,9 @@ exports.default = function (controller) {
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
-			var defaultBreakTime = user.defaultBreakTime;
+			var tz = user.SlackUser.tz;
 
+			var UserId = user.id;
 
 			user.getWorkSessions({
 				where: ['"WorkSession"."open" = ?', true],
@@ -310,11 +311,66 @@ exports.default = function (controller) {
 
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-							convo.say('~~Let\'s add a CHECKIN!!~~');
+							convo.checkIn = {
+								SlackUserId: SlackUserId
+							};
+
+							convo.ask("When would you like me to check in? Leave a note in the same line if you want me to remember it for you `i.e. halfway done by 4pm`", function (response, convo) {
+								var _response$intentObjec = response.intentObject.entities;
+								var reminder = _response$intentObjec.reminder;
+								var duration = _response$intentObjec.duration;
+								var datetime = _response$intentObjec.datetime;
+
+
+								var customNote = reminder ? reminder[0].value : null;
+								var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+								var message = '';
+
+								if (customTimeObject) {
+
+									convo.checkIn.customTimeObject = customTimeObject;
+									convo.checkIn.customNote = customNote;
+
+									var customTimeString = customTimeObject.format('h:mm a');
+
+									message = 'Okay, I\'ll check in at ' + customTimeString;
+									if (customNote) {
+										message = message + ' about `' + customNote + '`';
+									}
+
+									message = message + '! :muscle:';
+									convo.say(message);
+								} else {
+
+									if (customNote) {
+										message = 'Sorry, I need a time :thinking_face: (either `' + customNote + ' in 30 minutes` or `' + customNote + ' at 4:30pm`)';
+									} else {
+										message = 'Sorry, I need a time :thinking_face: (either `in 30 minutes` or `at 4:30pm`)';
+									}
+									convo.say(message);
+									convo.repeat();
+								}
+
+								convo.next();
+							});
+
 							convo.next();
 
 							convo.on('end', function (convo) {
-								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+								var _convo$checkIn = convo.checkIn;
+								var customTimeObject = _convo$checkIn.customTimeObject;
+								var customNote = _convo$checkIn.customNote;
+
+								// quick adding a reminder requires both text + time!
+
+								_models2.default.Reminder.create({
+									remindTime: customTimeObject,
+									UserId: UserId,
+									customNote: customNote,
+									type: "work_session"
+								}).then(function (reminder) {
+									(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+								});
 							});
 						});
 					});
@@ -364,6 +420,8 @@ var _models = require('../../../app/models');
 var _models2 = _interopRequireDefault(_models);
 
 var _messageHelpers = require('../../lib/messageHelpers');
+
+var _miscHelpers = require('../../lib/miscHelpers');
 
 var _intents = require('../../lib/intents');
 

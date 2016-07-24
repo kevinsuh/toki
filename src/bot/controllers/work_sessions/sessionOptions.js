@@ -7,6 +7,7 @@ import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, convertMinutesToHoursString } from '../../lib/messageHelpers';
+import { witTimeResponseToTimeZoneObject } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
 import { bots, resumeQueuedReachouts } from '../index';
@@ -325,7 +326,8 @@ export default function(controller) {
 		})
 		.then((user) => {
 
-			var { defaultBreakTime } = user;
+			const { SlackUser: { tz } } = user;
+			const UserId                = user.id;
 
 			user.getWorkSessions({
 				where: [`"WorkSession"."open" = ?`, true],
@@ -344,11 +346,65 @@ export default function(controller) {
 
 						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
-							convo.say(`~~Let's add a CHECKIN!!~~`);
+							convo.checkIn = {
+								SlackUserId
+							}
+
+							convo.ask("When would you like me to check in? Leave a note in the same line if you want me to remember it for you `i.e. halfway done by 4pm`", (response, convo) => {
+
+								const { intentObject: { entities: { reminder, duration, datetime } } } = response;
+
+								let customNote = reminder ? reminder[0].value : null;
+								let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+								let message = '';
+
+								if (customTimeObject) {
+
+									convo.checkIn.customTimeObject = customTimeObject;
+									convo.checkIn.customNote       = customNote;
+
+									let customTimeString = customTimeObject.format('h:mm a');
+
+									message = `Okay, I'll check in at ${customTimeString}`;
+									if (customNote) {
+										message = `${message} about \`${customNote}\``;
+									}
+
+									message = `${message}! :muscle:`;
+									convo.say(message);
+
+								} else {
+
+									if (customNote) {
+										message = `Sorry, I need a time :thinking_face: (either \`${customNote} in 30 minutes\` or \`${customNote} at 4:30pm\`)`
+									} else {
+										message = `Sorry, I need a time :thinking_face: (either \`in 30 minutes\` or \`at 4:30pm\`)`;
+									}
+									convo.say(message);
+									convo.repeat();
+								}
+
+								convo.next();
+
+							});
+
 							convo.next();
 
 							convo.on('end', (convo) => {
-								resumeQueuedReachouts(bot, { SlackUserId });
+
+								const { customTimeObject, customNote } = convo.checkIn;
+
+								// quick adding a reminder requires both text + time!
+								models.Reminder.create({
+									remindTime: customTimeObject,
+									UserId,
+									customNote,
+									type: "work_session"
+								})
+								.then((reminder) => {
+									resumeQueuedReachouts(bot, { SlackUserId });
+								});
+
 							});
 						});
 					});

@@ -147,7 +147,7 @@ exports.default = function (controller) {
 								if (customNote) {
 									_responseText = 'Hey, I need to know what time you want me to remind you about `' + text + '` (please say `' + text + ' in 30 min` or `' + text + ' at 7pm`)!';
 								} else {
-									_responseText = 'Hey, I need to know you want me to remind you about `i.e. pick up clothes at 7pm`!';
+									_responseText = 'Hey, I need to know when you want me to remind you `i.e. pick up clothes at 7pm`!';
 								}
 								responseObject.text = _responseText;
 								bot.replyPublic(message, responseObject);
