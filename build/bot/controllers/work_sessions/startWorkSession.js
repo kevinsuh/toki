@@ -432,7 +432,8 @@ exports.default = function (controller) {
 											name: _constants.buttonValues.startSession.endEarly.name,
 											text: "End Early",
 											value: _constants.buttonValues.startSession.endEarly.value,
-											type: "button"
+											type: "button",
+											style: "danger"
 										}]
 									}]
 								});

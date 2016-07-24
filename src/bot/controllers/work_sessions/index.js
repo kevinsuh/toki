@@ -6,7 +6,8 @@ import moment from 'moment-timezone';
 
 import endWorkSessionController from './endWorkSession';
 import endWorkSessionTimeoutsController from './endWorkSessionTimeouts';
-import startWorKSessionController from './startWorkSession';
+import startWorkSessionController from './startWorkSession';
+import sessionOptionsController from './sessionOptions';
 
 import intentConfig from '../../lib/intents';
 import { hoursForExpirationTime, startDayExpirationTime, colorsArray, buttonValues, colorsHash } from '../../lib/constants';
@@ -24,7 +25,8 @@ export default function(controller) {
 	 * 		INDEX functions of work sessions
 	 */
 	
-	startWorKSessionController(controller);
+	startWorkSessionController(controller);
+	sessionOptionsController(controller);
 	endWorkSessionController(controller);
 	endWorkSessionTimeoutsController(controller);
 

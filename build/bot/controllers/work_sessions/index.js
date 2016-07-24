@@ -11,6 +11,7 @@ exports.default = function (controller) {
   */
 
 	(0, _startWorkSession2.default)(controller);
+	(0, _sessionOptions2.default)(controller);
 	(0, _endWorkSession2.default)(controller);
 	(0, _endWorkSessionTimeouts2.default)(controller);
 
@@ -268,6 +269,10 @@ var _endWorkSessionTimeouts2 = _interopRequireDefault(_endWorkSessionTimeouts);
 var _startWorkSession = require('./startWorkSession');
 
 var _startWorkSession2 = _interopRequireDefault(_startWorkSession);
+
+var _sessionOptions = require('./sessionOptions');
+
+var _sessionOptions2 = _interopRequireDefault(_sessionOptions);
 
 var _intents = require('../../lib/intents');
 

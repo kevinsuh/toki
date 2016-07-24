@@ -448,7 +448,8 @@ export default function(controller) {
 														name: buttonValues.startSession.endEarly.name,
 														text: "End Early",
 														value: buttonValues.startSession.endEarly.value,
-														type: "button"
+														type: "button",
+														style: "danger"
 												}
 											]
 										}

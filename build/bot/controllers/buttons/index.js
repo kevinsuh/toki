@@ -175,12 +175,15 @@ exports.default = function (controller) {
 					break;
 				case _constants.buttonValues.startSession.pause.value:
 					bot.replyInteractive(message, "Paused!");
+					controller.trigger('session_pause_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
 				case _constants.buttonValues.startSession.addCheckIn.value:
 					bot.replyInteractive(message, "Let's add a checkin!");
+					controller.trigger('session_add_checkin_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
 				case _constants.buttonValues.startSession.endEarly.value:
 					bot.replyInteractive(message, "Let's end early!");
+					controller.trigger('done_session_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
 				default:
 					// some default to replace button no matter what
