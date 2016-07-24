@@ -137,6 +137,10 @@ var buttonValues = exports.buttonValues = {
 		endEarly: {
 			name: "START_SESSION_END_EARLY",
 			value: "START_SESSION_END_EARLY"
+		},
+		resume: {
+			name: "START_SESSION_RESUME",
+			value: "START_SESSION_RESUME"
 		}
 	},
 	newTask: {

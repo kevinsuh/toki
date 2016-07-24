@@ -6,7 +6,7 @@ import http from 'http';
 import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, convertMinutesToHoursString } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 
 import { bots, resumeQueuedReachouts } from '../index';
@@ -25,6 +25,12 @@ export default function(controller) {
 
 		const { SlackUserId, botCallback } = config;
 
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			let botToken = bot.config.token;
+			bot          = bots[botToken];
+		}
+
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
 			include: [
@@ -33,12 +39,6 @@ export default function(controller) {
 		})
 		.then((user) => {
 
-			if (botCallback) {
-				// if botCallback, need to get the correct bot
-				var botToken = bot.config.token;
-				bot          = bots[botToken];
-			}
-
 			user.getWorkSessions({
 				where: [`"WorkSession"."open" = ?`, true],
 				order: `"WorkSession"."createdAt" DESC`,
@@ -46,9 +46,27 @@ export default function(controller) {
 			})
 			.then((workSessions) => {
 
-				// get most recent work session for snooze option
+				// end most recent work session, and create new storedWorkSession
+				// with the remaining minutes
 				if (workSessions.length > 0) {
-					var workSession = workSessions[0];
+					
+					const workSession    = workSessions[0];
+					const workSessionId  = workSession.id;
+					const endTime        = moment(workSession.endTime);
+					let now              = moment();
+					let minutesRemaining = Math.round((moment.duration(endTime.diff(now)).asMinutes() * 100)) / 100; // 2 decimal places
+
+					workSession.update({
+						endTime: now,
+						open: false,
+						live: false
+					});
+
+					models.StoredWorkSession.create({
+						workSessionId,
+						minutes: minutesRemaining
+					});
+
 					workSession.getDailyTasks({
 						include: [ models.Task ]
 					})
@@ -65,8 +83,32 @@ export default function(controller) {
 						// making this just a reminder now so that user can end his own session as he pleases
 						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
+							let timeString = convertMinutesToHoursString(minutesRemaining);
+
 							convo.say({
-								text: `Hey! Let's pause your session for ${tasksToWorkOnString}`,
+								text: `You have *${timeString}* remaining for ${tasksToWorkOnString}`,
+								attachments: [
+									{
+										attachment_type: 'default',
+										callback_id: "PAUSED_SESSION_OPTIONS",
+										fallback: "Your session is paused!",
+										actions: [
+											{
+													name: buttonValues.startSession.resume.name,
+													text: "Resume",
+													value: buttonValues.startSession.resume.value,
+													type: "button",
+													style: "primary"
+											},
+											{
+													name: buttonValues.startSession.endEarly.name,
+													text: "End Session",
+													value: buttonValues.startSession.endEarly.value,
+													type: "button"
+											}
+										]
+									}
+								]
 							});
 
 							convo.next();
@@ -77,9 +119,63 @@ export default function(controller) {
 		})
 	});
 
+	controller.on(`session_resume_flow`, (bot, config) => {
+
+		const { SlackUserId, botCallback } = config;
+
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			var botToken = bot.config.token;
+			bot          = bots[botToken];
+		}
+
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			user.getWorkSessions({
+				where: [`"WorkSession"."open" = ?`, true],
+				order: `"WorkSession"."createdAt" DESC`,
+				limit: 1
+			})
+			.then((workSessions) => {
+
+				if (workSessions.length > 0) {
+
+					var workSession = workSessions[0];
+					workSession.getDailyTasks({
+						include: [ models.Task ]
+					})
+					.then((dailyTasks) => {
+
+						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+							convo.say(`~~Let's RESOOOOM!!~~`);
+							convo.next();
+
+							convo.on('end', (convo) => {
+
+							});
+						});
+					});
+				}
+			});
+		});
+	})
+
 	controller.on(`session_add_checkin_flow`, (bot, config) => {
 
 		const { SlackUserId, botCallback } = config;
+
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			var botToken = bot.config.token;
+			bot          = bots[botToken];
+		}
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -90,12 +186,6 @@ export default function(controller) {
 		.then((user) => {
 
 			var { defaultBreakTime } = user;
-
-			if (botCallback) {
-				// if botCallback, need to get the correct bot
-				var botToken = bot.config.token;
-				bot          = bots[botToken];
-			}
 
 			user.getWorkSessions({
 				where: [`"WorkSession"."open" = ?`, true],
@@ -138,7 +228,7 @@ export default function(controller) {
 		}
 
 		controller.trigger(`done_session_flow`, [bot, { SlackUserId }]);
-		
+
 	})
 
 };

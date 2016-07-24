@@ -47,13 +47,7 @@ export default function(controller) {
 
 	controller.on('done_session_flow', (bot, config) => {
 
-		const { SlackUserId, botCallback } = config;
-
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
-			bot          = bots[botToken];
-		}
+		const { SlackUserId } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],

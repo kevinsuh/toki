@@ -190,6 +190,10 @@ export default function(controller) {
 					bot.replyInteractive(message, "Let's end early!");
 					controller.trigger(`done_session_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
+				case buttonValues.startSession.resume.value:
+					bot.replyInteractive(message, "Resuming!");
+					controller.trigger(`session_resume_flow`, [ bot, { SlackUserId, botCallback: true }]);
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");
