@@ -3,10 +3,7 @@
 module.exports = function (sequelize, DataTypes) {
   var StoredWorkSession = sequelize.define('StoredWorkSession', {
     WorkSessionId: DataTypes.INTEGER,
-    minutes: DataTypes.DOUBLE,
-    resumed: { type: DataTypes.BOOLEAN,
-      defaultValue: false
-    }
+    minutes: DataTypes.DOUBLE
   }, {
     classMethods: {
       associate: function associate(models) {

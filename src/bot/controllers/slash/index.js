@@ -63,6 +63,7 @@ export default function(controller) {
 					response_type: "in_channel"
 				}
 
+				let customTimeObject;
 				switch (message.command) {
 					case "/add":
 						/*
@@ -79,7 +80,7 @@ export default function(controller) {
 
 						if (text == '') text = null; // cant have blank text
 
-						let customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
+						customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
 
 						if (text && customTimeObject) {
 
@@ -133,7 +134,7 @@ export default function(controller) {
 
 						let customNote = reminder ? reminder[0].value : null;
 
-						let customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
+						customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
 
 						if (customTimeObject) {
 

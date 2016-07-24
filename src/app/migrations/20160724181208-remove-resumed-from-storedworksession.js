@@ -3,6 +3,13 @@
 module.exports = {
   up: function (queryInterface, Sequelize) {
 
+    return queryInterface.removeColumn('StoredWorkSessions', 'resumed');
+
+   
+  },
+
+  down: function (queryInterface, Sequelize) {
+ 
    // add open bool
    return queryInterface.addColumn(
       'StoredWorkSessions',
@@ -13,11 +20,6 @@ module.exports = {
         allowNull: false
       }
     );
-  },
-
-  down: function (queryInterface, Sequelize) {
- 
-   return queryInterface.removeColumn('StoredWorkSessions', 'resumed');
 
   }
 };

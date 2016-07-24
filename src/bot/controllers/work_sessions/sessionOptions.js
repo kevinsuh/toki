@@ -143,6 +143,7 @@ export default function(controller) {
 
 			const UserId = user.id;
 
+			// get THE most recently created workSession for that user
 			user.getWorkSessions({
 				order: `"WorkSession"."createdAt" DESC`,
 				limit: 1
@@ -152,29 +153,22 @@ export default function(controller) {
 				if (workSessions.length > 0) {
 
 					let workSession = workSessions[0];
-					workSession.getDailyTasks({
-						include: [ models.Task ],
-						where: [`"Task"."done" = ? AND "DailyTask"."type" = ?`, false, "live"],
-					})
-					.then((dailyTasks) => {
-
-						// check if there are live and open tasks still to this work session
-						if (dailyTasks.length > 0) {
-
-							let dailyTaskIds = [];
-							dailyTasks.forEach((dailyTask) => {
-								dailyTaskIds.push(dailyTask.dataValues.id);
-							});
-
-							// only get STILL PAUSED work sessions
-							workSession.getStoredWorkSessions({
-								order: `"StoredWorkSession"."createdAt" DESC`,
-								where: [ `"StoredWorkSession"."resumed" = ?`, "false"],
-								limit: 1
+					workSession.getStoredWorkSession({})
+					.then((storedWorkSession) => {
+						if (storedWorkSession) {
+							// it has been paused
+							// now check if there are daily tasks associated
+							workSession.getDailyTasks({
+								include: [ models.Task ],
+								where: [`"Task"."done" = ? AND "DailyTask"."type" = ?`, false, "live"]
 							})
-							.then((storedWorkSessions) => {
-								if (storedWorkSessions.length > 0) {
-									let storedWorkSession = storedWorkSessions[0];
+							.then((dailyTasks) => {
+								if (dailyTasks.length > 0) {
+									// we are in the clear to resume the session!
+									let dailyTaskIds = [];
+									dailyTasks.forEach((dailyTask) => {
+										dailyTaskIds.push(dailyTask.dataValues.id);
+									});
 
 									const { minutes } = storedWorkSession;
 
@@ -195,11 +189,8 @@ export default function(controller) {
 									})
 									.then((workSession) => {
 
+										// add new daily tasks to the workSession
 										workSession.setDailyTasks(dailyTaskIds);
-										// the workSession has been resumed
-										storedWorkSession.update({
-											resumed: true
-										});
 
 										/**
 										 * 		~~ RESUME WORK SESSION MESSAGE ~~
@@ -218,6 +209,7 @@ export default function(controller) {
 										let endTimeString   = endTime.format("h:mm a");
 
 										bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+											convo.say(`I've resumed your session!`)
 											convo.say({
 												text: `Good luck with ${tasksString}!\nSee you in ${timeString} at *${endTimeString}* :timer_clock:`,
 												attachments: startSessionOptionsAttachments
@@ -229,41 +221,38 @@ export default function(controller) {
 												}, 500);	
 											});
 										});
-									})
 
-
+									});
 								} else {
-									// FAILURE to find storedWorkSession for pausedSession
+									// no live and open tasks
 									bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-										convo.say(`Doesn't seem like you paused this session :thinking_face:. Let me know if you want to \`start a session\``);
+										convo.say(`You don't have any tasks left for this session! Let me know when you want to \`start a session\``);
 										convo.next();
 										convo.on('end', (convo) => {
-											console.log(`\n\n\n ~~ should resume aslfkamsflmk ~~ \n\n`);
-											setTimeout(() => {
-												resumeQueuedReachouts(bot, { SlackUserId });
-											}, 500);	
+											resumeQueuedReachouts(bot, { SlackUserId });
 										});
 									});
 								}
 							})
-
 						} else {
-							// no 
+							// it has NOT been paused yet
 							bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-								convo.say(`You don't have any tasks left for this session! Let me know when you want to \`start a session\``);
+								convo.say(`Doesn't seem like you paused this session :thinking_face:. Let me know if you want to \`start a session\``);
 								convo.next();
 								convo.on('end', (convo) => {
-									resumeQueuedReachouts(bot, { SlackUserId });
+									console.log(`\n\n\n ~~ should resume aslfkamsflmk ~~ \n\n`);
+									setTimeout(() => {
+										resumeQueuedReachouts(bot, { SlackUserId });
+									}, 500);	
 								});
 							});
-
 						}
-
 					});
+
 				}
 			});
 		});
-	})
+	});
 
 	controller.on(`session_add_checkin_flow`, (bot, config) => {
 

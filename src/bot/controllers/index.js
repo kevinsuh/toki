@@ -158,27 +158,19 @@ export function resumeQueuedReachouts(bot, config) {
 			})
 
 			if (queuedWorkSessionIds.length > 0) {
-				models.WorkSession.findAll({
-					where: [`"WorkSession"."id" IN (?) `, queuedWorkSessionIds]
+
+				// if storedWorkSessionId IS NULL, means it has not been
+				// intentionally paused intentionally be user!
+				models.WorkSession.find({
+					where: [`"WorkSession"."id" IN (?) AND "StoredWorkSession"."id" IS NULL`, queuedWorkSessionIds],
+					include: [ models.StoredWorkSession ]
 				})
-				.then((workSessions) => {
-
-					workSessions.forEach((workSession) => {
-
-						workSession.getStoredWorkSessions({
-							where: [ `"StoredWorkSession"."resumed" = ?`, false],
-							limit: 1
-						})
-						.then((storedWorkSessions) => {
-							// if you find even at least one "paused" version of that workSessionID, then you leave it paused
-							if (storedWorkSessions.length == 0) {
-								workSession.update({
-									live: true
-								})
-							}
-						})
-
-					})
+				.then((workSession) => {
+					if (workSession) {
+						workSession.updateAttributes({
+							live: true
+						});
+					}
 				});
 
 			}
