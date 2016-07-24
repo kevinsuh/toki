@@ -58,13 +58,12 @@ exports.default = function (controller) {
       */
 
 						var totalMinutes = 0;
-						dailyTasks.forEach(function (dailyTask) {
+						dailyTasks.forEach(function (dailyTask, index) {
 							var minutes = dailyTask.dataValues.minutes;
 
 							totalMinutes += minutes;
 						});
 
-						var timeString = (0, _messageHelpers.convertMinutesToHoursString)(totalMinutes);
 						var text = reminder ? reminder[0].value : message.text;
 
 						if (text == '') text = null; // cant have blank text
@@ -94,6 +93,9 @@ exports.default = function (controller) {
 									minutes: minutes,
 									UserId: UserId
 								}).then(function () {
+
+									totalMinutes += minutes;
+									var timeString = (0, _messageHelpers.convertMinutesToHoursString)(totalMinutes);
 
 									responseObject.text = 'Nice, I added `' + text + ' (' + minutes + ' min)` to your task list! You have ' + timeString + ' of work remaining over ' + newPriority + ' tasks :muscle:';
 									bot.replyPublic(message, responseObject);
