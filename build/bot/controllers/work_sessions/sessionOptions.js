@@ -45,7 +45,6 @@ exports.default = function (controller) {
 
 						workSession.update({
 							endTime: now,
-							open: false,
 							live: false
 						});
 
@@ -101,6 +100,10 @@ exports.default = function (controller) {
 						});
 					})();
 				} else {
+					// 1. already has been paused
+
+					// 2. has been closed now
+
 					// no open sessions to pause
 					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 						convo.say('Doesn\'t look like you have an open session :thinking_face:. Let me know if you want to start a new one!');
@@ -144,7 +147,9 @@ exports.default = function (controller) {
 					(function () {
 
 						var workSession = workSessions[0];
-						workSession.getStoredWorkSession({}).then(function (storedWorkSession) {
+						workSession.getStoredWorkSession({
+							where: ['"StoredWorkSession"."live" = ?', true]
+						}).then(function (storedWorkSession) {
 							if (storedWorkSession) {
 								// it has been paused
 								// now check if there are daily tasks associated

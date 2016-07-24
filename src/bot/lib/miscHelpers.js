@@ -1,3 +1,4 @@
+import models from '../../app/models';
 import moment from 'moment-timezone';
 import { DURATION_INTENT, TIME_INTENT } from './constants';
 
@@ -198,6 +199,11 @@ export function closeOldRemindersAndSessions(user) {
 				endTime,
 				open: false,
 				live: false
+			});
+			models.StoredWorkSession.update({
+				live: false
+			}, {
+				where: [ `"WorkSessionId" = ?`, workSession.id ]
 			});
 		});
 	});
