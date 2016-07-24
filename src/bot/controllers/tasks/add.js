@@ -32,6 +32,9 @@ export default function(controller) {
 
 		if (utterances.startsWithAdd.test(text) && utterances.containsCheckin.test(text)) {
 			let config = { SlackUserId, message };
+			if (utterances.containsOnlyCheckin.test(text)){
+				config.reminder_type = "work_session";
+			}
 			controller.trigger(`ask_for_reminder`, [ bot, config ]);
 			return;
 		};

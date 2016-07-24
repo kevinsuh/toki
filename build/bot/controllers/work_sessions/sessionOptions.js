@@ -303,8 +303,9 @@ exports.default = function (controller) {
 			}).then(function (workSessions) {
 
 				if (workSessions.length > 0) {
-					var config = { SlackUserId: SlackUserId };
-					controller.trigger('ask_for_reminder', [bot, config]);
+					var _config = { SlackUserId: SlackUserId };
+					_config.reminder_type = "work_session";
+					controller.trigger('ask_for_reminder', [bot, _config]);
 				} else {
 					notInSessionWouldYouLikeToStartOne({ bot: bot, controller: controller, SlackUserId: SlackUserId });
 				}

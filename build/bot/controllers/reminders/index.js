@@ -93,6 +93,10 @@ exports.default = function (controller) {
 				}
 
 				config.message = message;
+				if (_botResponses.utterances.containsOnlyCheckin.test(text)) {
+					config.reminder_type = "work_session";
+				}
+
 				controller.trigger('ask_for_reminder', [bot, config]);
 			});
 		}, 850);
@@ -170,7 +174,10 @@ exports.default = function (controller) {
 	controller.on('ask_for_reminder', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
 		var message = config.message;
+		var reminder_type = config.reminder_type;
 
+
+		var reminderOrCheckInString = reminder_type == "work_session" ? 'check in at' : 'set a reminder for';
 
 		console.log('\n\n config:');
 		console.log(config);
@@ -189,7 +196,6 @@ exports.default = function (controller) {
 
 			if (message) {
 				(function () {
-					var reminder_type = message.reminder_type;
 					var _message$intentObject2 = message.intentObject.entities;
 					var reminder = _message$intentObject2.reminder;
 					var duration = _message$intentObject2.duration;
@@ -208,7 +214,7 @@ exports.default = function (controller) {
 
 							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-								responseMessage = 'Okay, I\'ll check in at ' + customTimeString;
+								responseMessage = 'Okay, I\'ll ' + reminderOrCheckInString + ' ' + customTimeString;
 								if (customNote) {
 									responseMessage = responseMessage + ' about `' + customNote + '`';
 								}
@@ -243,7 +249,7 @@ exports.default = function (controller) {
 						SlackUserId: SlackUserId
 					};
 
-					convo.ask("When would you like me to check in? Leave a note in the same line if you want me to remember it for you `i.e. halfway done by 4pm`", function (response, convo) {
+					convo.ask('What time would you like me to ' + reminderOrCheckInString + '? Leave a note in the same line if you want me to remember it for you `i.e. halfway done by 4pm`', function (response, convo) {
 						var _response$intentObjec = response.intentObject.entities;
 						var reminder = _response$intentObjec.reminder;
 						var duration = _response$intentObjec.duration;
@@ -261,7 +267,7 @@ exports.default = function (controller) {
 
 							var customTimeString = customTimeObject.format('h:mm a');
 
-							responseMessage = 'Okay, I\'ll check in at ' + customTimeString;
+							responseMessage = 'Okay, I\'ll ' + reminderOrCheckInString + ' ' + customTimeString;
 							if (customNote) {
 								responseMessage = responseMessage + ' about `' + customNote + '`';
 							}

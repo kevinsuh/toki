@@ -96,7 +96,11 @@ export default function(controller) {
 					return;
 				}
 
-				config.message = message;
+				config.message       = message;
+				if (utterances.containsOnlyCheckin.test(text)) {
+					config.reminder_type = "work_session";
+				}
+
 				controller.trigger(`ask_for_reminder`, [ bot, config ]);
 
 			});
@@ -180,7 +184,9 @@ export default function(controller) {
 	// option to pass in message and skip asking process
 	controller.on(`ask_for_reminder`, (bot, config) => {
 
-		const { SlackUserId, message } = config;
+		const { SlackUserId, message, reminder_type } = config;
+
+		let reminderOrCheckInString = reminder_type == "work_session" ? 'check in at' : 'set a reminder for';
 
 		console.log(`\n\n config:`);
 		console.log(config);
@@ -201,7 +207,7 @@ export default function(controller) {
 
 			if (message) {
 
-				const { reminder_type, intentObject: { entities: { reminder, duration, datetime } } } = message;
+				const { intentObject: { entities: { reminder, duration, datetime } } } = message;
 				let customNote = reminder ? reminder[0].value : null;
 				let customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
 				let responseMessage = '';
@@ -214,7 +220,7 @@ export default function(controller) {
 
 					bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
-						responseMessage = `Okay, I'll check in at ${customTimeString}`;
+						responseMessage = `Okay, I'll ${reminderOrCheckInString} ${customTimeString}`;
 						if (customNote) {
 							responseMessage = `${responseMessage} about \`${customNote}\``;
 						}
@@ -249,7 +255,7 @@ export default function(controller) {
 						SlackUserId
 					}
 
-					convo.ask("When would you like me to check in? Leave a note in the same line if you want me to remember it for you `i.e. halfway done by 4pm`", (response, convo) => {
+					convo.ask(`What time would you like me to ${reminderOrCheckInString}? Leave a note in the same line if you want me to remember it for you \`i.e. halfway done by 4pm\``, (response, convo) => {
 
 						const { intentObject: { entities: { reminder, duration, datetime } } } = response;
 
@@ -264,7 +270,7 @@ export default function(controller) {
 
 							let customTimeString = customTimeObject.format('h:mm a');
 
-							responseMessage = `Okay, I'll check in at ${customTimeString}`;
+							responseMessage = `Okay, I'll ${reminderOrCheckInString} ${customTimeString}`;
 							if (customNote) {
 								responseMessage = `${responseMessage} about \`${customNote}\``;
 							}
