@@ -135,8 +135,6 @@ export function resumeQueuedReachouts(bot, config) {
 	var now                 = moment();
 	var { SlackUserId }     = config;
 
-	console.log(bot.config);
-
 	const { token } = bot.config;
 	bot             = bots[token]; // use same bot every time
 
@@ -152,9 +150,9 @@ export function resumeQueuedReachouts(bot, config) {
 			queuedWorkSessions.forEach((workSession) => {
 				var endTime = moment(workSession.endTime);
 				if (endTime > now && workSession.dataValues.open == true) {
-					console.log("resuming this queuedSession:");
-					console.log(workSession);
-					console.log("\n\n");
+					if (workSession.dataValues) {
+						console.log(`resuming this queuedSession: ${workSession.dataValues.id}`);
+					}
 					queuedWorkSessionIds.push(workSession.dataValues.id);
 				}
 			})
@@ -172,7 +170,7 @@ export function resumeQueuedReachouts(bot, config) {
 							limit: 1
 						})
 						.then((storedWorkSessions) => {
-							console.log(`\n\n ~~~ STORED WORK SESSIONS LENGTH: ${storedWorkSessions.length} ~~~ \n\n`);
+							// if you find even at least one "paused" version of that workSessionID, then you leave it paused
 							if (storedWorkSessions.length == 0) {
 								workSession.update({
 									live: true

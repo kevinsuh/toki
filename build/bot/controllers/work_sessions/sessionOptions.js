@@ -204,7 +204,6 @@ exports.default = function (controller) {
 														convo.next();
 														convo.on('end', function (convo) {
 															setTimeout(function () {
-																console.log("\n\n\n\n\n\n\n RESUMING resumeQueuedReachouts \n\n\n\n\n\n");
 																(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 															}, 500);
 														});

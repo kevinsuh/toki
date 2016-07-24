@@ -196,10 +196,6 @@ function resumeQueuedReachouts(bot, config) {
 	// necessary config
 	var now = (0, _momentTimezone2.default)();
 	var SlackUserId = config.SlackUserId;
-
-
-	console.log(bot.config);
-
 	var token = bot.config.token;
 
 	bot = bots[token]; // use same bot every time
@@ -218,9 +214,9 @@ function resumeQueuedReachouts(bot, config) {
 			queuedWorkSessions.forEach(function (workSession) {
 				var endTime = (0, _momentTimezone2.default)(workSession.endTime);
 				if (endTime > now && workSession.dataValues.open == true) {
-					console.log("resuming this queuedSession:");
-					console.log(workSession);
-					console.log("\n\n");
+					if (workSession.dataValues) {
+						console.log('resuming this queuedSession: ' + workSession.dataValues.id);
+					}
 					queuedWorkSessionIds.push(workSession.dataValues.id);
 				}
 			});
@@ -236,7 +232,7 @@ function resumeQueuedReachouts(bot, config) {
 							where: ['"StoredWorkSession"."resumed" = ?', "false"],
 							limit: 1
 						}).then(function (storedWorkSessions) {
-							console.log('\n\n ~~~ STORED WORK SESSIONS LENGTH: ' + storedWorkSessions.length + ' ~~~ \n\n');
+							// if you find even at least one "paused" version of that workSessionID, then you leave it paused
 							if (storedWorkSessions.length == 0) {
 								workSession.update({
 									live: true
