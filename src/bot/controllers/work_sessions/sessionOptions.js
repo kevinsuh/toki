@@ -51,7 +51,6 @@ export default function(controller) {
 				if (workSessions.length > 0) {
 					
 					const workSession    = workSessions[0];
-					const workSessionId  = workSession.id;
 					const endTime        = moment(workSession.endTime);
 					let now              = moment();
 					let minutesRemaining = Math.round((moment.duration(endTime.diff(now)).asMinutes() * 100)) / 100; // 2 decimal places
@@ -63,7 +62,7 @@ export default function(controller) {
 					});
 
 					models.StoredWorkSession.create({
-						workSessionId,
+						WorkSessionId: workSession.id,
 						minutes: minutesRemaining
 					});
 
@@ -128,8 +127,6 @@ export default function(controller) {
 			let botToken = bot.config.token;
 			bot          = bots[botToken];
 		}
-
-		console.log("\n\n ~~ RESUMING SESSION??? ~~ \n\n");
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
