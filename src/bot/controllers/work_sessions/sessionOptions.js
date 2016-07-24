@@ -51,90 +51,139 @@ export default function(controller) {
 				if (workSessions.length > 0) {
 					
 					const workSession    = workSessions[0];
-					const workSessionId  = workSession.id;
-					const endTime        = moment(workSession.endTime);
-					let now              = moment();
-					let minutesRemaining = Math.round((moment.duration(endTime.diff(now)).asMinutes() * 100)) / 100; // 2 decimal places
 
-					workSession.update({
-						endTime: now,
-						live: false
-					});
-
-					models.StoredWorkSession.create({
-						WorkSessionId: workSessionId,
-						minutes: minutesRemaining
-					});
-
-					workSession.getDailyTasks({
-						include: [ models.Task ]
+					workSession.getStoredWorkSession({
+						where: [ `"StoredWorkSession"."live" = ?`, true ]
 					})
-					.then((dailyTasks) => {
+					.then((storedWorkSession) => {
 
-						workSession.DailyTasks = dailyTasks;
+						// GOOD TO PAUSE NOW
+						const workSessionId  = workSession.id;
+						const endTime        = moment(workSession.endTime);
+						let now              = moment();
+						let minutesRemaining = Math.round((moment.duration(endTime.diff(now)).asMinutes() * 100)) / 100; // 2 decimal places
 
-						var taskTextsToWorkOnArray = dailyTasks.map((dailyTask) => {
-							var text = dailyTask.Task.dataValues.text;
-							return text;
-						});
-						var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
+						workSession.getDailyTasks({
+							include: [ models.Task ]
+						})
+						.then((dailyTasks) => {
 
-						// making this just a reminder now so that user can end his own session as he pleases
-						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+							workSession.DailyTasks = dailyTasks;
 
-							let timeString = convertMinutesToHoursString(minutesRemaining);
-
-							convo.say({
-								text: `I've paused your session. You have *${timeString}* remaining for ${tasksToWorkOnString}`,
-								attachments: [
-									{
-										attachment_type: 'default',
-										callback_id: "PAUSED_SESSION_OPTIONS",
-										fallback: "Your session is paused!",
-										actions: [
-											{
-													name: buttonValues.startSession.resume.name,
-													text: "Resume",
-													value: buttonValues.startSession.resume.value,
-													type: "button",
-													style: "primary"
-											},
-											{
-													name: buttonValues.startSession.pause.endEarly.name,
-													text: "End Session",
-													value: buttonValues.startSession.pause.endEarly.value,
-													type: "button"
-											}
-										]
-									}
-								]
+							var taskTextsToWorkOnArray = dailyTasks.map((dailyTask) => {
+								var text = dailyTask.Task.dataValues.text;
+								return text;
 							});
+							var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
+							let timeString;
+							let message;
 
-							convo.next();
+							if (storedWorkSession) {
 
-							convo.on('end', (convo) => {
-								resumeQueuedReachouts(bot, { SlackUserId });
+								// already in pause!
+								const { minutes } = storedWorkSession.dataValues;
+								
+								timeString = convertMinutesToHoursString(minutes);
+								message    = `You're session is already on pause! You have *${timeString}* remaining for ${tasksToWorkOnString}`
+
+							} else {
+
+								/**
+								 * 		~~ GOOD TO GO TO PAUSE SESSION! ~~
+								 */
+								
+								workSession.update({
+									endTime: now,
+									live: false
+								});
+
+								models.StoredWorkSession.create({
+									WorkSessionId: workSessionId,
+									minutes: minutesRemaining
+								});
+
+								timeString = convertMinutesToHoursString(minutesRemaining);
+								message    = `I've paused your session. You have *${timeString}* remaining for ${tasksToWorkOnString}`;
+
+							}
+							// making this just a reminder now so that user can end his own session as he pleases
+							bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+								convo.say({
+									text: message,
+									attachments: [
+										{
+											attachment_type: 'default',
+											callback_id: "PAUSED_SESSION_OPTIONS",
+											fallback: "Your session is paused!",
+											actions: [
+												{
+														name: buttonValues.startSession.resume.name,
+														text: "Resume",
+														value: buttonValues.startSession.resume.value,
+														type: "button",
+														style: "primary"
+												},
+												{
+														name: buttonValues.startSession.pause.endEarly.name,
+														text: "End Session",
+														value: buttonValues.startSession.pause.endEarly.value,
+														type: "button"
+												}
+											]
+										}
+									]
+								});
+
+								convo.next();
+
+								convo.on('end', (convo) => {
+									resumeQueuedReachouts(bot, { SlackUserId });
+								});
+
 							});
-
-						});
+						})
 					})
+
 				} else {
-					// 1. already has been paused
-					
-					// 2. has been closed now
-
-					// no open sessions to pause
 					bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-						convo.say(`Doesn't look like you have an open session :thinking_face:. Let me know if you want to start a new one!`);
+						convo.ask(`You're not in a session right now! Would you like to start one :muscle:?`, [
+							{
+								pattern: utterances.yes,
+								callback: (response, convo) => {
+									convo.startSession = true;
+									convo.next();
+								}
+							},
+							{
+								pattern: utterances.no,
+								callback: (response, convo) => {
+									convo.say("Okay! I'll be here when you want to start a session :smile_cat:");
+									convo.next();
+								}
+							},
+							{
+								default: true,
+								callback: (response, convo) => {
+									convo.say("Sorry, I didn't catch that");
+									convo.repeat();
+									convo.next();
+								}
+							}
+						]);
 						convo.next();
 						convo.on('end', (convo) => {
+							if (convo.startSession) {
+								controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
+							}
 							setTimeout(() => {
 								resumeQueuedReachouts(bot, { SlackUserId });
 							}, 500);	
 						});
 					});
 				}
-			})
+
+			});
 		})
 	});
 
