@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
@@ -539,6 +539,29 @@ var taskListMessageResetTimesButtonAttachment = exports.taskListMessageResetTime
 		text: "Add more tasks!",
 		value: buttonValues.actuallyWantToAddATask.value,
 		type: "button"
+	}]
+}];
+
+var startSessionOptionsAttachments = exports.startSessionOptionsAttachments = [{
+	attachment_type: 'default',
+	callback_id: "START_SESSION_OPTIONS",
+	fallback: "Good luck with your session!",
+	actions: [{
+		name: buttonValues.startSession.pause.name,
+		text: "Pause",
+		value: buttonValues.startSession.pause.value,
+		type: "button"
+	}, {
+		name: buttonValues.startSession.addCheckIn.name,
+		text: "Add check-in",
+		value: buttonValues.startSession.addCheckIn.value,
+		type: "button"
+	}, {
+		name: buttonValues.startSession.endEarly.name,
+		text: "End Early",
+		value: buttonValues.startSession.endEarly.value,
+		type: "button",
+		style: "danger"
 	}]
 }];
 //# sourceMappingURL=constants.js.map

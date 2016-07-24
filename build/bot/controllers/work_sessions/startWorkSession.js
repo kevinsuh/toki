@@ -414,29 +414,9 @@ exports.default = function (controller) {
 								convo.say('Good luck with ' + tasksString + '!');
 								convo.say({
 									text: 'See you in ' + timeString + ' at *' + calculatedTime + '* :timer_clock:',
-									attachments: [{
-										attachment_type: 'default',
-										callback_id: "START_SESSION_OPTIONS",
-										fallback: "Good luck with your session!",
-										actions: [{
-											name: _constants.buttonValues.startSession.pause.name,
-											text: "Pause",
-											value: _constants.buttonValues.startSession.pause.value,
-											type: "button"
-										}, {
-											name: _constants.buttonValues.startSession.addCheckIn.name,
-											text: "Add check-in",
-											value: _constants.buttonValues.startSession.addCheckIn.value,
-											type: "button"
-										}, {
-											name: _constants.buttonValues.startSession.endEarly.name,
-											text: "End Early",
-											value: _constants.buttonValues.startSession.endEarly.value,
-											type: "button",
-											style: "danger"
-										}]
-									}]
+									attachments: _constants.startSessionOptionsAttachments
 								});
+
 								convo.next();
 							});
 						});

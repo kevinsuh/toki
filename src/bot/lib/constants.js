@@ -571,4 +571,33 @@ export const taskListMessageResetTimesButtonAttachment = [
 ];
 
 
+export const startSessionOptionsAttachments = [
+	{
+		attachment_type: 'default',
+		callback_id: "START_SESSION_OPTIONS",
+		fallback: "Good luck with your session!",
+		actions: [
+			{
+					name: buttonValues.startSession.pause.name,
+					text: "Pause",
+					value: buttonValues.startSession.pause.value,
+					type: "button"
+			},
+			{
+					name: buttonValues.startSession.addCheckIn.name,
+					text: "Add check-in",
+					value: buttonValues.startSession.addCheckIn.value,
+					type: "button"
+			},
+			{
+					name: buttonValues.startSession.endEarly.name,
+					text: "End Early",
+					value: buttonValues.startSession.endEarly.value,
+					type: "button",
+					style: "danger"
+			}
+		]
+	}
+]
+
 

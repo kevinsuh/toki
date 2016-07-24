@@ -8,7 +8,7 @@ import { createMomentObjectWithSpecificTimeZone, closeOldRemindersAndSessions } 
 
 import intentConfig from '../../lib/intents';
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsArray, THANK_YOU, buttonValues, colorsHash } from '../../lib/constants';
+import { colorsArray, THANK_YOU, buttonValues, colorsHash, startSessionOptionsAttachments } from '../../lib/constants';
 
 import { startSessionStartConversation, confirmTimeForTasks } from './startWorkSessionFunctions';
 
@@ -426,35 +426,9 @@ export default function(controller) {
 								convo.say(`Good luck with ${tasksString}!`);
 								convo.say({
 									text: `See you in ${timeString} at *${calculatedTime}* :timer_clock:`,
-									attachments:[
-										{
-											attachment_type: 'default',
-											callback_id: "START_SESSION_OPTIONS",
-											fallback: "Good luck with your session!",
-											actions: [
-												{
-														name: buttonValues.startSession.pause.name,
-														text: "Pause",
-														value: buttonValues.startSession.pause.value,
-														type: "button"
-												},
-												{
-														name: buttonValues.startSession.addCheckIn.name,
-														text: "Add check-in",
-														value: buttonValues.startSession.addCheckIn.value,
-														type: "button"
-												},
-												{
-														name: buttonValues.startSession.endEarly.name,
-														text: "End Early",
-														value: buttonValues.startSession.endEarly.value,
-														type: "button",
-														style: "danger"
-												}
-											]
-										}
-									]
+									attachments: startSessionOptionsAttachments
 								});
+								
 								convo.next();
 
 							});

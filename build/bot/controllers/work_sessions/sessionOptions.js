@@ -112,32 +112,106 @@ exports.default = function (controller) {
 			bot = _index.bots[botToken];
 		}
 
+		console.log("\n\n ~~ RESUMING SESSION??? ~~ \n\n");
+
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 
+			var UserId = user.id;
+
 			user.getWorkSessions({
-				where: ['"WorkSession"."open" = ?', true],
 				order: '"WorkSession"."createdAt" DESC',
 				limit: 1
 			}).then(function (workSessions) {
 
 				if (workSessions.length > 0) {
+					(function () {
 
-					var workSession = workSessions[0];
-					workSession.getDailyTasks({
-						include: [_models2.default.Task]
-					}).then(function (dailyTasks) {
+						var workSession = workSessions[0];
+						workSession.getDailyTasks({
+							include: [_models2.default.Task],
+							where: ['"Task"."done" = ? AND "DailyTask"."type" = ?', false, "live"]
+						}).then(function (dailyTasks) {
 
-						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+							// check if there are live and open tasks still to this work session
+							if (dailyTasks.length > 0) {
+								(function () {
 
-							convo.say('~~Let\'s RESOOOOM!!~~');
-							convo.next();
+									var dailyTaskIds = [];
+									dailyTasks.forEach(function (dailyTask) {
+										dailyTaskIds.push(dailyTask.dataValues.id);
+									});
 
-							convo.on('end', function (convo) {});
+									workSession.getStoredWorkSessions({
+										order: '"StoredWorkSession"."createdAt" DESC',
+										limit: 1
+									}).then(function (storedWorkSessions) {
+										if (storedWorkSessions.length > 0) {
+											(function () {
+												var storedWorkSession = storedWorkSessions[0];
+
+												var minutes = storedWorkSession.minutes;
+
+
+												var now = (0, _momentTimezone2.default)();
+												var endTime = now.add(minutes, 'minutes');
+
+												// create new work session with those daily tasks
+												_models2.default.WorkSession.create({
+													startTime: now,
+													endTime: endTime,
+													UserId: UserId
+												}).then(function (workSession) {
+
+													workSession.setDailyTasks(dailyTaskIds);
+
+													/**
+              * 		~~ RESUME WORK SESSION MESSAGE ~~
+              */
+
+													var tasksToWorkOnTexts = dailyTasks.map(function (dailyTask) {
+														if (dailyTask.dataValues) {
+															return dailyTask.dataValues.Task.text;
+														} else {
+															return dailyTask.text;
+														}
+													});
+
+													var tasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(tasksToWorkOnTexts);
+													var minutesDuration = Math.round(minutes);
+													var timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutesDuration);
+													var endTimeString = endTime.format("h:mm a");
+
+													bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+														convo.say('Good luck with ' + tasksString + '!');
+														convo.say({
+															text: 'See you in ' + timeString + ' at *' + endTimeString + '* :timer_clock:',
+															attachments: _constants.startSessionOptionsAttachments
+														});
+														convo.next();
+													});
+												});
+											})();
+										} else {
+											// FAILURE to find storedWorkSession for pausedSession
+											bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+												convo.say('Doesn\'t seem like you paused this session :thinking_face:. Let me know if you want to `start a session`');
+												convo.next();
+											});
+										}
+									});
+								})();
+							} else {
+								// no 
+								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+									convo.say('You don\'t have any tasks left for this session! Let me know when you want to `start a session`');
+									convo.next();
+								});
+							}
 						});
-					});
+					})();
 				}
 			});
 		});

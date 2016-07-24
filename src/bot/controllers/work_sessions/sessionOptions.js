@@ -11,7 +11,7 @@ import intentConfig from '../../lib/intents';
 
 import { bots, resumeQueuedReachouts } from '../index';
 
-import { colorsArray, buttonValues, colorsHash, TOKI_DEFAULT_SNOOZE_TIME, sessionTimerDecisions } from '../../lib/constants';
+import { colorsArray, buttonValues, colorsHash, startSessionOptionsAttachments } from '../../lib/constants';
 
 // ALL OF THE TIMEOUT FUNCTIONALITIES
 export default function(controller) {
@@ -125,9 +125,11 @@ export default function(controller) {
 
 		if (botCallback) {
 			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
+			let botToken = bot.config.token;
 			bot          = bots[botToken];
 		}
+
+		console.log("\n\n ~~ RESUMING SESSION??? ~~ \n\n");
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -137,8 +139,9 @@ export default function(controller) {
 		})
 		.then((user) => {
 
+			const UserId = user.id;
+
 			user.getWorkSessions({
-				where: [`"WorkSession"."open" = ?`, true],
 				order: `"WorkSession"."createdAt" DESC`,
 				limit: 1
 			})
@@ -146,21 +149,90 @@ export default function(controller) {
 
 				if (workSessions.length > 0) {
 
-					var workSession = workSessions[0];
+					let workSession = workSessions[0];
 					workSession.getDailyTasks({
-						include: [ models.Task ]
+						include: [ models.Task ],
+						where: [`"Task"."done" = ? AND "DailyTask"."type" = ?`, false, "live"],
 					})
 					.then((dailyTasks) => {
 
-						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+						// check if there are live and open tasks still to this work session
+						if (dailyTasks.length > 0) {
 
-							convo.say(`~~Let's RESOOOOM!!~~`);
-							convo.next();
-
-							convo.on('end', (convo) => {
-
+							let dailyTaskIds = [];
+							dailyTasks.forEach((dailyTask) => {
+								dailyTaskIds.push(dailyTask.dataValues.id);
 							});
-						});
+
+							workSession.getStoredWorkSessions({
+								order: `"StoredWorkSession"."createdAt" DESC`,
+								limit: 1
+							})
+							.then((storedWorkSessions) => {
+								if (storedWorkSessions.length > 0) {
+									let storedWorkSession = storedWorkSessions[0];
+
+									const { minutes } = storedWorkSession;
+
+									const now = moment();
+									const endTime = now.add(minutes, 'minutes');
+
+									// create new work session with those daily tasks
+									models.WorkSession.create({
+										startTime: now,
+										endTime,
+										UserId
+									})
+									.then((workSession) => {
+
+										workSession.setDailyTasks(dailyTaskIds);
+
+										/**
+										 * 		~~ RESUME WORK SESSION MESSAGE ~~
+										 */
+
+										let tasksToWorkOnTexts = dailyTasks.map((dailyTask) => {
+											if (dailyTask.dataValues) {
+												return dailyTask.dataValues.Task.text;
+											} else {
+												return dailyTask.text;
+											}
+										});
+
+										let tasksString     = commaSeparateOutTaskArray(tasksToWorkOnTexts);
+										let minutesDuration = Math.round(minutes);
+										let timeString      = convertMinutesToHoursString(minutesDuration);
+										let endTimeString   = endTime.format("h:mm a");
+
+										bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+											convo.say(`Good luck with ${tasksString}!`);
+											convo.say({
+												text: `See you in ${timeString} at *${endTimeString}* :timer_clock:`,
+												attachments: startSessionOptionsAttachments
+											});
+											convo.next();
+										});
+									})
+
+
+								} else {
+									// FAILURE to find storedWorkSession for pausedSession
+									bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+										convo.say(`Doesn't seem like you paused this session :thinking_face:. Let me know if you want to \`start a session\``);
+										convo.next();
+									});
+								}
+							})
+
+						} else {
+							// no 
+							bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+								convo.say(`You don't have any tasks left for this session! Let me know when you want to \`start a session\``);
+								convo.next();
+							});
+
+						}
+
 					});
 				}
 			});
