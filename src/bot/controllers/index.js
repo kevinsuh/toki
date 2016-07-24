@@ -166,7 +166,7 @@ export function resumeQueuedReachouts(bot, config) {
 					workSessions.forEach((workSession) => {
 
 						workSession.getStoredWorkSessions({
-							where: [ `"StoredWorkSession"."resumed" = ?`, "false"],
+							where: [ `"StoredWorkSession"."resumed" = ?`, false],
 							limit: 1
 						})
 						.then((storedWorkSessions) => {

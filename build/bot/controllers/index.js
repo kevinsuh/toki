@@ -229,7 +229,7 @@ function resumeQueuedReachouts(bot, config) {
 					workSessions.forEach(function (workSession) {
 
 						workSession.getStoredWorkSessions({
-							where: ['"StoredWorkSession"."resumed" = ?', "false"],
+							where: ['"StoredWorkSession"."resumed" = ?', false],
 							limit: 1
 						}).then(function (storedWorkSessions) {
 							// if you find even at least one "paused" version of that workSessionID, then you leave it paused
