@@ -394,7 +394,11 @@ exports.default = function (controller) {
 							});
 
 							var tasksToWorkOnTexts = tasksToWorkOnArray.map(function (dailyTask) {
-								return dailyTask.dataValues.Task.text;
+								if (dailyTask.dataValues) {
+									return dailyTask.dataValues.Task.text;
+								} else {
+									return dailyTask.text;
+								}
 							});
 							var tasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(tasksToWorkOnTexts);
 							// get minutes worked
