@@ -337,78 +337,12 @@ export default function(controller) {
 			.then((workSessions) => {
 
 				if (workSessions.length > 0) {
-
-					var workSession = workSessions[0];
-					workSession.getDailyTasks({
-						include: [ models.Task ]
-					})
-					.then((dailyTasks) => {
-
-						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-
-							convo.checkIn = {
-								SlackUserId
-							}
-
-							convo.ask("When would you like me to check in? Leave a note in the same line if you want me to remember it for you `i.e. halfway done by 4pm`", (response, convo) => {
-
-								const { intentObject: { entities: { reminder, duration, datetime } } } = response;
-
-								let customNote = reminder ? reminder[0].value : null;
-								let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
-								let message = '';
-
-								if (customTimeObject) {
-
-									convo.checkIn.customTimeObject = customTimeObject;
-									convo.checkIn.customNote       = customNote;
-
-									let customTimeString = customTimeObject.format('h:mm a');
-
-									message = `Okay, I'll check in at ${customTimeString}`;
-									if (customNote) {
-										message = `${message} about \`${customNote}\``;
-									}
-
-									message = `${message}! :muscle:`;
-									convo.say(message);
-
-								} else {
-
-									if (customNote) {
-										message = `Sorry, I need a time :thinking_face: (either \`${customNote} in 30 minutes\` or \`${customNote} at 4:30pm\`)`
-									} else {
-										message = `Sorry, I need a time :thinking_face: (either \`in 30 minutes\` or \`at 4:30pm\`)`;
-									}
-									convo.say(message);
-									convo.repeat();
-								}
-
-								convo.next();
-
-							});
-
-							convo.next();
-
-							convo.on('end', (convo) => {
-
-								const { customTimeObject, customNote } = convo.checkIn;
-
-								// quick adding a reminder requires both text + time!
-								models.Reminder.create({
-									remindTime: customTimeObject,
-									UserId,
-									customNote,
-									type: "work_session"
-								})
-								.then((reminder) => {
-									resumeQueuedReachouts(bot, { SlackUserId });
-								});
-
-							});
-						});
-					});
+					var config = { SlackUserId };
+					controller.trigger(`ask_for_reminder`, [bot, config]);
+				} else {
+					notInSessionWouldYouLikeToStartOne({ bot, controller, SlackUserId });
 				}
+
 			});
 		});
 	})

@@ -30,6 +30,12 @@ export default function(controller) {
 
 		const { text, intentObject: { entities: { reminder, duration } } } = message;
 
+		if (utterances.startsWithAdd.test(text) && utterances.containsCheckin.test(text)) {
+			let config = { SlackUserId, message };
+			controller.trigger(`ask_for_reminder`, [ bot, config ]);
+			return;
+		};
+
 		var userMessage = {
 			text,
 			reminder,
