@@ -18,6 +18,9 @@ exports.default = function (controller) {
 	controller.middleware.receive.use(_index.wit.receive);
 
 	controller.middleware.receive.use(function (bot, message, next) {
+		var token = bot.config.token;
+
+		bot = _index.bots[token]; // use same bot every time
 
 		// sent messages organized by channel, and most recent 25 for them
 		if (!bot.sentMessages) {
@@ -48,13 +51,10 @@ exports.default = function (controller) {
 	// then add them to bot.queuedReachouts, which will be called
 	// at the end of each conversation to turn back on
 	controller.middleware.receive.use(function (bot, message, next) {
+		var bot_id = message.bot_id;
+		var user = message.user;
+		var channel = message.channel;
 
-		console.log("message in pause session middleware:");
-		console.log(message);
-
-		if (!bot.queuedReachouts) {
-			bot.queuedReachouts = {};
-		}
 
 		if (!bot || !message) {
 			console.log('~~ Weird bug where bot or message not found ~~\n:');
@@ -62,6 +62,14 @@ exports.default = function (controller) {
 			console.log(message);
 			next();
 			return;
+		}
+
+		var token = bot.config.token;
+
+		bot = _index.bots[token]; // use same bot every time
+
+		if (!bot.queuedReachouts) {
+			bot.queuedReachouts = {};
 		}
 
 		if (message.user && message.type) {

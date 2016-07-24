@@ -58,7 +58,6 @@ export default function(controller) {
 
 					workSession.update({
 						endTime: now,
-						open: false,
 						live: false
 					});
 
@@ -86,7 +85,7 @@ export default function(controller) {
 							let timeString = convertMinutesToHoursString(minutesRemaining);
 
 							convo.say({
-								text: `You have *${timeString}* remaining for ${tasksToWorkOnString}`,
+								text: `I've paused your session. You have *${timeString}* remaining for ${tasksToWorkOnString}`,
 								attachments: [
 									{
 										attachment_type: 'default',
@@ -101,9 +100,9 @@ export default function(controller) {
 													style: "primary"
 											},
 											{
-													name: buttonValues.startSession.endEarly.name,
+													name: buttonValues.startSession.pause.endEarly.name,
 													text: "End Session",
-													value: buttonValues.startSession.endEarly.value,
+													value: buttonValues.startSession.pause.endEarly.value,
 													type: "button"
 											}
 										]
@@ -112,6 +111,11 @@ export default function(controller) {
 							});
 
 							convo.next();
+
+							convo.on('end', (convo) => {
+								resumeQueuedReachouts(bot, { SlackUserId });
+							});
+
 						});
 					})
 				}
@@ -162,8 +166,10 @@ export default function(controller) {
 								dailyTaskIds.push(dailyTask.dataValues.id);
 							});
 
+							// only get STILL PAUSED work sessions
 							workSession.getStoredWorkSessions({
 								order: `"StoredWorkSession"."createdAt" DESC`,
+								where: [ `"StoredWorkSession"."resumed" = ?`, "false"],
 								limit: 1
 							})
 							.then((storedWorkSessions) => {
@@ -175,15 +181,25 @@ export default function(controller) {
 									const now = moment();
 									const endTime = now.add(minutes, 'minutes');
 
+									// end prev work session
+									workSession.update({
+										open: false
+									});
+
 									// create new work session with those daily tasks
 									models.WorkSession.create({
 										startTime: now,
 										endTime,
-										UserId
+										UserId,
+										live: true
 									})
 									.then((workSession) => {
 
 										workSession.setDailyTasks(dailyTaskIds);
+										// the workSession has been resumed
+										storedWorkSession.update({
+											resumed: true
+										});
 
 										/**
 										 * 		~~ RESUME WORK SESSION MESSAGE ~~
@@ -198,8 +214,7 @@ export default function(controller) {
 										});
 
 										let tasksString     = commaSeparateOutTaskArray(tasksToWorkOnTexts);
-										let minutesDuration = Math.round(minutes);
-										let timeString      = convertMinutesToHoursString(minutesDuration);
+										let timeString      = convertMinutesToHoursString(minutes);
 										let endTimeString   = endTime.format("h:mm a");
 
 										bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
@@ -208,6 +223,12 @@ export default function(controller) {
 												attachments: startSessionOptionsAttachments
 											});
 											convo.next();
+											convo.on('end', (convo) => {
+												setTimeout(() => {
+													console.log("\n\n\n\n\n\n\n RESUMING resumeQueuedReachouts \n\n\n\n\n\n");
+													resumeQueuedReachouts(bot, { SlackUserId });
+												}, 500);	
+											});
 										});
 									})
 
@@ -217,6 +238,12 @@ export default function(controller) {
 									bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 										convo.say(`Doesn't seem like you paused this session :thinking_face:. Let me know if you want to \`start a session\``);
 										convo.next();
+										convo.on('end', (convo) => {
+											console.log(`\n\n\n ~~ should resume aslfkamsflmk ~~ \n\n`);
+											setTimeout(() => {
+												resumeQueuedReachouts(bot, { SlackUserId });
+											}, 500);	
+										});
 									});
 								}
 							})
@@ -226,6 +253,9 @@ export default function(controller) {
 							bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 								convo.say(`You don't have any tasks left for this session! Let me know when you want to \`start a session\``);
 								convo.next();
+								convo.on('end', (convo) => {
+									resumeQueuedReachouts(bot, { SlackUserId });
+								});
 							});
 
 						}
@@ -277,7 +307,7 @@ export default function(controller) {
 							convo.next();
 
 							convo.on('end', (convo) => {
-
+								resumeQueuedReachouts(bot, { SlackUserId });
 							});
 						});
 					});
@@ -288,7 +318,7 @@ export default function(controller) {
 
 	controller.on(`session_end_early_flow`, (bot, config) => {
 
-		const { SlackUserId, botCallback } = config;
+		const { SlackUserId, botCallback, storedWorkSession } = config;
 
 		if (botCallback) {
 			// if botCallback, need to get the correct bot
@@ -296,8 +326,8 @@ export default function(controller) {
 			bot          = bots[botToken];
 		}
 
-		controller.trigger(`done_session_flow`, [bot, { SlackUserId }]);
+		controller.trigger(`done_session_flow`, [bot, config]);
 
-	})
+	});
 
 };

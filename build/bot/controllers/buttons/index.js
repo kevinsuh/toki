@@ -174,7 +174,7 @@ exports.default = function (controller) {
 					bot.replyInteractive(message, "I like all those tasks too :open_hands:");
 					break;
 				case _constants.buttonValues.startSession.pause.value:
-					bot.replyInteractive(message, "Paused!");
+					bot.replyInteractive(message, "Okay!");
 					controller.trigger('session_pause_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
 				case _constants.buttonValues.startSession.addCheckIn.value:
@@ -183,10 +183,10 @@ exports.default = function (controller) {
 					break;
 				case _constants.buttonValues.startSession.endEarly.value:
 					bot.replyInteractive(message, "Let's end early!");
-					controller.trigger('done_session_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+					controller.trigger('session_end_early_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
 				case _constants.buttonValues.startSession.resume.value:
-					bot.replyInteractive(message, "Resuming!");
+					bot.replyInteractive(message, "Okay!");
 					controller.trigger('session_resume_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
 				default:

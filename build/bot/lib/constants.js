@@ -128,7 +128,11 @@ var buttonValues = exports.buttonValues = {
 		value: "START_SESSION",
 		pause: {
 			name: "START_SESSION_PAUSE",
-			value: "START_SESSION_PAUSE"
+			value: "START_SESSION_PAUSE",
+			endEarly: {
+				name: "START_SESSION_PAUSE_END_EARLY",
+				value: "START_SESSION_PAUSE_END_EARLY"
+			}
 		},
 		addCheckIn: {
 			name: "START_SESSION_ADD_CHECK_IN",

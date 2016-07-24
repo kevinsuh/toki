@@ -196,14 +196,21 @@ function resumeQueuedReachouts(bot, config) {
 	// necessary config
 	var now = (0, _momentTimezone2.default)();
 	var SlackUserId = config.SlackUserId;
-	var queuedReachouts = bot.queuedReachouts;
+
+
+	console.log(bot.config);
+
+	var token = bot.config.token;
+
+	bot = bots[token]; // use same bot every time
+
+	var _bot = bot;
+	var queuedReachouts = _bot.queuedReachouts;
 
 
 	if (queuedReachouts && SlackUserId && queuedReachouts[SlackUserId]) {
 
 		var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
-
-		console.log("\n\n ~~ looking to resume bot's queuedReachouts ~~:");
 
 		if (queuedWorkSessions && queuedWorkSessions.length > 0) {
 
@@ -219,10 +226,24 @@ function resumeQueuedReachouts(bot, config) {
 			});
 
 			if (queuedWorkSessionIds.length > 0) {
-				_models2.default.WorkSession.update({
-					live: true
-				}, {
-					where: ['"WorkSessions"."id" IN (?) ', queuedWorkSessionIds]
+				_models2.default.WorkSession.findAll({
+					where: ['"WorkSession"."id" IN (?) ', queuedWorkSessionIds]
+				}).then(function (workSessions) {
+
+					workSessions.forEach(function (workSession) {
+
+						workSession.getStoredWorkSessions({
+							where: ['"StoredWorkSession"."resumed" = ?', "false"],
+							limit: 1
+						}).then(function (storedWorkSessions) {
+							console.log('\n\n ~~~ STORED WORK SESSIONS LENGTH: ' + storedWorkSessions.length + ' ~~~ \n\n');
+							if (storedWorkSessions.length == 0) {
+								workSession.update({
+									live: true
+								});
+							}
+						});
+					});
 				});
 			}
 		}
