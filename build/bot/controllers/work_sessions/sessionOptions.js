@@ -45,6 +45,7 @@ exports.default = function (controller) {
 
 						workSession.update({
 							endTime: now,
+							open: false,
 							live: false
 						});
 
@@ -99,6 +100,17 @@ exports.default = function (controller) {
 							});
 						});
 					})();
+				} else {
+					// no open sessions to pause
+					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+						convo.say('Doesn\'t look like you have an open session :thinking_face:. Let me know if you want to start a new one!');
+						convo.next();
+						convo.on('end', function (convo) {
+							setTimeout(function () {
+								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+							}, 500);
+						});
+					});
 				}
 			});
 		});

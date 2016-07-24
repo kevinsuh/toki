@@ -63,6 +63,10 @@ var _slash = require('./slash');
 
 var _slash2 = _interopRequireDefault(_slash);
 
+var _notWit = require('./notWit');
+
+var _notWit2 = _interopRequireDefault(_notWit);
+
 var _models = require('../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
@@ -83,8 +87,10 @@ var _initiation = require('../actions/initiation');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// config modules
 require('dotenv').config();
+
+// config modules
+
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
@@ -248,6 +254,9 @@ function customConfigBot(controller) {
 
 	// beef up the bot
 	(0, _receiveMiddleware2.default)(controller);
+
+	// give non-wit a chance to answer first
+	(0, _notWit2.default)(controller);
 
 	(0, _misc2.default)(controller);
 	(0, _days2.default)(controller);

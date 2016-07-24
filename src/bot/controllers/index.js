@@ -13,6 +13,7 @@ import setupReceiveMiddleware from '../middleware/receiveMiddleware';
 import miscController from './misc';
 import settingsController from './settings';
 import slashController from './slash';
+import notWitController from './notWit';
 
 import models from '../../app/models';
 import intentConfig from '../lib/intents';
@@ -188,6 +189,9 @@ export function customConfigBot(controller) {
 
 	// beef up the bot
 	setupReceiveMiddleware(controller);
+
+	// give non-wit a chance to answer first
+	notWitController(controller);
 
 	miscController(controller);
 	daysController(controller);
