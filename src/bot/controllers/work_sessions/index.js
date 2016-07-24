@@ -180,8 +180,12 @@ export default function(controller) {
 									}
 
 									if (storedWorkSession) {
+
+										minutes       = storedWorkSession.dataValues.minutes;
+										minutesString = convertMinutesToHoursString(minutes);
+
 										// currently paused
-										message = `${message} Your session is still paused :smiley: You have *${minutesString}* remaining for ${sessionTasks}`;
+										message = `${message} Your session is still paused :double_vertical_bar: You have *${minutesString}* remaining for ${sessionTasks}`;
 										convo.say(message);
 										convo.say({
 											text: `*What would you like to do?*`,
@@ -952,8 +956,8 @@ export function checkWorkSessionForLiveTasks(config) {
 							var now           = moment();
 							var endTime       = moment(openWorkSession.dataValues.endTime).tz(tz);
 							var endTimeString = endTime.format("h:mm a");
-							var minutes       = moment.duration(endTime.diff(now)).asMinutes();
-							var minutesString = convertMinutesToHoursString(minutes);
+							let minutes       = moment.duration(endTime.diff(now)).asMinutes();
+							let minutesString = convertMinutesToHoursString(minutes);
 
 							// send either a pause or a live session reminder
 							openWorkSession.getStoredWorkSession({
@@ -961,11 +965,14 @@ export function checkWorkSessionForLiveTasks(config) {
 							})
 							.then((storedWorkSession) => {
 								if (storedWorkSession) {
+
 									// currently paused
+									minutes       = storedWorkSession.dataValues.minutes;
+									minutesString = convertMinutesToHoursString(minutes);
 									bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
 										convo.say({
-											text: `Your session is still paused :smiley: You have *${minutesString}* remaining for ${liveTasksString}`,
+											text: `Let me know when you want to resume your session for ${liveTasksString}!`,
 											attachments: pausedSessionOptionsAttachments
 										});
 

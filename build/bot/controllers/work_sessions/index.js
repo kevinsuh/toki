@@ -154,8 +154,12 @@ exports.default = function (controller) {
 									};
 
 									if (storedWorkSession) {
+
+										minutes = storedWorkSession.dataValues.minutes;
+										minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+
 										// currently paused
-										message = message + ' Your session is still paused :smiley: You have *' + minutesString + '* remaining for ' + sessionTasks;
+										message = message + ' Your session is still paused :double_vertical_bar: You have *' + minutesString + '* remaining for ' + sessionTasks;
 										convo.say(message);
 										convo.say({
 											text: '*What would you like to do?*',
@@ -895,47 +899,59 @@ function checkWorkSessionForLiveTasks(config) {
 							});
 						});
 					} else {
-						// inform user how much time is remaining
-						// and what tasks are attached to the work session
-						var liveTaskTextsArray = [];
-						liveTasks.forEach(function (dailyTask) {
-							liveTaskTextsArray.push(dailyTask.dataValues.Task.text);
-						});
-						var liveTasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(liveTaskTextsArray);
+						var liveTaskTextsArray;
+						var liveTasksString;
+						var now;
+						var endTime;
+						var endTimeString;
 
-						var now = (0, _momentTimezone2.default)();
-						var endTime = (0, _momentTimezone2.default)(openWorkSession.dataValues.endTime).tz(tz);
-						var endTimeString = endTime.format("h:mm a");
-						var minutes = _momentTimezone2.default.duration(endTime.diff(now)).asMinutes();
-						var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+						(function () {
+							// inform user how much time is remaining
+							// and what tasks are attached to the work session
+							liveTaskTextsArray = [];
 
-						// send either a pause or a live session reminder
-						openWorkSession.getStoredWorkSession({
-							where: ['"StoredWorkSession"."live" = ?', true]
-						}).then(function (storedWorkSession) {
-							if (storedWorkSession) {
-								// currently paused
-								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+							liveTasks.forEach(function (dailyTask) {
+								liveTaskTextsArray.push(dailyTask.dataValues.Task.text);
+							});
+							liveTasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(liveTaskTextsArray);
+							now = (0, _momentTimezone2.default)();
+							endTime = (0, _momentTimezone2.default)(openWorkSession.dataValues.endTime).tz(tz);
+							endTimeString = endTime.format("h:mm a");
 
-									convo.say({
-										text: 'Your session is still paused :smiley: You have *' + minutesString + '* remaining for ' + liveTasksString,
-										attachments: _constants.pausedSessionOptionsAttachments
+							var minutes = _momentTimezone2.default.duration(endTime.diff(now)).asMinutes();
+							var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+
+							// send either a pause or a live session reminder
+							openWorkSession.getStoredWorkSession({
+								where: ['"StoredWorkSession"."live" = ?', true]
+							}).then(function (storedWorkSession) {
+								if (storedWorkSession) {
+
+									// currently paused
+									minutes = storedWorkSession.dataValues.minutes;
+									minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+									bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+										convo.say({
+											text: 'Let me know when you want to resume your session for ' + liveTasksString + '!',
+											attachments: _constants.pausedSessionOptionsAttachments
+										});
 									});
-								});
-							} else {
-								// currently live
-								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+								} else {
+									// currently live
+									bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-									convo.say('Good luck with ' + liveTasksString + '!');
-									convo.say({
-										text: 'See you in ' + minutesString + ' at *' + endTimeString + '* :timer_clock:',
-										attachments: _constants.startSessionOptionsAttachments
+										convo.say('Good luck with ' + liveTasksString + '!');
+										convo.say({
+											text: 'See you in ' + minutesString + ' at *' + endTimeString + '* :timer_clock:',
+											attachments: _constants.startSessionOptionsAttachments
+										});
 									});
-								});
-							}
-						});
+								}
+							});
 
-						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+						})();
 					}
 				});
 			} else {

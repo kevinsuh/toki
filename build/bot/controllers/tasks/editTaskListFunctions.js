@@ -71,9 +71,13 @@ function startEditTaskListMessage(convo) {
 				};
 
 				if (storedWorkSession) {
+
+					minutes = storedWorkSession.dataValues.minutes;
+					minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+
 					// currently paused
 					convo.tasksEdit.currentSession.isPaused = true;
-					convo.say('Your session is still paused :smiley: You have *' + minutesString + '* remaining for ' + sessionTasks);
+					convo.say('Your session is still paused :double_vertical_bar: You have *' + minutesString + '* remaining for ' + sessionTasks);
 				} else {
 					// currently live
 					convo.say('You\'re currently in a session for ' + sessionTasks + ' until *' + endTimeString + '* (' + minutesString + ' left)');
@@ -302,7 +306,7 @@ function askForTaskListOptions(convo) {
 			if (currentSession.isPaused) {
 				// paused session
 				convo.say({
-					text: 'Your session is still paused :smiley: You have *' + minutesString + '* remaining for ' + sessionTasks,
+					text: 'Let me know when you want to resume your session for ' + sessionTasks + '!',
 					attachments: _constants.pausedSessionOptionsAttachments
 				});
 			} else {
