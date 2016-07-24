@@ -12,7 +12,7 @@ import intentConfig from '../../lib/intents';
 
 import { bots, resumeQueuedReachouts } from '../index';
 
-import { colorsArray, buttonValues, colorsHash, startSessionOptionsAttachments } from '../../lib/constants';
+import { colorsArray, buttonValues, colorsHash, startSessionOptionsAttachments, pausedSessionOptionsAttachments } from '../../lib/constants';
 
 // ALL OF THE TIMEOUT FUNCTIONALITIES
 export default function(controller) {
@@ -111,28 +111,7 @@ export default function(controller) {
 
 								convo.say({
 									text: message,
-									attachments: [
-										{
-											attachment_type: 'default',
-											callback_id: "PAUSED_SESSION_OPTIONS",
-											fallback: "Your session is paused!",
-											actions: [
-												{
-														name: buttonValues.startSession.resume.name,
-														text: "Resume",
-														value: buttonValues.startSession.resume.value,
-														type: "button",
-														style: "primary"
-												},
-												{
-														name: buttonValues.startSession.pause.endEarly.name,
-														text: "End Session",
-														value: buttonValues.startSession.pause.endEarly.value,
-														type: "button"
-												}
-											]
-										}
-									]
+									attachments: pausedSessionOptionsAttachments
 								});
 
 								convo.next();

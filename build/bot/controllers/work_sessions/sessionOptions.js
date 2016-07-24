@@ -94,23 +94,7 @@ exports.default = function (controller) {
 
 									convo.say({
 										text: message,
-										attachments: [{
-											attachment_type: 'default',
-											callback_id: "PAUSED_SESSION_OPTIONS",
-											fallback: "Your session is paused!",
-											actions: [{
-												name: _constants.buttonValues.startSession.resume.name,
-												text: "Resume",
-												value: _constants.buttonValues.startSession.resume.value,
-												type: "button",
-												style: "primary"
-											}, {
-												name: _constants.buttonValues.startSession.pause.endEarly.name,
-												text: "End Session",
-												value: _constants.buttonValues.startSession.pause.endEarly.value,
-												type: "button"
-											}]
-										}]
+										attachments: _constants.pausedSessionOptionsAttachments
 									});
 
 									convo.next();
