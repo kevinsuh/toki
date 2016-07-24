@@ -406,7 +406,11 @@ export default function(controller) {
 							})
 
 							let tasksToWorkOnTexts = tasksToWorkOnArray.map((dailyTask) => {
-								return dailyTask.dataValues.Task.text;
+								if (dailyTask.dataValues) {
+									return dailyTask.dataValues.Task.text;
+								} else {
+									return dailyTask.text;
+								}
 							});
 							let tasksString = commaSeparateOutTaskArray(tasksToWorkOnTexts);
 							// get minutes worked
