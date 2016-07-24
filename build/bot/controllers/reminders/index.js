@@ -178,6 +178,7 @@ exports.default = function (controller) {
 
 
 		var reminderOrCheckInString = reminder_type == "work_session" ? 'check in at' : 'set a reminder for';
+		var reminderOrCheckInExample = reminder_type == "work_session" ? '`i.e. halfway done by 4pm`' : '`i.e. pick up laundry at 8pm`';
 
 		console.log('\n\n config:');
 		console.log(config);
@@ -249,7 +250,7 @@ exports.default = function (controller) {
 						SlackUserId: SlackUserId
 					};
 
-					convo.ask('What time would you like me to ' + reminderOrCheckInString + '? Leave a note in the same line if you want me to remember it for you `i.e. halfway done by 4pm`', function (response, convo) {
+					convo.ask('What time would you like me to ' + reminderOrCheckInString + '? Leave a note in the same line if you want me to remember it for you ' + reminderOrCheckInExample, function (response, convo) {
 						var _response$intentObjec = response.intentObject.entities;
 						var reminder = _response$intentObjec.reminder;
 						var duration = _response$intentObjec.duration;

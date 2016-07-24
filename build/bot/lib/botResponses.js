@@ -38,7 +38,7 @@ var utterances = exports.utterances = {
 	specificYes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|\by[esahp]{2,}\b|\bs[ure]{2,}\b)/i),
 	endDay: new RegExp(/(\be[end ]{2,}\bd[day]{2,})/i),
 	containsNew: new RegExp(/(\bn[new]{2,}\b)/i),
-	containsCheckin: new RegExp(/(\bch[check in]{3,}\b|r[reminder]{4,})/i),
+	containsCheckin: new RegExp(/(\bch[check in]{3,}\b|\br[reminder]{4,}\b|\bn[note]{2,}\b)/i),
 	containsOnlyCheckin: new RegExp(/(\bch[check -in]{4,}\b)/i),
 	containsChangeTask: new RegExp(/(ch[change ]{3,}t[task ]{2,})/i),
 	containsChangeTime: new RegExp(/(ch[change ]{3,}t[time ]{2,})/i),

@@ -187,6 +187,7 @@ export default function(controller) {
 		const { SlackUserId, message, reminder_type } = config;
 
 		let reminderOrCheckInString = reminder_type == "work_session" ? 'check in at' : 'set a reminder for';
+		let reminderOrCheckInExample = reminder_type == "work_session" ? '`i.e. halfway done by 4pm`' : '`i.e. pick up laundry at 8pm`';
 
 		console.log(`\n\n config:`);
 		console.log(config);
@@ -255,7 +256,7 @@ export default function(controller) {
 						SlackUserId
 					}
 
-					convo.ask(`What time would you like me to ${reminderOrCheckInString}? Leave a note in the same line if you want me to remember it for you \`i.e. halfway done by 4pm\``, (response, convo) => {
+					convo.ask(`What time would you like me to ${reminderOrCheckInString}? Leave a note in the same line if you want me to remember it for you ${reminderOrCheckInExample}`, (response, convo) => {
 
 						const { intentObject: { entities: { reminder, duration, datetime } } } = response;
 
