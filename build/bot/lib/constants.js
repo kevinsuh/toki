@@ -125,7 +125,19 @@ var buttonValues = exports.buttonValues = {
 	},
 	startSession: {
 		name: "START_SESSION",
-		value: "START_SESSION"
+		value: "START_SESSION",
+		pause: {
+			name: "START_SESSION_PAUSE",
+			value: "START_SESSION_PAUSE"
+		},
+		addCheckIn: {
+			name: "START_SESSION_ADD_CHECK_IN",
+			value: "START_SESSION_ADD_CHECK_IN"
+		},
+		endEarly: {
+			name: "START_SESSION_END_EARLY",
+			value: "START_SESSION_END_EARLY"
+		}
 	},
 	newTask: {
 		name: "NEW_TASK",

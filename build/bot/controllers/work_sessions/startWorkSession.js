@@ -393,6 +393,10 @@ exports.default = function (controller) {
 								});
 							});
 
+							/**
+        * 		~~ START WORK SESSION MESSAGE ~~
+        */
+
 							var tasksToWorkOnTexts = tasksToWorkOnArray.map(function (dailyTask) {
 								if (dailyTask.dataValues) {
 									return dailyTask.dataValues.Task.text;
@@ -400,15 +404,38 @@ exports.default = function (controller) {
 									return dailyTask.text;
 								}
 							});
+
 							var tasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(tasksToWorkOnTexts);
-							// get minutes worked
 							var minutesDuration = Math.round(_momentTimezone2.default.duration(calculatedTimeObject.diff(now)).asMinutes());
 							var timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutesDuration);
 
 							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
 								convo.say('Good luck with ' + tasksString + '!');
-								convo.say('See you in ' + timeString + ' at *' + calculatedTime + '* :timer_clock:');
+								convo.say({
+									text: 'See you in ' + timeString + ' at *' + calculatedTime + '* :timer_clock:',
+									attachments: [{
+										attachment_type: 'default',
+										callback_id: "START_SESSION_OPTIONS",
+										fallback: "Good luck with your session!",
+										actions: [{
+											name: _constants.buttonValues.startSession.pause.name,
+											text: "Pause",
+											value: _constants.buttonValues.startSession.pause.value,
+											type: "button"
+										}, {
+											name: _constants.buttonValues.startSession.addCheckIn.name,
+											text: "Add check-in",
+											value: _constants.buttonValues.startSession.addCheckIn.value,
+											type: "button"
+										}, {
+											name: _constants.buttonValues.startSession.endEarly.name,
+											text: "End Early",
+											value: _constants.buttonValues.startSession.endEarly.value,
+											type: "button"
+										}]
+									}]
+								});
 								convo.next();
 							});
 						});

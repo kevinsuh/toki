@@ -405,6 +405,10 @@ export default function(controller) {
 
 							})
 
+							/**
+							 * 		~~ START WORK SESSION MESSAGE ~~
+							 */
+
 							let tasksToWorkOnTexts = tasksToWorkOnArray.map((dailyTask) => {
 								if (dailyTask.dataValues) {
 									return dailyTask.dataValues.Task.text;
@@ -412,15 +416,44 @@ export default function(controller) {
 									return dailyTask.text;
 								}
 							});
+
 							let tasksString = commaSeparateOutTaskArray(tasksToWorkOnTexts);
-							// get minutes worked
 							let minutesDuration = Math.round(moment.duration(calculatedTimeObject.diff(now)).asMinutes());
 							let timeString = convertMinutesToHoursString(minutesDuration);
 
 							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 							
 								convo.say(`Good luck with ${tasksString}!`);
-								convo.say(`See you in ${timeString} at *${calculatedTime}* :timer_clock:`);
+								convo.say({
+									text: `See you in ${timeString} at *${calculatedTime}* :timer_clock:`,
+									attachments:[
+										{
+											attachment_type: 'default',
+											callback_id: "START_SESSION_OPTIONS",
+											fallback: "Good luck with your session!",
+											actions: [
+												{
+														name: buttonValues.startSession.pause.name,
+														text: "Pause",
+														value: buttonValues.startSession.pause.value,
+														type: "button"
+												},
+												{
+														name: buttonValues.startSession.addCheckIn.name,
+														text: "Add check-in",
+														value: buttonValues.startSession.addCheckIn.value,
+														type: "button"
+												},
+												{
+														name: buttonValues.startSession.endEarly.name,
+														text: "End Early",
+														value: buttonValues.startSession.endEarly.value,
+														type: "button"
+												}
+											]
+										}
+									]
+								});
 								convo.next();
 
 							});
