@@ -124,37 +124,7 @@ exports.default = function (controller) {
 						});
 					})();
 				} else {
-					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-						convo.ask('You\'re not in a session right now! Would you like to start one :muscle:?', [{
-							pattern: _botResponses.utterances.yes,
-							callback: function callback(response, convo) {
-								convo.startSession = true;
-								convo.next();
-							}
-						}, {
-							pattern: _botResponses.utterances.no,
-							callback: function callback(response, convo) {
-								convo.say("Okay! I'll be here when you want to start a session :smile_cat:");
-								convo.next();
-							}
-						}, {
-							default: true,
-							callback: function callback(response, convo) {
-								convo.say("Sorry, I didn't catch that");
-								convo.repeat();
-								convo.next();
-							}
-						}]);
-						convo.next();
-						convo.on('end', function (convo) {
-							if (convo.startSession) {
-								controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
-							}
-							setTimeout(function () {
-								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-							}, 500);
-						});
-					});
+					notInSessionWouldYouLikeToStartOne({ bot: bot, controller: controller, SlackUserId: SlackUserId });
 				}
 			});
 		});
@@ -177,8 +147,10 @@ exports.default = function (controller) {
 		}).then(function (user) {
 
 			var UserId = user.id;
+			var tz = user.SlackUser.tz;
 
 			// get THE most recently created workSession for that user
+
 			user.getWorkSessions({
 				order: '"WorkSession"."createdAt" DESC',
 				limit: 1
@@ -188,31 +160,49 @@ exports.default = function (controller) {
 					(function () {
 
 						var workSession = workSessions[0];
+
 						workSession.getStoredWorkSession({
 							where: ['"StoredWorkSession"."live" = ?', true]
 						}).then(function (storedWorkSession) {
-							if (storedWorkSession) {
-								// it has been paused
-								// now check if there are daily tasks associated
-								workSession.getDailyTasks({
-									include: [_models2.default.Task],
-									where: ['"Task"."done" = ? AND "DailyTask"."type" = ?', false, "live"]
-								}).then(function (dailyTasks) {
-									if (dailyTasks.length > 0) {
-										(function () {
-											// we are in the clear to resume the session!
-											var dailyTaskIds = [];
-											dailyTasks.forEach(function (dailyTask) {
-												dailyTaskIds.push(dailyTask.dataValues.id);
-											});
+
+							workSession.getDailyTasks({
+								include: [_models2.default.Task],
+								where: ['"Task"."done" = ? AND "DailyTask"."type" = ?', false, "live"]
+							}).then(function (dailyTasks) {
+
+								if (dailyTasks.length > 0) {
+									(function () {
+
+										// we are in the clear to resume the session!
+										var dailyTaskIds = [];
+										dailyTasks.forEach(function (dailyTask) {
+											dailyTaskIds.push(dailyTask.dataValues.id);
+										});
+
+										var now = (0, _momentTimezone2.default)();
+
+										var tasksToWorkOnTexts = dailyTasks.map(function (dailyTask) {
+											if (dailyTask.dataValues) {
+												return dailyTask.dataValues.Task.text;
+											} else {
+												return dailyTask.text;
+											}
+										});
+
+										var tasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(tasksToWorkOnTexts);
+										var timeString = void 0;
+										var endTime = void 0;
+										var endTimeString = void 0;
+
+										if (storedWorkSession) {
+											// existing paused session to resume
 
 											var minutes = storedWorkSession.minutes;
 
+											endTime = now.add(minutes, 'minutes').tz(tz);
+											endTimeString = endTime.format("h:mm a");
+											timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
 
-											var now = (0, _momentTimezone2.default)();
-											var endTime = now.add(minutes, 'minutes');
-
-											// end prev work session
 											workSession.update({
 												open: false
 											});
@@ -232,18 +222,6 @@ exports.default = function (controller) {
              * 		~~ RESUME WORK SESSION MESSAGE ~~
              */
 
-												var tasksToWorkOnTexts = dailyTasks.map(function (dailyTask) {
-													if (dailyTask.dataValues) {
-														return dailyTask.dataValues.Task.text;
-													} else {
-														return dailyTask.text;
-													}
-												});
-
-												var tasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(tasksToWorkOnTexts);
-												var timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
-												var endTimeString = endTime.format("h:mm a");
-
 												bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 													convo.say('I\'ve resumed your session!');
 													convo.say({
@@ -258,33 +236,42 @@ exports.default = function (controller) {
 													});
 												});
 											});
-										})();
-									} else {
-										// no live and open tasks
-										bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-											convo.say('You don\'t have any tasks left for this session! Let me know when you want to `start a session`');
-											convo.next();
-											convo.on('end', function (convo) {
-												(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-											});
-										});
-									}
-								});
-							} else {
-								// it has NOT been paused yet
-								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-									convo.say('Doesn\'t seem like you paused this session :thinking_face:. Let me know if you want to `start a session`');
-									convo.next();
-									convo.on('end', function (convo) {
-										console.log('\n\n\n ~~ should resume aslfkamsflmk ~~ \n\n');
-										setTimeout(function () {
-											(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-										}, 500);
-									});
-								});
-							}
+										} else {
+
+											// no paused sessions: either in live one or not in one!
+											if (workSession.dataValues.open) {
+
+												endTime = (0, _momentTimezone2.default)(workSession.dataValues.endTime).tz(tz);
+												endTimeString = endTime.format("h:mm a");
+												var minutesRemaining = _momentTimezone2.default.duration(endTime.diff(now)).asMinutes();
+												timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutesRemaining);
+
+												bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+													convo.say('You\'re currently in a session! You have ' + timeString + ' remaining for ' + tasksString);
+													convo.say({
+														text: 'See you at *' + endTimeString + '*  :timer_clock:',
+														attachments: _constants.startSessionOptionsAttachments
+													});
+													convo.next();
+													convo.on('end', function (convo) {
+														setTimeout(function () {
+															(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+														}, 500);
+													});
+												});
+											} else {
+												notInSessionWouldYouLikeToStartOne({ bot: bot, controller: controller, SlackUserId: SlackUserId });
+											}
+										}
+									})();
+								} else {
+									notInSessionWouldYouLikeToStartOne({ bot: bot, controller: controller, SlackUserId: SlackUserId });
+								}
+							});
 						});
 					})();
+				} else {
+					notInSessionWouldYouLikeToStartOne({ bot: bot, controller: controller, SlackUserId: SlackUserId });
 				}
 			});
 		});
@@ -389,4 +376,45 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 ;
 
 // ALL OF THE TIMEOUT FUNCTIONALITIES
+
+
+function notInSessionWouldYouLikeToStartOne(config) {
+	var bot = config.bot;
+	var SlackUserId = config.SlackUserId;
+	var controller = config.controller;
+
+	if (bot && SlackUserId && controller) {
+		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+			convo.ask('You\'re not in a session right now! Would you like to start one :muscle:?', [{
+				pattern: _botResponses.utterances.yes,
+				callback: function callback(response, convo) {
+					convo.startSession = true;
+					convo.next();
+				}
+			}, {
+				pattern: _botResponses.utterances.no,
+				callback: function callback(response, convo) {
+					convo.say("Okay! I'll be here when you want to `start a session` :smile_cat:");
+					convo.next();
+				}
+			}, {
+				default: true,
+				callback: function callback(response, convo) {
+					convo.say("Sorry, I didn't catch that");
+					convo.repeat();
+					convo.next();
+				}
+			}]);
+			convo.next();
+			convo.on('end', function (convo) {
+				if (convo.startSession) {
+					controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+				}
+				setTimeout(function () {
+					(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+				}, 500);
+			});
+		});
+	}
+}
 //# sourceMappingURL=sessionOptions.js.map
