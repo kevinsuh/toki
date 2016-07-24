@@ -578,7 +578,7 @@ export const taskListMessageResetTimesButtonAttachment = [
 export const startSessionOptionsAttachments = [
 	{
 		attachment_type: 'default',
-		callback_id: "START_SESSION_OPTIONS",
+		callback_id: "LIVE_SESSION_OPTIONS",
 		fallback: "Good luck with your session!",
 		actions: [
 			{
@@ -599,6 +599,29 @@ export const startSessionOptionsAttachments = [
 					value: buttonValues.startSession.endEarly.value,
 					type: "button",
 					style: "danger"
+			}
+		]
+	}
+]
+
+export const pausedSessionOptionsAttachments = [
+	{
+		attachment_type: 'default',
+		callback_id: "PAUSED_SESSION_OPTIONS",
+		fallback: "Your session is paused!",
+		actions: [
+			{
+					name: buttonValues.startSession.resume.name,
+					text: "Resume",
+					value: buttonValues.startSession.resume.value,
+					type: "button",
+					style: "primary"
+			},
+			{
+					name: buttonValues.startSession.pause.endEarly.name,
+					text: "End Session",
+					value: buttonValues.startSession.pause.endEarly.value,
+					type: "button"
 			}
 		]
 	}

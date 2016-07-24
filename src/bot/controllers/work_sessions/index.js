@@ -10,7 +10,7 @@ import startWorkSessionController from './startWorkSession';
 import sessionOptionsController from './sessionOptions';
 
 import intentConfig from '../../lib/intents';
-import { hoursForExpirationTime, startDayExpirationTime, colorsArray, buttonValues, colorsHash } from '../../lib/constants';
+import { hoursForExpirationTime, startDayExpirationTime, colorsArray, buttonValues, colorsHash, startSessionOptionsAttachments, pausedSessionOptionsAttachments } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertMinutesToHoursString, deleteConvoAskMessage, convertTaskNumberStringToArray } from '../../lib/messageHelpers';
 import { utterances } from '../../lib/botResponses';
 
@@ -147,39 +147,57 @@ export default function(controller) {
 						var name = user.nickName || user.email;
 
 						// give response based on state user is in
-						var message = `Hey, ${name}!`;
+						let message = `Hey, ${name}!`;
 
 						if (openWorkSession) {
 
-							openWorkSession.getDailyTasks({
-								include: [ models.Task ]
+							// send either a pause or a live session reminder
+							openWorkSession.getStoredWorkSession({
+								where: [ `"StoredWorkSession"."live" = ?`, true ]
 							})
-							.then((dailyTasks) => {
+							.then((storedWorkSession) => {
+								openWorkSession.getDailyTasks({
+									include: [ models.Task ]
+								})
+								.then((dailyTasks) => {
 
-								var now           = moment();
-								var endTime       = moment(openWorkSession.endTime);
-								var endTimeString = endTime.format("h:mm a");
-								var minutes       = Math.round(moment.duration(endTime.diff(now)).asMinutes());
-								var minutesString = convertMinutesToHoursString(minutes);
+									let now           = moment();
+									let endTime       = moment(openWorkSession.endTime);
+									let endTimeString = endTime.format("h:mm a");
+									let minutes       = Math.round(moment.duration(endTime.diff(now)).asMinutes());
+									let minutesString = convertMinutesToHoursString(minutes);
 
-								var dailyTaskTexts = dailyTasks.map((dailyTask) => {
-									return dailyTask.dataValues.Task.text;
-								});
+									let dailyTaskTexts = dailyTasks.map((dailyTask) => {
+										return dailyTask.dataValues.Task.text;
+									});
 
-								var sessionTasks = commaSeparateOutTaskArray(dailyTaskTexts);
-								message = `${message} You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`
-								convo.say(message);
+									let sessionTasks = commaSeparateOutTaskArray(dailyTaskTexts);
 
-								convo.isBack.currentSession = {
-									endTime,
-									endTimeString,
-									minutesString
-								}
+									convo.isBack.currentSession = {
+										endTime,
+										endTimeString,
+										minutesString
+									}
 
-								currentlyInSessionFlow(err, convo);
-								convo.next();
+									if (storedWorkSession) {
+										// currently paused
+										message = `${message} You're session is still paused. You have *${minutesString}* remaining for ${sessionTasks}`;
+										convo.say(message);
+										convo.say({
+											text: `*What would you like to do?*`,
+											attachments: pausedSessionOptionsAttachments
+										});
+									} else {
+										// currently live
+										message = `${message} You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`;
+										convo.say(message);
+										currentlyInSessionFlow(err, convo);
+									}
 
-							})
+									convo.next();
+
+								})
+							});
 
 						} else {
 
@@ -937,10 +955,34 @@ export function checkWorkSessionForLiveTasks(config) {
 							var minutes       = moment.duration(endTime.diff(now)).asMinutes();
 							var minutesString = convertMinutesToHoursString(minutes);
 
-							bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+							// send either a pause or a live session reminder
+							openWorkSession.getStoredWorkSession({
+								where: [ `"StoredWorkSession"."live" = ?`, true ]
+							})
+							.then((storedWorkSession) => {
+								if (storedWorkSession) {
+									// currently paused
+									bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
-								convo.say(`Good luck finishing ${liveTasksString}!`);
+										convo.say(`Your session is still paused!`);
+										convo.say({
+											text: `You have *${minutesString}* remaining for ${liveTasksString}`,
+											attachments: pausedSessionOptionsAttachments
+										});
 
+									});
+								} else {
+									// currently live
+									bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+										convo.say(`Good luck with ${liveTasksString}!`);
+										convo.say({
+											text: `See you in ${minutesString} at *${endTimeString}* :timer_clock:`,
+											attachments: startSessionOptionsAttachments
+										});
+
+									});
+								}
 							});
 
 							resumeQueuedReachouts(bot, { SlackUserId });

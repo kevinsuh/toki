@@ -183,7 +183,6 @@ export default function(controller) {
 					controller.trigger(`session_pause_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				case buttonValues.startSession.addCheckIn.value:
-					bot.replyInteractive(message, "Let's add a checkin!");
 					controller.trigger(`session_add_checkin_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				case buttonValues.startSession.endEarly.value:

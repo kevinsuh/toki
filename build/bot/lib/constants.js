@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
@@ -548,7 +548,7 @@ var taskListMessageResetTimesButtonAttachment = exports.taskListMessageResetTime
 
 var startSessionOptionsAttachments = exports.startSessionOptionsAttachments = [{
 	attachment_type: 'default',
-	callback_id: "START_SESSION_OPTIONS",
+	callback_id: "LIVE_SESSION_OPTIONS",
 	fallback: "Good luck with your session!",
 	actions: [{
 		name: buttonValues.startSession.pause.name,
@@ -566,6 +566,24 @@ var startSessionOptionsAttachments = exports.startSessionOptionsAttachments = [{
 		value: buttonValues.startSession.endEarly.value,
 		type: "button",
 		style: "danger"
+	}]
+}];
+
+var pausedSessionOptionsAttachments = exports.pausedSessionOptionsAttachments = [{
+	attachment_type: 'default',
+	callback_id: "PAUSED_SESSION_OPTIONS",
+	fallback: "Your session is paused!",
+	actions: [{
+		name: buttonValues.startSession.resume.name,
+		text: "Resume",
+		value: buttonValues.startSession.resume.value,
+		type: "button",
+		style: "primary"
+	}, {
+		name: buttonValues.startSession.pause.endEarly.name,
+		text: "End Session",
+		value: buttonValues.startSession.pause.endEarly.value,
+		type: "button"
 	}]
 }];
 //# sourceMappingURL=constants.js.map

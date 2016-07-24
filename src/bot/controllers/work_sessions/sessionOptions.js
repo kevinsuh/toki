@@ -94,7 +94,6 @@ export default function(controller) {
 								 */
 								
 								workSession.update({
-									endTime: now,
 									live: false
 								});
 
@@ -205,7 +204,7 @@ export default function(controller) {
 									dailyTaskIds.push(dailyTask.dataValues.id);
 								});
 
-								const now         = moment();
+								const now = moment();
 
 								let tasksToWorkOnTexts = dailyTasks.map((dailyTask) => {
 									if (dailyTask.dataValues) {
@@ -234,7 +233,7 @@ export default function(controller) {
 
 									// create new work session with those daily tasks
 									models.WorkSession.create({
-										startTime: now,
+										startTime: moment(),
 										endTime,
 										UserId,
 										live: true
@@ -337,9 +336,23 @@ export default function(controller) {
 			.then((workSessions) => {
 
 				if (workSessions.length > 0) {
-					let config           = { SlackUserId };
-					config.reminder_type = "work_session";
-					controller.trigger(`ask_for_reminder`, [bot, config]);
+
+					bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+						convo.say(`Let's add a checkin!`);
+						convo.next();
+
+						convo.on('end', (convo) => {
+
+							let config           = { SlackUserId };
+							config.reminder_type = "work_session";
+							controller.trigger(`ask_for_reminder`, [bot, config]);
+							
+							resumeQueuedReachouts(bot, { SlackUserId });
+							
+						});
+					});
+
 				} else {
 					notInSessionWouldYouLikeToStartOne({ bot, controller, SlackUserId });
 				}

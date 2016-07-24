@@ -127,32 +127,49 @@ exports.default = function (controller) {
 
 						if (openWorkSession) {
 
-							openWorkSession.getDailyTasks({
-								include: [_models2.default.Task]
-							}).then(function (dailyTasks) {
+							// send either a pause or a live session reminder
+							openWorkSession.getStoredWorkSession({
+								where: ['"StoredWorkSession"."live" = ?', true]
+							}).then(function (storedWorkSession) {
+								openWorkSession.getDailyTasks({
+									include: [_models2.default.Task]
+								}).then(function (dailyTasks) {
 
-								var now = (0, _momentTimezone2.default)();
-								var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime);
-								var endTimeString = endTime.format("h:mm a");
-								var minutes = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
-								var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+									var now = (0, _momentTimezone2.default)();
+									var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime);
+									var endTimeString = endTime.format("h:mm a");
+									var minutes = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
+									var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
 
-								var dailyTaskTexts = dailyTasks.map(function (dailyTask) {
-									return dailyTask.dataValues.Task.text;
+									var dailyTaskTexts = dailyTasks.map(function (dailyTask) {
+										return dailyTask.dataValues.Task.text;
+									});
+
+									var sessionTasks = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
+
+									convo.isBack.currentSession = {
+										endTime: endTime,
+										endTimeString: endTimeString,
+										minutesString: minutesString
+									};
+
+									if (storedWorkSession) {
+										// currently paused
+										message = message + ' You\'re session is still paused. You have *' + minutesString + '* remaining for ' + sessionTasks;
+										convo.say(message);
+										convo.say({
+											text: '*What would you like to do?*',
+											attachments: _constants.pausedSessionOptionsAttachments
+										});
+									} else {
+										// currently live
+										message = message + ' You\'re currently in a session for ' + sessionTasks + ' until *' + endTimeString + '* (' + minutesString + ' left)';
+										convo.say(message);
+										currentlyInSessionFlow(err, convo);
+									}
+
+									convo.next();
 								});
-
-								var sessionTasks = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
-								message = message + ' You\'re currently in a session for ' + sessionTasks + ' until *' + endTimeString + '* (' + minutesString + ' left)';
-								convo.say(message);
-
-								convo.isBack.currentSession = {
-									endTime: endTime,
-									endTimeString: endTimeString,
-									minutesString: minutesString
-								};
-
-								currentlyInSessionFlow(err, convo);
-								convo.next();
 							});
 						} else {
 
@@ -892,9 +909,31 @@ function checkWorkSessionForLiveTasks(config) {
 						var minutes = _momentTimezone2.default.duration(endTime.diff(now)).asMinutes();
 						var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
 
-						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+						// send either a pause or a live session reminder
+						openWorkSession.getStoredWorkSession({
+							where: ['"StoredWorkSession"."live" = ?', true]
+						}).then(function (storedWorkSession) {
+							if (storedWorkSession) {
+								// currently paused
+								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-							convo.say('Good luck finishing ' + liveTasksString + '!');
+									convo.say('Your session is still paused!');
+									convo.say({
+										text: 'You have *' + minutesString + '* remaining for ' + liveTasksString,
+										attachments: _constants.pausedSessionOptionsAttachments
+									});
+								});
+							} else {
+								// currently live
+								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+									convo.say('Good luck with ' + liveTasksString + '!');
+									convo.say({
+										text: 'See you in ' + minutesString + ' at *' + endTimeString + '* :timer_clock:',
+										attachments: _constants.startSessionOptionsAttachments
+									});
+								});
+							}
 						});
 
 						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
