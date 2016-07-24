@@ -51,6 +51,7 @@ export default function(controller) {
 				if (workSessions.length > 0) {
 					
 					const workSession    = workSessions[0];
+					const workSessionId  = workSession.id;
 					const endTime        = moment(workSession.endTime);
 					let now              = moment();
 					let minutesRemaining = Math.round((moment.duration(endTime.diff(now)).asMinutes() * 100)) / 100; // 2 decimal places
@@ -62,7 +63,7 @@ export default function(controller) {
 					});
 
 					models.StoredWorkSession.create({
-						WorkSessionId: workSession.id,
+						WorkSessionId: workSessionId,
 						minutes: minutesRemaining
 					});
 
@@ -202,9 +203,8 @@ export default function(controller) {
 										let endTimeString   = endTime.format("h:mm a");
 
 										bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-											convo.say(`Good luck with ${tasksString}!`);
 											convo.say({
-												text: `See you in ${timeString} at *${endTimeString}* :timer_clock:`,
+												text: `Good luck with ${tasksString}!\nSee you in ${timeString} at *${endTimeString}* :timer_clock:`,
 												attachments: startSessionOptionsAttachments
 											});
 											convo.next();

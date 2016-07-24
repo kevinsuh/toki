@@ -38,6 +38,7 @@ exports.default = function (controller) {
 					(function () {
 
 						var workSession = workSessions[0];
+						var workSessionId = workSession.id;
 						var endTime = (0, _momentTimezone2.default)(workSession.endTime);
 						var now = (0, _momentTimezone2.default)();
 						var minutesRemaining = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes() * 100) / 100; // 2 decimal places
@@ -49,7 +50,7 @@ exports.default = function (controller) {
 						});
 
 						_models2.default.StoredWorkSession.create({
-							WorkSessionId: workSession.id,
+							WorkSessionId: workSessionId,
 							minutes: minutesRemaining
 						});
 
@@ -182,9 +183,8 @@ exports.default = function (controller) {
 													var endTimeString = endTime.format("h:mm a");
 
 													bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-														convo.say('Good luck with ' + tasksString + '!');
 														convo.say({
-															text: 'See you in ' + timeString + ' at *' + endTimeString + '* :timer_clock:',
+															text: 'Good luck with ' + tasksString + '!\nSee you in ' + timeString + ' at *' + endTimeString + '* :timer_clock:',
 															attachments: _constants.startSessionOptionsAttachments
 														});
 														convo.next();
