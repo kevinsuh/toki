@@ -85,7 +85,7 @@ export default function(controller) {
 								const { minutes } = storedWorkSession.dataValues;
 								
 								timeString = convertMinutesToHoursString(minutes);
-								message    = `You're session is already on pause! You have *${timeString}* remaining for ${tasksToWorkOnString}`
+								message    = `Your session is already on pause! You have *${timeString}* remaining for ${tasksToWorkOnString}`
 
 							} else {
 

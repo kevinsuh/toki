@@ -43,34 +43,45 @@ function startEditTaskListMessage(convo) {
 
 
 	if (openWorkSession) {
-		openWorkSession.getDailyTasks({
-			include: [_models2.default.Task]
-		}).then(function (dailyTasks) {
+		openWorkSession.getStoredWorkSession({
+			where: ['"StoredWorkSession"."live" = ?', true]
+		}).then(function (storedWorkSession) {
+			openWorkSession.getDailyTasks({
+				include: [_models2.default.Task]
+			}).then(function (dailyTasks) {
 
-			var now = (0, _moment2.default)();
-			var endTime = (0, _moment2.default)(openWorkSession.endTime);
-			var endTimeString = endTime.format("h:mm a");
-			var minutes = Math.round(_moment2.default.duration(endTime.diff(now)).asMinutes());
-			var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+				var now = (0, _moment2.default)();
+				var endTime = (0, _moment2.default)(openWorkSession.endTime);
+				var endTimeString = endTime.format("h:mm a");
+				var minutes = Math.round(_moment2.default.duration(endTime.diff(now)).asMinutes());
+				var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
 
-			var dailyTaskTexts = dailyTasks.map(function (dailyTask) {
-				return dailyTask.dataValues.Task.text;
+				var dailyTaskTexts = dailyTasks.map(function (dailyTask) {
+					return dailyTask.dataValues.Task.text;
+				});
+
+				var sessionTasks = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
+
+				sayTasksForToday(convo);
+
+				convo.tasksEdit.currentSession = {
+					minutesString: minutesString,
+					sessionTasks: sessionTasks,
+					endTimeString: endTimeString
+				};
+
+				if (storedWorkSession) {
+					// currently paused
+					convo.tasksEdit.currentSession.isPaused = true;
+					convo.say('Your session is still paused :smiley: You have *' + minutesString + '* remaining for ' + sessionTasks);
+				} else {
+					// currently live
+					convo.say('You\'re currently in a session for ' + sessionTasks + ' until *' + endTimeString + '* (' + minutesString + ' left)');
+				}
+
+				askForTaskListOptions(convo);
+				convo.next();
 			});
-
-			var sessionTasks = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
-			// convo.say({
-			// 	attachments: [
-			// 		{
-			// 			text: `You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`,
-			// 			mrkdwn_in: [ "text" ]
-			// 		}
-			// 	]
-			// });
-
-			sayTasksForToday(convo);
-			convo.say('You\'re currently in a session for ' + sessionTasks + ' until *' + endTimeString + '* (' + minutesString + ' left)');
-			askForTaskListOptions(convo);
-			convo.next();
 		});
 	} else {
 		sayTasksForToday(convo);
@@ -277,11 +288,30 @@ function askForTaskListOptions(convo) {
 	}, { // NL equivalent to buttonValues.neverMind.value
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
+			var currentSession = convo.tasksEdit.currentSession;
+			var minutesString = currentSession.minutesString;
+			var sessionTasks = currentSession.sessionTasks;
+			var endTimeString = currentSession.endTimeString;
 
 			// delete button when answered with NL
+
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
-			convo.say("Okay! No worries. Talk soon :wave:");
+			convo.say("Okay! No worries :smile_cat:");
+
+			if (currentSession.isPaused) {
+				// paused session
+				convo.say({
+					text: 'Your session is still paused :smiley: You have *' + minutesString + '* remaining for ' + sessionTasks,
+					attachments: _constants.pausedSessionOptionsAttachments
+				});
+			} else {
+				// live session
+				convo.say({
+					text: 'Good luck with ' + sessionTasks + '! See you at *' + endTimeString + '* :timer_clock:',
+					attachments: _constants.startSessionOptionsAttachments
+				});
+			}
 			convo.next();
 		}
 	}, { // this is failure point. restart with question

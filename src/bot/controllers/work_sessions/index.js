@@ -181,7 +181,7 @@ export default function(controller) {
 
 									if (storedWorkSession) {
 										// currently paused
-										message = `${message} You're session is still paused. You have *${minutesString}* remaining for ${sessionTasks}`;
+										message = `${message} Your session is still paused :smiley: You have *${minutesString}* remaining for ${sessionTasks}`;
 										convo.say(message);
 										convo.say({
 											text: `*What would you like to do?*`,
@@ -964,9 +964,8 @@ export function checkWorkSessionForLiveTasks(config) {
 									// currently paused
 									bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
-										convo.say(`Your session is still paused!`);
 										convo.say({
-											text: `You have *${minutesString}* remaining for ${liveTasksString}`,
+											text: `Your session is still paused :smiley: You have *${minutesString}* remaining for ${liveTasksString}`,
 											attachments: pausedSessionOptionsAttachments
 										});
 

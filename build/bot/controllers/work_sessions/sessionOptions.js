@@ -70,7 +70,7 @@ exports.default = function (controller) {
 
 
 									timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
-									message = 'You\'re session is already on pause! You have *' + timeString + '* remaining for ' + tasksToWorkOnString;
+									message = 'Your session is already on pause! You have *' + timeString + '* remaining for ' + tasksToWorkOnString;
 								} else {
 
 									/**
