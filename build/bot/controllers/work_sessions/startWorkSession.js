@@ -278,6 +278,7 @@ exports.default = function (controller) {
 					var SlackUserId = sessionStart.SlackUserId;
 					var confirmStart = sessionStart.confirmStart;
 
+					var now = (0, _momentTimezone2.default)();
 
 					if (confirmStart) {
 
@@ -392,11 +393,18 @@ exports.default = function (controller) {
 								});
 							});
 
-							var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(tasksToWorkOnArray);
+							var tasksToWorkOnTexts = tasksToWorkOnArray.map(function (dailyTask) {
+								return dailyTask.dataValues.Task.text;
+							});
+							var tasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(tasksToWorkOnTexts);
+							// get minutes worked
+							var minutesDuration = Math.round(_momentTimezone2.default.duration(calculatedTimeObject.diff(now)).asMinutes());
+							var timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutesDuration);
 
 							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-								convo.say('See you at *' + calculatedTime + '!* :timer_clock:');
-								convo.say('Good luck with: \n' + taskListMessage);
+
+								convo.say('Good luck with ' + tasksString + '!');
+								convo.say('See you in ' + timeString + ' at *' + calculatedTime + '* :timer_clock:');
 								convo.next();
 							});
 						});

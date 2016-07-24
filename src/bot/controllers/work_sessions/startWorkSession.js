@@ -3,7 +3,7 @@ import { wit } from '../index';
 import moment from 'moment-timezone';
 
 import models from '../../../app/models';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, convertMinutesToHoursString } from '../../lib/messageHelpers';
 import { createMomentObjectWithSpecificTimeZone, closeOldRemindersAndSessions } from '../../lib/miscHelpers';
 
 import intentConfig from '../../lib/intents';
@@ -297,6 +297,7 @@ export default function(controller) {
 					var responses        = convo.extractResponses();
 					var { sessionStart } = convo;
 					var { SlackUserId, confirmStart } = sessionStart;
+					var now = moment();
 
 					if (confirmStart) {
 
@@ -404,12 +405,20 @@ export default function(controller) {
 
 							})
 
-							var taskListMessage = convertArrayToTaskListMessage(tasksToWorkOnArray);
+							let tasksToWorkOnTexts = tasksToWorkOnArray.map((dailyTask) => {
+								return dailyTask.dataValues.Task.text;
+							});
+							let tasksString = commaSeparateOutTaskArray(tasksToWorkOnTexts);
+							// get minutes worked
+							let minutesDuration = Math.round(moment.duration(calculatedTimeObject.diff(now)).asMinutes());
+							let timeString = convertMinutesToHoursString(minutesDuration);
 
 							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-								convo.say(`See you at *${calculatedTime}!* :timer_clock:`);
-								convo.say(`Good luck with: \n${taskListMessage}`);
+							
+								convo.say(`Good luck with ${tasksString}!`);
+								convo.say(`See you in ${timeString} at *${calculatedTime}* :timer_clock:`);
 								convo.next();
+
 							});
 
 						});
