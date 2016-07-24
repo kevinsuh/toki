@@ -63,24 +63,16 @@ function finalizeTimeAndTasksToStart(response, convo) {
 							style: "primary"
 					},
 					{
-							name: buttonValues.checkIn.name,
-							text: "Add Checkin",
-							value: buttonValues.checkIn.value,
-							type: "button"
-					},
-					{
 							name: buttonValues.changeTask.name,
 							text: "Change Task",
 							value: buttonValues.changeTask.value,
-							type: "button",
-							style: "danger"
+							type: "button"
 					},
 					{
 							name: buttonValues.changeSessionTime.name,
 							text: "Change Time",
 							value: buttonValues.changeSessionTime.value,
-							type: "button",
-							style: "danger"
+							type: "button"
 					}
 				]
 			}
@@ -104,24 +96,6 @@ function finalizeTimeAndTasksToStart(response, convo) {
 
 				convo.sessionStart.confirmStart = true;
 				convo.stop();
-				convo.next();
-			}
-		},
-		{
-			pattern: buttonValues.checkIn.value,
-			callback: function(response, convo) {
-				askForCheckIn(response, convo);
-				convo.next();
-			}
-		},
-		{ // NL equivalent to buttonValues.checkIn.value
-			pattern: utterances.containsCheckin,
-			callback: function(response, convo) {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
-				askForCheckIn(response, convo);
 				convo.next();
 			}
 		},
@@ -207,24 +181,16 @@ function finalizeNewTaskToStart(response, convo) {
 							style: "primary"
 					},
 					{
-							name: buttonValues.checkIn.name,
-							text: "Add Checkin",
-							value: buttonValues.checkIn.value,
-							type: "button"
-					},
-					{
 							name: buttonValues.changeTask.name,
 							text: "Change Task",
 							value: buttonValues.changeTask.value,
-							type: "button",
-							style: "danger"
+							type: "button"
 					},
 					{
 							name: buttonValues.changeSessionTime.name,
 							text: "Change Time",
 							value: buttonValues.changeSessionTime.value,
-							type: "button",
-							style: "danger"
+							type: "button"
 					}
 				]
 			}
@@ -257,33 +223,6 @@ function finalizeNewTaskToStart(response, convo) {
 				convo.stop();
 				convo.next();
 
-			}
-		},
-		{
-			pattern: buttonValues.checkIn.value,
-			callback: function(response, convo) {
-
-				tasksToWorkOnHash[1]                 = newTask;
-				convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
-				convo.sessionStart.confirmStart      = true;
-
-				askForCheckIn(response, convo);
-				convo.next();
-			}
-		},
-		{ // NL equivalent to buttonValues.checkIn.value
-			pattern: utterances.containsCheckin,
-			callback: function(response, convo) {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
-				tasksToWorkOnHash[1]                 = newTask;
-				convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
-				convo.sessionStart.confirmStart      = true;
-
-				askForCheckIn(response, convo);
-				convo.next();
 			}
 		},
 		{

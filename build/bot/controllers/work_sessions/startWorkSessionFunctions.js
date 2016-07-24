@@ -85,22 +85,15 @@ function finalizeTimeAndTasksToStart(response, convo) {
 				type: "button",
 				style: "primary"
 			}, {
-				name: _constants.buttonValues.checkIn.name,
-				text: "Add Checkin",
-				value: _constants.buttonValues.checkIn.value,
-				type: "button"
-			}, {
 				name: _constants.buttonValues.changeTask.name,
 				text: "Change Task",
 				value: _constants.buttonValues.changeTask.value,
-				type: "button",
-				style: "danger"
+				type: "button"
 			}, {
 				name: _constants.buttonValues.changeSessionTime.name,
 				text: "Change Time",
 				value: _constants.buttonValues.changeSessionTime.value,
-				type: "button",
-				style: "danger"
+				type: "button"
 			}]
 		}]
 	}, [{
@@ -119,22 +112,6 @@ function finalizeTimeAndTasksToStart(response, convo) {
 
 			convo.sessionStart.confirmStart = true;
 			convo.stop();
-			convo.next();
-		}
-	}, {
-		pattern: _constants.buttonValues.checkIn.value,
-		callback: function callback(response, convo) {
-			askForCheckIn(response, convo);
-			convo.next();
-		}
-	}, { // NL equivalent to buttonValues.checkIn.value
-		pattern: _botResponses.utterances.containsCheckin,
-		callback: function callback(response, convo) {
-
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
-			askForCheckIn(response, convo);
 			convo.next();
 		}
 	}, {
@@ -218,22 +195,15 @@ function finalizeNewTaskToStart(response, convo) {
 				type: "button",
 				style: "primary"
 			}, {
-				name: _constants.buttonValues.checkIn.name,
-				text: "Add Checkin",
-				value: _constants.buttonValues.checkIn.value,
-				type: "button"
-			}, {
 				name: _constants.buttonValues.changeTask.name,
 				text: "Change Task",
 				value: _constants.buttonValues.changeTask.value,
-				type: "button",
-				style: "danger"
+				type: "button"
 			}, {
 				name: _constants.buttonValues.changeSessionTime.name,
 				text: "Change Time",
 				value: _constants.buttonValues.changeSessionTime.value,
-				type: "button",
-				style: "danger"
+				type: "button"
 			}]
 		}]
 	}, [{
@@ -259,31 +229,6 @@ function finalizeNewTaskToStart(response, convo) {
 			convo.sessionStart.confirmStart = true;
 
 			convo.stop();
-			convo.next();
-		}
-	}, {
-		pattern: _constants.buttonValues.checkIn.value,
-		callback: function callback(response, convo) {
-
-			tasksToWorkOnHash[1] = newTask;
-			convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
-			convo.sessionStart.confirmStart = true;
-
-			askForCheckIn(response, convo);
-			convo.next();
-		}
-	}, { // NL equivalent to buttonValues.checkIn.value
-		pattern: _botResponses.utterances.containsCheckin,
-		callback: function callback(response, convo) {
-
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
-			tasksToWorkOnHash[1] = newTask;
-			convo.sessionStart.tasksToWorkOnHash = tasksToWorkOnHash;
-			convo.sessionStart.confirmStart = true;
-
-			askForCheckIn(response, convo);
 			convo.next();
 		}
 	}, {
