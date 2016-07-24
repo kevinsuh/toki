@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
@@ -125,7 +125,27 @@ var buttonValues = exports.buttonValues = {
 	},
 	startSession: {
 		name: "START_SESSION",
-		value: "START_SESSION"
+		value: "START_SESSION",
+		pause: {
+			name: "START_SESSION_PAUSE",
+			value: "START_SESSION_PAUSE",
+			endEarly: {
+				name: "START_SESSION_PAUSE_END_EARLY",
+				value: "START_SESSION_PAUSE_END_EARLY"
+			}
+		},
+		addCheckIn: {
+			name: "START_SESSION_ADD_CHECK_IN",
+			value: "START_SESSION_ADD_CHECK_IN"
+		},
+		endEarly: {
+			name: "START_SESSION_END_EARLY",
+			value: "START_SESSION_END_EARLY"
+		},
+		resume: {
+			name: "START_SESSION_RESUME",
+			value: "START_SESSION_RESUME"
+		}
 	},
 	newTask: {
 		name: "NEW_TASK",
@@ -522,6 +542,47 @@ var taskListMessageResetTimesButtonAttachment = exports.taskListMessageResetTime
 		name: buttonValues.actuallyWantToAddATask.name,
 		text: "Add more tasks!",
 		value: buttonValues.actuallyWantToAddATask.value,
+		type: "button"
+	}]
+}];
+
+var startSessionOptionsAttachments = exports.startSessionOptionsAttachments = [{
+	attachment_type: 'default',
+	callback_id: "LIVE_SESSION_OPTIONS",
+	fallback: "Good luck with your session!",
+	actions: [{
+		name: buttonValues.startSession.pause.name,
+		text: "Pause",
+		value: buttonValues.startSession.pause.value,
+		type: "button"
+	}, {
+		name: buttonValues.startSession.addCheckIn.name,
+		text: "Add check-in",
+		value: buttonValues.startSession.addCheckIn.value,
+		type: "button"
+	}, {
+		name: buttonValues.startSession.endEarly.name,
+		text: "End Early",
+		value: buttonValues.startSession.endEarly.value,
+		type: "button",
+		style: "danger"
+	}]
+}];
+
+var pausedSessionOptionsAttachments = exports.pausedSessionOptionsAttachments = [{
+	attachment_type: 'default',
+	callback_id: "PAUSED_SESSION_OPTIONS",
+	fallback: "Your session is paused!",
+	actions: [{
+		name: buttonValues.startSession.resume.name,
+		text: "Resume",
+		value: buttonValues.startSession.resume.value,
+		type: "button",
+		style: "primary"
+	}, {
+		name: buttonValues.startSession.pause.endEarly.name,
+		text: "End Session",
+		value: buttonValues.startSession.pause.endEarly.value,
 		type: "button"
 	}]
 }];

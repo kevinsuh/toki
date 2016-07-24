@@ -11,6 +11,7 @@ exports.default = function (controller) {
   */
 
 	(0, _startWorkSession2.default)(controller);
+	(0, _sessionOptions2.default)(controller);
 	(0, _endWorkSession2.default)(controller);
 	(0, _endWorkSessionTimeouts2.default)(controller);
 
@@ -126,32 +127,53 @@ exports.default = function (controller) {
 
 						if (openWorkSession) {
 
-							openWorkSession.getDailyTasks({
-								include: [_models2.default.Task]
-							}).then(function (dailyTasks) {
+							// send either a pause or a live session reminder
+							openWorkSession.getStoredWorkSession({
+								where: ['"StoredWorkSession"."live" = ?', true]
+							}).then(function (storedWorkSession) {
+								openWorkSession.getDailyTasks({
+									include: [_models2.default.Task]
+								}).then(function (dailyTasks) {
 
-								var now = (0, _momentTimezone2.default)();
-								var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime);
-								var endTimeString = endTime.format("h:mm a");
-								var minutes = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
-								var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+									var now = (0, _momentTimezone2.default)();
+									var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime);
+									var endTimeString = endTime.format("h:mm a");
+									var minutes = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
+									var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
 
-								var dailyTaskTexts = dailyTasks.map(function (dailyTask) {
-									return dailyTask.dataValues.Task.text;
+									var dailyTaskTexts = dailyTasks.map(function (dailyTask) {
+										return dailyTask.dataValues.Task.text;
+									});
+
+									var sessionTasks = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
+
+									convo.isBack.currentSession = {
+										endTime: endTime,
+										endTimeString: endTimeString,
+										minutesString: minutesString
+									};
+
+									if (storedWorkSession) {
+
+										minutes = storedWorkSession.dataValues.minutes;
+										minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+
+										// currently paused
+										message = message + ' Your session is still paused :double_vertical_bar: You have *' + minutesString + '* remaining for ' + sessionTasks;
+										convo.say(message);
+										convo.say({
+											text: '*What would you like to do?*',
+											attachments: _constants.pausedSessionOptionsAttachments
+										});
+									} else {
+										// currently live
+										message = message + ' You\'re currently in a session for ' + sessionTasks + ' until *' + endTimeString + '* (' + minutesString + ' left)';
+										convo.say(message);
+										currentlyInSessionFlow(err, convo);
+									}
+
+									convo.next();
 								});
-
-								var sessionTasks = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
-								message = message + ' You\'re currently in a session for ' + sessionTasks + ' until *' + endTimeString + '* (' + minutesString + ' left)';
-								convo.say(message);
-
-								convo.isBack.currentSession = {
-									endTime: endTime,
-									endTimeString: endTimeString,
-									minutesString: minutesString
-								};
-
-								currentlyInSessionFlow(err, convo);
-								convo.next();
 							});
 						} else {
 
@@ -268,6 +290,10 @@ var _endWorkSessionTimeouts2 = _interopRequireDefault(_endWorkSessionTimeouts);
 var _startWorkSession = require('./startWorkSession');
 
 var _startWorkSession2 = _interopRequireDefault(_startWorkSession);
+
+var _sessionOptions = require('./sessionOptions');
+
+var _sessionOptions2 = _interopRequireDefault(_sessionOptions);
 
 var _intents = require('../../lib/intents');
 
@@ -873,26 +899,59 @@ function checkWorkSessionForLiveTasks(config) {
 							});
 						});
 					} else {
-						// inform user how much time is remaining
-						// and what tasks are attached to the work session
-						var liveTaskTextsArray = [];
-						liveTasks.forEach(function (dailyTask) {
-							liveTaskTextsArray.push(dailyTask.dataValues.Task.text);
-						});
-						var liveTasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(liveTaskTextsArray);
+						var liveTaskTextsArray;
+						var liveTasksString;
+						var now;
+						var endTime;
+						var endTimeString;
 
-						var now = (0, _momentTimezone2.default)();
-						var endTime = (0, _momentTimezone2.default)(openWorkSession.dataValues.endTime).tz(tz);
-						var endTimeString = endTime.format("h:mm a");
-						var minutes = _momentTimezone2.default.duration(endTime.diff(now)).asMinutes();
-						var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+						(function () {
+							// inform user how much time is remaining
+							// and what tasks are attached to the work session
+							liveTaskTextsArray = [];
 
-						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+							liveTasks.forEach(function (dailyTask) {
+								liveTaskTextsArray.push(dailyTask.dataValues.Task.text);
+							});
+							liveTasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(liveTaskTextsArray);
+							now = (0, _momentTimezone2.default)();
+							endTime = (0, _momentTimezone2.default)(openWorkSession.dataValues.endTime).tz(tz);
+							endTimeString = endTime.format("h:mm a");
 
-							convo.say('Good luck finishing ' + liveTasksString + '!');
-						});
+							var minutes = _momentTimezone2.default.duration(endTime.diff(now)).asMinutes();
+							var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
 
-						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+							// send either a pause or a live session reminder
+							openWorkSession.getStoredWorkSession({
+								where: ['"StoredWorkSession"."live" = ?', true]
+							}).then(function (storedWorkSession) {
+								if (storedWorkSession) {
+
+									// currently paused
+									minutes = storedWorkSession.dataValues.minutes;
+									minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+									bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+										convo.say({
+											text: 'Let me know when you want to resume your session for ' + liveTasksString + '!',
+											attachments: _constants.pausedSessionOptionsAttachments
+										});
+									});
+								} else {
+									// currently live
+									bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+										convo.say('Good luck with ' + liveTasksString + '!');
+										convo.say({
+											text: 'See you in ' + minutesString + ' at *' + endTimeString + '* :timer_clock:',
+											attachments: _constants.startSessionOptionsAttachments
+										});
+									});
+								}
+							});
+
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+						})();
 					}
 				});
 			} else {

@@ -27,6 +27,15 @@ exports.default = function (controller) {
 		var duration = _message$intentObject.duration;
 
 
+		if (_botResponses.utterances.startsWithAdd.test(text) && _botResponses.utterances.containsCheckin.test(text)) {
+			var _config = { SlackUserId: SlackUserId, message: message };
+			if (_botResponses.utterances.containsOnlyCheckin.test(text)) {
+				_config.reminder_type = "work_session";
+			}
+			controller.trigger('ask_for_reminder', [bot, _config]);
+			return;
+		};
+
 		var userMessage = {
 			text: text,
 			reminder: reminder,

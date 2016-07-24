@@ -17,6 +17,10 @@ exports.consoleLog = consoleLog;
 exports.closeOldRemindersAndSessions = closeOldRemindersAndSessions;
 exports.mapTimeToTaskArray = mapTimeToTaskArray;
 
+var _models = require('../../app/models');
+
+var _models2 = _interopRequireDefault(_models);
+
 var _momentTimezone = require('moment-timezone');
 
 var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
@@ -218,6 +222,11 @@ function closeOldRemindersAndSessions(user) {
 				endTime: endTime,
 				open: false,
 				live: false
+			});
+			_models2.default.StoredWorkSession.update({
+				live: false
+			}, {
+				where: ['"WorkSessionId" = ?', workSession.id]
 			});
 		});
 	});

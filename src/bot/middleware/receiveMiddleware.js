@@ -1,4 +1,4 @@
-import { wit } from '../controllers/index';
+import { wit, bots } from '../controllers/index';
 import models from '../../app/models';
 
 // add receive middleware to controller
@@ -7,6 +7,9 @@ export default (controller) => {
 	controller.middleware.receive.use(wit.receive);
 
 	controller.middleware.receive.use((bot, message, next) => {
+
+		const { token } = bot.config;
+		bot             = bots[token]; // use same bot every time
 
 		// sent messages organized by channel, and most recent 25 for them
 		if (!bot.sentMessages) {
@@ -39,12 +42,7 @@ export default (controller) => {
 	// at the end of each conversation to turn back on
 	controller.middleware.receive.use((bot, message, next) => {
 
-		console.log("message in pause session middleware:");
-		console.log(message);
-
-		if (!bot.queuedReachouts) {
-			bot.queuedReachouts = {};
-		}
+		var { bot_id, user, channel } = message;
 
 		if (!bot || !message) {
 			console.log(`~~ Weird bug where bot or message not found ~~\n:`);
@@ -53,6 +51,14 @@ export default (controller) => {
 			next();
 			return;
 		}
+
+		const { token } = bot.config;
+		bot             = bots[token]; // use same bot every time
+
+		if (!bot.queuedReachouts) {
+			bot.queuedReachouts = {};
+		}
+
 
 		if (message.user && message.type) {
 

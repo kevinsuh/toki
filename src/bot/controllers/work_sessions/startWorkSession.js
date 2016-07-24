@@ -8,7 +8,7 @@ import { createMomentObjectWithSpecificTimeZone, closeOldRemindersAndSessions } 
 
 import intentConfig from '../../lib/intents';
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsArray, THANK_YOU, buttonValues, colorsHash } from '../../lib/constants';
+import { colorsArray, THANK_YOU, buttonValues, colorsHash, startSessionOptionsAttachments } from '../../lib/constants';
 
 import { startSessionStartConversation, confirmTimeForTasks } from './startWorkSessionFunctions';
 
@@ -405,6 +405,10 @@ export default function(controller) {
 
 							})
 
+							/**
+							 * 		~~ START WORK SESSION MESSAGE ~~
+							 */
+
 							let tasksToWorkOnTexts = tasksToWorkOnArray.map((dailyTask) => {
 								if (dailyTask.dataValues) {
 									return dailyTask.dataValues.Task.text;
@@ -412,15 +416,19 @@ export default function(controller) {
 									return dailyTask.text;
 								}
 							});
+
 							let tasksString = commaSeparateOutTaskArray(tasksToWorkOnTexts);
-							// get minutes worked
 							let minutesDuration = Math.round(moment.duration(calculatedTimeObject.diff(now)).asMinutes());
 							let timeString = convertMinutesToHoursString(minutesDuration);
 
 							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 							
 								convo.say(`Good luck with ${tasksString}!`);
-								convo.say(`See you in ${timeString} at *${calculatedTime}* :timer_clock:`);
+								convo.say({
+									text: `See you in ${timeString} at *${calculatedTime}* :timer_clock:`,
+									attachments: startSessionOptionsAttachments
+								});
+								
 								convo.next();
 
 							});

@@ -25,7 +25,7 @@ export default function(controller) {
 	controller.on('slash_command', (bot, message) => {
 
 		const SlackUserId = message.user;
-		var env           = process.env.NODE_ENV || 'development';
+		let env           = process.env.NODE_ENV || 'development';
 
 		if (env == "development") {
 			message.command = message.command.replace("_dev","");
@@ -58,35 +58,35 @@ export default function(controller) {
 
 				const { intentObject: { entities: { reminder, duration, datetime } } } = message;
 
-				var now = moment();
-				var responseObject = {
+				let now = moment();
+				let responseObject = {
 					response_type: "in_channel"
 				}
 
+				let customTimeObject;
 				switch (message.command) {
 					case "/add":
 						/*
 						{"msg_id":"c02a017f-10d5-4b24-ab74-ee85c8955b42","_text":"clean up room for 30 minutes","entities":{"reminder":[{"confidence":0.9462485198304393,"entities":{},"type":"value","value":"clean up room","suggested":true}],"duration":[{"confidence":0.9997298403843689,"minute":30,"value":30,"unit":"minute","normalized":{"value":1800,"unit":"second"}}]}}
 					 */
 
-						var totalMinutes = 0;
-						dailyTasks.forEach((dailyTask) => {
-							var { dataValues: { minutes } } = dailyTask;
+						let totalMinutes = 0;
+						dailyTasks.forEach((dailyTask, index) => {
+							let { dataValues: { minutes } } = dailyTask;
 							totalMinutes += minutes;
 						});
 
-						var timeString = convertMinutesToHoursString(totalMinutes);
-						var text = reminder ? reminder[0].value : message.text;
+						let text = reminder ? reminder[0].value : message.text;
 
 						if (text == '') text = null; // cant have blank text
 
-						var customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
+						customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
 
 						if (text && customTimeObject) {
 
 							// quick adding a task requires both text + time!
 							
-							var minutes;
+							let minutes;
 							if (duration) {
 								minutes = witDurationToMinutes(duration);
 							} else { // datetime
@@ -94,7 +94,7 @@ export default function(controller) {
 							}
 
 							// we have the task and minutes, create task now
-							var newPriority = dailyTasks.length + 1;
+							let newPriority = dailyTasks.length + 1;
 							models.Task.create({
 								text
 							})
@@ -106,6 +106,9 @@ export default function(controller) {
 									UserId
 								})
 								.then(() => {
+
+									totalMinutes += minutes;
+									let timeString = convertMinutesToHoursString(totalMinutes);
 									
 									responseObject.text = `Nice, I added \`${text} (${minutes} min)\` to your task list! You have ${timeString} of work remaining over ${newPriority} tasks :muscle:`;
 									bot.replyPublic(message, responseObject);
@@ -115,7 +118,7 @@ export default function(controller) {
 
 						} else {
 
-							var responseText = '';
+							let responseText = '';
 							if (text) {
 								responseText = `Hey, I need to know how long you want to work on \`${text}\` for! (please say \`${text} for 30 min\` or \` ${text} until 3pm\`)`;
 							} else {
@@ -129,9 +132,9 @@ export default function(controller) {
 						break;
 					case "/note":
 
-						var customNote = reminder ? reminder[0].value : null;
+						let customNote = reminder ? reminder[0].value : null;
 
-						var customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
+						customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
 
 						if (customTimeObject) {
 
@@ -142,8 +145,8 @@ export default function(controller) {
 								customNote
 							})
 							.then((reminder) => {
-								var customTimeString = customTimeObject.format('h:mm a');
-								var responseText = `Okay, I'll remind you at ${customTimeString}`;
+								let customTimeString = customTimeObject.format('h:mm a');
+								let responseText = `Okay, I'll remind you at ${customTimeString}`;
 								if (customNote) {
 									responseText = `${responseText} about \`${customNote}\``;
 								}
@@ -153,11 +156,11 @@ export default function(controller) {
 							});
 
 						} else {
-							var responseText = '';
+							let responseText = '';
 							if (customNote) {
 								responseText = `Hey, I need to know what time you want me to remind you about \`${text}\` (please say \`${text} in 30 min\` or \`${text} at 7pm\`)!`;
 							} else {
-								responseText = `Hey, I need to know you want me to remind you about \`i.e. pick up clothes at 7pm\`!`;
+								responseText = `Hey, I need to know when you want me to remind you \`i.e. pick up clothes at 7pm\`!`;
 							}
 							responseObject.text = responseText;
 							bot.replyPublic(message, responseObject);

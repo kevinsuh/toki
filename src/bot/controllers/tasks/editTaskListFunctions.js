@@ -6,7 +6,7 @@ import moment from 'moment';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsHash, buttonValues, FINISH_WORD, RESET, taskListMessageDoneButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment } from '../../lib/constants';
+import { colorsHash, buttonValues, FINISH_WORD, RESET, taskListMessageDoneButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment, pausedSessionOptionsAttachments, startSessionOptionsAttachments } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, getMostRecentTaskListMessageToUpdate, getMostRecentMessageToUpdate, deleteConvoAskMessage, convertMinutesToHoursString } from '../../lib/messageHelpers';
 
 // this one shows the task list message and asks for options
@@ -15,36 +15,53 @@ export function startEditTaskListMessage(convo) {
 	const { tasksEdit: { dailyTasks, bot, openWorkSession } } = convo;
 
 	if (openWorkSession) {
-		openWorkSession.getDailyTasks({
-			include: [ models.Task ]
+		openWorkSession.getStoredWorkSession({
+			where: [ `"StoredWorkSession"."live" = ?`, true ]
 		})
-		.then((dailyTasks) => {
-
-			var now           = moment();
-			var endTime       = moment(openWorkSession.endTime);
-			var endTimeString = endTime.format("h:mm a");
-			var minutes       = Math.round(moment.duration(endTime.diff(now)).asMinutes());
-			var minutesString = convertMinutesToHoursString(minutes);
-
-			var dailyTaskTexts = dailyTasks.map((dailyTask) => {
-				return dailyTask.dataValues.Task.text;
+		.then((storedWorkSession) => {
+			openWorkSession.getDailyTasks({
+				include: [ models.Task ]
 			})
+			.then((dailyTasks) => {
 
-			var sessionTasks = commaSeparateOutTaskArray(dailyTaskTexts);
-			// convo.say({
-			// 	attachments: [
-			// 		{
-			// 			text: `You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`,
-			// 			mrkdwn_in: [ "text" ]
-			// 		}
-			// 	]
-			// });
+				var now           = moment();
+				var endTime       = moment(openWorkSession.endTime);
+				var endTimeString = endTime.format("h:mm a");
+				var minutes       = Math.round(moment.duration(endTime.diff(now)).asMinutes());
+				var minutesString = convertMinutesToHoursString(minutes);
 
-			sayTasksForToday(convo);
-			convo.say(`You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`);
-			askForTaskListOptions(convo);
-			convo.next();
-		})
+				var dailyTaskTexts = dailyTasks.map((dailyTask) => {
+					return dailyTask.dataValues.Task.text;
+				})
+
+				var sessionTasks = commaSeparateOutTaskArray(dailyTaskTexts);
+
+				sayTasksForToday(convo);
+
+				convo.tasksEdit.currentSession = {
+					minutesString,
+					sessionTasks,
+					endTimeString
+				}
+
+				if (storedWorkSession) {
+
+					minutes       = storedWorkSession.dataValues.minutes;
+					minutesString = convertMinutesToHoursString(minutes);
+					
+					// currently paused
+					convo.tasksEdit.currentSession.isPaused = true;
+					convo.say(`Your session is still paused :double_vertical_bar: You have *${minutesString}* remaining for ${sessionTasks}`);
+				} else {
+					// currently live
+					convo.say(`You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`);
+				}
+
+				askForTaskListOptions(convo);
+				convo.next();
+			})
+		});
+			
 	} else {
 		sayTasksForToday(convo);
 		askForTaskListOptions(convo);
@@ -268,11 +285,29 @@ function askForTaskListOptions(convo) {
 			pattern: utterances.noAndNeverMind,
 			callback: function(response, convo) {
 
+				const { tasksEdit: { currentSession } } = convo;
+				const { minutesString, sessionTasks, endTimeString } = currentSession
+
 				// delete button when answered with NL
 				deleteConvoAskMessage(response.channel, bot);
 
-				convo.say("Okay! No worries. Talk soon :wave:");
+				convo.say("Okay! No worries :smile_cat:")
+
+				if (currentSession.isPaused) {
+					// paused session
+					convo.say({
+						text: `Let me know when you want to resume your session for ${sessionTasks}!`,
+						attachments: pausedSessionOptionsAttachments
+					});
+				} else {
+					// live session
+					convo.say({
+						text: `Good luck with ${sessionTasks}! See you at *${endTimeString}* :timer_clock:`,
+						attachments: startSessionOptionsAttachments
+					});
+				}
 				convo.next();
+
 			}
 		},
 		{ // this is failure point. restart with question

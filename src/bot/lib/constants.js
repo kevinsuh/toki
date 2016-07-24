@@ -115,7 +115,27 @@ export const buttonValues ={
 	},
 	startSession: {
 		name: "START_SESSION",
-		value: "START_SESSION"
+		value: "START_SESSION",
+		pause: {
+			name: "START_SESSION_PAUSE",
+			value: "START_SESSION_PAUSE",
+			endEarly: {
+				name: "START_SESSION_PAUSE_END_EARLY",
+				value: "START_SESSION_PAUSE_END_EARLY"
+			}
+		},
+		addCheckIn: {
+			name: "START_SESSION_ADD_CHECK_IN",
+			value: "START_SESSION_ADD_CHECK_IN"
+		},
+		endEarly: {
+			name: "START_SESSION_END_EARLY",
+			value: "START_SESSION_END_EARLY"
+		},
+		resume: {
+			name: "START_SESSION_RESUME",
+			value: "START_SESSION_RESUME"
+		}
 	},
 	newTask: {
 		name: "NEW_TASK",
@@ -554,5 +574,57 @@ export const taskListMessageResetTimesButtonAttachment = [
 	}
 ];
 
+
+export const startSessionOptionsAttachments = [
+	{
+		attachment_type: 'default',
+		callback_id: "LIVE_SESSION_OPTIONS",
+		fallback: "Good luck with your session!",
+		actions: [
+			{
+					name: buttonValues.startSession.pause.name,
+					text: "Pause",
+					value: buttonValues.startSession.pause.value,
+					type: "button"
+			},
+			{
+					name: buttonValues.startSession.addCheckIn.name,
+					text: "Add check-in",
+					value: buttonValues.startSession.addCheckIn.value,
+					type: "button"
+			},
+			{
+					name: buttonValues.startSession.endEarly.name,
+					text: "End Early",
+					value: buttonValues.startSession.endEarly.value,
+					type: "button",
+					style: "danger"
+			}
+		]
+	}
+]
+
+export const pausedSessionOptionsAttachments = [
+	{
+		attachment_type: 'default',
+		callback_id: "PAUSED_SESSION_OPTIONS",
+		fallback: "Your session is paused!",
+		actions: [
+			{
+					name: buttonValues.startSession.resume.name,
+					text: "Resume",
+					value: buttonValues.startSession.resume.value,
+					type: "button",
+					style: "primary"
+			},
+			{
+					name: buttonValues.startSession.pause.endEarly.name,
+					text: "End Session",
+					value: buttonValues.startSession.pause.endEarly.value,
+					type: "button"
+			}
+		]
+	}
+]
 
 

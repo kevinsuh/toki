@@ -51,108 +51,117 @@ exports.default = function (controller) {
 					response_type: "in_channel"
 				};
 
-				switch (message.command) {
-					case "/add":
-						/*
-      {"msg_id":"c02a017f-10d5-4b24-ab74-ee85c8955b42","_text":"clean up room for 30 minutes","entities":{"reminder":[{"confidence":0.9462485198304393,"entities":{},"type":"value","value":"clean up room","suggested":true}],"duration":[{"confidence":0.9997298403843689,"minute":30,"value":30,"unit":"minute","normalized":{"value":1800,"unit":"second"}}]}}
-      */
+				var customTimeObject = void 0;
 
-						var totalMinutes = 0;
-						dailyTasks.forEach(function (dailyTask) {
-							var minutes = dailyTask.dataValues.minutes;
+				(function () {
+					switch (message.command) {
+						case "/add":
+							/*
+       {"msg_id":"c02a017f-10d5-4b24-ab74-ee85c8955b42","_text":"clean up room for 30 minutes","entities":{"reminder":[{"confidence":0.9462485198304393,"entities":{},"type":"value","value":"clean up room","suggested":true}],"duration":[{"confidence":0.9997298403843689,"minute":30,"value":30,"unit":"minute","normalized":{"value":1800,"unit":"second"}}]}}
+       */
 
-							totalMinutes += minutes;
-						});
+							var totalMinutes = 0;
+							dailyTasks.forEach(function (dailyTask, index) {
+								var minutes = dailyTask.dataValues.minutes;
 
-						var timeString = (0, _messageHelpers.convertMinutesToHoursString)(totalMinutes);
-						var text = reminder ? reminder[0].value : message.text;
-
-						if (text == '') text = null; // cant have blank text
-
-						var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(message, tz);
-
-						if (text && customTimeObject) {
-
-							// quick adding a task requires both text + time!
-
-							var minutes;
-							if (duration) {
-								minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
-							} else {
-								// datetime
-								minutes = parseInt(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
-							}
-
-							// we have the task and minutes, create task now
-							var newPriority = dailyTasks.length + 1;
-							_models2.default.Task.create({
-								text: text
-							}).then(function (task) {
-								_models2.default.DailyTask.create({
-									TaskId: task.id,
-									priority: newPriority,
-									minutes: minutes,
-									UserId: UserId
-								}).then(function () {
-
-									responseObject.text = 'Nice, I added `' + text + ' (' + minutes + ' min)` to your task list! You have ' + timeString + ' of work remaining over ' + newPriority + ' tasks :muscle:';
-									bot.replyPublic(message, responseObject);
-								});
+								totalMinutes += minutes;
 							});
-						} else {
 
-							var responseText = '';
-							if (text) {
-								responseText = 'Hey, I need to know how long you want to work on `' + text + '` for! (please say `' + text + ' for 30 min` or ` ' + text + ' until 3pm`)';
+							var text = reminder ? reminder[0].value : message.text;
+
+							if (text == '') text = null; // cant have blank text
+
+							customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(message, tz);
+
+							if (text && customTimeObject) {
+								(function () {
+
+									// quick adding a task requires both text + time!
+
+									var minutes = void 0;
+									if (duration) {
+										minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
+									} else {
+										// datetime
+										minutes = parseInt(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+									}
+
+									// we have the task and minutes, create task now
+									var newPriority = dailyTasks.length + 1;
+									_models2.default.Task.create({
+										text: text
+									}).then(function (task) {
+										_models2.default.DailyTask.create({
+											TaskId: task.id,
+											priority: newPriority,
+											minutes: minutes,
+											UserId: UserId
+										}).then(function () {
+
+											totalMinutes += minutes;
+											var timeString = (0, _messageHelpers.convertMinutesToHoursString)(totalMinutes);
+
+											responseObject.text = 'Nice, I added `' + text + ' (' + minutes + ' min)` to your task list! You have ' + timeString + ' of work remaining over ' + newPriority + ' tasks :muscle:';
+											bot.replyPublic(message, responseObject);
+										});
+									});
+								})();
 							} else {
-								responseText = 'Hey, I need to know what task you want to add `i.e. clean market report for 30 minutes`!';
-							}
-							responseObject.text = responseText;
-							bot.replyPublic(message, responseObject);
-						}
 
-						break;
-					case "/note":
-
-						var customNote = reminder ? reminder[0].value : null;
-
-						var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(message, tz);
-
-						if (customTimeObject) {
-
-							// quick adding a reminder requires both text + time!
-							_models2.default.Reminder.create({
-								remindTime: customTimeObject,
-								UserId: UserId,
-								customNote: customNote
-							}).then(function (reminder) {
-								var customTimeString = customTimeObject.format('h:mm a');
-								var responseText = 'Okay, I\'ll remind you at ' + customTimeString;
-								if (customNote) {
-									responseText = responseText + ' about `' + customNote + '`';
+								var responseText = '';
+								if (text) {
+									responseText = 'Hey, I need to know how long you want to work on `' + text + '` for! (please say `' + text + ' for 30 min` or ` ' + text + ' until 3pm`)';
+								} else {
+									responseText = 'Hey, I need to know what task you want to add `i.e. clean market report for 30 minutes`!';
 								}
-								responseText = responseText + '! :alarm_clock:';
 								responseObject.text = responseText;
 								bot.replyPublic(message, responseObject);
-							});
-						} else {
-							var responseText = '';
-							if (customNote) {
-								responseText = 'Hey, I need to know what time you want me to remind you about `' + text + '` (please say `' + text + ' in 30 min` or `' + text + ' at 7pm`)!';
-							} else {
-								responseText = 'Hey, I need to know you want me to remind you about `i.e. pick up clothes at 7pm`!';
 							}
-							responseObject.text = responseText;
-							bot.replyPublic(message, responseObject);
-						}
 
-						break;
-					case "/help":
-					default:
-						responseObject.text = 'I\'m sorry, still learning how to `' + message.command + '`! :dog:';
-						bot.replyPublic(message, responseObject);
-						break;
-				}
+							break;
+						case "/note":
+
+							var customNote = reminder ? reminder[0].value : null;
+
+							customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(message, tz);
+
+							if (customTimeObject) {
+
+								// quick adding a reminder requires both text + time!
+								_models2.default.Reminder.create({
+									remindTime: customTimeObject,
+									UserId: UserId,
+									customNote: customNote
+								}).then(function (reminder) {
+									var customTimeString = customTimeObject.format('h:mm a');
+									var responseText = 'Okay, I\'ll remind you at ' + customTimeString;
+									if (customNote) {
+										responseText = responseText + ' about `' + customNote + '`';
+									}
+									responseText = responseText + '! :alarm_clock:';
+									responseObject.text = responseText;
+									bot.replyPublic(message, responseObject);
+								});
+							} else {
+								var _responseText = '';
+								if (customNote) {
+									_responseText = 'Hey, I need to know what time you want me to remind you about `' + text + '` (please say `' + text + ' in 30 min` or `' + text + ' at 7pm`)!';
+								} else {
+									_responseText = 'Hey, I need to know when you want me to remind you `i.e. pick up clothes at 7pm`!';
+								}
+								responseObject.text = _responseText;
+								bot.replyPublic(message, responseObject);
+							}
+
+							break;
+						case "/help":
+						default:
+							responseObject.text = 'I\'m sorry, still learning how to `' + message.command + '`! :dog:';
+							bot.replyPublic(message, responseObject);
+							break;
+					}
+				})();
+
 				(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 			});
 		});

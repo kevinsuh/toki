@@ -39,7 +39,10 @@ exports.default = function (controller) {
 	});
 
 	controller.on('done_session_flow', function (bot, config) {
+
+		// you can pass in a storedWorkSession
 		var SlackUserId = config.SlackUserId;
+		var storedWorkSession = config.storedWorkSession;
 
 
 		_models2.default.User.find({
@@ -53,12 +56,12 @@ exports.default = function (controller) {
 			}).then(function (workSessions) {
 
 				var UserId = user.id;
+				var workSession = storedWorkSession || workSessions[0];
 
 				// if live work session, confirm end early
 				// else, user MUST say `done` to trigger end (this properly simulates user is done with that session)
-				if (workSessions.length > 0) {
+				if (workSession) {
 
-					var workSession = workSessions[0]; // only deal with most recent one
 					var dailyTaskIds = workSession.DailyTasks.map(function (dailyTask) {
 						return dailyTask.id;
 					});

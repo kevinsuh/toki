@@ -12,6 +12,7 @@ module.exports = function (sequelize, DataTypes) {
       associate: function associate(models) {
         WorkSession.belongsToMany(models.DailyTask, { through: "WorkSessionTask" });
         WorkSession.belongsTo(models.User);
+        WorkSession.hasOne(models.StoredWorkSession);
       }
     }
   });

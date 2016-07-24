@@ -13,6 +13,7 @@ import setupReceiveMiddleware from '../middleware/receiveMiddleware';
 import miscController from './misc';
 import settingsController from './settings';
 import slashController from './slash';
+import notWitController from './notWit';
 
 import models from '../../app/models';
 import intentConfig from '../lib/intents';
@@ -134,13 +135,15 @@ export function resumeQueuedReachouts(bot, config) {
 	// necessary config
 	var now                 = moment();
 	var { SlackUserId }     = config;
+
+	const { token } = bot.config;
+	bot             = bots[token]; // use same bot every time
+
 	var { queuedReachouts } = bot;
 
 	if (queuedReachouts && SlackUserId && queuedReachouts[SlackUserId]) {
 
 		var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
-
-		console.log("\n\n ~~ looking to resume bot's queuedReachouts ~~:");
 
 		if (queuedWorkSessions && queuedWorkSessions.length > 0) {
 
@@ -148,19 +151,29 @@ export function resumeQueuedReachouts(bot, config) {
 			queuedWorkSessions.forEach((workSession) => {
 				var endTime = moment(workSession.endTime);
 				if (endTime > now && workSession.dataValues.open == true) {
-					console.log("resuming this queuedSession:");
-					console.log(workSession);
-					console.log("\n\n");
+					if (workSession.dataValues) {
+						console.log(`resuming this queuedSession: ${workSession.dataValues.id}`);
+					}
 					queuedWorkSessionIds.push(workSession.dataValues.id);
 				}
 			})
 
 			if (queuedWorkSessionIds.length > 0) {
-				models.WorkSession.update({
-					live: true
-				}, {
-					where: [`"WorkSessions"."id" IN (?) `, queuedWorkSessionIds]
+
+				// if storedWorkSessionId IS NULL, means it has not been
+				// intentionally paused intentionally be user!
+				models.WorkSession.find({
+					where: [`"WorkSession"."id" IN (?) AND "StoredWorkSession"."id" IS NULL`, queuedWorkSessionIds],
+					include: [ models.StoredWorkSession ]
+				})
+				.then((workSession) => {
+					if (workSession) {
+						workSession.updateAttributes({
+							live: true
+						});
+					}
 				});
+
 			}
 
 		}
@@ -176,6 +189,9 @@ export function customConfigBot(controller) {
 
 	// beef up the bot
 	setupReceiveMiddleware(controller);
+
+	// give non-wit a chance to answer first
+	notWitController(controller);
 
 	miscController(controller);
 	daysController(controller);

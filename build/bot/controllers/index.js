@@ -63,6 +63,10 @@ var _slash = require('./slash');
 
 var _slash2 = _interopRequireDefault(_slash);
 
+var _notWit = require('./notWit');
+
+var _notWit2 = _interopRequireDefault(_notWit);
+
 var _models = require('../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
@@ -83,8 +87,10 @@ var _initiation = require('../actions/initiation');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// config modules
 require('dotenv').config();
+
+// config modules
+
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
@@ -196,14 +202,17 @@ function resumeQueuedReachouts(bot, config) {
 	// necessary config
 	var now = (0, _momentTimezone2.default)();
 	var SlackUserId = config.SlackUserId;
-	var queuedReachouts = bot.queuedReachouts;
+	var token = bot.config.token;
+
+	bot = bots[token]; // use same bot every time
+
+	var _bot = bot;
+	var queuedReachouts = _bot.queuedReachouts;
 
 
 	if (queuedReachouts && SlackUserId && queuedReachouts[SlackUserId]) {
 
 		var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
-
-		console.log("\n\n ~~ looking to resume bot's queuedReachouts ~~:");
 
 		if (queuedWorkSessions && queuedWorkSessions.length > 0) {
 
@@ -211,18 +220,26 @@ function resumeQueuedReachouts(bot, config) {
 			queuedWorkSessions.forEach(function (workSession) {
 				var endTime = (0, _momentTimezone2.default)(workSession.endTime);
 				if (endTime > now && workSession.dataValues.open == true) {
-					console.log("resuming this queuedSession:");
-					console.log(workSession);
-					console.log("\n\n");
+					if (workSession.dataValues) {
+						console.log('resuming this queuedSession: ' + workSession.dataValues.id);
+					}
 					queuedWorkSessionIds.push(workSession.dataValues.id);
 				}
 			});
 
 			if (queuedWorkSessionIds.length > 0) {
-				_models2.default.WorkSession.update({
-					live: true
-				}, {
-					where: ['"WorkSessions"."id" IN (?) ', queuedWorkSessionIds]
+
+				// if storedWorkSessionId IS NULL, means it has not been
+				// intentionally paused intentionally be user!
+				_models2.default.WorkSession.find({
+					where: ['"WorkSession"."id" IN (?) AND "StoredWorkSession"."id" IS NULL', queuedWorkSessionIds],
+					include: [_models2.default.StoredWorkSession]
+				}).then(function (workSession) {
+					if (workSession) {
+						workSession.updateAttributes({
+							live: true
+						});
+					}
 				});
 			}
 		}
@@ -237,6 +254,9 @@ function customConfigBot(controller) {
 
 	// beef up the bot
 	(0, _receiveMiddleware2.default)(controller);
+
+	// give non-wit a chance to answer first
+	(0, _notWit2.default)(controller);
 
 	(0, _misc2.default)(controller);
 	(0, _days2.default)(controller);
