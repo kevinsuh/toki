@@ -175,6 +175,23 @@ exports.default = function (controller) {
 									convo.say(':ocean: Woo!');
 									convo.next();
 								}
+							}, { // continue session
+								pattern: _constants.buttonValues.doneSessionEarlyNo.value,
+								callback: function callback(response, convo) {
+									convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
+									convo.next();
+								}
+							}, { // same as buttonValues.doneSessionNo.value
+								pattern: _botResponses.utterances.containsContinue,
+								callback: function callback(response, convo) {
+
+									// delete button when answered with NL
+									(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
+									convo.say('Got it');
+									convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
+									convo.next();
+								}
 							}, {
 								pattern: _constants.buttonValues.cancelSession.value,
 								callback: function callback(response, convo) {
@@ -192,23 +209,6 @@ exports.default = function (controller) {
 									convo.doneSessionEarly.doneEarlyDecision = _constants.sessionTimerDecisions.cancelSession;
 									convo.say("No worries! We'll get that done soon");
 									askUserPostSessionOptions(response, convo);
-									convo.next();
-								}
-							}, { // continue session
-								pattern: _constants.buttonValues.doneSessionEarlyNo.value,
-								callback: function callback(response, convo) {
-									convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
-									convo.next();
-								}
-							}, { // same as buttonValues.doneSessionNo.value
-								pattern: _botResponses.utterances.containsContinue,
-								callback: function callback(response, convo) {
-
-									// delete button when answered with NL
-									(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
-									convo.say('Got it');
-									convo.say('I\'ll see you in ' + minutesString + ' at *' + endTimeString + '*! Keep crushing :muscle:');
 									convo.next();
 								}
 							}, { // this is failure point. restart with question

@@ -199,6 +199,25 @@ export default function(controller) {
 										convo.next();
 									}
 								},
+								{ // continue session
+									pattern: buttonValues.doneSessionEarlyNo.value,
+									callback: (response, convo) => {
+										convo.say(`I'll see you in ${minutesString} at *${endTimeString}*! Keep crushing :muscle:`);
+										convo.next();
+									}
+								},
+								{ // same as buttonValues.doneSessionNo.value
+									pattern: utterances.containsContinue,
+									callback: (response, convo) => {
+
+										// delete button when answered with NL
+										deleteConvoAskMessage(response.channel, bot);
+
+										convo.say(`Got it`);
+										convo.say(`I'll see you in ${minutesString} at *${endTimeString}*! Keep crushing :muscle:`);
+										convo.next();
+									}
+								},
 								{
 									pattern: buttonValues.cancelSession.value,
 									callback: (response, convo) => {
@@ -217,25 +236,6 @@ export default function(controller) {
 										convo.doneSessionEarly.doneEarlyDecision = sessionTimerDecisions.cancelSession;
 										convo.say("No worries! We'll get that done soon");
 										askUserPostSessionOptions(response, convo);
-										convo.next();
-									}
-								},
-								{ // continue session
-									pattern: buttonValues.doneSessionEarlyNo.value,
-									callback: (response, convo) => {
-										convo.say(`I'll see you in ${minutesString} at *${endTimeString}*! Keep crushing :muscle:`);
-										convo.next();
-									}
-								},
-								{ // same as buttonValues.doneSessionNo.value
-									pattern: utterances.containsContinue,
-									callback: (response, convo) => {
-
-										// delete button when answered with NL
-										deleteConvoAskMessage(response.channel, bot);
-
-										convo.say(`Got it`);
-										convo.say(`I'll see you in ${minutesString} at *${endTimeString}*! Keep crushing :muscle:`);
 										convo.next();
 									}
 								},
