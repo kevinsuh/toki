@@ -218,9 +218,9 @@ export function prioritizeDailyTasks(user) {
 	let today;
 	if (user.dataValues && user.dataValues.SlackUser && user.dataValues.SlackUser.tz) {
 		const tz = user.dataValues.SlackUser.tz;
-		today = moment().tz(tz).format("YYYY-MM-DD");
+		today = moment().tz(tz).format("YYYY-MM-DD Z");
 	} else {
-		today = moment().format("YYYY-MM-DD");
+		today = moment().format("YYYY-MM-DD Z");
 	}
 
 	user.getDailyTasks({

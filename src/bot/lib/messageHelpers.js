@@ -202,6 +202,8 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 
 	var remainingTasks = getRemainingTasksFromTaskArray(taskArray, options);
 	var completedTasks = getCompletedTasksFromTaskArray(taskArray, options);
+	if (options.onlyRemainingTasks)
+		completedTasks = [];
 
 	// add completed tasks to right place
 	var taskListMessageBody = '';

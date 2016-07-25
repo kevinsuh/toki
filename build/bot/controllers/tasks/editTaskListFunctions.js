@@ -123,6 +123,8 @@ function specificCommandFlow(convo) {
 			if (taskNumbersToCompleteArray) {
 				// single line complete ability
 				singleLineCompleteTask(convo, taskNumbersToCompleteArray);
+				var options = { onlyRemainingTasks: true };
+				sayTasksForToday(convo, options);
 			} else {
 				completeTasksFlow(response, convo);
 			}
@@ -176,13 +178,18 @@ function sayWorkSessionMessage(convo) {
 }
 
 function sayTasksForToday(convo) {
+	var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 	var dailyTasks = convo.tasksEdit.dailyTasks;
 
 
-	var options = { segmentCompleted: true };
+	options.segmentCompleted = true;
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
 
-	convo.say("Here are your tasks for today :memo::");
+	var taskMessage = "Here are your tasks for today :memo::";
+	if (options.onlyRemainingTasks) {
+		taskMessage = "Here are your remaining tasks for today :memo::";
+	}
+	convo.say(taskMessage);
 	convo.say({
 		text: taskListMessage,
 		attachments: [{
@@ -873,13 +880,25 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 	var dailyTaskIdsToComplete = _convo$tasksEdit10.dailyTaskIdsToComplete;
 
 	var dailyTasksToComplete = [];
-	dailyTasks.forEach(function (dailyTask, index) {
+	dailyTasks = dailyTasks.filter(function (dailyTask, index) {
 		var priority = dailyTask.dataValues.priority;
 
+		var stillNotCompleted = true;
 		if (taskNumbersToCompleteArray.indexOf(priority) > -1) {
 			dailyTasksToComplete.push(dailyTask);
+			stillNotCompleted = false;
 		}
+		return stillNotCompleted;
 	});
+
+	var priority = 1;
+	dailyTasks = dailyTasks.map(function (dailyTask) {
+		dailyTask.dataValues.priority = priority;
+		priority++;
+		return dailyTask;
+	});
+
+	convo.tasksEdit.dailyTasks = dailyTasks;
 
 	if (dailyTasksToComplete.length > 0) {
 		var dailyTaskTextsToComplete = dailyTasksToComplete.map(function (dailyTask) {
@@ -889,7 +908,7 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 
 		convo.say('Great work, I completed off ' + dailyTasksToCompleteString + '!');
 
-		// add to delete array for tasksEdit
+		// add to complete array for tasksEdit
 		dailyTaskIdsToComplete = dailyTasksToComplete.map(function (dailyTask) {
 			return dailyTask.dataValues.id;
 		});

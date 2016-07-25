@@ -241,9 +241,9 @@ function prioritizeDailyTasks(user) {
 	var today = void 0;
 	if (user.dataValues && user.dataValues.SlackUser && user.dataValues.SlackUser.tz) {
 		var tz = user.dataValues.SlackUser.tz;
-		today = (0, _momentTimezone2.default)().tz(tz).format("YYYY-MM-DD");
+		today = (0, _momentTimezone2.default)().tz(tz).format("YYYY-MM-DD Z");
 	} else {
-		today = (0, _momentTimezone2.default)().format("YYYY-MM-DD");
+		today = (0, _momentTimezone2.default)().format("YYYY-MM-DD Z");
 	}
 
 	user.getDailyTasks({

@@ -59,6 +59,7 @@ exports.default = function (controller) {
 		var SlackUserId = config.SlackUserId;
 		var taskNumbers = config.taskNumbers;
 		var taskDecision = config.taskDecision;
+		var message = config.message;
 
 
 		_models2.default.User.find({
@@ -109,9 +110,6 @@ exports.default = function (controller) {
 						(0, _editTaskListFunctions.startEditTaskListMessage)(convo);
 
 						convo.on('end', function (convo) {
-							console.log("\n\n ~ edit tasks finished ~ \n\n");
-							console.log(convo.tasksEdit);
-
 							var _convo$tasksEdit = convo.tasksEdit;
 							var newTasks = _convo$tasksEdit.newTasks;
 							var dailyTasks = _convo$tasksEdit.dailyTasks;
@@ -214,7 +212,9 @@ exports.default = function (controller) {
 
 							setTimeout(function () {
 
-								(0, _miscHelpers.prioritizeDailyTasks)(user);
+								setTimeout(function () {
+									(0, _miscHelpers.prioritizeDailyTasks)(user);
+								}, 500);
 
 								// only check for live tasks if SOME action took place
 								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
@@ -239,7 +239,7 @@ exports.default = function (controller) {
 			channel: message.channel
 		});
 
-		var config = { SlackUserId: SlackUserId };
+		var config = { SlackUserId: SlackUserId, message: message };
 
 		var taskNumbers = (0, _messageHelpers.convertStringToNumbersArray)(text);
 		if (taskNumbers) {

@@ -76,7 +76,7 @@ export default function(controller) {
 
 	controller.on(`edit_tasks_flow`, (bot, config) => {
 
-		const { SlackUserId, taskNumbers, taskDecision } = config;
+		const { SlackUserId, taskNumbers, taskDecision, message } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -132,8 +132,6 @@ export default function(controller) {
 
 						
 						convo.on('end', (convo) => {
-							console.log("\n\n ~ edit tasks finished ~ \n\n");
-							console.log(convo.tasksEdit);
 							
 							var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate, startSession, dailyTasksToWorkOn } = convo.tasksEdit;
 
@@ -226,8 +224,10 @@ export default function(controller) {
 
 							setTimeout(() => {
 
-								prioritizeDailyTasks(user);
-
+								setTimeout(() => {
+									prioritizeDailyTasks(user);
+								}, 500);
+								
 								// only check for live tasks if SOME action took place
 								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
 									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
@@ -251,7 +251,7 @@ export default function(controller) {
 			channel: message.channel
 		});
 
-		let config = { SlackUserId };
+		let config = { SlackUserId, message };
 
 		var taskNumbers = convertStringToNumbersArray(text);
 		if (taskNumbers) {

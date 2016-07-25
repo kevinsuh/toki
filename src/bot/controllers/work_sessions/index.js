@@ -999,54 +999,57 @@ export function checkWorkSessionForLiveTasks(config) {
 
 				} else {
 
-					user.getDailyTasks({
-						where: [`"DailyTask"."type" = ? AND "Task"."done" = ?`, "live", false],
-						include: [models.Task]
-					})
-					.then((dailyTasks) => {
-						if (dailyTasks.length > 0) {
-							bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-								convo.startSession = false;
-								convo.ask("Shall we crank out one of your tasks? :wrench:", [
-										{
-											pattern: utterances.yes,
-											callback: (response, convo) => {
-												convo.startSession = true;
-												convo.next();
+					if (false) {
+						user.getDailyTasks({
+							where: [`"DailyTask"."type" = ? AND "Task"."done" = ?`, "live", false],
+							include: [models.Task]
+						})
+						.then((dailyTasks) => {
+							if (dailyTasks.length > 0) {
+								bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+									convo.startSession = false;
+									convo.ask("Shall we crank out one of your tasks? :wrench:", [
+											{
+												pattern: utterances.yes,
+												callback: (response, convo) => {
+													convo.startSession = true;
+													convo.next();
+												}
+											},
+											{
+												pattern: utterances.no,
+												callback: (response, convo) => {
+													convo.say("Okay! I'll be here when you're ready :fist:");
+													convo.next();
+												}
+											},
+											{
+												default: true,
+												callback: (response, convo) => {
+													convo.say("Sorry, I didn't catch that");
+													convo.repeat();
+													convo.next();
+												}
 											}
-										},
-										{
-											pattern: utterances.no,
-											callback: (response, convo) => {
-												convo.say("Okay! I'll be here when you're ready :fist:");
-												convo.next();
-											}
-										},
-										{
-											default: true,
-											callback: (response, convo) => {
-												convo.say("Sorry, I didn't catch that");
-												convo.repeat();
-												convo.next();
-											}
-										}
-									]);
-								convo.on('end', (convo) => {
-									const { startSession } = convo;
-									if (startSession) {
-										var intent = intentConfig.START_SESSION;
+										]);
+									convo.on('end', (convo) => {
+										const { startSession } = convo;
+										if (startSession) {
+											var intent = intentConfig.START_SESSION;
 
-										var config = {
-											intent,
-											SlackUserId
-										}
+											var config = {
+												intent,
+												SlackUserId
+											}
 
-										controller.trigger(`new_session_group_decision`, [ bot, config ]);
-									}
-								})
-							});
-						}
-					})
+											controller.trigger(`new_session_group_decision`, [ bot, config ]);
+										}
+									})
+								});
+							}
+						})
+					}
+					
 				}
 
 			});

@@ -94,6 +94,8 @@ function specificCommandFlow(convo) {
 			if (taskNumbersToCompleteArray) {
 				// single line complete ability
 				singleLineCompleteTask(convo, taskNumbersToCompleteArray);
+				let options = { onlyRemainingTasks: true };
+				sayTasksForToday(convo, options);
 			} else {
 				completeTasksFlow(response, convo);
 			}
@@ -141,14 +143,18 @@ function sayWorkSessionMessage(convo) {
 
 }
 
-function sayTasksForToday(convo) {
+function sayTasksForToday(convo, options = {}) {
 
 	const { tasksEdit: { dailyTasks } } = convo;
 
-	var options         = { segmentCompleted: true }
-	var taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
+	options.segmentCompleted = true;
+	let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
 
-	convo.say("Here are your tasks for today :memo::");
+	let taskMessage = "Here are your tasks for today :memo::"
+	if (options.onlyRemainingTasks) {
+		taskMessage = "Here are your remaining tasks for today :memo::";
+	}
+	convo.say(taskMessage);
 	convo.say({
 		text: taskListMessage,
 		attachments:[
@@ -895,12 +901,24 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 
 	let { dailyTasks, dailyTaskIdsToComplete } = convo.tasksEdit;
 	let dailyTasksToComplete = [];
-	dailyTasks.forEach((dailyTask, index) => {
+	dailyTasks = dailyTasks.filter((dailyTask, index) => {
 		const { dataValues: { priority } } = dailyTask;
+		let stillNotCompleted = true;
 		if (taskNumbersToCompleteArray.indexOf(priority) > -1) {
 			dailyTasksToComplete.push(dailyTask);
+			stillNotCompleted = false;
 		}
+		return stillNotCompleted;
 	});
+
+	let priority = 1;
+	dailyTasks = dailyTasks.map((dailyTask) => {
+		dailyTask.dataValues.priority = priority;
+		priority++;
+		return dailyTask;
+	});
+
+	convo.tasksEdit.dailyTasks = dailyTasks;
 
 	if (dailyTasksToComplete.length > 0) {
 		let dailyTaskTextsToComplete = dailyTasksToComplete.map((dailyTask) => {
@@ -910,11 +928,12 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 
 		convo.say(`Great work, I completed off ${dailyTasksToCompleteString}!`);
 
-		// add to delete array for tasksEdit
+		// add to complete array for tasksEdit
 		dailyTaskIdsToComplete = dailyTasksToComplete.map((dailyTask) => {
 			return dailyTask.dataValues.id;
 		});
 		convo.tasksEdit.dailyTaskIdsToComplete = dailyTaskIdsToComplete;
+
 	} else {
 		convo.say(`Ah, I didn't find that task to complete`);
 	}
