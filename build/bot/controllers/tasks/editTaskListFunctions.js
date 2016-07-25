@@ -126,7 +126,7 @@ function specificCommandFlow(convo) {
 				var options = { onlyRemainingTasks: true };
 				sayTasksForToday(convo, options);
 			} else {
-				completeTasksFlow(response, convo);
+				completeTasksFlow(convo);
 			}
 			break;
 		case _constants.TASK_DECISION.add.word:
@@ -146,7 +146,7 @@ function specificCommandFlow(convo) {
 				var _options = { onlyRemainingTasks: true };
 				sayTasksForToday(convo, _options);
 			} else {
-				deleteTasksFlow(response, convo);
+				deleteTasksFlow(convo);
 			}
 			break;
 		case _constants.TASK_DECISION.edit.word:
@@ -252,7 +252,7 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 		});
 		var dailyTasksToCompleteString = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTextsToComplete);
 
-		convo.say('Great work, I completed off ' + dailyTasksToCompleteString + '!');
+		convo.say('Great work :punch: I checked off ' + dailyTasksToCompleteString + '!');
 
 		// add to complete array for tasksEdit
 		dailyTaskIdsToComplete = dailyTasksToComplete.map(function (dailyTask) {
@@ -262,6 +262,40 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 	} else {
 		convo.say('Ah, I didn\'t find that task to complete');
 	}
+
+	convo.next();
+}
+
+function completeTasksFlow(convo) {
+	var dailyTasks = convo.tasksEdit.dailyTasks;
+
+	// say task list, then ask which ones to complete
+
+	sayTasksForToday(convo);
+
+	var message = 'Which of your task(s) above would you like to complete?';
+	convo.ask(message, [{
+		pattern: _botResponses.utterances.no,
+		callback: function callback(response, convo) {
+			convo.say("Okay, let me know if you still want to complete tasks! :wave: ");
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
+			if (taskNumbersToCompleteArray) {
+				singleLineCompleteTask(convo, taskNumbersToCompleteArray);
+				var options = { onlyRemainingTasks: true };
+				sayTasksForToday(convo, options);
+			} else {
+				convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+				convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+				convo.repeat();
+			}
+			convo.next();
+		}
+	}]);
 
 	convo.next();
 }
@@ -312,6 +346,40 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 	} else {
 		convo.say('Ah, I didn\'t find that task to delete');
 	}
+
+	convo.next();
+}
+
+function deleteTasksFlow(convo) {
+	var dailyTasks = convo.tasksEdit.dailyTasks;
+
+	// say task list, then ask which ones to complete
+
+	sayTasksForToday(convo);
+
+	var message = 'Which of your task(s) above would you like to delete?';
+	convo.ask(message, [{
+		pattern: _botResponses.utterances.no,
+		callback: function callback(response, convo) {
+			convo.say("Okay, let me know if you still want to delete tasks! :wave: ");
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			var taskNumbersToDeleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
+			if (taskNumbersToDeleteArray) {
+				singleLineDeleteTask(convo, taskNumbersToDeleteArray);
+				var options = { onlyRemainingTasks: true };
+				sayTasksForToday(convo, options);
+			} else {
+				convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+				convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+				convo.repeat();
+			}
+			convo.next();
+		}
+	}]);
 
 	convo.next();
 }
@@ -968,304 +1036,14 @@ function addNewTasksToTaskList(response, convo) {
 }
 
 /**
- * 			~~ COMPLETE TASKS FLOW ~~
- */
-
-function completeTasksFlow(response, convo) {
-	var dailyTasks = convo.tasksEdit.dailyTasks;
-
-	var message = 'Which of your task(s) above would you like to complete?';
-
-	convo.ask(message, [{
-		pattern: _botResponses.utterances.no,
-		callback: function callback(response, convo) {
-			convo.say("Okay, let me know if you still want to `edit tasks`! :wave: ");
-			convo.next();
-		}
-	}, {
-		default: true,
-		callback: function callback(response, convo) {
-			confirmCompleteTasks(response, convo);
-			convo.next();
-		}
-	}]);
-
-	convo.next();
-}
-
-function confirmCompleteTasks(response, convo) {
-
-	var tasksToCompleteString = response.text;
-	var _convo$tasksEdit12 = convo.tasksEdit;
-	var dailyTasks = _convo$tasksEdit12.dailyTasks;
-	var dailyTaskIdsToComplete = _convo$tasksEdit12.dailyTaskIdsToComplete;
-
-	// if we capture 0 valid tasks from string, then we start over
-
-	var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(tasksToCompleteString, dailyTasks);
-	if (!taskNumbersToCompleteArray) {
-		convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-		convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
-		var options = { segmentCompleted: true };
-		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
-		convo.say({
-			text: taskListMessage,
-			attachments: [{
-				attachment_type: 'default',
-				callback_id: "TASK_LIST_MESSAGE",
-				fallback: "Here's your task list!"
-			}]
-		});
-		completeTasksFlow(response, convo);
-		return;
-	}
-
-	var dailyTasksToComplete = [];
-	dailyTasks.forEach(function (dailyTask, index) {
-		var taskNumber = index + 1; // b/c index is 0-based
-		if (taskNumbersToCompleteArray.indexOf(taskNumber) > -1) {
-			dailyTasksToComplete.push(dailyTask);
-		}
-	});
-
-	var dailyTaskTextsToComplete = dailyTasksToComplete.map(function (dailyTask) {
-		return dailyTask.dataValues.Task.text;
-	});
-
-	var taskListMessage = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTextsToComplete);
-
-	convo.ask('So you would like to complete ' + taskListMessage + '?', [{
-		pattern: _botResponses.utterances.yes,
-		callback: function callback(response, convo) {
-			convo.say("Sounds great, checked off :white_check_mark:!");
-
-			// add to delete array for tasksEdit
-			dailyTaskIdsToComplete = dailyTasksToComplete.map(function (dailyTask) {
-				return dailyTask.dataValues.id;
-			});
-			convo.tasksEdit.dailyTaskIdsToComplete = dailyTaskIdsToComplete;
-
-			updateCompleteTaskListMessage(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _botResponses.utterances.no,
-		callback: function callback(response, convo) {
-			convo.say("Okay, let me know if you still want to `edit tasks`! :wave: ");
-			convo.next();
-		}
-	}, {
-		default: true,
-		callback: function callback(response, convo) {
-			convo.say("Couldn't quite catch that :thinking_face:");
-			convo.repeat();
-			convo.next();
-		}
-	}]);
-}
-
-function updateCompleteTaskListMessage(response, convo) {
-	var _convo$tasksEdit13 = convo.tasksEdit;
-	var bot = _convo$tasksEdit13.bot;
-	var dailyTasks = _convo$tasksEdit13.dailyTasks;
-	var dailyTaskIdsToComplete = _convo$tasksEdit13.dailyTaskIdsToComplete;
-	var newTasks = _convo$tasksEdit13.newTasks;
-
-	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
-
-	// spit back updated task list
-	var taskArray = [];
-	var fullTaskArray = []; // this one will have all daily tasks but with ~completed~ updated
-	dailyTasks.forEach(function (dailyTask, index) {
-		var id = dailyTask.dataValues.id;
-
-		if (dailyTaskIdsToComplete.indexOf(id) < 0) {
-			// daily task is NOT in the ids to delete
-			taskArray.push(dailyTask);
-		} else {
-			dailyTask.dataValues.done = true; // semi hack
-		}
-		fullTaskArray.push(dailyTask);
-	});
-
-	var options = { segmentCompleted: true };
-	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(fullTaskArray, options);
-
-	var remainingTasks = getRemainingTasks(fullTaskArray, newTasks);
-
-	convo.say("Here's your task list for today :memo::");
-	convo.say({
-		text: taskListMessage,
-		attachments: [{
-			attachment_type: 'default',
-			callback_id: "TASK_LIST_MESSAGE",
-			fallback: "Here's your task list!"
-		}]
-	});
-
-	if (remainingTasks.length == 0) {
-		askForTaskListOptionsIfNoRemainingTasks(convo);
-	}
-
-	convo.next();
-}
-
-/**
- * 			~~ DELETE TASKS FLOW ~~
- */
-
-function deleteTasksFlow(response, convo) {
-	var dailyTasks = convo.tasksEdit.dailyTasks;
-
-	var message = 'Which of your task(s) above would you like to delete?';
-
-	convo.ask(message, [{
-		pattern: _botResponses.utterances.no,
-		callback: function callback(response, convo) {
-			convo.say("Okay, let me know if you still want to `edit tasks`! :wave: ");
-			convo.next();
-		}
-	}, {
-		default: true,
-		callback: function callback(response, convo) {
-			confirmDeleteTasks(response, convo);
-			convo.next();
-		}
-	}]);
-
-	convo.next();
-}
-
-function confirmDeleteTasks(response, convo) {
-
-	var tasksToDeleteString = response.text;
-	var _convo$tasksEdit14 = convo.tasksEdit;
-	var dailyTasks = _convo$tasksEdit14.dailyTasks;
-	var dailyTaskIdsToDelete = _convo$tasksEdit14.dailyTaskIdsToDelete;
-
-	// if we capture 0 valid tasks from string, then we start over
-
-	var taskNumbersToDeleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(tasksToDeleteString, dailyTasks);
-	if (!taskNumbersToDeleteArray) {
-		convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-		convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
-		var options = { segmentCompleted: true };
-		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
-		convo.say({
-			text: taskListMessage,
-			attachments: [{
-				attachment_type: 'default',
-				callback_id: "TASK_LIST_MESSAGE",
-				fallback: "Here's your task list!"
-			}]
-		});
-		deleteTasksFlow(response, convo);
-		return;
-	}
-
-	var dailyTasksToDelete = [];
-	dailyTasks.forEach(function (dailyTask, index) {
-		var taskNumber = index + 1; // b/c index is 0-based
-		if (taskNumbersToDeleteArray.indexOf(taskNumber) > -1) {
-			dailyTask.dataValues.type = "deleted";
-			dailyTasksToDelete.push(dailyTask);
-		}
-	});
-
-	var dailyTaskTextsToDelete = dailyTasksToDelete.map(function (dailyTask) {
-		return dailyTask.dataValues.Task.text;
-	});
-
-	var tasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTextsToDelete);
-
-	convo.ask('So you would like to delete ' + tasksString + '?', [{
-		pattern: _botResponses.utterances.yes,
-		callback: function callback(response, convo) {
-			convo.say("Sounds great, deleted!");
-
-			// add to delete array for tasksEdit
-			dailyTaskIdsToDelete = dailyTasksToDelete.map(function (dailyTask) {
-				return dailyTask.dataValues.id;
-			});
-			convo.tasksEdit.dailyTaskIdsToDelete = dailyTaskIdsToDelete;
-
-			updateDeleteTaskListMessage(response, convo);
-
-			convo.next();
-		}
-	}, {
-		pattern: _botResponses.utterances.no,
-		callback: function callback(response, convo) {
-			convo.say("Okay, let me know if you still want to `edit tasks`! :wave: ");
-			convo.next();
-		}
-	}, {
-		default: true,
-		callback: function callback(response, convo) {
-			convo.say("Couldn't quite catch that :thinking_face:");
-			convo.repeat();
-			convo.next();
-		}
-	}]);
-}
-
-function updateDeleteTaskListMessage(response, convo) {
-	var _convo$tasksEdit15 = convo.tasksEdit;
-	var bot = _convo$tasksEdit15.bot;
-	var dailyTasks = _convo$tasksEdit15.dailyTasks;
-	var dailyTaskIdsToDelete = _convo$tasksEdit15.dailyTaskIdsToDelete;
-	var newTasks = _convo$tasksEdit15.newTasks;
-
-	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
-
-	// spit back updated task list
-	var taskArray = [];
-	dailyTasks.forEach(function (dailyTask, index) {
-		var id = dailyTask.dataValues.id;
-
-		if (dailyTaskIdsToDelete.indexOf(id) < 0) {
-			// daily task is NOT in the ids to delete
-			taskArray.push(dailyTask);
-		}
-	});
-
-	var options = { segmentCompleted: true };
-	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
-
-	var remainingTasks = getRemainingTasks(taskArray, newTasks);
-
-	convo.say("Here's your task list for today :memo::");
-	convo.say({
-		text: taskListMessage,
-		attachments: [{
-			attachment_type: 'default',
-			callback_id: "TASK_LIST_MESSAGE",
-			fallback: "Here's your task list!"
-		}]
-	});
-
-	console.log("new tasks:");
-	console.log(newTasks);
-	console.log(taskArray);
-	console.log(remainingTasks);
-	console.log("\n\n\n");
-
-	if (remainingTasks.length == 0) {
-		askForTaskListOptionsIfNoRemainingTasks(convo);
-	}
-
-	convo.next();
-}
-
-/**
  * 			~~ EDIT TIMES TO TASKS FLOW ~~
  */
 
 function editTaskTimesFlow(response, convo) {
-	var _convo$tasksEdit16 = convo.tasksEdit;
-	var bot = _convo$tasksEdit16.bot;
-	var dailyTasks = _convo$tasksEdit16.dailyTasks;
-	var dailyTasksToUpdate = _convo$tasksEdit16.dailyTasksToUpdate;
+	var _convo$tasksEdit12 = convo.tasksEdit;
+	var bot = _convo$tasksEdit12.bot;
+	var dailyTasks = _convo$tasksEdit12.dailyTasks;
+	var dailyTasksToUpdate = _convo$tasksEdit12.dailyTasksToUpdate;
 
 
 	var dailyTasksToSetMinutes = [];
@@ -1293,9 +1071,9 @@ function editTaskTimesFlow(response, convo) {
 }
 
 function getTimeToTasks(response, convo) {
-	var _convo$tasksEdit17 = convo.tasksEdit;
-	var dailyTasksToSetMinutes = _convo$tasksEdit17.dailyTasksToSetMinutes;
-	var bot = _convo$tasksEdit17.bot;
+	var _convo$tasksEdit13 = convo.tasksEdit;
+	var dailyTasksToSetMinutes = _convo$tasksEdit13.dailyTasksToSetMinutes;
+	var bot = _convo$tasksEdit13.bot;
 
 
 	var taskListMessage;
