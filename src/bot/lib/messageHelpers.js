@@ -244,6 +244,13 @@ function createTaskListMessageBody(taskArray, options) {
 			task = task.dataValues;
 		};
 
+		let priority = task.priority;
+		if (!priority && task.dailyTask && task.DailyTask.dataValues) {
+			priority = task.DailyTask.dataValues.priority;
+		} else if (!priority) {
+			priority = '';
+		}
+
 		if (!options.dontShowMinutes && task.minutes) {
 
 			var minutesInt = parseInt(task.minutes);
@@ -261,8 +268,8 @@ function createTaskListMessageBody(taskArray, options) {
 
 		// completed tasks do not have count
 		var taskContent = ``;
-		if (!options.segmentCompleted || task.done != true) {
-			taskContent = `${count}) `;
+		if (!options.segmentCompleted && task.done != true) {
+			taskContent = `${priority}) `;
 		}
 		taskContent = `${taskContent}${task.text}${minutesMessage}`
 
