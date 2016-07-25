@@ -184,6 +184,10 @@ exports.default = function (controller) {
 					bot.replyInteractive(message, "Let's end early!");
 					controller.trigger('session_end_early_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
+				case _constants.buttonValues.startSession.pause.endEarly.value:
+					bot.replyInteractive(message, "Let's end early!");
+					controller.trigger('session_end_early_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+					break;
 				case _constants.buttonValues.startSession.resume.value:
 					bot.replyInteractive(message, "Okay!");
 					controller.trigger('session_resume_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
