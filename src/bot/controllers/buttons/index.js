@@ -197,7 +197,7 @@ export default function(controller) {
 					});
 					break;
 				case buttonValues.startSession.resume.value:
-					bot.replyInteractive(message, "Okay, let's resume your session :arrow_forward:", () => {
+					bot.replyInteractive(message, "Okay, let's resume!", () => {
 						controller.trigger(`session_resume_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					});
 					break;

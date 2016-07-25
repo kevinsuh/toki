@@ -70,7 +70,7 @@ exports.default = function (controller) {
 
 
 									timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
-									message = 'Your session is already on pause! You have *' + timeString + '* remaining for ' + tasksToWorkOnString;
+									message = 'Wait, your session is already on pause! You have *' + timeString + '* remaining for ' + tasksToWorkOnString;
 								} else {
 
 									/**
@@ -207,7 +207,7 @@ exports.default = function (controller) {
 
 												bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 													convo.say({
-														text: 'Good luck with ' + tasksString + '!\nSee you in ' + timeString + ' at *' + endTimeString + '* :timer_clock:',
+														text: 'Your session is resumed :arrow_forward:. Good luck with ' + tasksString + '!\n\nSee you in ' + timeString + ' at *' + endTimeString + '* :timer_clock:',
 														attachments: _constants.startSessionOptionsAttachments
 													});
 													convo.next();
@@ -229,7 +229,7 @@ exports.default = function (controller) {
 												timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutesRemaining);
 
 												bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-													convo.say('You\'re currently in a session! You have ' + timeString + ' remaining for ' + tasksString);
+													convo.say('Wait, your session has already been resumed! You have ' + timeString + ' remaining for ' + tasksString);
 													convo.say({
 														text: 'See you at *' + endTimeString + '*  :timer_clock:',
 														attachments: _constants.startSessionOptionsAttachments

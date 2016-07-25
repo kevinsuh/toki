@@ -38,7 +38,7 @@ exports.default = function (controller) {
 
 				var config = { SlackUserId: SlackUserId };
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-					convo.say("Okay, let's pause your session");
+					convo.say("Okay, let's pause!");
 					convo.next();
 					convo.on('end', function (convo) {
 						controller.trigger('session_pause_flow', [bot, config]);
@@ -80,7 +80,7 @@ exports.default = function (controller) {
 
 				var config = { SlackUserId: SlackUserId };
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-					convo.say("Okay, let's resume your session :arrow_forward:");
+					convo.say("Okay, let's resume!");
 					convo.next();
 					convo.on('end', function (convo) {
 						controller.trigger('session_resume_flow', [bot, config]);
