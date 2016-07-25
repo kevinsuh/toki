@@ -303,7 +303,8 @@ function createTaskListMessageBody(taskArray, options) {
 
 		// completed tasks do not have count
 		var taskContent = '';
-		if (!options.segmentCompleted && task.done != true) {
+		// only not done tasks should have numbers
+		if (task.done == false) {
 			taskContent = priority + ') ';
 		}
 		taskContent = '' + taskContent + task.text + minutesMessage;
