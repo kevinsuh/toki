@@ -54,18 +54,23 @@ var TIME_INTENT = exports.TIME_INTENT = {
 
 var TASK_DECISION = exports.TASK_DECISION = {
 	complete: {
+		word: "TASK_COMPLETE",
 		reg_exp: new RegExp(/\bcomp[omplete]{3,}\b/i)
 	},
 	add: {
+		word: "TASK_ADD",
 		reg_exp: new RegExp(/\bad[ad]{1,}\b/i)
 	},
 	view: {
+		word: "TASK_VIEW",
 		reg_exp: new RegExp(/\bvi[iew]{1,}\b/i)
 	},
 	delete: {
+		word: "TASK_DELETE",
 		reg_exp: new RegExp(/\bdel[elete]{3,}\b/i)
 	},
 	edit: {
+		word: "TASK_EDIT",
 		reg_exp: new RegExp(/\bed[dit]{1,}\b/i)
 	}
 };

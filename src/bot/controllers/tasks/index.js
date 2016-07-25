@@ -78,7 +78,7 @@ export default function(controller) {
 
 	controller.on(`edit_tasks_flow`, (bot, config) => {
 
-		const { SlackUserId } = config;
+		const { SlackUserId, taskNumbers, taskDecision } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -124,7 +124,9 @@ export default function(controller) {
 							dailyTaskIdsToDelete: [],
 							dailyTaskIdsToComplete: [],
 							dailyTasksToUpdate: [], // existing dailyTasks
-							openWorkSession
+							openWorkSession,
+							taskDecision,
+							taskNumbers
 						}
 
 						// this is the flow you expect for editing tasks
@@ -262,18 +264,26 @@ export default function(controller) {
 		switch (text) {
 			case (text.match(TASK_DECISION.complete.reg_exp) || {}).input:
 				console.log(`\n\n ~~ User wants to complete task ~~ \n\n`);
+				config.taskDecision = TASK_DECISION.complete.word;
 				break;
 			case (text.match(TASK_DECISION.add.reg_exp) || {}).input:
 				console.log(`\n\n ~~ User wants to add task ~~ \n\n`);
+				config.taskDecision = TASK_DECISION.add.word;
 				break;
 			case (text.match(TASK_DECISION.view.reg_exp) || {}).input:
 				console.log(`\n\n ~~ User wants to view task ~~ \n\n`);
+				config.taskDecision = TASK_DECISION.view.word;
 				break;
 			case (text.match(TASK_DECISION.delete.reg_exp) || {}).input:
 				console.log(`\n\n ~~ User wants to delete task ~~ \n\n`);
+				config.taskDecision = TASK_DECISION.delete.word;
 				break;
 			case (text.match(TASK_DECISION.edit.reg_exp) || {}).input:
 				console.log(`\n\n ~~ User wants to edit task ~~ \n\n`);
+				config.taskDecision = TASK_DECISION.edit.word;
+				break;
+			default: 
+				config.taskDecision = TASK_DECISION.view.word;
 				break;
 		}
 

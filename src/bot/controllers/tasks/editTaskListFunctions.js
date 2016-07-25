@@ -6,14 +6,20 @@ import moment from 'moment';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsHash, buttonValues, FINISH_WORD, RESET, taskListMessageDoneButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment, pausedSessionOptionsAttachments, startSessionOptionsAttachments } from '../../lib/constants';
+import { colorsHash, buttonValues, FINISH_WORD, RESET, taskListMessageDoneButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment, pausedSessionOptionsAttachments, startSessionOptionsAttachments, TASK_DECISION } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, getMostRecentTaskListMessageToUpdate, getMostRecentMessageToUpdate, deleteConvoAskMessage, convertMinutesToHoursString } from '../../lib/messageHelpers';
 
 // this one shows the task list message and asks for options
 export function startEditTaskListMessage(convo) {
 
-	const { tasksEdit: { dailyTasks, bot, openWorkSession } } = convo;
+	const { tasksEdit: { dailyTasks, bot, openWorkSession, taskNumbers, taskDecision } } = convo;
 
+	/**
+	 * 		We enter here to provide specific context if the user
+	 * 		has an currently open work session or not. Otherwise,
+	 * 		the next step is the same (`specificCommandFlow`)
+	 */
+	
 	if (openWorkSession) {
 		openWorkSession.getStoredWorkSession({
 			where: [ `"StoredWorkSession"."live" = ?`, true ]
@@ -36,45 +42,99 @@ export function startEditTaskListMessage(convo) {
 
 				var sessionTasks = commaSeparateOutTaskArray(dailyTaskTexts);
 
-				sayTasksForToday(convo);
-
 				convo.tasksEdit.currentSession = {
+					minutes,
 					minutesString,
 					sessionTasks,
-					endTimeString
+					endTimeString,
+					storedWorkSession
 				}
 
 				if (storedWorkSession) {
-
-					minutes       = storedWorkSession.dataValues.minutes;
-					minutesString = convertMinutesToHoursString(minutes);
-					
-					// currently paused
 					convo.tasksEdit.currentSession.isPaused = true;
-					convo.say(`Your session is still paused :double_vertical_bar: You have *${minutesString}* remaining for ${sessionTasks}`);
-				} else {
-					// currently live
-					convo.say(`You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`);
 				}
 
-				askForTaskListOptions(convo);
+				/**
+				 * 		~~ Start of flow for specific command ~~
+				 * 				* if you have an openWorkSession *
+				 */
+				
+				specificCommandFlow(convo);
 				convo.next();
+
 			})
 		});
 			
 	} else {
-		sayTasksForToday(convo);
-		askForTaskListOptions(convo);
+
+		/**
+		 * 		~~ Start of flow for specific command ~~
+		 * 		 * if you don't have openWorkSession *
+		 */
+		
+		specificCommandFlow(convo);
 		convo.next();
+
+	}
+
+}
+
+/**
+ * 		ENTRY POINT FOR VIEW / EDIT PLAN
+ */
+function specificCommandFlow(convo) {
+
+	const { tasksEdit: { dailyTasks, bot, openWorkSession, taskNumbers, taskDecision, currentSession } } = convo;
+
+	switch (taskDecision) {
+		case TASK_DECISION.complete.word:
+			console.log(`\n\n ~~ user wants to complete tasks in specificCommandFlow ~~ \n\n`)
+			break;
+		case TASK_DECISION.add.word:
+			console.log(`\n\n ~~ user wants to add tasks in specificCommandFlow ~~ \n\n`)
+			break;
+		case TASK_DECISION.view.word:
+			console.log(`\n\n ~~ user wants to view tasks in specificCommandFlow ~~ \n\n`)
+			break;
+		case TASK_DECISION.delete.word:
+			console.log(`\n\n ~~ user wants to delete tasks in specificCommandFlow ~~ \n\n`)
+			break;
+		case TASK_DECISION.edit.word:
+			console.log(`\n\n ~~ user wants to edit tasks in specificCommandFlow ~~ \n\n`)
+			break;
+		default:
+			break;
+	}
+
+	sayWorkSessionMessage(convo);
+
+}
+
+function sayWorkSessionMessage(convo) {
+
+	const { tasksEdit: { openWorkSession, currentSession: { minutes, minutesString, sessionTasks, endTimeString, storedWorkSession } } } = convo;
+
+	let workSessionMessage = '';
+	if (openWorkSession) {
+		if (storedWorkSession) {
+			// currently paused
+			minutes       = storedWorkSession.dataValues.minutes;
+			minutesString = convertMinutesToHoursString(minutes);
+			workSessionMessage = `Your session is still paused :double_vertical_bar: You have *${minutesString}* remaining for ${sessionTasks}`;
+		} else {
+			// currently live
+			workSessionMessage = `You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`;
+		}
+		convo.say(workSessionMessage);
 	}
 
 }
 
 function sayTasksForToday(convo) {
 
-	const { tasksEdit: { dailyTasks, bot, openWorkSession } } = convo;
+	const { tasksEdit: { dailyTasks } } = convo;
 
-	var options = { segmentCompleted: true }
+	var options         = { segmentCompleted: true }
 	var taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
 
 	convo.say("Here are your tasks for today :memo::");

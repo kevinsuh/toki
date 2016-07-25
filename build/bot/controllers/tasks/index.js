@@ -59,6 +59,8 @@ exports.default = function (controller) {
 
 	controller.on('edit_tasks_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
+		var taskNumbers = config.taskNumbers;
+		var taskDecision = config.taskDecision;
 
 
 		_models2.default.User.find({
@@ -100,7 +102,9 @@ exports.default = function (controller) {
 							dailyTaskIdsToDelete: [],
 							dailyTaskIdsToComplete: [],
 							dailyTasksToUpdate: [], // existing dailyTasks
-							openWorkSession: openWorkSession
+							openWorkSession: openWorkSession,
+							taskDecision: taskDecision,
+							taskNumbers: taskNumbers
 						};
 
 						// this is the flow you expect for editing tasks
@@ -248,18 +252,26 @@ exports.default = function (controller) {
 		switch (text) {
 			case (text.match(_constants.TASK_DECISION.complete.reg_exp) || {}).input:
 				console.log('\n\n ~~ User wants to complete task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.complete.word;
 				break;
 			case (text.match(_constants.TASK_DECISION.add.reg_exp) || {}).input:
 				console.log('\n\n ~~ User wants to add task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.add.word;
 				break;
 			case (text.match(_constants.TASK_DECISION.view.reg_exp) || {}).input:
 				console.log('\n\n ~~ User wants to view task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.view.word;
 				break;
 			case (text.match(_constants.TASK_DECISION.delete.reg_exp) || {}).input:
 				console.log('\n\n ~~ User wants to delete task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.delete.word;
 				break;
 			case (text.match(_constants.TASK_DECISION.edit.reg_exp) || {}).input:
 				console.log('\n\n ~~ User wants to edit task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.edit.word;
+				break;
+			default:
+				config.taskDecision = _constants.TASK_DECISION.view.word;
 				break;
 		}
 
