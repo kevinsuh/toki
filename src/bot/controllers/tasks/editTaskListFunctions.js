@@ -104,11 +104,21 @@ function specificCommandFlow(convo) {
 			console.log(`\n\n ~~ user wants to add tasks in specificCommandFlow ~~ \n\n`)
 			break;
 		case TASK_DECISION.view.word:
-			console.log(`\n\n ~~ user wants to view tasks in specificCommandFlow ~~ \n\n`)
+			console.log(`\n\n ~~ user wants to view tasks in specificCommandFlow ~~ \n\n`);
 			sayTasksForToday(convo);
 			break;
 		case TASK_DECISION.delete.word:
 			console.log(`\n\n ~~ user wants to delete tasks in specificCommandFlow ~~ \n\n`)
+			var taskNumberString = taskNumbers ? taskNumbers.join(",") : '';
+			var taskNumbersToDeleteArray = convertTaskNumberStringToArray(taskNumberString, dailyTasks);
+			if (taskNumbersToDeleteArray) {
+				// single line complete ability
+				singleLineDeleteTask(convo, taskNumbersToDeleteArray);
+				let options = { onlyRemainingTasks: true };
+				sayTasksForToday(convo, options);
+			} else {
+				deleteTasksFlow(response, convo);
+			}
 			break;
 		case TASK_DECISION.edit.word:
 			console.log(`\n\n ~~ user wants to edit tasks in specificCommandFlow ~~ \n\n`)
@@ -117,7 +127,12 @@ function specificCommandFlow(convo) {
 			break;
 	}
 
-	sayWorkSessionMessage(convo);
+	// sayWorkSessionMessage(convo);
+
+	// if (remainingTasks.length == 0) {
+	// 	askForTaskListOptionsIfNoRemainingTasks(convo);
+	// }
+
 	convo.next();
 
 }
@@ -167,6 +182,111 @@ function sayTasksForToday(convo, options = {}) {
 	});
 
 }
+
+/**
+ * 		~~ COMPLETE TASKS ~~
+ */
+
+// complete the tasks requested
+function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
+
+	let { dailyTasks, dailyTaskIdsToComplete } = convo.tasksEdit;
+	let dailyTasksToComplete = [];
+	dailyTasks = dailyTasks.filter((dailyTask, index) => {
+		const { dataValues: { priority } } = dailyTask;
+		let stillNotCompleted = true;
+		if (taskNumbersToCompleteArray.indexOf(priority) > -1) {
+			dailyTasksToComplete.push(dailyTask);
+			stillNotCompleted = false;
+		}
+		return stillNotCompleted;
+	});
+
+	let priority = 1;
+	dailyTasks = dailyTasks.map((dailyTask) => {
+		dailyTask.dataValues.priority = priority;
+		priority++;
+		return dailyTask;
+	});
+
+	convo.tasksEdit.dailyTasks = dailyTasks;
+
+	if (dailyTasksToComplete.length > 0) {
+		let dailyTaskTextsToComplete = dailyTasksToComplete.map((dailyTask) => {
+			return dailyTask.dataValues.Task.text;
+		});
+		let dailyTasksToCompleteString = commaSeparateOutTaskArray(dailyTaskTextsToComplete);
+
+		convo.say(`Great work, I completed off ${dailyTasksToCompleteString}!`);
+
+		// add to complete array for tasksEdit
+		dailyTaskIdsToComplete = dailyTasksToComplete.map((dailyTask) => {
+			return dailyTask.dataValues.id;
+		});
+		convo.tasksEdit.dailyTaskIdsToComplete = dailyTaskIdsToComplete;
+
+	} else {
+		convo.say(`Ah, I didn't find that task to complete`);
+	}
+
+	convo.next();
+
+}
+
+
+/**
+ * 		~~ DELETE TASKS ~~
+ */
+
+function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
+
+	let { dailyTasks, dailyTaskIdsToDelete } = convo.tasksEdit;
+	let dailyTasksToDelete = [];
+	dailyTasks = dailyTasks.filter((dailyTask, index) => {
+		const { dataValues: { priority } } = dailyTask;
+		let stillNotDeleted = true;
+		if (taskNumbersToDeleteArray.indexOf(priority) > -1) {
+			dailyTasksToDelete.push(dailyTask);
+			stillNotDeleted = false;
+		}
+		return stillNotDeleted;
+	});
+
+	let priority = 1;
+	dailyTasks = dailyTasks.map((dailyTask) => {
+		dailyTask.dataValues.priority = priority;
+		priority++;
+		return dailyTask;
+	});
+
+	convo.tasksEdit.dailyTasks = dailyTasks;
+
+	if (dailyTasksToDelete.length > 0) {
+		let dailyTasksTextsToDelete = dailyTasksToDelete.map((dailyTask) => {
+			return dailyTask.dataValues.Task.text;
+		});
+		let dailyTasksToDeleteString = commaSeparateOutTaskArray(dailyTasksTextsToDelete);
+
+		convo.say(`Sounds good, I deleted ${dailyTasksToDeleteString}!`);
+
+		// add to delete array for tasksEdit
+		dailyTaskIdsToDelete = dailyTasksToDelete.map((dailyTask) => {
+			return dailyTask.dataValues.id;
+		});
+		convo.tasksEdit.dailyTaskIdsToDelete = dailyTaskIdsToDelete;
+
+	} else {
+		convo.say(`Ah, I didn't find that task to delete`);
+	}
+
+	convo.next();
+
+}
+
+
+/**
+ * 			DEPRECATED FUNCTIONS 7/25/16
+ */
 
 // options to ask if user has at least 1 remaining task
 function askForTaskListOptions(convo) {
@@ -894,52 +1014,6 @@ function completeTasksFlow(response, convo) {
 	]);
 
 	convo.next();
-}
-
-// complete the tasks requested
-function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
-
-	let { dailyTasks, dailyTaskIdsToComplete } = convo.tasksEdit;
-	let dailyTasksToComplete = [];
-	dailyTasks = dailyTasks.filter((dailyTask, index) => {
-		const { dataValues: { priority } } = dailyTask;
-		let stillNotCompleted = true;
-		if (taskNumbersToCompleteArray.indexOf(priority) > -1) {
-			dailyTasksToComplete.push(dailyTask);
-			stillNotCompleted = false;
-		}
-		return stillNotCompleted;
-	});
-
-	let priority = 1;
-	dailyTasks = dailyTasks.map((dailyTask) => {
-		dailyTask.dataValues.priority = priority;
-		priority++;
-		return dailyTask;
-	});
-
-	convo.tasksEdit.dailyTasks = dailyTasks;
-
-	if (dailyTasksToComplete.length > 0) {
-		let dailyTaskTextsToComplete = dailyTasksToComplete.map((dailyTask) => {
-			return dailyTask.dataValues.Task.text;
-		});
-		let dailyTasksToCompleteString = commaSeparateOutTaskArray(dailyTaskTextsToComplete);
-
-		convo.say(`Great work, I completed off ${dailyTasksToCompleteString}!`);
-
-		// add to complete array for tasksEdit
-		dailyTaskIdsToComplete = dailyTasksToComplete.map((dailyTask) => {
-			return dailyTask.dataValues.id;
-		});
-		convo.tasksEdit.dailyTaskIdsToComplete = dailyTaskIdsToComplete;
-
-	} else {
-		convo.say(`Ah, I didn't find that task to complete`);
-	}
-
-	convo.next();
-
 }
 
 function confirmCompleteTasks(response, convo) {
