@@ -49,8 +49,6 @@ export default function(controller) {
 			})
 			.then((dailyTasks) => {
 
-				console.log(dailyTasks);
-
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
 					dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
@@ -291,7 +289,7 @@ export default function(controller) {
 		console.log(config);
 
 		setTimeout(() => {
-			controller.trigger(`view_daily_tasks_flow`, [ bot, config ]);
+			controller.trigger(`edit_tasks_flow`, [ bot, config ]);
 		}, 1000);
 
 	});

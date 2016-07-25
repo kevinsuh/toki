@@ -88,13 +88,22 @@ function specificCommandFlow(convo) {
 
 	switch (taskDecision) {
 		case TASK_DECISION.complete.word:
-			console.log(`\n\n ~~ user wants to complete tasks in specificCommandFlow ~~ \n\n`)
+			console.log(`\n\n ~~ user wants to complete tasks in specificCommandFlow ~~ \n\n`);
+			var taskNumberString = taskNumbers ? taskNumbers.join(",") : '';
+			var taskNumbersToCompleteArray = convertTaskNumberStringToArray(taskNumberString, dailyTasks);
+			if (taskNumbersToCompleteArray) {
+				// single line complete ability
+				singleLineCompleteTask(convo, taskNumbersToCompleteArray);
+			} else {
+				completeTasksFlow(response, convo);
+			}
 			break;
 		case TASK_DECISION.add.word:
 			console.log(`\n\n ~~ user wants to add tasks in specificCommandFlow ~~ \n\n`)
 			break;
 		case TASK_DECISION.view.word:
 			console.log(`\n\n ~~ user wants to view tasks in specificCommandFlow ~~ \n\n`)
+			sayTasksForToday(convo);
 			break;
 		case TASK_DECISION.delete.word:
 			console.log(`\n\n ~~ user wants to delete tasks in specificCommandFlow ~~ \n\n`)
@@ -107,15 +116,17 @@ function specificCommandFlow(convo) {
 	}
 
 	sayWorkSessionMessage(convo);
+	convo.next();
 
 }
 
 function sayWorkSessionMessage(convo) {
 
-	const { tasksEdit: { openWorkSession, currentSession: { minutes, minutesString, sessionTasks, endTimeString, storedWorkSession } } } = convo;
+	let { tasksEdit: { openWorkSession, currentSession } } = convo;
 
 	let workSessionMessage = '';
-	if (openWorkSession) {
+	if (openWorkSession && currentSession) {
+		let { minutes, minutesString, sessionTasks, endTimeString, storedWorkSession } = currentSession;
 		if (storedWorkSession) {
 			// currently paused
 			minutes       = storedWorkSession.dataValues.minutes;
@@ -877,6 +888,39 @@ function completeTasksFlow(response, convo) {
 	]);
 
 	convo.next();
+}
+
+// complete the tasks requested
+function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
+
+	let { dailyTasks, dailyTaskIdsToComplete } = convo.tasksEdit;
+	let dailyTasksToComplete = [];
+	dailyTasks.forEach((dailyTask, index) => {
+		const { dataValues: { priority } } = dailyTask;
+		if (taskNumbersToCompleteArray.indexOf(priority) > -1) {
+			dailyTasksToComplete.push(dailyTask);
+		}
+	});
+
+	if (dailyTasksToComplete.length > 0) {
+		let dailyTaskTextsToComplete = dailyTasksToComplete.map((dailyTask) => {
+			return dailyTask.dataValues.Task.text;
+		});
+		let dailyTasksToCompleteString = commaSeparateOutTaskArray(dailyTaskTextsToComplete);
+
+		convo.say(`Great work, I completed off ${dailyTasksToCompleteString}!`);
+
+		// add to delete array for tasksEdit
+		dailyTaskIdsToComplete = dailyTasksToComplete.map((dailyTask) => {
+			return dailyTask.dataValues.id;
+		});
+		convo.tasksEdit.dailyTaskIdsToComplete = dailyTaskIdsToComplete;
+	} else {
+		convo.say(`Ah, I didn't find that task to complete`);
+	}
+
+	convo.next();
+
 }
 
 function confirmCompleteTasks(response, convo) {
