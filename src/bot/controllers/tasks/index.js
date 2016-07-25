@@ -7,8 +7,9 @@ import moment from 'moment';
 import models from '../../../app/models';
 
 import { randomInt } from '../../lib/botResponses';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertStringToNumbersArray } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
+import { TASK_DECISION } from '../../lib/constants';
 
 import addTaskController from './add';
 import completeTasksController from './complete';
@@ -92,7 +93,6 @@ export default function(controller) {
 			})
 			.then((workSessions) => {
 
-				console.log("\n\n\nadding work session...\n\n")
 				var openWorkSession = false;
 				if (workSessions.length > 0) {
 					var now     = moment();
@@ -223,6 +223,21 @@ export default function(controller) {
 							}
 
 							setTimeout(() => {
+
+								user.getDailyTasks({
+									where: [`"DailyTask"."type" = ?`, "live"],
+									include: [ models.Task ],
+									order: `"Task"."done", "DailyTask"."priority" ASC`
+								})
+								.then((dailyTasks) => {
+									dailyTasks.forEach((dailyTask, index) => {
+										let priority = index + 1;
+										dailyTask.update({
+											priority
+										});
+									})
+								});
+
 								// only check for live tasks if SOME action took place
 								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
 									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
@@ -238,16 +253,45 @@ export default function(controller) {
 
 	controller.hears(['daily_tasks', 'completed_task'], 'direct_message', wit.hears, (bot, message) => {
 
-		const SlackUserId = message.user;
-		var channel       = message.channel;
+		const { text, channel } = message;
+		const SlackUserId       = message.user;
 
 		bot.send({
 			type: "typing",
 			channel: message.channel
 		});
 
+		let config = { SlackUserId };
+
+		var taskNumbers = convertStringToNumbersArray(text);
+		if (taskNumbers) {
+			config.taskNumbers = taskNumbers;
+		}
+
+		// this is how you make switch/case statements with RegEx
+		switch (text) {
+			case (text.match(TASK_DECISION.complete.reg_exp) || {}).input:
+				console.log(`\n\n ~~ User wants to complete task ~~ \n\n`);
+				break;
+			case (text.match(TASK_DECISION.add.reg_exp) || {}).input:
+				console.log(`\n\n ~~ User wants to add task ~~ \n\n`);
+				break;
+			case (text.match(TASK_DECISION.view.reg_exp) || {}).input:
+				console.log(`\n\n ~~ User wants to view task ~~ \n\n`);
+				break;
+			case (text.match(TASK_DECISION.delete.reg_exp) || {}).input:
+				console.log(`\n\n ~~ User wants to delete task ~~ \n\n`);
+				break;
+			case (text.match(TASK_DECISION.edit.reg_exp) || {}).input:
+				console.log(`\n\n ~~ User wants to edit task ~~ \n\n`);
+				break;
+		}
+
+		console.log(`\n\nCONFIG:`);
+		console.log(config);
+
 		setTimeout(() => {
-			controller.trigger(`edit_tasks_flow`, [ bot, { SlackUserId } ]);
+			controller.trigger(`view_daily_tasks_flow`, [ bot, config ]);
 		}, 1000);
 
 	});

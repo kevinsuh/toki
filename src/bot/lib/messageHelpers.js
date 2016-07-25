@@ -695,3 +695,34 @@ export function getTimeToTaskTextAttachmentWithTaskListMessage(taskTextArray, in
 	return attachments;
 }
 
+/**
+ * takes in user input string `i.e. complete tasks 4, 1, 3` and converts it to an array of numbers
+ */
+export function convertStringToNumbersArray(userInputString) {
+
+	const splitter     = RegExp(/(,|\ba[and]{1,}\b)/);
+	var userInputArray = userInputString.split(splitter);
+
+	// if we capture 0 valid tasks from string, then we start over
+	var numberRegEx  = new RegExp(/[\d]+/);
+	var numbersArray = [];
+	
+	userInputArray.forEach((string) => {
+
+		var number = string.match(numberRegEx);
+
+		// if it's a valid number and within the remainingTasks length
+		if (number) {
+			number = parseInt(number[0]);
+			numbersArray.push(number);
+		}
+
+	});
+
+	if (numbersArray.length == 0) {
+		return false;
+	} else {
+		return numbersArray;
+	}
+
+}

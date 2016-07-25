@@ -71,7 +71,6 @@ exports.default = function (controller) {
 				where: ['"open" = ?', true]
 			}).then(function (workSessions) {
 
-				console.log("\n\n\nadding work session...\n\n");
 				var openWorkSession = false;
 				if (workSessions.length > 0) {
 					var now = (0, _moment2.default)();
@@ -211,6 +210,20 @@ exports.default = function (controller) {
 							}
 
 							setTimeout(function () {
+
+								user.getDailyTasks({
+									where: ['"DailyTask"."type" = ?', "live"],
+									include: [_models2.default.Task],
+									order: '"Task"."done", "DailyTask"."priority" ASC'
+								}).then(function (dailyTasks) {
+									dailyTasks.forEach(function (dailyTask, index) {
+										var priority = index + 1;
+										dailyTask.update({
+											priority: priority
+										});
+									});
+								});
+
 								// only check for live tasks if SOME action took place
 								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
 									(0, _work_sessions.checkWorkSessionForLiveTasks)({ SlackUserId: SlackUserId, bot: bot, controller: controller });
@@ -224,17 +237,47 @@ exports.default = function (controller) {
 	});
 
 	controller.hears(['daily_tasks', 'completed_task'], 'direct_message', _index.wit.hears, function (bot, message) {
+		var text = message.text;
+		var channel = message.channel;
 
 		var SlackUserId = message.user;
-		var channel = message.channel;
 
 		bot.send({
 			type: "typing",
 			channel: message.channel
 		});
 
+		var config = { SlackUserId: SlackUserId };
+
+		var taskNumbers = (0, _messageHelpers.convertStringToNumbersArray)(text);
+		if (taskNumbers) {
+			config.taskNumbers = taskNumbers;
+		}
+
+		// this is how you make switch/case statements with RegEx
+		switch (text) {
+			case (text.match(_constants.TASK_DECISION.complete.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to complete task ~~ \n\n');
+				break;
+			case (text.match(_constants.TASK_DECISION.add.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to add task ~~ \n\n');
+				break;
+			case (text.match(_constants.TASK_DECISION.view.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to view task ~~ \n\n');
+				break;
+			case (text.match(_constants.TASK_DECISION.delete.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to delete task ~~ \n\n');
+				break;
+			case (text.match(_constants.TASK_DECISION.edit.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to edit task ~~ \n\n');
+				break;
+		}
+
+		console.log('\n\nCONFIG:');
+		console.log(config);
+
 		setTimeout(function () {
-			controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
+			controller.trigger('view_daily_tasks_flow', [bot, config]);
 		}, 1000);
 	});
 };
@@ -268,6 +311,8 @@ var _messageHelpers = require('../../lib/messageHelpers');
 var _intents = require('../../lib/intents');
 
 var _intents2 = _interopRequireDefault(_intents);
+
+var _constants = require('../../lib/constants');
 
 var _add = require('./add');
 

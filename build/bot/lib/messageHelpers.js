@@ -23,6 +23,7 @@ exports.getMostRecentDoneSessionMessage = getMostRecentDoneSessionMessage;
 exports.deleteConvoAskMessage = deleteConvoAskMessage;
 exports.deleteMostRecentDoneSessionMessage = deleteMostRecentDoneSessionMessage;
 exports.getTimeToTaskTextAttachmentWithTaskListMessage = getTimeToTaskTextAttachmentWithTaskListMessage;
+exports.convertStringToNumbersArray = convertStringToNumbersArray;
 
 var _constants = require('./constants');
 
@@ -715,5 +716,35 @@ function getTimeToTaskTextAttachmentWithTaskListMessage(taskTextArray, index, ta
 	});
 
 	return attachments;
+}
+
+/**
+ * takes in user input string `i.e. complete tasks 4, 1, 3` and converts it to an array of numbers
+ */
+function convertStringToNumbersArray(userInputString) {
+
+	var splitter = RegExp(/(,|\ba[and]{1,}\b)/);
+	var userInputArray = userInputString.split(splitter);
+
+	// if we capture 0 valid tasks from string, then we start over
+	var numberRegEx = new RegExp(/[\d]+/);
+	var numbersArray = [];
+
+	userInputArray.forEach(function (string) {
+
+		var number = string.match(numberRegEx);
+
+		// if it's a valid number and within the remainingTasks length
+		if (number) {
+			number = parseInt(number[0]);
+			numbersArray.push(number);
+		}
+	});
+
+	if (numbersArray.length == 0) {
+		return false;
+	} else {
+		return numbersArray;
+	}
 }
 //# sourceMappingURL=messageHelpers.js.map

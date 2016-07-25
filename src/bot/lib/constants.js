@@ -41,6 +41,24 @@ export const TIME_INTENT = {
 	reg_exp: new RegExp((/(:|[at]{2,}[ ]?[\d]+\b)/i))
 }
 
+export const TASK_DECISION = {
+	complete: {
+		reg_exp: new RegExp(/\bcomp[omplete]{3,}\b/i)
+	},
+	add: {
+		reg_exp: new RegExp(/\bad[ad]{1,}\b/i)
+	},
+	view: {
+		reg_exp: new RegExp(/\bvi[iew]{1,}\b/i)
+	},
+	delete: {
+		reg_exp: new RegExp(/\bdel[elete]{3,}\b/i)
+	},
+	edit: {
+		reg_exp: new RegExp(/\bed[dit]{1,}\b/i)
+	}
+}
+
 export const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
 
 export const colorsHash = {
