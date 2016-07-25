@@ -227,19 +227,23 @@ function resumeQueuedReachouts(bot, config) {
 				}
 			});
 
+			console.log("\n\n ~~ resuming the queued reachouts ~~");
+			console.log(queuedWorkSessionIds);
+			console.log("\n\n");
+
 			if (queuedWorkSessionIds.length > 0) {
 
 				// if storedWorkSessionId IS NULL, means it has not been
 				// intentionally paused intentionally be user!
-				_models2.default.WorkSession.find({
+				_models2.default.WorkSession.findAll({
 					where: ['"WorkSession"."id" IN (?) AND "StoredWorkSession"."id" IS NULL', queuedWorkSessionIds],
 					include: [_models2.default.StoredWorkSession]
-				}).then(function (workSession) {
-					if (workSession) {
+				}).then(function (workSessions) {
+					workSessions.forEach(function (workSession) {
 						workSession.updateAttributes({
 							live: true
 						});
-					}
+					});
 				});
 			}
 		}

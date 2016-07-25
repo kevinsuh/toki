@@ -158,20 +158,24 @@ export function resumeQueuedReachouts(bot, config) {
 				}
 			})
 
+			console.log("\n\n ~~ resuming the queued reachouts ~~");
+			console.log(queuedWorkSessionIds);
+			console.log("\n\n");
+
 			if (queuedWorkSessionIds.length > 0) {
 
 				// if storedWorkSessionId IS NULL, means it has not been
 				// intentionally paused intentionally be user!
-				models.WorkSession.find({
+				models.WorkSession.findAll({
 					where: [`"WorkSession"."id" IN (?) AND "StoredWorkSession"."id" IS NULL`, queuedWorkSessionIds],
 					include: [ models.StoredWorkSession ]
 				})
-				.then((workSession) => {
-					if (workSession) {
+				.then((workSessions) => {
+					workSessions.forEach((workSession) => {
 						workSession.updateAttributes({
 							live: true
 						});
-					}
+					})
 				});
 
 			}
