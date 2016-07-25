@@ -286,7 +286,7 @@ function askForTaskListOptions(convo) {
 			callback: function(response, convo) {
 
 				const { tasksEdit: { currentSession } } = convo;
-				const { minutesString, sessionTasks, endTimeString } = currentSession
+				const { minutesString, sessionTasks, endTimeString } = currentSession;
 
 				// delete button when answered with NL
 				deleteConvoAskMessage(response.channel, bot);

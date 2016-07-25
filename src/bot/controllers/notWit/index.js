@@ -23,16 +23,31 @@ export default function(controller) {
 
 		const SlackUserId = message.user;
 
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(()=>{
+		const { text, intentObject: { entities: { reminder, datetime, duration } } } = message;
 
-			let config = { SlackUserId };
-			controller.trigger(`session_pause_flow`, [bot, config]);
+		var valid = true;
 
-		}, 1000);
+		// these are different scenarios where a pause NL functionality is highly unlikely
+		if (datetime || duration) {
+			valid = false;
+		} else if (text.length > 25) {
+			valid = false;
+		} else if (text[0] == "/") {
+			valid = false;
+		}
+
+		if (valid) {
+			bot.send({
+				type: "typing",
+				channel: message.channel
+			});
+			setTimeout(()=>{
+
+				let config = { SlackUserId };
+				controller.trigger(`session_pause_flow`, [bot, config]);
+
+			}, 1000);
+		}
 
 	});
 
@@ -41,16 +56,29 @@ export default function(controller) {
 
 		const SlackUserId = message.user;
 
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(()=>{
+		const { intentObject: { entities: { reminder, datetime, duration } } } = message;
 
-			let config = { SlackUserId };
-			controller.trigger(`session_resume_flow`, [bot, config]);
+		// these are different scenarios where a pause NL functionality is highly unlikely
+		if (datetime || duration) {
+			valid = false;
+		} else if (text.length > 30) {
+			valid = false;
+		} else if (text[0] == "/") {
+			valid = false;
+		}
 
-		}, 1000);
+		if (valid) {
+			bot.send({
+				type: "typing",
+				channel: message.channel
+			});
+			setTimeout(()=>{
+
+				let config = { SlackUserId };
+				controller.trigger(`session_resume_flow`, [bot, config]);
+
+			}, 1000);
+		}
 
 	});
 

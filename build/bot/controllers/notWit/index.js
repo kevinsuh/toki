@@ -11,15 +11,35 @@ exports.default = function (controller) {
 
 		var SlackUserId = message.user;
 
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(function () {
+		var text = message.text;
+		var _message$intentObject = message.intentObject.entities;
+		var reminder = _message$intentObject.reminder;
+		var datetime = _message$intentObject.datetime;
+		var duration = _message$intentObject.duration;
 
-			var config = { SlackUserId: SlackUserId };
-			controller.trigger('session_pause_flow', [bot, config]);
-		}, 1000);
+
+		var valid = true;
+
+		// these are different scenarios where a pause NL functionality is highly unlikely
+		if (datetime || duration) {
+			valid = false;
+		} else if (text.length > 25) {
+			valid = false;
+		} else if (text[0] == "/") {
+			valid = false;
+		}
+
+		if (valid) {
+			bot.send({
+				type: "typing",
+				channel: message.channel
+			});
+			setTimeout(function () {
+
+				var config = { SlackUserId: SlackUserId };
+				controller.trigger('session_pause_flow', [bot, config]);
+			}, 1000);
+		}
 	});
 
 	// intentionally resuming session
@@ -27,15 +47,32 @@ exports.default = function (controller) {
 
 		var SlackUserId = message.user;
 
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(function () {
+		var _message$intentObject2 = message.intentObject.entities;
+		var reminder = _message$intentObject2.reminder;
+		var datetime = _message$intentObject2.datetime;
+		var duration = _message$intentObject2.duration;
 
-			var config = { SlackUserId: SlackUserId };
-			controller.trigger('session_resume_flow', [bot, config]);
-		}, 1000);
+		// these are different scenarios where a pause NL functionality is highly unlikely
+
+		if (datetime || duration) {
+			valid = false;
+		} else if (text.length > 30) {
+			valid = false;
+		} else if (text[0] == "/") {
+			valid = false;
+		}
+
+		if (valid) {
+			bot.send({
+				type: "typing",
+				channel: message.channel
+			});
+			setTimeout(function () {
+
+				var config = { SlackUserId: SlackUserId };
+				controller.trigger('session_resume_flow', [bot, config]);
+			}, 1000);
+		}
 	});
 };
 
