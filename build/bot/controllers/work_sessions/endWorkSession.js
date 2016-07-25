@@ -208,7 +208,7 @@ exports.default = function (controller) {
 										if (currentSession.isPaused) {
 											// paused session
 											convo.say({
-												text: 'Let me know when you want to resume your session for ' + tasksToWorkOnString,
+												text: 'Let me know when you want to resume your session for ' + tasksToWorkOnString + '!',
 												attachments: _constants.pausedSessionOptionsAttachments
 											});
 										} else {
