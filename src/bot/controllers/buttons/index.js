@@ -179,7 +179,7 @@ export default function(controller) {
 					bot.replyInteractive(message, "I like all those tasks too :open_hands:");
 					break;
 				case buttonValues.startSession.pause.value:
-					bot.replyInteractive(message, "Let's pause :double_vertical_bar:", () => {
+					bot.replyInteractive(message, "Okay, let's pause!", () => {
 						controller.trigger(`session_pause_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					});
 					break;
@@ -197,7 +197,7 @@ export default function(controller) {
 					});
 					break;
 				case buttonValues.startSession.resume.value:
-					bot.replyInteractive(message, "Let's resume :runner:", () => {
+					bot.replyInteractive(message, "Okay, let's resume your session :arrow_forward:", () => {
 						controller.trigger(`session_resume_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					});
 					break;

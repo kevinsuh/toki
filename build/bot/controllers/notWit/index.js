@@ -37,7 +37,13 @@ exports.default = function (controller) {
 			setTimeout(function () {
 
 				var config = { SlackUserId: SlackUserId };
-				controller.trigger('session_pause_flow', [bot, config]);
+				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+					convo.say("Okay, let's pause your session");
+					convo.next();
+					convo.on('end', function (convo) {
+						controller.trigger('session_pause_flow', [bot, config]);
+					});
+				});
 			}, 1000);
 		}
 	});
@@ -73,7 +79,13 @@ exports.default = function (controller) {
 			setTimeout(function () {
 
 				var config = { SlackUserId: SlackUserId };
-				controller.trigger('session_resume_flow', [bot, config]);
+				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+					convo.say("Okay, let's resume your session :arrow_forward:");
+					convo.next();
+					convo.on('end', function (convo) {
+						controller.trigger('session_resume_flow', [bot, config]);
+					});
+				});
 			}, 1000);
 		}
 	});
