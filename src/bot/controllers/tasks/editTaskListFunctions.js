@@ -285,27 +285,32 @@ function askForTaskListOptions(convo) {
 			pattern: utterances.noAndNeverMind,
 			callback: function(response, convo) {
 
-				const { tasksEdit: { currentSession } } = convo;
-				const { minutesString, sessionTasks, endTimeString } = currentSession;
-
 				// delete button when answered with NL
 				deleteConvoAskMessage(response.channel, bot);
 
+				const { tasksEdit: { currentSession } } = convo;
+
 				convo.say("Okay! No worries :smile_cat:")
 
-				if (currentSession.isPaused) {
-					// paused session
-					convo.say({
-						text: `Let me know when you want to resume your session for ${sessionTasks}!`,
-						attachments: pausedSessionOptionsAttachments
-					});
-				} else {
-					// live session
-					convo.say({
-						text: `Good luck with ${sessionTasks}! See you at *${endTimeString}* :timer_clock:`,
-						attachments: startSessionOptionsAttachments
-					});
+				if (currentSession) {
+
+					const { minutesString, sessionTasks, endTimeString } = currentSession;
+
+					if (currentSession.isPaused) {
+						// paused session
+						convo.say({
+							text: `Let me know when you want to resume your session for ${sessionTasks}!`,
+							attachments: pausedSessionOptionsAttachments
+						});
+					} else {
+						// live session
+						convo.say({
+							text: `Good luck with ${sessionTasks}! See you at *${endTimeString}* :timer_clock:`,
+							attachments: startSessionOptionsAttachments
+						});
+					}
 				}
+				
 				convo.next();
 
 			}

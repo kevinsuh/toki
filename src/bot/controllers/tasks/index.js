@@ -47,6 +47,8 @@ export default function(controller) {
 			})
 			.then((dailyTasks) => {
 
+				console.log(dailyTasks);
+
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
 					dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");

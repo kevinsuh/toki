@@ -292,30 +292,36 @@ function askForTaskListOptions(convo) {
 	}, { // NL equivalent to buttonValues.neverMind.value
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			var currentSession = convo.tasksEdit.currentSession;
-			var minutesString = currentSession.minutesString;
-			var sessionTasks = currentSession.sessionTasks;
-			var endTimeString = currentSession.endTimeString;
 
 			// delete button when answered with NL
-
 			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
+			var currentSession = convo.tasksEdit.currentSession;
+
 
 			convo.say("Okay! No worries :smile_cat:");
 
-			if (currentSession.isPaused) {
-				// paused session
-				convo.say({
-					text: 'Let me know when you want to resume your session for ' + sessionTasks + '!',
-					attachments: _constants.pausedSessionOptionsAttachments
-				});
-			} else {
-				// live session
-				convo.say({
-					text: 'Good luck with ' + sessionTasks + '! See you at *' + endTimeString + '* :timer_clock:',
-					attachments: _constants.startSessionOptionsAttachments
-				});
+			if (currentSession) {
+				var minutesString = currentSession.minutesString;
+				var sessionTasks = currentSession.sessionTasks;
+				var endTimeString = currentSession.endTimeString;
+
+
+				if (currentSession.isPaused) {
+					// paused session
+					convo.say({
+						text: 'Let me know when you want to resume your session for ' + sessionTasks + '!',
+						attachments: _constants.pausedSessionOptionsAttachments
+					});
+				} else {
+					// live session
+					convo.say({
+						text: 'Good luck with ' + sessionTasks + '! See you at *' + endTimeString + '* :timer_clock:',
+						attachments: _constants.startSessionOptionsAttachments
+					});
+				}
 			}
+
 			convo.next();
 		}
 	}, { // this is failure point. restart with question

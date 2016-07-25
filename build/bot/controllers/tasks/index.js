@@ -33,6 +33,8 @@ exports.default = function (controller) {
 				order: '"Task"."done", "DailyTask"."priority" ASC'
 			}).then(function (dailyTasks) {
 
+				console.log(dailyTasks);
+
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
 					dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
