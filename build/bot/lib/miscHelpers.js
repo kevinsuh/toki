@@ -219,11 +219,21 @@ function closeOldRemindersAndSessions(user) {
 		order: '"createdAt" DESC'
 	}).then(function (workSessions) {
 		workSessions.forEach(function (workSession) {
+
+			var workSessionEndTime = (0, _momentTimezone2.default)(workSession.dataValues.endTime);
+
 			workSession.update({
-				endTime: endTime,
 				open: false,
 				live: false
 			});
+
+			// only update endTime, if it is sooner than the current workSession endTime!
+			if (endTime < workSessionEndTime) {
+				workSession.update({
+					endTime: endTime
+				});
+			}
+
 			_models2.default.StoredWorkSession.update({
 				live: false
 			}, {
