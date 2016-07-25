@@ -15,6 +15,7 @@ exports.witDurationToTimeZoneObject = witDurationToTimeZoneObject;
 exports.witDurationToMinutes = witDurationToMinutes;
 exports.consoleLog = consoleLog;
 exports.closeOldRemindersAndSessions = closeOldRemindersAndSessions;
+exports.prioritizeDailyTasks = prioritizeDailyTasks;
 exports.mapTimeToTaskArray = mapTimeToTaskArray;
 
 var _models = require('../../app/models');
@@ -227,6 +228,33 @@ function closeOldRemindersAndSessions(user) {
 				live: false
 			}, {
 				where: ['"WorkSessionId" = ?', workSession.id]
+			});
+		});
+	});
+}
+
+// this re-prioritizes user daily tasks so that
+// live and not-completed tasks show up in expected order
+// and that priorities are not double-counted
+function prioritizeDailyTasks(user) {
+
+	var today = void 0;
+	if (user.dataValues && user.dataValues.SlackUser && user.dataValues.SlackUser.tz) {
+		var tz = user.dataValues.SlackUser.tz;
+		today = (0, _momentTimezone2.default)().tz(tz).format("YYYY-MM-DD");
+	} else {
+		today = (0, _momentTimezone2.default)().format("YYYY-MM-DD");
+	}
+
+	user.getDailyTasks({
+		where: ['"DailyTask"."createdAt" > ?', today],
+		include: [_models2.default.Task],
+		order: '"Task"."done" = FALSE DESC, "DailyTask"."type" = \'live\' DESC, "DailyTask"."priority" ASC'
+	}).then(function (dailyTasks) {
+		dailyTasks.forEach(function (dailyTask, index) {
+			var priority = index + 1;
+			dailyTask.update({
+				priority: priority
 			});
 		});
 	});

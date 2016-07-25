@@ -8,6 +8,7 @@ import models from '../../../app/models';
 
 import { randomInt } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertStringToNumbersArray } from '../../lib/messageHelpers';
+import { prioritizeDailyTasks } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 import { TASK_DECISION } from '../../lib/constants';
 
@@ -63,6 +64,7 @@ export default function(controller) {
 						convo.say(taskListMessage);
 					}
 					convo.on('end', (convo) => {
+						prioritizeDailyTasks(user);
 						resumeQueuedReachouts(bot, { SlackUserId });
 						console.log("\n\n ~ view tasks finished ~ \n\n");
 					});
@@ -224,19 +226,7 @@ export default function(controller) {
 
 							setTimeout(() => {
 
-								user.getDailyTasks({
-									where: [`"DailyTask"."type" = ?`, "live"],
-									include: [ models.Task ],
-									order: `"Task"."done", "DailyTask"."priority" ASC`
-								})
-								.then((dailyTasks) => {
-									dailyTasks.forEach((dailyTask, index) => {
-										let priority = index + 1;
-										dailyTask.update({
-											priority
-										});
-									})
-								});
+								prioritizeDailyTasks(user);
 
 								// only check for live tasks if SOME action took place
 								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {

@@ -48,6 +48,7 @@ exports.default = function (controller) {
 						convo.say(taskListMessage);
 					}
 					convo.on('end', function (convo) {
+						(0, _miscHelpers.prioritizeDailyTasks)(user);
 						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 						console.log("\n\n ~ view tasks finished ~ \n\n");
 					});
@@ -211,18 +212,7 @@ exports.default = function (controller) {
 
 							setTimeout(function () {
 
-								user.getDailyTasks({
-									where: ['"DailyTask"."type" = ?', "live"],
-									include: [_models2.default.Task],
-									order: '"Task"."done", "DailyTask"."priority" ASC'
-								}).then(function (dailyTasks) {
-									dailyTasks.forEach(function (dailyTask, index) {
-										var priority = index + 1;
-										dailyTask.update({
-											priority: priority
-										});
-									});
-								});
+								(0, _miscHelpers.prioritizeDailyTasks)(user);
 
 								// only check for live tasks if SOME action took place
 								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
@@ -307,6 +297,8 @@ var _models2 = _interopRequireDefault(_models);
 var _botResponses = require('../../lib/botResponses');
 
 var _messageHelpers = require('../../lib/messageHelpers');
+
+var _miscHelpers = require('../../lib/miscHelpers');
 
 var _intents = require('../../lib/intents');
 
