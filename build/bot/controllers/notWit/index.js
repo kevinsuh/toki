@@ -47,16 +47,19 @@ exports.default = function (controller) {
 
 		var SlackUserId = message.user;
 
+		var text = message.text;
 		var _message$intentObject2 = message.intentObject.entities;
 		var reminder = _message$intentObject2.reminder;
 		var datetime = _message$intentObject2.datetime;
 		var duration = _message$intentObject2.duration;
 
-		// these are different scenarios where a pause NL functionality is highly unlikely
 
+		var valid = true;
+
+		// these are different scenarios where a pause NL functionality is highly unlikely
 		if (datetime || duration) {
 			valid = false;
-		} else if (text.length > 30) {
+		} else if (text.length > 25) {
 			valid = false;
 		} else if (text[0] == "/") {
 			valid = false;
