@@ -131,6 +131,7 @@ function specificCommandFlow(convo) {
 			break;
 		case _constants.TASK_DECISION.add.word:
 			console.log('\n\n ~~ user wants to add tasks in specificCommandFlow ~~ \n\n');
+			addTasksFlow(convo);
 			break;
 		case _constants.TASK_DECISION.view.word:
 			console.log('\n\n ~~ user wants to view tasks in specificCommandFlow ~~ \n\n');
@@ -275,7 +276,7 @@ function completeTasksFlow(convo) {
 
 	var message = 'Which of your task(s) above would you like to complete?';
 	convo.ask(message, [{
-		pattern: _botResponses.utterances.no,
+		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
 			convo.say("Okay, let me know if you still want to complete tasks! :wave: ");
 			convo.next();
@@ -359,7 +360,7 @@ function deleteTasksFlow(convo) {
 
 	var message = 'Which of your task(s) above would you like to delete?';
 	convo.ask(message, [{
-		pattern: _botResponses.utterances.no,
+		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
 			convo.say("Okay, let me know if you still want to delete tasks! :wave: ");
 			convo.next();
@@ -723,29 +724,27 @@ function askForTaskListOptionsIfNoRemainingTasks(convo) {
  * 			~~ ADD TASKS FLOW ~~
  */
 
-function addTasksFlow(response, convo) {
-
-	// tasks is just a copy of dailyTasks (you're saved tasks)
-	askWhichTasksToAdd(response, convo);
-	convo.next();
-}
-
-function askWhichTasksToAdd(response, convo) {
+function addTasksFlow(convo) {
+	var source_message = convo.source_message;
 	var _convo$tasksEdit7 = convo.tasksEdit;
 	var bot = _convo$tasksEdit7.bot;
 	var dailyTasks = _convo$tasksEdit7.dailyTasks;
 	var newTasks = _convo$tasksEdit7.newTasks;
 	var actuallyWantToAddATask = _convo$tasksEdit7.actuallyWantToAddATask;
 
-	var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
+	// say task list, then ask for user to add tasks
+
+	var options = { onlyRemainingTasks: true };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
 
 	var tasksToAdd = [];
+	convo.say("Let's do it! What other tasks do you want to work on?");
 	convo.ask({
-		text: "What other tasks do you want to work on?",
+		text: taskListMessage,
 		attachments: [{
 			attachment_type: 'default',
-			callback_id: "ADD_TASKS",
-			fallback: "What tasks do you want to add?"
+			callback_id: "TASK_LIST_MESSAGE",
+			fallback: "Here's your task list!"
 		}]
 	}, [{
 		pattern: _constants.buttonValues.doneAddingTasks.value,
@@ -762,9 +761,18 @@ function askWhichTasksToAdd(response, convo) {
 			getTimeToNewTasks(response, convo);
 			convo.next();
 		}
+	}, { // NL equivalent to buttonValues.neverMind.value
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say("Okay! Let me know whenever you want to add more tasks");
+			convo.next();
+		}
 	}, { // this is failure point. restart with question
 		default: true,
 		callback: function callback(response, convo) {
+
+			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
+
 			var text = response.text;
 
 			var newTask = {
@@ -781,21 +789,26 @@ function askWhichTasksToAdd(response, convo) {
 				taskArray.push(task);
 			});
 
-			var fullTaskListMessage = '';
+			options = { onlyRemainingTasks: true };
 			if (actuallyWantToAddATask) {
-				var options = { dontCalculateMinutes: true };
-				fullTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
+				options.dontCalculateMinutes = true;
+				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 			} else {
-				var options = { segmentCompleted: true, newTasks: taskArray };
-				fullTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
+				options.segmentCompleted = true;
+				options.newTasks = taskArray;
+				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
 			}
 
-			updateTaskListMessageObject.text = fullTaskListMessage;
-			updateTaskListMessageObject.attachments = JSON.stringify(_constants.taskListMessageDoneButtonAttachment);
+			if (updateTaskListMessageObject) {
+				updateTaskListMessageObject.text = taskListMessage;
+				updateTaskListMessageObject.attachments = JSON.stringify(_constants.taskListMessageDoneButtonAttachment);
 
-			bot.api.chat.update(updateTaskListMessageObject);
+				bot.api.chat.update(updateTaskListMessageObject);
+			}
 		}
 	}]);
+
+	convo.next();
 }
 
 function saveNewTaskResponses(tasksToAdd, convo) {
@@ -871,7 +884,7 @@ function getTimeToNewTasks(response, convo) {
 			updateTaskListMessageObject.text = taskListMessage;
 			bot.api.chat.update(updateTaskListMessageObject);
 
-			askWhichTasksToAdd(response, convo);
+			addTasksFlow(response, convo);
 			convo.next();
 		}
 	}, {

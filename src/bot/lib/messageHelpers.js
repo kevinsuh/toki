@@ -511,7 +511,7 @@ export function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
 	let { sentMessages } = bot;
 
 	let updateTaskListMessageObject = false;
-
+	
 	console.log(sentMessages);
 
 	if (sentMessages && sentMessages[userChannel]) {

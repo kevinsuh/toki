@@ -228,11 +228,21 @@ exports.default = function (controller) {
 		});
 	});
 
-	controller.hears(['daily_tasks', 'completed_task'], 'direct_message', _index.wit.hears, function (bot, message) {
+	controller.hears(['daily_tasks', 'add_daily_task', 'completed_task'], 'direct_message', _index.wit.hears, function (bot, message) {
 		var text = message.text;
 		var channel = message.channel;
 
 		var SlackUserId = message.user;
+
+		// wit may pick up "add check in" as add_daily_task
+		if (_botResponses.utterances.startsWithAdd.test(text) && _botResponses.utterances.containsCheckin.test(text)) {
+			var _config = { SlackUserId: SlackUserId, message: message };
+			if (_botResponses.utterances.containsOnlyCheckin.test(text)) {
+				_config.reminder_type = "work_session";
+			}
+			controller.trigger('ask_for_reminder', [bot, _config]);
+			return;
+		};
 
 		bot.send({
 			type: "typing",

@@ -6,7 +6,7 @@ import moment from 'moment';
 
 import models from '../../../app/models';
 
-import { randomInt } from '../../lib/botResponses';
+import { randomInt, utterances } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertStringToNumbersArray } from '../../lib/messageHelpers';
 import { prioritizeDailyTasks } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
@@ -227,7 +227,7 @@ export default function(controller) {
 								setTimeout(() => {
 									prioritizeDailyTasks(user);
 								}, 500);
-								
+
 								// only check for live tasks if SOME action took place
 								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
 									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
@@ -241,10 +241,20 @@ export default function(controller) {
 		})
 	});
 
-	controller.hears(['daily_tasks', 'completed_task'], 'direct_message', wit.hears, (bot, message) => {
+	controller.hears(['daily_tasks', 'add_daily_task', 'completed_task'], 'direct_message', wit.hears, (bot, message) => {
 
 		const { text, channel } = message;
 		const SlackUserId       = message.user;
+
+		// wit may pick up "add check in" as add_daily_task
+		if (utterances.startsWithAdd.test(text) && utterances.containsCheckin.test(text)) {
+			let config = { SlackUserId, message };
+			if (utterances.containsOnlyCheckin.test(text)){
+				config.reminder_type = "work_session";
+			}
+			controller.trigger(`ask_for_reminder`, [ bot, config ]);
+			return;
+		};
 
 		bot.send({
 			type: "typing",

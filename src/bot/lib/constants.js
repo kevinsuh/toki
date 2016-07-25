@@ -44,7 +44,7 @@ export const TIME_INTENT = {
 export const TASK_DECISION = {
 	complete: {
 		word: "TASK_COMPLETE",
-		reg_exp: new RegExp(/(\bcomp[omplete]{3,}\b|\bche[heck]{1,}\b)/i)
+		reg_exp: new RegExp(/(\bcomp[omplete]{3,}\b|\bche[heck]{1,}\b|\bcro[ross]{1,}\b)/i)
 	},
 	add: {
 		word: "TASK_ADD",

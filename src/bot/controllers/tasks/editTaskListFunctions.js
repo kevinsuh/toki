@@ -102,6 +102,7 @@ function specificCommandFlow(convo) {
 			break;
 		case TASK_DECISION.add.word:
 			console.log(`\n\n ~~ user wants to add tasks in specificCommandFlow ~~ \n\n`)
+			addTasksFlow(convo);
 			break;
 		case TASK_DECISION.view.word:
 			console.log(`\n\n ~~ user wants to view tasks in specificCommandFlow ~~ \n\n`);
@@ -243,7 +244,7 @@ function completeTasksFlow(convo) {
 	let message = `Which of your task(s) above would you like to complete?`;
 	convo.ask(message, [
 		{
-			pattern: utterances.no,
+			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
 				convo.say("Okay, let me know if you still want to complete tasks! :wave: ");
 				convo.next();
@@ -331,7 +332,7 @@ function deleteTasksFlow(convo) {
 	let message = `Which of your task(s) above would you like to delete?`;
 	convo.ask(message, [
 		{
-			pattern: utterances.no,
+			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
 				convo.say("Okay, let me know if you still want to delete tasks! :wave: ");
 				convo.next();
@@ -736,27 +737,23 @@ function askForTaskListOptionsIfNoRemainingTasks(convo) {
  * 			~~ ADD TASKS FLOW ~~
  */
 
-function addTasksFlow(response, convo) {
+function addTasksFlow(convo) {
 
-	// tasks is just a copy of dailyTasks (you're saved tasks)
-	askWhichTasksToAdd(response, convo);
-	convo.next();
+	var { source_message, tasksEdit: { bot, dailyTasks, newTasks, actuallyWantToAddATask } } = convo;
 
-}
-
-function askWhichTasksToAdd(response, convo) {
-
-	var { tasksEdit: { bot, dailyTasks, newTasks, actuallyWantToAddATask } } = convo;
-	var updateTaskListMessageObject                  = getMostRecentTaskListMessageToUpdate(response.channel, bot);
+	// say task list, then ask for user to add tasks
+	let options = { onlyRemainingTasks: true };
+	let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
 
 	var tasksToAdd = [];
+	convo.say("Let's do it! What other tasks do you want to work on?");
 	convo.ask({
-		text: "What other tasks do you want to work on?",
+		text: taskListMessage,
 		attachments:[
 			{
 				attachment_type: 'default',
-				callback_id: "ADD_TASKS",
-				fallback: "What tasks do you want to add?",
+				callback_id: "TASK_LIST_MESSAGE",
+				fallback: "Here's your task list!"
 			}
 		]
 	},
@@ -778,9 +775,18 @@ function askWhichTasksToAdd(response, convo) {
 				convo.next();
 			}
 		},
+		{ // NL equivalent to buttonValues.neverMind.value
+			pattern: utterances.noAndNeverMind,
+			callback: function(response, convo) {
+				convo.say("Okay! Let me know whenever you want to add more tasks");
+				convo.next();
+			}
+		},
 		{ // this is failure point. restart with question
 			default: true,
 			callback: function(response, convo) {
+
+				let updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 
 				const { text } = response;
 				const newTask = {
@@ -797,24 +803,31 @@ function askWhichTasksToAdd(response, convo) {
 					taskArray.push(task);
 				})
 
-				var fullTaskListMessage = '';
+				options = { onlyRemainingTasks: true };
 				if (actuallyWantToAddATask) {
-					var options = { dontCalculateMinutes: true };
-					fullTaskListMessage = convertArrayToTaskListMessage(taskArray, options)
+					options.dontCalculateMinutes = true;
+					taskListMessage = convertArrayToTaskListMessage(taskArray, options)
 				} else {
-					var options = { segmentCompleted: true, newTasks: taskArray };
-					fullTaskListMessage = convertArrayToTaskListMessage(dailyTasks, options)
+					options.segmentCompleted = true;
+					options.newTasks = taskArray;
+					taskListMessage = convertArrayToTaskListMessage(dailyTasks, options)
 				}
 
-				updateTaskListMessageObject.text        = fullTaskListMessage;
-				updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageDoneButtonAttachment);
+				if (updateTaskListMessageObject) {
+					updateTaskListMessageObject.text        = taskListMessage;
+					updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageDoneButtonAttachment);
 
-				bot.api.chat.update(updateTaskListMessageObject);
+					bot.api.chat.update(updateTaskListMessageObject);
+				}
 
 			}
 		}
 	]);
+
+	convo.next();
+
 }
+
 
 function saveNewTaskResponses(tasksToAdd, convo) {
 
@@ -890,7 +903,7 @@ function getTimeToNewTasks(response, convo) {
 				updateTaskListMessageObject.text = taskListMessage;
 				bot.api.chat.update(updateTaskListMessageObject);
 
-				askWhichTasksToAdd(response, convo);
+				addTasksFlow(response, convo);
 				convo.next();
 			}
 		},

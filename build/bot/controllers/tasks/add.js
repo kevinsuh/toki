@@ -12,59 +12,6 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 exports.default = function (controller) {
 
 	/**
-  * 		User wants to add task
-  * 			as interpreted by ~ Wit.ai ~
-  */
-	controller.hears(['add_daily_task'], 'direct_message', _index.wit.hears, function (bot, message) {
-
-		var SlackUserId = message.user;
-		var intent = _intents2.default.ADD_TASK;
-		var channel = message.channel;
-
-		var text = message.text;
-		var _message$intentObject = message.intentObject.entities;
-		var reminder = _message$intentObject.reminder;
-		var duration = _message$intentObject.duration;
-
-
-		if (_botResponses.utterances.startsWithAdd.test(text) && _botResponses.utterances.containsCheckin.test(text)) {
-			var _config = { SlackUserId: SlackUserId, message: message };
-			if (_botResponses.utterances.containsOnlyCheckin.test(text)) {
-				_config.reminder_type = "work_session";
-			}
-			controller.trigger('ask_for_reminder', [bot, _config]);
-			return;
-		};
-
-		var userMessage = {
-			text: text,
-			reminder: reminder,
-			duration: duration
-		};
-
-		// if the user says tasks (plural), then assume
-		// they want to add multiple tasks
-		var tasksRegExp = new RegExp(/(\btasks\b)/i);
-		if (tasksRegExp.test(text)) {
-			intent = _intents2.default.EDIT_TASKS;
-		}
-
-		var config = {
-			intent: intent,
-			SlackUserId: SlackUserId,
-			message: userMessage
-		};
-
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(function () {
-			controller.trigger('new_session_group_decision', [bot, config]);
-		}, 1000);
-	});
-
-	/**
   * 			ADD DAILY TASK FLOW
   */
 	controller.on('add_task_flow', function (bot, config) {
