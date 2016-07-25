@@ -195,11 +195,21 @@ export function closeOldRemindersAndSessions(user) {
 	})
 	.then((workSessions) => {
 		workSessions.forEach((workSession) => {
+
+			const workSessionEndTime = moment(workSession.dataValues.endTime);
+
 			workSession.update({
-				endTime,
 				open: false,
 				live: false
 			});
+
+			// only update endTime, if it is sooner than the current workSession endTime!
+			if (endTime < workSessionEndTime) {
+				workSession.update({
+					endTime
+				});
+			}
+
 			models.StoredWorkSession.update({
 				live: false
 			}, {
