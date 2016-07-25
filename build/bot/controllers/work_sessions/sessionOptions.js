@@ -78,6 +78,7 @@ exports.default = function (controller) {
           */
 
 									workSession.update({
+										endTime: (0, _momentTimezone2.default)(),
 										live: false
 									});
 

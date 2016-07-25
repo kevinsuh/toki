@@ -94,6 +94,7 @@ export default function(controller) {
 								 */
 								
 								workSession.update({
+									endTime: moment(),
 									live: false
 								});
 
