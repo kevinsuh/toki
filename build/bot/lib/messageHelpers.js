@@ -269,9 +269,8 @@ function convertArrayToTaskListMessage(taskArray) {
 function createTaskListMessageBody(taskArray, options) {
 
 	var taskListMessage = '';
-	var count = options.count;
 
-
+	var count = 0;
 	taskArray.forEach(function (task, index) {
 
 		// for when you get task from DB
@@ -285,6 +284,12 @@ function createTaskListMessageBody(taskArray, options) {
 			priority = task.DailyTask.dataValues.priority;
 		} else if (!priority) {
 			priority = '';
+		}
+
+		if (priority > 0) {
+			count = priority;
+		} else {
+			count++;
 		}
 
 		if (!options.dontShowMinutes && task.minutes) {
@@ -304,9 +309,10 @@ function createTaskListMessageBody(taskArray, options) {
 
 		// completed tasks do not have count
 		var taskContent = '';
-		// only not done tasks should have numbers
-		if (task.done == false) {
-			taskContent = priority + ') ';
+
+		// only not completed tasks should have numbers
+		if (task.done != true) {
+			taskContent = count + ') ';
 		}
 		taskContent = '' + taskContent + task.text + minutesMessage;
 
@@ -314,8 +320,6 @@ function createTaskListMessageBody(taskArray, options) {
 		taskContent = options.noKarets ? taskContent : '> ' + taskContent;
 
 		taskListMessage += taskContent;
-
-		count++;
 	});
 
 	return taskListMessage;
