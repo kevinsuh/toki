@@ -174,19 +174,27 @@ exports.default = function (controller) {
 					bot.replyInteractive(message, "I like all those tasks too :open_hands:");
 					break;
 				case _constants.buttonValues.startSession.pause.value:
-					controller.trigger('session_pause_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+					bot.replyInteractive(message, "Let's pause :double_vertical_bar:", function () {
+						controller.trigger('session_pause_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+					});
 					break;
 				case _constants.buttonValues.startSession.addCheckIn.value:
 					controller.trigger('session_add_checkin_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
 				case _constants.buttonValues.startSession.endEarly.value:
-					controller.trigger('session_end_early_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+					bot.replyInteractive(message, "Let's end early!", function () {
+						controller.trigger('session_end_early_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+					});
 					break;
 				case _constants.buttonValues.startSession.pause.endEarly.value:
-					controller.trigger('session_end_early_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+					bot.replyInteractive(message, "Let's end early!", function () {
+						controller.trigger('session_end_early_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+					});
 					break;
 				case _constants.buttonValues.startSession.resume.value:
-					controller.trigger('session_resume_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+					bot.replyInteractive(message, "Let's resume :runner:", function () {
+						controller.trigger('session_resume_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
+					});
 					break;
 				default:
 					// some default to replace button no matter what
