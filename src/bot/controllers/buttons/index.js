@@ -187,12 +187,12 @@ export default function(controller) {
 					controller.trigger(`session_add_checkin_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				case buttonValues.startSession.endEarly.value:
-					bot.replyInteractive(message, "Let's end early!", () => {
+					bot.replyInteractive(message, "Let's finish early!", () => {
 						controller.trigger(`session_end_early_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					});
 					break;
 				case buttonValues.startSession.pause.endEarly.value:
-					bot.replyInteractive(message, "Let's end early!", () => {
+					bot.replyInteractive(message, "Let's finish early!", () => {
 						controller.trigger(`session_end_early_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					});
 					break;
