@@ -650,8 +650,11 @@ function getTimeToTasks(response, convo) {
 							// this should be done through datetime, but only duration for now
 							// minutes = parseInt(moment.duration(customTimeObject.diff(now)).asMinutes());
 						}
-						if (minutes > 0) timeToTasksArray.push(minutes);
+					} else {
+						minutes = (0, _messageHelpers.convertTimeStringToMinutes)(response.text);
 					}
+
+					if (minutes > 0) timeToTasksArray.push(minutes);
 				}
 
 				taskArray = (0, _miscHelpers.mapTimeToTaskArray)(taskArray, timeToTasksArray);
