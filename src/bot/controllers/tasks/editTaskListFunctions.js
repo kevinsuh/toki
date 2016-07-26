@@ -874,8 +874,8 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 
 		let tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
 
-		convo.say(`Okay!`);
 		convo.tasksEdit.startSession = true;
+		convo.say(" ");
 		convo.next();
 
 	} else {

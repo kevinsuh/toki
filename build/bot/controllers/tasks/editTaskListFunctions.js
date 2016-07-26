@@ -884,8 +884,8 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 
 		var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
 
-		convo.say('Okay!');
 		convo.tasksEdit.startSession = true;
+		convo.say(" ");
 		convo.next();
 	} else {
 		convo.say('I couldn\'t find that task to work on');

@@ -148,7 +148,7 @@ exports.default = function (controller) {
 							newSessionMessage = 'Do you want to cancel this session and work on ' + newSessionTasksString + ' instead?';
 						}
 
-						convo.say('Wait, you are already in a session for ' + tasksString + ' until *' + endTimeString + '*! You have *' + minutesString + '* left :timer_clock:');
+						convo.say('You are already in a session for ' + tasksString + ' until *' + endTimeString + '*! You have *' + minutesString + '* left :timer_clock:');
 						convo.ask(newSessionMessage, [{
 							pattern: _botResponses.utterances.yes,
 							callback: function callback(response, convo) {
