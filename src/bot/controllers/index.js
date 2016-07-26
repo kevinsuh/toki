@@ -480,7 +480,8 @@ export function triggerIntent(intent, config) {
 			controller.trigger(`edit_tasks_flow`, [ bot, { SlackUserId, message }]);
 			break;
 		case intentConfig.START_SESSION:
-			controller.trigger(`confirm_new_session`, [ bot, config ]);
+		console.log(config);
+			controller.trigger(`edit_tasks_flow`, [ bot, config ]);
 			break;
 		case intentConfig.VIEW_TASKS:
 			controller.trigger(`view_daily_tasks_flow`, [ bot, { SlackUserId, message } ]);

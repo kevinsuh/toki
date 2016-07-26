@@ -59,12 +59,12 @@ exports.default = function (controller) {
 					if (dailyTasksToWorkOn.length > 0) {
 						config.dailyTasksToWorkOn = dailyTasksToWorkOn;
 					}
-					controller.trigger('edit_tasks_flow', [bot, config]);
+					controller.trigger('new_session_group_decision', [bot, config]);
 				});
 			});
 		} else {
 			setTimeout(function () {
-				controller.trigger('edit_tasks_flow', [bot, config]);
+				controller.trigger('new_session_group_decision', [bot, config]);
 			}, 1000);
 		}
 	});
