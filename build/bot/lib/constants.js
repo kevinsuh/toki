@@ -585,7 +585,7 @@ var startSessionOptionsAttachments = exports.startSessionOptionsAttachments = [{
 		type: "button"
 	}, {
 		name: buttonValues.startSession.endEarly.name,
-		text: "Done Early",
+		text: "End Session Early",
 		value: buttonValues.startSession.endEarly.value,
 		type: "button"
 	}]
