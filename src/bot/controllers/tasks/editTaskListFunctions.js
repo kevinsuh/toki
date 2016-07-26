@@ -96,9 +96,6 @@ function specificCommandFlow(convo) {
 			if (taskNumbersToCompleteArray) {
 				// single line complete ability
 				singleLineCompleteTask(convo, taskNumbersToCompleteArray);
-				let options = { onlyRemainingTasks: true };
-				sayTasksForToday(convo, options);
-				checkForNoRemainingTasks(convo);
 			} else {
 				completeTasksFlow(convo);
 			}
@@ -118,9 +115,6 @@ function specificCommandFlow(convo) {
 			if (taskNumbersToDeleteArray) {
 				// single line complete ability
 				singleLineDeleteTask(convo, taskNumbersToDeleteArray);
-				let options = { onlyRemainingTasks: true };
-				sayTasksForToday(convo, options);
-				checkForNoRemainingTasks(convo);
 			} else {
 				deleteTasksFlow(convo);
 			}
@@ -248,7 +242,9 @@ function sayTasksForToday(convo, options = {}) {
 		if (options.onlyRemainingTasks) {
 			taskMessage = "Here are your remaining tasks for today :memo::";
 		}
-		convo.say(taskMessage);
+		if (!options.noTitle) {
+			convo.say(taskMessage);
+		}
 		convo.say({
 			text: taskListMessage,
 			attachments:[
@@ -273,9 +269,10 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 	let { dailyTasks, dailyTaskIdsToComplete } = convo.tasksEdit;
 	let dailyTasksToComplete = [];
 	dailyTasks = dailyTasks.filter((dailyTask, index) => {
-		const { dataValues: { priority } } = dailyTask;
+		const { dataValues: { priority, type, Task: { done } } } = dailyTask;
 		let stillNotCompleted = true;
-		if (taskNumbersToCompleteArray.indexOf(priority) > -1) {
+		// not already completed
+		if (taskNumbersToCompleteArray.indexOf(priority) > -1 && !done && type == "live") {
 			dailyTasksToComplete.push(dailyTask);
 			stillNotCompleted = false;
 		}
@@ -321,8 +318,13 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 			}]
 		});
 
+		let options = { onlyRemainingTasks: true };
+		sayTasksForToday(convo, options);
+		checkForNoRemainingTasks(convo);
+
 	} else {
-		convo.say(`I couldn't find that task to complete`);
+		convo.say("I couldn't find that task to complete!");
+		completeTasksFlow(convo);
 	}
 
 	convo.next();
@@ -334,7 +336,7 @@ function completeTasksFlow(convo) {
 	let { tasksEdit: { dailyTasks } } = convo;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true };
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
 	sayTasksForToday(convo, options);
 
 	let message = `Which of your task(s) above would you like to complete?`;
@@ -352,9 +354,6 @@ function completeTasksFlow(convo) {
 				let taskNumbersToCompleteArray = convertTaskNumberStringToArray(response.text, dailyTasks);
 				if (taskNumbersToCompleteArray) {
 					singleLineCompleteTask(convo, taskNumbersToCompleteArray);
-					let options = { onlyRemainingTasks: true };
-					sayTasksForToday(convo, options);
-					checkForNoRemainingTasks(convo);
 				} else {
 					convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 					convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
@@ -379,9 +378,10 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 	let { dailyTasks, dailyTaskIdsToDelete } = convo.tasksEdit;
 	let dailyTasksToDelete = [];
 	dailyTasks = dailyTasks.filter((dailyTask, index) => {
-		const { dataValues: { priority } } = dailyTask;
+		const { dataValues: { priority, type, Task: { done } } } = dailyTask;
 		let stillNotDeleted = true;
-		if (taskNumbersToDeleteArray.indexOf(priority) > -1) {
+		// not already deleted
+		if (taskNumbersToDeleteArray.indexOf(priority) > -1 && type == "live" && !done) {
 			dailyTasksToDelete.push(dailyTask);
 			stillNotDeleted = false;
 		}
@@ -427,8 +427,13 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 			}]
 		});
 
+		let options = { onlyRemainingTasks: true };
+		sayTasksForToday(convo, options);
+		checkForNoRemainingTasks(convo);
+
 	} else {
-		convo.say(`I couldn't find that task to delete`);
+		convo.say("I couldn't find that task to delete!");
+		deleteTasksFlow(convo);
 	}
 
 	convo.next();
@@ -440,7 +445,7 @@ function deleteTasksFlow(convo) {
 	let { tasksEdit: { dailyTasks } } = convo;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true };
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
 	sayTasksForToday(convo, options);
 
 	let message = `Which of your task(s) above would you like to delete?`;
@@ -458,9 +463,6 @@ function deleteTasksFlow(convo) {
 				let taskNumbersToDeleteArray = convertTaskNumberStringToArray(response.text, dailyTasks);
 				if (taskNumbersToDeleteArray) {
 					singleLineDeleteTask(convo, taskNumbersToDeleteArray);
-					let options = { onlyRemainingTasks: true };
-					sayTasksForToday(convo, options);
-					checkForNoRemainingTasks(convo);
 				} else {
 					convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 					convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");

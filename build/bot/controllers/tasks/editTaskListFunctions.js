@@ -122,9 +122,6 @@ function specificCommandFlow(convo) {
 			if (taskNumbersToCompleteArray) {
 				// single line complete ability
 				singleLineCompleteTask(convo, taskNumbersToCompleteArray);
-				var options = { onlyRemainingTasks: true };
-				sayTasksForToday(convo, options);
-				checkForNoRemainingTasks(convo);
 			} else {
 				completeTasksFlow(convo);
 			}
@@ -144,9 +141,6 @@ function specificCommandFlow(convo) {
 			if (taskNumbersToDeleteArray) {
 				// single line complete ability
 				singleLineDeleteTask(convo, taskNumbersToDeleteArray);
-				var _options = { onlyRemainingTasks: true };
-				sayTasksForToday(convo, _options);
-				checkForNoRemainingTasks(convo);
 			} else {
 				deleteTasksFlow(convo);
 			}
@@ -279,7 +273,9 @@ function sayTasksForToday(convo) {
 		if (options.onlyRemainingTasks) {
 			taskMessage = "Here are your remaining tasks for today :memo::";
 		}
-		convo.say(taskMessage);
+		if (!options.noTitle) {
+			convo.say(taskMessage);
+		}
 		convo.say({
 			text: taskListMessage,
 			attachments: [{
@@ -303,10 +299,14 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 
 	var dailyTasksToComplete = [];
 	dailyTasks = dailyTasks.filter(function (dailyTask, index) {
-		var priority = dailyTask.dataValues.priority;
+		var _dailyTask$dataValues = dailyTask.dataValues;
+		var priority = _dailyTask$dataValues.priority;
+		var type = _dailyTask$dataValues.type;
+		var done = _dailyTask$dataValues.Task.done;
 
 		var stillNotCompleted = true;
-		if (taskNumbersToCompleteArray.indexOf(priority) > -1) {
+		// not already completed
+		if (taskNumbersToCompleteArray.indexOf(priority) > -1 && !done && type == "live") {
 			dailyTasksToComplete.push(dailyTask);
 			stillNotCompleted = false;
 		}
@@ -349,8 +349,13 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 				}]
 			}]
 		});
+
+		var options = { onlyRemainingTasks: true };
+		sayTasksForToday(convo, options);
+		checkForNoRemainingTasks(convo);
 	} else {
-		convo.say('I couldn\'t find that task to complete');
+		convo.say("I couldn't find that task to complete!");
+		completeTasksFlow(convo);
 	}
 
 	convo.next();
@@ -361,7 +366,7 @@ function completeTasksFlow(convo) {
 
 	// say task list, then ask which ones to complete
 
-	var options = { onlyRemainingTasks: true };
+	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
 	sayTasksForToday(convo, options);
 
 	var message = 'Which of your task(s) above would you like to complete?';
@@ -377,9 +382,6 @@ function completeTasksFlow(convo) {
 			var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
 			if (taskNumbersToCompleteArray) {
 				singleLineCompleteTask(convo, taskNumbersToCompleteArray);
-				var _options2 = { onlyRemainingTasks: true };
-				sayTasksForToday(convo, _options2);
-				checkForNoRemainingTasks(convo);
 			} else {
 				convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 				convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
@@ -403,10 +405,14 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 
 	var dailyTasksToDelete = [];
 	dailyTasks = dailyTasks.filter(function (dailyTask, index) {
-		var priority = dailyTask.dataValues.priority;
+		var _dailyTask$dataValues2 = dailyTask.dataValues;
+		var priority = _dailyTask$dataValues2.priority;
+		var type = _dailyTask$dataValues2.type;
+		var done = _dailyTask$dataValues2.Task.done;
 
 		var stillNotDeleted = true;
-		if (taskNumbersToDeleteArray.indexOf(priority) > -1) {
+		// not already deleted
+		if (taskNumbersToDeleteArray.indexOf(priority) > -1 && type == "live" && !done) {
 			dailyTasksToDelete.push(dailyTask);
 			stillNotDeleted = false;
 		}
@@ -449,8 +455,13 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 				}]
 			}]
 		});
+
+		var options = { onlyRemainingTasks: true };
+		sayTasksForToday(convo, options);
+		checkForNoRemainingTasks(convo);
 	} else {
-		convo.say('I couldn\'t find that task to delete');
+		convo.say("I couldn't find that task to delete!");
+		deleteTasksFlow(convo);
 	}
 
 	convo.next();
@@ -461,7 +472,7 @@ function deleteTasksFlow(convo) {
 
 	// say task list, then ask which ones to complete
 
-	var options = { onlyRemainingTasks: true };
+	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
 	sayTasksForToday(convo, options);
 
 	var message = 'Which of your task(s) above would you like to delete?';
@@ -477,9 +488,6 @@ function deleteTasksFlow(convo) {
 			var taskNumbersToDeleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
 			if (taskNumbersToDeleteArray) {
 				singleLineDeleteTask(convo, taskNumbersToDeleteArray);
-				var _options3 = { onlyRemainingTasks: true };
-				sayTasksForToday(convo, _options3);
-				checkForNoRemainingTasks(convo);
 			} else {
 				convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 				convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
@@ -637,8 +645,8 @@ function getTimeToTasks(response, convo) {
 				timeToTasksArray.pop();
 				taskArray = (0, _miscHelpers.mapTimeToTaskArray)(taskArray, timeToTasksArray);
 
-				var _options4 = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
-				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, _options4);
+				var _options = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
+				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, _options);
 
 				attachments = (0, _messageHelpers.getTimeToTaskTextAttachmentWithTaskListMessage)(taskTextsArray, timeToTasksArray.length, taskListMessage);
 
