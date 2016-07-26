@@ -7,7 +7,7 @@ import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, convertMinutesToHoursString, deleteConvoAskMessage, deleteMostRecentDoneSessionMessage } from '../../lib/messageHelpers';
-import { closeOldRemindersAndSessions, witTimeResponseToTimeZoneObject } from '../../lib/miscHelpers';
+import { closeOldRemindersAndSessions, witTimeResponseToTimeZoneObject, prioritizeDailyTasks } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
 import { bots, resumeQueuedReachouts } from '../index';
@@ -314,6 +314,9 @@ export default function(controller) {
 														done: true
 													}, {
 														where: [`"Tasks"."id" in (?)`, completedTaskIds]
+													})
+													.then(() => {
+														prioritizeDailyTasks(user);
 													})
 												});
 												break;
@@ -714,6 +717,9 @@ export default function(controller) {
 			    						}, {
 			    							where: [`"Tasks"."id" in (?)`, completedTaskIds]
 			    						})
+			    						.then(() => {
+			    							prioritizeDailyTasks(user);
+			    						})
 										});
 										break;
 									case sessionTimerDecisions.snooze:
@@ -1008,6 +1014,7 @@ export default function(controller) {
 						});
 
 						// mark appropriate tasks as done
+						let count = 0;
 						tasksCompleted.forEach((TaskId) => {
 							models.DailyTask.find({
 								where: { id: TaskId },
@@ -1020,6 +1027,12 @@ export default function(controller) {
 									})
 								}
 							})
+							count++;
+							if (count == tasksCompleted.length) {
+								setTimeout(() => {
+									prioritizeDailyTasks(user);
+								}, 500);
+							}
 						});
 
 						
@@ -1032,6 +1045,7 @@ export default function(controller) {
 						.then((workSessions) => {
 
 							var endTime = moment();
+
 							// IF you chose a new task not on your list to have completed
 							if (differentCompletedTask) {
 
@@ -1069,13 +1083,16 @@ export default function(controller) {
 											minutes,
 											UserId
 										})
+										.then(() => {
+											prioritizeDailyTasks(user);
+										})
 									})
 								});
 							}
 
-							setTimeout(() => { 
+							setTimeout(() => {
 								handlePostSessionDecision(postSessionDecision, { controller, bot, SlackUserId });
-							}, 500);
+							}, 800);
 
 						});
 

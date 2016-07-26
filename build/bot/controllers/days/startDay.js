@@ -141,6 +141,7 @@ exports.default = function (controller) {
 				// live or pending tasks, that are not completed yet
 				user.getDailyTasks({
 					where: ['"DailyTask"."type" in (?) AND "Task"."done" = ?', ["pending", "live"], false],
+					order: '"Task"."done", "DailyTask"."priority" ASC',
 					include: [_models2.default.Task]
 				}).then(function (dailyTasks) {
 
@@ -196,6 +197,7 @@ exports.default = function (controller) {
 									});
 
 									// After all of the previous tasks have been put into "pending", choose the select ones and bring them back to "live"
+									var count = 0;
 									taskArray.forEach(function (task, index) {
 										var dataValues = task.dataValues;
 
@@ -235,6 +237,13 @@ exports.default = function (controller) {
 													UserId: UserId
 												});
 											});
+										}
+
+										count++;
+										if (count == taskArray.length) {
+											setTimeout(function () {
+												(0, _miscHelpers.prioritizeDailyTasks)(user);
+											}, 1000);
 										}
 									});
 								});

@@ -7,6 +7,7 @@ import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray } from '../../lib/messageHelpers';
+import { prioritizeDailyTasks } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 import { askUserPostSessionOptions, handlePostSessionDecision } from './endWorkSession';
 
@@ -165,6 +166,9 @@ export default function(controller) {
 									done: true
 								}, {
 									where: [`"Tasks"."id" in (?)`, completedTaskIds]
+								})
+								.then(() =>{
+									prioritizeDailyTasks(user);
 								})
 
 								user.getWorkSessions({

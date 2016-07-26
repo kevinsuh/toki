@@ -8,7 +8,7 @@ import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes } from '../../lib/messageHelpers';
-import { closeOldRemindersAndSessions } from '../../lib/miscHelpers';
+import { closeOldRemindersAndSessions, prioritizeDailyTasks } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 
 import { resumeQueuedReachouts } from '../index';
@@ -229,6 +229,9 @@ export default function(controller) {
 										});
 									});
 								});
+								setTimeout(() => {
+									prioritizeDailyTasks(user);
+								}, 3000);
 								resumeQueuedReachouts(bot, { SlackUserId });
 
 							} else {

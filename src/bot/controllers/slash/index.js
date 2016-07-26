@@ -9,7 +9,7 @@ import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
 import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment } from '../../lib/constants';
-import { dateStringToMomentTimeZone, witTimeResponseToTimeZoneObject, witDurationToMinutes, witDurationToTimeZoneObject} from '../../lib/miscHelpers';
+import { dateStringToMomentTimeZone, witTimeResponseToTimeZoneObject, witDurationToMinutes, witDurationToTimeZoneObject, prioritizeDailyTasks } from '../../lib/miscHelpers';
 import { convertMinutesToHoursString } from '../../lib/messageHelpers';
 import intentConfig from '../../lib/intents';
 
@@ -106,6 +106,8 @@ export default function(controller) {
 									UserId
 								})
 								.then(() => {
+
+									prioritizeDailyTasks(user);
 
 									totalMinutes += minutes;
 									let timeString = convertMinutesToHoursString(totalMinutes);

@@ -292,6 +292,8 @@ exports.default = function (controller) {
 														done: true
 													}, {
 														where: ['"Tasks"."id" in (?)', completedTaskIds]
+													}).then(function () {
+														(0, _miscHelpers.prioritizeDailyTasks)(user);
 													});
 												});
 												break;
@@ -672,6 +674,8 @@ exports.default = function (controller) {
 													done: true
 												}, {
 													where: ['"Tasks"."id" in (?)', completedTaskIds]
+												}).then(function () {
+													(0, _miscHelpers.prioritizeDailyTasks)(user);
 												});
 											});
 											break;
@@ -976,6 +980,7 @@ exports.default = function (controller) {
 							});
 
 							// mark appropriate tasks as done
+							var count = 0;
 							tasksCompleted.forEach(function (TaskId) {
 								_models2.default.DailyTask.find({
 									where: { id: TaskId },
@@ -987,6 +992,12 @@ exports.default = function (controller) {
 										});
 									}
 								});
+								count++;
+								if (count == tasksCompleted.length) {
+									setTimeout(function () {
+										(0, _miscHelpers.prioritizeDailyTasks)(user);
+									}, 500);
+								}
 							});
 
 							// get the most recent work session
@@ -997,6 +1008,7 @@ exports.default = function (controller) {
 							}).then(function (workSessions) {
 
 								var endTime = (0, _momentTimezone2.default)();
+
 								// IF you chose a new task not on your list to have completed
 								if (differentCompletedTask) {
 
@@ -1030,6 +1042,8 @@ exports.default = function (controller) {
 												priority: priority,
 												minutes: minutes,
 												UserId: UserId
+											}).then(function () {
+												(0, _miscHelpers.prioritizeDailyTasks)(user);
 											});
 										});
 									});
@@ -1037,7 +1051,7 @@ exports.default = function (controller) {
 
 								setTimeout(function () {
 									handlePostSessionDecision(postSessionDecision, { controller: controller, bot: bot, SlackUserId: SlackUserId });
-								}, 500);
+								}, 800);
 							});
 						});
 					})();
