@@ -753,7 +753,7 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 
 		var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
 
-		convo.say('Let\'s do it! :muscle:');
+		convo.say('Let\'s do it! :weight_lifter:');
 		convo.tasksEdit.startSession = true;
 		convo.next();
 	} else {

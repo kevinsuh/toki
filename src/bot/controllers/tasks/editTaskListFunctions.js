@@ -740,7 +740,7 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 
 		let tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
 
-		convo.say(`Let's do it! :muscle:`);
+		convo.say(`Let's do it! :weight_lifter:`);
 		convo.tasksEdit.startSession = true;
 		convo.next();
 
