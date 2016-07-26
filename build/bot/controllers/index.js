@@ -219,8 +219,8 @@ function resumeQueuedReachouts(bot, config) {
 			var queuedWorkSessionIds = [];
 			queuedWorkSessions.forEach(function (workSession) {
 				var endTime = (0, _momentTimezone2.default)(workSession.endTime);
-				var fiveMinuteBuffer = now.subtract(5, 'minutes');
-				if (endTime > fiveMinuteBuffer && workSession.dataValues.open == true) {
+				var tenMinuteBuffer = now.subtract(10, 'minutes');
+				if (endTime > tenMinuteBuffer && workSession.dataValues.open == true) {
 					if (workSession.dataValues) {
 						console.log('resuming this queuedSession: ' + workSession.dataValues.id);
 					}
