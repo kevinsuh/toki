@@ -126,6 +126,18 @@ function specificCommandFlow(convo) {
 		case TASK_DECISION.edit.word:
 			console.log(`\n\n ~~ user wants to edit tasks in specificCommandFlow ~~ \n\n`)
 			break;
+		case TASK_DECISION.work.word:
+
+			var taskNumberString         = taskNumbers ? taskNumbers.join(",") : '';
+			var taskNumbersToWorkOnArray = convertTaskNumberStringToArray(taskNumberString, dailyTasks);
+
+			if (taskNumbersToWorkOnArray) {
+				// single line work ability
+				singleLineWorkOnTask(convo, taskNumbersToWorkOnArray);
+			} else {
+				workOnTasksFlow(convo);
+			}
+			break;
 		default:
 			break;
 	}
@@ -700,6 +712,82 @@ function addNewTasksToTaskList(response, convo) {
 
 }
 
+/**
+ * 		~~ WORK ON TASK ~~
+ */
+
+// confirm user wants to do work session
+function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
+
+	let { tasksEdit: { dailyTasks } } = convo;
+	let dailyTasksToWorkOn = [];
+
+	dailyTasks.forEach((dailyTask, index) => {
+		const { dataValues: { priority } } = dailyTask;
+		if (taskNumbersToWorkOnArray.indexOf(priority) > -1) {
+			dailyTasksToWorkOn.push(dailyTask);
+		}
+	});
+
+	if (dailyTasksToWorkOn.length > 0) {
+
+		let taskTextsToWorkOnArray = dailyTasksToWorkOn.map((dailyTask) => {
+			let text = dailyTask.dataValues ? dailyTask.dataValues.Task.text : dailyTask.text;
+			return text;
+		});
+
+		convo.tasksEdit.dailyTasksToWorkOn = dailyTasksToWorkOn;
+
+		let tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
+
+		convo.say(`Let's do it! :muscle:`);
+		convo.tasksEdit.startSession = true;
+		convo.next();
+
+	} else {
+		convo.say(`Ah, I didn't find that task to work on`);
+	}
+
+	convo.next();
+
+}
+
+// work on which task flow
+function workOnTasksFlow(convo) {
+
+	let { tasksEdit: { dailyTasks } } = convo;
+
+	// say task list, then ask which ones to complete
+	sayTasksForToday(convo);
+
+	let message = `Which of your task(s) above would you like to work on?`;
+	convo.ask(message, [
+		{
+			pattern: utterances.noAndNeverMind,
+			callback: (response, convo) => {
+				convo.say("Okay, let me know if you still want to work on a task :muscle: ");
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				let taskNumbersToWorkOnArray = convertTaskNumberStringToArray(response.text, dailyTasks);
+				if (taskNumbersToWorkOnArray) {
+					singleLineWorkOnTask(convo, taskNumbersToWorkOnArray);
+				} else {
+					convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+					convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+					convo.repeat();
+				}
+				convo.next();
+			}
+		}
+	]);
+
+	convo.next();
+
+}
 
 /**
  * 			DEPRECATED FUNCTIONS 7/25/16
@@ -933,43 +1021,6 @@ function askForTaskListOptions(convo) {
 			default: true,
 			callback: function(response, convo) {
 				convo.say("I didn't quite get that :thinking_face:");
-				convo.repeat();
-				convo.next();
-			}
-		}
-	]);
-}
-
-// confirm user wants to do work session
-function confirmWorkSession(convo) {
-
-	var { tasksEdit: { dailyTasksToWorkOn } } = convo;
-	var taskTextsToWorkOnArray = dailyTasksToWorkOn.map((task) => {
-		var text = task.dataValues ? task.dataValues.text : task.text;
-		return text;
-	});
-	var tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
-
-	convo.ask(`Would you like to work on ${tasksToWorkOnString}?`, [
-		{
-			pattern: utterances.yes,
-			callback: (response, convo) => {
-				convo.tasksEdit.startSession = true;
-				convo.next();
-			}
-		},
-		{
-			pattern: utterances.no,
-			callback: (response, convo) => {
-				convo.say("Okay!");
-				askForTaskListOptions(convo);
-				convo.next();
-			}
-		},
-		{
-			default: true,
-			callback: (response, convo) => {
-				convo.say("Sorry, I didn't catch that");
 				convo.repeat();
 				convo.next();
 			}

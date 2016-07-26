@@ -292,6 +292,10 @@ export default function(controller) {
 				console.log(`\n\n ~~ User wants to edit task ~~ \n\n`);
 				config.taskDecision = TASK_DECISION.edit.word;
 				break;
+			case (text.match(TASK_DECISION.work.reg_exp) || {}).input:
+				console.log(`\n\n ~~ User wants to work on task ~~ \n\n`);
+				config.taskDecision = TASK_DECISION.work.word;
+				break;
 			default: 
 				config.taskDecision = TASK_DECISION.view.word;
 				break;

@@ -72,6 +72,10 @@ var TASK_DECISION = exports.TASK_DECISION = {
 	edit: {
 		word: "TASK_EDIT",
 		reg_exp: new RegExp(/\bed[dit]{1,}\b/i)
+	},
+	work: {
+		word: "TASK_WORK",
+		reg_exp: new RegExp(/\b(do[o]?|wor[ork]{1,})\b/i)
 	}
 };
 
