@@ -15,6 +15,14 @@ import { utterances } from '../../lib/botResponses';
 
 import { resumeQueuedReachouts } from '../index';
 
+
+/**
+ * 				THIS WHOLE FILE IS DEPRECATED AND NO LONGER IN USE
+ * 						~~ 7/26/16 ~~
+ * 				It now goes through "command center" in ./index.js
+ */
+
+
 // base controller for tasks
 export default function(controller) {
 

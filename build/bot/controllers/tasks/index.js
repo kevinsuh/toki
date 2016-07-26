@@ -217,7 +217,7 @@ exports.default = function (controller) {
 
 								setTimeout(function () {
 									(0, _miscHelpers.prioritizeDailyTasks)(user);
-								}, 500);
+								}, 1000);
 
 								// only check for live tasks if SOME action took place
 								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
