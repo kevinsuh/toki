@@ -126,16 +126,6 @@ exports.default = function (controller) {
 
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 
-							if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
-								var config = {
-									SlackUserId: SlackUserId,
-									dailyTasksToWorkOn: dailyTasksToWorkOn
-								};
-								config.intent = _intents2.default.START_SESSION;
-								controller.trigger('new_session_group_decision', [bot, config]);
-								return;
-							}
-
 							// add new tasks if they got added
 							if (newTasks.length > 0) {
 								var priority = dailyTasks.length;
@@ -217,7 +207,18 @@ exports.default = function (controller) {
 
 								setTimeout(function () {
 									(0, _miscHelpers.prioritizeDailyTasks)(user);
-								}, 1000);
+								}, 500);
+								setTimeout(function () {
+									if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
+										var config = {
+											SlackUserId: SlackUserId,
+											dailyTasksToWorkOn: dailyTasksToWorkOn
+										};
+										config.intent = _intents2.default.START_SESSION;
+										controller.trigger('new_session_group_decision', [bot, config]);
+										return;
+									}
+								}, 1250);
 
 								// only check for live tasks if SOME action took place
 								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
