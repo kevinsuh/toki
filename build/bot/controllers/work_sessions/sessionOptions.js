@@ -208,7 +208,7 @@ exports.default = function (controller) {
 
 												bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 													convo.say({
-														text: 'Your session is resumed :arrow_forward:. Good luck with ' + tasksString + '!\n\nSee you in ' + timeString + ' at *' + endTimeString + '* :timer_clock:',
+														text: 'Good luck with ' + tasksString + '!\n\nSee you in ' + timeString + ' at *' + endTimeString + '* :timer_clock:',
 														attachments: _constants.startSessionOptionsAttachments
 													});
 													convo.next();
