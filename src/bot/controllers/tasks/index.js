@@ -1,5 +1,5 @@
 import os from 'os';
-import { wit } from '../index';
+import { wit, bots } from '../index';
 import http from 'http';
 import bodyParser from 'body-parser';
 import moment from 'moment';
@@ -7,7 +7,7 @@ import moment from 'moment';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertStringToNumbersArray } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertStringToNumbersArray, commaSeparateOutTaskArray } from '../../lib/messageHelpers';
 import { prioritizeDailyTasks } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 import { TASK_DECISION } from '../../lib/constants';
@@ -309,5 +309,146 @@ export default function(controller) {
 		}, 1000);
 
 	});
+
+	/**
+	 * 		UNDO COMPLETE OR DELETE OF TASKS
+	 */
+	controller.on(`undo_task_complete`, (bot, config) => {
+
+		const { SlackUserId, botCallback, payload } = config;
+
+		let dailyTaskIdsToUnComplete = [];
+		if (payload.actions[0]) {
+			let dailyTaskIdsString = payload.actions[0].name;
+			dailyTaskIdsToUnComplete = dailyTaskIdsString.split(",");
+		}
+
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			let botToken = bot.config.token;
+			bot          = bots[botToken];
+		}
+
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			const UserId = user.id;
+			const { SlackUser: { tz } } = user;
+
+			user.getDailyTasks({
+				where: [`"DailyTask"."id" IN (?)`, dailyTaskIdsToUnComplete],
+				include: [ models.Task ]
+			})
+			.then((dailyTasks) => {
+
+				let count = 0;
+				dailyTasks.forEach((dailyTask) => {
+					dailyTask.dataValues.Task.update({
+						done: false
+					});
+					count++;
+					if (count == dailyTasks.length) {
+						setTimeout(() => {
+							prioritizeDailyTasks(user);
+						}, 750);
+					}
+				})
+
+				let dailyTaskTexts = dailyTasks.map((dailyTask) => {
+					let text = dailyTask.dataValues ? dailyTask.dataValues.Task.text : dailyTask.text;
+					return text;
+				});
+				let dailyTasksString = commaSeparateOutTaskArray(dailyTaskTexts);
+
+				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+					if (dailyTaskTexts.length == 1) {
+						convo.say(`Okay! I unchecked ${dailyTasksString}. Good luck with that task!`);
+					} else {
+						convo.say(`Okay! I unchecked ${dailyTasksString}. Good luck with those tasks!`);
+					}
+
+				});
+
+			});
+
+		})
+	});
+
+	/**
+	 * 		UNDO COMPLETE OR DELETE OF TASKS
+	 */
+	controller.on(`undo_task_delete`, (bot, config) => {
+
+		const { SlackUserId, botCallback, payload } = config;
+
+		let dailyTaskIdsToUnDelete = [];
+		if (payload.actions[0]) {
+			let dailyTaskIdsString = payload.actions[0].name;
+			dailyTaskIdsToUnDelete = dailyTaskIdsString.split(",");
+		}
+
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			let botToken = bot.config.token;
+			bot          = bots[botToken];
+		}
+
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			const UserId = user.id;
+			const { SlackUser: { tz } } = user;
+
+			user.getDailyTasks({
+				where: [`"DailyTask"."id" IN (?)`, dailyTaskIdsToUnDelete],
+				include: [ models.Task ]
+			})
+			.then((dailyTasks) => {
+
+				let count = 0;
+				dailyTasks.forEach((dailyTask) => {
+					dailyTask.update({
+						type: "live"
+					});
+					count++;
+					if (count == dailyTasks.length) {
+						setTimeout(() => {
+							prioritizeDailyTasks(user);
+						}, 750);
+					}
+				})
+
+				let dailyTaskTexts = dailyTasks.map((dailyTask) => {
+					let text = dailyTask.dataValues ? dailyTask.dataValues.Task.text : dailyTask.text;
+					return text;
+				});
+				let dailyTasksString = commaSeparateOutTaskArray(dailyTaskTexts);
+
+				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+					if (dailyTaskTexts.length == 1) {
+						convo.say(`Okay! I undeleted ${dailyTasksString}. Good luck with that task!`);
+					} else {
+						convo.say(`Okay! I undeleted ${dailyTasksString}. Good luck with those tasks!`);
+					}
+
+				});
+
+			});
+
+		})
+	});
+
 
 };

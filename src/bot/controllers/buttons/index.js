@@ -21,6 +21,8 @@ export default function(controller) {
 
 		const SlackUserId = message.user;
 		const { actions, callback_id } = message;
+		let payload;
+		let config;
 
 		// need to replace buttons so user cannot reclick it
 		if (actions && actions.length > 0) {
@@ -95,7 +97,6 @@ export default function(controller) {
 				case buttonValues.resetTimes.value:
 					break;
 				case buttonValues.doneSessionTimeoutYes.value:
-					bot.replyInteractive(message, "Great work! :raised_hands:")
 					controller.trigger(`done_session_yes_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				case buttonValues.doneSessionTimeoutSnooze.value:
@@ -111,11 +112,9 @@ export default function(controller) {
 					});
 					break;
 				case buttonValues.doneSessionTimeoutDidSomethingElse.value:
-					bot.replyInteractive(message, `Woo! :ocean:`);
 					controller.trigger(`end_session`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				case buttonValues.doneSessionTimeoutNo.value:
-					bot.replyInteractive(message, `That's okay! You can keep chipping away and you'll get there :pick:`);
 					controller.trigger(`done_session_no_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				case buttonValues.doneSessionEarlyNo.value:
@@ -200,6 +199,16 @@ export default function(controller) {
 					bot.replyInteractive(message, "Okay, let's resume :arrow_forward:", () => {
 						controller.trigger(`session_resume_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					});
+					break;
+				case buttonValues.undoTaskComplete.value:
+					payload = JSON.parse(message.payload);
+					config = { SlackUserId, botCallback: true, payload };
+					controller.trigger(`undo_task_complete`, [ bot, config ]);
+					break;
+				case buttonValues.undoTaskDelete.value:
+					payload = JSON.parse(message.payload);
+					config = { SlackUserId, botCallback: true, payload };
+					controller.trigger(`undo_task_delete`, [ bot, config ]);
 					break;
 				default:
 					// some default to replace button no matter what

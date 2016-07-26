@@ -297,6 +297,138 @@ exports.default = function (controller) {
 			controller.trigger('edit_tasks_flow', [bot, config]);
 		}, 1000);
 	});
+
+	/**
+  * 		UNDO COMPLETE OR DELETE OF TASKS
+  */
+	controller.on('undo_task_complete', function (bot, config) {
+		var SlackUserId = config.SlackUserId;
+		var botCallback = config.botCallback;
+		var payload = config.payload;
+
+
+		var dailyTaskIdsToUnComplete = [];
+		if (payload.actions[0]) {
+			var dailyTaskIdsString = payload.actions[0].name;
+			dailyTaskIdsToUnComplete = dailyTaskIdsString.split(",");
+		}
+
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			var botToken = bot.config.token;
+			bot = _index.bots[botToken];
+		}
+
+		_models2.default.User.find({
+			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+			include: [_models2.default.SlackUser]
+		}).then(function (user) {
+
+			var UserId = user.id;
+			var tz = user.SlackUser.tz;
+
+
+			user.getDailyTasks({
+				where: ['"DailyTask"."id" IN (?)', dailyTaskIdsToUnComplete],
+				include: [_models2.default.Task]
+			}).then(function (dailyTasks) {
+
+				var count = 0;
+				dailyTasks.forEach(function (dailyTask) {
+					dailyTask.dataValues.Task.update({
+						done: false
+					});
+					count++;
+					if (count == dailyTasks.length) {
+						setTimeout(function () {
+							(0, _miscHelpers.prioritizeDailyTasks)(user);
+						}, 750);
+					}
+				});
+
+				var dailyTaskTexts = dailyTasks.map(function (dailyTask) {
+					var text = dailyTask.dataValues ? dailyTask.dataValues.Task.text : dailyTask.text;
+					return text;
+				});
+				var dailyTasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
+
+				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+					if (dailyTaskTexts.length == 1) {
+						convo.say('Okay! I unchecked ' + dailyTasksString + '. Good luck with that task!');
+					} else {
+						convo.say('Okay! I unchecked ' + dailyTasksString + '. Good luck with those tasks!');
+					}
+				});
+			});
+		});
+	});
+
+	/**
+  * 		UNDO COMPLETE OR DELETE OF TASKS
+  */
+	controller.on('undo_task_delete', function (bot, config) {
+		var SlackUserId = config.SlackUserId;
+		var botCallback = config.botCallback;
+		var payload = config.payload;
+
+
+		var dailyTaskIdsToUnDelete = [];
+		if (payload.actions[0]) {
+			var dailyTaskIdsString = payload.actions[0].name;
+			dailyTaskIdsToUnDelete = dailyTaskIdsString.split(",");
+		}
+
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			var botToken = bot.config.token;
+			bot = _index.bots[botToken];
+		}
+
+		_models2.default.User.find({
+			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+			include: [_models2.default.SlackUser]
+		}).then(function (user) {
+
+			var UserId = user.id;
+			var tz = user.SlackUser.tz;
+
+
+			user.getDailyTasks({
+				where: ['"DailyTask"."id" IN (?)', dailyTaskIdsToUnDelete],
+				include: [_models2.default.Task]
+			}).then(function (dailyTasks) {
+
+				var count = 0;
+				dailyTasks.forEach(function (dailyTask) {
+					dailyTask.update({
+						type: "live"
+					});
+					count++;
+					if (count == dailyTasks.length) {
+						setTimeout(function () {
+							(0, _miscHelpers.prioritizeDailyTasks)(user);
+						}, 750);
+					}
+				});
+
+				var dailyTaskTexts = dailyTasks.map(function (dailyTask) {
+					var text = dailyTask.dataValues ? dailyTask.dataValues.Task.text : dailyTask.text;
+					return text;
+				});
+				var dailyTasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
+
+				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+					if (dailyTaskTexts.length == 1) {
+						convo.say('Okay! I undeleted ' + dailyTasksString + '. Good luck with that task!');
+					} else {
+						convo.say('Okay! I undeleted ' + dailyTasksString + '. Good luck with those tasks!');
+					}
+				});
+			});
+		});
+	});
 };
 
 var _os = require('os');

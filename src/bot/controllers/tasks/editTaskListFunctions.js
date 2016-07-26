@@ -159,30 +159,36 @@ function checkForNoRemainingTasks(convo) {
 	const { tasksEdit: { dailyTasks, newTasks } } = convo;
 	let remainingTasks = getRemainingTasks(dailyTasks, newTasks);
 	if (remainingTasks.length == 0) {
-		convo.ask(`You have no remaining tasks for today. Would you like to add some tasks?`, [
-			{
-				pattern: utterances.yes,
-				callback: (response, convo) => {
-					addTasksFlow(convo);
-					convo.next();
+
+		convo.say(`You have no remaining tasks for today. Let me know when you want to \`add tasks\`!`);
+
+		if (false) {
+			convo.ask(`You have no remaining tasks for today. Would you like to add some tasks?`, [
+				{
+					pattern: utterances.yes,
+					callback: (response, convo) => {
+						addTasksFlow(convo);
+						convo.next();
+					}
+				},
+				{
+					pattern: utterances.no,
+					callback: (response, convo) => {
+						convo.say("Okay! Let me know when you want to add tasks, or make a new plan :memo:");
+						convo.next();
+					}
+				},
+				{
+					default: true,
+					callback: (response, convo) => {
+						convo.say("Sorry, I didn't catch that");
+						convo.repeat();
+						convo.next();
+					}
 				}
-			},
-			{
-				pattern: utterances.no,
-				callback: (response, convo) => {
-					convo.say("Okay! Let me know when you want to add tasks, or make a new plan :memo:");
-					convo.next();
-				}
-			},
-			{
-				default: true,
-				callback: (response, convo) => {
-					convo.say("Sorry, I didn't catch that");
-					convo.repeat();
-					convo.next();
-				}
-			}
-		]);
+			]);
+		}
+
 	}
 }
 
@@ -289,27 +295,29 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 		});
 		let dailyTasksToCompleteString = commaSeparateOutTaskArray(dailyTaskTextsToComplete);
 
-		convo.say({
-			text: `Great work :punch: I checked off ${dailyTasksToCompleteString}!`,
-			attachment_type: 'default',
-			callback_id: "UNDO_BUTTON_444",
-			fallback: "Here is your task list",
-			color: colorsHash.grey.hex,
-			actions: [
-				{
-						name: buttonValues.yes.name,
-						text: "Undo",
-						value: buttonValues.yes.value,
-						type: "button"
-				}
-			]
-		});
-
 		// add to complete array for tasksEdit
 		dailyTaskIdsToComplete = dailyTasksToComplete.map((dailyTask) => {
 			return dailyTask.dataValues.id;
 		});
 		convo.tasksEdit.dailyTaskIdsToComplete = dailyTaskIdsToComplete;
+
+		convo.say({
+			text: `Great work :punch:. I checked off ${dailyTasksToCompleteString}!`,
+			attachments: [ {
+				attachment_type: 'default',
+				callback_id: "UNDO_BUTTON",
+				fallback: "Here is your task list",
+				color: colorsHash.grey.hex,
+				actions: [
+					{
+							name: `${dailyTaskIdsToComplete}`,
+							text: "Wait, that's not right!",
+							value: buttonValues.undoTaskComplete.value,
+							type: "button"
+					}
+				]
+			}]
+		});
 
 	} else {
 		convo.say(`Ah, I didn't find that task to complete`);
@@ -392,13 +400,29 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 		});
 		let dailyTasksToDeleteString = commaSeparateOutTaskArray(dailyTasksTextsToDelete);
 
-		convo.say(`Sounds good, I deleted ${dailyTasksToDeleteString}!`);
-
 		// add to delete array for tasksEdit
 		dailyTaskIdsToDelete = dailyTasksToDelete.map((dailyTask) => {
 			return dailyTask.dataValues.id;
 		});
 		convo.tasksEdit.dailyTaskIdsToDelete = dailyTaskIdsToDelete;
+
+		convo.say({
+			text: `Sounds good, I deleted ${dailyTasksToDeleteString}!`,
+			attachments: [ {
+				attachment_type: 'default',
+				callback_id: "UNDO_BUTTON",
+				fallback: "Here is your task list",
+				color: colorsHash.grey.hex,
+				actions: [
+					{
+							name: `${dailyTaskIdsToDelete}`,
+							text: "Wait, that's not right!",
+							value: buttonValues.undoTaskDelete.value,
+							type: "button"
+					}
+				]
+			}]
+		});
 
 	} else {
 		convo.say(`Ah, I didn't find that task to delete`);

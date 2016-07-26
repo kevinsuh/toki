@@ -379,6 +379,14 @@ var buttonValues = exports.buttonValues = {
 	changeDefaultBreakTime: {
 		value: "CHANGE_DEFAULT_BREAK_TIME",
 		name: "CHANGE_DEFAULT_BREAK_TIME"
+	},
+	undoTaskComplete: {
+		value: "UNDO_TASK_COMPLETE",
+		name: "UNDO_TASK_COMPLETE"
+	},
+	undoTaskDelete: {
+		value: "UNDO_TASK_DELETE",
+		name: "UNDO_TASK_DELETE"
 	}
 };
 
