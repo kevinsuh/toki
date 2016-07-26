@@ -98,6 +98,7 @@ function specificCommandFlow(convo) {
 				singleLineCompleteTask(convo, taskNumbersToCompleteArray);
 				let options = { onlyRemainingTasks: true };
 				sayTasksForToday(convo, options);
+				checkForNoRemainingTasks(convo);
 			} else {
 				completeTasksFlow(convo);
 			}
@@ -119,6 +120,7 @@ function specificCommandFlow(convo) {
 				singleLineDeleteTask(convo, taskNumbersToDeleteArray);
 				let options = { onlyRemainingTasks: true };
 				sayTasksForToday(convo, options);
+				checkForNoRemainingTasks(convo);
 			} else {
 				deleteTasksFlow(convo);
 			}
@@ -141,7 +143,6 @@ function specificCommandFlow(convo) {
 		default:
 			break;
 	}
-	checkForNoRemainingTasks(convo);
 
 	// sayWorkSessionMessage(convo);
 
@@ -228,9 +229,10 @@ function sayWorkSessionMessage(convo) {
 
 function sayTasksForToday(convo, options = {}) {
 
-	const { tasksEdit: { dailyTasks } } = convo;
+	const { tasksEdit: { dailyTasks, newTasks } } = convo;
+	let remainingTasks = getRemainingTasks(dailyTasks, newTasks);
 
-	if (dailyTasks.length > 0) {
+	if (dailyTasks.length > 0 && (!options.onlyRemainingTasks || (options.onlyRemainingTasks && remainingTasks.length > 0))) {
 		options.segmentCompleted = true;
 		let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
 
@@ -287,7 +289,21 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 		});
 		let dailyTasksToCompleteString = commaSeparateOutTaskArray(dailyTaskTextsToComplete);
 
-		convo.say(`Great work :punch: I checked off ${dailyTasksToCompleteString}!`);
+		convo.say({
+			text: `Great work :punch: I checked off ${dailyTasksToCompleteString}!`,
+			attachment_type: 'default',
+			callback_id: "UNDO_BUTTON_444",
+			fallback: "Here is your task list",
+			color: colorsHash.grey.hex,
+			actions: [
+				{
+						name: buttonValues.yes.name,
+						text: "Undo",
+						value: buttonValues.yes.value,
+						type: "button"
+				}
+			]
+		});
 
 		// add to complete array for tasksEdit
 		dailyTaskIdsToComplete = dailyTasksToComplete.map((dailyTask) => {
@@ -327,6 +343,7 @@ function completeTasksFlow(convo) {
 					singleLineCompleteTask(convo, taskNumbersToCompleteArray);
 					let options = { onlyRemainingTasks: true };
 					sayTasksForToday(convo, options);
+					checkForNoRemainingTasks(convo);
 				} else {
 					convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 					convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
@@ -415,6 +432,7 @@ function deleteTasksFlow(convo) {
 					singleLineDeleteTask(convo, taskNumbersToDeleteArray);
 					let options = { onlyRemainingTasks: true };
 					sayTasksForToday(convo, options);
+					checkForNoRemainingTasks(convo);
 				} else {
 					convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 					convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
