@@ -118,6 +118,7 @@ export default function(controller) {
 							bot,
 							tz,
 							SlackUserId,
+							UserId,
 							dailyTasks,
 							updateTaskListMessageObject: {},
 							newTasks: [],
@@ -138,37 +139,6 @@ export default function(controller) {
 							var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate, startSession, dailyTasksToWorkOn } = convo.tasksEdit;
 
 							resumeQueuedReachouts(bot, { SlackUserId });
-
-							// add new tasks if they got added
-							if (newTasks.length > 0) {
-								var priority = dailyTasks.length;
-								// add the priorities
-								newTasks = newTasks.map((newTask) => {
-									priority++;
-									return {
-										...newTask,
-										priority
-									};
-								});
-
-								newTasks.forEach((newTask) => {
-									const { minutes, text, priority } = newTask;
-									if (minutes && text) {
-										models.Task.create({
-											text
-										})
-										.then((task) => {
-											const TaskId = task.id;
-											models.DailyTask.create({
-												TaskId,
-												priority,
-												minutes,
-												UserId
-											});
-										});
-									}
-								})
-							}
 
 							// delete tasks if requested
 							if (dailyTaskIdsToDelete.length > 0) {
@@ -214,22 +184,21 @@ export default function(controller) {
 								})
 							}
 
+							if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
+								var config = {
+									SlackUserId,
+									dailyTasksToWorkOn
+								};
+								config.intent = intentConfig.START_SESSION;
+								controller.trigger(`new_session_group_decision`, [ bot, config ]);
+								return;
+							}
+
 							setTimeout(() => {
 
 								setTimeout(() => {
 									prioritizeDailyTasks(user);
-								}, 500);
-								setTimeout(() => {
-									if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
-										var config = {
-											SlackUserId,
-											dailyTasksToWorkOn
-										}
-										config.intent = intentConfig.START_SESSION;
-										controller.trigger(`new_session_group_decision`, [ bot, config ]);
-										return;
-									}
-								}, 1250);
+								}, 1000);
 
 								// only check for live tasks if SOME action took place
 								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {

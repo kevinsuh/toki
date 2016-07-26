@@ -4,11 +4,6 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-// base controller for tasks
-
-
 exports.default = function (controller) {
 
 	(0, _add2.default)(controller);
@@ -98,6 +93,7 @@ exports.default = function (controller) {
 							bot: bot,
 							tz: tz,
 							SlackUserId: SlackUserId,
+							UserId: UserId,
 							dailyTasks: dailyTasks,
 							updateTaskListMessageObject: {},
 							newTasks: [],
@@ -125,38 +121,6 @@ exports.default = function (controller) {
 
 
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-
-							// add new tasks if they got added
-							if (newTasks.length > 0) {
-								var priority = dailyTasks.length;
-								// add the priorities
-								newTasks = newTasks.map(function (newTask) {
-									priority++;
-									return _extends({}, newTask, {
-										priority: priority
-									});
-								});
-
-								newTasks.forEach(function (newTask) {
-									var minutes = newTask.minutes;
-									var text = newTask.text;
-									var priority = newTask.priority;
-
-									if (minutes && text) {
-										_models2.default.Task.create({
-											text: text
-										}).then(function (task) {
-											var TaskId = task.id;
-											_models2.default.DailyTask.create({
-												TaskId: TaskId,
-												priority: priority,
-												minutes: minutes,
-												UserId: UserId
-											});
-										});
-									}
-								});
-							}
 
 							// delete tasks if requested
 							if (dailyTaskIdsToDelete.length > 0) {
@@ -203,22 +167,21 @@ exports.default = function (controller) {
 								});
 							}
 
+							if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
+								var config = {
+									SlackUserId: SlackUserId,
+									dailyTasksToWorkOn: dailyTasksToWorkOn
+								};
+								config.intent = _intents2.default.START_SESSION;
+								controller.trigger('new_session_group_decision', [bot, config]);
+								return;
+							}
+
 							setTimeout(function () {
 
 								setTimeout(function () {
 									(0, _miscHelpers.prioritizeDailyTasks)(user);
-								}, 500);
-								setTimeout(function () {
-									if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
-										var config = {
-											SlackUserId: SlackUserId,
-											dailyTasksToWorkOn: dailyTasksToWorkOn
-										};
-										config.intent = _intents2.default.START_SESSION;
-										controller.trigger('new_session_group_decision', [bot, config]);
-										return;
-									}
-								}, 1250);
+								}, 1000);
 
 								// only check for live tasks if SOME action took place
 								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
@@ -481,4 +444,6 @@ var _editTaskListFunctions = require('./editTaskListFunctions');
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 ;
+
+// base controller for tasks
 //# sourceMappingURL=index.js.map
