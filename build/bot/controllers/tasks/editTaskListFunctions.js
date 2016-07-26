@@ -153,6 +153,8 @@ function specificCommandFlow(convo) {
 			break;
 		case _constants.TASK_DECISION.edit.word:
 			console.log('\n\n ~~ user wants to edit tasks in specificCommandFlow ~~ \n\n');
+			sayTasksForToday(convo);
+			convo.say("You can complete, delete, or add tasks to this list ( `complete task 2` or `add tasks`)!");
 			break;
 		case _constants.TASK_DECISION.work.word:
 
