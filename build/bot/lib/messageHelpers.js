@@ -202,12 +202,6 @@ function convertArrayToTaskListMessage(taskArray) {
 	options.totalMinutes = totalMinutes;
 	options.count = count;
 
-	if (taskArray.length == 0) {
-		console.log("array passed in is empty at convertArrayToTaskListMessage");
-		taskListMessage = '> :spiral_note_pad:';
-		return taskListMessage;
-	}
-
 	// different format if has 1+ completed tasks (`segmentCompleted`)
 	var hasCompletedTasks = false;
 	taskArray.some(function (task) {
@@ -235,6 +229,12 @@ function convertArrayToTaskListMessage(taskArray) {
 	var remainingTasks = getRemainingTasksFromTaskArray(taskArray, options);
 	var completedTasks = getCompletedTasksFromTaskArray(taskArray, options);
 	if (options.onlyRemainingTasks) completedTasks = [];
+
+	if (taskArray.length == 0 || options.onlyRemainingTasks && remainingTasks.length == 0) {
+		console.log("array passed in is empty at convertArrayToTaskListMessage");
+		taskListMessage = '> :spiral_note_pad:';
+		return taskListMessage;
+	}
 
 	// add completed tasks to right place
 	var taskListMessageBody = '';

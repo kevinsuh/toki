@@ -141,6 +141,7 @@ function specificCommandFlow(convo) {
 		default:
 			break;
 	}
+	checkForNoRemainingTasks(convo);
 
 	// sayWorkSessionMessage(convo);
 
@@ -151,6 +152,58 @@ function specificCommandFlow(convo) {
 	convo.next();
 
 }
+
+// if no remaining tasks, ask to add new ones
+function checkForNoRemainingTasks(convo) {
+	const { tasksEdit: { dailyTasks, newTasks } } = convo;
+	let remainingTasks = getRemainingTasks(dailyTasks, newTasks);
+	if (remainingTasks.length == 0) {
+		convo.ask(`You have no remaining tasks for today. Would you like to add some tasks?`, [
+			{
+				pattern: utterances.yes,
+				callback: (response, convo) => {
+					addTasksFlow(convo);
+					convo.next();
+				}
+			},
+			{
+				pattern: utterances.no,
+				callback: (response, convo) => {
+					convo.say("Okay! Let me know when you want to add tasks, or make a new plan :memo:");
+					convo.next();
+				}
+			},
+			{
+				default: true,
+				callback: (response, convo) => {
+					convo.say("Sorry, I didn't catch that");
+					convo.repeat();
+					convo.next();
+				}
+			}
+		]);
+	}
+}
+
+function getRemainingTasks(fullTaskArray, newTasks) {
+	var remainingTasks = [];
+	fullTaskArray.forEach((task) => {
+		if (task.dataValues) {
+			task = task.dataValues;
+		};
+		if (!task.done && task.type == 'live') {
+			remainingTasks.push(task);
+		}
+	});
+
+	if (newTasks) {
+		newTasks.forEach((newTask) => {
+			remainingTasks.push(newTask);
+		})
+	}
+	return remainingTasks;
+}
+
 
 function sayWorkSessionMessage(convo) {
 
@@ -177,24 +230,26 @@ function sayTasksForToday(convo, options = {}) {
 
 	const { tasksEdit: { dailyTasks } } = convo;
 
-	options.segmentCompleted = true;
-	let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
+	if (dailyTasks.length > 0) {
+		options.segmentCompleted = true;
+		let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
 
-	let taskMessage = "Here are your tasks for today :memo::"
-	if (options.onlyRemainingTasks) {
-		taskMessage = "Here are your remaining tasks for today :memo::";
+		let taskMessage = "Here are your tasks for today :memo::"
+		if (options.onlyRemainingTasks) {
+			taskMessage = "Here are your remaining tasks for today :memo::";
+		}
+		convo.say(taskMessage);
+		convo.say({
+			text: taskListMessage,
+			attachments:[
+				{
+					attachment_type: 'default',
+					callback_id: "TASK_LIST_MESSAGE",
+					fallback: "Here's your task list!"
+				}
+			]
+		});
 	}
-	convo.say(taskMessage);
-	convo.say({
-		text: taskListMessage,
-		attachments:[
-			{
-				attachment_type: 'default',
-				callback_id: "TASK_LIST_MESSAGE",
-				fallback: "Here's your task list!"
-			}
-		]
-	});
 
 }
 
@@ -383,7 +438,7 @@ function addTasksFlow(convo) {
 	var { source_message, tasksEdit: { bot, dailyTasks, newTasks, actuallyWantToAddATask } } = convo;
 
 	// say task list, then ask for user to add tasks
-	let options = { onlyRemainingTasks: true };
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true };
 	let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
 
 	var tasksToAdd = [];
@@ -448,7 +503,7 @@ function addTasksFlow(convo) {
 					taskArray.push(task);
 				})
 
-				options = { onlyRemainingTasks: true };
+				options = { onlyRemainingTasks: true, dontCalculateMinutes: true };
 				if (actuallyWantToAddATask) {
 					options.dontCalculateMinutes = true;
 					taskListMessage = convertArrayToTaskListMessage(taskArray, options)
@@ -636,6 +691,37 @@ function getTimeToTasks(response, convo) {
 
 }
 
+function saveNewTaskResponses(tasksToAdd, convo) {
+
+	// get the newTasks!
+	var { dailyTasks, newTasks } = convo.tasksEdit;
+
+	if (tasksToAdd) {
+
+		// only get the new tasks
+		var tasksArray = [];
+		tasksToAdd.forEach((task) => {
+			if (task.newTask) {
+				tasksArray.push(task);
+			}
+		})
+		var tasksToAddArray = convertResponseObjectsToTaskArray(tasksArray);
+		if (!dailyTasks) {
+			dailyTasks = [];
+		}
+
+		tasksToAddArray.forEach((newTask) => {
+			newTasks.push(newTask);
+		})
+
+		convo.tasksEdit.dailyTasks = dailyTasks; // all daily tasks
+		convo.tasksEdit.newTasks   = newTasks; // only the new ones
+
+	}
+
+	convo.next();
+}
+
 // used for both edit time to tasks, as well as add new tasks!!
 function confirmTimeToTasks(convo) {
 
@@ -645,6 +731,8 @@ function confirmTimeToTasks(convo) {
 		{
 			pattern: utterances.yes,
 			callback: (response, convo) => {
+
+				convo.say("Excellent!");
 
 				// you use this function for either ADDING tasks or UPDATING tasks (one or the other)
 				if (newTasks.length > 0) {
@@ -1124,38 +1212,6 @@ function askForTaskListOptionsIfNoRemainingTasks(convo) {
 }
 
 
-function saveNewTaskResponses(tasksToAdd, convo) {
-
-	// get the newTasks!
-	var { dailyTasks, newTasks } = convo.tasksEdit;
-
-	if (tasksToAdd) {
-
-		// only get the new tasks
-		var tasksArray = [];
-		tasksToAdd.forEach((task) => {
-			if (task.newTask) {
-				tasksArray.push(task);
-			}
-		})
-		var tasksToAddArray = convertResponseObjectsToTaskArray(tasksArray);
-		if (!dailyTasks) {
-			dailyTasks = [];
-		}
-
-		tasksToAddArray.forEach((newTask) => {
-			newTasks.push(newTask);
-		})
-
-		convo.tasksEdit.dailyTasks = dailyTasks; // all daily tasks
-		convo.tasksEdit.newTasks   = newTasks; // only the new ones
-
-	}
-
-	convo.next();
-}
-
-
 /**
  * 			~~ EDIT TIMES TO TASKS FLOW ~~
  */
@@ -1190,23 +1246,4 @@ function editTaskTimesFlow(response, convo) {
 
 	getTimeToTasks(response, convo);
 
-}
-
-function getRemainingTasks(fullTaskArray, newTasks) {
-	var remainingTasks = [];
-	fullTaskArray.forEach((task) => {
-		if (task.dataValues) {
-			task = task.dataValues;
-		};
-		if (!task.done && task.type == 'live') {
-			remainingTasks.push(task);
-		}
-	});
-
-	if (newTasks) {
-		newTasks.forEach((newTask) => {
-			remainingTasks.push(newTask);
-		})
-	}
-	return remainingTasks;
 }
