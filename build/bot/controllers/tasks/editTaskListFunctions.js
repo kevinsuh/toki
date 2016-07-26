@@ -350,7 +350,7 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 			}]
 		});
 	} else {
-		convo.say('Ah, I didn\'t find that task to complete');
+		convo.say('I couldn\'t find that task to complete');
 	}
 
 	convo.next();
@@ -449,7 +449,7 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 			}]
 		});
 	} else {
-		convo.say('Ah, I didn\'t find that task to delete');
+		convo.say('I couldn\'t find that task to delete');
 	}
 
 	convo.next();
