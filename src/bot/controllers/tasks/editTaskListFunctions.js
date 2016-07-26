@@ -894,7 +894,8 @@ function workOnTasksFlow(convo) {
 	let { tasksEdit: { dailyTasks } } = convo;
 
 	// say task list, then ask which ones to complete
-	sayTasksForToday(convo);
+	let options = { onlyRemainingTasks: true };
+	sayTasksForToday(convo, options);
 
 	let message = `Which of your task(s) above would you like to work on?`;
 	convo.ask(message, [
