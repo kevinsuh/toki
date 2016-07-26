@@ -361,7 +361,8 @@ function completeTasksFlow(convo) {
 
 	// say task list, then ask which ones to complete
 
-	sayTasksForToday(convo);
+	var options = { onlyRemainingTasks: true };
+	sayTasksForToday(convo, options);
 
 	var message = 'Which of your task(s) above would you like to complete?';
 	convo.ask(message, [{
@@ -376,8 +377,8 @@ function completeTasksFlow(convo) {
 			var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
 			if (taskNumbersToCompleteArray) {
 				singleLineCompleteTask(convo, taskNumbersToCompleteArray);
-				var options = { onlyRemainingTasks: true };
-				sayTasksForToday(convo, options);
+				var _options2 = { onlyRemainingTasks: true };
+				sayTasksForToday(convo, _options2);
 				checkForNoRemainingTasks(convo);
 			} else {
 				convo.say("Oops, I don't totally understand :dog:. Let's try this again");
@@ -460,7 +461,8 @@ function deleteTasksFlow(convo) {
 
 	// say task list, then ask which ones to complete
 
-	sayTasksForToday(convo);
+	var options = { onlyRemainingTasks: true };
+	sayTasksForToday(convo, options);
 
 	var message = 'Which of your task(s) above would you like to delete?';
 	convo.ask(message, [{
@@ -475,8 +477,8 @@ function deleteTasksFlow(convo) {
 			var taskNumbersToDeleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
 			if (taskNumbersToDeleteArray) {
 				singleLineDeleteTask(convo, taskNumbersToDeleteArray);
-				var options = { onlyRemainingTasks: true };
-				sayTasksForToday(convo, options);
+				var _options3 = { onlyRemainingTasks: true };
+				sayTasksForToday(convo, _options3);
 				checkForNoRemainingTasks(convo);
 			} else {
 				convo.say("Oops, I don't totally understand :dog:. Let's try this again");
@@ -635,8 +637,8 @@ function getTimeToTasks(response, convo) {
 				timeToTasksArray.pop();
 				taskArray = (0, _miscHelpers.mapTimeToTaskArray)(taskArray, timeToTasksArray);
 
-				var _options2 = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
-				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, _options2);
+				var _options4 = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
+				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, _options4);
 
 				attachments = (0, _messageHelpers.getTimeToTaskTextAttachmentWithTaskListMessage)(taskTextsArray, timeToTasksArray.length, taskListMessage);
 
@@ -882,8 +884,8 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 
 		var tasksToWorkOnString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTextsToWorkOnArray);
 
-		convo.say('Let\'s do it! :weight_lifter:');
 		convo.tasksEdit.startSession = true;
+		convo.say(" ");
 		convo.next();
 	} else {
 		convo.say('I couldn\'t find that task to work on');

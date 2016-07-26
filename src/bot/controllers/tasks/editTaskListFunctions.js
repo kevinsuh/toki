@@ -334,7 +334,8 @@ function completeTasksFlow(convo) {
 	let { tasksEdit: { dailyTasks } } = convo;
 
 	// say task list, then ask which ones to complete
-	sayTasksForToday(convo);
+	let options = { onlyRemainingTasks: true };
+	sayTasksForToday(convo, options);
 
 	let message = `Which of your task(s) above would you like to complete?`;
 	convo.ask(message, [
@@ -439,7 +440,8 @@ function deleteTasksFlow(convo) {
 	let { tasksEdit: { dailyTasks } } = convo;
 
 	// say task list, then ask which ones to complete
-	sayTasksForToday(convo);
+	let options = { onlyRemainingTasks: true };
+	sayTasksForToday(convo, options);
 
 	let message = `Which of your task(s) above would you like to delete?`;
 	convo.ask(message, [
@@ -872,8 +874,8 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 
 		let tasksToWorkOnString = commaSeparateOutTaskArray(taskTextsToWorkOnArray);
 
-		convo.say(`Let's do it! :weight_lifter:`);
 		convo.tasksEdit.startSession = true;
+		convo.say(" ");
 		convo.next();
 
 	} else {
