@@ -877,7 +877,9 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 		convo.next();
 
 	} else {
-		convo.say(`Ah, I didn't find that task to work on`);
+		convo.say(`I couldn't find that task to work on`);
+		let options = { onlyRemainingTasks: true };
+		sayTasksForToday(convo, options);
 	}
 
 	convo.next();
