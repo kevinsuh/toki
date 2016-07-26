@@ -87,6 +87,7 @@ export default function(controller) {
 		.then((user) => {
 
 			const UserId = user.id;
+			const { SlackUser: { tz } } = user;
 
 			user.getWorkSessions({
 				where: [`"open" = ?`, true]
@@ -115,6 +116,7 @@ export default function(controller) {
 
 						convo.tasksEdit = {
 							bot,
+							tz,
 							SlackUserId,
 							dailyTasks,
 							updateTaskListMessageObject: {},

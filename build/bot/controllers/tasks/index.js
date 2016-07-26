@@ -68,6 +68,8 @@ exports.default = function (controller) {
 		}).then(function (user) {
 
 			var UserId = user.id;
+			var tz = user.SlackUser.tz;
+
 
 			user.getWorkSessions({
 				where: ['"open" = ?', true]
@@ -94,6 +96,7 @@ exports.default = function (controller) {
 
 						convo.tasksEdit = {
 							bot: bot,
+							tz: tz,
 							SlackUserId: SlackUserId,
 							dailyTasks: dailyTasks,
 							updateTaskListMessageObject: {},

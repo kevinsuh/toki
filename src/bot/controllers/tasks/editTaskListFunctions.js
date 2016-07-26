@@ -7,7 +7,9 @@ import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
 import { colorsHash, buttonValues, FINISH_WORD, RESET, taskListMessageDoneButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment, pausedSessionOptionsAttachments, startSessionOptionsAttachments, TASK_DECISION } from '../../lib/constants';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, getMostRecentTaskListMessageToUpdate, getMostRecentMessageToUpdate, deleteConvoAskMessage, convertMinutesToHoursString } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, getMostRecentTaskListMessageToUpdate, getMostRecentMessageToUpdate, deleteConvoAskMessage, convertMinutesToHoursString, getTimeToTaskTextAttachmentWithTaskListMessage } from '../../lib/messageHelpers';
+
+import { consoleLog, witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray } from '../../lib/miscHelpers';
 
 // this one shows the task list message and asks for options
 export function startEditTaskListMessage(convo) {
@@ -358,6 +360,108 @@ function deleteTasksFlow(convo) {
 
 	convo.next();
 	
+}
+
+/**
+ * 		~~ ADD TASKS ~~
+ */
+/**
+ * 			~~ ADD TASKS FLOW ~~
+ */
+
+function addTasksFlow(convo) {
+
+	var { source_message, tasksEdit: { bot, dailyTasks, newTasks, actuallyWantToAddATask } } = convo;
+
+	// say task list, then ask for user to add tasks
+	let options = { onlyRemainingTasks: true };
+	let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
+
+	var tasksToAdd = [];
+	convo.say("Let's do it! What other tasks do you want to work on?");
+	convo.ask({
+		text: taskListMessage,
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "TASK_LIST_MESSAGE",
+				fallback: "Here's your task list!"
+			}
+		]
+	},
+	[
+		{
+			pattern: buttonValues.doneAddingTasks.value,
+			callback: function(response, convo) {
+				saveNewTaskResponses(tasksToAdd, convo);
+				getTimeToNewTasks(response, convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.done,
+			callback: function(response, convo) {
+
+				// delete button when answered with NL
+				deleteConvoAskMessage(response.channel, bot);
+				
+				convo.say("Excellent!");
+				saveNewTaskResponses(tasksToAdd, convo);
+				getTimeToNewTasks(response, convo);
+				convo.next();
+			}
+		},
+		{ // NL equivalent to buttonValues.neverMind.value
+			pattern: utterances.noAndNeverMind,
+			callback: function(response, convo) {
+				convo.say("Okay! Let me know whenever you want to add more tasks");
+				convo.next();
+			}
+		},
+		{ // this is failure point. restart with question
+			default: true,
+			callback: function(response, convo) {
+
+				let updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
+
+				const { text } = response;
+				const newTask = {
+					text,
+					newTask: true
+				}
+
+				tasksToAdd.push(newTask);
+				var taskArray = [];
+				newTasks.forEach((task) => {
+					taskArray.push(task);
+				})
+				tasksToAdd.forEach((task) => {
+					taskArray.push(task);
+				})
+
+				options = { onlyRemainingTasks: true };
+				if (actuallyWantToAddATask) {
+					options.dontCalculateMinutes = true;
+					taskListMessage = convertArrayToTaskListMessage(taskArray, options)
+				} else {
+					options.segmentCompleted = true;
+					options.newTasks = taskArray;
+					taskListMessage = convertArrayToTaskListMessage(dailyTasks, options)
+				}
+
+				if (updateTaskListMessageObject) {
+					updateTaskListMessageObject.text        = taskListMessage;
+					updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageDoneButtonAttachment);
+
+					bot.api.chat.update(updateTaskListMessageObject);
+				}
+
+			}
+		}
+	]);
+
+	convo.next();
+
 }
 
 
@@ -733,101 +837,6 @@ function askForTaskListOptionsIfNoRemainingTasks(convo) {
 
 }
 
-/**
- * 			~~ ADD TASKS FLOW ~~
- */
-
-function addTasksFlow(convo) {
-
-	var { source_message, tasksEdit: { bot, dailyTasks, newTasks, actuallyWantToAddATask } } = convo;
-
-	// say task list, then ask for user to add tasks
-	let options = { onlyRemainingTasks: true };
-	let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
-
-	var tasksToAdd = [];
-	convo.say("Let's do it! What other tasks do you want to work on?");
-	convo.ask({
-		text: taskListMessage,
-		attachments:[
-			{
-				attachment_type: 'default',
-				callback_id: "TASK_LIST_MESSAGE",
-				fallback: "Here's your task list!"
-			}
-		]
-	},
-	[
-		{
-			pattern: buttonValues.doneAddingTasks.value,
-			callback: function(response, convo) {
-				saveNewTaskResponses(tasksToAdd, convo);
-				getTimeToNewTasks(response, convo);
-				convo.next();
-			}
-		},
-		{
-			pattern: FINISH_WORD.reg_exp,
-			callback: function(response, convo) {
-				convo.say("Excellent!");
-				saveNewTaskResponses(tasksToAdd, convo);
-				getTimeToNewTasks(response, convo);
-				convo.next();
-			}
-		},
-		{ // NL equivalent to buttonValues.neverMind.value
-			pattern: utterances.noAndNeverMind,
-			callback: function(response, convo) {
-				convo.say("Okay! Let me know whenever you want to add more tasks");
-				convo.next();
-			}
-		},
-		{ // this is failure point. restart with question
-			default: true,
-			callback: function(response, convo) {
-
-				let updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
-
-				const { text } = response;
-				const newTask = {
-					text,
-					newTask: true
-				}
-
-				tasksToAdd.push(newTask);
-				var taskArray = [];
-				newTasks.forEach((task) => {
-					taskArray.push(task);
-				})
-				tasksToAdd.forEach((task) => {
-					taskArray.push(task);
-				})
-
-				options = { onlyRemainingTasks: true };
-				if (actuallyWantToAddATask) {
-					options.dontCalculateMinutes = true;
-					taskListMessage = convertArrayToTaskListMessage(taskArray, options)
-				} else {
-					options.segmentCompleted = true;
-					options.newTasks = taskArray;
-					taskListMessage = convertArrayToTaskListMessage(dailyTasks, options)
-				}
-
-				if (updateTaskListMessageObject) {
-					updateTaskListMessageObject.text        = taskListMessage;
-					updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageDoneButtonAttachment);
-
-					bot.api.chat.update(updateTaskListMessageObject);
-				}
-
-			}
-		}
-	]);
-
-	convo.next();
-
-}
-
 
 function saveNewTaskResponses(tasksToAdd, convo) {
 
@@ -862,47 +871,30 @@ function saveNewTaskResponses(tasksToAdd, convo) {
 
 function getTimeToNewTasks(response, convo) {
 
-	var { bot, dailyTasks, newTasks } = convo.tasksEdit;
-	var options                    = { dontShowMinutes: true };
-	var taskListMessage            = convertArrayToTaskListMessage(newTasks, options);
-
-	console.log(`\n\n\nnew tasks that you're adding:`);
-	console.log(newTasks);
+	var { bot, dailyTasks, newTasks, tz } = convo.tasksEdit;
+	var options                           = { dontShowMinutes: true, dontCalculateMinutes: true, noKarets: true };
+	var taskListMessage                   = convertArrayToTaskListMessage(newTasks, options);
 
 	var timeToTasksArray = [];
 
-	convo.say(`How much time would you like to allocate to your new tasks?`);
+	var mainText = "Let's add time to each of your tasks:";
+	let taskTextsArray = newTasks.map((task) => {
+		if (task.dataValues) {
+			task = task.dataValues;
+		}
+		return task.text;
+	})
+	let attachments = getTimeToTaskTextAttachmentWithTaskListMessage(taskTextsArray, timeToTasksArray.length, taskListMessage);
+
 	convo.ask({
-		text: taskListMessage,
-		attachments:[
-			{
-				attachment_type: 'default',
-				callback_id: "TASK_LIST_MESSAGE",
-				fallback: "What are the times to your new tasks?",
-				color: colorsHash.grey.hex,
-				actions: [
-					{
-							name: buttonValues.actuallyWantToAddATask.name,
-							text: "Add more tasks!",
-							value: buttonValues.actuallyWantToAddATask.value,
-							type: "button"
-					}
-				]
-			}
-		]
+		text: mainText,
+		attachments
 	},
 	[
 		{
 			pattern: buttonValues.actuallyWantToAddATask.value,
 			callback: function(response, convo) {
 				convo.tasksEdit.actuallyWantToAddATask = true;
-
-				// take out the total time estimate
-				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
-				taskListMessage = convertArrayToTaskListMessage(newTasks, { dontShowMinutes: true, dontCalculateMinutes: true });
-				updateTaskListMessageObject.text = taskListMessage;
-				bot.api.chat.update(updateTaskListMessageObject);
-
 				addTasksFlow(response, convo);
 				convo.next();
 			}
@@ -911,37 +903,49 @@ function getTimeToNewTasks(response, convo) {
 			pattern: buttonValues.resetTimes.value,
 			callback: (response, convo) => {
 
-				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
+				let updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 				if (updateTaskListMessageObject) {
 					convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
-					// reset ze task list message
-					timeToTasksArray = [];
-					taskListMessage = convertArrayToTaskListMessage(newTasks, { dontShowMinutes: true });
 
-					updateTaskListMessageObject.text        = taskListMessage;
-					updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageAddMoreTasksButtonAttachment);
+					timeToTasksArray.pop();
+					newTasks = mapTimeToTaskArray(newTasks, timeToTasksArray);
+
+					let options = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
+					taskListMessage = convertArrayToTaskListMessage(newTasks, options);
+
+					attachments     = getTimeToTaskTextAttachmentWithTaskListMessage(taskTextsArray, timeToTasksArray.length, taskListMessage);
+
+					updateTaskListMessageObject.text        = mainText;
+					updateTaskListMessageObject.attachments = JSON.stringify(attachments);
 
 					bot.api.chat.update(updateTaskListMessageObject);
+
 				}
 
 				convo.silentRepeat();
 			}
 		},
 		{
-			pattern: RESET.reg_exp,
+			pattern: utterances.containsResetOrUndo,
 			callback: (response, convo) => {
 
-				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
+				let updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 				if (updateTaskListMessageObject) {
 					convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
-					// reset ze task list message
-					timeToTasksArray = [];
-					taskListMessage = convertArrayToTaskListMessage(newTasks, { dontShowMinutes: true });
-					
-					updateTaskListMessageObject.text        = taskListMessage;
-					updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageAddMoreTasksButtonAttachment);
+
+					timeToTasksArray.pop();
+					newTasks = mapTimeToTaskArray(newTasks, timeToTasksArray);
+
+					options = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
+					taskListMessage = convertArrayToTaskListMessage(newTasks, options);
+
+					attachments     = getTimeToTaskTextAttachmentWithTaskListMessage(taskTextsArray, timeToTasksArray.length, taskListMessage);
+
+					updateTaskListMessageObject.text        = mainText;
+					updateTaskListMessageObject.attachments = JSON.stringify(attachments);
 
 					bot.api.chat.update(updateTaskListMessageObject);
+
 				}
 
 				convo.silentRepeat();
@@ -952,48 +956,64 @@ function getTimeToNewTasks(response, convo) {
 			default: true,
 			callback: function(response, convo) {
 
-				var updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
+				const { intentObject: { entities: { reminder, duration, datetime } } } = response;
+
+				let updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
 
 				if (updateTaskListMessageObject) {
+
 					convo.tasksEdit.updateTaskListMessageObject = updateTaskListMessageObject;
-					const comma            = new RegExp(/[,]/);
-					var validMinutesTester = new RegExp(/[\dh]/);
-					var timeToTasks        = response.text.split(comma);
+					const commaOrNewLine = new RegExp(/[,\n]/);
+					let timeToTasks      = response.text.split(commaOrNewLine);
 
-					timeToTasks.forEach((time) => {
-						if (validMinutesTester.test(time)) {
+					// get user string response and convert it to time!
+					if (timeToTasks.length > 1) {
+						// entered via comma or \n (30 min, 45 min) and requires old method
+						timeToTasks.forEach((time) => {
 							var minutes = convertTimeStringToMinutes(time);
-							timeToTasksArray.push(minutes);
-						}
-					});
-
-					newTasks = newTasks.map((task, index) => {
-						if (task.dataValues) { // task from DB
-							return {
-								...task,
-								minutes: timeToTasksArray[index],
-								text: task.dataValues.text
+							if (minutes > 0)
+								timeToTasksArray.push(minutes);
+						});
+					} else {
+						// user entered only one time (1 hr 35 min) and we can use wit intelligence
+						// now that we ask one at a time, we can use wit duration
+						var customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+						if (customTimeObject) {
+							var minutes;
+							if (duration) {
+								minutes = witDurationToMinutes(duration);
+							} else { // cant currently handle datetime cuz wit sucks
+								minutes = convertTimeStringToMinutes(response.text);
+								// this should be done through datetime, but only duration for now
+								// minutes = parseInt(moment.duration(customTimeObject.diff(now)).asMinutes());
 							}
+						} else {
+							minutes = convertTimeStringToMinutes(response.text);
 						}
-						return { // newly created task
-							...task,
-							minutes: timeToTasksArray[index]
-						}
-					});
 
-					var taskListMessage = convertArrayToTaskListMessage(newTasks, { dontUseDataValues: true, emphasizeMinutes: true });
+						if (minutes > 0)
+							timeToTasksArray.push(minutes);
+					}
 
-					updateTaskListMessageObject.text        = taskListMessage;
-					updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageAddMoreTasksAndResetTimesButtonAttachment);
+					newTasks = mapTimeToTaskArray(newTasks, timeToTasksArray);
+
+					// update message for the user
+					options         = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
+					taskListMessage = convertArrayToTaskListMessage(newTasks, options);
+					attachments     = getTimeToTaskTextAttachmentWithTaskListMessage(taskTextsArray, timeToTasksArray.length, taskListMessage);
+
+					updateTaskListMessageObject.text        = mainText;
+					updateTaskListMessageObject.attachments = JSON.stringify(attachments);
+
 					bot.api.chat.update(updateTaskListMessageObject);
-				}
 
-				if (timeToTasksArray.length >= newTasks.length) {
-					convo.tasksEdit.newTasks = newTasks;
-					confirmTimeToTasks(convo);
-					convo.next();
-				}
+					if (timeToTasksArray.length >= newTasks.length) {
+						convo.tasksEdit.newTasks = newTasks;
+						confirmTimeToTasks(convo);
+						convo.next();
+					}
 
+				}
 			}
 		}
 	]);
