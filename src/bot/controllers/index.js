@@ -150,7 +150,8 @@ export function resumeQueuedReachouts(bot, config) {
 			var queuedWorkSessionIds = [];
 			queuedWorkSessions.forEach((workSession) => {
 				var endTime = moment(workSession.endTime);
-				if (endTime > now && workSession.dataValues.open == true) {
+				let fiveMinuteBuffer = now.subtract(5, 'minutes');
+				if (endTime > fiveMinuteBuffer && workSession.dataValues.open == true) {
 					if (workSession.dataValues) {
 						console.log(`resuming this queuedSession: ${workSession.dataValues.id}`);
 					}
