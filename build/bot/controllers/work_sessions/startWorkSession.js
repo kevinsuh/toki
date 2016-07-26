@@ -110,108 +110,133 @@ exports.default = function (controller) {
 					controller.trigger('begin_session', [bot, config]);
 					return;
 				}
+				var liveWorkSession = workSessions[0];
+				liveWorkSession.getDailyTasks({
+					include: [_models2.default.Task]
+				}).then(function (dailyTasks) {
 
-				// otherwise, we gotta confirm user wants to cancel current work session
+					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+						// by default, user wants to start a new session
+						// that's why she is in this flow...
+						// no liveWorkSession unless we found one
+						convo.startNewSession = true;
+						convo.liveWorkSession = false;
 
-					// by default, user wants to start a new session
-					// that's why she is in this flow...
-					// no liveWorkSession unless we found one
-					convo.startNewSession = true;
-					convo.liveWorkSession = false;
+						var liveWorkSession = workSessions[0]; // deal with first one as reference point
 
-					var liveWorkSession = workSessions[0]; // deal with first one as reference point
-					convo.liveWorkSession = liveWorkSession;
+						convo.liveWorkSession = liveWorkSession;
 
-					var endTime = (0, _momentTimezone2.default)(liveWorkSession.endTime).tz(tz);
-					var endTimeString = endTime.format("h:mm a");
-					var now = (0, _momentTimezone2.default)();
-					var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
+						var endTime = (0, _momentTimezone2.default)(liveWorkSession.endTime).tz(tz);
+						var endTimeString = endTime.format("h:mm a");
+						var now = (0, _momentTimezone2.default)();
+						var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
+						var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutesLeft);
 
-					convo.say('You are already in a session until *' + endTimeString + '*! You have ' + minutesLeft + ' minutes left :timer_clock:');
-					convo.ask('Do you want to `keep going`, or cancel it and start a `new session`?', function (response, convo) {
+						var taskTexts = dailyTasks.map(function (dailyTask) {
+							return dailyTask.dataValues.Task.text;
+						});
+						var tasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(taskTexts);
 
-						var responseMessage = response.text;
-						var entities = response.intentObject.entities;
-
-
-						var newSession = new RegExp(/(((^st[tart]*))|(^ne[ew]*)|(^se[ession]*))/); // `start` or `new`
-						var keepGoing = new RegExp(/(((^k[ep]*))|(^go[oing]*))/); // `keep` or `going`
-
-						if (newSession.test(responseMessage)) {
-
-							// start new session
-							convo.say("Sounds good :facepunch:");
-						} else if (keepGoing.test(responseMessage)) {
-
-							// continue current session
-							convo.say("Got it. Let's do it! :weight_lifter:");
-							convo.say('I\'ll ping you at ' + endTimeString + ' :alarm_clock:');
-							convo.startNewSession = false;
-						} else {
-
-							// invalid
-							convo.say("I'm sorry, I didn't catch that :dog:");
-							convo.repeat();
+						var newSessionTasks = dailyTasksToWorkOn;
+						var newSessionMessage = "Do you want to cancel this session and start your new one?";
+						if (newSessionTasks && newSessionTasks.length > 0) {
+							var newSessionTaskTexts = newSessionTasks.map(function (dailyTask) {
+								return dailyTask.dataValues.Task.text;
+							});
+							var newSessionTasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(newSessionTaskTexts);
+							newSessionMessage = 'Do you want to cancel this session and work on ' + newSessionTasksString + ' instead?';
 						}
-						convo.next();
-					});
 
-					convo.on('end', function (convo) {
+						convo.say('Wait, you are already in a session for ' + tasksString + ' until *' + endTimeString + '*! You have *' + minutesString + '* left :timer_clock:');
+						convo.ask(newSessionMessage, [{
+							pattern: _botResponses.utterances.yes,
+							callback: function callback(response, convo) {
+								// start new session
+								convo.say("Sounds good :facepunch:");
+								convo.next();
+							}
+						}, {
+							pattern: _botResponses.utterances.containsCancel,
+							callback: function callback(response, convo) {
+								// start new session
+								convo.say("Sounds good :facepunch:");
+								convo.next();
+							}
+						}, {
+							pattern: _botResponses.utterances.no,
+							callback: function callback(response, convo) {
+								// continue current session
+								convo.say("Got it. Let's keep this one! :weight_lifter:");
+								convo.say('I\'ll ping you at *' + endTimeString + '* :timer_clock: ');
+								convo.startNewSession = false;
+								convo.next();
+							}
+						}, {
+							default: true,
+							callback: function callback(response, convo) {
+								// invalid
+								convo.say("I'm sorry, I didn't catch that. Let me know `yes` or `no`!");
+								convo.repeat();
+								convo.next();
+							}
+						}]);
 
-						console.log("\n\n\n ~~ here in end of confirm_new_session ~~ \n\n\n");
+						convo.on('end', function (convo) {
 
-						var startNewSession = convo.startNewSession;
-						var liveWorkSession = convo.liveWorkSession;
+							console.log("\n\n\n ~~ here in end of confirm_new_session ~~ \n\n\n");
 
-						// if user wants to start new session, then do this flow and enter `begin_session` flow
+							var startNewSession = convo.startNewSession;
+							var liveWorkSession = convo.liveWorkSession;
 
-						if (startNewSession) {
+							// if user wants to start new session, then do this flow and enter `begin_session` flow
 
-							/**
-        * 		~ User has confirmed starting a new session ~
-        * 			* end current work session early
-        * 			* cancel all existing open work sessions
-        * 			* cancel `break` reminders
-        */
+							if (startNewSession) {
 
-							var now = (0, _momentTimezone2.default)();
+								/**
+         * 		~ User has confirmed starting a new session ~
+         * 			* end current work session early
+         * 			* cancel all existing open work sessions
+         * 			* cancel `break` reminders
+         */
 
-							// if user had any live work session(s), cancel them!
-							if (liveWorkSession) {
-								liveWorkSession.update({
-									endTime: now,
-									open: false,
-									live: false
-								});
-								workSessions.forEach(function (workSession) {
-									workSession.update({
+								var now = (0, _momentTimezone2.default)();
+
+								// if user had any live work session(s), cancel them!
+								if (liveWorkSession) {
+									liveWorkSession.update({
+										endTime: now,
 										open: false,
 										live: false
 									});
-								});
-							};
+									workSessions.forEach(function (workSession) {
+										workSession.update({
+											open: false,
+											live: false
+										});
+									});
+								};
 
-							// cancel all user breaks cause user is RDY TO WORK
-							_models2.default.User.find({
-								where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
-								include: [_models2.default.SlackUser]
-							}).then(function (user) {
-								user.getReminders({
-									where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break"]]
-								}).then(function (reminders) {
-									reminders.forEach(function (reminder) {
-										reminder.update({
-											"open": false
+								// cancel all user breaks cause user is RDY TO WORK
+								_models2.default.User.find({
+									where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+									include: [_models2.default.SlackUser]
+								}).then(function (user) {
+									user.getReminders({
+										where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break"]]
+									}).then(function (reminders) {
+										reminders.forEach(function (reminder) {
+											reminder.update({
+												"open": false
+											});
 										});
 									});
 								});
-							});
-							controller.trigger('begin_session', [bot, config]);
-						} else {
-							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-						}
+								controller.trigger('begin_session', [bot, config]);
+							} else {
+								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+							}
+						});
 					});
 				});
 			});
