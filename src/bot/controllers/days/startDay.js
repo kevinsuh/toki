@@ -8,7 +8,7 @@ import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
 import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput } from '../../lib/messageHelpers';
-import { closeOldRemindersAndSessions } from '../../lib/miscHelpers';
+import { closeOldRemindersAndSessions, prioritizeDailyTasks } from '../../lib/miscHelpers';
 import intentConfig from '../../lib/intents';
 import { FINISH_WORD, EXIT_EARLY_WORDS, NONE } from '../../lib/constants';
 
@@ -171,6 +171,7 @@ export default function(controller) {
 				// live or pending tasks, that are not completed yet
 				user.getDailyTasks({
 					where: [`"DailyTask"."type" in (?) AND "Task"."done" = ?`, ["pending", "live"], false ],
+					order: `"Task"."done", "DailyTask"."priority" ASC`,
 					include: [ models.Task ]
 				})
 				.then((dailyTasks) => {
@@ -225,6 +226,7 @@ export default function(controller) {
 								});
 								
 								// After all of the previous tasks have been put into "pending", choose the select ones and bring them back to "live"
+								let count = 0;
 								taskArray.forEach((task, index) => {
 
 									const { dataValues } = task;
@@ -262,6 +264,13 @@ export default function(controller) {
 												UserId
 											});
 										});
+									}
+
+									count++;
+									if (count == taskArray.length){
+										setTimeout(() => {
+											prioritizeDailyTasks(user);
+										}, 1000);
 									}
 
 								});

@@ -17,6 +17,8 @@ exports.default = function (controller) {
 	controller.hears(['start_session'], 'direct_message', _index.wit.hears, function (bot, message) {
 
 		var SlackUserId = message.user;
+		var text = message.text;
+
 		var intent = _intents2.default.START_SESSION;
 
 		var config = {
@@ -28,9 +30,46 @@ exports.default = function (controller) {
 			type: "typing",
 			channel: message.channel
 		});
-		setTimeout(function () {
-			controller.trigger('new_session_group_decision', [bot, config]);
-		}, 1000);
+
+		var taskNumbers = (0, _messageHelpers.convertStringToNumbersArray)(text);
+		if (taskNumbers) {
+			// if task numbers, we'll try and get single line task to work on
+			_models2.default.User.find({
+				where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+				include: [_models2.default.SlackUser]
+			}).then(function (user) {
+
+				var UserId = user.id;
+
+				user.getDailyTasks({
+					where: ['"DailyTask"."type" = ?', "live"],
+					include: [_models2.default.Task],
+					order: '"Task"."done", "DailyTask"."priority" ASC'
+				}).then(function (dailyTasks) {
+
+					var dailyTasksToWorkOn = [];
+					dailyTasks.forEach(function (dailyTask, index) {
+						var priority = dailyTask.dataValues.priority;
+
+						if (taskNumbers.indexOf(priority) > -1) {
+							dailyTasksToWorkOn.push(dailyTask);
+						}
+					});
+					if (dailyTasksToWorkOn.length > 0) {
+						config.dailyTasksToWorkOn = dailyTasksToWorkOn;
+					}
+					bot.send({
+						text: "Let's do it! :weight_lifter:",
+						channel: message.channel
+					});
+					controller.trigger('new_session_group_decision', [bot, config]);
+				});
+			});
+		} else {
+			setTimeout(function () {
+				controller.trigger('new_session_group_decision', [bot, config]);
+			}, 1000);
+		}
 	});
 
 	/**

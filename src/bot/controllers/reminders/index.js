@@ -45,7 +45,7 @@ export default function(controller) {
 				if (utterances.startsWithAdd.test(text) && !utterances.containsCheckin.test(text)) {
 
 					/**
-					 * 		TRIGGERING ADD TASK FLOW (add_task_flow)
+					 * 		TRIGGERING ADD TASK FLOW (will now loop to edit_tasks_flow)
 					 */
 					var intent = intentConfig.ADD_TASK;
 					

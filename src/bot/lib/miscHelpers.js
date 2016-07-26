@@ -220,6 +220,35 @@ export function closeOldRemindersAndSessions(user) {
 
 }
 
+// this re-prioritizes user daily tasks so that
+// live and not-completed tasks show up in expected order
+// and that priorities are not double-counted
+export function prioritizeDailyTasks(user) {
+
+	let today;
+	if (user.dataValues && user.dataValues.SlackUser && user.dataValues.SlackUser.tz) {
+		const tz = user.dataValues.SlackUser.tz;
+		today = moment().tz(tz).format("YYYY-MM-DD Z");
+	} else {
+		today = moment().format("YYYY-MM-DD Z");
+	}
+
+	user.getDailyTasks({
+		where: [ `"DailyTask"."createdAt" > ?`, today ],
+		include: [ models.Task ],
+		order: `"Task"."done" = FALSE DESC, "DailyTask"."type" = 'live' DESC, "DailyTask"."priority" ASC`
+	})
+	.then((dailyTasks) => {
+		dailyTasks.forEach((dailyTask, index) => {
+			let priority = index + 1;
+			dailyTask.update({
+				priority
+			});
+		})
+	});
+
+}
+
 // helper function to map time to tasks
 export function mapTimeToTaskArray(taskArray, timeToTasksArray) {
 	// add time to the tasks

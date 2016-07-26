@@ -142,6 +142,8 @@ exports.default = function (controller) {
 									done: true
 								}, {
 									where: ['"Tasks"."id" in (?)', completedTaskIds]
+								}).then(function () {
+									(0, _messageHelpers.prioritizeDailyTasks)(user);
 								});
 
 								user.getWorkSessions({

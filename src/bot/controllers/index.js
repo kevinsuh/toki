@@ -474,7 +474,7 @@ export function triggerIntent(intent, config) {
 	const { bot, controller, SlackUserId, message, dailyTasksToWorkOn } = config;
 	switch (intent) {
 		case intentConfig.ADD_TASK:
-			controller.trigger(`add_task_flow`, [ bot, { SlackUserId, message }]);
+			controller.trigger(`edit_tasks_flow`, [ bot, { SlackUserId, message }]);
 			break;
 		case intentConfig.START_SESSION:
 			controller.trigger(`confirm_new_session`, [ bot, { SlackUserId, dailyTasksToWorkOn } ]);

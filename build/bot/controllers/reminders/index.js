@@ -41,7 +41,7 @@ exports.default = function (controller) {
 				if (_botResponses.utterances.startsWithAdd.test(text) && !_botResponses.utterances.containsCheckin.test(text)) {
 
 					/**
-      * 		TRIGGERING ADD TASK FLOW (add_task_flow)
+      * 		TRIGGERING ADD TASK FLOW (will now loop to edit_tasks_flow)
       */
 					var intent = _intents2.default.ADD_TASK;
 

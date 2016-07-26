@@ -829,7 +829,7 @@ function askToStartWorkSession(response, convo) {
 				deleteConvoAskMessage(response.channel, bot);
 
 				convo.dayStart.startDayDecision = intentConfig.BACK_LATER;
-				convo.say("Okay! Call me whenever you want to get productive `hey toki!` :muscle:");
+				convo.say("Okay! Call me over when you're ready to work :muscle:");
 				convo.next();
 
 			}

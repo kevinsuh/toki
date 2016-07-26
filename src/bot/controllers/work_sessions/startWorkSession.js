@@ -3,7 +3,7 @@ import { wit } from '../index';
 import moment from 'moment-timezone';
 
 import models from '../../../app/models';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, convertMinutesToHoursString } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, convertMinutesToHoursString, convertStringToNumbersArray } from '../../lib/messageHelpers';
 import { createMomentObjectWithSpecificTimeZone, closeOldRemindersAndSessions } from '../../lib/miscHelpers';
 
 import intentConfig from '../../lib/intents';
@@ -28,7 +28,8 @@ export default function(controller) {
 	controller.hears(['start_session'], 'direct_message', wit.hears, (bot, message) => {
 
 		const SlackUserId = message.user;
-		var intent = intentConfig.START_SESSION;
+		const { text }    = message;
+		var intent        = intentConfig.START_SESSION;
 
 		var config = {
 			intent,
@@ -39,9 +40,50 @@ export default function(controller) {
 			type: "typing",
 			channel: message.channel
 		});
-		setTimeout(() => {
-			controller.trigger(`new_session_group_decision`, [ bot, config ]);
-		}, 1000);
+
+		var taskNumbers = convertStringToNumbersArray(text);
+		if (taskNumbers) {
+			// if task numbers, we'll try and get single line task to work on
+			models.User.find({
+				where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+				include: [
+					models.SlackUser
+				]
+			})
+			.then((user) => {
+
+				const UserId = user.id;
+
+				user.getDailyTasks({
+					where: [`"DailyTask"."type" = ?`, "live"],
+					include: [ models.Task ],
+					order: `"Task"."done", "DailyTask"."priority" ASC`
+				})
+				.then((dailyTasks) => {
+
+					let dailyTasksToWorkOn = [];
+					dailyTasks.forEach((dailyTask, index) => {
+						const { dataValues: { priority } } = dailyTask;
+						if (taskNumbers.indexOf(priority) > -1) {
+							dailyTasksToWorkOn.push(dailyTask);
+						}
+					});
+					if (dailyTasksToWorkOn.length > 0) {
+						config.dailyTasksToWorkOn = dailyTasksToWorkOn;
+					}
+					bot.send({
+						text: "Let's do it! :weight_lifter:",
+						channel: message.channel
+					})
+					controller.trigger(`new_session_group_decision`, [ bot, config ]);
+				});
+			});
+
+		} else {
+			setTimeout(() => {
+				controller.trigger(`new_session_group_decision`, [ bot, config ]);
+			}, 1000);
+		}	
 
 	});
 

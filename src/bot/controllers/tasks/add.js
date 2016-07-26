@@ -15,58 +15,16 @@ import { utterances } from '../../lib/botResponses';
 
 import { resumeQueuedReachouts } from '../index';
 
+
+/**
+ * 				THIS WHOLE FILE IS DEPRECATED AND NO LONGER IN USE
+ * 						~~ 7/26/16 ~~
+ * 				It now goes through "command center" in ./index.js
+ */
+
+
 // base controller for tasks
 export default function(controller) {
-
-	/**
-	 * 		User wants to add task
-	 * 			as interpreted by ~ Wit.ai ~
-	 */
-	controller.hears(['add_daily_task'], 'direct_message', wit.hears, (bot, message) => {
-
-		const SlackUserId = message.user;
-		var intent        = intentConfig.ADD_TASK;
-		var channel       = message.channel;
-
-		const { text, intentObject: { entities: { reminder, duration } } } = message;
-
-		if (utterances.startsWithAdd.test(text) && utterances.containsCheckin.test(text)) {
-			let config = { SlackUserId, message };
-			if (utterances.containsOnlyCheckin.test(text)){
-				config.reminder_type = "work_session";
-			}
-			controller.trigger(`ask_for_reminder`, [ bot, config ]);
-			return;
-		};
-
-		var userMessage = {
-			text,
-			reminder,
-			duration
-		}
-
-		// if the user says tasks (plural), then assume
-		// they want to add multiple tasks
-		var tasksRegExp = new RegExp(/(\btasks\b)/i);
-		if (tasksRegExp.test(text)) {
-			intent = intentConfig.EDIT_TASKS;
-		}
-
-		var config = {
-			intent,
-			SlackUserId,
-			message: userMessage
-		}
-
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(() => {
-			controller.trigger(`new_session_group_decision`, [ bot, config ]);
-		}, 1000);
-
-	});
 
 	/**
 	 * 			ADD DAILY TASK FLOW

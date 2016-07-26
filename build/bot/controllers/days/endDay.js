@@ -203,6 +203,9 @@ exports.default = function (controller) {
 										});
 									});
 								});
+								setTimeout(function () {
+									(0, _miscHelpers.prioritizeDailyTasks)(user);
+								}, 3000);
 								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 							} else {
 								// default premature end

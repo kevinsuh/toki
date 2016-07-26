@@ -23,6 +23,7 @@ exports.getMostRecentDoneSessionMessage = getMostRecentDoneSessionMessage;
 exports.deleteConvoAskMessage = deleteConvoAskMessage;
 exports.deleteMostRecentDoneSessionMessage = deleteMostRecentDoneSessionMessage;
 exports.getTimeToTaskTextAttachmentWithTaskListMessage = getTimeToTaskTextAttachmentWithTaskListMessage;
+exports.convertStringToNumbersArray = convertStringToNumbersArray;
 
 var _constants = require('./constants');
 
@@ -201,12 +202,6 @@ function convertArrayToTaskListMessage(taskArray) {
 	options.totalMinutes = totalMinutes;
 	options.count = count;
 
-	if (taskArray.length == 0) {
-		console.log("array passed in is empty at convertArrayToTaskListMessage");
-		taskListMessage = '> :spiral_note_pad:';
-		return taskListMessage;
-	}
-
 	// different format if has 1+ completed tasks (`segmentCompleted`)
 	var hasCompletedTasks = false;
 	taskArray.some(function (task) {
@@ -233,6 +228,13 @@ function convertArrayToTaskListMessage(taskArray) {
 
 	var remainingTasks = getRemainingTasksFromTaskArray(taskArray, options);
 	var completedTasks = getCompletedTasksFromTaskArray(taskArray, options);
+	if (options.onlyRemainingTasks) completedTasks = [];
+
+	if (taskArray.length == 0 || options.onlyRemainingTasks && remainingTasks.length == 0) {
+		console.log("array passed in is empty at convertArrayToTaskListMessage");
+		taskListMessage = '> :spiral_note_pad:';
+		return taskListMessage;
+	}
 
 	// add completed tasks to right place
 	var taskListMessageBody = '';
@@ -267,9 +269,8 @@ function convertArrayToTaskListMessage(taskArray) {
 function createTaskListMessageBody(taskArray, options) {
 
 	var taskListMessage = '';
-	var count = options.count;
 
-
+	var count = 0;
 	taskArray.forEach(function (task, index) {
 
 		// for when you get task from DB
@@ -277,6 +278,19 @@ function createTaskListMessageBody(taskArray, options) {
 		if (!options.dontUseDataValues && task.dataValues) {
 			task = task.dataValues;
 		};
+
+		var priority = task.priority;
+		if (!priority && task.dailyTask && task.DailyTask.dataValues) {
+			priority = task.DailyTask.dataValues.priority;
+		} else if (!priority) {
+			priority = '';
+		}
+
+		if (priority > 0) {
+			count = priority;
+		} else {
+			count++;
+		}
 
 		if (!options.dontShowMinutes && task.minutes) {
 
@@ -295,7 +309,9 @@ function createTaskListMessageBody(taskArray, options) {
 
 		// completed tasks do not have count
 		var taskContent = '';
-		if (!options.segmentCompleted || task.done != true) {
+
+		// only not completed tasks should have numbers
+		if (task.done != true) {
 			taskContent = count + ') ';
 		}
 		taskContent = '' + taskContent + task.text + minutesMessage;
@@ -304,8 +320,6 @@ function createTaskListMessageBody(taskArray, options) {
 		taskContent = options.noKarets ? taskContent : '> ' + taskContent;
 
 		taskListMessage += taskContent;
-
-		count++;
 	});
 
 	return taskListMessage;
@@ -715,5 +729,35 @@ function getTimeToTaskTextAttachmentWithTaskListMessage(taskTextArray, index, ta
 	});
 
 	return attachments;
+}
+
+/**
+ * takes in user input string `i.e. complete tasks 4, 1, 3` and converts it to an array of numbers
+ */
+function convertStringToNumbersArray(userInputString) {
+
+	var splitter = RegExp(/(,|\ba[and]{1,}\b)/);
+	var userInputArray = userInputString.split(splitter);
+
+	// if we capture 0 valid tasks from string, then we start over
+	var numberRegEx = new RegExp(/[\d]+/);
+	var numbersArray = [];
+
+	userInputArray.forEach(function (string) {
+
+		var number = string.match(numberRegEx);
+
+		// if it's a valid number and within the remainingTasks length
+		if (number) {
+			number = parseInt(number[0]);
+			numbersArray.push(number);
+		}
+	});
+
+	if (numbersArray.length == 0) {
+		return false;
+	} else {
+		return numbersArray;
+	}
 }
 //# sourceMappingURL=messageHelpers.js.map

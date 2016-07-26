@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TASK_DECISION = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
@@ -50,6 +50,33 @@ var DURATION_INTENT = exports.DURATION_INTENT = {
 var TIME_INTENT = exports.TIME_INTENT = {
 	word: "time",
 	reg_exp: new RegExp(/(:|[at]{2,}[ ]?[\d]+\b)/i)
+};
+
+var TASK_DECISION = exports.TASK_DECISION = {
+	complete: {
+		word: "TASK_COMPLETE",
+		reg_exp: new RegExp(/(\bcomp[omplete]{3,}\b|\bche[heck]{1,}\b|\bcro[ross]{1,}\b)/i)
+	},
+	add: {
+		word: "TASK_ADD",
+		reg_exp: new RegExp(/\bad[ad]{1,}\b/i)
+	},
+	view: {
+		word: "TASK_VIEW",
+		reg_exp: new RegExp(/\bvi[iew]{1,}\b/i)
+	},
+	delete: {
+		word: "TASK_DELETE",
+		reg_exp: new RegExp(/\bdel[elete]{3,}\b/i)
+	},
+	edit: {
+		word: "TASK_EDIT",
+		reg_exp: new RegExp(/\bed[dit]{1,}\b/i)
+	},
+	work: {
+		word: "TASK_WORK",
+		reg_exp: new RegExp(/\b(do[o]?|wor[ork]{1,})\b/i)
+	}
 };
 
 var EXIT_EARLY_WORDS = exports.EXIT_EARLY_WORDS = ['exit', 'stop', 'never mind', 'quit'];
@@ -352,6 +379,14 @@ var buttonValues = exports.buttonValues = {
 	changeDefaultBreakTime: {
 		value: "CHANGE_DEFAULT_BREAK_TIME",
 		name: "CHANGE_DEFAULT_BREAK_TIME"
+	},
+	undoTaskComplete: {
+		value: "UNDO_TASK_COMPLETE",
+		name: "UNDO_TASK_COMPLETE"
+	},
+	undoTaskDelete: {
+		value: "UNDO_TASK_DELETE",
+		name: "UNDO_TASK_DELETE"
 	}
 };
 

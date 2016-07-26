@@ -19,8 +19,10 @@ exports.default = function (controller) {
 		var actions = message.actions;
 		var callback_id = message.callback_id;
 
-		// need to replace buttons so user cannot reclick it
+		var payload = void 0;
+		var config = void 0;
 
+		// need to replace buttons so user cannot reclick it
 		if (actions && actions.length > 0) {
 			switch (actions[0].value) {
 				case _constants.buttonValues.startNow.value:
@@ -93,7 +95,6 @@ exports.default = function (controller) {
 				case _constants.buttonValues.resetTimes.value:
 					break;
 				case _constants.buttonValues.doneSessionTimeoutYes.value:
-					bot.replyInteractive(message, "Great work! :raised_hands:");
 					controller.trigger('done_session_yes_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
 				case _constants.buttonValues.doneSessionTimeoutSnooze.value:
@@ -106,11 +107,9 @@ exports.default = function (controller) {
 					});
 					break;
 				case _constants.buttonValues.doneSessionTimeoutDidSomethingElse.value:
-					bot.replyInteractive(message, 'Woo! :ocean:');
 					controller.trigger('end_session', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
 				case _constants.buttonValues.doneSessionTimeoutNo.value:
-					bot.replyInteractive(message, 'That\'s okay! You can keep chipping away and you\'ll get there :pick:');
 					controller.trigger('done_session_no_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
 				case _constants.buttonValues.doneSessionEarlyNo.value:
@@ -182,12 +181,12 @@ exports.default = function (controller) {
 					controller.trigger('session_add_checkin_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					break;
 				case _constants.buttonValues.startSession.endEarly.value:
-					bot.replyInteractive(message, "Let's end early!", function () {
+					bot.replyInteractive(message, "Okay!", function () {
 						controller.trigger('session_end_early_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					});
 					break;
 				case _constants.buttonValues.startSession.pause.endEarly.value:
-					bot.replyInteractive(message, "Let's end early!", function () {
+					bot.replyInteractive(message, "Okay!", function () {
 						controller.trigger('session_end_early_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					});
 					break;
@@ -195,6 +194,16 @@ exports.default = function (controller) {
 					bot.replyInteractive(message, "Okay, let's resume :arrow_forward:", function () {
 						controller.trigger('session_resume_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					});
+					break;
+				case _constants.buttonValues.undoTaskComplete.value:
+					payload = JSON.parse(message.payload);
+					config = { SlackUserId: SlackUserId, botCallback: true, payload: payload };
+					controller.trigger('undo_task_complete', [bot, config]);
+					break;
+				case _constants.buttonValues.undoTaskDelete.value:
+					payload = JSON.parse(message.payload);
+					config = { SlackUserId: SlackUserId, botCallback: true, payload: payload };
+					controller.trigger('undo_task_delete', [bot, config]);
 					break;
 				default:
 					// some default to replace button no matter what

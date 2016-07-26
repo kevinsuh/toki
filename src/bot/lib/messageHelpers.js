@@ -171,13 +171,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 
 	options.totalMinutes = totalMinutes;
 	options.count        = count;
-
-	if (taskArray.length  == 0) {
-		console.log("array passed in is empty at convertArrayToTaskListMessage");
-		taskListMessage = '> :spiral_note_pad:';
-		return taskListMessage;
-	}
-
+	
 	// different format if has 1+ completed tasks (`segmentCompleted`)
 	var hasCompletedTasks = false;
 	taskArray.some((task) => {
@@ -202,6 +196,14 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 
 	var remainingTasks = getRemainingTasksFromTaskArray(taskArray, options);
 	var completedTasks = getCompletedTasksFromTaskArray(taskArray, options);
+	if (options.onlyRemainingTasks)
+		completedTasks = [];
+
+	if (taskArray.length  == 0 || (options.onlyRemainingTasks && remainingTasks.length == 0)) {
+		console.log("array passed in is empty at convertArrayToTaskListMessage");
+		taskListMessage = '> :spiral_note_pad:';
+		return taskListMessage;
+	}
 
 	// add completed tasks to right place
 	var taskListMessageBody = '';
@@ -234,8 +236,8 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 function createTaskListMessageBody(taskArray, options) {
 
 	var taskListMessage = '';
-	var { count } = options
 
+	let count = 0;
 	taskArray.forEach((task, index) => {
 
 		// for when you get task from DB
@@ -243,6 +245,19 @@ function createTaskListMessageBody(taskArray, options) {
 		if (!options.dontUseDataValues && task.dataValues) {
 			task = task.dataValues;
 		};
+
+		let priority = task.priority;
+		if (!priority && task.dailyTask && task.DailyTask.dataValues) {
+			priority = task.DailyTask.dataValues.priority;
+		} else if (!priority) {
+			priority = '';
+		}
+
+		if (priority > 0) {
+			count = priority;
+		} else {
+			count++;
+		}
 
 		if (!options.dontShowMinutes && task.minutes) {
 
@@ -261,7 +276,9 @@ function createTaskListMessageBody(taskArray, options) {
 
 		// completed tasks do not have count
 		var taskContent = ``;
-		if (!options.segmentCompleted || task.done != true) {
+
+		// only not completed tasks should have numbers
+		if (task.done != true) {
 			taskContent = `${count}) `;
 		}
 		taskContent = `${taskContent}${task.text}${minutesMessage}`
@@ -271,7 +288,6 @@ function createTaskListMessageBody(taskArray, options) {
 
 		taskListMessage += taskContent;
 		
-		count++;
 	});
 
 	return taskListMessage;
@@ -695,3 +711,34 @@ export function getTimeToTaskTextAttachmentWithTaskListMessage(taskTextArray, in
 	return attachments;
 }
 
+/**
+ * takes in user input string `i.e. complete tasks 4, 1, 3` and converts it to an array of numbers
+ */
+export function convertStringToNumbersArray(userInputString) {
+
+	const splitter     = RegExp(/(,|\ba[and]{1,}\b)/);
+	var userInputArray = userInputString.split(splitter);
+
+	// if we capture 0 valid tasks from string, then we start over
+	var numberRegEx  = new RegExp(/[\d]+/);
+	var numbersArray = [];
+	
+	userInputArray.forEach((string) => {
+
+		var number = string.match(numberRegEx);
+
+		// if it's a valid number and within the remainingTasks length
+		if (number) {
+			number = parseInt(number[0]);
+			numbersArray.push(number);
+		}
+
+	});
+
+	if (numbersArray.length == 0) {
+		return false;
+	} else {
+		return numbersArray;
+	}
+
+}

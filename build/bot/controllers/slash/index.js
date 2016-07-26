@@ -98,6 +98,8 @@ exports.default = function (controller) {
 											UserId: UserId
 										}).then(function () {
 
+											(0, _miscHelpers.prioritizeDailyTasks)(user);
+
 											totalMinutes += minutes;
 											var timeString = (0, _messageHelpers.convertMinutesToHoursString)(totalMinutes);
 
