@@ -132,7 +132,8 @@ function specificCommandFlow(convo) {
 			break;
 		case _constants.TASK_DECISION.view.word:
 			console.log('\n\n ~~ user wants to view tasks in specificCommandFlow ~~ \n\n');
-			sayTasksForToday(convo);
+			convo.say("NEED TO CREATE VIEW PLAN FLOW");
+			// viewTasksFlow(convo);
 			break;
 		case _constants.TASK_DECISION.delete.word:
 			console.log('\n\n ~~ user wants to delete tasks in specificCommandFlow ~~ \n\n');
@@ -147,8 +148,8 @@ function specificCommandFlow(convo) {
 			break;
 		case _constants.TASK_DECISION.edit.word:
 			console.log('\n\n ~~ user wants to edit tasks in specificCommandFlow ~~ \n\n');
-			sayTasksForToday(convo);
-			convo.say("You can complete, delete, or add tasks to this list ( `complete task 2` or `add tasks`)!");
+			convo.say("NEED TO CREATE VIEW PLAN FLOW");
+			// viewTasksFlow(convo);
 			break;
 		case _constants.TASK_DECISION.work.word:
 
@@ -372,16 +373,23 @@ function completeTasksFlow(convo) {
 	var changePlanCommand = _convo$tasksEdit7.changePlanCommand;
 	var changedPlanCommands = _convo$tasksEdit7.changedPlanCommands;
 
-	// say task list, then ask which ones to complete
 
+	var wordSwapCount = 0;
+	var wordSwaps = ["complete", "*complete*", "*_complete_*"];
+
+	// say task list, then ask which ones to complete
 	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, planTitle: true };
-	var message = '';
+
+	var baseMessage = '';
+
 	if (changedPlanCommands) {
-		message = 'Okay! Which of your task(s) above would you like to complete?';
+		baseMessage = 'Okay! Which of your task(s) above would you like to';
 	} else {
+		baseMessage = 'Which of your task(s) above would you like to';
 		sayTasksForToday(convo, options);
-		message = 'Which of your task(s) above would you like to complete?';
 	}
+
+	var message = baseMessage + ' ' + wordSwaps[0] + '?';
 
 	convo.ask({
 		text: message,
@@ -415,26 +423,43 @@ function completeTasksFlow(convo) {
 				// let's delete the most recent ask message
 				(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
 
+				// handling add task flow differently -- we will delete plan for now
+				if (_constants.TASK_DECISION.add.reg_exp.test(text)) {
+					(0, _messageHelpers.deleteMostRecentPlanMessage)(response.channel, bot);
+				}
+
 				changePlanCommand.decision = true;
 				changePlanCommand.text = text;
-			} else if (_constants.TASK_DECISION.complete.reg_exp.test(text)) {
-				// if user tries completing task again!
 			}
 
 			if (changePlanCommand.decision) {
 				convo.stop();
 				convo.next();
 			} else {
-				// otherwise do the expected, default decision!
-				var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(text, dailyTasks);
-				if (taskNumbersToCompleteArray) {
-					singleLineCompleteTask(convo, taskNumbersToCompleteArray);
+
+				if (_constants.TASK_DECISION.complete.reg_exp.test(text)) {
+
+					// if user tries completing task again, just update the text
+					wordSwapCount++;
+					var wordSwapChoice = wordSwaps[wordSwapCount % wordSwaps.length];
+					var _text = baseMessage + ' ' + wordSwapChoice + '?';
+					var convoAskQuestionUpdate = (0, _messageHelpers.getMostRecentMessageToUpdate)(response.channel, bot);
+					convoAskQuestionUpdate.text = _text;
+					bot.api.chat.update(convoAskQuestionUpdate);
 				} else {
-					convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-					convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
-					convo.repeat();
+
+					// otherwise do the expected, default decision!
+					var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(text, dailyTasks);
+					if (taskNumbersToCompleteArray) {
+						singleLineCompleteTask(convo, taskNumbersToCompleteArray);
+					} else {
+						convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+						convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+						convo.repeat();
+					}
+
+					convo.next();
 				}
-				convo.next();
 			}
 		}
 	}]);
@@ -522,16 +547,23 @@ function deleteTasksFlow(convo) {
 	var changePlanCommand = _convo$tasksEdit9.changePlanCommand;
 	var changedPlanCommands = _convo$tasksEdit9.changedPlanCommands;
 
-	// say task list, then ask which ones to complete
 
+	var wordSwapCount = 0;
+	var wordSwaps = ["delete", "*delete*", "*_delete_*"];
+
+	// say task list, then ask which ones to complete
 	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, planTitle: true };
-	var message = '';
+
+	var baseMessage = '';
+
 	if (changedPlanCommands) {
-		message = 'Okay! Which of your task(s) above would you like to delete?';
+		baseMessage = 'Okay! Which of your task(s) above would you like to';
 	} else {
+		baseMessage = 'Which of your task(s) above would you like to';
 		sayTasksForToday(convo, options);
-		message = 'Which of your task(s) above would you like to delete?';
 	}
+
+	var message = baseMessage + ' ' + wordSwaps[0] + '?';
 
 	convo.ask({
 		text: message,
@@ -561,8 +593,19 @@ function deleteTasksFlow(convo) {
 
 			// if key word exists, we are stopping early and do the other flow!
 			if (_constants.TASK_DECISION.add.reg_exp.test(text) || _constants.TASK_DECISION.complete.reg_exp.test(text) || _constants.TASK_DECISION.work.reg_exp.test(text)) {
+
+				// let's delete the most recent ask message
+				(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
+				// handling add task flow differently -- we will delete plan for now
+				if (_constants.TASK_DECISION.add.reg_exp.test(text)) {
+					(0, _messageHelpers.deleteMostRecentPlanMessage)(response.channel, bot);
+				}
+
 				changePlanCommand.decision = true;
 				changePlanCommand.text = text;
+			} else if (_constants.TASK_DECISION.delete.reg_exp.test(text)) {
+				// if you hit delete again
 			}
 
 			if (changePlanCommand.decision) {
@@ -1043,9 +1086,18 @@ function workOnTasksFlow(convo) {
 
 			// if key word exists, we are stopping early and do the other flow!
 			if (_constants.TASK_DECISION.add.reg_exp.test(text) || _constants.TASK_DECISION.complete.reg_exp.test(text) || _constants.TASK_DECISION.delete.reg_exp.test(text)) {
+
+				// let's delete the most recent ask message
+				(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
+				// handling add task flow differently -- we will delete plan for now
+				if (_constants.TASK_DECISION.add.reg_exp.test(text)) {
+					(0, _messageHelpers.deleteMostRecentPlanMessage)(response.channel, bot);
+				}
+
 				changePlanCommand.decision = true;
 				changePlanCommand.text = text;
-			}
+			} else if (_constants.TASK_DECISION.work.reg_exp.test(text)) {}
 
 			if (changePlanCommand.decision) {
 				convo.stop();
