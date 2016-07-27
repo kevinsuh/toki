@@ -431,7 +431,13 @@ export default function(controller) {
 
 		console.log("\n\n\n ~~ In Plan Command Center ~~ \n\n\n");
 
-		const { message, message: { text }, SlackUserId } = config;
+		const { message, message: { text }, SlackUserId, botCallback } = config;
+
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			let botToken = bot.config.token;
+			bot          = bots[botToken];
+		}
 
 		let taskNumbers = convertStringToNumbersArray(text);
 		if (taskNumbers) {

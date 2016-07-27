@@ -273,6 +273,9 @@ function sayTasksForToday(convo) {
 	if (dailyTasks.length > 0 && (!options.onlyRemainingTasks || options.onlyRemainingTasks && remainingTasks.length > 0)) {
 		options.segmentCompleted = true;
 		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
+		if (options.customTaskListMessage) {
+			taskListMessage = options.customTaskListMessage;
+		}
 
 		var taskMessage = "Here are your tasks for today :memo::";
 		if (options.onlyRemainingTasks) {
@@ -285,10 +288,17 @@ function sayTasksForToday(convo) {
 		if (options.scope) {
 			attachmentOptions.scope = options.scope;
 		}
-		var attachments = (0, _miscHelpers.getPlanCommandOptionAttachments)(attachmentOptions);
-		if (options.planTitle) {
+		var attachments = [];
+
+		if (options.startPlan) {
 			taskListMessage = 'Here\'s your plan for today :memo::\n' + taskListMessage;
+			attachments = (0, _miscHelpers.getPlanCommandOptionAttachments)(attachmentOptions);
+		} else if (options.endOfPlan) {
+			taskListMessage = 'Here\'s your plan for today :memo::\n' + taskListMessage;
+			// this is not working consistently enough to implement right now
+			attachments = (0, _miscHelpers.getEndOfPlanCommandOptionAttachments)(attachmentOptions);
 		}
+
 		convo.say({
 			text: taskListMessage,
 			attachments: attachments
@@ -367,7 +377,8 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 			}]
 		});
 
-		var options = { onlyRemainingTasks: true };
+		// say task list, then ask which ones to complete
+		var options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
 		sayTasksForToday(convo, options);
 		checkForNoRemainingTasks(convo);
 	} else {
@@ -387,7 +398,7 @@ function completeTasksFlow(convo) {
 
 	// say task list, then ask which ones to complete
 
-	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, planTitle: true };
+	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, startPlan: true };
 
 	var baseMessage = '';
 
@@ -538,7 +549,8 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 			}]
 		});
 
-		var options = { onlyRemainingTasks: true };
+		// say task list, then ask which ones to complete
+		var options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
 		sayTasksForToday(convo, options);
 		checkForNoRemainingTasks(convo);
 	} else {
@@ -558,7 +570,7 @@ function deleteTasksFlow(convo) {
 
 	// say task list, then ask which ones to complete
 
-	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, planTitle: true };
+	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, startPlan: true };
 
 	var baseMessage = '';
 
@@ -957,12 +969,10 @@ function confirmTimeToTasks(convo) {
 				// you added new tasks and are confirming time for them
 				addNewTasksToTaskList(response, convo);
 			} else if (dailyTasksToUpdate.length > 0) {
-				// editing time to tasks
-				var options = { dontUseDataValues: true, segmentCompleted: true };
-				var fullTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasksToUpdate, options);
 
-				convo.say("Here's your remaining task list :memo::");
-				convo.say(fullTaskListMessage);
+				// say task list, then ask which ones to complete
+				var options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
+				sayTasksForToday(convo, options);
 			}
 
 			convo.next();
@@ -991,7 +1001,6 @@ function addNewTasksToTaskList(response, convo) {
 	var dailyTasks = _convo$tasksEdit14.dailyTasks;
 	var newTasks = _convo$tasksEdit14.newTasks;
 
-	var options = { segmentCompleted: true };
 
 	var taskArray = [];
 	dailyTasks.forEach(function (task) {
@@ -1001,17 +1010,12 @@ function addNewTasksToTaskList(response, convo) {
 		taskArray.push(newTask);
 	});
 
-	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, { onlyRemainingTasks: true });
 
-	convo.say("Here's your updated task list :memo::");
-	convo.say({
-		text: taskListMessage,
-		attachments: [{
-			attachment_type: 'default',
-			callback_id: "TASK_LIST_MESSAGE",
-			fallback: "Here's your task list!"
-		}]
-	});
+	// say task list, then ask which ones to complete
+	var options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true, customTaskListMessage: taskListMessage };
+	sayTasksForToday(convo, options);
+
 	convo.next();
 }
 
@@ -1049,7 +1053,8 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 		convo.next();
 	} else {
 		convo.say('I couldn\'t find that task to work on');
-		var options = { onlyRemainingTasks: true };
+		// say task list, then ask which ones to complete
+		var options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
 		sayTasksForToday(convo, options);
 	}
 
@@ -1066,7 +1071,7 @@ function workOnTasksFlow(convo) {
 
 	// say task list, then ask which ones to complete
 
-	var options = { onlyRemainingTasks: true, planTitle: true };
+	var options = { onlyRemainingTasks: true, startPlan: true };
 
 	var baseMessage = '';
 

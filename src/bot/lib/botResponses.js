@@ -34,7 +34,7 @@ export const utterances = {
 	yes: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|(\bd[o ]+[this]{2,})|(\bd[o ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
 	yesOrCorrect: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bc[correct]{4,})/i),
 	no: new RegExp(/((no|not|nah|nope|^n)\b|\bn[oahpe]{1,4}\b)/i),
-	noAndNeverMind: new RegExp(/(\b(no|nah|nope)|\bn[oahpe]+\b|\bn[never mind]{4,}\b|[nvm]{2,})/i),
+	noAndNeverMind: new RegExp(/(\b(no|nah|nope|n)\b|\bn[oahpe]{1,6}\b|\bn[never mind]{4,}\b|\bn[vm]{1,3}\b)/i),
 	startsWithNever: new RegExp(/^ne[never]{3,}\b/i),
 	specificYes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|\by[esahp]{2,}\b|\bs[ure]{2,}\b)/i),
 	endDay: new RegExp(/(\be[end ]{2,}\bd[day]{2,})/i),

@@ -4,7 +4,7 @@ import http from 'http';
 import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
-import { buttonValues } from '../../lib/constants';
+import { buttonValues, TASK_DECISION } from '../../lib/constants';
 import moment from 'moment-timezone';
 
 // base controller for "buttons" flow
@@ -23,6 +23,7 @@ export default function(controller) {
 		const { actions, callback_id } = message;
 		let payload;
 		let config;
+		let responseMessage;
 
 		// need to replace buttons so user cannot reclick it
 		if (actions && actions.length > 0) {
@@ -201,6 +202,8 @@ export default function(controller) {
 					});
 					break;
 				case buttonValues.undoTaskComplete.value:
+					console.log("\n\n MESSAGE:");
+					console.log(message);
 					payload = JSON.parse(message.payload);
 					config = { SlackUserId, botCallback: true, payload };
 					controller.trigger(`undo_task_complete`, [ bot, config ]);
@@ -218,6 +221,34 @@ export default function(controller) {
 				case buttonValues.planCommands.deleteTasks.value:
 					break;
 				case buttonValues.planCommands.workOnTasks.value:
+					break;
+				case buttonValues.endOfPlanCommands.addTasks.value:
+					responseMessage = { text: "add tasks" };
+					config = { SlackUserId, message, botCallback: true };
+					bot.replyInteractive(message, "Okay, let's add tasks!", () => {
+						controller.trigger(`plan_command_center`, [ bot, config ]);
+					});
+					break;
+				case buttonValues.endOfPlanCommands.completeTasks.value:
+					responseMessage = { text: "complete tasks" };
+					config = { SlackUserId, message, botCallback: true, taskDecision: TASK_DECISION.complete.word };
+					bot.replyInteractive(message, "Okay, let's complete tasks!", () => {
+						controller.trigger(`edit_tasks_flow`, [ bot, config ]);
+					});
+					break;
+				case buttonValues.endOfPlanCommands.deleteTasks.value:
+					responseMessage = { text: "delete tasks" };
+					config = { SlackUserId, message, botCallback: true };
+					bot.replyInteractive(message, "Okay, let's delete tasks!", () => {
+						controller.trigger(`plan_command_center`, [ bot, config ]);
+					});
+					break;
+				case buttonValues.endOfPlanCommands.workOnTasks.value:
+					responseMessage = { text: "work on tasks" };
+					config = { SlackUserId, message, botCallback: true };
+					bot.replyInteractive(message, "Okay, let's work on tasks!", () => {
+						controller.trigger(`plan_command_center`, [ bot, config ]);
+					});
 					break;
 				default:
 					// some default to replace button no matter what

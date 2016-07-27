@@ -415,7 +415,14 @@ exports.default = function (controller) {
 		var message = config.message;
 		var text = config.message.text;
 		var SlackUserId = config.SlackUserId;
+		var botCallback = config.botCallback;
 
+
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			var botToken = bot.config.token;
+			bot = _index.bots[botToken];
+		}
 
 		var taskNumbers = (0, _messageHelpers.convertStringToNumbersArray)(text);
 		if (taskNumbers) {
