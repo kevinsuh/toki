@@ -250,6 +250,9 @@ function sayTasksForToday(convo, options = {}) {
 			attachmentOptions.scope = options.scope;
 		}
 		let attachments = getPlanCommandOptionAttachments(attachmentOptions);
+		if (options.planTitle) {
+			taskListMessage = `Here's your plan for today :memo::\n${taskListMessage}`;
+		}
 		convo.say({
 			text: taskListMessage,
 			attachments
@@ -335,12 +338,11 @@ function completeTasksFlow(convo) {
 	let { tasksEdit: { dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, planTitle: true };
 	let message = '';
 	if (changedPlanCommands) {
 		message = `Okay! Which of your task(s) above would you like to complete?`;
 	} else {
-		convo.say("Here's your plan for today :memo::");
 		sayTasksForToday(convo, options);
 		message = `Which of your task(s) above would you like to complete?`;
 	}
@@ -471,12 +473,11 @@ function deleteTasksFlow(convo) {
 	let { tasksEdit: { dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, planTitle: true };
 	let message = '';
 	if (changedPlanCommands) {
 		message = `Okay! Which of your task(s) above would you like to delete?`;
 	} else {
-		convo.say("Here's your plan for today :memo::");
 		sayTasksForToday(convo, options);
 		message = `Which of your task(s) above would you like to delete?`;
 	}
@@ -947,12 +948,11 @@ function workOnTasksFlow(convo) {
 	let { tasksEdit: { dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true };
+	let options = { onlyRemainingTasks: true, planTitle: true };
 	let message = '';
 	if (changedPlanCommands) {
 		message = `Okay! Which of your task(s) above would you like to work on?`;
 	} else {
-		convo.say("Here's your plan for today :memo::");
 		sayTasksForToday(convo, options);
 		message = `Which of your task(s) above would you like to work on?`;
 	}

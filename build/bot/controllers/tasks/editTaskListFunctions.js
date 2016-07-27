@@ -281,6 +281,9 @@ function sayTasksForToday(convo) {
 			attachmentOptions.scope = options.scope;
 		}
 		var attachments = (0, _miscHelpers.getPlanCommandOptionAttachments)(attachmentOptions);
+		if (options.planTitle) {
+			taskListMessage = 'Here\'s your plan for today :memo::\n' + taskListMessage;
+		}
 		convo.say({
 			text: taskListMessage,
 			attachments: attachments
@@ -370,12 +373,11 @@ function completeTasksFlow(convo) {
 
 	// say task list, then ask which ones to complete
 
-	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
+	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, planTitle: true };
 	var message = '';
 	if (changedPlanCommands) {
 		message = 'Okay! Which of your task(s) above would you like to complete?';
 	} else {
-		convo.say("Here's your plan for today :memo::");
 		sayTasksForToday(convo, options);
 		message = 'Which of your task(s) above would you like to complete?';
 	}
@@ -505,12 +507,11 @@ function deleteTasksFlow(convo) {
 
 	// say task list, then ask which ones to complete
 
-	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
+	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, planTitle: true };
 	var message = '';
 	if (changedPlanCommands) {
 		message = 'Okay! Which of your task(s) above would you like to delete?';
 	} else {
-		convo.say("Here's your plan for today :memo::");
 		sayTasksForToday(convo, options);
 		message = 'Which of your task(s) above would you like to delete?';
 	}
@@ -971,12 +972,11 @@ function workOnTasksFlow(convo) {
 
 	// say task list, then ask which ones to complete
 
-	var options = { onlyRemainingTasks: true };
+	var options = { onlyRemainingTasks: true, planTitle: true };
 	var message = '';
 	if (changedPlanCommands) {
 		message = 'Okay! Which of your task(s) above would you like to work on?';
 	} else {
-		convo.say("Here's your plan for today :memo::");
 		sayTasksForToday(convo, options);
 		message = 'Which of your task(s) above would you like to work on?';
 	}
