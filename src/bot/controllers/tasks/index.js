@@ -118,7 +118,6 @@ export default function(controller) {
 							bot,
 							tz,
 							SlackUserId,
-							UserId,
 							dailyTasks,
 							updateTaskListMessageObject: {},
 							newTasks: [],
@@ -223,16 +222,6 @@ export default function(controller) {
 										})
 									}
 								})
-							}
-
-							if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
-								var config = {
-									SlackUserId,
-									dailyTasksToWorkOn
-								};
-								config.intent = intentConfig.START_SESSION;
-								controller.trigger(`new_session_group_decision`, [ bot, config ]);
-								return;
 							}
 
 							setTimeout(() => {
