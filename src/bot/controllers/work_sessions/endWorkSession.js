@@ -12,7 +12,7 @@ import intentConfig from '../../lib/intents';
 
 import { bots, resumeQueuedReachouts } from '../index';
 
-import { colorsArray, buttonValues, colorsHash, TOKI_DEFAULT_SNOOZE_TIME, TOKI_DEFAULT_BREAK_TIME, sessionTimerDecisions, MINUTES_FOR_DONE_SESSION_TIMEOUT, pausedSessionOptionsAttachments, startSessionOptionsAttachments } from '../../lib/constants';
+import { colorsArray, buttonValues, colorsHash, TOKI_DEFAULT_SNOOZE_TIME, TOKI_DEFAULT_BREAK_TIME, sessionTimerDecisions, MINUTES_FOR_DONE_SESSION_TIMEOUT, pausedSessionOptionsAttachments, startSessionOptionsAttachments, TASK_DECISION } from '../../lib/constants';
 
 // END OF A WORK SESSION
 export default function(controller) {
@@ -1330,7 +1330,8 @@ export function handlePostSessionDecision(postSessionDecision, config) {
 			controller.trigger('trigger_day_end', [bot, { SlackUserId }]);
 			return;
 		case intentConfig.START_SESSION:
-			controller.trigger('confirm_new_session', [bot, { SlackUserId }]);
+			let config = { taskDecision: TASK_DECISION.work.word, SlackUserId };
+			controller.trigger('edit_tasks_flow', [bot, config]);
 			return;
 		default: break;
 	}
