@@ -219,9 +219,9 @@ exports.default = function (controller) {
 					break;
 				case _constants.buttonValues.endOfPlanCommands.addTasks.value:
 					responseMessage = { text: "add tasks" };
-					config = { SlackUserId: SlackUserId, message: message, botCallback: true };
+					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.add.word };
 					bot.replyInteractive(message, "Okay, let's add tasks!", function () {
-						controller.trigger('plan_command_center', [bot, config]);
+						controller.trigger('edit_tasks_flow', [bot, config]);
 					});
 					break;
 				case _constants.buttonValues.endOfPlanCommands.completeTasks.value:
@@ -233,16 +233,16 @@ exports.default = function (controller) {
 					break;
 				case _constants.buttonValues.endOfPlanCommands.deleteTasks.value:
 					responseMessage = { text: "delete tasks" };
-					config = { SlackUserId: SlackUserId, message: message, botCallback: true };
+					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.delete.word };
 					bot.replyInteractive(message, "Okay, let's delete tasks!", function () {
-						controller.trigger('plan_command_center', [bot, config]);
+						controller.trigger('edit_tasks_flow', [bot, config]);
 					});
 					break;
 				case _constants.buttonValues.endOfPlanCommands.workOnTasks.value:
 					responseMessage = { text: "work on tasks" };
-					config = { SlackUserId: SlackUserId, message: message, botCallback: true };
+					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.work.word };
 					bot.replyInteractive(message, "Okay, let's work on tasks!", function () {
-						controller.trigger('plan_command_center', [bot, config]);
+						controller.trigger('edit_tasks_flow', [bot, config]);
 					});
 					break;
 				default:

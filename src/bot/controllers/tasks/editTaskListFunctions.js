@@ -230,6 +230,8 @@ function sayWorkSessionMessage(convo) {
 			workSessionMessage = `You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`;
 		}
 		convo.say(workSessionMessage);
+	} else {
+		convo.say(`Let me know when you're ready to `start a session` :muscle:`);
 	}
 
 }
@@ -347,8 +349,9 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 
 		// say task list, then ask which ones to complete
 		let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
-		sayTasksForToday(convo, options);
+		// sayTasksForToday(convo, options);
 		checkForNoRemainingTasks(convo);
+		sayWorkSessionMessage(convo);
 
 	} else {
 		convo.say("I couldn't find that task to complete!");
@@ -433,8 +436,10 @@ function completeTasksFlow(convo) {
 						wordSwapCount++;
 						let text = wordSwapMessage(baseMessage, "complete?", wordSwapCount);
 						let convoAskQuestionUpdate = getMostRecentMessageToUpdate(response.channel, bot);
-						convoAskQuestionUpdate.text = text;
-						bot.api.chat.update(convoAskQuestionUpdate);
+						if (convoAskQuestionUpdate) {
+							convoAskQuestionUpdate.text = text;
+							bot.api.chat.update(convoAskQuestionUpdate);
+						}
 
 					} else {
 
@@ -523,8 +528,9 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 
 		// say task list, then ask which ones to complete
 		let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
-		sayTasksForToday(convo, options);
+		// sayTasksForToday(convo, options);
 		checkForNoRemainingTasks(convo);
+		sayWorkSessionMessage(convo);
 
 	} else {
 		convo.say("I couldn't find that task to delete!");
@@ -608,8 +614,10 @@ function deleteTasksFlow(convo) {
 						wordSwapCount++;
 						let text = wordSwapMessage(baseMessage, "delete?", wordSwapCount);
 						let convoAskQuestionUpdate = getMostRecentMessageToUpdate(response.channel, bot);
-						convoAskQuestionUpdate.text = text;
-						bot.api.chat.update(convoAskQuestionUpdate);
+						if (convoAskQuestionUpdate) {
+							convoAskQuestionUpdate.text = text;
+							bot.api.chat.update(convoAskQuestionUpdate);
+						}
 
 					} else {
 
@@ -992,7 +1000,9 @@ function addNewTasksToTaskList(response, convo) {
 
 	// say task list, then ask which ones to complete
 	let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true, customTaskListMessage: taskListMessage };
-	sayTasksForToday(convo, options);
+	// sayTasksForToday(convo, options);
+	checkForNoRemainingTasks(convo);
+	sayWorkSessionMessage(convo);
 
 	convo.next();
 
@@ -1034,7 +1044,7 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 		convo.say(`I couldn't find that task to work on`);
 		// say task list, then ask which ones to complete
 		let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
-		sayTasksForToday(convo, options);
+		// sayTasksForToday(convo, options);
 	}
 
 	convo.next();
@@ -1115,8 +1125,10 @@ function workOnTasksFlow(convo) {
 						wordSwapCount++;
 						let text = wordSwapMessage(baseMessage, "work on?", wordSwapCount);
 						let convoAskQuestionUpdate = getMostRecentMessageToUpdate(response.channel, bot);
-						convoAskQuestionUpdate.text = text;
-						bot.api.chat.update(convoAskQuestionUpdate);
+						if (convoAskQuestionUpdate) {
+							convoAskQuestionUpdate.text = text;
+							bot.api.chat.update(convoAskQuestionUpdate);
+						}
 
 					} else {
 
