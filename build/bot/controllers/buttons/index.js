@@ -220,28 +220,28 @@ exports.default = function (controller) {
 				case _constants.buttonValues.endOfPlanCommands.addTasks.value:
 					responseMessage = { text: "add tasks" };
 					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.add.word };
-					bot.replyInteractive(message, "Okay, let's add tasks!", function () {
+					bot.replyInteractive(message, "Okay, let's add some tasks!", function () {
 						controller.trigger('edit_tasks_flow', [bot, config]);
 					});
 					break;
 				case _constants.buttonValues.endOfPlanCommands.completeTasks.value:
 					responseMessage = { text: "complete tasks" };
 					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.complete.word };
-					bot.replyInteractive(message, "Okay, let's complete tasks!", function () {
+					bot.replyInteractive(message, "Okay, let's complete some tasks!", function () {
 						controller.trigger('edit_tasks_flow', [bot, config]);
 					});
 					break;
 				case _constants.buttonValues.endOfPlanCommands.deleteTasks.value:
 					responseMessage = { text: "delete tasks" };
 					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.delete.word };
-					bot.replyInteractive(message, "Okay, let's delete tasks!", function () {
+					bot.replyInteractive(message, "Okay, let's delete some tasks!", function () {
 						controller.trigger('edit_tasks_flow', [bot, config]);
 					});
 					break;
 				case _constants.buttonValues.endOfPlanCommands.workOnTasks.value:
 					responseMessage = { text: "work on tasks" };
 					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.work.word };
-					bot.replyInteractive(message, "Okay, let's work on tasks!", function () {
+					bot.replyInteractive(message, "Okay, let's get to work!", function () {
 						controller.trigger('edit_tasks_flow', [bot, config]);
 					});
 					break;

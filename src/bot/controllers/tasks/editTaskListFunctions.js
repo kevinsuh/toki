@@ -106,8 +106,7 @@ function specificCommandFlow(convo) {
 			break;
 		case TASK_DECISION.view.word:
 			console.log(`\n\n ~~ user wants to view tasks in specificCommandFlow ~~ \n\n`);
-			convo.say("NEED TO CREATE VIEW PLAN FLOW");
-			// viewTasksFlow(convo);
+			viewTasksFlow(convo);
 			break;
 		case TASK_DECISION.delete.word:
 			console.log(`\n\n ~~ user wants to delete tasks in specificCommandFlow ~~ \n\n`)
@@ -122,8 +121,7 @@ function specificCommandFlow(convo) {
 			break;
 		case TASK_DECISION.edit.word:
 			console.log(`\n\n ~~ user wants to edit tasks in specificCommandFlow ~~ \n\n`)
-			convo.say("NEED TO CREATE VIEW PLAN FLOW");
-			// viewTasksFlow(convo);
+			viewTasksFlow(convo);
 			break;
 		case TASK_DECISION.work.word:
 
@@ -231,7 +229,7 @@ function sayWorkSessionMessage(convo) {
 		}
 		convo.say(workSessionMessage);
 	} else {
-		convo.say(`Let me know when you're ready to `start a session` :muscle:`);
+		convo.say(`Good luck with today! Let me know when you're ready to start a session :muscle:`);
 	}
 
 }
@@ -266,7 +264,12 @@ function sayTasksForToday(convo, options = {}) {
 			taskListMessage = `Here's your plan for today :memo::\n${taskListMessage}`;
 			attachments     = getPlanCommandOptionAttachments(attachmentOptions);
 		} else if (options.endOfPlan) {
-			taskListMessage = `Here's your plan for today :memo::\n${taskListMessage}`;
+			if (options.homeBase) {
+				taskListMessage = `Okay! Here's today's plan :memo:. Let me know if you want to do something with it:\n${taskListMessage}`;
+			} else {
+				taskListMessage = `Here's your plan for today :memo::\n${taskListMessage}`;
+			}
+			
 			// this is not working consistently enough to implement right now
 			attachments     = getEndOfPlanCommandOptionAttachments(attachmentOptions);
 		}
@@ -285,6 +288,21 @@ function wordSwapMessage(baseMessage, word, wordSwapCount) {
 	let wordSwapChoice = wordSwaps[wordSwapCount % wordSwaps.length];
 	let message = `${baseMessage} ${wordSwapChoice}`;
 	return message;
+
+}
+
+/**
+ * 		~~ VIEW TASKS (HOME BASE OF PLAN) ~~
+ */
+
+function viewTasksFlow(convo) {
+
+	let { tasksEdit: { bot, dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
+
+	// say task list, then ask which ones to complete
+	let options = { noTitle: true, endOfPlan: true, homeBase: true };
+	sayTasksForToday(convo, options);
+	convo.next();
 
 }
 

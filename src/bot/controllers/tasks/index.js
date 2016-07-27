@@ -76,7 +76,13 @@ export default function(controller) {
 
 	controller.on(`edit_tasks_flow`, (bot, config) => {
 
-		const { SlackUserId, taskNumbers, taskDecision, message } = config;
+		const { SlackUserId, taskNumbers, taskDecision, message, botCallback } = config;
+
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			let botToken = bot.config.token;
+			bot          = bots[botToken];
+		}
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
