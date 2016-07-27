@@ -1312,7 +1312,8 @@ function handlePostSessionDecision(postSessionDecision, config) {
 			controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
 			return;
 		case _intents2.default.START_SESSION:
-			controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+			var _config = { taskDecision: _constants.TASK_DECISION.work.word, SlackUserId: SlackUserId };
+			controller.trigger('edit_tasks_flow', [bot, _config]);
 			return;
 		default:
 			break;

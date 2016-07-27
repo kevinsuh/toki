@@ -320,7 +320,7 @@ controller.on('login_bot', (bot,identity) => {
 controller.on(`new_session_group_decision`, (bot, config) => {
 
 	// type is either `ADD_TASK` or `START_SESSION`
-	const { SlackUserId, intent, message, dailyTasksToWorkOn } = config;
+	const { SlackUserId, intent, message, dailyTasksToWorkOn, taskDecision } = config;
 
 	models.User.find({
 		where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -342,7 +342,8 @@ controller.on(`new_session_group_decision`, (bot, config) => {
 			message,
 			controller,
 			bot,
-			dailyTasksToWorkOn
+			dailyTasksToWorkOn,
+			taskDecision
 		}
 		triggerIntent(intent, config);
 		return;
@@ -458,7 +459,8 @@ controller.on(`new_session_group_decision`, (bot, config) => {
 								message,
 								controller,
 								bot,
-								dailyTasksToWorkOn
+								dailyTasksToWorkOn,
+								taskDecision
 							}
 							triggerIntent(intent, config);
 						}
@@ -478,7 +480,8 @@ export function triggerIntent(intent, config) {
 			controller.trigger(`edit_tasks_flow`, [ bot, { SlackUserId, message }]);
 			break;
 		case intentConfig.START_SESSION:
-			controller.trigger(`confirm_new_session`, [ bot, { SlackUserId, dailyTasksToWorkOn } ]);
+			console.log(config);
+			controller.trigger(`confirm_new_session`, [ bot, config ]);
 			break;
 		case intentConfig.VIEW_TASKS:
 			controller.trigger(`view_daily_tasks_flow`, [ bot, { SlackUserId, message } ]);
