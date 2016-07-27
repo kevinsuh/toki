@@ -231,73 +231,6 @@ exports.default = function (controller) {
 		});
 	});
 
-	controller.hears(['daily_tasks', 'add_daily_task', 'completed_task'], 'direct_message', _index.wit.hears, function (bot, message) {
-		var text = message.text;
-		var channel = message.channel;
-
-		var SlackUserId = message.user;
-
-		// wit may pick up "add check in" as add_daily_task
-		if (_botResponses.utterances.startsWithAdd.test(text) && _botResponses.utterances.containsCheckin.test(text)) {
-			var _config = { SlackUserId: SlackUserId, message: message };
-			if (_botResponses.utterances.containsOnlyCheckin.test(text)) {
-				_config.reminder_type = "work_session";
-			}
-			controller.trigger('ask_for_reminder', [bot, _config]);
-			return;
-		};
-
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-
-		var config = { SlackUserId: SlackUserId, message: message };
-
-		var taskNumbers = (0, _messageHelpers.convertStringToNumbersArray)(text);
-		if (taskNumbers) {
-			config.taskNumbers = taskNumbers;
-		}
-
-		// this is how you make switch/case statements with RegEx
-		switch (text) {
-			case (text.match(_constants.TASK_DECISION.complete.reg_exp) || {}).input:
-				console.log('\n\n ~~ User wants to complete task ~~ \n\n');
-				config.taskDecision = _constants.TASK_DECISION.complete.word;
-				break;
-			case (text.match(_constants.TASK_DECISION.add.reg_exp) || {}).input:
-				console.log('\n\n ~~ User wants to add task ~~ \n\n');
-				config.taskDecision = _constants.TASK_DECISION.add.word;
-				break;
-			case (text.match(_constants.TASK_DECISION.view.reg_exp) || {}).input:
-				console.log('\n\n ~~ User wants to view task ~~ \n\n');
-				config.taskDecision = _constants.TASK_DECISION.view.word;
-				break;
-			case (text.match(_constants.TASK_DECISION.delete.reg_exp) || {}).input:
-				console.log('\n\n ~~ User wants to delete task ~~ \n\n');
-				config.taskDecision = _constants.TASK_DECISION.delete.word;
-				break;
-			case (text.match(_constants.TASK_DECISION.edit.reg_exp) || {}).input:
-				console.log('\n\n ~~ User wants to edit task ~~ \n\n');
-				config.taskDecision = _constants.TASK_DECISION.edit.word;
-				break;
-			case (text.match(_constants.TASK_DECISION.work.reg_exp) || {}).input:
-				console.log('\n\n ~~ User wants to work on task ~~ \n\n');
-				config.taskDecision = _constants.TASK_DECISION.work.word;
-				break;
-			default:
-				config.taskDecision = _constants.TASK_DECISION.view.word;
-				break;
-		}
-
-		console.log('\n\nCONFIG:');
-		console.log(config);
-
-		setTimeout(function () {
-			controller.trigger('edit_tasks_flow', [bot, config]);
-		}, 1000);
-	});
-
 	/**
   * 		UNDO COMPLETE OR DELETE OF TASKS
   */
@@ -428,6 +361,91 @@ exports.default = function (controller) {
 				});
 			});
 		});
+	});
+
+	controller.hears(['daily_tasks', 'add_daily_task', 'completed_task'], 'direct_message', _index.wit.hears, function (bot, message) {
+		var text = message.text;
+		var channel = message.channel;
+
+		var SlackUserId = message.user;
+
+		// wit may pick up "add check in" as add_daily_task
+		if (_botResponses.utterances.startsWithAdd.test(text) && _botResponses.utterances.containsCheckin.test(text)) {
+			var _config = { SlackUserId: SlackUserId, message: message };
+			if (_botResponses.utterances.containsOnlyCheckin.test(text)) {
+				_config.reminder_type = "work_session";
+			}
+			controller.trigger('ask_for_reminder', [bot, _config]);
+			return;
+		};
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+
+		var config = { SlackUserId: SlackUserId, message: message };
+
+		setTimeout(function () {
+			controller.trigger('plan_command_center', [bot, config]);
+		}, 1000);
+	});
+
+	/**
+  * 		This is where the message command goes to decide
+  * 		What happens with your plan, what data we show
+  * 		i.e. what specific customization config to displaying PLAN module.
+  */
+	controller.on('plan_command_center', function (bot, config) {
+
+		console.log("\n\n\n ~~ In Plan Command Center ~~ \n\n\n");
+
+		var text = config.message.text;
+		var SlackUserId = config.SlackUserId;
+
+
+		var taskNumbers = (0, _messageHelpers.convertStringToNumbersArray)(text);
+		if (taskNumbers) {
+			config.taskNumbers = taskNumbers;
+		}
+
+		// this is how you make switch/case statements with RegEx
+		switch (text) {
+			case (text.match(_constants.TASK_DECISION.complete.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to complete task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.complete.word;
+				break;
+			case (text.match(_constants.TASK_DECISION.add.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to add task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.add.word;
+				break;
+			case (text.match(_constants.TASK_DECISION.view.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to view task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.view.word;
+				break;
+			case (text.match(_constants.TASK_DECISION.delete.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to delete task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.delete.word;
+				break;
+			case (text.match(_constants.TASK_DECISION.edit.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to edit task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.edit.word;
+				break;
+			case (text.match(_constants.TASK_DECISION.work.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to work on task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.work.word;
+				break;
+			default:
+				config.taskDecision = _constants.TASK_DECISION.view.word;
+				break;
+		}
+
+		/**
+   * 	For `edit_tasks_flow`, config must have taskDecision.
+   * 	if taskNumbers exists, allows for single-line command
+   */
+
+		controller.trigger('edit_tasks_flow', [bot, config]);
 	});
 };
 
