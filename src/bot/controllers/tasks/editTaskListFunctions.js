@@ -229,7 +229,8 @@ function sayWorkSessionMessage(convo) {
 		}
 		convo.say(workSessionMessage);
 	} else {
-		convo.say(`Good luck with today! Let me know when you're ready to start a session :muscle:`);
+		convo.say(`Good luck with today!`);
+		convo.say(`Let me know if there's anything you want to do :muscle: \`i.e. lets do task 2\``);
 	}
 
 }
@@ -265,7 +266,7 @@ function sayTasksForToday(convo, options = {}) {
 			attachments     = getPlanCommandOptionAttachments(attachmentOptions);
 		} else if (options.endOfPlan) {
 			if (options.homeBase) {
-				taskListMessage = `Okay! Here's today's plan :memo::\n${taskListMessage}`;
+				taskListMessage = `Here's today's plan :memo::\n${taskListMessage}`;
 			} else {
 				taskListMessage = `Here's your plan for today :memo::\n${taskListMessage}`;
 			}
@@ -366,11 +367,7 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 			}]
 		});
 
-		// say task list, then ask which ones to complete
-		let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
-		// sayTasksForToday(convo, options);
 		checkForNoRemainingTasks(convo);
-		sayWorkSessionMessage(convo);
 
 	} else {
 		convo.say("I couldn't find that task to complete!");
@@ -469,7 +466,12 @@ function completeTasksFlow(convo) {
 							// delete the plan if you finish completing a task
 							deleteMostRecentPlanMessage(response.channel, bot);
 
+							// say task list, then ask which ones to complete
+							let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
+
 							singleLineCompleteTask(convo, taskNumbersToCompleteArray);
+							sayTasksForToday(convo, options);
+							sayWorkSessionMessage(convo);
 
 						} else {
 							convo.say("Oops, I don't totally understand :dog:. Let's try this again");
@@ -550,11 +552,7 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 			}]
 		});
 
-		// say task list, then ask which ones to complete
-		let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
-		// sayTasksForToday(convo, options);
 		checkForNoRemainingTasks(convo);
-		sayWorkSessionMessage(convo);
 
 	} else {
 		convo.say("I couldn't find that task to delete!");
@@ -652,7 +650,13 @@ function deleteTasksFlow(convo) {
 							// delete the plan if you finish completing a task
 							deleteMostRecentPlanMessage(response.channel, bot);
 
+							// say task list, then ask which ones to complete
+							let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
+
 							singleLineDeleteTask(convo, taskNumbersToDeleteArray);
+							sayTasksForToday(convo, options);
+							sayWorkSessionMessage(convo);
+
 						} else {
 							convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 							convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
@@ -1028,7 +1032,8 @@ function addNewTasksToTaskList(response, convo) {
 
 	// say task list, then ask which ones to complete
 	let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true, customTaskListMessage: taskListMessage };
-	// sayTasksForToday(convo, options);
+
+	sayTasksForToday(convo, options);
 	checkForNoRemainingTasks(convo);
 	sayWorkSessionMessage(convo);
 
@@ -1167,7 +1172,12 @@ function workOnTasksFlow(convo) {
 							// delete the plan if you finish completing a task
 							deleteMostRecentPlanMessage(response.channel, bot);
 
+							// say task list, then ask which ones to complete
+							let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
+
 							singleLineWorkOnTask(convo, taskNumbersToWorkOnArray);
+							sayTasksForToday(convo, options);
+							sayWorkSessionMessage(convo);
 
 						} else {
 							convo.say("Oops, I don't totally understand :dog:. Let's try this again");
