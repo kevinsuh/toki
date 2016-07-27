@@ -34,8 +34,10 @@ export default function(controller) {
 		var config = {
 			intent,
 			SlackUserId,
-			taskDecision: TASK_DECISION.work.word
+			taskDecision: TASK_DECISION.work.word,
+			message
 		}
+		config.taskDecision = TASK_DECISION.work.word;
 
 		bot.send({
 			type: "typing",
@@ -72,13 +74,13 @@ export default function(controller) {
 					if (dailyTasksToWorkOn.length > 0) {
 						config.dailyTasksToWorkOn = dailyTasksToWorkOn;
 					}
-					controller.trigger(`new_session_group_decision`, [ bot, config ]);
+					controller.trigger(`edit_tasks_flow`, [ bot, config ]);
 				});
 			});
 
 		} else {
 			setTimeout(() => {
-				controller.trigger(`new_session_group_decision`, [ bot, config ]);
+				controller.trigger(`edit_tasks_flow`, [ bot, config ]);
 			}, 1000);
 		}	
 

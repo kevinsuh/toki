@@ -21,7 +21,6 @@ exports.default = function (controller) {
 
 		var payload = void 0;
 		var config = void 0;
-		var responseMessage = void 0;
 
 		// need to replace buttons so user cannot reclick it
 		if (actions && actions.length > 0) {
@@ -218,28 +217,24 @@ exports.default = function (controller) {
 				case _constants.buttonValues.planCommands.workOnTasks.value:
 					break;
 				case _constants.buttonValues.endOfPlanCommands.addTasks.value:
-					responseMessage = { text: "add tasks" };
 					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.add.word };
 					bot.replyInteractive(message, "Okay, let's add some tasks!", function () {
 						controller.trigger('edit_tasks_flow', [bot, config]);
 					});
 					break;
 				case _constants.buttonValues.endOfPlanCommands.completeTasks.value:
-					responseMessage = { text: "complete tasks" };
 					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.complete.word };
 					bot.replyInteractive(message, "Okay, let's complete some tasks!", function () {
 						controller.trigger('edit_tasks_flow', [bot, config]);
 					});
 					break;
 				case _constants.buttonValues.endOfPlanCommands.deleteTasks.value:
-					responseMessage = { text: "delete tasks" };
 					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.delete.word };
 					bot.replyInteractive(message, "Okay, let's delete some tasks!", function () {
 						controller.trigger('edit_tasks_flow', [bot, config]);
 					});
 					break;
 				case _constants.buttonValues.endOfPlanCommands.workOnTasks.value:
-					responseMessage = { text: "work on tasks" };
 					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.work.word };
 					bot.replyInteractive(message, "Okay, let's get to work!", function () {
 						controller.trigger('edit_tasks_flow', [bot, config]);
