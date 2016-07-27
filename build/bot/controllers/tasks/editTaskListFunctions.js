@@ -367,6 +367,7 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 
 function completeTasksFlow(convo) {
 	var _convo$tasksEdit7 = convo.tasksEdit;
+	var bot = _convo$tasksEdit7.bot;
 	var dailyTasks = _convo$tasksEdit7.dailyTasks;
 	var changePlanCommand = _convo$tasksEdit7.changePlanCommand;
 	var changedPlanCommands = _convo$tasksEdit7.changedPlanCommands;
@@ -387,6 +388,10 @@ function completeTasksFlow(convo) {
 	}, [{
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
+
+			// delete the plan if "never mind"
+			(0, _messageHelpers.deleteMostRecentPlanMessage)(response.channel, bot);
+
 			convo.say("Okay, let me know if you still want to complete tasks! :wave: ");
 			convo.next();
 		}
@@ -501,6 +506,7 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 
 function deleteTasksFlow(convo) {
 	var _convo$tasksEdit9 = convo.tasksEdit;
+	var bot = _convo$tasksEdit9.bot;
 	var dailyTasks = _convo$tasksEdit9.dailyTasks;
 	var changePlanCommand = _convo$tasksEdit9.changePlanCommand;
 	var changedPlanCommands = _convo$tasksEdit9.changedPlanCommands;
@@ -519,6 +525,10 @@ function deleteTasksFlow(convo) {
 	convo.ask(message, [{
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
+
+			// delete the plan if "never mind"
+			(0, _messageHelpers.deleteMostRecentPlanMessage)(response.channel, bot);
+
 			convo.say("Okay, let me know if you still want to delete tasks! :wave: ");
 			convo.next();
 		}
@@ -607,6 +617,11 @@ function addTasksFlow(convo) {
 	}, { // NL equivalent to buttonValues.neverMind.value
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
+
+			// delete the plan and this taskListMessage if "never mind"
+			(0, _messageHelpers.deleteMostRecentTaskListMessage)(response.channel, bot);
+			(0, _messageHelpers.deleteMostRecentPlanMessage)(response.channel, bot);
+
 			convo.say("Okay! Let me know whenever you want to add more tasks");
 			convo.next();
 		}
@@ -966,6 +981,7 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 // work on which task flow
 function workOnTasksFlow(convo) {
 	var _convo$tasksEdit15 = convo.tasksEdit;
+	var bot = _convo$tasksEdit15.bot;
 	var dailyTasks = _convo$tasksEdit15.dailyTasks;
 	var changePlanCommand = _convo$tasksEdit15.changePlanCommand;
 	var changedPlanCommands = _convo$tasksEdit15.changedPlanCommands;
@@ -984,6 +1000,10 @@ function workOnTasksFlow(convo) {
 	convo.ask(message, [{
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
+
+			// delete the plan if "never mind"
+			(0, _messageHelpers.deleteMostRecentPlanMessage)(response.channel, bot);
+
 			convo.say("Okay, let me know if you still want to work on a task :muscle: ");
 			convo.next();
 		}

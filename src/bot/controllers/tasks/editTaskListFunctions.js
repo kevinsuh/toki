@@ -7,7 +7,7 @@ import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
 import { colorsHash, buttonValues, FINISH_WORD, RESET, taskListMessageDoneButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment, pausedSessionOptionsAttachments, startSessionOptionsAttachments, TASK_DECISION } from '../../lib/constants';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, getMostRecentTaskListMessageToUpdate, getMostRecentMessageToUpdate, deleteConvoAskMessage, convertMinutesToHoursString, getTimeToTaskTextAttachmentWithTaskListMessage } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, getMostRecentTaskListMessageToUpdate, getMostRecentMessageToUpdate, deleteConvoAskMessage, convertMinutesToHoursString, getTimeToTaskTextAttachmentWithTaskListMessage, deleteMostRecentTaskListMessage, deleteMostRecentPlanMessage } from '../../lib/messageHelpers';
 
 import { consoleLog, witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray, getPlanCommandOptionAttachments } from '../../lib/miscHelpers';
 
@@ -335,7 +335,7 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 
 function completeTasksFlow(convo) {
 
-	let { tasksEdit: { dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
+	let { tasksEdit: { bot, dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
 
 	// say task list, then ask which ones to complete
 	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, planTitle: true };
@@ -353,6 +353,10 @@ function completeTasksFlow(convo) {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
+
+				// delete the plan if "never mind"
+				deleteMostRecentPlanMessage(response.channel, bot);
+				
 				convo.say("Okay, let me know if you still want to complete tasks! :wave: ");
 				convo.next();
 			}
@@ -470,7 +474,7 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 
 function deleteTasksFlow(convo) {
 
-	let { tasksEdit: { dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
+	let { tasksEdit: { bot, dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
 
 	// say task list, then ask which ones to complete
 	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, planTitle: true };
@@ -486,6 +490,10 @@ function deleteTasksFlow(convo) {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
+
+				// delete the plan if "never mind"
+				deleteMostRecentPlanMessage(response.channel, bot);
+
 				convo.say("Okay, let me know if you still want to delete tasks! :wave: ");
 				convo.next();
 			}
@@ -578,6 +586,11 @@ function addTasksFlow(convo) {
 		{ // NL equivalent to buttonValues.neverMind.value
 			pattern: utterances.noAndNeverMind,
 			callback: function(response, convo) {
+
+				// delete the plan and this taskListMessage if "never mind"
+				deleteMostRecentTaskListMessage(response.channel, bot);
+				deleteMostRecentPlanMessage(response.channel, bot);
+
 				convo.say("Okay! Let me know whenever you want to add more tasks");
 				convo.next();
 			}
@@ -945,7 +958,7 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 // work on which task flow
 function workOnTasksFlow(convo) {
 
-	let { tasksEdit: { dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
+	let { tasksEdit: { bot, dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
 
 	// say task list, then ask which ones to complete
 	let options = { onlyRemainingTasks: true, planTitle: true };
@@ -961,6 +974,10 @@ function workOnTasksFlow(convo) {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
+
+				// delete the plan if "never mind"
+				deleteMostRecentPlanMessage(response.channel, bot);
+
 				convo.say("Okay, let me know if you still want to work on a task :muscle: ");
 				convo.next();
 			}

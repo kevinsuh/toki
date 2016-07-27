@@ -21,6 +21,8 @@ exports.getMostRecentTaskListMessageToUpdate = getMostRecentTaskListMessageToUpd
 exports.getMostRecentMessageToUpdate = getMostRecentMessageToUpdate;
 exports.getMostRecentDoneSessionMessage = getMostRecentDoneSessionMessage;
 exports.deleteConvoAskMessage = deleteConvoAskMessage;
+exports.deleteMostRecentTaskListMessage = deleteMostRecentTaskListMessage;
+exports.deleteMostRecentPlanMessage = deleteMostRecentPlanMessage;
 exports.deleteMostRecentDoneSessionMessage = deleteMostRecentDoneSessionMessage;
 exports.getTimeToTaskTextAttachmentWithTaskListMessage = getTimeToTaskTextAttachmentWithTaskListMessage;
 exports.convertStringToNumbersArray = convertStringToNumbersArray;
@@ -539,10 +541,20 @@ function commaSeparateOutTaskArray(a) {
 
 // new function to ensure you are getting a task list message to update
 function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
+	var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 	var sentMessages = bot.sentMessages;
 
 
 	var updateTaskListMessageObject = false;
+
+	var callbackId = "TASK_LIST_MESSAGE";
+	var type = options.type;
+
+	if (type) {
+		if (type == "plan") {
+			callbackId = "PLAN_OPTIONS";
+		}
+	}
 
 	console.log(sentMessages);
 
@@ -561,7 +573,7 @@ function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
 			var attachments = message.attachments;
 
 			if (channel == userChannel) {
-				if (attachments && attachments[0].callback_id == "TASK_LIST_MESSAGE") {
+				if (attachments && attachments[0].callback_id == callbackId) {
 					updateTaskListMessageObject = {
 						channel: channel,
 						ts: ts
@@ -653,6 +665,20 @@ function deleteConvoAskMessage(userChannel, bot) {
 	var convoAskMessage = getMostRecentMessageToUpdate(userChannel, bot);
 	if (convoAskMessage) {
 		bot.api.chat.delete(convoAskMessage);
+	}
+}
+
+function deleteMostRecentTaskListMessage(userChannel, bot) {
+	var taskListMessage = getMostRecentTaskListMessageToUpdate(userChannel, bot);
+	if (taskListMessage) {
+		bot.api.chat.delete(taskListMessage);
+	}
+}
+
+function deleteMostRecentPlanMessage(userChannel, bot) {
+	var planMessage = getMostRecentTaskListMessageToUpdate(userChannel, bot, { type: "plan" });
+	if (planMessage) {
+		bot.api.chat.delete(planMessage);
 	}
 }
 

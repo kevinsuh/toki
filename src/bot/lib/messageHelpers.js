@@ -512,11 +512,19 @@ export function commaSeparateOutTaskArray(a) {
 }
 
 // new function to ensure you are getting a task list message to update
-export function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
+export function getMostRecentTaskListMessageToUpdate(userChannel, bot, options = {}) {
 	
 	let { sentMessages } = bot;
 
 	let updateTaskListMessageObject = false;
+
+	let callbackId = "TASK_LIST_MESSAGE";
+	const { type } = options;
+	if (type) {
+		if (type == "plan") {
+			callbackId = "PLAN_OPTIONS";
+		}
+	}
 
 	console.log(sentMessages);
 
@@ -532,7 +540,7 @@ export function getMostRecentTaskListMessageToUpdate(userChannel, bot) {
 
 			const { channel, ts, attachments } = message;
 			if (channel == userChannel) {
-				if (attachments && attachments[0].callback_id == "TASK_LIST_MESSAGE") {
+				if (attachments && attachments[0].callback_id == callbackId) {
 					updateTaskListMessageObject = {
 						channel,
 						ts
@@ -623,6 +631,20 @@ export function deleteConvoAskMessage(userChannel, bot) {
 		bot.api.chat.delete(convoAskMessage);
 	}
 	
+}
+
+export function deleteMostRecentTaskListMessage(userChannel, bot) {
+	let taskListMessage = getMostRecentTaskListMessageToUpdate(userChannel, bot);
+	if (taskListMessage) {
+		bot.api.chat.delete(taskListMessage);
+	}
+}
+
+export function deleteMostRecentPlanMessage(userChannel, bot) {
+	let planMessage = getMostRecentTaskListMessageToUpdate(userChannel, bot, { type: "plan" });
+	if (planMessage) {
+		bot.api.chat.delete(planMessage);
+	}
 }
 
 export function deleteMostRecentDoneSessionMessage(userChannel, bot) {
