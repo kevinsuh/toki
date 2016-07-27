@@ -277,13 +277,14 @@ function sayTasksForToday(convo) {
 			taskListMessage = options.customTaskListMessage;
 		}
 
-		var taskMessage = "Here are your tasks for today :memo::";
-		if (options.onlyRemainingTasks) {
-			taskMessage = "Here are your remaining tasks for today :memo::";
-		}
-		if (!options.noTitle) {
-			convo.say(taskMessage);
-		}
+		// let taskMessage = "Here are your tasks for today :memo::"
+		// if (options.onlyRemainingTasks) {
+		// 	taskMessage = "Here are your remaining tasks for today :memo::";
+		// }
+		// if (!options.noTitle) {
+		// 	convo.say(taskMessage);
+		// }
+
 		var attachmentOptions = {};
 		if (options.scope) {
 			attachmentOptions.scope = options.scope;
@@ -673,11 +674,12 @@ function addTasksFlow(convo) {
 
 	// say task list, then ask for user to add tasks
 
-	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true };
+	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, newTasks: newTasks };
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
 
 	var tasksToAdd = [];
-	convo.say("Let's do it! What other tasks do you want to work on?");
+
+	convo.say("What other tasks do you want to work on?");
 	convo.ask({
 		text: taskListMessage,
 		attachments: [{
@@ -738,14 +740,9 @@ function addTasksFlow(convo) {
 			});
 
 			options = { onlyRemainingTasks: true, dontCalculateMinutes: true };
-			if (actuallyWantToAddATask) {
-				options.dontCalculateMinutes = true;
-				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
-			} else {
-				options.segmentCompleted = true;
-				options.newTasks = taskArray;
-				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
-			}
+			options.segmentCompleted = true;
+			options.newTasks = taskArray;
+			taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
 
 			if (updateTaskListMessageObject) {
 				updateTaskListMessageObject.text = taskListMessage;
@@ -795,7 +792,7 @@ function getTimeToTasks(response, convo) {
 		pattern: _constants.buttonValues.actuallyWantToAddATask.value,
 		callback: function callback(response, convo) {
 			convo.tasksEdit.actuallyWantToAddATask = true;
-			addTasksFlow(response, convo);
+			addTasksFlow(convo);
 			convo.next();
 		}
 	}, {

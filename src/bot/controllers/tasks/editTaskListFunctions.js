@@ -246,13 +246,14 @@ function sayTasksForToday(convo, options = {}) {
 			taskListMessage = options.customTaskListMessage;
 		}
 
-		let taskMessage = "Here are your tasks for today :memo::"
-		if (options.onlyRemainingTasks) {
-			taskMessage = "Here are your remaining tasks for today :memo::";
-		}
-		if (!options.noTitle) {
-			convo.say(taskMessage);
-		}
+		// let taskMessage = "Here are your tasks for today :memo::"
+		// if (options.onlyRemainingTasks) {
+		// 	taskMessage = "Here are your remaining tasks for today :memo::";
+		// }
+		// if (!options.noTitle) {
+		// 	convo.say(taskMessage);
+		// }
+		
 		let attachmentOptions = {};
 		if (options.scope){
 			attachmentOptions.scope = options.scope;
@@ -644,11 +645,12 @@ function addTasksFlow(convo) {
 	var { source_message, tasksEdit: { bot, dailyTasks, newTasks, actuallyWantToAddATask, changePlanCommand } } = convo;
 
 	// say task list, then ask for user to add tasks
-	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true };
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, newTasks };
 	let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
 
 	var tasksToAdd = [];
-	convo.say("Let's do it! What other tasks do you want to work on?");
+
+	convo.say("What other tasks do you want to work on?");
 	convo.ask({
 		text: taskListMessage,
 		attachments:[
@@ -715,14 +717,9 @@ function addTasksFlow(convo) {
 				})
 
 				options = { onlyRemainingTasks: true, dontCalculateMinutes: true };
-				if (actuallyWantToAddATask) {
-					options.dontCalculateMinutes = true;
-					taskListMessage = convertArrayToTaskListMessage(taskArray, options)
-				} else {
-					options.segmentCompleted = true;
-					options.newTasks = taskArray;
-					taskListMessage = convertArrayToTaskListMessage(dailyTasks, options)
-				}
+				options.segmentCompleted = true;
+				options.newTasks = taskArray;
+				taskListMessage = convertArrayToTaskListMessage(dailyTasks, options)
 
 				if (updateTaskListMessageObject) {
 					updateTaskListMessageObject.text        = taskListMessage;
@@ -773,7 +770,7 @@ function getTimeToTasks(response, convo) {
 			pattern: buttonValues.actuallyWantToAddATask.value,
 			callback: function(response, convo) {
 				convo.tasksEdit.actuallyWantToAddATask = true;
-				addTasksFlow(response, convo);
+				addTasksFlow(convo);
 				convo.next();
 			}
 		},
