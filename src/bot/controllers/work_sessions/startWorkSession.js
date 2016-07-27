@@ -74,6 +74,7 @@ export default function(controller) {
 					if (dailyTasksToWorkOn.length > 0) {
 						config.dailyTasksToWorkOn = dailyTasksToWorkOn;
 					}
+					config.taskNumbers = taskNumbers;
 					controller.trigger(`edit_tasks_flow`, [ bot, config ]);
 				});
 			});

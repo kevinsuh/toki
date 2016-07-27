@@ -84,11 +84,7 @@ exports.default = function (controller) {
 
 				var openWorkSession = false;
 				if (workSessions.length > 0) {
-					var now = (0, _moment2.default)();
-					var endTime = (0, _moment2.default)(workSessions[0].endTime).add(1, 'minutes');
-					if (endTime > now) {
-						openWorkSession = workSessions[0];
-					}
+					openWorkSession = workSessions[0];
 				}
 
 				user.getDailyTasks({
