@@ -17,6 +17,7 @@ exports.consoleLog = consoleLog;
 exports.closeOldRemindersAndSessions = closeOldRemindersAndSessions;
 exports.prioritizeDailyTasks = prioritizeDailyTasks;
 exports.mapTimeToTaskArray = mapTimeToTaskArray;
+exports.getPlanCommandOptionAttachments = getPlanCommandOptionAttachments;
 
 var _models = require('../../app/models');
 
@@ -282,5 +283,55 @@ function mapTimeToTaskArray(taskArray, timeToTasksArray) {
 		});
 	});
 	return taskArray;
+}
+
+// get button attachments for your plan list
+function getPlanCommandOptionAttachments() {
+	var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+
+	var optionsAttachment = [{
+		attachment_type: 'default',
+		callback_id: "PLAN_OPTIONS",
+		fallback: "What do you want to do with your plan?",
+		color: _constants.colorsHash.grey.hex,
+		actions: []
+	}];
+
+	var actions = [{
+		name: _constants.buttonValues.planCommands.addTasks.name,
+		text: "Add Tasks",
+		value: _constants.buttonValues.planCommands.addTasks.value,
+		type: "button"
+	}, {
+		name: _constants.buttonValues.planCommands.completeTasks.name,
+		text: "Complete Tasks",
+		value: _constants.buttonValues.planCommands.completeTasks.value,
+		type: "button"
+	}, {
+		name: _constants.buttonValues.planCommands.deleteTasks.name,
+		text: "Delete Tasks",
+		value: _constants.buttonValues.planCommands.deleteTasks.value,
+		type: "button"
+	}, {
+		name: _constants.buttonValues.planCommands.workOnTasks.name,
+		text: "Work on Tasks",
+		value: _constants.buttonValues.planCommands.workOnTasks.value,
+		type: "button"
+	}];
+
+	var scope = options.scope;
+
+	actions.forEach(function (action) {
+		var value = action.value;
+
+		if (scope == "add" && value == _constants.buttonValues.planCommands.addTasks.value) return;
+		if (scope == "complete" && value == _constants.buttonValues.planCommands.completeTasks.value) return;
+		if (scope == "delete" && value == _constants.buttonValues.planCommands.deleteTasks.value) return;
+		if (scope == "work" && value == _constants.buttonValues.planCommands.workOnTasks.value) return;
+		optionsAttachment[0].actions.push(action);
+	});
+
+	return optionsAttachment;
 }
 //# sourceMappingURL=miscHelpers.js.map

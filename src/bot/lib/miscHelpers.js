@@ -1,6 +1,6 @@
 import models from '../../app/models';
 import moment from 'moment-timezone';
-import { DURATION_INTENT, TIME_INTENT } from './constants';
+import { DURATION_INTENT, TIME_INTENT, buttonValues, colorsHash } from './constants';
 
 /**
  * this creates a moment object that takes in a timestamp
@@ -262,5 +262,62 @@ export function mapTimeToTaskArray(taskArray, timeToTasksArray) {
 		}
 	});
 	return taskArray;
+}
+
+// get button attachments for your plan list
+export function getPlanCommandOptionAttachments(options = {}) {
+
+	let optionsAttachment = [
+		{
+			attachment_type: 'default',
+			callback_id: "PLAN_OPTIONS",
+			fallback: "What do you want to do with your plan?",
+			color: colorsHash.grey.hex,
+			actions: []
+		}
+	];
+
+	let actions = [ 
+		{
+			name: buttonValues.planCommands.addTasks.name,
+			text: "Add Tasks",
+			value: buttonValues.planCommands.addTasks.value,
+			type: "button"
+		},
+		{
+				name: buttonValues.planCommands.completeTasks.name,
+				text: "Complete Tasks",
+				value: buttonValues.planCommands.completeTasks.value,
+				type: "button"
+		},
+		{
+				name: buttonValues.planCommands.deleteTasks.name,
+				text: "Delete Tasks",
+				value: buttonValues.planCommands.deleteTasks.value,
+				type: "button"
+		},
+		{
+				name: buttonValues.planCommands.workOnTasks.name,
+				text: "Work on Tasks",
+				value: buttonValues.planCommands.workOnTasks.value,
+				type: "button"
+		}];
+
+	let { scope } = options;
+	actions.forEach((action) => {
+		let { value } = action;
+		if (scope == "add" && value == buttonValues.planCommands.addTasks.value)
+			return;
+		if (scope == "complete" && value == buttonValues.planCommands.completeTasks.value)
+			return;
+		if (scope == "delete" && value == buttonValues.planCommands.deleteTasks.value)
+			return;
+		if (scope == "work" && value == buttonValues.planCommands.workOnTasks.value)
+			return;
+		optionsAttachment[0].actions.push(action);
+	});
+	
+	return optionsAttachment;
+
 }
 

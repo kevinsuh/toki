@@ -276,9 +276,10 @@ function sayTasksForToday(convo) {
 		if (!options.noTitle) {
 			convo.say(taskMessage);
 		}
+		var attachments = (0, _miscHelpers.getPlanCommandOptionAttachments)({ scope: "complete" });
 		convo.say({
 			text: taskListMessage,
-			attachments: _constants.completeTasksPlanOptionsAttachments
+			attachments: attachments
 		});
 	}
 }
@@ -365,6 +366,7 @@ function completeTasksFlow(convo) {
 	// say task list, then ask which ones to complete
 
 	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
+	convo.say('Okay! Here\'s your plan for today :memo::');
 	sayTasksForToday(convo, options);
 
 	var message = 'Which of your task(s) above would you like to complete?';
