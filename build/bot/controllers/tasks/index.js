@@ -106,7 +106,10 @@ exports.default = function (controller) {
 							dailyTasksToUpdate: [], // existing dailyTasks
 							openWorkSession: openWorkSession,
 							taskDecision: taskDecision,
-							taskNumbers: taskNumbers
+							taskNumbers: taskNumbers,
+							changePlanCommand: {
+								decision: false
+							}
 						};
 
 						// this is the flow you expect for editing tasks
@@ -122,7 +125,18 @@ exports.default = function (controller) {
 							var dailyTasksToUpdate = _convo$tasksEdit.dailyTasksToUpdate;
 							var startSession = _convo$tasksEdit.startSession;
 							var dailyTasksToWorkOn = _convo$tasksEdit.dailyTasksToWorkOn;
+							var changePlanCommand = _convo$tasksEdit.changePlanCommand;
 
+
+							console.log(convo.tasksEdit.changePlanCommand);
+
+							// this means we are changing the plan!
+							if (changePlanCommand.decision) {
+								var _message = { text: changePlanCommand.text };
+								var _config = { SlackUserId: SlackUserId, message: _message };
+								controller.trigger('plan_command_center', [bot, _config]);
+								return;
+							}
 
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 
@@ -369,26 +383,18 @@ exports.default = function (controller) {
 
 		var SlackUserId = message.user;
 
+		var config = { SlackUserId: SlackUserId, message: message };
+
 		// wit may pick up "add check in" as add_daily_task
 		if (_botResponses.utterances.startsWithAdd.test(text) && _botResponses.utterances.containsCheckin.test(text)) {
-			var _config = { SlackUserId: SlackUserId, message: message };
 			if (_botResponses.utterances.containsOnlyCheckin.test(text)) {
-				_config.reminder_type = "work_session";
+				config.reminder_type = "work_session";
 			}
-			controller.trigger('ask_for_reminder', [bot, _config]);
+			controller.trigger('ask_for_reminder', [bot, config]);
 			return;
 		};
 
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-
-		var config = { SlackUserId: SlackUserId, message: message };
-
-		setTimeout(function () {
-			controller.trigger('plan_command_center', [bot, config]);
-		}, 1000);
+		controller.trigger('plan_command_center', [bot, config]);
 	});
 
 	/**
@@ -400,6 +406,7 @@ exports.default = function (controller) {
 
 		console.log("\n\n\n ~~ In Plan Command Center ~~ \n\n\n");
 
+		var message = config.message;
 		var text = config.message.text;
 		var SlackUserId = config.SlackUserId;
 
@@ -445,7 +452,13 @@ exports.default = function (controller) {
    * 	if taskNumbers exists, allows for single-line command
    */
 
-		controller.trigger('edit_tasks_flow', [bot, config]);
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(function () {
+			controller.trigger('edit_tasks_flow', [bot, config]);
+		}, 1000);
 	});
 };
 

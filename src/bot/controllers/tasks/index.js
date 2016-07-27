@@ -126,7 +126,10 @@ export default function(controller) {
 							dailyTasksToUpdate: [], // existing dailyTasks
 							openWorkSession,
 							taskDecision,
-							taskNumbers
+							taskNumbers,
+							changePlanCommand: {
+								decision: false
+							}
 						}
 
 						// this is the flow you expect for editing tasks
@@ -135,7 +138,17 @@ export default function(controller) {
 						
 						convo.on('end', (convo) => {
 							
-							var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate, startSession, dailyTasksToWorkOn } = convo.tasksEdit;
+							var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate, startSession, dailyTasksToWorkOn, changePlanCommand } = convo.tasksEdit;
+
+							console.log(convo.tasksEdit.changePlanCommand);
+
+							// this means we are changing the plan!
+							if (changePlanCommand.decision) {
+								let message = { text: changePlanCommand.text };
+								let config = { SlackUserId, message }
+								controller.trigger(`plan_command_center`, [ bot, config ]);
+								return;
+							}
 
 							resumeQueuedReachouts(bot, { SlackUserId });
 
@@ -388,26 +401,18 @@ export default function(controller) {
 		const { text, channel } = message;
 		const SlackUserId       = message.user;
 
+		let config = { SlackUserId, message };
+
 		// wit may pick up "add check in" as add_daily_task
 		if (utterances.startsWithAdd.test(text) && utterances.containsCheckin.test(text)) {
-			let config = { SlackUserId, message };
 			if (utterances.containsOnlyCheckin.test(text)){
 				config.reminder_type = "work_session";
 			}
 			controller.trigger(`ask_for_reminder`, [ bot, config ]);
 			return;
-		};
+		};		
 
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-
-		let config = { SlackUserId, message };
-
-		setTimeout(() => {
-			controller.trigger(`plan_command_center`, [ bot, config ]);
-		}, 1000);
+		controller.trigger(`plan_command_center`, [ bot, config ]);
 
 	});
 
@@ -420,7 +425,7 @@ export default function(controller) {
 
 		console.log("\n\n\n ~~ In Plan Command Center ~~ \n\n\n");
 
-		const { message: { text }, SlackUserId } = config;
+		const { message, message: { text }, SlackUserId } = config;
 
 		let taskNumbers = convertStringToNumbersArray(text);
 		if (taskNumbers) {
@@ -463,7 +468,13 @@ export default function(controller) {
 		 * 	if taskNumbers exists, allows for single-line command
 		 */
 
-		controller.trigger(`edit_tasks_flow`, [ bot, config ]);
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(() => {
+			controller.trigger(`edit_tasks_flow`, [ bot, config ]);
+		}, 1000);
 
 	});
 

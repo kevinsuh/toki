@@ -362,7 +362,9 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 }
 
 function completeTasksFlow(convo) {
-	var dailyTasks = convo.tasksEdit.dailyTasks;
+	var _convo$tasksEdit7 = convo.tasksEdit;
+	var dailyTasks = _convo$tasksEdit7.dailyTasks;
+	var changePlanCommand = _convo$tasksEdit7.changePlanCommand;
 
 	// say task list, then ask which ones to complete
 
@@ -379,15 +381,30 @@ function completeTasksFlow(convo) {
 	}, {
 		default: true,
 		callback: function callback(response, convo) {
-			var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
-			if (taskNumbersToCompleteArray) {
-				singleLineCompleteTask(convo, taskNumbersToCompleteArray);
-			} else {
-				convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-				convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
-				convo.repeat();
+			var text = response.text;
+
+			// if key word exists, we are stopping early and do the other flow!
+
+			if (_constants.TASK_DECISION.add.reg_exp.test(text) || _constants.TASK_DECISION.delete.reg_exp.test(text) || _constants.TASK_DECISION.work.reg_exp.test(text)) {
+				changePlanCommand.decision = true;
+				changePlanCommand.text = text;
 			}
-			convo.next();
+
+			if (changePlanCommand.decision) {
+				convo.stop();
+				convo.next();
+			} else {
+				// otherwise do the expected, default decision!
+				var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(text, dailyTasks);
+				if (taskNumbersToCompleteArray) {
+					singleLineCompleteTask(convo, taskNumbersToCompleteArray);
+				} else {
+					convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+					convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+					convo.repeat();
+				}
+				convo.next();
+			}
 		}
 	}]);
 
@@ -399,9 +416,9 @@ function completeTasksFlow(convo) {
  */
 
 function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
-	var _convo$tasksEdit7 = convo.tasksEdit;
-	var dailyTasks = _convo$tasksEdit7.dailyTasks;
-	var dailyTaskIdsToDelete = _convo$tasksEdit7.dailyTaskIdsToDelete;
+	var _convo$tasksEdit8 = convo.tasksEdit;
+	var dailyTasks = _convo$tasksEdit8.dailyTasks;
+	var dailyTaskIdsToDelete = _convo$tasksEdit8.dailyTaskIdsToDelete;
 
 	var dailyTasksToDelete = [];
 	dailyTasks = dailyTasks.filter(function (dailyTask, index) {
@@ -506,11 +523,11 @@ function deleteTasksFlow(convo) {
 
 function addTasksFlow(convo) {
 	var source_message = convo.source_message;
-	var _convo$tasksEdit8 = convo.tasksEdit;
-	var bot = _convo$tasksEdit8.bot;
-	var dailyTasks = _convo$tasksEdit8.dailyTasks;
-	var newTasks = _convo$tasksEdit8.newTasks;
-	var actuallyWantToAddATask = _convo$tasksEdit8.actuallyWantToAddATask;
+	var _convo$tasksEdit9 = convo.tasksEdit;
+	var bot = _convo$tasksEdit9.bot;
+	var dailyTasks = _convo$tasksEdit9.dailyTasks;
+	var newTasks = _convo$tasksEdit9.newTasks;
+	var actuallyWantToAddATask = _convo$tasksEdit9.actuallyWantToAddATask;
 
 	// say task list, then ask for user to add tasks
 
@@ -596,11 +613,11 @@ function addTasksFlow(convo) {
 }
 
 function getTimeToTasks(response, convo) {
-	var _convo$tasksEdit9 = convo.tasksEdit;
-	var bot = _convo$tasksEdit9.bot;
-	var dailyTasks = _convo$tasksEdit9.dailyTasks;
-	var newTasks = _convo$tasksEdit9.newTasks;
-	var tz = _convo$tasksEdit9.tz;
+	var _convo$tasksEdit10 = convo.tasksEdit;
+	var bot = _convo$tasksEdit10.bot;
+	var dailyTasks = _convo$tasksEdit10.dailyTasks;
+	var newTasks = _convo$tasksEdit10.newTasks;
+	var tz = _convo$tasksEdit10.tz;
 
 	var options = { dontShowMinutes: true, dontCalculateMinutes: true, noKarets: true };
 
@@ -756,9 +773,9 @@ function getTimeToTasks(response, convo) {
 function saveNewTaskResponses(tasksToAdd, convo) {
 
 	// get the newTasks!
-	var _convo$tasksEdit10 = convo.tasksEdit;
-	var dailyTasks = _convo$tasksEdit10.dailyTasks;
-	var newTasks = _convo$tasksEdit10.newTasks;
+	var _convo$tasksEdit11 = convo.tasksEdit;
+	var dailyTasks = _convo$tasksEdit11.dailyTasks;
+	var newTasks = _convo$tasksEdit11.newTasks;
 
 
 	if (tasksToAdd) {
@@ -788,10 +805,10 @@ function saveNewTaskResponses(tasksToAdd, convo) {
 
 // used for both edit time to tasks, as well as add new tasks!!
 function confirmTimeToTasks(convo) {
-	var _convo$tasksEdit11 = convo.tasksEdit;
-	var dailyTasks = _convo$tasksEdit11.dailyTasks;
-	var dailyTasksToUpdate = _convo$tasksEdit11.dailyTasksToUpdate;
-	var newTasks = _convo$tasksEdit11.newTasks;
+	var _convo$tasksEdit12 = convo.tasksEdit;
+	var dailyTasks = _convo$tasksEdit12.dailyTasks;
+	var dailyTasksToUpdate = _convo$tasksEdit12.dailyTasksToUpdate;
+	var newTasks = _convo$tasksEdit12.newTasks;
 
 
 	convo.ask("Are those times right?", [{
@@ -835,9 +852,9 @@ function confirmTimeToTasks(convo) {
 
 function addNewTasksToTaskList(response, convo) {
 	// combine the newTasks with dailyTasks
-	var _convo$tasksEdit12 = convo.tasksEdit;
-	var dailyTasks = _convo$tasksEdit12.dailyTasks;
-	var newTasks = _convo$tasksEdit12.newTasks;
+	var _convo$tasksEdit13 = convo.tasksEdit;
+	var dailyTasks = _convo$tasksEdit13.dailyTasks;
+	var newTasks = _convo$tasksEdit13.newTasks;
 
 	var options = { segmentCompleted: true };
 

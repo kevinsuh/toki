@@ -333,7 +333,7 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 
 function completeTasksFlow(convo) {
 
-	let { tasksEdit: { dailyTasks } } = convo;
+	let { tasksEdit: { dailyTasks, changePlanCommand } } = convo;
 
 	// say task list, then ask which ones to complete
 	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
@@ -351,15 +351,30 @@ function completeTasksFlow(convo) {
 		{
 			default: true,
 			callback: (response, convo) => {
-				let taskNumbersToCompleteArray = convertTaskNumberStringToArray(response.text, dailyTasks);
-				if (taskNumbersToCompleteArray) {
-					singleLineCompleteTask(convo, taskNumbersToCompleteArray);
-				} else {
-					convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-					convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
-					convo.repeat();
+
+				let { text } = response;
+
+				// if key word exists, we are stopping early and do the other flow!
+				if (TASK_DECISION.add.reg_exp.test(text) || TASK_DECISION.delete.reg_exp.test(text) || TASK_DECISION.work.reg_exp.test(text)) {
+					changePlanCommand.decision = true;
+					changePlanCommand.text     = text
 				}
-				convo.next();
+
+				if (changePlanCommand.decision) {
+					convo.stop();
+					convo.next();
+				} else {
+					// otherwise do the expected, default decision!
+					let taskNumbersToCompleteArray = convertTaskNumberStringToArray(text, dailyTasks);
+					if (taskNumbersToCompleteArray) {
+						singleLineCompleteTask(convo, taskNumbersToCompleteArray);
+					} else {
+						convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+						convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+						convo.repeat();
+					}
+					convo.next();
+				}
 			}
 		}
 	]);
