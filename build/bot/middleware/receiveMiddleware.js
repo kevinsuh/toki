@@ -22,6 +22,14 @@ exports.default = function (controller) {
 
 		bot = _index.bots[token]; // use same bot every time
 
+		if (!bot) {
+			console.log("\n\n\n BOT NOT FOUND FOR SOME REASON");
+			console.log(message);
+			console.log("\n\n\n");
+			next();
+			return;
+		}
+
 		// sent messages organized by channel, and most recent 25 for them
 		if (!bot.sentMessages) {
 			bot.sentMessages = {};
