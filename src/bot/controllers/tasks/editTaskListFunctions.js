@@ -106,7 +106,8 @@ function specificCommandFlow(convo) {
 			break;
 		case TASK_DECISION.view.word:
 			console.log(`\n\n ~~ user wants to view tasks in specificCommandFlow ~~ \n\n`);
-			sayTasksForToday(convo);
+			convo.say("NEED TO CREATE VIEW PLAN FLOW");
+			// viewTasksFlow(convo);
 			break;
 		case TASK_DECISION.delete.word:
 			console.log(`\n\n ~~ user wants to delete tasks in specificCommandFlow ~~ \n\n`)
@@ -121,8 +122,8 @@ function specificCommandFlow(convo) {
 			break;
 		case TASK_DECISION.edit.word:
 			console.log(`\n\n ~~ user wants to edit tasks in specificCommandFlow ~~ \n\n`)
-			sayTasksForToday(convo);
-			convo.say("You can complete, delete, or add tasks to this list ( `complete task 2` or `add tasks`)!");
+			convo.say("NEED TO CREATE VIEW PLAN FLOW");
+			// viewTasksFlow(convo);
 			break;
 		case TASK_DECISION.work.word:
 
@@ -348,7 +349,12 @@ function completeTasksFlow(convo) {
 	}
 
 	convo.ask({
-		text: message
+		text: message,
+		attachments: [ {
+			attachment_type: 'default',
+			callback_id: "TASK_COMPLETE",
+			fallback: "Which of your task(s) would you like to complete?"
+		}]
 	}, [
 		{
 			pattern: utterances.noAndNeverMind,
@@ -356,7 +362,7 @@ function completeTasksFlow(convo) {
 
 				// delete the plan if "never mind"
 				deleteMostRecentPlanMessage(response.channel, bot);
-				
+
 				convo.say("Okay, let me know if you still want to complete tasks! :wave: ");
 				convo.next();
 			}
@@ -372,8 +378,19 @@ function completeTasksFlow(convo) {
 
 				// if key word exists, we are stopping early and do the other flow!
 				if (TASK_DECISION.add.reg_exp.test(text) || TASK_DECISION.delete.reg_exp.test(text) || TASK_DECISION.work.reg_exp.test(text)) {
+
+					// let's delete the most recent ask message
+					deleteConvoAskMessage(response.channel, bot);
+
+					// handling add task flow differently -- we will delete plan for now
+					if (TASK_DECISION.add.reg_exp.test(text)) {
+						deleteMostRecentPlanMessage(response.channel, bot);
+					}
+
 					changePlanCommand.decision = true;
 					changePlanCommand.text     = text
+				} else if (TASK_DECISION.complete.reg_exp.test(text)) {
+					// if user tries completing task again!
 				}
 
 				if (changePlanCommand.decision) {
@@ -486,7 +503,14 @@ function deleteTasksFlow(convo) {
 		message = `Which of your task(s) above would you like to delete?`;
 	}
 
-	convo.ask(message, [
+	convo.ask({
+		text: message,
+		attachments: [ {
+			attachment_type: 'default',
+			callback_id: "TASK_DELETE",
+			fallback: "Which of your task(s) would you like to delete?"
+		}]
+	}, [
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
@@ -509,8 +533,20 @@ function deleteTasksFlow(convo) {
 
 				// if key word exists, we are stopping early and do the other flow!
 				if (TASK_DECISION.add.reg_exp.test(text) || TASK_DECISION.complete.reg_exp.test(text) || TASK_DECISION.work.reg_exp.test(text)) {
+
+					// let's delete the most recent ask message
+					deleteConvoAskMessage(response.channel, bot);
+
+					// handling add task flow differently -- we will delete plan for now
+					if (TASK_DECISION.add.reg_exp.test(text)) {
+						deleteMostRecentPlanMessage(response.channel, bot);
+					}
+
 					changePlanCommand.decision = true;
 					changePlanCommand.text     = text
+				} else if (TASK_DECISION.delete.reg_exp.test(text)) 
+					// if you hit delete again
+
 				}
 
 				if (changePlanCommand.decision) {
@@ -970,7 +1006,14 @@ function workOnTasksFlow(convo) {
 		message = `Which of your task(s) above would you like to work on?`;
 	}
 
-	convo.ask(message, [
+	convo.ask({
+		text: message,
+		attachments: [ {
+			attachment_type: 'default',
+			callback_id: "TASK_WORK",
+			fallback: "Which of your task(s) would you like to work on?"
+		}]
+	}, [
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
@@ -993,8 +1036,19 @@ function workOnTasksFlow(convo) {
 
 				// if key word exists, we are stopping early and do the other flow!
 				if (TASK_DECISION.add.reg_exp.test(text) || TASK_DECISION.complete.reg_exp.test(text) || TASK_DECISION.delete.reg_exp.test(text)) {
+
+					// let's delete the most recent ask message
+					deleteConvoAskMessage(response.channel, bot);
+
+					// handling add task flow differently -- we will delete plan for now
+					if (TASK_DECISION.add.reg_exp.test(text)) {
+						deleteMostRecentPlanMessage(response.channel, bot);
+					}
+
 					changePlanCommand.decision = true;
 					changePlanCommand.text     = text
+				} else if (TASK_DECISION.work.reg_exp.test(text)) {
+
 				}
 
 				if (changePlanCommand.decision) {

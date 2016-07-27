@@ -384,7 +384,12 @@ function completeTasksFlow(convo) {
 	}
 
 	convo.ask({
-		text: message
+		text: message,
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "TASK_COMPLETE",
+			fallback: "Which of your task(s) would you like to complete?"
+		}]
 	}, [{
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
@@ -406,8 +411,14 @@ function completeTasksFlow(convo) {
 
 			// if key word exists, we are stopping early and do the other flow!
 			if (_constants.TASK_DECISION.add.reg_exp.test(text) || _constants.TASK_DECISION.delete.reg_exp.test(text) || _constants.TASK_DECISION.work.reg_exp.test(text)) {
+
+				// let's delete the most recent ask message
+				(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+
 				changePlanCommand.decision = true;
 				changePlanCommand.text = text;
+			} else if (_constants.TASK_DECISION.complete.reg_exp.test(text)) {
+				// if user tries completing task again!
 			}
 
 			if (changePlanCommand.decision) {
@@ -522,7 +533,14 @@ function deleteTasksFlow(convo) {
 		message = 'Which of your task(s) above would you like to delete?';
 	}
 
-	convo.ask(message, [{
+	convo.ask({
+		text: message,
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "TASK_DELETE",
+			fallback: "Which of your task(s) would you like to delete?"
+		}]
+	}, [{
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
 
@@ -997,7 +1015,14 @@ function workOnTasksFlow(convo) {
 		message = 'Which of your task(s) above would you like to work on?';
 	}
 
-	convo.ask(message, [{
+	convo.ask({
+		text: message,
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "TASK_WORK",
+			fallback: "Which of your task(s) would you like to work on?"
+		}]
+	}, [{
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
 
