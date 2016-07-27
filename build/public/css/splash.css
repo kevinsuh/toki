@@ -9,8 +9,7 @@
 	 * 		~~ MAIN BODY OF CSS ~~
 	 */ }
   .splash .color-gradient {
-    background: radial-gradient(circle at 100% 50%, transparent 20%, rgba(255, 255, 255, 0.3) 21%, rgba(255, 255, 255, 0.3) 34%, transparent 35%, transparent), radial-gradient(circle at 0% 50%, transparent 20%, rgba(255, 255, 255, 0.3) 21%, rgba(255, 255, 255, 0.3) 34%, transparent 35%, transparent) 0 -99px;
-    background-color: #8F00FF;
+    background-color: rgba(108, 237, 237, 0.1);
     background-size: 150px 199px; }
   .splash .bottom-landing, .splash .main-landing {
     display: block;
@@ -19,18 +18,18 @@
     vertical-align: middle;
     text-align: center; }
     .splash .bottom-landing .main-title, .splash .main-landing .main-title {
-      color: white;
+      color: black;
       font-size: 50px;
       font-weight: 600;
       padding-bottom: 25px;
-      border-bottom: 2.5pt solid #FFA819; }
+      border-bottom: 2.5pt solid rgba(150, 34, 234,1); }
     .splash .bottom-landing .main-body, .splash .main-landing .main-body {
       padding: 0 15px; }
       .splash .bottom-landing .main-body .subtitle, .splash .main-landing .main-body .subtitle {
         font-size: 25px;
         margin: 25px 0;
         line-height: 30px;
-        color: white; }
+        color: black; }
       .splash .bottom-landing .main-body .gif, .splash .main-landing .main-body .gif {
         margin: 10px auto; }
     .splash .bottom-landing form.invite, .splash .main-landing form.invite {
@@ -61,12 +60,12 @@
           width: 100%; }
       .splash .bottom-landing form.invite .description, .splash .main-landing form.invite .description {
         font-weight: inherit;
-        color: white;
+        color: black;
         font-size: 18px;
         text-align: left;
         margin: 25px 0 10px 0; }
         .splash .bottom-landing form.invite .description .link-emphasize, .splash .main-landing form.invite .description .link-emphasize {
-          color: white;
+          color: black;
           font-style: italic; }
       .splash .bottom-landing form.invite .beta, .splash .main-landing form.invite .beta {
         color: white;
@@ -74,7 +73,7 @@
         padding-top: 5px;
         font-size: 15px; }
   .splash .bottom-landing {
-    color: white; }
+    color: black; }
     .splash .bottom-landing .title {
       margin-bottom: 20px;
       font-size: 45px; }
@@ -105,7 +104,7 @@
       padding: 20px;
       padding-right: 150px;
       margin-bottom: 25px;
-      border: 4pt solid #3F76FF;
+      border: 4pt solid rgba(150, 34, 234,1);
       height: 250px;
       cursor: pointer;
       -o-transition: 0.3s;
