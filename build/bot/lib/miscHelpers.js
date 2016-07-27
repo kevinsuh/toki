@@ -257,7 +257,7 @@ function prioritizeDailyTasks(user) {
 	}
 
 	user.getDailyTasks({
-		where: ['"DailyTask"."createdAt" > ?', today],
+		where: ['"DailyTask"."type" = ?', "live"],
 		include: [_models2.default.Task],
 		order: '"Task"."done" = FALSE DESC, "DailyTask"."type" = \'live\' DESC, "DailyTask"."priority" ASC'
 	}).then(function (dailyTasks) {

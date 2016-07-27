@@ -234,7 +234,7 @@ export function prioritizeDailyTasks(user) {
 	}
 
 	user.getDailyTasks({
-		where: [ `"DailyTask"."createdAt" > ?`, today ],
+		where: [ `"DailyTask"."type" = ?`, "live" ],
 		include: [ models.Task ],
 		order: `"Task"."done" = FALSE DESC, "DailyTask"."type" = 'live' DESC, "DailyTask"."priority" ASC`
 	})
