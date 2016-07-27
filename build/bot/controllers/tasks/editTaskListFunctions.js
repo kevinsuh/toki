@@ -486,7 +486,10 @@ function completeTasksFlow(convo) {
 				convo.next();
 			} else {
 
-				if (_constants.TASK_DECISION.complete.reg_exp.test(text)) {
+				// otherwise do the expected, default decision!
+				var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(text, dailyTasks);
+
+				if (_constants.TASK_DECISION.complete.reg_exp.test(text) && !taskNumbersToCompleteArray) {
 
 					// if user tries completing task again, just update the text
 					wordSwapCount++;
@@ -498,8 +501,6 @@ function completeTasksFlow(convo) {
 					}
 				} else {
 
-					// otherwise do the expected, default decision!
-					var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(text, dailyTasks);
 					if (taskNumbersToCompleteArray) {
 
 						// delete the plan if you finish completing a task
@@ -671,7 +672,10 @@ function deleteTasksFlow(convo) {
 				convo.next();
 			} else {
 
-				if (_constants.TASK_DECISION.delete.reg_exp.test(text)) {
+				// otherwise do the expected, default decision!
+				var taskNumbersToDeleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
+
+				if (_constants.TASK_DECISION.delete.reg_exp.test(text) && !taskNumbersToDeleteArray) {
 
 					// if user tries completing task again, just update the text
 					wordSwapCount++;
@@ -683,8 +687,6 @@ function deleteTasksFlow(convo) {
 					}
 				} else {
 
-					// otherwise do the expected, default decision!
-					var taskNumbersToDeleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
 					if (taskNumbersToDeleteArray) {
 
 						// delete the plan if you finish completing a task
@@ -1178,7 +1180,10 @@ function workOnTasksFlow(convo) {
 				convo.next();
 			} else {
 
-				if (_constants.TASK_DECISION.work.reg_exp.test(text)) {
+				// otherwise do the expected, default decision!
+				var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
+
+				if (_constants.TASK_DECISION.work.reg_exp.test(text) && !taskNumbersToWorkOnArray) {
 
 					// if user tries completing task again, just update the text
 					wordSwapCount++;
@@ -1190,8 +1195,6 @@ function workOnTasksFlow(convo) {
 					}
 				} else {
 
-					// otherwise do the expected, default decision!
-					var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
 					if (taskNumbersToWorkOnArray) {
 
 						// delete the plan if you finish completing a task
