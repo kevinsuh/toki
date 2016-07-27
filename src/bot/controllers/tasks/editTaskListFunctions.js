@@ -245,7 +245,11 @@ function sayTasksForToday(convo, options = {}) {
 		if (!options.noTitle) {
 			convo.say(taskMessage);
 		}
-		let attachments = getPlanCommandOptionAttachments({ scope: "complete" });
+		let attachmentOptions = {};
+		if (options.scope){
+			attachmentOptions.scope = options.scope;
+		}
+		let attachments = getPlanCommandOptionAttachments(attachmentOptions);
 		convo.say({
 			text: taskListMessage,
 			attachments
@@ -331,7 +335,7 @@ function completeTasksFlow(convo) {
 	let { tasksEdit: { dailyTasks, changePlanCommand } } = convo;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, scope: "complete" };
 	convo.say(`Okay! Here's your plan for today :memo::`);
 	sayTasksForToday(convo, options);
 
@@ -355,9 +359,6 @@ function completeTasksFlow(convo) {
 					text = response.actions[0].value;
 				}
 
-				console.log("\n\n\nRESPONSE");
-				console.log(response);
-
 				// if key word exists, we are stopping early and do the other flow!
 				if (TASK_DECISION.add.reg_exp.test(text) || TASK_DECISION.delete.reg_exp.test(text) || TASK_DECISION.work.reg_exp.test(text)) {
 					changePlanCommand.decision = true;
@@ -379,6 +380,7 @@ function completeTasksFlow(convo) {
 					}
 					convo.next();
 				}
+
 			}
 		}
 	]);
@@ -461,10 +463,10 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 
 function deleteTasksFlow(convo) {
 
-	let { tasksEdit: { dailyTasks } } = convo;
+	let { tasksEdit: { dailyTasks, changePlanCommand } } = convo;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, scope: "delete" };
 	sayTasksForToday(convo, options);
 
 	let message = `Which of your task(s) above would you like to delete?`;
@@ -479,15 +481,34 @@ function deleteTasksFlow(convo) {
 		{
 			default: true,
 			callback: (response, convo) => {
-				let taskNumbersToDeleteArray = convertTaskNumberStringToArray(response.text, dailyTasks);
-				if (taskNumbersToDeleteArray) {
-					singleLineDeleteTask(convo, taskNumbersToDeleteArray);
-				} else {
-					convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-					convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
-					convo.repeat();
+
+				let { text } = response;
+				if (response.actions && response.actions[0]) {
+					text = response.actions[0].value;
 				}
-				convo.next();
+
+				// if key word exists, we are stopping early and do the other flow!
+				if (TASK_DECISION.add.reg_exp.test(text) || TASK_DECISION.complete.reg_exp.test(text) || TASK_DECISION.work.reg_exp.test(text)) {
+					changePlanCommand.decision = true;
+					changePlanCommand.text     = text
+				}
+
+				if (changePlanCommand.decision) {
+					convo.stop();
+					convo.next();
+				} else {
+					// otherwise do the expected, default decision!
+					let taskNumbersToDeleteArray = convertTaskNumberStringToArray(response.text, dailyTasks);
+					if (taskNumbersToDeleteArray) {
+						singleLineDeleteTask(convo, taskNumbersToDeleteArray);
+					} else {
+						convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+						convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+						convo.repeat();
+					}
+					convo.next();
+				}
+
 			}
 		}
 	]);
@@ -502,7 +523,7 @@ function deleteTasksFlow(convo) {
 
 function addTasksFlow(convo) {
 
-	var { source_message, tasksEdit: { bot, dailyTasks, newTasks, actuallyWantToAddATask } } = convo;
+	var { source_message, tasksEdit: { bot, dailyTasks, newTasks, actuallyWantToAddATask, changePlanCommand } } = convo;
 
 	// say task list, then ask for user to add tasks
 	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true };
@@ -912,10 +933,10 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 // work on which task flow
 function workOnTasksFlow(convo) {
 
-	let { tasksEdit: { dailyTasks } } = convo;
+	let { tasksEdit: { dailyTasks, changePlanCommand } } = convo;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true };
+	let options = { onlyRemainingTasks: true, scope: "work" };
 	sayTasksForToday(convo, options);
 
 	let message = `Which of your task(s) above would you like to work on?`;
@@ -930,15 +951,34 @@ function workOnTasksFlow(convo) {
 		{
 			default: true,
 			callback: (response, convo) => {
-				let taskNumbersToWorkOnArray = convertTaskNumberStringToArray(response.text, dailyTasks);
-				if (taskNumbersToWorkOnArray) {
-					singleLineWorkOnTask(convo, taskNumbersToWorkOnArray);
-				} else {
-					convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-					convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
-					convo.repeat();
+
+				let { text } = response;
+				if (response.actions && response.actions[0]) {
+					text = response.actions[0].value;
 				}
-				convo.next();
+
+				// if key word exists, we are stopping early and do the other flow!
+				if (TASK_DECISION.add.reg_exp.test(text) || TASK_DECISION.complete.reg_exp.test(text) || TASK_DECISION.delete.reg_exp.test(text)) {
+					changePlanCommand.decision = true;
+					changePlanCommand.text     = text
+				}
+
+				if (changePlanCommand.decision) {
+					convo.stop();
+					convo.next();
+				} else {
+					// otherwise do the expected, default decision!
+					let taskNumbersToWorkOnArray = convertTaskNumberStringToArray(response.text, dailyTasks);
+					if (taskNumbersToWorkOnArray) {
+						singleLineWorkOnTask(convo, taskNumbersToWorkOnArray);
+					} else {
+						convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+						convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+						convo.repeat();
+					}
+					convo.next();
+				}
+
 			}
 		}
 	]);

@@ -205,6 +205,15 @@ exports.default = function (controller) {
 					config = { SlackUserId: SlackUserId, botCallback: true, payload: payload };
 					controller.trigger('undo_task_delete', [bot, config]);
 					break;
+				case _constants.buttonValues.planCommands.addTasks.value:
+					// bot.replyInteractive(message, "Awesome!");
+					break;
+				case _constants.buttonValues.planCommands.completeTasks.value:
+					break;
+				case _constants.buttonValues.planCommands.deleteTasks.value:
+					break;
+				case _constants.buttonValues.planCommands.workOnTasks.value:
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");
