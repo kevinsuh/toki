@@ -98,6 +98,7 @@ exports.default = function (controller) {
 							bot: bot,
 							tz: tz,
 							SlackUserId: SlackUserId,
+							UserId: UserId,
 							dailyTasks: dailyTasks,
 							updateTaskListMessageObject: {},
 							newTasks: [],
@@ -211,6 +212,16 @@ exports.default = function (controller) {
 										});
 									}
 								});
+							}
+
+							if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
+								var config = {
+									SlackUserId: SlackUserId,
+									dailyTasksToWorkOn: dailyTasksToWorkOn
+								};
+								config.intent = _intents2.default.START_SESSION;
+								controller.trigger('new_session_group_decision', [bot, config]);
+								return;
 							}
 
 							setTimeout(function () {
