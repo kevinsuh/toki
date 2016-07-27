@@ -23,7 +23,8 @@ exports.default = function (controller) {
 
 		var config = {
 			intent: intent,
-			SlackUserId: SlackUserId
+			SlackUserId: SlackUserId,
+			taskDecision: _constants.TASK_DECISION.work.word
 		};
 
 		bot.send({
@@ -58,10 +59,6 @@ exports.default = function (controller) {
 					if (dailyTasksToWorkOn.length > 0) {
 						config.dailyTasksToWorkOn = dailyTasksToWorkOn;
 					}
-					bot.send({
-						text: "Let's do it! :weight_lifter:",
-						channel: message.channel
-					});
 					controller.trigger('new_session_group_decision', [bot, config]);
 				});
 			});

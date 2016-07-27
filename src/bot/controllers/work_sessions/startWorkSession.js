@@ -8,7 +8,7 @@ import { createMomentObjectWithSpecificTimeZone, closeOldRemindersAndSessions } 
 
 import intentConfig from '../../lib/intents';
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsArray, THANK_YOU, buttonValues, colorsHash, startSessionOptionsAttachments } from '../../lib/constants';
+import { colorsArray, THANK_YOU, buttonValues, colorsHash, startSessionOptionsAttachments, TASK_DECISION } from '../../lib/constants';
 
 import { startSessionStartConversation, confirmTimeForTasks } from './startWorkSessionFunctions';
 
@@ -33,7 +33,8 @@ export default function(controller) {
 
 		var config = {
 			intent,
-			SlackUserId
+			SlackUserId,
+			taskDecision: TASK_DECISION.work.word
 		}
 
 		bot.send({
@@ -71,10 +72,6 @@ export default function(controller) {
 					if (dailyTasksToWorkOn.length > 0) {
 						config.dailyTasksToWorkOn = dailyTasksToWorkOn;
 					}
-					bot.send({
-						text: "Let's do it! :weight_lifter:",
-						channel: message.channel
-					})
 					controller.trigger(`new_session_group_decision`, [ bot, config ]);
 				});
 			});
