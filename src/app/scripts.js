@@ -4,7 +4,7 @@
 
 import { bots } from '../bot/controllers';
 import { controller } from '../bot/controllers';
-import { consoleLog } from '../bot/lib/miscHelpers';
+import { consoleLog, prioritizeDailyTasks } from '../bot/lib/miscHelpers';
 
 // sequelize models
 import models from './models';
@@ -14,6 +14,17 @@ import moment from 'moment-timezone';
 import dotenv from 'dotenv';
 
 export function updateUsers() {
+
+	models.User.findAll({
+		include: [ models.SlackUser ]
+	})
+	.then((users) => {
+		users.forEach((user) => {
+			prioritizeDailyTasks(user);
+		})
+	})
+
+	return;
 
 	var env = process.env.NODE_ENV || 'development';
 	if (env == 'development') {

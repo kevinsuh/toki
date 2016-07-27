@@ -34,6 +34,16 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function updateUsers() {
 
+	_models2.default.User.findAll({
+		include: [_models2.default.SlackUser]
+	}).then(function (users) {
+		users.forEach(function (user) {
+			(0, _miscHelpers.prioritizeDailyTasks)(user);
+		});
+	});
+
+	return;
+
 	var env = process.env.NODE_ENV || 'development';
 	if (env == 'development') {
 		(0, _miscHelpers.consoleLog)("In development server of Toki");
