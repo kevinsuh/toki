@@ -543,7 +543,7 @@ function triggerIntent(intent, config) {
 			break;
 		case _intents2.default.START_SESSION:
 			console.log(config);
-			controller.trigger('edit_tasks_flow', [bot, config]);
+			controller.trigger('confirm_new_session', [bot, config]);
 			break;
 		case _intents2.default.VIEW_TASKS:
 			controller.trigger('view_daily_tasks_flow', [bot, { SlackUserId: SlackUserId, message: message }]);
