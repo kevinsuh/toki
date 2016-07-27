@@ -132,6 +132,12 @@ export default function(controller) {
 							}
 						}
 
+						// if you are changing between commands, we will
+						// store that information and have special config ability
+						if (config.changePlanCommand && config.changePlanCommand.decision) {
+							convo.tasksEdit.changedPlanCommands = true;
+						}
+
 						// this is the flow you expect for editing tasks
 						startEditTaskListMessage(convo);
 
@@ -145,7 +151,7 @@ export default function(controller) {
 							// this means we are changing the plan!
 							if (changePlanCommand.decision) {
 								let message = { text: changePlanCommand.text };
-								let config = { SlackUserId, message }
+								let config = { SlackUserId, message, changePlanCommand }
 								controller.trigger(`plan_command_center`, [ bot, config ]);
 								return;
 							}

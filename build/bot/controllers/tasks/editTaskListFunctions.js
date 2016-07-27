@@ -366,14 +366,20 @@ function completeTasksFlow(convo) {
 	var _convo$tasksEdit7 = convo.tasksEdit;
 	var dailyTasks = _convo$tasksEdit7.dailyTasks;
 	var changePlanCommand = _convo$tasksEdit7.changePlanCommand;
+	var changedPlanCommands = _convo$tasksEdit7.changedPlanCommands;
 
 	// say task list, then ask which ones to complete
 
-	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, scope: "complete" };
-	convo.say('Okay! Here\'s your plan for today :memo::');
-	sayTasksForToday(convo, options);
+	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
+	var message = '';
+	if (changedPlanCommands) {
+		message = 'Okay! Which of your task(s) above would you like to complete?';
+	} else {
+		convo.say("Here's your plan for today :memo::");
+		sayTasksForToday(convo, options);
+		message = 'Which of your task(s) above would you like to complete?';
+	}
 
-	var message = 'Which of your task(s) above would you like to complete?';
 	convo.ask({
 		text: message
 	}, [{
@@ -495,13 +501,20 @@ function deleteTasksFlow(convo) {
 	var _convo$tasksEdit9 = convo.tasksEdit;
 	var dailyTasks = _convo$tasksEdit9.dailyTasks;
 	var changePlanCommand = _convo$tasksEdit9.changePlanCommand;
+	var changedPlanCommands = _convo$tasksEdit9.changedPlanCommands;
 
 	// say task list, then ask which ones to complete
 
-	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, scope: "delete" };
-	sayTasksForToday(convo, options);
+	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
+	var message = '';
+	if (changedPlanCommands) {
+		message = 'Okay! Which of your task(s) above would you like to delete?';
+	} else {
+		convo.say("Here's your plan for today :memo::");
+		sayTasksForToday(convo, options);
+		message = 'Which of your task(s) above would you like to delete?';
+	}
 
-	var message = 'Which of your task(s) above would you like to delete?';
 	convo.ask(message, [{
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
@@ -954,13 +967,20 @@ function workOnTasksFlow(convo) {
 	var _convo$tasksEdit15 = convo.tasksEdit;
 	var dailyTasks = _convo$tasksEdit15.dailyTasks;
 	var changePlanCommand = _convo$tasksEdit15.changePlanCommand;
+	var changedPlanCommands = _convo$tasksEdit15.changedPlanCommands;
 
 	// say task list, then ask which ones to complete
 
-	var options = { onlyRemainingTasks: true, scope: "work" };
-	sayTasksForToday(convo, options);
+	var options = { onlyRemainingTasks: true };
+	var message = '';
+	if (changedPlanCommands) {
+		message = 'Okay! Which of your task(s) above would you like to work on?';
+	} else {
+		convo.say("Here's your plan for today :memo::");
+		sayTasksForToday(convo, options);
+		message = 'Which of your task(s) above would you like to work on?';
+	}
 
-	var message = 'Which of your task(s) above would you like to work on?';
 	convo.ask(message, [{
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {

@@ -332,14 +332,19 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 
 function completeTasksFlow(convo) {
 
-	let { tasksEdit: { dailyTasks, changePlanCommand } } = convo;
+	let { tasksEdit: { dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, scope: "complete" };
-	convo.say(`Okay! Here's your plan for today :memo::`);
-	sayTasksForToday(convo, options);
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
+	let message = '';
+	if (changedPlanCommands) {
+		message = `Okay! Which of your task(s) above would you like to complete?`;
+	} else {
+		convo.say("Here's your plan for today :memo::");
+		sayTasksForToday(convo, options);
+		message = `Which of your task(s) above would you like to complete?`;
+	}
 
-	let message = `Which of your task(s) above would you like to complete?`;
 	convo.ask({
 		text: message
 	}, [
@@ -463,13 +468,19 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 
 function deleteTasksFlow(convo) {
 
-	let { tasksEdit: { dailyTasks, changePlanCommand } } = convo;
+	let { tasksEdit: { dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, scope: "delete" };
-	sayTasksForToday(convo, options);
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
+	let message = '';
+	if (changedPlanCommands) {
+		message = `Okay! Which of your task(s) above would you like to delete?`;
+	} else {
+		convo.say("Here's your plan for today :memo::");
+		sayTasksForToday(convo, options);
+		message = `Which of your task(s) above would you like to delete?`;
+	}
 
-	let message = `Which of your task(s) above would you like to delete?`;
 	convo.ask(message, [
 		{
 			pattern: utterances.noAndNeverMind,
@@ -933,13 +944,19 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 // work on which task flow
 function workOnTasksFlow(convo) {
 
-	let { tasksEdit: { dailyTasks, changePlanCommand } } = convo;
+	let { tasksEdit: { dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true, scope: "work" };
-	sayTasksForToday(convo, options);
+	let options = { onlyRemainingTasks: true };
+	let message = '';
+	if (changedPlanCommands) {
+		message = `Okay! Which of your task(s) above would you like to work on?`;
+	} else {
+		convo.say("Here's your plan for today :memo::");
+		sayTasksForToday(convo, options);
+		message = `Which of your task(s) above would you like to work on?`;
+	}
 
-	let message = `Which of your task(s) above would you like to work on?`;
 	convo.ask(message, [
 		{
 			pattern: utterances.noAndNeverMind,
