@@ -6,7 +6,7 @@ import moment from 'moment';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsHash, buttonValues, FINISH_WORD, RESET, taskListMessageDoneButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment, pausedSessionOptionsAttachments, startSessionOptionsAttachments, TASK_DECISION } from '../../lib/constants';
+import { colorsHash, buttonValues, FINISH_WORD, RESET, taskListMessageDoneButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment, pausedSessionOptionsAttachments, startSessionOptionsAttachments, TASK_DECISION, completeTasksPlanOptionsAttachments } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, getMostRecentTaskListMessageToUpdate, getMostRecentMessageToUpdate, deleteConvoAskMessage, convertMinutesToHoursString, getTimeToTaskTextAttachmentWithTaskListMessage } from '../../lib/messageHelpers';
 
 import { consoleLog, witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray } from '../../lib/miscHelpers';
@@ -247,13 +247,7 @@ function sayTasksForToday(convo, options = {}) {
 		}
 		convo.say({
 			text: taskListMessage,
-			attachments:[
-				{
-					attachment_type: 'default',
-					callback_id: "TASK_LIST_MESSAGE",
-					fallback: "Here's your task list!"
-				}
-			]
+			attachments: completeTasksPlanOptionsAttachments
 		});
 	}
 
@@ -340,7 +334,9 @@ function completeTasksFlow(convo) {
 	sayTasksForToday(convo, options);
 
 	let message = `Which of your task(s) above would you like to complete?`;
-	convo.ask(message, [
+	convo.ask({
+		text: message
+	}, [
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
@@ -353,6 +349,12 @@ function completeTasksFlow(convo) {
 			callback: (response, convo) => {
 
 				let { text } = response;
+				if (response.actions && response.actions[0]) {
+					text = response.actions[0].value;
+				}
+
+				console.log("\n\n\nRESPONSE");
+				console.log(response);
 
 				// if key word exists, we are stopping early and do the other flow!
 				if (TASK_DECISION.add.reg_exp.test(text) || TASK_DECISION.delete.reg_exp.test(text) || TASK_DECISION.work.reg_exp.test(text)) {

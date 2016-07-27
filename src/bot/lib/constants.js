@@ -377,6 +377,24 @@ export const buttonValues ={
 	undoTaskDelete: {
 		value: "UNDO_TASK_DELETE",
 		name: "UNDO_TASK_DELETE"
+	},
+	planCommands: { // value will be NL single line commands
+		deleteTasks: {
+			name: "PLAN_DELETE_TASKS",
+			value: "delete tasks"
+		},
+		completeTasks: {
+			name: "PLAN_COMPLETE_TASKS",
+			value: "complete tasks"
+		},
+		addTasks: {
+			name: "PLAN_ADD_TASKS",
+			value: "add tasks"
+		},
+		workOnTasks: {
+			name: "PLAN_WORK_ON_TASKS",
+			value: "work on tasks"
+		}
 	}
 }
 
@@ -659,6 +677,70 @@ export const pausedSessionOptionsAttachments = [
 			}
 		]
 	}
-]
+];
+
+export const fullPlanOptionsAttachments = [
+	{
+		attachment_type: 'default',
+		callback_id: "PLAN_OPTIONS",
+		fallback: "What do you want to do with your plan?",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+					name: buttonValues.planCommands.addTasks.name,
+					text: "Add Tasks",
+					value: buttonValues.planCommands.addTasks.value,
+					type: "button"
+			},
+			{
+					name: buttonValues.planCommands.completeTasks.name,
+					text: "Complete Tasks",
+					value: buttonValues.planCommands.completeTasks.value,
+					type: "button"
+			},
+			{
+					name: buttonValues.planCommands.deleteTasks.name,
+					text: "Delete Tasks",
+					value: buttonValues.planCommands.deleteTasks.value,
+					type: "button"
+			},
+			{
+					name: buttonValues.planCommands.workOnTasks.name,
+					text: "Work on Tasks",
+					value: buttonValues.planCommands.workOnTasks.value,
+					type: "button"
+			}
+		]
+	}
+];
+
+export const completeTasksPlanOptionsAttachments = [
+	{
+		attachment_type: 'default',
+		callback_id: "PLAN_OPTIONS",
+		fallback: "What do you want to do with your plan?",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+					name: buttonValues.planCommands.addTasks.name,
+					text: "Add Tasks",
+					value: buttonValues.planCommands.addTasks.value,
+					type: "button"
+			},
+			{
+					name: buttonValues.planCommands.deleteTasks.name,
+					text: "Delete Tasks",
+					value: buttonValues.planCommands.deleteTasks.value,
+					type: "button"
+			},
+			{
+					name: buttonValues.planCommands.workOnTasks.name,
+					text: "Work on Tasks",
+					value: buttonValues.planCommands.workOnTasks.value,
+					type: "button"
+			}
+		]
+	}
+];
 
 

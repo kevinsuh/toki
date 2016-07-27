@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TASK_DECISION = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.completeTasksPlanOptionsAttachments = exports.fullPlanOptionsAttachments = exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TASK_DECISION = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
@@ -387,6 +387,24 @@ var buttonValues = exports.buttonValues = {
 	undoTaskDelete: {
 		value: "UNDO_TASK_DELETE",
 		name: "UNDO_TASK_DELETE"
+	},
+	planCommands: { // value will be NL single line commands
+		deleteTasks: {
+			name: "PLAN_DELETE_TASKS",
+			value: "delete tasks"
+		},
+		completeTasks: {
+			name: "PLAN_COMPLETE_TASKS",
+			value: "complete tasks"
+		},
+		addTasks: {
+			name: "PLAN_ADD_TASKS",
+			value: "add tasks"
+		},
+		workOnTasks: {
+			name: "PLAN_WORK_ON_TASKS",
+			value: "work on tasks"
+		}
 	}
 };
 
@@ -617,6 +635,57 @@ var pausedSessionOptionsAttachments = exports.pausedSessionOptionsAttachments = 
 		name: buttonValues.startSession.pause.endEarly.name,
 		text: "End Session",
 		value: buttonValues.startSession.pause.endEarly.value,
+		type: "button"
+	}]
+}];
+
+var fullPlanOptionsAttachments = exports.fullPlanOptionsAttachments = [{
+	attachment_type: 'default',
+	callback_id: "PLAN_OPTIONS",
+	fallback: "What do you want to do with your plan?",
+	color: colorsHash.grey.hex,
+	actions: [{
+		name: buttonValues.planCommands.addTasks.name,
+		text: "Add Tasks",
+		value: buttonValues.planCommands.addTasks.value,
+		type: "button"
+	}, {
+		name: buttonValues.planCommands.completeTasks.name,
+		text: "Complete Tasks",
+		value: buttonValues.planCommands.completeTasks.value,
+		type: "button"
+	}, {
+		name: buttonValues.planCommands.deleteTasks.name,
+		text: "Delete Tasks",
+		value: buttonValues.planCommands.deleteTasks.value,
+		type: "button"
+	}, {
+		name: buttonValues.planCommands.workOnTasks.name,
+		text: "Work on Tasks",
+		value: buttonValues.planCommands.workOnTasks.value,
+		type: "button"
+	}]
+}];
+
+var completeTasksPlanOptionsAttachments = exports.completeTasksPlanOptionsAttachments = [{
+	attachment_type: 'default',
+	callback_id: "PLAN_OPTIONS",
+	fallback: "What do you want to do with your plan?",
+	color: colorsHash.grey.hex,
+	actions: [{
+		name: buttonValues.planCommands.addTasks.name,
+		text: "Add Tasks",
+		value: buttonValues.planCommands.addTasks.value,
+		type: "button"
+	}, {
+		name: buttonValues.planCommands.deleteTasks.name,
+		text: "Delete Tasks",
+		value: buttonValues.planCommands.deleteTasks.value,
+		type: "button"
+	}, {
+		name: buttonValues.planCommands.workOnTasks.name,
+		text: "Work on Tasks",
+		value: buttonValues.planCommands.workOnTasks.value,
 		type: "button"
 	}]
 }];

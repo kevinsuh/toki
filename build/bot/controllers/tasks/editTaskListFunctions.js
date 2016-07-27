@@ -278,11 +278,7 @@ function sayTasksForToday(convo) {
 		}
 		convo.say({
 			text: taskListMessage,
-			attachments: [{
-				attachment_type: 'default',
-				callback_id: "TASK_LIST_MESSAGE",
-				fallback: "Here's your task list!"
-			}]
+			attachments: _constants.completeTasksPlanOptionsAttachments
 		});
 	}
 }
@@ -372,7 +368,9 @@ function completeTasksFlow(convo) {
 	sayTasksForToday(convo, options);
 
 	var message = 'Which of your task(s) above would you like to complete?';
-	convo.ask(message, [{
+	convo.ask({
+		text: message
+	}, [{
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
 			convo.say("Okay, let me know if you still want to complete tasks! :wave: ");
@@ -383,8 +381,14 @@ function completeTasksFlow(convo) {
 		callback: function callback(response, convo) {
 			var text = response.text;
 
-			// if key word exists, we are stopping early and do the other flow!
+			if (response.actions && response.actions[0]) {
+				text = response.actions[0].value;
+			}
 
+			console.log("\n\n\nRESPONSE");
+			console.log(response);
+
+			// if key word exists, we are stopping early and do the other flow!
 			if (_constants.TASK_DECISION.add.reg_exp.test(text) || _constants.TASK_DECISION.delete.reg_exp.test(text) || _constants.TASK_DECISION.work.reg_exp.test(text)) {
 				changePlanCommand.decision = true;
 				changePlanCommand.text = text;
