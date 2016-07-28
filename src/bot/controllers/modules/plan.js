@@ -764,12 +764,6 @@ function askToStartWorkSession(response, convo) {
 						text: "Be back later",
 						value: buttonValues.backLater.value,
 						type: "button"
-					},
-					{
-						name: buttonValues.editTaskList.name,
-						text: "Edit tasks",
-						value: buttonValues.editTaskList.value,
-						type: "button"
 					}
 				]
 			}
@@ -832,26 +826,6 @@ function askToStartWorkSession(response, convo) {
 				convo.say("Okay! Call me over when you're ready to work :muscle:");
 				convo.next();
 
-			}
-		},
-		{
-			pattern: buttonValues.editTaskList.value,
-			callback: function(response, convo) {
-				
-				convo.dayStart.startDayDecision = intentConfig.EDIT_TASKS;
-				convo.next();
-			}
-		},
-		{
-			pattern: utterances.containsEditTaskList,
-			callback: function(response, convo) {
-				
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
-				convo.dayStart.startDayDecision = intentConfig.EDIT_TASKS;
-				convo.next();
-				
 			}
 		},
 		{
