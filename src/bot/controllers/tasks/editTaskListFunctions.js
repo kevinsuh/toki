@@ -1155,8 +1155,8 @@ function workOnTasksFlow(convo) {
 							let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
 
 							singleLineWorkOnTask(convo, taskNumbersToWorkOnArray);
-							sayTasksForToday(convo, options);
-							sayEndOfPlanMessage(convo);
+							// sayTasksForToday(convo, options);
+							// sayEndOfPlanMessage(convo);
 
 						} else {
 							convo.say("Oops, I don't totally understand :dog:. Let's try this again");

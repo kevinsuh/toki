@@ -1175,8 +1175,8 @@ function workOnTasksFlow(convo) {
 						var _options3 = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
 
 						singleLineWorkOnTask(convo, taskNumbersToWorkOnArray);
-						sayTasksForToday(convo, _options3);
-						sayEndOfPlanMessage(convo);
+						// sayTasksForToday(convo, options);
+						// sayEndOfPlanMessage(convo);
 					} else {
 						convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 						convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
