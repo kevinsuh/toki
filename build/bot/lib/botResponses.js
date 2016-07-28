@@ -72,7 +72,7 @@ var utterances = exports.utterances = {
 	containsCancel: new RegExp(/(\bc[cancel]{4,})/i),
 	containsContinue: new RegExp(/(\bc[continue]{5,})/i),
 	done: new RegExp(/(^d[done]{2,}$)/i),
-	noAdditional: new RegExp(/(\bn[no ]{1,}\ba[additional]{5,}\b)/i),
+	noAdditional: new RegExp(/(\bn[no ]{1,}\ba[additional]{5,}\b|^no\b|^no[one]{2,4}$)/i),
 	containsKeep: new RegExp(/(\bk[keep]{2,}\b)/i),
 	containsDifferentOrAnother: new RegExp(/\b(d[different]{5,}|a[another]{4,})\b/i),
 	eastern: new RegExp(/\b(e[eastern]{5,})\b/i),
