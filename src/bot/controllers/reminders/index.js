@@ -68,7 +68,7 @@ export default function(controller) {
 						message: userMessage
 					}
 
-					controller.trigger(`new_session_group_decision`, [ bot, config ]);
+					controller.trigger(`add_task_flow`, [ bot, config ]);
 
 					return;
 				}
