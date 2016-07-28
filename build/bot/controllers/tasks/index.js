@@ -416,10 +416,11 @@ exports.default = function (controller) {
 		console.log("\n\n\n ~~ In Plan Command Center ~~ \n\n\n");
 
 		var message = config.message;
-		var text = config.message.text;
 		var SlackUserId = config.SlackUserId;
 		var botCallback = config.botCallback;
 
+		var text = message ? message.text : ''; // no message, will default to view_plan_flow
+		var channel = message ? message.channel : false;
 
 		if (botCallback) {
 			// if botCallback, need to get the correct bot
@@ -468,13 +469,15 @@ exports.default = function (controller) {
    * 	if taskNumbers exists, allows for single-line command
    */
 
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
+		if (channel) {
+			bot.send({
+				type: "typing",
+				channel: channel
+			});
+		}
 		setTimeout(function () {
 			controller.trigger('edit_tasks_flow', [bot, config]);
-		}, 1000);
+		}, 500);
 	});
 };
 

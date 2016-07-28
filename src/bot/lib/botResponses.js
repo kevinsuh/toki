@@ -66,7 +66,7 @@ export const utterances = {
 	containsShowCommands: new RegExp(/(\bs[show]{2,}|\bc[commands]{4,})/i),
 	containsStartDay: new RegExp(/(\bs[start]{3,}|\bd[day]{2,})/i),
 	containsSettings: new RegExp(/\bs[settings]{4,}/i),
-	containsEditTaskList: new RegExp(/(\be[edit ]{2,}(\bl[list]{2,}|\bt[task]{2,}))/i),
+	containsEditTaskList: new RegExp(/(\be[edit ]{2,}\b(l[list]{2,}|t[task]{2,}|p[plan]{2,})\b)/i),
 	containsCompleteOrCheckOrCross: new RegExp(/(\bc[complete]{5,}|\bc[check]{3,}|\bc[cross]{3,})/i),
 	containsDeleteOrRemove: new RegExp(/(\bd[delete]{4,}|\br[remove]{3,})/i),
 	containsTime: new RegExp(/(\bt[time]{2,})/i),

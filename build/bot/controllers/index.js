@@ -539,17 +539,17 @@ function triggerIntent(intent, config) {
 
 	switch (intent) {
 		case _intents2.default.ADD_TASK:
-			controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId, message: message }]);
+			controller.trigger('plan_command_center', [bot, { SlackUserId: SlackUserId, message: message }]);
 			break;
 		case _intents2.default.START_SESSION:
 			console.log(config);
 			controller.trigger('confirm_new_session', [bot, config]);
 			break;
 		case _intents2.default.VIEW_TASKS:
-			controller.trigger('view_daily_tasks_flow', [bot, { SlackUserId: SlackUserId, message: message }]);
+			controller.trigger('plan_command_center', [bot, { SlackUserId: SlackUserId, message: message }]);
 			break;
 		case _intents2.default.EDIT_TASKS:
-			controller.trigger('edit_tasks_flow', [bot, { SlackUserId: SlackUserId }]);
+			controller.trigger('plan_command_center', [bot, { SlackUserId: SlackUserId, message: message }]);
 			break;
 		case _intents2.default.END_DAY:
 			controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
