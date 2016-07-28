@@ -60,7 +60,14 @@ exports.default = function (controller) {
 		var taskNumbers = config.taskNumbers;
 		var taskDecision = config.taskDecision;
 		var message = config.message;
+		var botCallback = config.botCallback;
 
+
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			var botToken = bot.config.token;
+			bot = _index.bots[botToken];
+		}
 
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
@@ -77,11 +84,7 @@ exports.default = function (controller) {
 
 				var openWorkSession = false;
 				if (workSessions.length > 0) {
-					var now = (0, _moment2.default)();
-					var endTime = (0, _moment2.default)(workSessions[0].endTime).add(1, 'minutes');
-					if (endTime > now) {
-						openWorkSession = workSessions[0];
-					}
+					openWorkSession = workSessions[0];
 				}
 
 				user.getDailyTasks({
@@ -106,8 +109,17 @@ exports.default = function (controller) {
 							dailyTasksToUpdate: [], // existing dailyTasks
 							openWorkSession: openWorkSession,
 							taskDecision: taskDecision,
-							taskNumbers: taskNumbers
+							taskNumbers: taskNumbers,
+							changePlanCommand: {
+								decision: false
+							}
 						};
+
+						// if you are changing between commands, we will
+						// store that information and have special config ability
+						if (config.changePlanCommand && config.changePlanCommand.decision) {
+							convo.tasksEdit.changedPlanCommands = true;
+						}
 
 						// this is the flow you expect for editing tasks
 						(0, _editTaskListFunctions.startEditTaskListMessage)(convo);
@@ -122,7 +134,18 @@ exports.default = function (controller) {
 							var dailyTasksToUpdate = _convo$tasksEdit.dailyTasksToUpdate;
 							var startSession = _convo$tasksEdit.startSession;
 							var dailyTasksToWorkOn = _convo$tasksEdit.dailyTasksToWorkOn;
+							var changePlanCommand = _convo$tasksEdit.changePlanCommand;
 
+
+							console.log(convo.tasksEdit.changePlanCommand);
+
+							// this means we are changing the plan!
+							if (changePlanCommand.decision) {
+								var _message = { text: changePlanCommand.text };
+								var _config = { SlackUserId: SlackUserId, message: _message, changePlanCommand: changePlanCommand };
+								controller.trigger('plan_command_center', [bot, _config]);
+								return;
+							}
 
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 
@@ -229,73 +252,6 @@ exports.default = function (controller) {
 				});
 			});
 		});
-	});
-
-	controller.hears(['daily_tasks', 'add_daily_task', 'completed_task'], 'direct_message', _index.wit.hears, function (bot, message) {
-		var text = message.text;
-		var channel = message.channel;
-
-		var SlackUserId = message.user;
-
-		// wit may pick up "add check in" as add_daily_task
-		if (_botResponses.utterances.startsWithAdd.test(text) && _botResponses.utterances.containsCheckin.test(text)) {
-			var _config = { SlackUserId: SlackUserId, message: message };
-			if (_botResponses.utterances.containsOnlyCheckin.test(text)) {
-				_config.reminder_type = "work_session";
-			}
-			controller.trigger('ask_for_reminder', [bot, _config]);
-			return;
-		};
-
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-
-		var config = { SlackUserId: SlackUserId, message: message };
-
-		var taskNumbers = (0, _messageHelpers.convertStringToNumbersArray)(text);
-		if (taskNumbers) {
-			config.taskNumbers = taskNumbers;
-		}
-
-		// this is how you make switch/case statements with RegEx
-		switch (text) {
-			case (text.match(_constants.TASK_DECISION.complete.reg_exp) || {}).input:
-				console.log('\n\n ~~ User wants to complete task ~~ \n\n');
-				config.taskDecision = _constants.TASK_DECISION.complete.word;
-				break;
-			case (text.match(_constants.TASK_DECISION.add.reg_exp) || {}).input:
-				console.log('\n\n ~~ User wants to add task ~~ \n\n');
-				config.taskDecision = _constants.TASK_DECISION.add.word;
-				break;
-			case (text.match(_constants.TASK_DECISION.view.reg_exp) || {}).input:
-				console.log('\n\n ~~ User wants to view task ~~ \n\n');
-				config.taskDecision = _constants.TASK_DECISION.view.word;
-				break;
-			case (text.match(_constants.TASK_DECISION.delete.reg_exp) || {}).input:
-				console.log('\n\n ~~ User wants to delete task ~~ \n\n');
-				config.taskDecision = _constants.TASK_DECISION.delete.word;
-				break;
-			case (text.match(_constants.TASK_DECISION.edit.reg_exp) || {}).input:
-				console.log('\n\n ~~ User wants to edit task ~~ \n\n');
-				config.taskDecision = _constants.TASK_DECISION.edit.word;
-				break;
-			case (text.match(_constants.TASK_DECISION.work.reg_exp) || {}).input:
-				console.log('\n\n ~~ User wants to work on task ~~ \n\n');
-				config.taskDecision = _constants.TASK_DECISION.work.word;
-				break;
-			default:
-				config.taskDecision = _constants.TASK_DECISION.view.word;
-				break;
-		}
-
-		console.log('\n\nCONFIG:');
-		console.log(config);
-
-		setTimeout(function () {
-			controller.trigger('edit_tasks_flow', [bot, config]);
-		}, 1000);
 	});
 
 	/**
@@ -428,6 +384,97 @@ exports.default = function (controller) {
 				});
 			});
 		});
+	});
+
+	controller.hears(['daily_tasks', 'add_daily_task', 'completed_task'], 'direct_message', _index.wit.hears, function (bot, message) {
+		var text = message.text;
+		var channel = message.channel;
+
+		var SlackUserId = message.user;
+
+		var config = { SlackUserId: SlackUserId, message: message };
+
+		// wit may pick up "add check in" as add_daily_task
+		if (_botResponses.utterances.startsWithAdd.test(text) && _botResponses.utterances.containsCheckin.test(text)) {
+			if (_botResponses.utterances.containsOnlyCheckin.test(text)) {
+				config.reminder_type = "work_session";
+			}
+			controller.trigger('ask_for_reminder', [bot, config]);
+			return;
+		};
+
+		controller.trigger('plan_command_center', [bot, config]);
+	});
+
+	/**
+  * 		This is where the message command goes to decide
+  * 		What happens with your plan, what data we show
+  * 		i.e. what specific customization config to displaying PLAN module.
+  */
+	controller.on('plan_command_center', function (bot, config) {
+
+		console.log("\n\n\n ~~ In Plan Command Center ~~ \n\n\n");
+
+		var message = config.message;
+		var text = config.message.text;
+		var SlackUserId = config.SlackUserId;
+		var botCallback = config.botCallback;
+
+
+		if (botCallback) {
+			// if botCallback, need to get the correct bot
+			var botToken = bot.config.token;
+			bot = _index.bots[botToken];
+		}
+
+		var taskNumbers = (0, _messageHelpers.convertStringToNumbersArray)(text);
+		if (taskNumbers) {
+			config.taskNumbers = taskNumbers;
+		}
+
+		// this is how you make switch/case statements with RegEx
+		switch (text) {
+			case (text.match(_constants.TASK_DECISION.complete.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to complete task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.complete.word;
+				break;
+			case (text.match(_constants.TASK_DECISION.add.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to add task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.add.word;
+				break;
+			case (text.match(_constants.TASK_DECISION.view.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to view task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.view.word;
+				break;
+			case (text.match(_constants.TASK_DECISION.delete.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to delete task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.delete.word;
+				break;
+			case (text.match(_constants.TASK_DECISION.edit.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to edit task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.edit.word;
+				break;
+			case (text.match(_constants.TASK_DECISION.work.reg_exp) || {}).input:
+				console.log('\n\n ~~ User wants to work on task ~~ \n\n');
+				config.taskDecision = _constants.TASK_DECISION.work.word;
+				break;
+			default:
+				config.taskDecision = _constants.TASK_DECISION.view.word;
+				break;
+		}
+
+		/**
+   * 	For `edit_tasks_flow`, config must have taskDecision.
+   * 	if taskNumbers exists, allows for single-line command
+   */
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(function () {
+			controller.trigger('edit_tasks_flow', [bot, config]);
+		}, 1000);
 	});
 };
 

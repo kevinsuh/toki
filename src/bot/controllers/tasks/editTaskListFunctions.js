@@ -7,9 +7,9 @@ import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
 import { colorsHash, buttonValues, FINISH_WORD, RESET, taskListMessageDoneButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment, pausedSessionOptionsAttachments, startSessionOptionsAttachments, TASK_DECISION } from '../../lib/constants';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, getMostRecentTaskListMessageToUpdate, getMostRecentMessageToUpdate, deleteConvoAskMessage, convertMinutesToHoursString, getTimeToTaskTextAttachmentWithTaskListMessage } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, getMostRecentTaskListMessageToUpdate, getMostRecentMessageToUpdate, deleteConvoAskMessage, convertMinutesToHoursString, getTimeToTaskTextAttachmentWithTaskListMessage, deleteMostRecentTaskListMessage, deleteMostRecentPlanMessage } from '../../lib/messageHelpers';
 
-import { consoleLog, witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray } from '../../lib/miscHelpers';
+import { consoleLog, witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray, getPlanCommandOptionAttachments, getEndOfPlanCommandOptionAttachments } from '../../lib/miscHelpers';
 
 // this one shows the task list message and asks for options
 export function startEditTaskListMessage(convo) {
@@ -106,7 +106,7 @@ function specificCommandFlow(convo) {
 			break;
 		case TASK_DECISION.view.word:
 			console.log(`\n\n ~~ user wants to view tasks in specificCommandFlow ~~ \n\n`);
-			sayTasksForToday(convo);
+			viewTasksFlow(convo);
 			break;
 		case TASK_DECISION.delete.word:
 			console.log(`\n\n ~~ user wants to delete tasks in specificCommandFlow ~~ \n\n`)
@@ -121,8 +121,7 @@ function specificCommandFlow(convo) {
 			break;
 		case TASK_DECISION.edit.word:
 			console.log(`\n\n ~~ user wants to edit tasks in specificCommandFlow ~~ \n\n`)
-			sayTasksForToday(convo);
-			convo.say("You can complete, delete, or add tasks to this list ( `complete task 2` or `add tasks`)!");
+			viewTasksFlow(convo);
 			break;
 		case TASK_DECISION.work.word:
 
@@ -149,6 +148,10 @@ function specificCommandFlow(convo) {
 	convo.next();
 
 }
+
+/**
+ * 			~~ editTaskListFunctions Helper Messages ~~
+ */
 
 // if no remaining tasks, ask to add new ones
 function checkForNoRemainingTasks(convo) {
@@ -221,10 +224,12 @@ function sayWorkSessionMessage(convo) {
 			minutesString = convertMinutesToHoursString(minutes);
 			workSessionMessage = `Your session is still paused :double_vertical_bar: You have *${minutesString}* remaining for ${sessionTasks}`;
 		} else {
-			// currently live
-			workSessionMessage = `You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`;
+			// currently live (handled by checkWorkSessionForLiveTasks)
+			// workSessionMessage = `You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`;
 		}
 		convo.say(workSessionMessage);
+	} else {
+		convo.say(`Let me know if there's anything you want to do :muscle: \`i.e. lets do task 2\``);
 	}
 
 }
@@ -237,25 +242,68 @@ function sayTasksForToday(convo, options = {}) {
 	if (dailyTasks.length > 0 && (!options.onlyRemainingTasks || (options.onlyRemainingTasks && remainingTasks.length > 0))) {
 		options.segmentCompleted = true;
 		let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
+		if (options.customTaskListMessage) {
+			taskListMessage = options.customTaskListMessage;
+		}
+		
+		let attachmentOptions = {};
+		if (options.scope){
+			attachmentOptions.scope = options.scope;
+		}
+		let attachments = [];
 
-		let taskMessage = "Here are your tasks for today :memo::"
-		if (options.onlyRemainingTasks) {
-			taskMessage = "Here are your remaining tasks for today :memo::";
+		if (options.startPlan) {
+			taskListMessage = `Here's your plan for today :memo::\n${taskListMessage}`;
+			attachments     = getPlanCommandOptionAttachments(attachmentOptions);
+		} else if (options.endOfPlan) {
+			if (options.homeBase) {
+				taskListMessage = `Here's today's plan :memo::\n${taskListMessage}`;
+			} else {
+				taskListMessage = `Here's your plan for today :memo::\n${taskListMessage}`;
+			}
+			
+			// this is not working consistently enough to implement right now
+			attachments     = getEndOfPlanCommandOptionAttachments(attachmentOptions);
+		} else {
+			let taskMessage = "Here are your tasks for today :memo::"
+			if (options.onlyRemainingTasks) {
+				taskMessage = "Here are your remaining tasks for today :memo::";
+			}
+			if (!options.noTitle) {
+				convo.say(taskMessage);
+			}
 		}
-		if (!options.noTitle) {
-			convo.say(taskMessage);
-		}
+
 		convo.say({
 			text: taskListMessage,
-			attachments:[
-				{
-					attachment_type: 'default',
-					callback_id: "TASK_LIST_MESSAGE",
-					fallback: "Here's your task list!"
-				}
-			]
+			attachments
 		});
 	}
+
+}
+
+function wordSwapMessage(baseMessage, word, wordSwapCount) {
+
+	let wordSwaps = [`${word}`,`*${word}*`,`*_${word}_*`];
+	let wordSwapChoice = wordSwaps[wordSwapCount % wordSwaps.length];
+	let message = `${baseMessage} ${wordSwapChoice}`;
+	return message;
+
+}
+
+/**
+ * 		~~ VIEW TASKS (HOME BASE OF PLAN) ~~
+ */
+
+function viewTasksFlow(convo) {
+
+	let { tasksEdit: { bot, dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
+
+	// say task list, then ask which ones to complete
+	let options = { noTitle: true, endOfPlan: true, homeBase: true };
+	sayTasksForToday(convo, options);
+	sayWorkSessionMessage(convo);
+	convo.next();
 
 }
 
@@ -318,7 +366,10 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 			}]
 		});
 
-		let options = { onlyRemainingTasks: true };
+		let options = { dontUseDataValues: true, onlyRemainingTasks: true };
+		if (convo.tasksEdit.inFlow) {
+			// options.endOfPlan = true;
+		}
 		sayTasksForToday(convo, options);
 		checkForNoRemainingTasks(convo);
 
@@ -333,17 +384,39 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 
 function completeTasksFlow(convo) {
 
-	let { tasksEdit: { dailyTasks } } = convo;
+	let { tasksEdit: { bot, dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
+	convo.tasksEdit.inFlow = true;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
-	sayTasksForToday(convo, options);
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, startPlan: true };
 
-	let message = `Which of your task(s) above would you like to complete?`;
-	convo.ask(message, [
+	let baseMessage = '';
+
+	if (changedPlanCommands) {
+		baseMessage = `Okay! Which of your task(s) above would you like to`;
+	} else {
+		baseMessage = `Which of your task(s) above would you like to`;
+		sayTasksForToday(convo, options);
+	}
+
+	let wordSwapCount = 0;
+	let message       = wordSwapMessage(baseMessage, "complete?", wordSwapCount);
+
+	convo.ask({
+		text: message,
+		attachments: [ {
+			attachment_type: 'default',
+			callback_id: "TASK_COMPLETE",
+			fallback: "Which of your task(s) would you like to complete?"
+		}]
+	}, [
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
+
+				// delete the plan if "never mind"
+				deleteMostRecentPlanMessage(response.channel, bot);
+
 				convo.say("Okay, let me know if you still want to complete tasks! :wave: ");
 				convo.next();
 			}
@@ -351,15 +424,72 @@ function completeTasksFlow(convo) {
 		{
 			default: true,
 			callback: (response, convo) => {
-				let taskNumbersToCompleteArray = convertTaskNumberStringToArray(response.text, dailyTasks);
-				if (taskNumbersToCompleteArray) {
-					singleLineCompleteTask(convo, taskNumbersToCompleteArray);
-				} else {
-					convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-					convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
-					convo.repeat();
+
+				let { text } = response;
+				if (response.actions && response.actions[0]) {
+					text = response.actions[0].value;
 				}
-				convo.next();
+
+				// if key word exists, we are stopping early and do the other flow!
+				if (TASK_DECISION.add.reg_exp.test(text) || TASK_DECISION.delete.reg_exp.test(text) || TASK_DECISION.work.reg_exp.test(text)) {
+
+					// let's delete the most recent ask message
+					deleteConvoAskMessage(response.channel, bot);
+
+					// handling add task flow differently -- we will delete plan for now
+					if (TASK_DECISION.add.reg_exp.test(text)) {
+						deleteMostRecentPlanMessage(response.channel, bot);
+					}
+
+					changePlanCommand.decision = true;
+					changePlanCommand.text     = text
+
+				}
+
+				if (changePlanCommand.decision) {
+					convo.stop();
+					convo.next();
+				} else  {
+
+					// otherwise do the expected, default decision!
+					let taskNumbersToCompleteArray = convertTaskNumberStringToArray(text, dailyTasks);
+
+					if (TASK_DECISION.complete.reg_exp.test(text) && !taskNumbersToCompleteArray) {
+
+						// if user tries completing task again, just update the text
+						wordSwapCount++;
+						let text = wordSwapMessage(baseMessage, "complete?", wordSwapCount);
+						let convoAskQuestionUpdate = getMostRecentMessageToUpdate(response.channel, bot);
+						if (convoAskQuestionUpdate) {
+							convoAskQuestionUpdate.text = text;
+							bot.api.chat.update(convoAskQuestionUpdate);
+						}
+
+					} else {
+
+						if (taskNumbersToCompleteArray) {
+
+							// delete the plan if you finish completing a task
+							deleteMostRecentPlanMessage(response.channel, bot);
+
+							// say task list, then ask which ones to complete
+							let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
+
+							singleLineCompleteTask(convo, taskNumbersToCompleteArray);
+							sayWorkSessionMessage(convo);
+
+						} else {
+							convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+							convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+							convo.repeat();
+						}
+
+						convo.next();
+
+					}
+					
+				}
+
 			}
 		}
 	]);
@@ -427,7 +557,10 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 			}]
 		});
 
-		let options = { onlyRemainingTasks: true };
+		let options = { dontUseDataValues: true, onlyRemainingTasks: true };
+		if (convo.tasksEdit.inFlow) {
+			// options.endOfPlan = true;
+		}
 		sayTasksForToday(convo, options);
 		checkForNoRemainingTasks(convo);
 
@@ -442,17 +575,39 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 
 function deleteTasksFlow(convo) {
 
-	let { tasksEdit: { dailyTasks } } = convo;
+	let { tasksEdit: { bot, dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
+	convo.tasksEdit.inFlow = true;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true };
-	sayTasksForToday(convo, options);
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, startPlan: true };
 
-	let message = `Which of your task(s) above would you like to delete?`;
-	convo.ask(message, [
+	let baseMessage = '';
+
+	if (changedPlanCommands) {
+		baseMessage = `Okay! Which of your task(s) above would you like to`;
+	} else {
+		baseMessage = `Which of your task(s) above would you like to`;
+		sayTasksForToday(convo, options);
+	}
+
+	let wordSwapCount = 0;
+	let message       = wordSwapMessage(baseMessage, "delete?", wordSwapCount);
+
+	convo.ask({
+		text: message,
+		attachments: [ {
+			attachment_type: 'default',
+			callback_id: "TASK_DELETE",
+			fallback: "Which of your task(s) would you like to delete?"
+		}]
+	}, [
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
+
+				// delete the plan if "never mind"
+				deleteMostRecentPlanMessage(response.channel, bot);
+
 				convo.say("Okay, let me know if you still want to delete tasks! :wave: ");
 				convo.next();
 			}
@@ -460,15 +615,67 @@ function deleteTasksFlow(convo) {
 		{
 			default: true,
 			callback: (response, convo) => {
-				let taskNumbersToDeleteArray = convertTaskNumberStringToArray(response.text, dailyTasks);
-				if (taskNumbersToDeleteArray) {
-					singleLineDeleteTask(convo, taskNumbersToDeleteArray);
-				} else {
-					convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-					convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
-					convo.repeat();
+
+				let { text } = response;
+				if (response.actions && response.actions[0]) {
+					text = response.actions[0].value;
 				}
-				convo.next();
+
+				// if key word exists, we are stopping early and do the other flow!
+				if (TASK_DECISION.add.reg_exp.test(text) || TASK_DECISION.complete.reg_exp.test(text) || TASK_DECISION.work.reg_exp.test(text)) {
+
+					// let's delete the most recent ask message
+					deleteConvoAskMessage(response.channel, bot);
+
+					// handling add task flow differently -- we will delete plan for now
+					if (TASK_DECISION.add.reg_exp.test(text)) {
+						deleteMostRecentPlanMessage(response.channel, bot);
+					}
+
+					changePlanCommand.decision = true;
+					changePlanCommand.text     = text
+				}
+
+				if (changePlanCommand.decision) {
+					convo.stop();
+					convo.next();
+				} else {
+
+					// otherwise do the expected, default decision!
+					let taskNumbersToDeleteArray = convertTaskNumberStringToArray(response.text, dailyTasks);
+
+					if (TASK_DECISION.delete.reg_exp.test(text) && !taskNumbersToDeleteArray) {
+
+						// if user tries completing task again, just update the text
+						wordSwapCount++;
+						let text = wordSwapMessage(baseMessage, "delete?", wordSwapCount);
+						let convoAskQuestionUpdate = getMostRecentMessageToUpdate(response.channel, bot);
+						if (convoAskQuestionUpdate) {
+							convoAskQuestionUpdate.text = text;
+							bot.api.chat.update(convoAskQuestionUpdate);
+						}
+
+					} else {
+
+						if (taskNumbersToDeleteArray) {
+
+							// delete the plan if you finish completing a task
+							deleteMostRecentPlanMessage(response.channel, bot);
+
+							singleLineDeleteTask(convo, taskNumbersToDeleteArray);
+							sayWorkSessionMessage(convo);
+
+						} else {
+							convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+							convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+							convo.repeat();
+						}
+						convo.next();
+
+					}
+						
+				}
+
 			}
 		}
 	]);
@@ -483,14 +690,15 @@ function deleteTasksFlow(convo) {
 
 function addTasksFlow(convo) {
 
-	var { source_message, tasksEdit: { bot, dailyTasks, newTasks, actuallyWantToAddATask } } = convo;
+	var { source_message, tasksEdit: { bot, dailyTasks, newTasks, actuallyWantToAddATask, changePlanCommand } } = convo;
 
 	// say task list, then ask for user to add tasks
-	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true };
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, newTasks };
 	let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
 
 	var tasksToAdd = [];
-	convo.say("Let's do it! What other tasks do you want to work on?");
+
+	convo.say("What other tasks do you want to work on?");
 	convo.ask({
 		text: taskListMessage,
 		attachments:[
@@ -526,6 +734,11 @@ function addTasksFlow(convo) {
 		{ // NL equivalent to buttonValues.neverMind.value
 			pattern: utterances.noAndNeverMind,
 			callback: function(response, convo) {
+
+				// delete the plan and this taskListMessage if "never mind"
+				deleteMostRecentTaskListMessage(response.channel, bot);
+				deleteMostRecentPlanMessage(response.channel, bot);
+
 				convo.say("Okay! Let me know whenever you want to add more tasks");
 				convo.next();
 			}
@@ -552,14 +765,9 @@ function addTasksFlow(convo) {
 				})
 
 				options = { onlyRemainingTasks: true, dontCalculateMinutes: true };
-				if (actuallyWantToAddATask) {
-					options.dontCalculateMinutes = true;
-					taskListMessage = convertArrayToTaskListMessage(taskArray, options)
-				} else {
-					options.segmentCompleted = true;
-					options.newTasks = taskArray;
-					taskListMessage = convertArrayToTaskListMessage(dailyTasks, options)
-				}
+				options.segmentCompleted = true;
+				options.newTasks = taskArray;
+				taskListMessage = convertArrayToTaskListMessage(dailyTasks, options)
 
 				if (updateTaskListMessageObject) {
 					updateTaskListMessageObject.text        = taskListMessage;
@@ -610,7 +818,7 @@ function getTimeToTasks(response, convo) {
 			pattern: buttonValues.actuallyWantToAddATask.value,
 			callback: function(response, convo) {
 				convo.tasksEdit.actuallyWantToAddATask = true;
-				addTasksFlow(response, convo);
+				addTasksFlow(convo);
 				convo.next();
 			}
 		},
@@ -787,12 +995,10 @@ function confirmTimeToTasks(convo) {
 					// you added new tasks and are confirming time for them
 					addNewTasksToTaskList(response, convo);
 				} else if (dailyTasksToUpdate.length > 0) {
-					// editing time to tasks
-					var options = { dontUseDataValues: true, segmentCompleted: true };
-					var fullTaskListMessage = convertArrayToTaskListMessage(dailyTasksToUpdate, options);
 
-					convo.say("Here's your remaining task list :memo::");
-					convo.say(fullTaskListMessage);
+					// say task list, then ask which ones to complete
+					let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
+					sayTasksForToday(convo, options);
 
 				}
 
@@ -821,7 +1027,6 @@ function confirmTimeToTasks(convo) {
 function addNewTasksToTaskList(response, convo) {
 	// combine the newTasks with dailyTasks
 	var { dailyTasks, newTasks } = convo.tasksEdit;
-	var options                  = { segmentCompleted: true };
 
 	var taskArray = [];
 	dailyTasks.forEach((task) => {
@@ -831,19 +1036,15 @@ function addNewTasksToTaskList(response, convo) {
 		taskArray.push(newTask);
 	});
 
-	var taskListMessage = convertArrayToTaskListMessage(taskArray, options);
+	var taskListMessage = convertArrayToTaskListMessage(taskArray, {onlyRemainingTasks: true});
 
-	convo.say("Here's your updated task list :memo::");
-	convo.say({
-		text: taskListMessage,
-		attachments:[
-			{
-				attachment_type: 'default',
-				callback_id: "TASK_LIST_MESSAGE",
-				fallback: "Here's your task list!"
-			}
-		]
-	});
+	// say task list, then ask which ones to complete
+	let options = { dontUseDataValues: true, onlyRemainingTasks: true, customTaskListMessage: taskListMessage };
+	sayTasksForToday(convo, options);
+
+	checkForNoRemainingTasks(convo);
+	sayWorkSessionMessage(convo);
+
 	convo.next();
 
 }
@@ -882,8 +1083,9 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 
 	} else {
 		convo.say(`I couldn't find that task to work on`);
-		let options = { onlyRemainingTasks: true };
-		sayTasksForToday(convo, options);
+		// say task list, then ask which ones to complete
+		let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
+		// sayTasksForToday(convo, options);
 	}
 
 	convo.next();
@@ -893,17 +1095,38 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 // work on which task flow
 function workOnTasksFlow(convo) {
 
-	let { tasksEdit: { dailyTasks } } = convo;
+	let { tasksEdit: { bot, dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true };
-	sayTasksForToday(convo, options);
+	let options = { onlyRemainingTasks: true, startPlan: true };
 
-	let message = `Which of your task(s) above would you like to work on?`;
-	convo.ask(message, [
+	let baseMessage = '';
+
+	if (changedPlanCommands) {
+		baseMessage = `Okay! Which of your task(s) above would you like to`;
+	} else {
+		baseMessage = `Which of your task(s) above would you like to`;
+		sayTasksForToday(convo, options);
+	}
+
+	let wordSwapCount = 0;
+	let message       = wordSwapMessage(baseMessage, "work on?", wordSwapCount);
+
+	convo.ask({
+		text: message,
+		attachments: [ {
+			attachment_type: 'default',
+			callback_id: "TASK_WORK",
+			fallback: "Which of your task(s) would you like to work on?"
+		}]
+	}, [
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
+
+				// delete the plan if "never mind"
+				deleteMostRecentPlanMessage(response.channel, bot);
+
 				convo.say("Okay, let me know if you still want to work on a task :muscle: ");
 				convo.next();
 			}
@@ -911,15 +1134,71 @@ function workOnTasksFlow(convo) {
 		{
 			default: true,
 			callback: (response, convo) => {
-				let taskNumbersToWorkOnArray = convertTaskNumberStringToArray(response.text, dailyTasks);
-				if (taskNumbersToWorkOnArray) {
-					singleLineWorkOnTask(convo, taskNumbersToWorkOnArray);
-				} else {
-					convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-					convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
-					convo.repeat();
+
+				let { text } = response;
+				if (response.actions && response.actions[0]) {
+					text = response.actions[0].value;
 				}
-				convo.next();
+
+				// if key word exists, we are stopping early and do the other flow!
+				if (TASK_DECISION.add.reg_exp.test(text) || TASK_DECISION.complete.reg_exp.test(text) || TASK_DECISION.delete.reg_exp.test(text)) {
+
+					// let's delete the most recent ask message
+					deleteConvoAskMessage(response.channel, bot);
+
+					// handling add task flow differently -- we will delete plan for now
+					if (TASK_DECISION.add.reg_exp.test(text)) {
+						deleteMostRecentPlanMessage(response.channel, bot);
+					}
+
+					changePlanCommand.decision = true;
+					changePlanCommand.text     = text
+				}
+
+				if (changePlanCommand.decision) {
+					convo.stop();
+					convo.next();
+				} else {
+
+					// otherwise do the expected, default decision!
+					let taskNumbersToWorkOnArray = convertTaskNumberStringToArray(response.text, dailyTasks);
+
+					if (TASK_DECISION.work.reg_exp.test(text) && !taskNumbersToWorkOnArray) {
+
+						// if user tries completing task again, just update the text
+						wordSwapCount++;
+						let text = wordSwapMessage(baseMessage, "work on?", wordSwapCount);
+						let convoAskQuestionUpdate = getMostRecentMessageToUpdate(response.channel, bot);
+						if (convoAskQuestionUpdate) {
+							convoAskQuestionUpdate.text = text;
+							bot.api.chat.update(convoAskQuestionUpdate);
+						}
+
+					} else {
+
+						if (taskNumbersToWorkOnArray) {
+
+							// delete the plan if you finish completing a task
+							deleteMostRecentPlanMessage(response.channel, bot);
+
+							// say task list, then ask which ones to complete
+							let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
+
+							singleLineWorkOnTask(convo, taskNumbersToWorkOnArray);
+							sayTasksForToday(convo, options);
+							sayWorkSessionMessage(convo);
+
+						} else {
+							convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+							convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+							convo.repeat();
+						}
+						convo.next();
+
+					}
+
+				}
+
 			}
 		}
 	]);

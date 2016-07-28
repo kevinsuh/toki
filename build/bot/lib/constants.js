@@ -387,6 +387,42 @@ var buttonValues = exports.buttonValues = {
 	undoTaskDelete: {
 		value: "UNDO_TASK_DELETE",
 		name: "UNDO_TASK_DELETE"
+	},
+	planCommands: { // value will be NL single line commands
+		deleteTasks: {
+			name: "PLAN_DELETE_TASKS",
+			value: "delete tasks"
+		},
+		completeTasks: {
+			name: "PLAN_COMPLETE_TASKS",
+			value: "complete tasks"
+		},
+		addTasks: {
+			name: "PLAN_ADD_TASKS",
+			value: "add tasks"
+		},
+		workOnTasks: {
+			name: "PLAN_WORK_ON_TASKS",
+			value: "work on tasks"
+		}
+	},
+	endOfPlanCommands: { // value will be NL single line commands
+		deleteTasks: {
+			name: "END_OF_PLAN_DELETE_TASKS",
+			value: "END_OF_PLAN_DELETE_TASKS"
+		},
+		completeTasks: {
+			name: "END_OF_PLAN_COMPLETE_TASKS",
+			value: "END_OF_PLAN_COMPLETE_TASKS"
+		},
+		addTasks: {
+			name: "END_OF_PLAN_ADD_TASKS",
+			value: "END_OF_PLAN_ADD_TASKS"
+		},
+		workOnTasks: {
+			name: "END_OF_PLAN_WORK_ON_TASKS",
+			value: "END_OF_PLAN_WORK_ON_TASKS"
+		}
 	}
 };
 

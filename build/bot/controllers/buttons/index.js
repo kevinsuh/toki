@@ -196,6 +196,8 @@ exports.default = function (controller) {
 					});
 					break;
 				case _constants.buttonValues.undoTaskComplete.value:
+					console.log("\n\n MESSAGE:");
+					console.log(message);
 					payload = JSON.parse(message.payload);
 					config = { SlackUserId: SlackUserId, botCallback: true, payload: payload };
 					controller.trigger('undo_task_complete', [bot, config]);
@@ -204,6 +206,39 @@ exports.default = function (controller) {
 					payload = JSON.parse(message.payload);
 					config = { SlackUserId: SlackUserId, botCallback: true, payload: payload };
 					controller.trigger('undo_task_delete', [bot, config]);
+					break;
+				case _constants.buttonValues.planCommands.addTasks.value:
+					// bot.replyInteractive(message, "Awesome!");
+					break;
+				case _constants.buttonValues.planCommands.completeTasks.value:
+					break;
+				case _constants.buttonValues.planCommands.deleteTasks.value:
+					break;
+				case _constants.buttonValues.planCommands.workOnTasks.value:
+					break;
+				case _constants.buttonValues.endOfPlanCommands.addTasks.value:
+					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.add.word };
+					bot.replyInteractive(message, "Okay, let's add some tasks!", function () {
+						controller.trigger('edit_tasks_flow', [bot, config]);
+					});
+					break;
+				case _constants.buttonValues.endOfPlanCommands.completeTasks.value:
+					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.complete.word };
+					bot.replyInteractive(message, "Okay, let's complete some tasks!", function () {
+						controller.trigger('edit_tasks_flow', [bot, config]);
+					});
+					break;
+				case _constants.buttonValues.endOfPlanCommands.deleteTasks.value:
+					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.delete.word };
+					bot.replyInteractive(message, "Okay, let's delete some tasks!", function () {
+						controller.trigger('edit_tasks_flow', [bot, config]);
+					});
+					break;
+				case _constants.buttonValues.endOfPlanCommands.workOnTasks.value:
+					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.work.word };
+					bot.replyInteractive(message, "Okay, let's get to work!", function () {
+						controller.trigger('edit_tasks_flow', [bot, config]);
+					});
 					break;
 				default:
 					// some default to replace button no matter what

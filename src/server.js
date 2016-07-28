@@ -11,11 +11,11 @@ import cronFunction from './app/cron';
 var CronJob = cron.CronJob;
 
 import { seedUsers, updateUsers } from './app/scripts';
-import { consoleLog } from './bot/lib/miscHelpers';
+import { consoleLog, prioritizeDailyTasks } from './bot/lib/miscHelpers';
 
 setTimeout(() => {
 	consoleLog("updating and seeding users");
-	// updateUsers(); // to fill in all users who are not in DB yet
+	updateUsers(); // to fill in all users who are not in DB yet
 	// seedUsers();
 }, 5000)
 
