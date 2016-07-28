@@ -477,17 +477,17 @@ export function triggerIntent(intent, config) {
 	const { bot, controller, SlackUserId, message, dailyTasksToWorkOn } = config;
 	switch (intent) {
 		case intentConfig.ADD_TASK:
-			controller.trigger(`edit_tasks_flow`, [ bot, { SlackUserId, message }]);
+			controller.trigger(`plan_command_center`, [ bot, { SlackUserId, message }]);
 			break;
 		case intentConfig.START_SESSION:
 			console.log(config);
 			controller.trigger(`confirm_new_session`, [ bot, config ]);
 			break;
 		case intentConfig.VIEW_TASKS:
-			controller.trigger(`view_daily_tasks_flow`, [ bot, { SlackUserId, message } ]);
+			controller.trigger(`plan_command_center`, [ bot, { SlackUserId, message } ]);
 			break;
 		case intentConfig.EDIT_TASKS:
-			controller.trigger(`edit_tasks_flow`, [ bot, { SlackUserId } ]);
+			controller.trigger(`plan_command_center`, [ bot, { SlackUserId, message } ]);
 			break;
 		case intentConfig.END_DAY:
 			controller.trigger(`trigger_day_end`, [ bot, { SlackUserId } ]);
