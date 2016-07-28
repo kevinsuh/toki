@@ -116,7 +116,7 @@ function specificCommandFlow(convo) {
 
 	switch (taskDecision) {
 		case _constants.TASK_DECISION.complete.word:
-			console.log('\n\n ~~ user wants to complete tasks in specificCommandFlow ~~ \n\n');
+			console.log('\n\n ~~ user wants to check off tasks in specificCommandFlow ~~ \n\n');
 			var taskNumberString = taskNumbers ? taskNumbers.join(",") : '';
 			var taskNumbersToCompleteArray = (0, _messageHelpers.convertTaskNumberStringToArray)(taskNumberString, dailyTasks);
 			if (taskNumbersToCompleteArray) {
@@ -425,7 +425,7 @@ function completeTasksFlow(convo) {
 
 	convo.tasksEdit.inFlow = true;
 
-	// say task list, then ask which ones to complete
+	// say task list, then ask which ones to check off
 	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, startPlan: true };
 
 	var baseMessage = '';
@@ -438,14 +438,14 @@ function completeTasksFlow(convo) {
 	}
 
 	var wordSwapCount = 0;
-	var message = wordSwapMessage(baseMessage, "complete?", wordSwapCount);
+	var message = wordSwapMessage(baseMessage, "check off?", wordSwapCount);
 
 	convo.ask({
 		text: message,
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "TASK_COMPLETE",
-			fallback: "Which of your task(s) would you like to complete?"
+			fallback: "Which of your task(s) would you like to check off?"
 		}]
 	}, [{
 		pattern: _botResponses.utterances.noAndNeverMind,
@@ -454,7 +454,7 @@ function completeTasksFlow(convo) {
 			// delete the plan if "never mind"
 			(0, _messageHelpers.deleteMostRecentPlanMessage)(response.channel, bot);
 
-			convo.say("Okay, let me know if you still want to complete tasks! :wave: ");
+			convo.say("Okay, let me know if you still want to check off tasks! :wave: ");
 			convo.next();
 		}
 	}, {

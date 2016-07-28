@@ -286,7 +286,7 @@ export function getPlanCommandOptionAttachments(options = {}) {
 		},
 		{
 				name: buttonValues.planCommands.completeTasks.name,
-				text: "Complete Tasks",
+				text: "Check Off Tasks",
 				value: buttonValues.planCommands.completeTasks.value,
 				type: "button"
 		},
@@ -342,7 +342,7 @@ export function getEndOfPlanCommandOptionAttachments(options = {}) {
 		},
 		{
 				name: buttonValues.endOfPlanCommands.completeTasks.name,
-				text: "Complete Tasks",
+				text: "Check Off Tasks",
 				value: buttonValues.endOfPlanCommands.completeTasks.value,
 				type: "button"
 		},

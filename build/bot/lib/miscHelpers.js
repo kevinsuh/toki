@@ -306,7 +306,7 @@ function getPlanCommandOptionAttachments() {
 		type: "button"
 	}, {
 		name: _constants.buttonValues.planCommands.completeTasks.name,
-		text: "Complete Tasks",
+		text: "Check Off Tasks",
 		value: _constants.buttonValues.planCommands.completeTasks.value,
 		type: "button"
 	}, {
@@ -355,7 +355,7 @@ function getEndOfPlanCommandOptionAttachments() {
 		type: "button"
 	}, {
 		name: _constants.buttonValues.endOfPlanCommands.completeTasks.name,
-		text: "Complete Tasks",
+		text: "Check Off Tasks",
 		value: _constants.buttonValues.endOfPlanCommands.completeTasks.value,
 		type: "button"
 	}, {
