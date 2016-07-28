@@ -459,7 +459,7 @@ exports.default = function (controller) {
 				config.taskDecision = _constants.TASK_DECISION.work.word;
 				break;
 			default:
-				config.taskDecision = _constants.TASK_DECISION.view.word;
+				config.taskDecision = config.taskNumbers ? _constants.TASK_DECISION.work.word : _constants.TASK_DECISION.view.word;
 				break;
 		}
 

@@ -1049,12 +1049,17 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 
 	var dailyTasksToWorkOn = [];
 
-	dailyTasks.forEach(function (dailyTask, index) {
-		var priority = dailyTask.dataValues.priority;
+	dailyTasksToWorkOn = dailyTasks.filter(function (dailyTask, index) {
+		var _dailyTask$dataValues3 = dailyTask.dataValues;
+		var priority = _dailyTask$dataValues3.priority;
+		var type = _dailyTask$dataValues3.type;
+		var done = _dailyTask$dataValues3.Task.done;
 
-		if (taskNumbersToWorkOnArray.indexOf(priority) > -1) {
-			dailyTasksToWorkOn.push(dailyTask);
+		var workOnTask = false;
+		if (taskNumbersToWorkOnArray.indexOf(priority) > -1 && type == "live" && !done) {
+			workOnTask = true;
 		}
+		return workOnTask;
 	});
 
 	if (dailyTasksToWorkOn.length > 0) {
@@ -1072,10 +1077,8 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 		convo.say(" ");
 		convo.next();
 	} else {
-		convo.say('I couldn\'t find that task to work on');
-		// say task list, then ask which ones to complete
-		var options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
-		// sayTasksForToday(convo, options);
+		convo.say('I couldn\'t find that task to work on!');
+		workOnTasksFlow(convo);
 	}
 
 	convo.next();

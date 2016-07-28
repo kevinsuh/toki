@@ -472,8 +472,8 @@ export default function(controller) {
 				console.log(`\n\n ~~ User wants to work on task ~~ \n\n`);
 				config.taskDecision = TASK_DECISION.work.word;
 				break;
-			default: 
-				config.taskDecision = TASK_DECISION.view.word;
+			default:
+				config.taskDecision = config.taskNumbers ? TASK_DECISION.work.word : TASK_DECISION.view.word;
 				break;
 		}
 

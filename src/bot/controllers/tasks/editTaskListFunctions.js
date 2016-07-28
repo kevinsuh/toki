@@ -1029,11 +1029,13 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 	let { tasksEdit: { dailyTasks } } = convo;
 	let dailyTasksToWorkOn = [];
 
-	dailyTasks.forEach((dailyTask, index) => {
-		const { dataValues: { priority } } = dailyTask;
-		if (taskNumbersToWorkOnArray.indexOf(priority) > -1) {
-			dailyTasksToWorkOn.push(dailyTask);
+	dailyTasksToWorkOn = dailyTasks.filter((dailyTask, index) => {
+		const { dataValues: { priority, type, Task: { done } } } = dailyTask;
+		let workOnTask = false;
+		if (taskNumbersToWorkOnArray.indexOf(priority) > -1 && type == "live" && !done) {
+			workOnTask = true;
 		}
+		return workOnTask;
 	});
 
 	if (dailyTasksToWorkOn.length > 0) {
@@ -1052,10 +1054,8 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 		convo.next();
 
 	} else {
-		convo.say(`I couldn't find that task to work on`);
-		// say task list, then ask which ones to complete
-		let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
-		// sayTasksForToday(convo, options);
+		convo.say(`I couldn't find that task to work on!`);
+		workOnTasksFlow(convo);
 	}
 
 	convo.next();
