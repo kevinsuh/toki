@@ -182,6 +182,13 @@ export default function(controller) {
 					} else {
 						// has pending tasks
 						dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
+						// remove "priority" on them
+						dailyTasks = dailyTasks.map((dailyTask) => {
+							if (dailyTask.dataValues && dailyTask.dataValues.priority)
+								delete dailyTask.dataValues.priority;
+							return dailyTask;
+						});
+
 						convo.dayStart.pendingTasks = dailyTasks;
 						showPendingTasks(err, convo);
 					}
