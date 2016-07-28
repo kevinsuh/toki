@@ -165,7 +165,7 @@ function specificCommandFlow(convo) {
 			break;
 	}
 
-	// sayWorkSessionMessage(convo);
+	// sayEndOfPlanMessage(convo);
 
 	// if (remainingTasks.length == 0) {
 	// 	askForTaskListOptionsIfNoRemainingTasks(convo);
@@ -197,7 +197,7 @@ function getRemainingTasks(fullTaskArray, newTasks) {
 	return remainingTasks;
 }
 
-function sayWorkSessionMessage(convo) {
+function sayEndOfPlanMessage(convo) {
 	var _convo$tasksEdit3 = convo.tasksEdit;
 	var openWorkSession = _convo$tasksEdit3.openWorkSession;
 	var currentSession = _convo$tasksEdit3.currentSession;
@@ -309,7 +309,7 @@ function viewTasksFlow(convo) {
 
 	var options = { noTitle: true, endOfPlan: true, homeBase: true };
 	sayTasksForToday(convo, options);
-	sayWorkSessionMessage(convo);
+	sayEndOfPlanMessage(convo);
 	convo.next();
 }
 
@@ -483,7 +483,7 @@ function completeTasksFlow(convo) {
 						var _options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
 
 						singleLineCompleteTask(convo, taskNumbersToCompleteArray);
-						sayWorkSessionMessage(convo);
+						sayEndOfPlanMessage(convo);
 					} else {
 						convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 						convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
@@ -665,7 +665,7 @@ function deleteTasksFlow(convo) {
 						(0, _messageHelpers.deleteMostRecentPlanMessage)(response.channel, bot);
 
 						singleLineDeleteTask(convo, taskNumbersToDeleteArray);
-						sayWorkSessionMessage(convo);
+						sayEndOfPlanMessage(convo);
 					} else {
 						convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 						convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
@@ -1034,7 +1034,7 @@ function addNewTasksToTaskList(response, convo) {
 	var options = { dontUseDataValues: true, onlyRemainingTasks: true, customTaskListMessage: taskListMessage };
 	sayTasksForToday(convo, options);
 
-	sayWorkSessionMessage(convo);
+	sayEndOfPlanMessage(convo);
 
 	convo.next();
 }
@@ -1176,7 +1176,7 @@ function workOnTasksFlow(convo) {
 
 						singleLineWorkOnTask(convo, taskNumbersToWorkOnArray);
 						sayTasksForToday(convo, _options3);
-						sayWorkSessionMessage(convo);
+						sayEndOfPlanMessage(convo);
 					} else {
 						convo.say("Oops, I don't totally understand :dog:. Let's try this again");
 						convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");

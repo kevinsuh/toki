@@ -139,7 +139,7 @@ function specificCommandFlow(convo) {
 			break;
 	}
 
-	// sayWorkSessionMessage(convo);
+	// sayEndOfPlanMessage(convo);
 
 	// if (remainingTasks.length == 0) {
 	// 	askForTaskListOptionsIfNoRemainingTasks(convo);
@@ -174,7 +174,7 @@ function getRemainingTasks(fullTaskArray, newTasks) {
 }
 
 
-function sayWorkSessionMessage(convo) {
+function sayEndOfPlanMessage(convo) {
 
 	let { tasksEdit: { openWorkSession, currentSession, dailyTasks, newTasks } } = convo;
 
@@ -275,7 +275,7 @@ function viewTasksFlow(convo) {
 	// say task list, then ask which ones to complete
 	let options = { noTitle: true, endOfPlan: true, homeBase: true };
 	sayTasksForToday(convo, options);
-	sayWorkSessionMessage(convo);
+	sayEndOfPlanMessage(convo);
 	convo.next();
 
 }
@@ -448,7 +448,7 @@ function completeTasksFlow(convo) {
 							let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
 
 							singleLineCompleteTask(convo, taskNumbersToCompleteArray);
-							sayWorkSessionMessage(convo);
+							sayEndOfPlanMessage(convo);
 
 						} else {
 							convo.say("Oops, I don't totally understand :dog:. Let's try this again");
@@ -634,7 +634,7 @@ function deleteTasksFlow(convo) {
 							deleteMostRecentPlanMessage(response.channel, bot);
 
 							singleLineDeleteTask(convo, taskNumbersToDeleteArray);
-							sayWorkSessionMessage(convo);
+							sayEndOfPlanMessage(convo);
 
 						} else {
 							convo.say("Oops, I don't totally understand :dog:. Let's try this again");
@@ -1013,7 +1013,7 @@ function addNewTasksToTaskList(response, convo) {
 	let options = { dontUseDataValues: true, onlyRemainingTasks: true, customTaskListMessage: taskListMessage };
 	sayTasksForToday(convo, options);
 
-	sayWorkSessionMessage(convo);
+	sayEndOfPlanMessage(convo);
 
 	convo.next();
 
@@ -1156,7 +1156,7 @@ function workOnTasksFlow(convo) {
 
 							singleLineWorkOnTask(convo, taskNumbersToWorkOnArray);
 							sayTasksForToday(convo, options);
-							sayWorkSessionMessage(convo);
+							sayEndOfPlanMessage(convo);
 
 						} else {
 							convo.say("Oops, I don't totally understand :dog:. Let's try this again");
