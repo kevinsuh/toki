@@ -236,7 +236,7 @@ export function prioritizeDailyTasks(user) {
 	user.getDailyTasks({
 		where: [ `"DailyTask"."type" = ?`, "live" ],
 		include: [ models.Task ],
-		order: `"Task"."done" = FALSE DESC, "DailyTask"."type" = 'live' DESC, "DailyTask"."priority" ASC`
+		order: `"Task"."done" = FALSE DESC, "DailyTask"."type" = 'live' DESC, "DailyTask"."updatedAt" ASC, "DailyTask"."priority" ASC`
 	})
 	.then((dailyTasks) => {
 		dailyTasks.forEach((dailyTask, index) => {

@@ -261,7 +261,7 @@ function prioritizeDailyTasks(user) {
 	user.getDailyTasks({
 		where: ['"DailyTask"."type" = ?', "live"],
 		include: [_models2.default.Task],
-		order: '"Task"."done" = FALSE DESC, "DailyTask"."type" = \'live\' DESC, "DailyTask"."priority" ASC'
+		order: '"Task"."done" = FALSE DESC, "DailyTask"."type" = \'live\' DESC, "DailyTask"."updatedAt" ASC, "DailyTask"."priority" ASC'
 	}).then(function (dailyTasks) {
 		dailyTasks.forEach(function (dailyTask, index) {
 			var priority = index + 1;
