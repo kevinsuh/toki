@@ -153,43 +153,6 @@ function specificCommandFlow(convo) {
  * 			~~ editTaskListFunctions Helper Messages ~~
  */
 
-// if no remaining tasks, ask to add new ones
-function checkForNoRemainingTasks(convo) {
-	const { tasksEdit: { dailyTasks, newTasks } } = convo;
-	let remainingTasks = getRemainingTasks(dailyTasks, newTasks);
-	if (remainingTasks.length == 0) {
-
-		convo.say(`You have no remaining tasks for today. Let me know when you want to \`add tasks\`!`);
-
-		if (false) {
-			convo.ask(`You have no remaining tasks for today. Would you like to add some tasks?`, [
-				{
-					pattern: utterances.yes,
-					callback: (response, convo) => {
-						addTasksFlow(convo);
-						convo.next();
-					}
-				},
-				{
-					pattern: utterances.no,
-					callback: (response, convo) => {
-						convo.say("Okay! Let me know when you want to add tasks, or make a new plan :memo:");
-						convo.next();
-					}
-				},
-				{
-					default: true,
-					callback: (response, convo) => {
-						convo.say("Sorry, I didn't catch that");
-						convo.repeat();
-						convo.next();
-					}
-				}
-			]);
-		}
-
-	}
-}
 
 function getRemainingTasks(fullTaskArray, newTasks) {
 	var remainingTasks = [];
@@ -213,23 +176,33 @@ function getRemainingTasks(fullTaskArray, newTasks) {
 
 function sayWorkSessionMessage(convo) {
 
-	let { tasksEdit: { openWorkSession, currentSession } } = convo;
+	let { tasksEdit: { openWorkSession, currentSession, dailyTasks, newTasks } } = convo;
 
-	let workSessionMessage = '';
-	if (openWorkSession && currentSession) {
-		let { minutes, minutesString, sessionTasks, endTimeString, storedWorkSession } = currentSession;
-		if (storedWorkSession) {
-			// currently paused
-			minutes       = storedWorkSession.dataValues.minutes;
-			minutesString = convertMinutesToHoursString(minutes);
-			workSessionMessage = `Your session is still paused :double_vertical_bar: You have *${minutesString}* remaining for ${sessionTasks}`;
-		} else {
-			// currently live (handled by checkWorkSessionForLiveTasks)
-			// workSessionMessage = `You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`;
-		}
-		convo.say(workSessionMessage);
+	let remainingTasks = getRemainingTasks(dailyTasks, newTasks);
+
+	if (remainingTasks.length == 0) {
+
+		convo.say(`You have no remaining tasks for today. Let me know when you want to \`add tasks\`!`);
+
 	} else {
-		convo.say(`Let me know if there's anything you want to do :muscle: \`i.e. lets do task 2\``);
+
+		let workSessionMessage = '';
+		if (openWorkSession && currentSession) {
+			let { minutes, minutesString, sessionTasks, endTimeString, storedWorkSession } = currentSession;
+			if (storedWorkSession) {
+				// currently paused
+				minutes       = storedWorkSession.dataValues.minutes;
+				minutesString = convertMinutesToHoursString(minutes);
+				workSessionMessage = `Your session is still paused :double_vertical_bar: You have *${minutesString}* remaining for ${sessionTasks}`;
+			} else {
+				// currently live (handled by checkWorkSessionForLiveTasks)
+				// workSessionMessage = `You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`;
+			}
+			convo.say(workSessionMessage);
+		} else {
+			convo.say(`Let me know if there's anything you want to do :muscle: \`i.e. lets do task 2\``);
+		}
+
 	}
 
 }
@@ -371,10 +344,9 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 			// options.endOfPlan = true;
 		}
 		sayTasksForToday(convo, options);
-		checkForNoRemainingTasks(convo);
 
 	} else {
-		convo.say("I couldn't find that task to complete!");
+		convo.say("I couldn't find that task to check off!");
 		completeTasksFlow(convo);
 	}
 
@@ -458,7 +430,7 @@ function completeTasksFlow(convo) {
 
 						// if user tries completing task again, just update the text
 						wordSwapCount++;
-						let text = wordSwapMessage(baseMessage, "complete?", wordSwapCount);
+						let text = wordSwapMessage(baseMessage, "check off?", wordSwapCount);
 						let convoAskQuestionUpdate = getMostRecentMessageToUpdate(response.channel, bot);
 						if (convoAskQuestionUpdate) {
 							convoAskQuestionUpdate.text = text;
@@ -562,7 +534,6 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 			// options.endOfPlan = true;
 		}
 		sayTasksForToday(convo, options);
-		checkForNoRemainingTasks(convo);
 
 	} else {
 		convo.say("I couldn't find that task to delete!");
@@ -1042,7 +1013,6 @@ function addNewTasksToTaskList(response, convo) {
 	let options = { dontUseDataValues: true, onlyRemainingTasks: true, customTaskListMessage: taskListMessage };
 	sayTasksForToday(convo, options);
 
-	checkForNoRemainingTasks(convo);
 	sayWorkSessionMessage(convo);
 
 	convo.next();
