@@ -47,6 +47,10 @@ var checkForSessions = function checkForSessions() {
 			var open = workSession.open;
 			var live = workSession.live;
 
+			// 1. check if user is in conversation
+			// 2. if not, update live to false and ping
+			// ~~ live should only be turned off, if it pings in response ~~
+
 			/**
     * 		For each work session
     * 			1. close it
