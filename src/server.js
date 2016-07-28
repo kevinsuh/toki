@@ -15,7 +15,7 @@ import { consoleLog, prioritizeDailyTasks } from './bot/lib/miscHelpers';
 
 setTimeout(() => {
 	consoleLog("updating and seeding users");
-	updateUsers(); // to fill in all users who are not in DB yet
+	// updateUsers(); // to fill in all users who are not in DB yet
 	// seedUsers();
 }, 5000)
 
