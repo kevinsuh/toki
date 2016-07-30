@@ -3,22 +3,6 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.randomInt = randomInt;
-// randomly returns a response from array
-function randomSelection(responseArray) {
-	var min = 0;
-	var max = responseArray.length;
-
-	var randomIndex = Math.floor(Math.random() * (max - min)) + min;
-
-	return responseArray[randomIndex];
-}
-
-function randomInt(min, max) {
-	var randomIndex = Math.floor(Math.random() * (max - min)) + min;
-	return randomIndex;
-}
-
 var utterances = exports.utterances = {
 	yes: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|(\bd[o ]+[this]{2,})|(\bd[o ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
 	yesOrCorrect: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bc[correct]{4,})/i),

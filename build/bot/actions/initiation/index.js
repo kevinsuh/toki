@@ -8,8 +8,6 @@ exports.loginInitiateConversation = loginInitiateConversation;
 
 var _controllers = require('../../controllers');
 
-var _botResponses = require('../../lib/botResponses');
-
 var _http = require('http');
 
 var _http2 = _interopRequireDefault(_http);

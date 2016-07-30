@@ -1,18 +1,3 @@
-// randomly returns a response from array
-function randomSelection(responseArray) {
-	var min = 0;
-	var max = responseArray.length;
-
-	const randomIndex = Math.floor(Math.random() * (max - min)) + min;
-
-	return responseArray[randomIndex];
-}
-
-export function randomInt(min, max) {
-	var randomIndex = Math.floor(Math.random() * (max - min)) + min;
-	return randomIndex;
-}
-
 export const utterances = {
 	yes: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|(\bd[o ]+[this]{2,})|(\bd[o ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
 	yesOrCorrect: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bc[correct]{4,})/i),
