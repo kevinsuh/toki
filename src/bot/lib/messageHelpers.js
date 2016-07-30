@@ -341,6 +341,13 @@ export function convertTimeStringToMinutes(timeString) {
 
 	var totalMinutesCount = 0; // max of 1
 	var totalHoursCount = 0; // max of 1
+
+	// let's get rid of all space
+	timeArray = timeArray.filter((value) => {
+		if (value != "")
+			return true;
+	});
+
 	for (var i = 0; i < timeArray.length; i++) {
 
 		var aOrAnRegExp = new RegExp(/\b[an]{1,3}/i);

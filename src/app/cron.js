@@ -37,6 +37,10 @@ var checkForSessions = () => {
 
 			const { UserId, open, live } = workSession;
 
+			// 1. check if user is in conversation
+			// 2. if not, update live to false and ping
+			// ~~ live should only be turned off, if it pings in response ~~
+
 			/**
 			 * 		For each work session
 			 * 			1. close it
