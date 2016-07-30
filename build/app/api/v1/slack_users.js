@@ -188,7 +188,6 @@ router.get('/', function (req, res) {
   // })
 
 
-  // seedDatabaseWithExistingSlackUsers(bot);
   console.log("checking session:");
   // checkForSessions();
 });

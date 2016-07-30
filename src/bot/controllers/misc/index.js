@@ -10,7 +10,6 @@ import { randomInt, utterances } from '../../lib/botResponses';
 import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, tokiOptionsExtendedAttachment, ANY_CHARACTER } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, deleteConvoAskMessage } from '../../lib/messageHelpers';
 import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog } from '../../lib/miscHelpers';
-import intentConfig from '../../lib/intents';
 
 import { resumeQueuedReachouts } from '../index';
 

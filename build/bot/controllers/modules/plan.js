@@ -26,10 +26,6 @@ var _botResponses = require('../../lib/botResponses');
 
 var _messageHelpers = require('../../lib/messageHelpers');
 
-var _intents = require('../../lib/intents');
-
-var _intents2 = _interopRequireDefault(_intents);
-
 var _constants = require('../../lib/constants');
 
 var _miscHelpers = require('../../lib/miscHelpers');

@@ -10,6 +10,13 @@ export const MINUTES_FOR_DONE_SESSION_TIMEOUT = 30;
 
 export const startDayExpirationTime = moment().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
 
+export const intentConfig = {
+	START_DAY: 'start_day',
+	END_DAY: 'end_day',
+	START_SESSION: 'start_session',
+	END_SESSION: 'end_session'
+}
+
 export const FINISH_WORD = {
 	word: "done",
 	reg_exp: new RegExp(/^d[one]{2,}\b/i)

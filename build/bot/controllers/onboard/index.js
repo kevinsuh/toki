@@ -69,7 +69,7 @@ exports.default = function (controller) {
 					}
 
 					switch (postOnboardDecision) {
-						case _intents2.default.START_DAY:
+						case _constants.intentConfig.START_DAY:
 							controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
 							break;
 						default:
@@ -111,10 +111,6 @@ var _constants = require('../../lib/constants');
 var _messageHelpers = require('../../lib/messageHelpers');
 
 var _miscHelpers = require('../../lib/miscHelpers');
-
-var _intents = require('../../lib/intents');
-
-var _intents2 = _interopRequireDefault(_intents);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -508,7 +504,7 @@ function askUserToStartDay(response, convo) {
 		pattern: _botResponses.utterances.containsStartDay,
 		callback: function callback(response, convo) {
 			convo.say("Let's do this :grin:");
-			convo.onBoard.postOnboardDecision = _intents2.default.START_DAY;
+			convo.onBoard.postOnboardDecision = _constants.intentConfig.START_DAY;
 			convo.next();
 		}
 	}, {

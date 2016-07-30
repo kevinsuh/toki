@@ -111,9 +111,5 @@ var _miscHelpers = require('../../lib/miscHelpers');
 
 var _messageHelpers = require('../../lib/messageHelpers');
 
-var _intents = require('../../lib/intents');
-
-var _intents2 = _interopRequireDefault(_intents);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 //# sourceMappingURL=index.js.map

@@ -7,10 +7,9 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, tokiOptionsExtendedAttachment } from '../../lib/constants';
+import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, tokiOptionsExtendedAttachment, intentConfig } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, deleteConvoAskMessage } from '../../lib/messageHelpers';
 import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog } from '../../lib/miscHelpers';
-import intentConfig from '../../lib/intents';
 
 import { resumeQueuedReachouts } from '../index';
 

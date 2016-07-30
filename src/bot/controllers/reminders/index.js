@@ -6,7 +6,6 @@ import models from '../../../app/models';
 import { utterances } from '../../lib/botResponses';
 import { witTimeResponseToTimeZoneObject, witDurationToTimeZoneObject, dateStringToMomentTimeZone } from '../../lib/miscHelpers';
 import { convertTimeStringToMinutes } from '../../lib/messageHelpers';
-import intentConfig from '../../lib/intents';
 
 import { resumeQueuedReachouts } from '../index';
 

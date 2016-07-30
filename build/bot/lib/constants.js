@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TASK_DECISION = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.ANY_CHARACTER = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TASK_DECISION = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.ANY_CHARACTER = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.intentConfig = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
@@ -20,6 +20,13 @@ var hoursForExpirationTime = exports.hoursForExpirationTime = 6;
 var MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = 30;
 
 var startDayExpirationTime = exports.startDayExpirationTime = (0, _moment2.default)().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
+
+var intentConfig = exports.intentConfig = {
+	START_DAY: 'start_day',
+	END_DAY: 'end_day',
+	START_SESSION: 'start_session',
+	END_SESSION: 'end_session'
+};
 
 var FINISH_WORD = exports.FINISH_WORD = {
 	word: "done",

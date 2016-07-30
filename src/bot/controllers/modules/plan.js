@@ -8,7 +8,6 @@ import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
 import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, convertTaskNumberStringToArray, getMostRecentTaskListMessageToUpdate, deleteConvoAskMessage, convertResponseObjectToNewTaskArray, getTimeToTaskTextAttachmentWithTaskListMessage, commaSeparateOutTaskArray } from '../../lib/messageHelpers';
-import intentConfig from '../../lib/intents';
 import { FINISH_WORD, EXIT_EARLY_WORDS, NONE, RESET, colorsHash, buttonValues, taskListMessageDoneButtonAttachment, taskListMessageDoneAndDeleteButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment, taskListMessageYesButtonAttachment, taskListMessageNoButtonsAttachment } from '../../lib/constants';
 import { consoleLog, witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray } from '../../lib/miscHelpers';
 
