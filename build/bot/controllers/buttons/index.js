@@ -128,33 +128,6 @@ exports.default = function (controller) {
 				case _constants.buttonValues.thatsIncorrect.value:
 					bot.replyInteractive(message, 'Oops, okay! Let\'s get this right');
 					break;
-				case _constants.buttonValues.addTask.value:
-					bot.replyInteractive(message, 'Added! Keep at it :muscle:');
-					break;
-				case _constants.buttonValues.changeTaskContent.value:
-					bot.replyInteractive(message, 'Let\'s change the task then!');
-					break;
-				case _constants.buttonValues.changeTaskTime.value:
-					bot.replyInteractive(message, 'Let\'s change the time then!');
-					break;
-				case _constants.buttonValues.editTaskList.value:
-					bot.replyInteractive(message, 'Okay! Let\'s edit your task list');
-					break;
-				case _constants.buttonValues.addTasks.value:
-					bot.replyInteractive(message, 'Boom! Let\'s add some tasks :muscle:');
-					break;
-				case _constants.buttonValues.markComplete.value:
-					bot.replyInteractive(message, 'Woo! Let\'s check off some tasks :grin:');
-					break;
-				case _constants.buttonValues.deleteTasks.value:
-					bot.replyInteractive(message, 'Okay! Let\'s remove some tasks');
-					break;
-				case _constants.buttonValues.neverMindTasks.value:
-					bot.replyInteractive(message, "Okay! I didn't do anything :smile_cat:");
-					break;
-				case _constants.buttonValues.editTaskTimes.value:
-					bot.replyInteractive(message, "Let's do this :hourglass:");
-					break;
 				case _constants.buttonValues.newSession.value:
 					bot.replyInteractive(message, "Let's do this :baby:");
 					break;
@@ -188,51 +161,6 @@ exports.default = function (controller) {
 				case _constants.buttonValues.startSession.resume.value:
 					bot.replyInteractive(message, "Okay, let's resume :arrow_forward:", function () {
 						controller.trigger('session_resume_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
-					});
-					break;
-				case _constants.buttonValues.undoTaskComplete.value:
-					console.log("\n\n MESSAGE:");
-					console.log(message);
-					payload = JSON.parse(message.payload);
-					config = { SlackUserId: SlackUserId, botCallback: true, payload: payload };
-					controller.trigger('undo_task_complete', [bot, config]);
-					break;
-				case _constants.buttonValues.undoTaskDelete.value:
-					payload = JSON.parse(message.payload);
-					config = { SlackUserId: SlackUserId, botCallback: true, payload: payload };
-					controller.trigger('undo_task_delete', [bot, config]);
-					break;
-				case _constants.buttonValues.planCommands.addTasks.value:
-					// bot.replyInteractive(message, "Awesome!");
-					break;
-				case _constants.buttonValues.planCommands.completeTasks.value:
-					break;
-				case _constants.buttonValues.planCommands.deleteTasks.value:
-					break;
-				case _constants.buttonValues.planCommands.workOnTasks.value:
-					break;
-				case _constants.buttonValues.endOfPlanCommands.addTasks.value:
-					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.add.word };
-					bot.replyInteractive(message, "Okay, let's add some tasks!", function () {
-						controller.trigger('edit_tasks_flow', [bot, config]);
-					});
-					break;
-				case _constants.buttonValues.endOfPlanCommands.completeTasks.value:
-					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.complete.word };
-					bot.replyInteractive(message, "Okay, let's complete some tasks!", function () {
-						controller.trigger('edit_tasks_flow', [bot, config]);
-					});
-					break;
-				case _constants.buttonValues.endOfPlanCommands.deleteTasks.value:
-					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.delete.word };
-					bot.replyInteractive(message, "Okay, let's delete some tasks!", function () {
-						controller.trigger('edit_tasks_flow', [bot, config]);
-					});
-					break;
-				case _constants.buttonValues.endOfPlanCommands.workOnTasks.value:
-					config = { SlackUserId: SlackUserId, message: message, botCallback: true, taskDecision: _constants.TASK_DECISION.work.word };
-					bot.replyInteractive(message, "Okay, let's get to work!", function () {
-						controller.trigger('edit_tasks_flow', [bot, config]);
 					});
 					break;
 				default:

@@ -58,10 +58,6 @@ var _models = require('../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
 
-var _intents = require('../lib/intents');
-
-var _intents2 = _interopRequireDefault(_intents);
-
 var _constants = require('../lib/constants');
 
 var _miscHelpers = require('../lib/miscHelpers');
@@ -74,8 +70,10 @@ var _initiation = require('../actions/initiation');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// config modules
 require('dotenv').config();
+
+// config modules
+
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {

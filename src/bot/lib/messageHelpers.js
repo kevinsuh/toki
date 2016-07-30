@@ -2,7 +2,7 @@
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
  */
 
-import { FINISH_WORD, buttonValues, colorsHash, taskListMessageNoButtonsAttachment } from './constants';
+import { constants, buttonValues, colorsHash, taskListMessageNoButtonsAttachment } from './constants';
 import { utterances } from './botResponses';
 
 import nlp from 'nlp_compromise';
@@ -19,7 +19,7 @@ export function convertResponseObjectsToTaskArray(tasks) {
 	tasks.forEach((task, index) => {
 		// ignore the last one (`done` command)
 		// also ignore if it is an `add a task` NL command
-		if (FINISH_WORD.reg_exp.test(task.text)) {
+		if (constants.FINISH_WORD.reg_exp.test(task.text)) {
 			return;
 		}
 

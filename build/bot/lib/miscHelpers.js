@@ -133,7 +133,7 @@ function witTimeResponseToTimeZoneObject(response, tz) {
 			}
 
 			// handle if it is a duration configured intent
-			if (_constants.DURATION_INTENT.reg_exp.test(response.text) && !_constants.TIME_INTENT.reg_exp.test(response.text)) {
+			if (_constants.constants.DURATION_INTENT.reg_exp.test(response.text) && !_constants.constants.TIME_INTENT.reg_exp.test(response.text)) {
 
 				console.log("\n\n ~~ interpreted datetime as duration ~~ \n");
 				console.log(response.text);

@@ -4,7 +4,7 @@ import http from 'http';
 import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
-import { buttonValues, TASK_DECISION } from '../../lib/constants';
+import { buttonValues, constants } from '../../lib/constants';
 import moment from 'moment-timezone';
 
 // base controller for "buttons" flow
@@ -133,33 +133,6 @@ export default function(controller) {
 				case buttonValues.thatsIncorrect.value:
 					bot.replyInteractive(message, `Oops, okay! Let's get this right`);
 					break;
-				case buttonValues.addTask.value:
-					bot.replyInteractive(message, `Added! Keep at it :muscle:`);
-					break;
-				case buttonValues.changeTaskContent.value:
-					bot.replyInteractive(message, `Let's change the task then!`);
-					break;
-				case buttonValues.changeTaskTime.value:
-					bot.replyInteractive(message, `Let's change the time then!`);
-					break;
-				case buttonValues.editTaskList.value:
-					bot.replyInteractive(message, `Okay! Let's edit your task list`);
-					break;
-				case buttonValues.addTasks.value:
-					bot.replyInteractive(message, `Boom! Let's add some tasks :muscle:`);
-					break;
-				case buttonValues.markComplete.value:
-					bot.replyInteractive(message, `Woo! Let's check off some tasks :grin:`);
-					break;
-				case buttonValues.deleteTasks.value:
-					bot.replyInteractive(message, `Okay! Let's remove some tasks`);
-					break;
-				case buttonValues.neverMindTasks.value:
-					bot.replyInteractive(message, "Okay! I didn't do anything :smile_cat:")
-					break;
-				case buttonValues.editTaskTimes.value:
-					bot.replyInteractive(message, "Let's do this :hourglass:");
-					break;
 				case buttonValues.newSession.value:
 					bot.replyInteractive(message, "Let's do this :baby:");
 					break;
@@ -193,51 +166,6 @@ export default function(controller) {
 				case buttonValues.startSession.resume.value:
 					bot.replyInteractive(message, "Okay, let's resume :arrow_forward:", () => {
 						controller.trigger(`session_resume_flow`, [ bot, { SlackUserId, botCallback: true }]);
-					});
-					break;
-				case buttonValues.undoTaskComplete.value:
-					console.log("\n\n MESSAGE:");
-					console.log(message);
-					payload = JSON.parse(message.payload);
-					config = { SlackUserId, botCallback: true, payload };
-					controller.trigger(`undo_task_complete`, [ bot, config ]);
-					break;
-				case buttonValues.undoTaskDelete.value:
-					payload = JSON.parse(message.payload);
-					config = { SlackUserId, botCallback: true, payload };
-					controller.trigger(`undo_task_delete`, [ bot, config ]);
-					break;
-				case buttonValues.planCommands.addTasks.value:
-					// bot.replyInteractive(message, "Awesome!");
-					break;
-				case buttonValues.planCommands.completeTasks.value:
-					break;
-				case buttonValues.planCommands.deleteTasks.value:
-					break;
-				case buttonValues.planCommands.workOnTasks.value:
-					break;
-				case buttonValues.endOfPlanCommands.addTasks.value:
-					config = { SlackUserId, message, botCallback: true, taskDecision: TASK_DECISION.add.word };
-					bot.replyInteractive(message, "Okay, let's add some tasks!", () => {
-						controller.trigger(`edit_tasks_flow`, [ bot, config ]);
-					});
-					break;
-				case buttonValues.endOfPlanCommands.completeTasks.value:
-					config = { SlackUserId, message, botCallback: true, taskDecision: TASK_DECISION.complete.word };
-					bot.replyInteractive(message, "Okay, let's complete some tasks!", () => {
-						controller.trigger(`edit_tasks_flow`, [ bot, config ]);
-					});
-					break;
-				case buttonValues.endOfPlanCommands.deleteTasks.value:
-					config = { SlackUserId, message, botCallback: true, taskDecision: TASK_DECISION.delete.word };
-					bot.replyInteractive(message, "Okay, let's delete some tasks!", () => {
-						controller.trigger(`edit_tasks_flow`, [ bot, config ]);
-					});
-					break;
-				case buttonValues.endOfPlanCommands.workOnTasks.value:
-					config = { SlackUserId, message, botCallback: true, taskDecision: TASK_DECISION.work.word };
-					bot.replyInteractive(message, "Okay, let's get to work!", () => {
-						controller.trigger(`edit_tasks_flow`, [ bot, config ]);
 					});
 					break;
 				default:

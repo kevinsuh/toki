@@ -1,6 +1,6 @@
 import models from '../../app/models';
 import moment from 'moment-timezone';
-import { DURATION_INTENT, TIME_INTENT, buttonValues, colorsHash } from './constants';
+import { constants, buttonValues, colorsHash } from './constants';
 
 /**
  * this creates a moment object that takes in a timestamp
@@ -102,7 +102,7 @@ export function witTimeResponseToTimeZoneObject(response, tz) {
 			}
 			
 			// handle if it is a duration configured intent
-			if (DURATION_INTENT.reg_exp.test(response.text) && !TIME_INTENT.reg_exp.test(response.text)) {
+			if (constants.DURATION_INTENT.reg_exp.test(response.text) && !constants.TIME_INTENT.reg_exp.test(response.text)) {
 
 				console.log("\n\n ~~ interpreted datetime as duration ~~ \n");
 				console.log(response.text);

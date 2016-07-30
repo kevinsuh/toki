@@ -7,7 +7,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 
 import { utterances } from '../../lib/botResponses';
-import { colorsArray, THANK_YOU, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, tokiOptionsExtendedAttachment, ANY_CHARACTER } from '../../lib/constants';
+import { colorsArray, constants, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, tokiOptionsExtendedAttachment } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, deleteConvoAskMessage } from '../../lib/messageHelpers';
 import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog } from '../../lib/miscHelpers';
 
@@ -15,7 +15,7 @@ import { resumeQueuedReachouts } from '../index';
 
 export default function(controller) {
 
-	controller.hears([THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
+	controller.hears([constants.THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
 		const SlackUserId = message.user;
 		bot.send({
 			type: "typing",
@@ -27,7 +27,10 @@ export default function(controller) {
 		}, 500);
 	});
 
-	controller.hears([ANY_CHARACTER.reg_exp], 'direct_message', (bot, message) => {
+	/**
+	 * DEFAULT FALLBACK
+	 */
+	controller.hears([constants.ANY_CHARACTER.reg_exp], 'direct_message', (bot, message) => {
 		const SlackUserId = message.user;
 		bot.send({
 			type: "typing",
@@ -66,7 +69,7 @@ export default function(controller) {
 				// different fallbacks based on reg exp
 				const { text } = message;
 
-				if (THANK_YOU.reg_exp.test(text)) {
+				if (constants.THANK_YOU.reg_exp.test(text)) {
 					// user says thank you
 					bot.reply(message, "You're welcome!! :smile:");
 				} else if (SECRET_KEY.test(text)) {

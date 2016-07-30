@@ -49,7 +49,7 @@ function convertResponseObjectsToTaskArray(tasks) {
 	tasks.forEach(function (task, index) {
 		// ignore the last one (`done` command)
 		// also ignore if it is an `add a task` NL command
-		if (_constants.FINISH_WORD.reg_exp.test(task.text)) {
+		if (_constants.constants.FINISH_WORD.reg_exp.test(task.text)) {
 			return;
 		}
 

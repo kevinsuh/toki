@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
-	controller.hears([_constants.THANK_YOU.reg_exp], 'direct_message', function (bot, message) {
+	controller.hears([_constants.constants.THANK_YOU.reg_exp], 'direct_message', function (bot, message) {
 		var SlackUserId = message.user;
 		bot.send({
 			type: "typing",
@@ -18,7 +18,10 @@ exports.default = function (controller) {
 		}, 500);
 	});
 
-	controller.hears([_constants.ANY_CHARACTER.reg_exp], 'direct_message', function (bot, message) {
+	/**
+  * DEFAULT FALLBACK
+  */
+	controller.hears([_constants.constants.ANY_CHARACTER.reg_exp], 'direct_message', function (bot, message) {
 		var SlackUserId = message.user;
 		bot.send({
 			type: "typing",
@@ -58,7 +61,7 @@ exports.default = function (controller) {
 				var text = message.text;
 
 
-				if (_constants.THANK_YOU.reg_exp.test(text)) {
+				if (_constants.constants.THANK_YOU.reg_exp.test(text)) {
 					// user says thank you
 					bot.reply(message, "You're welcome!! :smile:");
 				} else if (SECRET_KEY.test(text)) {

@@ -13,8 +13,7 @@ import onboardController from './onboard';
 import buttonsController from './buttons';
 
 import models from '../../app/models';
-import intentConfig from '../lib/intents';
-import { colorsArray, THANK_YOU, hoursForExpirationTime, startDayExpirationTime } from '../lib/constants';
+import { colorsArray, hoursForExpirationTime, startDayExpirationTime } from '../lib/constants';
 import { consoleLog } from '../lib/miscHelpers';
 
 import storageCreator from '../lib/storage';

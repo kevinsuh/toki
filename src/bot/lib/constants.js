@@ -1,11 +1,8 @@
 import moment from 'moment';
 
 export const TOKI_DEFAULT_SNOOZE_TIME = 15;
-
 export const TOKI_DEFAULT_BREAK_TIME = 10;
-
 export const hoursForExpirationTime = 6;
-
 export const MINUTES_FOR_DONE_SESSION_TIMEOUT = 30;
 
 export const startDayExpirationTime = moment().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
@@ -17,69 +14,36 @@ export const intentConfig = {
 	END_SESSION: 'end_session'
 }
 
-export const FINISH_WORD = {
-	word: "done",
-	reg_exp: new RegExp(/^d[one]{2,}\b/i)
-};
-
-export const NONE = {
-	word: "none",
-	reg_exp: new RegExp(/^[none]{3,}e$/i)
-};
-
-export const RESET = {
-	word: "reset",
-	reg_exp: new RegExp(/^r[reset]{3,}\b/i)
-}
-
-export const ANY_CHARACTER = {
-	reg_exp: new RegExp(/\D/i)
-}
-
-export const THANK_YOU = {
-	word: "thank you",
-	reg_exp: new RegExp(/(^t(?=.*n)[thanks you]{4,}\b|^t(?=.*n)[thanksyou]{5,}\b|^t(?=.*x)[thx]{2,4}\b|^ty[y]{0,}\b)/i)
-}
-
-// contains an intent for duration and not datetime
-export const DURATION_INTENT = {
-	word: "duration",
-	reg_exp: new RegExp((/((\b[\d]+( [hoursminutes]+\b|[hoursminutes]+\b))|([forin]{2,}[ ]?[\d]+\b)|(\bh[our]{2,}|\bm[inutes]{2,}))/i))
-}
-
-export const TIME_INTENT = {
-	word: "time",
-	reg_exp: new RegExp((/(:|[at]{2,}[ ]?[\d]+\b)/i))
-}
-
-export const TASK_DECISION = {
-	complete: {
-		word: "TASK_COMPLETE",
-		reg_exp: new RegExp(/(\bcomp[omplete]{3,}\b|\bche[heck]{1,}\b|\bcro[ross]{1,}\b)/i)
+export const constants = {
+	FINISH_WORD: {
+		word: "done",
+		reg_exp: new RegExp(/^d[one]{2,}\b/i)
 	},
-	add: {
-		word: "TASK_ADD",
-		reg_exp: new RegExp(/\bad[ad]{1,}\b/i)
+	 NONE: {
+		word: "none",
+		reg_exp: new RegExp(/^[none]{3,}e$/i)
 	},
-	view: {
-		word: "TASK_VIEW",
-		reg_exp: new RegExp(/\bvi[iew]{1,}\b/i)
+	RESET: {
+		word: "reset",
+		reg_exp: new RegExp(/^r[reset]{3,}\b/i)
 	},
-	delete: {
-		word: "TASK_DELETE",
-		reg_exp: new RegExp(/\bdel[elete]{3,}\b/i)
+	ANY_CHARACTER: {
+		reg_exp: new RegExp(/\D/i)
 	},
-	edit: {
-		word: "TASK_EDIT",
-		reg_exp: new RegExp(/\bed[dit]{1,}\b/i)
+	THANK_YOU: {
+		word: "thank you",
+		reg_exp: new RegExp(/(^t(?=.*n)[thanks you]{4,}\b|^t(?=.*n)[thanksyou]{5,}\b|^t(?=.*x)[thx]{2,4}\b|^ty[y]{0,}\b)/i)
 	},
-	work: {
-		word: "TASK_WORK",
-		reg_exp: new RegExp(/\b(do[o]?|wor[ork]{1,})\b/i)
-	}
-}
+	DURATION_INTENT: {
+		word: "duration",
+		reg_exp: new RegExp((/((\b[\d]+( [hoursminutes]+\b|[hoursminutes]+\b))|([forin]{2,}[ ]?[\d]+\b)|(\bh[our]{2,}|\bm[inutes]{2,}))/i))
+	},
+	TIME_INTENT: {
+		word: "time",
+		reg_exp: new RegExp((/(:|[at]{2,}[ ]?[\d]+\b)/i))
+	},
 
-export const EXIT_EARLY_WORDS = ['exit', 'stop','never mind','quit'];
+}
 
 export const colorsHash = {
 	green: {
