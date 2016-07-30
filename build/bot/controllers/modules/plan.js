@@ -54,7 +54,7 @@ function startNewPlanWizardFlow(convo) {
 	if (daySplit != _constants.constants.MORNING.word) {
 		contextDay = 'this ' + daySplit;
 	}
-	var question = 'What are the top 3 most anxious or uncomfortable things you have on your plate ' + contextDay + '?';
+	var question = 'What are the top 3 most anxious or uncomfortable things you have on your plate ' + contextDay + '? Please enter each in a separate message!';
 
 	prioritizedTasks = [];
 	var options = { dontShowMinutes: true, dontCalculateMinutes: true };
@@ -112,9 +112,17 @@ function startNewPlanWizardFlow(convo) {
 				updateTaskListMessageObject.attachments = JSON.stringify(attachments);
 				bot.api.chat.update(updateTaskListMessageObject);
 			} else {
+
+				while (prioritizedTasks.length > 3) {
+					prioritizedTasks.pop();
+				}
+
 				// we move on, with default to undo.
-				updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageNoButtonsAttachment);
+				updateTaskListMessageObject.attachments = JSON.stringify(_constants.taskListMessageNoButtonsAttachment);
 				bot.api.chat.update(updateTaskListMessageObject);
+
+				convo.newPlan.prioritizedTasks = prioritizedTasks;
+
 				convo.say("Good to know!");
 				convo.next();
 				console.log(prioritizedTasks);

@@ -8,7 +8,7 @@ import models from '../../../app/models';
 
 import { utterances } from '../../lib/botResponses';
 import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, convertTaskNumberStringToArray, getMostRecentTaskListMessageToUpdate, deleteConvoAskMessage, convertResponseObjectToNewTaskArray, getTimeToTaskTextAttachmentWithTaskListMessage, commaSeparateOutTaskArray, getNewPlanAttachments } from '../../lib/messageHelpers';
-import { constants, colorsHash, buttonValues } from '../../lib/constants';
+import { constants, colorsHash, buttonValues, taskListMessageNoButtonsAttachment } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray } from '../../lib/miscHelpers';
 
 /**
@@ -30,7 +30,7 @@ export function startNewPlanWizardFlow(convo) {
 	if (daySplit != constants.MORNING.word) {
 		contextDay = `this ${daySplit}`;
 	}
-	const question = `What are the top 3 most anxious or uncomfortable things you have on your plate ${contextDay}?`
+	const question = `What are the top 3 most anxious or uncomfortable things you have on your plate ${contextDay}? Please enter each in a separate message!`
 
 	prioritizedTasks = [];
 	let options = { dontShowMinutes: true, dontCalculateMinutes: true };
@@ -94,9 +94,17 @@ export function startNewPlanWizardFlow(convo) {
 					updateTaskListMessageObject.attachments = JSON.stringify(attachments);
 					bot.api.chat.update(updateTaskListMessageObject);
 				} else {
+
+					while (prioritizedTasks.length > 3) {
+						prioritizedTasks.pop();
+					}
+
 					// we move on, with default to undo.
 					updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageNoButtonsAttachment);
 					bot.api.chat.update(updateTaskListMessageObject);
+
+					convo.newPlan.prioritizedTasks = prioritizedTasks;
+
 					convo.say("Good to know!");
 					convo.next();
 					console.log(prioritizedTasks);
