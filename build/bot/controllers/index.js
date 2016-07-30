@@ -9,7 +9,6 @@ exports.customConfigBot = customConfigBot;
 exports.trackBot = trackBot;
 exports.connectOnInstall = connectOnInstall;
 exports.connectOnLogin = connectOnLogin;
-exports.triggerIntent = triggerIntent;
 
 var _botkit = require('botkit');
 
@@ -27,25 +26,9 @@ var _momentTimezone = require('moment-timezone');
 
 var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 
-var _tasks = require('./tasks');
-
-var _tasks2 = _interopRequireDefault(_tasks);
-
-var _work_sessions = require('./work_sessions');
-
-var _work_sessions2 = _interopRequireDefault(_work_sessions);
-
 var _reminders = require('./reminders');
 
 var _reminders2 = _interopRequireDefault(_reminders);
-
-var _days = require('./days');
-
-var _days2 = _interopRequireDefault(_days);
-
-var _buttons = require('./buttons');
-
-var _buttons2 = _interopRequireDefault(_buttons);
 
 var _receiveMiddleware = require('../middleware/receiveMiddleware');
 
@@ -59,13 +42,17 @@ var _settings = require('./settings');
 
 var _settings2 = _interopRequireDefault(_settings);
 
-var _slash = require('./slash');
-
-var _slash2 = _interopRequireDefault(_slash);
-
 var _notWit = require('./notWit');
 
 var _notWit2 = _interopRequireDefault(_notWit);
+
+var _onboard = require('./onboard');
+
+var _onboard2 = _interopRequireDefault(_onboard);
+
+var _buttons = require('./buttons');
+
+var _buttons2 = _interopRequireDefault(_buttons);
 
 var _models = require('../../app/models');
 
@@ -87,10 +74,8 @@ var _initiation = require('../actions/initiation');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-require('dotenv').config();
-
 // config modules
-
+require('dotenv').config();
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
@@ -263,14 +248,13 @@ function customConfigBot(controller) {
 	// give non-wit a chance to answer first
 	(0, _notWit2.default)(controller);
 
-	(0, _misc2.default)(controller);
-	(0, _days2.default)(controller);
-	(0, _tasks2.default)(controller);
-	(0, _work_sessions2.default)(controller);
+	(0, _onboard2.default)(controller);
 	(0, _reminders2.default)(controller);
-	(0, _buttons2.default)(controller);
 	(0, _settings2.default)(controller);
-	(0, _slash2.default)(controller);
+	(0, _buttons2.default)(controller);
+
+	// last because miscController will hold fallbacks
+	(0, _misc2.default)(controller);
 }
 
 // try to avoid repeat RTM's
@@ -336,15 +320,6 @@ controller.on('create_bot', function (bot, team) {
 // subsequent logins
 controller.on('login_bot', function (bot, identity) {
 
-	// identity is the specific identiy of the logged in user
-	/**
- 		{ 
- 			ok: true,
- 			user: { name: 'Kevin Suh', id: 'U1LANQKHB' },
- 			team: { id: 'T1LAWRR34' } 
- 		}
-  */
-
 	if (bots[bot.config.token]) {
 		// already online! do nothing.
 		console.log("already online! do nothing.");
@@ -370,193 +345,4 @@ controller.on('login_bot', function (bot, identity) {
 		});
 	}
 });
-
-/**
- *      CATCH FOR WHETHER WE SHOULD START
- *        A NEW SESSION GROUP (AKA A NEW DAY) OR NOT
- *    1) if have not started day yet, then this will get triggered
- *    2) if it has been 5 hours, then this will get this trigger
- */
-controller.on('new_session_group_decision', function (bot, config) {
-
-	// type is either `ADD_TASK` or `START_SESSION`
-	var SlackUserId = config.SlackUserId;
-	var intent = config.intent;
-	var message = config.message;
-	var dailyTasksToWorkOn = config.dailyTasksToWorkOn;
-	var taskDecision = config.taskDecision;
-
-
-	_models2.default.User.find({
-		where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
-		include: [_models2.default.SlackUser]
-	}).then(function (user) {
-
-		var name = user.nickName || user.email;
-		var UserId = user.id;
-
-		/**
-   *    ~~ THIS SKIPS EVERYTHING ELSE NOW ~~
-   *    	user is no longer required to have 
-   *    to start day, even though we encourage it
-   * 										07/19/16
-   */
-		var config = {
-			SlackUserId: SlackUserId,
-			message: message,
-			controller: controller,
-			bot: bot,
-			dailyTasksToWorkOn: dailyTasksToWorkOn,
-			taskDecision: taskDecision
-		};
-		triggerIntent(intent, config);
-		return;
-
-		/**
-   * 		~~ END OF TEMPORARY SKIPPER INPUTTED CODE ~~
-   * 										07/19/16
-   */
-
-		// 1. has user started day yet?
-		user.getSessionGroups({
-			order: '"SessionGroup"."createdAt" DESC',
-			limit: 1
-		}).then(function (sessionGroups) {
-
-			(0, _miscHelpers.consoleLog)("IN NEW SESSION GROUP DECISION", "this is the dispatch center for many decisions", "config object:", config);
-
-			// 1. you have not started your day
-			// you should start day and everything past this is irrelevant
-			var shouldStartDay = false;
-			if (sessionGroups.length == 0) {
-				shouldStartDay = true;
-			} else if (sessionGroups[0] && sessionGroups[0].type == "end_work") {
-				shouldStartDay = true;
-			}
-			if (shouldStartDay) {
-				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-					convo.say("Wait, you have not started a day yet!");
-					convo.next();
-					convo.on('end', function (convo) {
-						controller.trigger('user_confirm_new_day', [bot, { SlackUserId: SlackUserId }]);
-					});
-				});
-				return;
-			}
-
-			// 2. you have already `started your day`, but it's been 5 hours since working with me
-			user.getWorkSessions({
-				where: ['"WorkSession"."endTime" > ?', _constants.startDayExpirationTime]
-			}).then(function (workSessions) {
-
-				// at this point you know the most recent SessionGroup is a `start_work`. has it been six hours since?
-				var startDaySessionTime = (0, _momentTimezone2.default)(sessionGroups[0].createdAt);
-				var now = (0, _momentTimezone2.default)();
-				var hoursSinceStartDay = _momentTimezone2.default.duration(now.diff(startDaySessionTime)).asHours();
-
-				// you have started your day or had work session in the last 6 hours
-				// so we will pass you through and not have you start a new day
-				if (hoursSinceStartDay < _constants.hoursForExpirationTime || workSessions.length > 0) {
-					var config = {
-						SlackUserId: SlackUserId,
-						message: message,
-						controller: controller,
-						bot: bot,
-						dailyTasksToWorkOn: dailyTasksToWorkOn
-					};
-					triggerIntent(intent, config);
-					return;
-				}
-
-				// you have not had a work session in a while
-				// so we will confirm this is what you want to do
-				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-
-					convo.name = name;
-					convo.newSessionGroup = {
-						decision: false // for when you want to end early
-					};
-
-					convo.say('Hey ' + name + '! It\'s been a while since we worked together');
-					convo.ask("If your priorities changed, I recommend that you `start your day` to kick the tires :car:, otherwise let's `continue`", function (response, convo) {
-
-						var responseMessage = response.text;
-
-						// 1. `start your day`
-						// 2. `add a task`
-						// 3. anything else will exit
-						var startDay = new RegExp(/(((^st[tart]*))|(^d[ay]*))/); // `start` or `day`
-						var letsContinue = new RegExp(/((^co[ntinue]*))/); // `add` or `task`
-
-						if (startDay.test(responseMessage)) {
-							// start new day
-							convo.say("Got it. Let's do it! :weight_lifter:");
-							convo.newSessionGroup.decision = _intents2.default.START_DAY;
-						} else if (letsContinue.test(responseMessage)) {
-							// continue with add task flow
-							convo.newSessionGroup.decision = intent;
-						} else {
-							// default is to exit this conversation entirely
-							convo.say("Okay! I'll be here for whenever you're ready");
-						}
-						convo.next();
-					});
-
-					convo.on('end', function (convo) {
-
-						(0, _miscHelpers.consoleLog)("end of start new session group");
-
-						var newSessionGroup = convo.newSessionGroup;
-
-
-						if (newSessionGroup.decision == _intents2.default.START_DAY) {
-							controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
-							return;
-						} else {
-							var config = {
-								SlackUserId: SlackUserId,
-								message: message,
-								controller: controller,
-								bot: bot,
-								dailyTasksToWorkOn: dailyTasksToWorkOn,
-								taskDecision: taskDecision
-							};
-							triggerIntent(intent, config);
-						}
-					});
-				});
-			});
-		});
-	});
-});
-
-function triggerIntent(intent, config) {
-	var bot = config.bot;
-	var controller = config.controller;
-	var SlackUserId = config.SlackUserId;
-	var message = config.message;
-	var dailyTasksToWorkOn = config.dailyTasksToWorkOn;
-
-	switch (intent) {
-		case _intents2.default.ADD_TASK:
-			controller.trigger('plan_command_center', [bot, { SlackUserId: SlackUserId, message: message }]);
-			break;
-		case _intents2.default.START_SESSION:
-			console.log(config);
-			controller.trigger('confirm_new_session', [bot, config]);
-			break;
-		case _intents2.default.VIEW_TASKS:
-			controller.trigger('plan_command_center', [bot, { SlackUserId: SlackUserId, message: message }]);
-			break;
-		case _intents2.default.EDIT_TASKS:
-			controller.trigger('plan_command_center', [bot, { SlackUserId: SlackUserId, message: message }]);
-			break;
-		case _intents2.default.END_DAY:
-			controller.trigger('trigger_day_end', [bot, { SlackUserId: SlackUserId }]);
-			break;
-		default:
-			resumeQueuedReachouts(bot, { SlackUserId: SlackUserId });
-			break;
-	}
-}
 //# sourceMappingURL=index.js.map

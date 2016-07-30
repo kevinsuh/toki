@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TASK_DECISION = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TASK_DECISION = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.ANY_CHARACTER = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
@@ -34,6 +34,10 @@ var NONE = exports.NONE = {
 var RESET = exports.RESET = {
 	word: "reset",
 	reg_exp: new RegExp(/^r[reset]{3,}\b/i)
+};
+
+var ANY_CHARACTER = exports.ANY_CHARACTER = {
+	reg_exp: new RegExp(/\D/i)
 };
 
 var THANK_YOU = exports.THANK_YOU = {

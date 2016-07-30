@@ -3,17 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.helloResponse = helloResponse;
 exports.randomInt = randomInt;
-// this contains responses that is randomized to keep things fresh and funky
-
-// respond to hello
-function helloResponse() {
-
-	var helloResponses = ["Hey!", "Hello :)", "Hola", "Hello!", "Heyya", "Hey there"];
-	return randomSelection(helloResponses);
-}
-
 // randomly returns a response from array
 function randomSelection(responseArray) {
 	var min = 0;

@@ -1,20 +1,3 @@
-// this contains responses that is randomized to keep things fresh and funky
-
-// respond to hello
-export function helloResponse() {
-
-	var helloResponses = [
-		"Hey!",
-		"Hello :)",
-		"Hola",
-		"Hello!",
-		"Heyya",
-		"Hey there"
-	];
-	return randomSelection(helloResponses);
-}
-
-
 // randomly returns a response from array
 function randomSelection(responseArray) {
 	var min = 0;

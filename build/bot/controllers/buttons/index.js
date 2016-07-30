@@ -10,11 +10,6 @@ exports.default = function (controller) {
 	// check message.actions and message.callback_id to see the action to take
 	controller.on('interactive_message_callback', function (bot, message) {
 
-		console.log("\n\n\n ~~ inside interactive_message_callback ~~ \n");
-		console.log("this is message:");
-		console.log(message);
-		console.log("\n\n\n");
-
 		var SlackUserId = message.user;
 		var actions = message.actions;
 		var callback_id = message.callback_id;

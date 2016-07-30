@@ -25,6 +25,10 @@ export const RESET = {
 	reg_exp: new RegExp(/^r[reset]{3,}\b/i)
 }
 
+export const ANY_CHARACTER = {
+	reg_exp: new RegExp(/\D/i)
+}
+
 export const THANK_YOU = {
 	word: "thank you",
 	reg_exp: new RegExp(/(^t(?=.*n)[thanks you]{4,}\b|^t(?=.*n)[thanksyou]{5,}\b|^t(?=.*x)[thx]{2,4}\b|^ty[y]{0,}\b)/i)
