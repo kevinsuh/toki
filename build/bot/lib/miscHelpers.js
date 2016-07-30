@@ -8,6 +8,7 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
+exports.getCurrentDaySplit = getCurrentDaySplit;
 exports.createMomentObjectWithSpecificTimeZone = createMomentObjectWithSpecificTimeZone;
 exports.dateStringToMomentTimeZone = dateStringToMomentTimeZone;
 exports.witTimeResponseToTimeZoneObject = witTimeResponseToTimeZoneObject;
@@ -31,6 +32,19 @@ var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 var _constants = require('./constants');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function getCurrentDaySplit(tz) {
+	var daySplit = '';
+	var currentHour = (0, _momentTimezone2.default)().tz(tz).format("HH");
+	if (currentHour >= _constants.constants.AFTERNOON.hour && currentHour <= _constants.constants.EVENING.hour) {
+		daySplit = _constants.constants.AFTERNOON.word;
+	} else if (currentHour >= _constants.constants.EVENING.hour) {
+		daySplit = _constants.constants.EVENING.word;
+	} else {
+		daySplit = _constants.constants.MORNING.word;
+	}
+	return daySplit;
+}
 
 /**
  * this creates a moment object that takes in a timestamp

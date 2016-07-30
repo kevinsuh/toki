@@ -52,8 +52,19 @@ var constants = exports.constants = {
 	TIME_INTENT: {
 		word: "time",
 		reg_exp: new RegExp(/(:|[at]{2,}[ ]?[\d]+\b)/i)
+	},
+	MORNING: {
+		word: "morning",
+		hour: 0
+	},
+	AFTERNOON: {
+		word: "afternoon",
+		hour: 12
+	},
+	EVENING: {
+		word: "evening",
+		hour: 17
 	}
-
 };
 
 var colorsHash = exports.colorsHash = {
@@ -398,6 +409,10 @@ var buttonValues = exports.buttonValues = {
 			name: "END_OF_PLAN_WORK_ON_TASKS",
 			value: "END_OF_PLAN_WORK_ON_TASKS"
 		}
+	},
+	redoTasks: {
+		name: "REDO_TASKS",
+		value: "REDO_TASKS"
 	}
 };
 

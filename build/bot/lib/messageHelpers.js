@@ -8,6 +8,7 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
                                                                                                                                                                                                                                                                    * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
                                                                                                                                                                                                                                                                    */
 
+exports.getNewPlanAttachments = getNewPlanAttachments;
 exports.convertResponseObjectsToTaskArray = convertResponseObjectsToTaskArray;
 exports.convertResponseObjectToNewTaskArray = convertResponseObjectToNewTaskArray;
 exports.convertTaskNumberStringToArray = convertTaskNumberStringToArray;
@@ -36,6 +37,41 @@ var _nlp_compromise = require('nlp_compromise');
 var _nlp_compromise2 = _interopRequireDefault(_nlp_compromise);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function getNewPlanAttachments(prioritizedTasks) {
+
+	var doneTasksButton = "Let's move on";
+	if (prioritizedTasks.length == 1) {
+		doneTasksButton = "I only have one";
+	} else if (prioritizedTasks.length == 2) {
+		doneTasksButton = "I only have two";
+	}
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "TASK_LIST_MESSAGE",
+		fallback: "Let's get your priorities",
+		actions: [{
+			name: _constants.buttonValues.doneAddingTasks.name,
+			text: doneTasksButton,
+			value: _constants.buttonValues.doneAddingTasks.value,
+			type: "button"
+		}, {
+			name: _constants.buttonValues.redoTasks.name,
+			text: "Start Over",
+			value: _constants.buttonValues.redoTasks.value,
+			type: "button"
+		}]
+	}];
+
+	if (prioritizedTasks.length == 0) {
+		attachments = [{
+			attachment_type: 'default',
+			callback_id: "TASK_LIST_MESSAGE",
+			fallback: "Let's get your priorities"
+		}];
+	}
+	return attachments;
+}
 
 /**
  * takes array of tasks and converts to array of task STRINGS

@@ -42,7 +42,18 @@ export const constants = {
 		word: "time",
 		reg_exp: new RegExp((/(:|[at]{2,}[ ]?[\d]+\b)/i))
 	},
-
+	MORNING: {
+		word: "morning",
+		hour: 0
+	},
+	AFTERNOON: {
+		word: "afternoon",
+		hour: 12
+	},
+	EVENING: {
+		word: "evening",
+		hour: 17
+	}
 }
 
 export const colorsHash = {
@@ -388,6 +399,10 @@ export const buttonValues ={
 			name: "END_OF_PLAN_WORK_ON_TASKS",
 			value: "END_OF_PLAN_WORK_ON_TASKS"
 		}
+	},
+	redoTasks: {
+		name: "REDO_TASKS",
+		value: "REDO_TASKS"
 	}
 }
 

@@ -7,6 +7,48 @@ import { utterances } from './botResponses';
 
 import nlp from 'nlp_compromise';
 
+export function getNewPlanAttachments(prioritizedTasks) {
+
+	let doneTasksButton = "Let's move on";
+	if (prioritizedTasks.length  == 1) {
+		doneTasksButton = "I only have one";
+	} else if (prioritizedTasks.length == 2) {
+		doneTasksButton = "I only have two";
+	}
+	let attachments = [
+		{
+			attachment_type: 'default',
+			callback_id: "TASK_LIST_MESSAGE",
+			fallback: "Let's get your priorities",
+			actions: [
+				{
+						name: buttonValues.doneAddingTasks.name,
+						text: doneTasksButton,
+						value: buttonValues.doneAddingTasks.value,
+						type: "button"
+				},
+				{
+						name: buttonValues.redoTasks.name,
+						text: "Start Over",
+						value: buttonValues.redoTasks.value,
+						type: "button"
+				}
+			]
+		}
+	];
+
+	if (prioritizedTasks.length == 0) {
+		attachments = [
+			{
+				attachment_type: 'default',
+				callback_id: "TASK_LIST_MESSAGE",
+				fallback: "Let's get your priorities"
+			}
+		]
+	}
+	return attachments;
+}
+
 /**
  * takes array of tasks and converts to array of task STRINGS
  * these "response objects" are botkit MESSAGE response

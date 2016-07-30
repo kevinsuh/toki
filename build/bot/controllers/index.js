@@ -54,6 +54,10 @@ var _buttons = require('./buttons');
 
 var _buttons2 = _interopRequireDefault(_buttons);
 
+var _plans = require('./plans');
+
+var _plans2 = _interopRequireDefault(_plans);
+
 var _models = require('../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
@@ -70,10 +74,8 @@ var _initiation = require('../actions/initiation');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-require('dotenv').config();
-
 // config modules
-
+require('dotenv').config();
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
@@ -250,6 +252,7 @@ function customConfigBot(controller) {
 	(0, _reminders2.default)(controller);
 	(0, _settings2.default)(controller);
 	(0, _buttons2.default)(controller);
+	(0, _plans2.default)(controller);
 
 	// last because miscController will hold fallbacks
 	(0, _misc2.default)(controller);

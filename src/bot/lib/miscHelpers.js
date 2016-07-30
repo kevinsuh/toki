@@ -2,6 +2,20 @@ import models from '../../app/models';
 import moment from 'moment-timezone';
 import { constants, buttonValues, colorsHash } from './constants';
 
+export function getCurrentDaySplit(tz) {
+	let daySplit = '';
+	let currentHour = moment().tz(tz).format("HH");
+	if (currentHour >= constants.AFTERNOON.hour && currentHour <= constants.EVENING.hour) {
+		daySplit = constants.AFTERNOON.word;
+	} else if (currentHour >= constants.EVENING.hour) {
+		daySplit = constants.EVENING.word;
+	} else {
+		daySplit = constants.MORNING.word;
+	}
+	return daySplit;
+}
+
+
 /**
  * this creates a moment object that takes in a timestamp
  * makes it timestamp neutral, then creates a moment-timezone obj

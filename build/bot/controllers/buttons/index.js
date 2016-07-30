@@ -163,6 +163,8 @@ exports.default = function (controller) {
 						controller.trigger('session_resume_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					});
 					break;
+				case _constants.buttonValues.redoTasks.value:
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");
