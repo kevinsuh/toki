@@ -8,7 +8,7 @@ import { } from '../../lib/messageHelpers';
 import { getCurrentDaySplit, closeOldRemindersAndSessions } from '../../lib/miscHelpers';
 import { constants } from '../../lib/constants';
 
-import { startNewPlanFlow, startNewPlanWizardFlow } from '../modules/plan';
+import { startNewPlanFlow } from '../modules/plan';
 
 /**
  * Starting a new plan for the day
@@ -72,7 +72,9 @@ export default function(controller) {
 					convo.newPlan = {
 						tz,
 						daySplit,
-						prioritizedTasks: []
+						autoWizard: false,
+						prioritizedTasks: [],
+						startTaskIndex: false
 					}
 
 					let day = "day";
@@ -81,13 +83,11 @@ export default function(controller) {
 					}
 					convo.say(`Hey ${name}! Let's win the ${daySplit} :muscle:`);
 
-					if (sessionGroups.length > 0) {
-						// it will always be a new plan, when you start
-						startNewPlanFlow(convo);
-					} else {
-						// first time is automatically the wizard flow
-						startNewPlanWizardFlow(convo);
+					if (sessionGroups.length == 0) {
+						convo.newPlan.autoWizard = true;
 					}
+
+					startNewPlanFlow(convo);
 
 					// on finish conversation
 					convo.on('end', (convo) => {

@@ -17,20 +17,17 @@ import { witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArr
 
 export function startNewPlanFlow(convo) {
 
-
-
-}
-
-export function startNewPlanWizardFlow(convo) {
-
-	const { task: { bot }, newPlan: { daySplit } } = convo;
-	let { newPlan: { prioritizedTasks } }         = convo;
+	const { task: { bot }, newPlan: { daySplit, autoWizard } } = convo;
+	let { newPlan: { prioritizedTasks } }                      = convo;
 
 	let contextDay = "today";
 	if (daySplit != constants.MORNING.word) {
 		contextDay = `this ${daySplit}`;
 	}
-	const question = `What are the top 3 most anxious or uncomfortable things you have on your plate ${contextDay}? Please enter each in a separate message!`
+	let question = `What are the top 3 most anxious or uncomfortable things you have on your plate ${contextDay}?`
+	if (autoWizard) {
+		question = `${question} Please enter each one in a separate message!`
+	}
 
 	prioritizedTasks = [];
 	let options = { dontShowMinutes: true, dontCalculateMinutes: true };
@@ -57,19 +54,19 @@ export function startNewPlanWizardFlow(convo) {
 			}
 		},
 		{
-			pattern: buttonValues.doneAddingTasks.value,
-			callback: function(response, convo) {
-				convo.next();
-			}
-		},
-		{
 			pattern: utterances.done,
 			callback: function(response, convo) {
 
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
+				convo.newPlan.prioritizedTasks = prioritizedTasks;
 
 				convo.say("Excellent!");
+
+				if (autoWizard) {
+					wizardPrioritizeTasks(convo);
+				} else {
+					prioritizeTasks(convo);
+				}
+
 				convo.next();
 			}
 		},
@@ -96,6 +93,7 @@ export function startNewPlanWizardFlow(convo) {
 				} else {
 
 					while (prioritizedTasks.length > 3) {
+						// only 3 priorities!
 						prioritizedTasks.pop();
 					}
 
@@ -105,9 +103,16 @@ export function startNewPlanWizardFlow(convo) {
 
 					convo.newPlan.prioritizedTasks = prioritizedTasks;
 
-					convo.say("Good to know!");
+					convo.say("Excellent!");
+
+					if (autoWizard) {
+						wizardPrioritizeTasks(convo);
+					} else {
+						prioritizeTasks(convo);
+					}
+
 					convo.next();
-					console.log(prioritizedTasks);
+
 				}
 				
 			}
@@ -115,3 +120,71 @@ export function startNewPlanWizardFlow(convo) {
 	]);
 
 }
+
+function prioritizeTasks(convo) {
+
+}
+
+function wizardPrioritizeTasks(convo) {
+
+	const { task: { bot }, newPlan: { daySplit, autoWizard } } = convo;
+	let { newPlan: { prioritizedTasks } }                      = convo;
+
+	if (prioritizedTasks.length == 1) {
+		// 1 task needs no prioritizing
+		convo.newPlan.startTaskIndex = 0;
+		startOnTask(convo);
+	} else {
+		// 2+ tasks need prioritizing
+		let question = `Out of your ${prioritizedTasks.length} priorities, which one would most make the rest of your day easier, or your other tasks more irrelevant?`
+
+		let options         = { dontShowMinutes: true, dontCalculateMinutes: true };
+		let taskListMessage = convertArrayToTaskListMessage(prioritizedTasks, options);
+
+		convo.ask(`${question}\n${taskListMessage}`, [
+			{
+				pattern: utterances.containsNumber,
+				callback: (response, convo) => {
+
+					let taskNumbersToWorkOnArray = convertTaskNumberStringToArray(response.text, prioritizedTasks);
+					let taskIndexToWorkOn        = taskNumbersToWorkOnArray[0] - 1;
+
+					if (taskIndexToWorkOn) {
+						convo.newPlan.startTaskIndex = taskIndexToWorkOn;
+						startOnTask(convo);
+					} else {
+						convo.say("Sorry, I didn't catch that. Let me know a number `i.e. task 2`");
+						convo.repeat();
+					}
+
+					convo.next();
+				}
+			},
+			{
+				default: true,
+				callback: (response, convo) => {
+					convo.say("Sorry, I didn't catch that. Let me know a number `i.e. task 2`");
+					convo.repeat();
+					convo.next();
+				}
+			}
+		]);
+	}
+
+}
+
+function startOnTask(convo) {
+
+	const { newPlan: { daySplit, autoWizard, startTaskIndex } } = convo;
+	let { newPlan: { prioritizedTasks } }                       = convo;
+
+	let taskString = prioritizedTasks[startTaskIndex].text;
+
+	convo.say(`Great! Let's find time to work on \`${taskString}\``);
+	convo.ask("When would you like to start? You can tell me a specific time, like `4pm`, or a relative time, like `in 10 minutes`", (response, convo) => {
+
+		// use wit to decipher the relative time
+
+	});
+}
+

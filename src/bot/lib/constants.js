@@ -329,7 +329,7 @@ export const buttonValues ={
 		name: "CANCEL_SESSION"
 	},
 	doneAddingTasks: {
-		value: "DONE_ADDING_TASKS",
+		value: "Done",
 		name: "DONE_ADDING_TASKS"
 	},
 	endSessionYes: {

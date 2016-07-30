@@ -170,6 +170,8 @@ export default function(controller) {
 					break;
 				case buttonValues.redoTasks.value:
 					break;
+				case buttonValues.doneAddingTasks.value:
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");

@@ -55,7 +55,9 @@ exports.default = function (controller) {
 					convo.newPlan = {
 						tz: tz,
 						daySplit: daySplit,
-						prioritizedTasks: []
+						autoWizard: false,
+						prioritizedTasks: [],
+						startTaskIndex: false
 					};
 
 					var day = "day";
@@ -64,13 +66,11 @@ exports.default = function (controller) {
 					}
 					convo.say('Hey ' + name + '! Let\'s win the ' + daySplit + ' :muscle:');
 
-					if (sessionGroups.length > 0) {
-						// it will always be a new plan, when you start
-						(0, _plan.startNewPlanFlow)(convo);
-					} else {
-						// first time is automatically the wizard flow
-						(0, _plan.startNewPlanWizardFlow)(convo);
+					if (sessionGroups.length == 0) {
+						convo.newPlan.autoWizard = true;
 					}
+
+					(0, _plan.startNewPlanFlow)(convo);
 
 					// on finish conversation
 					convo.on('end', function (convo) {

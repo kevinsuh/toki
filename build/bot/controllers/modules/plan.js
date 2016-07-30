@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 exports.startNewPlanFlow = startNewPlanFlow;
-exports.startNewPlanWizardFlow = startNewPlanWizardFlow;
 
 var _os = require('os');
 
@@ -42,11 +41,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * 		NEW PLAN CONVERSATION FLOW FUNCTIONS
  */
 
-function startNewPlanFlow(convo) {}
-
-function startNewPlanWizardFlow(convo) {
+function startNewPlanFlow(convo) {
 	var bot = convo.task.bot;
-	var daySplit = convo.newPlan.daySplit;
+	var _convo$newPlan = convo.newPlan;
+	var daySplit = _convo$newPlan.daySplit;
+	var autoWizard = _convo$newPlan.autoWizard;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -54,7 +53,10 @@ function startNewPlanWizardFlow(convo) {
 	if (daySplit != _constants.constants.MORNING.word) {
 		contextDay = 'this ' + daySplit;
 	}
-	var question = 'What are the top 3 most anxious or uncomfortable things you have on your plate ' + contextDay + '? Please enter each in a separate message!';
+	var question = 'What are the top 3 most anxious or uncomfortable things you have on your plate ' + contextDay + '?';
+	if (autoWizard) {
+		question = question + ' Please enter each one in a separate message!';
+	}
 
 	prioritizedTasks = [];
 	var options = { dontShowMinutes: true, dontCalculateMinutes: true };
@@ -77,18 +79,19 @@ function startNewPlanWizardFlow(convo) {
 			convo.silentRepeat();
 		}
 	}, {
-		pattern: _constants.buttonValues.doneAddingTasks.value,
-		callback: function callback(response, convo) {
-			convo.next();
-		}
-	}, {
 		pattern: _botResponses.utterances.done,
 		callback: function callback(response, convo) {
 
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
+			convo.newPlan.prioritizedTasks = prioritizedTasks;
 
 			convo.say("Excellent!");
+
+			if (autoWizard) {
+				wizardPrioritizeTasks(convo);
+			} else {
+				prioritizeTasks(convo);
+			}
+
 			convo.next();
 		}
 	}, { // this is additional task added in this case.
@@ -114,6 +117,7 @@ function startNewPlanWizardFlow(convo) {
 			} else {
 
 				while (prioritizedTasks.length > 3) {
+					// only 3 priorities!
 					prioritizedTasks.pop();
 				}
 
@@ -123,11 +127,84 @@ function startNewPlanWizardFlow(convo) {
 
 				convo.newPlan.prioritizedTasks = prioritizedTasks;
 
-				convo.say("Good to know!");
+				convo.say("Excellent!");
+
+				if (autoWizard) {
+					wizardPrioritizeTasks(convo);
+				} else {
+					prioritizeTasks(convo);
+				}
+
 				convo.next();
-				console.log(prioritizedTasks);
 			}
 		}
 	}]);
+}
+
+function prioritizeTasks(convo) {}
+
+function wizardPrioritizeTasks(convo) {
+	var bot = convo.task.bot;
+	var _convo$newPlan2 = convo.newPlan;
+	var daySplit = _convo$newPlan2.daySplit;
+	var autoWizard = _convo$newPlan2.autoWizard;
+	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+
+
+	if (prioritizedTasks.length == 1) {
+		// 1 task needs no prioritizing
+		convo.newPlan.startTaskIndex = 0;
+		startOnTask(convo);
+	} else {
+		// 2+ tasks need prioritizing
+		var question = 'Out of your ' + prioritizedTasks.length + ' priorities, which one would most make the rest of your day easier, or your other tasks more irrelevant?';
+
+		var options = { dontShowMinutes: true, dontCalculateMinutes: true };
+		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTasks, options);
+
+		convo.ask(question + '\n' + taskListMessage, [{
+			pattern: _botResponses.utterances.containsNumber,
+			callback: function callback(response, convo) {
+
+				var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, prioritizedTasks);
+				var taskIndexToWorkOn = taskNumbersToWorkOnArray[0] - 1;
+
+				if (taskIndexToWorkOn) {
+					convo.newPlan.startTaskIndex = taskIndexToWorkOn;
+					startOnTask(convo);
+				} else {
+					convo.say("Sorry, I didn't catch that. Let me know a number `i.e. task 2`");
+					convo.repeat();
+				}
+
+				convo.next();
+			}
+		}, {
+			default: true,
+			callback: function callback(response, convo) {
+				convo.say("Sorry, I didn't catch that. Let me know a number `i.e. task 2`");
+				convo.repeat();
+				convo.next();
+			}
+		}]);
+	}
+}
+
+function startOnTask(convo) {
+	var _convo$newPlan3 = convo.newPlan;
+	var daySplit = _convo$newPlan3.daySplit;
+	var autoWizard = _convo$newPlan3.autoWizard;
+	var startTaskIndex = _convo$newPlan3.startTaskIndex;
+	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+
+
+	var taskString = prioritizedTasks[startTaskIndex].text;
+
+	convo.say('Great! Let\'s find time to work on `' + taskString + '`');
+	convo.ask("When would you like to start? You can tell me a specific time, like `4pm`, or a relative time, like `in 10 minutes`", function (response, convo) {
+
+		// use wit to decipher the relative time
+
+	});
 }
 //# sourceMappingURL=plan.js.map
