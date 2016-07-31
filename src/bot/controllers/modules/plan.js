@@ -125,14 +125,14 @@ function prioritizeTasks(convo) {
 function wizardPrioritizeTasks(convo, question = '') {
 
 	const { task: { bot }, newPlan: { daySplit, autoWizard } } = convo;
-	let { newPlan: { prioritizedTasks } }                      = convo;
+	let { newPlan: { prioritizedTasks } } = convo;
 
 	if (question == '') // this is the default question!
 		question = `Out of your ${prioritizedTasks.length} priorities, which one would most make the rest of your day easier, or your other tasks more irrelevant?`;
 
 	if (prioritizedTasks.length == 1) {
 		// 1 task needs no prioritizing
-		convo.newPlan.startTaskIndex = 0;
+		convo.newPlan.startTask.index = 0;
 		getTimeToTask(convo);
 	} else {
 		// 2+ tasks need prioritizing
@@ -177,7 +177,7 @@ function wizardPrioritizeTasks(convo, question = '') {
 					let taskIndexToWorkOn        = taskNumbersToWorkOnArray[0] - 1;
 
 					if (taskIndexToWorkOn >= 0) {
-						convo.newPlan.startTaskIndex = taskIndexToWorkOn;
+						convo.newPlan.startTask.index = taskIndexToWorkOn;
 						getTimeToTask(convo);
 					} else {
 						convo.say("Sorry, I didn't catch that. Let me know a number `i.e. task 2`");
@@ -202,10 +202,10 @@ function wizardPrioritizeTasks(convo, question = '') {
 
 function getTimeToTask(convo) {
 
-	const { tz, daySplit, autoWizard, startTaskIndex } = convo.newPlan;
+	const { tz, daySplit, autoWizard, startTask } = convo.newPlan;
 	let { newPlan: { prioritizedTasks } }              = convo;
 
-	let taskString = prioritizedTasks[startTaskIndex].text;
+	let taskString = prioritizedTasks[startTask.index].text;
 
 	let attachments = [];
 	if (prioritizedTasks.length > 1) {
@@ -263,7 +263,8 @@ function getTimeToTask(convo) {
 				}
 
 				if (minutes > 0) {
-					convo.say(`Okay! Let's work on \`${taskString}\` for ${minutes} minutes`);
+					convo.say(`Got it!`);
+					convo.newPlan.startTask.minutes = minutes;
 					startOnTask(convo);
 				} else {
 					convo.say("Sorry, I didn't catch that. Let me know a time `i.e. 45 minutes`");
@@ -280,12 +281,12 @@ function getTimeToTask(convo) {
 
 function startOnTask(convo) {
 
-	const { tz, daySplit, autoWizard, startTaskIndex } = convo.newPlan;
-	let { newPlan: { prioritizedTasks } }              = convo;
+	const { tz, daySplit, autoWizard, startTask } = convo.newPlan;
+	let { newPlan: { prioritizedTasks } }         = convo;
 
 	let timeExample = moment().tz(tz).add(15, "minutes").format("h:mma");
 	convo.ask({
-		text: `When would you like to start? You can tell me a specific time, like \`${timeExample}\`, or a relative time, like \`in 10 minutes\``,
+		text: `When would you like to start? You can tell me a specific time, like \`${timeExample}\`, or a relative time, like \`in 15 minutes\``,
 		attachments: [
 			{
 				attachment_type: 'default',
@@ -322,12 +323,14 @@ function startOnTask(convo) {
 				let minutes;
 				let now = moment();
 				if (customTimeObject) {
+					convo.newPlan.startTime = customTimeObject;
 					if (duration) {
 						minutes = witDurationToMinutes(duration);
 					} else {
 						minutes = parseInt(moment.duration(customTimeObject.diff(now)).asMinutes());
 					}
-					convo.say(`Okay! You want to start this task in ${minutes} minutes`);
+					let timeString = customTimeObject.format("h:mm a");
+					convo.say(`Okay! I'll ping you in ${minutes} minutes at ${timeString} :wave:`);
 					convo.next();
 				} else {
 					convo.say("Sorry, I didn't catch that. Let me know a time `i.e. let's start in 10 minutes`");

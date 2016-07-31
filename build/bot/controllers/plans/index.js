@@ -56,7 +56,11 @@ exports.default = function (controller) {
 						daySplit: daySplit,
 						autoWizard: false,
 						prioritizedTasks: [],
-						startTaskIndex: false
+						startTask: {
+							index: false,
+							minutes: 30 // fail-safe default. should get updated in flow
+						},
+						startTime: false // default will be now
 					};
 
 					var day = "day";
