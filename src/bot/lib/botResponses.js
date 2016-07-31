@@ -21,6 +21,8 @@ export const utterances = {
 	containsNumber: new RegExp(/\d/i),
 	containsAll: new RegExp(/\ba[all]{2,}/i),
 	containsAdd: new RegExp(/\ba[add]{1,}/i),
+	containsNow: new RegExp(/\bn[now]{1,}/i),
+	containsRedo: new RegExp(/\bre[re do]{2,}\b/i),
 	startsWithAdd: new RegExp(/^a[add]{2,}\b/i),
 	containsTask: new RegExp(/t[task]{2,}/i),
 	containsName: new RegExp(/n[name]{2,}/i),

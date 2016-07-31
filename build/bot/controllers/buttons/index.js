@@ -169,9 +169,10 @@ exports.default = function (controller) {
 					break;
 				case _constants.buttonValues.workOnDifferentTask.value:
 					break;
+				case _constants.buttonValues.workOnTaskNow.value:
+					break;
 				default:
-					// some default to replace button no matter what
-					bot.replyInteractive(message, "Awesome!");
+					break;
 			}
 		}
 	});

@@ -419,6 +419,14 @@ var buttonValues = exports.buttonValues = {
 	workOnDifferentTask: {
 		name: "WORK_ON_DIFFERENT_TASK",
 		value: "Let's choose a different task!"
+	},
+	workOnTaskNow: {
+		name: "WORK_ON_TASK_NOW",
+		value: "Let's do this task right now!"
+	},
+	redoMyPriorities: {
+		name: "REDO_MY_PRIORITIES",
+		value: "Let's redo my priorities!"
 	}
 };
 
