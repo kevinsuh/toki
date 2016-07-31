@@ -39,11 +39,10 @@ exports.default = function (controller) {
 			var tz = user.SlackUser.tz;
 
 
-			var dateOfNewPlanDayFlow = "2016-07-30";
 			var daySplit = (0, _miscHelpers.getCurrentDaySplit)(tz);
 
 			user.getSessionGroups({
-				where: ['"SessionGroup"."type" = ? AND "SessionGroup"."createdAt" > ?', "start_work", dateOfNewPlanDayFlow],
+				where: ['"SessionGroup"."type" = ? AND "SessionGroup"."createdAt" > ?', "start_work", _constants.dateOfNewPlanDayFlow],
 				limit: 1
 			}).then(function (sessionGroups) {
 

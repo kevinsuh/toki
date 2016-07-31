@@ -6,7 +6,7 @@ import models from '../../../app/models';
 import { utterances } from '../../lib/botResponses';
 import { } from '../../lib/messageHelpers';
 import { getCurrentDaySplit, closeOldRemindersAndSessions } from '../../lib/miscHelpers';
-import { constants } from '../../lib/constants';
+import { constants, dateOfNewPlanDayFlow } from '../../lib/constants';
 
 import { startNewPlanFlow } from '../modules/plan';
 
@@ -55,7 +55,6 @@ export default function(controller) {
 			const UserId = user.id;
 			const { SlackUser: { tz } } = user;
 
-			const dateOfNewPlanDayFlow = "2016-07-30";
 			let daySplit = getCurrentDaySplit(tz);
 
 			user.getSessionGroups({

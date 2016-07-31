@@ -69,14 +69,11 @@ function startNewPlanFlow(convo) {
 		callback: function callback(response, convo) {
 
 			prioritizedTasks = [];
+			convo.newPlan.prioritizedTasks = prioritizedTasks;
 
-			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
-
-			updateTaskListMessageObject.text = question;
-			updateTaskListMessageObject.attachments = JSON.stringify((0, _messageHelpers.getNewPlanAttachments)(prioritizedTasks));
-			bot.api.chat.update(updateTaskListMessageObject);
-
-			convo.silentRepeat();
+			convo.say("Okay, let's do try this again :repeat:");
+			startNewPlanFlow(convo);
+			convo.next();
 		}
 	}, {
 		pattern: _botResponses.utterances.done,
@@ -162,14 +159,36 @@ function wizardPrioritizeTasks(convo) {
 		var options = { dontShowMinutes: true, dontCalculateMinutes: true };
 		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTasks, options);
 
-		convo.ask(question + '\n' + taskListMessage, [{
+		convo.ask({
+			text: question + '\n' + taskListMessage,
+			attachments: [{
+				attachment_type: 'default',
+				callback_id: "REDO_TASKS",
+				fallback: "Do you want to work on this task?",
+				color: _constants.colorsHash.grey.hex,
+				actions: [{
+					name: _constants.buttonValues.workOnDifferentTask.name,
+					text: "Wait, this is wrong!",
+					value: _constants.buttonValues.workOnDifferentTask.value,
+					type: "button"
+				}]
+			}]
+		}, [{
+			pattern: _botResponses.utterances.containsDifferent,
+			callback: function callback(response, convo) {
+
+				convo.say("Okay, let's do try this again :repeat:");
+				startNewPlanFlow(convo);
+				convo.next();
+			}
+		}, {
 			pattern: _botResponses.utterances.containsNumber,
 			callback: function callback(response, convo) {
 
 				var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, prioritizedTasks);
 				var taskIndexToWorkOn = taskNumbersToWorkOnArray[0] - 1;
 
-				if (taskIndexToWorkOn) {
+				if (taskIndexToWorkOn >= 0) {
 					convo.newPlan.startTaskIndex = taskIndexToWorkOn;
 					startOnTask(convo);
 				} else {
@@ -192,6 +211,7 @@ function wizardPrioritizeTasks(convo) {
 
 function startOnTask(convo) {
 	var _convo$newPlan3 = convo.newPlan;
+	var tz = _convo$newPlan3.tz;
 	var daySplit = _convo$newPlan3.daySplit;
 	var autoWizard = _convo$newPlan3.autoWizard;
 	var startTaskIndex = _convo$newPlan3.startTaskIndex;
@@ -200,11 +220,68 @@ function startOnTask(convo) {
 
 	var taskString = prioritizedTasks[startTaskIndex].text;
 
-	convo.say('Great! Let\'s find time to work on `' + taskString + '`');
-	convo.ask("When would you like to start? You can tell me a specific time, like `4pm`, or a relative time, like `in 10 minutes`", function (response, convo) {
-
-		// use wit to decipher the relative time
-
+	convo.say({
+		text: 'Great! Let\'s find time to do `' + taskString + '` then',
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "CHANGE_TASK",
+			fallback: "Do you want to work on this task?",
+			color: _constants.colorsHash.grey.hex,
+			actions: [{
+				name: _constants.buttonValues.workOnDifferentTask.name,
+				text: "Wait, this is wrong!",
+				value: _constants.buttonValues.workOnDifferentTask.value,
+				type: "button"
+			}]
+		}]
 	});
+
+	convo.ask("When would you like to start? You can tell me a specific time, like `4pm`, or a relative time, like `in 10 minutes`", [{
+		pattern: _botResponses.utterances.containsDifferent,
+		callback: function callback(response, convo) {
+
+			convo.say("Okay, let's do a different task!");
+			chooseDifferentTask(convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+
+			// use wit to decipher the relative time. if no time, then re-ask
+			var _response$intentObjec = response.intentObject.entities;
+			var duration = _response$intentObjec.duration;
+			var datetime = _response$intentObjec.datetime;
+
+			var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+
+			var minutes = void 0;
+			var now = (0, _momentTimezone2.default)();
+			if (customTimeObject) {
+				if (duration) {
+					minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
+				} else {
+					minutes = parseInt(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+				}
+				convo.say('Okay! You want to start this task in ' + minutes + ' minutes');
+			} else {
+				convo.say("Sorry, I didn't catch that. Let me know a time `i.e. let's start in 10 minutes`");
+				convo.repeat();
+			}
+
+			convo.next();
+		}
+	}]);
+}
+
+function chooseDifferentTask(convo) {
+	var _convo$newPlan4 = convo.newPlan;
+	var daySplit = _convo$newPlan4.daySplit;
+	var autoWizard = _convo$newPlan4.autoWizard;
+	var startTaskIndex = _convo$newPlan4.startTaskIndex;
+	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+
+
+	convo.ask("What task do you want to do?", function (response, convo) {});
 }
 //# sourceMappingURL=plan.js.map

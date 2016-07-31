@@ -41,15 +41,12 @@ export function startNewPlanFlow(convo) {
 			pattern: buttonValues.redoTasks.value,
 			callback: function(response, convo) {
 
-				prioritizedTasks = [];
+				prioritizedTasks               = [];
+				convo.newPlan.prioritizedTasks = prioritizedTasks;
 
-				const updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
-
-				updateTaskListMessageObject.text        = question;
-				updateTaskListMessageObject.attachments = JSON.stringify(getNewPlanAttachments(prioritizedTasks));
-				bot.api.chat.update(updateTaskListMessageObject);
-
-				convo.silentRepeat();
+				convo.say("Okay, let's do try this again :repeat:");
+				startNewPlanFlow(convo);
+				convo.next();
 
 			}
 		},
@@ -141,7 +138,35 @@ function wizardPrioritizeTasks(convo) {
 		let options         = { dontShowMinutes: true, dontCalculateMinutes: true };
 		let taskListMessage = convertArrayToTaskListMessage(prioritizedTasks, options);
 
-		convo.ask(`${question}\n${taskListMessage}`, [
+		convo.ask({
+			text: `${question}\n${taskListMessage}`,
+			attachments: [
+				{
+					attachment_type: 'default',
+					callback_id: "REDO_TASKS",
+					fallback: "Do you want to work on this task?",
+					color: colorsHash.grey.hex,
+					actions: [
+						{
+								name: buttonValues.workOnDifferentTask.name,
+								text: "Wait, this is wrong!",
+								value: buttonValues.workOnDifferentTask.value,
+								type: "button"
+						}
+					]
+				}
+			]
+		}, [
+			{
+				pattern: utterances.containsDifferent,
+				callback: (response, convo) => {
+
+					convo.say("Okay, let's do try this again :repeat:");
+					startNewPlanFlow(convo);
+					convo.next();
+
+				}
+			},
 			{
 				pattern: utterances.containsNumber,
 				callback: (response, convo) => {
@@ -149,7 +174,7 @@ function wizardPrioritizeTasks(convo) {
 					let taskNumbersToWorkOnArray = convertTaskNumberStringToArray(response.text, prioritizedTasks);
 					let taskIndexToWorkOn        = taskNumbersToWorkOnArray[0] - 1;
 
-					if (taskIndexToWorkOn) {
+					if (taskIndexToWorkOn >= 0) {
 						convo.newPlan.startTaskIndex = taskIndexToWorkOn;
 						startOnTask(convo);
 					} else {
@@ -175,16 +200,80 @@ function wizardPrioritizeTasks(convo) {
 
 function startOnTask(convo) {
 
-	const { newPlan: { daySplit, autoWizard, startTaskIndex } } = convo;
-	let { newPlan: { prioritizedTasks } }                       = convo;
+	const { tz, daySplit, autoWizard, startTaskIndex } = convo.newPlan;
+	let { newPlan: { prioritizedTasks } }              = convo;
 
 	let taskString = prioritizedTasks[startTaskIndex].text;
 
-	convo.say(`Great! Let's find time to work on \`${taskString}\``);
-	convo.ask("When would you like to start? You can tell me a specific time, like `4pm`, or a relative time, like `in 10 minutes`", (response, convo) => {
+	convo.say({
+		text: `Great! Let's find time to do \`${taskString}\` then`,
+		attachments: [
+			{
+				attachment_type: 'default',
+				callback_id: "CHANGE_TASK",
+				fallback: "Do you want to work on this task?",
+				color: colorsHash.grey.hex,
+				actions: [
+					{
+							name: buttonValues.workOnDifferentTask.name,
+							text: "Wait, this is wrong!",
+							value: buttonValues.workOnDifferentTask.value,
+							type: "button"
+					}
+				]
+			}
+		]
+	});
 
-		// use wit to decipher the relative time
+	convo.ask("When would you like to start? You can tell me a specific time, like `4pm`, or a relative time, like `in 10 minutes`", [
+		{
+			pattern: utterances.containsDifferent,
+			callback: (response, convo) => {
+
+				convo.say("Okay, let's do a different task!");
+				chooseDifferentTask(convo);
+				convo.next();
+
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+
+				// use wit to decipher the relative time. if no time, then re-ask
+				const { intentObject: { entities: { duration, datetime } } } = response;
+				var customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+
+				let minutes;
+				let now = moment();
+				if (customTimeObject) {
+					if (duration) {
+						minutes = witDurationToMinutes(duration);
+					} else {
+						minutes = parseInt(moment.duration(customTimeObject.diff(now)).asMinutes());
+					}
+					convo.say(`Okay! You want to start this task in ${minutes} minutes`);
+				} else {
+					convo.say("Sorry, I didn't catch that. Let me know a time `i.e. let's start in 10 minutes`");
+					convo.repeat();
+				}
+
+				convo.next();
+
+			}
+		}
+	]);
+}
+
+function chooseDifferentTask(convo) {
+
+	const { newPlan: { daySplit, autoWizard, startTaskIndex } } = convo;
+	let { newPlan: { prioritizedTasks } }                       = convo;
+
+	convo.ask("What task do you want to do?", (response, convo) => {
 
 	});
+
 }
+
 

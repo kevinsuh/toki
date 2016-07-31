@@ -167,6 +167,8 @@ exports.default = function (controller) {
 					break;
 				case _constants.buttonValues.doneAddingTasks.value:
 					break;
+				case _constants.buttonValues.workOnDifferentTask.value:
+					break;
 				default:
 					// some default to replace button no matter what
 					bot.replyInteractive(message, "Awesome!");

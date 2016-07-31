@@ -5,6 +5,8 @@ export const TOKI_DEFAULT_BREAK_TIME = 10;
 export const hoursForExpirationTime = 6;
 export const MINUTES_FOR_DONE_SESSION_TIMEOUT = 30;
 
+export const dateOfNewPlanDayFlow = "2016-07-30";
+
 export const startDayExpirationTime = moment().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
 
 export const intentConfig = {
@@ -403,6 +405,10 @@ export const buttonValues ={
 	redoTasks: {
 		name: "REDO_TASKS",
 		value: "REDO_TASKS"
+	},
+	workOnDifferentTask: {
+		name: "WORK_ON_DIFFERENT_TASK",
+		value: "Let's choose a different task!"
 	}
 }
 
