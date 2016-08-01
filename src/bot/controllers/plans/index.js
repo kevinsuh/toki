@@ -74,7 +74,7 @@ export default function(controller) {
 						autoWizard: false,
 						prioritizedTasks: [],
 						startTask: {
-							index: false,
+							index: 0, // fail-safe default. should get updated in flow
 							minutes: 30 // fail-safe default. should get updated in flow
 						},
 						startTime: false // default will be now
@@ -96,17 +96,72 @@ export default function(controller) {
 					convo.on('end', (convo) => {
 
 						const { newPlan } = convo;
-
-						console.log('done!')
-						console.log("here is new plan object:\n\n\n");
-						console.log(convo.newPlan);
-						console.log("\n\n\n");
+						let { prioritizedTasks, startTask, startTime } = newPlan;
 
 						closeOldRemindersAndSessions(user);
 
+						// we only know minutes information of first task
+						startTask.taskObject = {
+							...prioritizedTasks[startTask.index],
+							minutes: startTask.minutes
+						};
+
+						prioritizedTasks.splice(startTask.index, 1);
+						prioritizedTasks.unshift(startTask.taskObject); // put this in first
+
+						// first turn off all existing daily tasks
+						user.getDailyTasks({
+							where: [`"DailyTask"."type" = ?`, "live"]
+						})
+						.then((dailyTasks) => {
+							let dailyTaskIds = dailyTasks.map(dailyTask => dailyTask.id);
+							if (dailyTaskIds.length == 0) {
+								dailyTaskIds = [0]
+							};
+							models.DailyTask.update({
+								type: "archived"
+							}, {
+								where: [ `"DailyTasks"."id" IN (?)`, dailyTaskIds ]
+							})
+							.then((dailyTasks) => {
+								prioritizedTasks.forEach((task, index) => {
+									const priority = index + 1;
+									const { text, minutes } = task;
+									models.Task.create({
+										text
+									})
+									.then((task) => {
+										task.createDailyTask({
+											minutes,
+											priority,
+											UserId
+										});
+									})
+								});
+							});
+						})
+
+						if (startTime) {
+							// when the reminder comes, it will ask for the highest priority
+							// task that is not done yet. right now schema is: when user
+							// decides to work on something else, it will put that as highest 
+							// priorty. does highest priority mean doing it first?
+							models.Reminder.create({
+								UserId,
+								remindTime: startTime,
+								type: "start_work"
+							})
+						}
+
+
+
+						console.log("here is new plan object:\n");
+						console.log(convo.newPlan);
+						console.log("\n\n\n");
+
 						setTimeout(() => {
 							resumeQueuedReachouts(bot, { SlackUserId });
-						}, 750);
+						}, 1250);
 
 						// placeholder for keep going
 						if (newPlan) {

@@ -218,9 +218,11 @@ function consoleLog() {
 // to avoid cron job pushing in middle of convo
 function closeOldRemindersAndSessions(user) {
 
+	var now = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss Z");
+
 	// cancel old sessions and reminders as early as possible
 	user.getReminders({
-		where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break", "done_session_snooze"]]
+		where: ['"open" = ? AND "type" IN (?) AND "Reminder"."createdAt" < ? ', true, ["work_session", "break", "done_session_snooze"], now]
 	}).then(function (oldReminders) {
 		oldReminders.forEach(function (reminder) {
 			reminder.update({
