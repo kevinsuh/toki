@@ -8,6 +8,7 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
+exports.getSlackUsersFromString = getSlackUsersFromString;
 exports.getCurrentDaySplit = getCurrentDaySplit;
 exports.createMomentObjectWithSpecificTimeZone = createMomentObjectWithSpecificTimeZone;
 exports.dateStringToMomentTimeZone = dateStringToMomentTimeZone;
@@ -32,6 +33,21 @@ var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 var _constants = require('./constants');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function getSlackUsersFromString(string) {
+	var arrayString = string.split(/[<@>]/);
+	var slackUsers = [];
+	arrayString.forEach(function (string) {
+		if (string[0] === "U") {
+			slackUsers.push(string);
+		}
+	});
+	if (slackUsers.length == 0) {
+		return false;
+	} else {
+		return slackUsers;
+	}
+}
 
 function getCurrentDaySplit(tz) {
 	var daySplit = '';

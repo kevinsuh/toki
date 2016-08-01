@@ -65,16 +65,6 @@ function startNewPlanFlow(convo) {
 		text: question,
 		attachments: (0, _messageHelpers.getNewPlanAttachments)(prioritizedTasks)
 	}, [{
-		pattern: _botResponses.utterances.startsWithHelp,
-		callback: function callback(response, convo) {
-
-			convo.newPlan.prioritizedTasks = [];
-
-			convo.say("Okay, let's do do this together!");
-			wizardPrioritizeTasks(convo);
-			convo.next();
-		}
-	}, {
 		pattern: _constants.buttonValues.redoTasks.value,
 		callback: function callback(response, convo) {
 
@@ -192,7 +182,7 @@ function prioritizeTasks(convo) {
 				}]
 			}]
 		}, [{
-			pattern: _botResponses.utterances.startsWithKeep,
+			pattern: _botResponses.utterances.containsKeep,
 			callback: function callback(response, convo) {
 
 				convo.say("This order looks great to me, too!");
@@ -201,6 +191,9 @@ function prioritizeTasks(convo) {
 		}, {
 			default: true,
 			callback: function callback(response, convo) {
+
+				console.log("\n\n keep stuff");
+				console.log(response.text);
 
 				var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, prioritizedTasks);
 
@@ -223,6 +216,7 @@ function prioritizeTasks(convo) {
 						convo.newPlan.prioritizedTasks = newPrioritizedTasks;
 
 						convo.say("Love it!");
+						whoDoYouWantToInclude(convo); // TEST METHOD
 					})();
 				} else {
 
@@ -237,6 +231,36 @@ function prioritizeTasks(convo) {
 			}
 		}]);
 	}
+}
+
+function whoDoYouWantToInclude(convo) {
+	var bot = convo.task.bot;
+	var _convo$newPlan3 = convo.newPlan;
+	var daySplit = _convo$newPlan3.daySplit;
+	var autoWizard = _convo$newPlan3.autoWizard;
+	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+
+	convo.ask('Who do you want to include?', function (response, convo) {
+		var text = response.text;
+
+
+		var includeSlackUserIds = (0, _miscHelpers.getSlackUsersFromString)(text);
+
+		if (includeSlackUserIds) {
+			_models2.default.SlackUser.findAll({
+				where: ['"SlackUser"."SlackUserId" IN (?)', includeSlackUserIds]
+			}).then(function (slackUsers) {
+				convo.say("okay found the slack users");
+				console.log(slackUsers);
+				convo.next();
+			});
+		} else {
+			convo.say("You didn't include anyone right...");
+			convo.repeat();
+		}
+
+		convo.next();
+	});
 }
 
 /*
@@ -320,11 +344,11 @@ function prioritizeTasks(convo, question = '') {
 */
 
 function getTimeToTask(convo) {
-	var _convo$newPlan3 = convo.newPlan;
-	var tz = _convo$newPlan3.tz;
-	var daySplit = _convo$newPlan3.daySplit;
-	var autoWizard = _convo$newPlan3.autoWizard;
-	var startTask = _convo$newPlan3.startTask;
+	var _convo$newPlan4 = convo.newPlan;
+	var tz = _convo$newPlan4.tz;
+	var daySplit = _convo$newPlan4.daySplit;
+	var autoWizard = _convo$newPlan4.autoWizard;
+	var startTask = _convo$newPlan4.startTask;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -398,11 +422,11 @@ function getTimeToTask(convo) {
 }
 
 function startOnTask(convo) {
-	var _convo$newPlan4 = convo.newPlan;
-	var tz = _convo$newPlan4.tz;
-	var daySplit = _convo$newPlan4.daySplit;
-	var autoWizard = _convo$newPlan4.autoWizard;
-	var startTask = _convo$newPlan4.startTask;
+	var _convo$newPlan5 = convo.newPlan;
+	var tz = _convo$newPlan5.tz;
+	var daySplit = _convo$newPlan5.daySplit;
+	var autoWizard = _convo$newPlan5.autoWizard;
+	var startTask = _convo$newPlan5.startTask;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 

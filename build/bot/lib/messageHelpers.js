@@ -67,13 +67,7 @@ function getNewPlanAttachments(prioritizedTasks) {
 		attachments = [{
 			attachment_type: 'default',
 			callback_id: "TASK_LIST_MESSAGE",
-			fallback: "Let's get your priorities",
-			actions: [{
-				name: _constants.buttonValues.wizardNewPlanFlow.name,
-				text: "Help me figure out!",
-				value: _constants.buttonValues.wizardNewPlanFlow.value,
-				type: "button"
-			}]
+			fallback: "Let's get your priorities"
 		}];
 	}
 	return attachments;

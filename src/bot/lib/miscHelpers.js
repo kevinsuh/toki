@@ -2,6 +2,21 @@ import models from '../../app/models';
 import moment from 'moment-timezone';
 import { constants, buttonValues, colorsHash } from './constants';
 
+export function getSlackUsersFromString(string) {
+	let arrayString = string.split(/[<@>]/);
+	let slackUsers = [];
+	arrayString.forEach((string) => {
+		if (string[0] === "U") {
+			slackUsers.push(string);
+		}
+	});
+	if (slackUsers.length == 0) {
+		return false;
+	} else {
+		return slackUsers;
+	}
+}
+
 export function getCurrentDaySplit(tz) {
 	let daySplit = '';
 	let currentHour = moment().tz(tz).format("HH");

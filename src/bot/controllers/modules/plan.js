@@ -9,7 +9,7 @@ import models from '../../../app/models';
 import { utterances } from '../../lib/botResponses';
 import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, convertTaskNumberStringToArray, getMostRecentTaskListMessageToUpdate, deleteConvoAskMessage, convertResponseObjectToNewTaskArray, getTimeToTaskTextAttachmentWithTaskListMessage, commaSeparateOutTaskArray, getNewPlanAttachments } from '../../lib/messageHelpers';
 import { constants, colorsHash, buttonValues, taskListMessageNoButtonsAttachment } from '../../lib/constants';
-import { witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray } from '../../lib/miscHelpers';
+import { witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray, getSlackUsersFromString } from '../../lib/miscHelpers';
 
 /**
  * 		NEW PLAN CONVERSATION FLOW FUNCTIONS
@@ -37,18 +37,6 @@ export function startNewPlanFlow(convo) {
 		attachments: getNewPlanAttachments(prioritizedTasks)
 	},
 	[
-		{
-			pattern: utterances.startsWithHelp,
-			callback: function(response, convo) {
-
-				convo.newPlan.prioritizedTasks = [];
-
-				convo.say("Okay, let's do do this together!");
-				wizardPrioritizeTasks(convo);
-				convo.next();
-
-			}
-		},
 		{
 			pattern: buttonValues.redoTasks.value,
 			callback: function(response, convo) {
@@ -176,7 +164,7 @@ function prioritizeTasks(convo, question = '') {
 			]
 		}, [
 			{
-				pattern: utterances.startsWithKeep,
+				pattern: utterances.containsKeep,
 				callback: (response, convo) => {
 
 					convo.say("This order looks great to me, too!");
@@ -187,6 +175,9 @@ function prioritizeTasks(convo, question = '') {
 			{
 				default: true,
 				callback: (response, convo) => {
+
+					console.log("\n\n keep stuff");
+					console.log(response.text);
 
 					let taskNumbersToWorkOnArray = convertTaskNumberStringToArray(response.text, prioritizedTasks);
 
@@ -208,6 +199,7 @@ function prioritizeTasks(convo, question = '') {
 						convo.newPlan.prioritizedTasks = newPrioritizedTasks;
 						
 						convo.say("Love it!");
+						whoDoYouWantToInclude(convo); // TEST METHOD
 
 					} else {
 
@@ -227,6 +219,35 @@ function prioritizeTasks(convo, question = '') {
 	}
 
 
+}
+
+function whoDoYouWantToInclude(convo) {
+	const { task: { bot }, newPlan: { daySplit, autoWizard } } = convo;
+	let { newPlan: { prioritizedTasks } } = convo;
+	convo.ask(`Who do you want to include?`, (response, convo) => {
+
+		let { text } = response;
+
+		let includeSlackUserIds = getSlackUsersFromString(text);
+
+		if (includeSlackUserIds) {
+			models.SlackUser.findAll({
+				where: [ `"SlackUser"."SlackUserId" IN (?)`, includeSlackUserIds]
+			})
+			.then((slackUsers) => {
+				convo.say("okay found the slack users");
+				console.log(slackUsers);
+				convo.next();
+			})
+		} else {
+			convo.say("You didn't include anyone right...");
+			convo.repeat();
+		}
+
+		convo.next();
+
+
+	})
 }
 
 /*
