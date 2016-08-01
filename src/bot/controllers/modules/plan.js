@@ -17,15 +17,15 @@ import { witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArr
 
 export function startNewPlanFlow(convo) {
 
-	const { task: { bot }, newPlan: { daySplit, autoWizard } } = convo;
+	const { task: { bot }, newPlan: { daySplit, onboardVersion } } = convo;
 	let { newPlan: { prioritizedTasks } }                      = convo;
 
 	let contextDay = "today";
 	if (daySplit != constants.MORNING.word) {
 		contextDay = `this ${daySplit}`;
 	}
-	let question = `What are the 3 outcomes you want to make happen today?`
-	if (autoWizard) {
+	let question = `What are the 3 outcomes you want to make happen ${contextDay}?`
+	if (onboardVersion) {
 		question = `${question} Please enter each one in a separate message`
 	}
 
@@ -55,6 +55,13 @@ export function startNewPlanFlow(convo) {
 			callback: function(response, convo) {
 
 				convo.newPlan.prioritizedTasks = prioritizedTasks;
+
+				if (onboardVersion) {
+					convo.say(`Excellent! Now let's choose one priority to work on`);
+					convo.say(`Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"`);
+				} else {
+					convo.say(`Excellent!`);
+				}
 
 				chooseFirstTask(convo);
 				convo.next();
@@ -94,6 +101,13 @@ export function startNewPlanFlow(convo) {
 
 					convo.newPlan.prioritizedTasks = prioritizedTasks;
 
+					if (onboardVersion) {
+						convo.say(`Excellent! Now let's choose one priority to work on`);
+						convo.say(`Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"`);
+					} else {
+						convo.say(`Excellent!`);
+					}
+
 					chooseFirstTask(convo);
 					convo.next();
 
@@ -107,7 +121,7 @@ export function startNewPlanFlow(convo) {
 
 function chooseFirstTask(convo, question = '') {
 
-	const { task: { bot }, newPlan: { daySplit, autoWizard } } = convo;
+	const { task: { bot }, newPlan: { daySplit, onboardVersion } } = convo;
 	let { newPlan: { prioritizedTasks } } = convo;
 
 	if (question == '') // this is the default question!
@@ -122,12 +136,6 @@ function chooseFirstTask(convo, question = '') {
 		// 2+ tasks means choosing one
 		let options         = { dontShowMinutes: true, dontCalculateMinutes: true };
 		let taskListMessage = convertArrayToTaskListMessage(prioritizedTasks, options);
-
-		if (autoWizard) {
-			convo.say(`Excellent! Now let's choose a priority to work on. Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"`);
-		} else {
-			convo.say(`Excellent!`);
-		}
 
 		convo.ask({
 			text: `${question}\n${taskListMessage}`,
@@ -172,12 +180,14 @@ function chooseFirstTask(convo, question = '') {
 						} else {
 							// only one at a time
 							convo.say("Let's work on one priority at a time!");
-							convo.repeat();
+							let question = "Which one do you want to start with?";
+							chooseFirstTask(convo, question);
 						}
 						
 					} else {
 						convo.say("Sorry, I didn't catch that. Let me know a number `i.e. task 2`");
-						convo.repeat();
+						let question = "Which of these do you want to start off with?";
+						chooseFirstTask(convo, question);
 					}
 
 					convo.next();
@@ -198,7 +208,7 @@ function chooseFirstTask(convo, question = '') {
 
 function getTimeToTask(convo) {
 
-	const { tz, daySplit, autoWizard, startTask } = convo.newPlan;
+	const { tz, daySplit, onboardVersion, startTask } = convo.newPlan;
 	let { newPlan: { prioritizedTasks } }              = convo;
 
 	let taskString = prioritizedTasks[startTask.index].text;
@@ -222,9 +232,7 @@ function getTimeToTask(convo) {
 		});
 	}
 
-	convo.say({
-		text: `Great! Let's make time for this priority :punch:`
-	});
+	convo.say("Let's do it :weight_lifter:");
 
 	let timeExample = moment().tz(tz).add(90, "minutes").format("h:mma");
 
@@ -287,8 +295,6 @@ function getTimeToTask(convo) {
 					} else {
 						minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
 					}
-				} else {
-					minutes = convertTimeStringToMinutes(response.text);
 				}
 
 				if (minutes > 0) {
@@ -310,7 +316,7 @@ function getTimeToTask(convo) {
 
 function startOnTask(convo) {
 
-	const { tz, daySplit, autoWizard, startTask } = convo.newPlan;
+	const { tz, daySplit, onboardVersion, startTask } = convo.newPlan;
 	let { newPlan: { prioritizedTasks } }         = convo;
 
 	let timeExample = moment().tz(tz).add(10, "minutes").format("h:mma");
@@ -343,7 +349,9 @@ function startOnTask(convo) {
 			callback: (response, convo) => {
 
 				convo.say("Okay! Let's do this now :muscle:");
-				whoDoYouWantToInclude(convo);
+				if (onboardVersion) {
+					whoDoYouWantToInclude(convo);
+				}
 				convo.next();
 
 			}
@@ -359,6 +367,7 @@ function startOnTask(convo) {
 				let minutes;
 				let now = moment();
 				if (customTimeObject) {
+
 					convo.newPlan.startTime = customTimeObject;
 					if (duration) {
 						minutes = witDurationToMinutes(duration);
@@ -366,9 +375,12 @@ function startOnTask(convo) {
 						minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
 					}
 					let timeString = customTimeObject.format("h:mm a");
-					convo.say(`Okay! I'll make sure to get you in ${minutes} minutes at ${timeString} :timer_clock:`);
-					whoDoYouWantToInclude(convo);
+					convo.say(`Okay! I'll make sure to get you at ${timeString} :timer_clock:`);
+					if (onboardVersion) {
+						whoDoYouWantToInclude(convo);
+					}
 					convo.next();
+
 				} else {
 					convo.say("Sorry, I didn't catch that. Let me know a time `i.e. let's start in 10 minutes`");
 					convo.repeat();
@@ -383,72 +395,77 @@ function startOnTask(convo) {
 
 function whoDoYouWantToInclude(convo) {
 
-	const { task: { bot }, newPlan: { daySplit, autoWizard } } = convo;
+	const { task: { bot }, newPlan: { daySplit } } = convo;
 	let { newPlan: { prioritizedTasks } } = convo;
 
-	// only if user has not included anyone yet
-	if (true) {
-		convo.say("One last thing! Is there anyone you want me to notify about your daily priorities?");
-		convo.say("This makes it easy for you to communicate the results you're aiming for today, and stay in sync with your team to ensure that you're working on your highest priority items");
-		convo.ask({
-			text: `Simply let me know the people you want to include by entering their handles here \`i.e. let's include @chip and @kevin\``,
-			attachments: [
-				{
-					attachment_type: 'default',
-					callback_id: "INCLUDE_NO_ONE",
-					fallback: "Who do you want to include?",
-					color: colorsHash.grey.hex,
-					actions: [
-						{
-								name: buttonValues.include.noOne.name,
-								text: "No one for now!",
-								value: buttonValues.include.noOne.value,
-								type: "button"
-						}
-					]
-				}
-			]
-		}, [
+	// we only ask this for the first time they make a new plan
+	// this is part of onboard flow
+	convo.say("One last thing! Is there anyone you want me to notify about your daily priorities?");
+	convo.say("This makes it easy for you to communicate your outcomes for today, and stay in sync with your team to ensure that you're working on your highest priority items");
+	convo.ask({
+		text: `Simply let me know the people you want to include by entering their handles here \`i.e. let's include @chip and @kevin\``,
+		attachments: [
 			{
-				pattern: utterances.containsNoOne,
-				callback: (response, convo) => {
-
-					convo.say("Okay, you can always add this later by asking me to `update settings`!");
-					convo.next();
-
-				}
-			},
-			{
-				default: true,
-				callback: (response, convo) => {
-
-					let { text } = response;
-
-					let includeSlackUserIds = getSlackUsersFromString(text);
-
-					if (includeSlackUserIds) {
-						models.SlackUser.findAll({
-							where: [ `"SlackUser"."SlackUserId" IN (?)`, includeSlackUserIds]
-						})
-						.then((slackUsers) => {
-							convo.say("okay found the slack users");
-							console.log(slackUsers);
-							convo.next();
-						})
-					} else {
-						convo.say("You didn't include any users! I pick up who you want to include by their slack handles, like `@kevin`");
-						convo.repeat();
+				attachment_type: 'default',
+				callback_id: "INCLUDE_NO_ONE",
+				fallback: "Who do you want to include?",
+				color: colorsHash.grey.hex,
+				actions: [
+					{
+							name: buttonValues.include.noOne.name,
+							text: "No one for now!",
+							value: buttonValues.include.noOne.value,
+							type: "button"
 					}
-
-					convo.next();
-
-				}
+				]
 			}
-		]);
-	} else {
-		// if user has already done this flow, keep going on
-		convo.next();
-	}
+		]
+	}, [
+		{
+			pattern: utterances.containsNoOne,
+			callback: (response, convo) => {
+
+				convo.say("Okay, you can always add this later by asking me to `update settings`!");
+				convo.next();
+
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+
+				let { text } = response;
+
+				let includeSlackUserIds = getSlackUsersFromString(text);
+
+				if (includeSlackUserIds) {
+					models.SlackUser.findAll({
+						where: [ `"SlackUser"."SlackUserId" IN (?)`, includeSlackUserIds],
+						include: [ models.User ]
+					})
+					.then((slackUsers) => {
+
+						let userNames = slackUsers.map(slackUser => slackUser.dataValues.User.nickName );
+						let finalSlackUserIdsToInclude = slackUsers.map(slackUser => slackUser.dataValues.SlackUserId );
+
+						convo.newPlan.includeSlackUserIds = finalSlackUserIdsToInclude;
+						let userNameStrings               = commaSeparateOutTaskArray(userNames);
+
+						convo.say(`Great! I'll notify ${userNameStrings} about your daily priorities from now on`);
+						convo.say("If you want to change who you include, you can always `update settings`");
+						convo.next();
+
+					})
+				} else {
+					convo.say("You didn't include any users! I pick up who you want to include by their slack handles, like `@kevin`");
+					convo.repeat();
+				}
+
+				convo.next();
+
+			}
+		}
+	]);
 
 }
 
@@ -457,7 +474,7 @@ function whoDoYouWantToInclude(convo) {
  */
 function prioritizeTasks(convo, question = '') {
 
-	const { task: { bot }, newPlan: { daySplit, autoWizard } } = convo;
+	const { task: { bot }, newPlan: { daySplit, onboardVersion } } = convo;
 	let { newPlan: { prioritizedTasks } } = convo;
 
 	if (question == '') // this is the default question!
@@ -527,7 +544,9 @@ function prioritizeTasks(convo, question = '') {
 						convo.newPlan.prioritizedTasks = newPrioritizedTasks;
 						
 						convo.say("Love it!");
-						whoDoYouWantToInclude(convo); // TEST METHOD
+						if (onboardVersion) {
+							whoDoYouWantToInclude(convo);
+						}
 
 					} else {
 

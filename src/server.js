@@ -85,8 +85,6 @@ controller.createOauthEndpoints(app,function(err,req,res) {
 http.createServer(app).listen(process.env.HTTP_PORT, () => {
 	consoleLog(`Listening on port: ${app.get('port')}`);
 
-	test();
-
 	 /**
 	 * 						*** CRON JOB ***
 	 * @param  time increment in cron format

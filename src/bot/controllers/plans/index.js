@@ -69,22 +69,24 @@ export default function(controller) {
 					convo.name = name;
 
 					convo.newPlan = {
+						SlackUserId,
 						tz,
 						daySplit,
-						autoWizard: false,
+						onboardVersion: false,
 						prioritizedTasks: [],
 						startTask: {
 							index: 0, // fail-safe default. should get updated in flow
 							minutes: 30 // fail-safe default. should get updated in flow
 						},
-						startTime: false // default will be now
+						startTime: false, // default will be now
+						includeSlackUserIds: []
 					}
 
 					let day = moment().tz(tz).format('dddd');
 					convo.say(`Happy ${day}, ${name}! Let's win the ${daySplit} :muscle:`);
 
 					if (sessionGroups.length == 0) {
-						convo.newPlan.autoWizard = true;
+						convo.newPlan.onboardVersion = true;
 					}
 
 					startNewPlanFlow(convo);

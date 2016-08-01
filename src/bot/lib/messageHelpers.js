@@ -552,7 +552,7 @@ export function commaSeparateOutTaskArray(a) {
 
 	// put into red blocks
 	a = a.map((a) => {
-		return `\`${a}\``;
+		return `${a}`;
 	})
 
 	// make into string

@@ -45,7 +45,7 @@ function startNewPlanFlow(convo) {
 	var bot = convo.task.bot;
 	var _convo$newPlan = convo.newPlan;
 	var daySplit = _convo$newPlan.daySplit;
-	var autoWizard = _convo$newPlan.autoWizard;
+	var onboardVersion = _convo$newPlan.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -53,8 +53,8 @@ function startNewPlanFlow(convo) {
 	if (daySplit != _constants.constants.MORNING.word) {
 		contextDay = 'this ' + daySplit;
 	}
-	var question = 'What are the 3 outcomes you want to make happen today?';
-	if (autoWizard) {
+	var question = 'What are the 3 outcomes you want to make happen ' + contextDay + '?';
+	if (onboardVersion) {
 		question = question + ' Please enter each one in a separate message';
 	}
 
@@ -80,6 +80,13 @@ function startNewPlanFlow(convo) {
 		callback: function callback(response, convo) {
 
 			convo.newPlan.prioritizedTasks = prioritizedTasks;
+
+			if (onboardVersion) {
+				convo.say('Excellent! Now let\'s choose one priority to work on');
+				convo.say('Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"');
+			} else {
+				convo.say('Excellent!');
+			}
 
 			chooseFirstTask(convo);
 			convo.next();
@@ -117,6 +124,13 @@ function startNewPlanFlow(convo) {
 
 				convo.newPlan.prioritizedTasks = prioritizedTasks;
 
+				if (onboardVersion) {
+					convo.say('Excellent! Now let\'s choose one priority to work on');
+					convo.say('Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"');
+				} else {
+					convo.say('Excellent!');
+				}
+
 				chooseFirstTask(convo);
 				convo.next();
 			}
@@ -129,7 +143,7 @@ function chooseFirstTask(convo) {
 	var bot = convo.task.bot;
 	var _convo$newPlan2 = convo.newPlan;
 	var daySplit = _convo$newPlan2.daySplit;
-	var autoWizard = _convo$newPlan2.autoWizard;
+	var onboardVersion = _convo$newPlan2.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -145,12 +159,6 @@ function chooseFirstTask(convo) {
 		// 2+ tasks means choosing one
 		var options = { dontShowMinutes: true, dontCalculateMinutes: true };
 		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTasks, options);
-
-		if (autoWizard) {
-			convo.say('Excellent! Now let\'s choose a priority to work on. Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"');
-		} else {
-			convo.say('Excellent!');
-		}
 
 		convo.ask({
 			text: question + '\n' + taskListMessage,
@@ -188,11 +196,13 @@ function chooseFirstTask(convo) {
 					} else {
 						// only one at a time
 						convo.say("Let's work on one priority at a time!");
-						convo.repeat();
+						var _question = "Which one do you want to start with?";
+						chooseFirstTask(convo, _question);
 					}
 				} else {
 					convo.say("Sorry, I didn't catch that. Let me know a number `i.e. task 2`");
-					convo.repeat();
+					var _question2 = "Which of these do you want to start off with?";
+					chooseFirstTask(convo, _question2);
 				}
 
 				convo.next();
@@ -212,7 +222,7 @@ function getTimeToTask(convo) {
 	var _convo$newPlan3 = convo.newPlan;
 	var tz = _convo$newPlan3.tz;
 	var daySplit = _convo$newPlan3.daySplit;
-	var autoWizard = _convo$newPlan3.autoWizard;
+	var onboardVersion = _convo$newPlan3.onboardVersion;
 	var startTask = _convo$newPlan3.startTask;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
@@ -236,9 +246,7 @@ function getTimeToTask(convo) {
 		});
 	}
 
-	convo.say({
-		text: 'Great! Let\'s make time for this priority :punch:'
-	});
+	convo.say("Let's do it :weight_lifter:");
 
 	var timeExample = (0, _momentTimezone2.default)().tz(tz).add(90, "minutes").format("h:mma");
 
@@ -295,8 +303,6 @@ function getTimeToTask(convo) {
 				} else {
 					minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
 				}
-			} else {
-				minutes = (0, _messageHelpers.convertTimeStringToMinutes)(response.text);
 			}
 
 			if (minutes > 0) {
@@ -317,7 +323,7 @@ function startOnTask(convo) {
 	var _convo$newPlan4 = convo.newPlan;
 	var tz = _convo$newPlan4.tz;
 	var daySplit = _convo$newPlan4.daySplit;
-	var autoWizard = _convo$newPlan4.autoWizard;
+	var onboardVersion = _convo$newPlan4.onboardVersion;
 	var startTask = _convo$newPlan4.startTask;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
@@ -346,7 +352,9 @@ function startOnTask(convo) {
 		callback: function callback(response, convo) {
 
 			convo.say("Okay! Let's do this now :muscle:");
-			whoDoYouWantToInclude(convo);
+			if (onboardVersion) {
+				whoDoYouWantToInclude(convo);
+			}
 			convo.next();
 		}
 	}, {
@@ -363,6 +371,7 @@ function startOnTask(convo) {
 			var minutes = void 0;
 			var now = (0, _momentTimezone2.default)();
 			if (customTimeObject) {
+
 				convo.newPlan.startTime = customTimeObject;
 				if (duration) {
 					minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
@@ -370,8 +379,10 @@ function startOnTask(convo) {
 					minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
 				}
 				var timeString = customTimeObject.format("h:mm a");
-				convo.say('Okay! I\'ll make sure to get you in ' + minutes + ' minutes at ' + timeString + ' :timer_clock:');
-				whoDoYouWantToInclude(convo);
+				convo.say('Okay! I\'ll make sure to get you at ' + timeString + ' :timer_clock:');
+				if (onboardVersion) {
+					whoDoYouWantToInclude(convo);
+				}
 				convo.next();
 			} else {
 				convo.say("Sorry, I didn't catch that. Let me know a time `i.e. let's start in 10 minutes`");
@@ -385,65 +396,71 @@ function startOnTask(convo) {
 
 function whoDoYouWantToInclude(convo) {
 	var bot = convo.task.bot;
-	var _convo$newPlan5 = convo.newPlan;
-	var daySplit = _convo$newPlan5.daySplit;
-	var autoWizard = _convo$newPlan5.autoWizard;
+	var daySplit = convo.newPlan.daySplit;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
-	// only if user has not included anyone yet
+	// we only ask this for the first time they make a new plan
+	// this is part of onboard flow
 
-	if (true) {
-		convo.say("One last thing! Is there anyone you want me to notify about your daily priorities?");
-		convo.say("This makes it easy for you to communicate the results you're aiming for today, and stay in sync with your team to ensure that you're working on your highest priority items");
-		convo.ask({
-			text: 'Simply let me know the people you want to include by entering their handles here `i.e. let\'s include @chip and @kevin`',
-			attachments: [{
-				attachment_type: 'default',
-				callback_id: "INCLUDE_NO_ONE",
-				fallback: "Who do you want to include?",
-				color: _constants.colorsHash.grey.hex,
-				actions: [{
-					name: _constants.buttonValues.include.noOne.name,
-					text: "No one for now!",
-					value: _constants.buttonValues.include.noOne.value,
-					type: "button"
-				}]
+	convo.say("One last thing! Is there anyone you want me to notify about your daily priorities?");
+	convo.say("This makes it easy for you to communicate your outcomes for today, and stay in sync with your team to ensure that you're working on your highest priority items");
+	convo.ask({
+		text: 'Simply let me know the people you want to include by entering their handles here `i.e. let\'s include @chip and @kevin`',
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "INCLUDE_NO_ONE",
+			fallback: "Who do you want to include?",
+			color: _constants.colorsHash.grey.hex,
+			actions: [{
+				name: _constants.buttonValues.include.noOne.name,
+				text: "No one for now!",
+				value: _constants.buttonValues.include.noOne.value,
+				type: "button"
 			}]
-		}, [{
-			pattern: _botResponses.utterances.containsNoOne,
-			callback: function callback(response, convo) {
+		}]
+	}, [{
+		pattern: _botResponses.utterances.containsNoOne,
+		callback: function callback(response, convo) {
 
-				convo.say("Okay, you can always add this later by asking me to `update settings`!");
-				convo.next();
-			}
-		}, {
-			default: true,
-			callback: function callback(response, convo) {
-				var text = response.text;
+			convo.say("Okay, you can always add this later by asking me to `update settings`!");
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			var text = response.text;
 
 
-				var includeSlackUserIds = (0, _miscHelpers.getSlackUsersFromString)(text);
+			var includeSlackUserIds = (0, _miscHelpers.getSlackUsersFromString)(text);
 
-				if (includeSlackUserIds) {
-					_models2.default.SlackUser.findAll({
-						where: ['"SlackUser"."SlackUserId" IN (?)', includeSlackUserIds]
-					}).then(function (slackUsers) {
-						convo.say("okay found the slack users");
-						console.log(slackUsers);
-						convo.next();
+			if (includeSlackUserIds) {
+				_models2.default.SlackUser.findAll({
+					where: ['"SlackUser"."SlackUserId" IN (?)', includeSlackUserIds],
+					include: [_models2.default.User]
+				}).then(function (slackUsers) {
+
+					var userNames = slackUsers.map(function (slackUser) {
+						return slackUser.dataValues.User.nickName;
 					});
-				} else {
-					convo.say("You didn't include any users! I pick up who you want to include by their slack handles, like `@kevin`");
-					convo.repeat();
-				}
+					var finalSlackUserIdsToInclude = slackUsers.map(function (slackUser) {
+						return slackUser.dataValues.SlackUserId;
+					});
 
-				convo.next();
+					convo.newPlan.includeSlackUserIds = finalSlackUserIdsToInclude;
+					var userNameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(userNames);
+
+					convo.say('Great! I\'ll notify ' + userNameStrings + ' about your daily priorities from now on');
+					convo.say("If you want to change who you include, you can always `update settings`");
+					convo.next();
+				});
+			} else {
+				convo.say("You didn't include any users! I pick up who you want to include by their slack handles, like `@kevin`");
+				convo.repeat();
 			}
-		}]);
-	} else {
-		// if user has already done this flow, keep going on
-		convo.next();
-	}
+
+			convo.next();
+		}
+	}]);
 }
 
 /**
@@ -452,9 +469,9 @@ function whoDoYouWantToInclude(convo) {
 function prioritizeTasks(convo) {
 	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
 	var bot = convo.task.bot;
-	var _convo$newPlan6 = convo.newPlan;
-	var daySplit = _convo$newPlan6.daySplit;
-	var autoWizard = _convo$newPlan6.autoWizard;
+	var _convo$newPlan5 = convo.newPlan;
+	var daySplit = _convo$newPlan5.daySplit;
+	var onboardVersion = _convo$newPlan5.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -519,7 +536,9 @@ function prioritizeTasks(convo) {
 						convo.newPlan.prioritizedTasks = newPrioritizedTasks;
 
 						convo.say("Love it!");
-						whoDoYouWantToInclude(convo); // TEST METHOD
+						if (onboardVersion) {
+							whoDoYouWantToInclude(convo);
+						}
 					})();
 				} else {
 

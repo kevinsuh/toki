@@ -61,22 +61,24 @@ exports.default = function (controller) {
 					convo.name = name;
 
 					convo.newPlan = {
+						SlackUserId: SlackUserId,
 						tz: tz,
 						daySplit: daySplit,
-						autoWizard: false,
+						onboardVersion: false,
 						prioritizedTasks: [],
 						startTask: {
 							index: 0, // fail-safe default. should get updated in flow
 							minutes: 30 // fail-safe default. should get updated in flow
 						},
-						startTime: false // default will be now
+						startTime: false, // default will be now
+						includeSlackUserIds: []
 					};
 
 					var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');
 					convo.say('Happy ' + day + ', ' + name + '! Let\'s win the ' + daySplit + ' :muscle:');
 
 					if (sessionGroups.length == 0) {
-						convo.newPlan.autoWizard = true;
+						convo.newPlan.onboardVersion = true;
 					}
 
 					(0, _plan.startNewPlanFlow)(convo);

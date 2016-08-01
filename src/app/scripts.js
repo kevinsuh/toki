@@ -21,9 +21,9 @@ export function test() {
 		slackUser.getIncluded({
 			include: [ models.User ]
 		})
-		.then((slackUsers) => {
+		.then((includedSlackUsers) => {
 			console.log("got slack users included!");
-			console.log(slackUsers);
+			console.log(includedSlackUsers);
 		})
 	})
 }

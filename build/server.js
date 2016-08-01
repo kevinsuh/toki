@@ -111,8 +111,6 @@ _controllers.controller.createOauthEndpoints(app, function (err, req, res) {
 _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
 	(0, _miscHelpers.consoleLog)('Listening on port: ' + app.get('port'));
 
-	(0, _scripts.test)();
-
 	/**
  * 						*** CRON JOB ***
  * @param  time increment in cron format

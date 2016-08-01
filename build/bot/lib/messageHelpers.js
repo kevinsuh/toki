@@ -573,7 +573,7 @@ function commaSeparateOutTaskArray(a) {
 
 	// put into red blocks
 	a = a.map(function (a) {
-		return '`' + a + '`';
+		return '' + a;
 	});
 
 	// make into string

@@ -39,9 +39,9 @@ function test() {
 	}).then(function (slackUser) {
 		slackUser.getIncluded({
 			include: [_models2.default.User]
-		}).then(function (slackUsers) {
+		}).then(function (includedSlackUsers) {
 			console.log("got slack users included!");
-			console.log(slackUsers);
+			console.log(includedSlackUsers);
 		});
 	});
 }
