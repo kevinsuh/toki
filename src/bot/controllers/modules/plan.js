@@ -56,10 +56,9 @@ export function startNewPlanFlow(convo) {
 
 				convo.newPlan.prioritizedTasks = prioritizedTasks;
 
-				convo.say("Excellent!");
 				chooseFirstTask(convo);
-
 				convo.next();
+
 			}
 		},
 		{ // this is additional task added in this case.
@@ -95,7 +94,6 @@ export function startNewPlanFlow(convo) {
 
 					convo.newPlan.prioritizedTasks = prioritizedTasks;
 
-					convo.say("Excellent!");
 					chooseFirstTask(convo);
 					convo.next();
 
@@ -126,7 +124,9 @@ function chooseFirstTask(convo, question = '') {
 		let taskListMessage = convertArrayToTaskListMessage(prioritizedTasks, options);
 
 		if (autoWizard) {
-			convo.say(`Let's one priority to work on. Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"`);
+			convo.say(`Excellent! Now let's choose a priority to work on. Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"`);
+		} else {
+			convo.say(`Excellent!`);
 		}
 
 		convo.ask({
@@ -389,7 +389,7 @@ function whoDoYouWantToInclude(convo) {
 	// only if user has not included anyone yet
 	if (true) {
 		convo.say("One last thing! Is there anyone you want me to notify about your daily priorities?");
-		convo.say("This is to make it easy for you to communicate the results you're aiming for today, and stay in sync with your team to ensure that you are working on your highest priority items");
+		convo.say("This makes it easy for you to communicate the results you're aiming for today, and stay in sync with your team to ensure that you're working on your highest priority items");
 		convo.ask({
 			text: `Simply let me know the people you want to include by entering their handles here \`i.e. let's include @chip and @kevin\``,
 			attachments: [
