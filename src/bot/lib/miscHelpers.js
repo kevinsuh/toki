@@ -5,7 +5,7 @@ import { constants, buttonValues, colorsHash } from './constants';
 export function getCurrentDaySplit(tz) {
 	let daySplit = '';
 	let currentHour = moment().tz(tz).format("HH");
-	if (currentHour >= constants.AFTERNOON.hour && currentHour <= constants.EVENING.hour) {
+	if (currentHour >= constants.AFTERNOON.hour && currentHour <= constants.EVENING.hour && false) {
 		daySplit = constants.AFTERNOON.word;
 	} else if (currentHour >= constants.EVENING.hour) {
 		daySplit = constants.EVENING.word;

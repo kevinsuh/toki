@@ -72,11 +72,8 @@ exports.default = function (controller) {
 						startTime: false // default will be now
 					};
 
-					var day = "day";
-					if (daySplit != _constants.constants.MORNING.word) {
-						day = daySplit;
-					}
-					convo.say('Hey ' + name + '! Let\'s win the ' + daySplit + ' :muscle:');
+					var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');
+					convo.say('Happy ' + day + ', ' + name + '! Let\'s win the ' + daySplit + ' :muscle:');
 
 					if (sessionGroups.length == 0) {
 						convo.newPlan.autoWizard = true;

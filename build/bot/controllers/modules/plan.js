@@ -53,7 +53,7 @@ function startNewPlanFlow(convo) {
 	if (daySplit != _constants.constants.MORNING.word) {
 		contextDay = 'this ' + daySplit;
 	}
-	var question = 'What are the top 3 most anxious or uncomfortable things you have on your plate ' + contextDay + '?';
+	var question = 'What are the 3 outcomes you want to make happen to do that?';
 	if (autoWizard) {
 		question = question + ' Please enter each one in a separate message!';
 	}

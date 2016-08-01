@@ -36,7 +36,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function getCurrentDaySplit(tz) {
 	var daySplit = '';
 	var currentHour = (0, _momentTimezone2.default)().tz(tz).format("HH");
-	if (currentHour >= _constants.constants.AFTERNOON.hour && currentHour <= _constants.constants.EVENING.hour) {
+	if (currentHour >= _constants.constants.AFTERNOON.hour && currentHour <= _constants.constants.EVENING.hour && false) {
 		daySplit = _constants.constants.AFTERNOON.word;
 	} else if (currentHour >= _constants.constants.EVENING.hour) {
 		daySplit = _constants.constants.EVENING.word;

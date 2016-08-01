@@ -80,11 +80,8 @@ export default function(controller) {
 						startTime: false // default will be now
 					}
 
-					let day = "day";
-					if (daySplit != constants.MORNING.word) {
-						day = daySplit;
-					}
-					convo.say(`Hey ${name}! Let's win the ${daySplit} :muscle:`);
+					let day = moment().tz(tz).format('dddd');
+					convo.say(`Happy ${day}, ${name}! Let's win the ${daySplit} :muscle:`);
 
 					if (sessionGroups.length == 0) {
 						convo.newPlan.autoWizard = true;

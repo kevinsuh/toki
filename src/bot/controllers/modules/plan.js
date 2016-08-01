@@ -24,7 +24,7 @@ export function startNewPlanFlow(convo) {
 	if (daySplit != constants.MORNING.word) {
 		contextDay = `this ${daySplit}`;
 	}
-	let question = `What are the top 3 most anxious or uncomfortable things you have on your plate ${contextDay}?`
+	let question = `What are the 3 outcomes you want to make happen to do that?`
 	if (autoWizard) {
 		question = `${question} Please enter each one in a separate message!`
 	}

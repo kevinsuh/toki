@@ -56,16 +56,16 @@ var constants = exports.constants = {
 		reg_exp: new RegExp(/(:|[at]{2,}[ ]?[\d]+\b)/i)
 	},
 	MORNING: {
-		word: "morning",
+		word: "day",
 		hour: 0
 	},
 	AFTERNOON: {
 		word: "afternoon",
-		hour: 12
+		hour: 14
 	},
 	EVENING: {
 		word: "evening",
-		hour: 17
+		hour: 18
 	}
 };
 
