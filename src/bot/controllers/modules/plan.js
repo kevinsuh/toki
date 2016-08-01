@@ -24,9 +24,9 @@ export function startNewPlanFlow(convo) {
 	if (daySplit != constants.MORNING.word) {
 		contextDay = `this ${daySplit}`;
 	}
-	let question = `What are the 3 outcomes you want to make happen to do that?`
+	let question = `What are the 3 outcomes you want to make happen today?`
 	if (autoWizard) {
-		question = `${question} Please enter each one in a separate message!`
+		question = `${question} Please enter each one in a separate message`
 	}
 
 	prioritizedTasks = [];
@@ -37,6 +37,18 @@ export function startNewPlanFlow(convo) {
 		attachments: getNewPlanAttachments(prioritizedTasks)
 	},
 	[
+		{
+			pattern: utterances.startsWithHelp,
+			callback: function(response, convo) {
+
+				convo.newPlan.prioritizedTasks = [];
+
+				convo.say("Okay, let's do do this together!");
+				wizardPrioritizeTasks(convo);
+				convo.next();
+
+			}
+		},
 		{
 			pattern: buttonValues.redoTasks.value,
 			callback: function(response, convo) {
@@ -59,7 +71,7 @@ export function startNewPlanFlow(convo) {
 				convo.say("Excellent!");
 
 				if (autoWizard) {
-					wizardPrioritizeTasks(convo);
+					prioritizeTasks(convo);
 				} else {
 					prioritizeTasks(convo);
 				}
@@ -103,7 +115,7 @@ export function startNewPlanFlow(convo) {
 					convo.say("Excellent!");
 
 					if (autoWizard) {
-						wizardPrioritizeTasks(convo);
+						prioritizeTasks(convo);
 					} else {
 						prioritizeTasks(convo);
 					}
@@ -118,11 +130,107 @@ export function startNewPlanFlow(convo) {
 
 }
 
-function prioritizeTasks(convo) {
+function wizardPrioritizeTasks(convo) {
+
+	convo.ask(`What is your one result from today, that alone would make you feel most accomplished?`, (response, convo) => {
+		convo.say("Awesome!");
+		convo.next();
+	});
 
 }
 
-function wizardPrioritizeTasks(convo, question = '') {
+function prioritizeTasks(convo, question = '') {
+
+	const { task: { bot }, newPlan: { daySplit, autoWizard } } = convo;
+	let { newPlan: { prioritizedTasks } } = convo;
+
+	if (question == '') // this is the default question!
+		question = `How would you rank your ${prioritizedTasks.length} priorities in order of most meaningful to your day?`;
+
+	if (prioritizedTasks.length == 1) {
+		// 1 task needs no prioritizing
+		convo.newPlan.startTask.index = 0;
+		getTimeToTask(convo);
+	} else {
+		// 2+ tasks need prioritizing
+		let options         = { dontShowMinutes: true, dontCalculateMinutes: true };
+		let taskListMessage = convertArrayToTaskListMessage(prioritizedTasks, options);
+
+		convo.ask({
+			text: `${question}\n${taskListMessage}`,
+			attachments: [
+				{
+					attachment_type: 'default',
+					callback_id: "KEEP_TASK_ORDER",
+					fallback: "Let's keep this task order!",
+					color: colorsHash.grey.hex,
+					actions: [
+						{
+								name: buttonValues.keepTaskOrder.name,
+								text: "Keep this order!",
+								value: buttonValues.keepTaskOrder.value,
+								type: "button"
+						}
+					]
+				}
+			]
+		}, [
+			{
+				pattern: utterances.startsWithKeep,
+				callback: (response, convo) => {
+
+					convo.say("This order looks great to me, too!");
+					convo.next();
+
+				}
+			},
+			{
+				default: true,
+				callback: (response, convo) => {
+
+					let taskNumbersToWorkOnArray = convertTaskNumberStringToArray(response.text, prioritizedTasks);
+
+					let necessaryNumbers = [];
+					for (let i = 0; i < prioritizedTasks.length; i++) {
+						let number = i+1;
+						necessaryNumbers.push(number);
+					}
+
+					let newPrioritizedTaskNumbers = taskNumbersToWorkOnArray.slice();
+					// this tests if the arrays contain the same values or not
+					if (taskNumbersToWorkOnArray.sort().join(',') === necessaryNumbers.sort().join(',')) {
+
+						let newPrioritizedTasks = [];
+						newPrioritizedTaskNumbers.forEach((taskNumber) => {
+							let index = taskNumber - 1;
+							newPrioritizedTasks.push(prioritizedTasks[index]);
+						});
+						convo.newPlan.prioritizedTasks = newPrioritizedTasks;
+						
+						convo.say("Love it!");
+
+					} else {
+
+						necessaryNumbers.reverse();
+						let numberString = necessaryNumbers.join(", ");
+						convo.say("Sorry, I didn't catch that");
+						let repeatQuestion = `Let me know how you would rank your ${prioritizedTasks.length} priorities in order of importance by listing the numbers \`i.e. ${numberString}\``
+						prioritizeTasks(convo, repeatQuestion);
+
+					}
+
+					convo.next();
+
+				}
+			}
+		]);
+	}
+
+
+}
+
+/*
+function prioritizeTasks(convo, question = '') {
 
 	const { task: { bot }, newPlan: { daySplit, autoWizard } } = convo;
 	let { newPlan: { prioritizedTasks } } = convo;
@@ -199,6 +307,7 @@ function wizardPrioritizeTasks(convo, question = '') {
 	}
 
 }
+*/
 
 function getTimeToTask(convo) {
 

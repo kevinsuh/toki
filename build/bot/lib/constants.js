@@ -427,6 +427,14 @@ var buttonValues = exports.buttonValues = {
 	redoMyPriorities: {
 		name: "REDO_MY_PRIORITIES",
 		value: "Let's redo my priorities!"
+	},
+	wizardNewPlanFlow: {
+		name: "WIZARD_NEW_PLAN_FLOW",
+		value: "Help me figure that out!"
+	},
+	keepTaskOrder: {
+		name: "KEEP_TASK_ORDER",
+		value: "Keep this order!"
 	}
 };
 

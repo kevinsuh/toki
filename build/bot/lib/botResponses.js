@@ -57,6 +57,7 @@ var utterances = exports.utterances = {
 	mountain: new RegExp(/\b(m[mountain]{5,})\b/i),
 	other: new RegExp(/\b(o[other]{3,})\b/i),
 	deleteTasks: new RegExp(/^(d[delete ]{3,}[tasks ]{0,})\b/i),
-	containsResetOrUndo: new RegExp(/\b(r[reset]{3,}|u[undo]{2,})\b/i)
+	containsResetOrUndo: new RegExp(/\b(r[reset]{3,}|u[undo]{2,})\b/i),
+	startsWithHelp: new RegExp(/^(hel[elp]{1,4})\b/i)
 };
 //# sourceMappingURL=botResponses.js.map

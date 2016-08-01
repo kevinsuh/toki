@@ -67,7 +67,13 @@ function getNewPlanAttachments(prioritizedTasks) {
 		attachments = [{
 			attachment_type: 'default',
 			callback_id: "TASK_LIST_MESSAGE",
-			fallback: "Let's get your priorities"
+			fallback: "Let's get your priorities",
+			actions: [{
+				name: _constants.buttonValues.wizardNewPlanFlow.name,
+				text: "Help me figure out!",
+				value: _constants.buttonValues.wizardNewPlanFlow.value,
+				type: "button"
+			}]
 		}];
 	}
 	return attachments;
@@ -138,7 +144,7 @@ function convertResponseObjectToNewTaskArray(response) {
  */
 function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 
-	var splitter = RegExp(/(,|\ba[and]{1,}\b)/);
+	var splitter = RegExp(/(,|\ba[and]{1,}\b|\bthen\b)/);
 	var taskNumbersSplitArray = taskNumbersString.split(splitter);
 
 	// let's get task array of only remaining tasks
