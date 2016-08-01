@@ -10,7 +10,7 @@ import cron from 'cron';
 import cronFunction from './app/cron';
 var CronJob = cron.CronJob;
 
-import { seedUsers, updateUsers } from './app/scripts';
+import { seedUsers, updateUsers, test } from './app/scripts';
 import { consoleLog, prioritizeDailyTasks } from './bot/lib/miscHelpers';
 
 setTimeout(() => {
@@ -84,6 +84,8 @@ controller.createOauthEndpoints(app,function(err,req,res) {
 // create HTTP service
 http.createServer(app).listen(process.env.HTTP_PORT, () => {
 	consoleLog(`Listening on port: ${app.get('port')}`);
+
+	test();
 
 	 /**
 	 * 						*** CRON JOB ***

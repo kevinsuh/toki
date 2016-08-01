@@ -11,6 +11,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 // sequelize models
 
 
+exports.test = test;
 exports.updateUsers = updateUsers;
 exports.seedUsers = seedUsers;
 
@@ -31,6 +32,19 @@ var _dotenv = require('dotenv');
 var _dotenv2 = _interopRequireDefault(_dotenv);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function test() {
+	_models2.default.SlackUser.find({
+		where: ['"SlackUser"."SlackUserId" = ?', "U121ZK15J"]
+	}).then(function (slackUser) {
+		slackUser.getIncluded({
+			include: [_models2.default.User]
+		}).then(function (slackUsers) {
+			console.log("got slack users included!");
+			console.log(slackUsers);
+		});
+	});
+}
 
 function updateUsers() {
 

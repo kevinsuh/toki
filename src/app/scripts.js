@@ -13,6 +13,21 @@ import moment from 'moment-timezone';
 
 import dotenv from 'dotenv';
 
+export function test() {
+	models.SlackUser.find({
+		where: [`"SlackUser"."SlackUserId" = ?`, "U121ZK15J"]
+	})
+	.then((slackUser) => {
+		slackUser.getIncluded({
+			include: [ models.User ]
+		})
+		.then((slackUsers) => {
+			console.log("got slack users included!");
+			console.log(slackUsers);
+		})
+	})
+}
+
 export function updateUsers() {
 
 	var env = process.env.NODE_ENV || 'development';
