@@ -53,5 +53,6 @@ export const utterances = {
 	other: new RegExp(/\b(o[other]{3,})\b/i),
 	deleteTasks: new RegExp(/^(d[delete ]{3,}[tasks ]{0,})\b/i),
 	containsResetOrUndo: new RegExp(/\b(r[reset]{3,}|u[undo]{2,})\b/i),
-	startsWithHelp: new RegExp(/^(hel[elp]{1,4})\b/i)
+	startsWithHelp: new RegExp(/^(hel[elp]{1,4})\b/i),
+	containsNoOne: new RegExp(/\b(no one)\b/i)
 }

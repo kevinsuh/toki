@@ -410,10 +410,6 @@ export const buttonValues ={
 		name: "WORK_ON_DIFFERENT_TASK",
 		value: "Let's choose a different task!"
 	},
-	workOnTaskNow: {
-		name: "WORK_ON_TASK_NOW",
-		value: "Let's do this task right now!"
-	},
 	redoMyPriorities: {
 		name: "REDO_MY_PRIORITIES",
 		value: "Let's redo my priorities!"
@@ -425,6 +421,40 @@ export const buttonValues ={
 	keepTaskOrder: {
 		name: "KEEP_TASK_ORDER",
 		value: "Keep this order!"
+	},
+	workOnTaskFor: {
+		ninetyMinutes: {
+			name: "WORK_ON_TASK_FOR_90_MINUTES",
+			value: "90 minutes"
+		},
+		sixtyMinutes: {
+			name: "WORK_ON_TASK_FOR_60_MINUTES",
+			value: "60 minutes"
+		},
+		thirtyMinutes: {
+			name: "WORK_ON_TASK_FOR_30_MINUTES",
+			value: "30 minutes"
+		},
+		fifteenMinutes: {
+			name: "WORK_ON_TASK_FOR_15_MINUTES",
+			value: "15 minutes"
+		}
+	},
+	startTaskIn: {
+		now: {
+			name: "WORK_ON_TASK_NOW",
+			value: "Let's do this task right now!" 
+		},
+		tenMinutes: {
+			name: "WORK_ON_TASK_IN_10_MINUTES",
+			value: "in 10 minutes" 
+		}
+	},
+	include: {
+		noOne: {
+			name: "INCLUDE_NO_ONE",
+			value: "No one for now!"
+		}
 	}
 }
 

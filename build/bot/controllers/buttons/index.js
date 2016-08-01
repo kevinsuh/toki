@@ -163,14 +163,6 @@ exports.default = function (controller) {
 						controller.trigger('session_resume_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
 					});
 					break;
-				case _constants.buttonValues.redoTasks.value:
-					break;
-				case _constants.buttonValues.doneAddingTasks.value:
-					break;
-				case _constants.buttonValues.workOnDifferentTask.value:
-					break;
-				case _constants.buttonValues.workOnTaskNow.value:
-					break;
 				default:
 					break;
 			}
