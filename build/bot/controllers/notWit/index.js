@@ -6,6 +6,19 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
+	// TOKI_T1ME TESTER
+	controller.hears(['TOKI_T1ME'], 'direct_message', function (bot, message) {
+
+		var SlackUserId = message.user;
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(function () {
+			controller.trigger('begin_onboard_flow', [bot, { SlackUserId: SlackUserId }]);
+		}, 1000);
+	});
+
 	// intentionally pausing session
 	controller.hears(['pa[ause]{1,}'], 'direct_message', function (bot, message) {
 

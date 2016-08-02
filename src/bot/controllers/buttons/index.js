@@ -22,75 +22,6 @@ export default function(controller) {
 		// need to replace buttons so user cannot reclick it
 		if (actions && actions.length > 0) {
 			switch (actions[0].value) {
-				case buttonValues.startNow.value:
-					bot.replyInteractive(message, "Boom! :boom:");
-					break;
-				case buttonValues.checkIn.value:
-					bot.replyInteractive(message, "I'd love to check in with you! Leave a note in the same line if you want me to remember it (`i.e. halfway done by 4pm`)");
-					break;
-				case buttonValues.changeTask.value:
-					bot.replyInteractive(message, "Let's give this another try then :repeat_one:");
-					break;
-				case buttonValues.changeSessionTime.value:
-					// this is when you want to have a custom time
-					bot.replyInteractive(message, "Let's choose how long to work! I understand minutes (`ex. 45 min`) or specific times (`ex. 3:15pm`)");
-					break;
-				case buttonValues.changeCheckinTime.value:
-					bot.replyInteractive(message, "I'm glad we caught this - when would you like me to check in with you?");
-					break;
-				case buttonValues.newTask.value:
-					bot.replyInteractive(message, "Sweet! Let's work on a new task");
-					break;
-				case buttonValues.addCheckinNote.value:
-					bot.replyInteractive(message, "Let's add a note to your checkin!");
-					break;
-				case buttonValues.takeBreak.value:
-					bot.replyInteractive(message, "Let's take a break!");
-					break;
-				case buttonValues.noTasks.value:
-					bot.replyInteractive(message, "No worries! :smile_cat:");
-					break;
-				case buttonValues.noPendingTasks.value:
-					bot.replyInteractive(message, "I like a fresh start each day, too");
-					break;
-				case buttonValues.noAdditionalTasks.value:
-					bot.replyInteractive(message, "Sounds good!");
-					break;
-				case buttonValues.backLater.value:
-					bot.replyInteractive(message, "Okay! I'll be here when you get back :wave:");
-					break;
-				case buttonValues.actuallyWantToAddATask.value:
-					bot.replyInteractive(message, "Let's add more tasks! Enter them here separated by new lines");
-				break;
-				case buttonValues.differentTask.value:
-					bot.replyInteractive(message, "What did you get done instead?");
-					break;
-				case buttonValues.keepName.value:
-					bot.replyInteractive(message, "Cool!")
-					break;
-				case buttonValues.differentName.value:
-					bot.replyInteractive(message, "Let's do another name then!")
-					break;
-				case buttonValues.changeTimeZone.value:
-					bot.replyInteractive(message, "Let's change your timezone!")
-					break;
-				case buttonValues.changeName.value:
-					bot.replyInteractive(message, "Let's change your name!")
-					break;
-				case buttonValues.neverMind.value:
-					bot.replyInteractive(message, "Sounds good")
-					break;
-				case buttonValues.startDay.value:
-					bot.replyInteractive(message, "Let's do it!")
-					break;
-				case buttonValues.startSession.value:
-					bot.replyInteractive(message, ":boom: boom")
-					break;
-				case buttonValues.endDay.value:
-					bot.replyInteractive(message, "It's about that time, isn't it?")
-					break;
-				case buttonValues.resetTimes.value:
-					break;
 				case buttonValues.doneSessionTimeoutYes.value:
 					controller.trigger(`done_session_yes_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
@@ -111,39 +42,6 @@ export default function(controller) {
 					break;
 				case buttonValues.doneSessionTimeoutNo.value:
 					controller.trigger(`done_session_no_flow`, [ bot, { SlackUserId, botCallback: true }]);
-					break;
-				case buttonValues.doneSessionEarlyNo.value:
-					bot.replyInteractive(message, `Got it`)
-					break;
-				case buttonValues.doneSessionYes.value:
-					bot.replyInteractive(message, "Great work! :raised_hands:")
-					break;
-				case buttonValues.doneSessionSnooze.value:
-					bot.replyInteractive(message, `Keep at it!`);
-					break;
-				case buttonValues.doneSessionDidSomethingElse.value:
-					bot.replyInteractive(message, `:ocean: Woo!`);
-					break;
-				case buttonValues.doneSessionNo.value:
-					bot.replyInteractive(message, `That's okay! You can keep chipping away and you'll get there :pick:`);
-					break;
-				case buttonValues.thatsCorrect.value:
-					bot.replyInteractive(message, `Fantastic!`);
-					break;
-				case buttonValues.thatsIncorrect.value:
-					bot.replyInteractive(message, `Oops, okay! Let's get this right`);
-					break;
-				case buttonValues.newSession.value:
-					bot.replyInteractive(message, "Let's do this :baby:");
-					break;
-				case buttonValues.cancelSession.value:
-					bot.replyInteractive(message, "No worries! We'll get that done soon");
-					break;
-				case buttonValues.endSessionYes.value:
-					bot.replyInteractive(message, "Woo! :horse_racing:");
-					break;
-				case buttonValues.allPendingTasks.value:
-					bot.replyInteractive(message, "I like all those tasks too :open_hands:");
 					break;
 				case buttonValues.startSession.pause.value:
 					bot.replyInteractive(message, "Okay, let's pause!", () => {

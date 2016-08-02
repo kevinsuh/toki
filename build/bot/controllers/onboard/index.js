@@ -70,7 +70,7 @@ exports.default = function (controller) {
 
 					switch (postOnboardDecision) {
 						case _constants.intentConfig.START_DAY:
-							controller.trigger('begin_day_flow', [bot, { SlackUserId: SlackUserId }]);
+							controller.trigger('new_plan_flow', [bot, { SlackUserId: SlackUserId }]);
 							break;
 						default:
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
@@ -118,7 +118,7 @@ function startOnBoardConversation(err, convo) {
 	var name = convo.name;
 
 
-	convo.say('Hey ' + name + '! Thanks for inviting me to help you make the most of your time each day');
+	convo.say('Hey, nice to meet you! My name is Toki, and I\'m here to help you win each day');
 	askForUserName(err, convo);
 }
 
@@ -149,38 +149,15 @@ function askForUserName(err, convo) {
 			}]
 		}]
 	}, [{
-		pattern: _constants.buttonValues.keepName.value,
-		callback: function callback(response, convo) {
-			convo.onBoard.nickName = name;
-			convo.say('I really like the name *' + name + '*!');
-			askForTimeZone(response, convo);
-			convo.next();
-		}
-	}, {
 		pattern: _botResponses.utterances.containsKeep,
 		callback: function callback(response, convo) {
-
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
 			convo.onBoard.nickName = name;
-			convo.say('Cool! I really like the name *' + name + '*!');
 			askForTimeZone(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _constants.buttonValues.differentName.value,
-		callback: function callback(response, convo) {
-			askCustomUserName(response, convo);
 			convo.next();
 		}
 	}, {
 		pattern: _botResponses.utterances.containsDifferentOrAnother,
 		callback: function callback(response, convo) {
-
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
 			convo.say("Okay!");
 			askCustomUserName(response, convo);
 			convo.next();
@@ -188,14 +165,19 @@ function askForUserName(err, convo) {
 	}, {
 		default: true,
 		callback: function callback(response, convo) {
-
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
 			confirmUserName(response.text, convo);
 			convo.next();
 		}
 	}]);
+}
+
+function askCustomUserName(response, convo) {
+
+	convo.ask("What would you like me to call you?", function (response, convo) {
+		convo.onBoard.nickName = response.text;
+		askForTimeZone(response, convo);
+		convo.next();
+	});
 }
 
 function confirmUserName(name, convo) {
@@ -204,7 +186,6 @@ function confirmUserName(name, convo) {
 		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.onBoard.nickName = name;
-			convo.say('I really like the name *' + name + '*!');
 			askForTimeZone(response, convo);
 			convo.next();
 		}
@@ -224,21 +205,17 @@ function confirmUserName(name, convo) {
 	}]);
 }
 
-function askCustomUserName(response, convo) {
-
-	convo.ask("What would you like me to call you?", function (response, convo) {
-		confirmUserName(response.text, convo);
-		convo.next();
-	});
-}
-
 function askForTimeZone(response, convo) {
 	var nickName = convo.onBoard.nickName;
 	var bot = convo.task.bot;
 
 
+	convo.say('Nice to virtually meet you, ' + nickName + '!');
+	convo.say('Instead of treating each day as a never-ending list of todo\'s, I\'m here to help you identify the 3 priorities that define your day, and actually accomplish them');
+	convo.say('These are often the priorities that are difficult to make time for and get focused on, but are what create big outcomes for yourself and your team :weight_lifter:');
+
 	convo.ask({
-		text: 'Which *timezone* are you in?',
+		text: 'Since I help you make time for these outcomes, I need to know which *timezone* you are in!',
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "ONBOARD",
@@ -272,90 +249,36 @@ function askForTimeZone(response, convo) {
 			}]
 		}]
 	}, [{
-		pattern: _constants.buttonValues.timeZones.eastern.value,
-		callback: function callback(response, convo) {
-			convo.onBoard.timeZone = _constants.timeZones.eastern;
-			confirmTimeZone(response, convo);
-			convo.next();
-		}
-	}, {
 		pattern: _botResponses.utterances.eastern,
 		callback: function callback(response, convo) {
-
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
 			convo.onBoard.timeZone = _constants.timeZones.eastern;
-			confirmTimeZone(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _constants.buttonValues.timeZones.central.value,
-		callback: function callback(response, convo) {
-			convo.onBoard.timeZone = _constants.timeZones.central;
-			confirmTimeZone(response, convo);
+			startNewPlanFlow(response, convo);
 			convo.next();
 		}
 	}, {
 		pattern: _botResponses.utterances.central,
 		callback: function callback(response, convo) {
-
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
 			convo.onBoard.timeZone = _constants.timeZones.central;
-			confirmTimeZone(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _constants.buttonValues.timeZones.mountain.value,
-		callback: function callback(response, convo) {
-			convo.onBoard.timeZone = _constants.timeZones.mountain;
-			confirmTimeZone(response, convo);
+			startNewPlanFlow(response, convo);
 			convo.next();
 		}
 	}, {
 		pattern: _botResponses.utterances.mountain,
 		callback: function callback(response, convo) {
-
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
 			convo.onBoard.timeZone = _constants.timeZones.mountain;
-			confirmTimeZone(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _constants.buttonValues.timeZones.pacific.value,
-		callback: function callback(response, convo) {
-			convo.onBoard.timeZone = _constants.timeZones.pacific;
-			confirmTimeZone(response, convo);
+			startNewPlanFlow(response, convo);
 			convo.next();
 		}
 	}, {
 		pattern: _botResponses.utterances.pacific,
 		callback: function callback(response, convo) {
-
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
 			convo.onBoard.timeZone = _constants.timeZones.pacific;
-			confirmTimeZone(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _constants.buttonValues.timeZones.other.value,
-		callback: function callback(response, convo) {
-			askOtherTimeZoneOptions(response, convo);
+			startNewPlanFlow(response, convo);
 			convo.next();
 		}
 	}, {
 		pattern: _botResponses.utterances.other,
 		callback: function callback(response, convo) {
-
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
 			askOtherTimeZoneOptions(response, convo);
 			convo.next();
 		}
@@ -369,7 +292,20 @@ function askForTimeZone(response, convo) {
 	}]);
 }
 
-// for now we do not provide this
+function startNewPlanFlow(response, convo) {
+	var _convo$onBoard$timeZo = convo.onBoard.timeZone;
+	var tz = _convo$onBoard$timeZo.tz;
+	var name = _convo$onBoard$timeZo.name;
+
+
+	convo.say('Awesome, I have you in the *' + name + '* timezone! Now, let\'s win our first day together :grin:');
+	convo.onBoard.postOnboardDecision = _constants.intentConfig.START_DAY;
+	convo.next();
+}
+
+/**
+ * 		Currently these functions are deprecated
+ */
 function askOtherTimeZoneOptions(response, convo) {
 
 	convo.say("As a time-based sidekick, I need to have your timezone to be effective");
@@ -397,9 +333,9 @@ function askOtherTimeZoneOptions(response, convo) {
 }
 
 function confirmTimeZone(response, convo) {
-	var _convo$onBoard$timeZo = convo.onBoard.timeZone;
-	var tz = _convo$onBoard$timeZo.tz;
-	var name = _convo$onBoard$timeZo.name;
+	var _convo$onBoard$timeZo2 = convo.onBoard.timeZone;
+	var tz = _convo$onBoard$timeZo2.tz;
+	var name = _convo$onBoard$timeZo2.name;
 	var bot = convo.task.bot;
 
 
@@ -423,50 +359,24 @@ function confirmTimeZone(response, convo) {
 			}]
 		}]
 	}, [{
-		pattern: _constants.buttonValues.thatsIncorrect.value,
-		callback: function callback(response, convo) {
-			askForTimeZone(response, convo);
-			convo.next();
-		}
-	}, {
 		pattern: _botResponses.utterances.no,
 		callback: function callback(response, convo) {
-
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
 			convo.say('Oops, okay!');
 			askForTimeZone(response, convo);
 			convo.next();
 		}
 	}, {
-		pattern: _constants.buttonValues.thatsCorrect.value,
-		callback: function callback(response, convo) {
-			displayTokiOptions(response, convo);
-			convo.next();
-		}
-	}, {
 		pattern: _botResponses.utterances.yesOrCorrect,
 		callback: function callback(response, convo) {
-
-			console.log("\n\n\n ~~ said yes or correct ~~ \n\n\n");
-
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
-			convo.say('Fantastic!');
-			displayTokiOptions(response, convo);
+			convo.say("Fantastic! Let's get started with your first plan :grin:");
+			convo.onBoard.postOnboardDecision = _constants.intentConfig.START_DAY;
 			convo.next();
 		}
 	}, { // everything else other than that's incorrect or "no" should be treated as yes
 		default: true,
 		callback: function callback(response, convo) {
-
-			// delete button when answered with NL
-			(0, _messageHelpers.deleteConvoAskMessage)(response.channel, bot);
-
-			convo.say('Fantastic!');
-			displayTokiOptions(response, convo);
+			convo.say("Fantastic! Let's get started with your first plan :grin:");
+			convo.onBoard.postOnboardDecision = _constants.intentConfig.START_DAY;
 			convo.next();
 		}
 	}]);

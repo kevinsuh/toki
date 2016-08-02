@@ -8,6 +8,7 @@ var utterances = exports.utterances = {
 	yesOrCorrect: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bc[correct]{4,})/i),
 	no: new RegExp(/((no|not|nah|nope|^n)\b|\bn[oahpe]{1,4}\b)/i),
 	noAndNeverMind: new RegExp(/^n([oahpet]{1,5}|e[ever mind]{4,}|[vm]{1,4})\b/i),
+	onlyNeverMind: new RegExp(/^ne[ever mind]{4,}$/i),
 	startsWithNever: new RegExp(/^ne[never]{3,}\b/i),
 	specificYes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|\by[esahp]{2,}\b|\bs[ure]{2,}\b)/i),
 	endDay: new RegExp(/(\be[end ]{2,}\bd[day]{2,})/i),

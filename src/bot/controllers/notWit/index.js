@@ -17,6 +17,20 @@ import { resumeQueuedReachouts } from '../index';
 
 export default function(controller) {
 
+	// TOKI_T1ME TESTER
+	controller.hears(['TOKI_T1ME'], 'direct_message', (bot, message) => {
+
+		const SlackUserId = message.user;
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(()=>{
+			controller.trigger(`begin_onboard_flow`, [ bot, { SlackUserId } ]);
+		}, 1000);
+
+	});
+
 	// intentionally pausing session
 	controller.hears(['pa[ause]{1,}'], 'direct_message', (bot, message) => {
 

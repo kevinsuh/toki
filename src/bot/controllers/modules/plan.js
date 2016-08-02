@@ -24,9 +24,9 @@ export function startNewPlanFlow(convo) {
 	if (daySplit != constants.MORNING.word) {
 		contextDay = `this ${daySplit}`;
 	}
-	let question = `What are the 3 outcomes you want to make happen ${contextDay}?`
+	let question = `What are the 3 outcomes you want to make happen ${contextDay}?`;
 	if (onboardVersion) {
-		question = `${question} Please enter each one in a separate message`
+		question = `${question} Please enter each one in a separate message`;
 	}
 
 	prioritizedTasks = [];
@@ -46,6 +46,16 @@ export function startNewPlanFlow(convo) {
 
 				convo.say("Okay! Let's try this again :repeat:");
 				startNewPlanFlow(convo);
+				convo.next();
+
+			}
+		},
+		{
+			pattern: utterances.onlyNeverMind,
+			callback: function(response, convo) {
+
+				convo.say("Okay! Let me know when you're ready to plan :wave:");
+				convo.newPlan.exitEarly = true;
 				convo.next();
 
 			}
@@ -237,7 +247,7 @@ function getTimeToTask(convo) {
 
 	if (onboardVersion) {
 		convo.say(`Boom :boom:! Let's put our first focused work session towards \`${taskString}\``);
-		convo.say(`This isn't necessarily how long you think the task will take -- instead, think of it as dedicated time towards your most important things for the day. This structure and clarity helps you *enter flow* more easily, as well as *protect your time* from yourself and others`);
+		convo.say(`This isn't necessarily how long you think the task will take -- instead, think of it as dedicated time towards your most important things for the day. This structure helps you *enter flow* more easily, as well as *protect your time* from yourself and others`);
 		convo.say(`If you aren't done with the task after your first session, you can easily start another one towards it :muscle:`);
 	} else {
 		convo.say("Boom! Let's do it :boom:");

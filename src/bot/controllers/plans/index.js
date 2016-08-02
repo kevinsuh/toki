@@ -83,10 +83,13 @@ export default function(controller) {
 					}
 
 					let day = moment().tz(tz).format('dddd');
-					convo.say(`Happy ${day}, ${name}! Let's win the ${daySplit} :muscle:`);
 
 					if (sessionGroups.length == 0) {
 						convo.newPlan.onboardVersion = true;
+					}
+
+					if (!convo.newPlan.onboardVersion) {
+						convo.say(`Happy ${day}, ${name}! Let's win the ${daySplit} :muscle:`);
 					}
 
 					startNewPlanFlow(convo);
@@ -95,9 +98,13 @@ export default function(controller) {
 					convo.on('end', (convo) => {
 
 						const { newPlan } = convo;
-						let { prioritizedTasks, startTask, startTime } = newPlan;
+						let { exitEarly, prioritizedTasks, startTask, startTime } = newPlan;
 
 						closeOldRemindersAndSessions(user);
+
+						if (exitEarly) {
+							return;
+						}
 
 						// we only know minutes information of first task
 						startTask.taskObject = {

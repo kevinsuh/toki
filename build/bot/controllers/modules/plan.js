@@ -76,6 +76,14 @@ function startNewPlanFlow(convo) {
 			convo.next();
 		}
 	}, {
+		pattern: _botResponses.utterances.onlyNeverMind,
+		callback: function callback(response, convo) {
+
+			convo.say("Okay! Let me know when you're ready to plan :wave:");
+			convo.newPlan.exitEarly = true;
+			convo.next();
+		}
+	}, {
 		pattern: _botResponses.utterances.done,
 		callback: function callback(response, convo) {
 
@@ -250,7 +258,7 @@ function getTimeToTask(convo) {
 
 	if (onboardVersion) {
 		convo.say('Boom :boom:! Let\'s put our first focused work session towards `' + taskString + '`');
-		convo.say('This isn\'t necessarily how long you think the task will take -- instead, think of it as dedicated time towards your most important things for the day. This structure and clarity helps you *enter flow* more easily, as well as *protect your time* from yourself and others');
+		convo.say('This isn\'t necessarily how long you think the task will take -- instead, think of it as dedicated time towards your most important things for the day. This structure helps you *enter flow* more easily, as well as *protect your time* from yourself and others');
 		convo.say('If you aren\'t done with the task after your first session, you can easily start another one towards it :muscle:');
 	} else {
 		convo.say("Boom! Let's do it :boom:");

@@ -75,10 +75,13 @@ exports.default = function (controller) {
 					};
 
 					var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');
-					convo.say('Happy ' + day + ', ' + name + '! Let\'s win the ' + daySplit + ' :muscle:');
 
 					if (sessionGroups.length == 0) {
 						convo.newPlan.onboardVersion = true;
+					}
+
+					if (!convo.newPlan.onboardVersion) {
+						convo.say('Happy ' + day + ', ' + name + '! Let\'s win the ' + daySplit + ' :muscle:');
 					}
 
 					(0, _plan.startNewPlanFlow)(convo);
@@ -86,12 +89,17 @@ exports.default = function (controller) {
 					// on finish conversation
 					convo.on('end', function (convo) {
 						var newPlan = convo.newPlan;
+						var exitEarly = newPlan.exitEarly;
 						var prioritizedTasks = newPlan.prioritizedTasks;
 						var startTask = newPlan.startTask;
 						var startTime = newPlan.startTime;
 
 
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+
+						if (exitEarly) {
+							return;
+						}
 
 						// we only know minutes information of first task
 						startTask.taskObject = _extends({}, prioritizedTasks[startTask.index], {

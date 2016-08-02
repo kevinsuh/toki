@@ -200,32 +200,32 @@ var buttonValues = exports.buttonValues = {
 	},
 	keepName: {
 		name: "KEEP_NAME",
-		value: "KEEP_NAME"
+		value: "I'll keep my name"
 	},
 	differentName: {
 		name: "DIFFERENT_NAME",
-		value: "DIFFERENT_NAME"
+		value: "I'll choose a different name"
 	},
 	timeZones: {
 		eastern: {
 			name: "EASTERN_TIME",
-			value: "EASTERN_TIME"
+			value: "Eastern timezone"
 		},
 		central: {
 			name: "CENTRAL_TIME",
-			value: "CENTRAL_TIME"
+			value: "Central timezone"
 		},
 		mountain: {
 			name: "MOUNTAIN_TIME",
-			value: "MOUNTAIN_TIME"
+			value: "Mountain timezone"
 		},
 		pacific: {
 			name: "PACIFIC_TIME",
-			value: "PACIFIC_TIME"
+			value: "Pacific timezone"
 		},
 		other: {
 			name: "OTHER_TIMEZONE",
-			value: "OTHER_TIMEZONE"
+			value: "other timezone"
 		}
 	},
 	changeName: {

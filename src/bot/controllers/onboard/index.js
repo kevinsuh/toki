@@ -78,7 +78,7 @@ export default function(controller) {
 
 					switch (postOnboardDecision) {
 						case intentConfig.START_DAY:
-							controller.trigger(`begin_day_flow`, [ bot, { SlackUserId }]);
+							controller.trigger(`new_plan_flow`, [ bot, { SlackUserId }]);
 							break;
 						default: 
 							resumeQueuedReachouts(bot, { SlackUserId });
@@ -99,7 +99,7 @@ function startOnBoardConversation(err, convo) {
 	
 	const { name } = convo;
 
-	convo.say(`Hey ${name}! Thanks for inviting me to help you make the most of your time each day`);
+	convo.say(`Hey, nice to meet you! My name is Toki, and I'm here to help you win each day`);
 	askForUserName(err, convo);
 }
 
@@ -137,41 +137,16 @@ function askForUserName(err, convo) {
 		]
 	}, [
 		{
-			pattern: buttonValues.keepName.value,
-			callback: (response, convo) => {
-				convo.onBoard.nickName = name;
-				convo.say(`I really like the name *${name}*!`);
-				askForTimeZone(response, convo);
-				convo.next();
-			}
-		},
-		{
 			pattern: utterances.containsKeep,
 			callback: (response, convo) => {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
 				convo.onBoard.nickName = name;
-				convo.say(`Cool! I really like the name *${name}*!`);
 				askForTimeZone(response, convo);
-				convo.next();
-			}
-		},
-		{
-			pattern: buttonValues.differentName.value,
-			callback: (response, convo) => {
-				askCustomUserName(response, convo);
 				convo.next();
 			}
 		},
 		{
 			pattern: utterances.containsDifferentOrAnother,
 			callback: (response, convo) => {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
 				convo.say("Okay!");
 				askCustomUserName(response, convo);
 				convo.next();
@@ -180,16 +155,22 @@ function askForUserName(err, convo) {
 		{
 			default: true,
 			callback: (response, convo) => {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
 				confirmUserName(response.text, convo);
 				convo.next();
 			}
 		}
 	]);
 
+
+}
+
+function askCustomUserName(response, convo) {
+
+	convo.ask("What would you like me to call you?", (response, convo) => {
+		convo.onBoard.nickName = response.text;
+		askForTimeZone(response, convo);
+		convo.next();
+	});
 
 }
 
@@ -200,7 +181,6 @@ function confirmUserName(name, convo) {
 			pattern: utterances.yes,
 			callback: (response, convo) => {
 				convo.onBoard.nickName = name;
-				convo.say(`I really like the name *${name}*!`);
 				askForTimeZone(response, convo);
 				convo.next();
 			}
@@ -224,23 +204,18 @@ function confirmUserName(name, convo) {
 
 }
 
-function askCustomUserName(response, convo) {
-
-	convo.ask("What would you like me to call you?", (response, convo) => {
-		confirmUserName(response.text, convo);
-		convo.next();
-	});
-
-}
-
 function askForTimeZone(response, convo) {
 
 	const { nickName } = convo.onBoard;
 
 	const { task: { bot } } = convo;
 
+	convo.say(`Nice to virtually meet you, ${nickName}!`);
+	convo.say(`Instead of treating each day as a never-ending list of todo's, I'm here to help you identify the 3 priorities that define your day, and actually accomplish them`);
+	convo.say(`These are often the priorities that are difficult to make time for and get focused on, but are what create big outcomes for yourself and your team :weight_lifter:`);
+
 	convo.ask({
-		text: `Which *timezone* are you in?`,
+		text: `Since I help you make time for these outcomes, I need to know which *timezone* you are in!`,
 		attachments: [
 			{
 				attachment_type: 'default',
@@ -283,99 +258,40 @@ function askForTimeZone(response, convo) {
 		]
 	}, [
 		{
-			pattern: buttonValues.timeZones.eastern.value,
-			callback: (response, convo) => {
-				convo.onBoard.timeZone = timeZones.eastern;
-				confirmTimeZone(response, convo);
-				convo.next();
-			}
-		},
-		{
 			pattern: utterances.eastern,
 			callback: (response, convo) => {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
 				convo.onBoard.timeZone = timeZones.eastern;
-				confirmTimeZone(response, convo);
-				convo.next();
-			}
-		},
-		{
-			pattern: buttonValues.timeZones.central.value,
-			callback: (response, convo) => {
-				convo.onBoard.timeZone = timeZones.central;
-				confirmTimeZone(response, convo);
+				startNewPlanFlow(response, convo);
 				convo.next();
 			}
 		},
 		{
 			pattern: utterances.central,
 			callback: (response, convo) => {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
 				convo.onBoard.timeZone = timeZones.central;
-				confirmTimeZone(response, convo);
-				convo.next();
-			}
-		},
-		{
-			pattern: buttonValues.timeZones.mountain.value,
-			callback: (response, convo) => {
-				convo.onBoard.timeZone = timeZones.mountain;
-				confirmTimeZone(response, convo);
+				startNewPlanFlow(response, convo);
 				convo.next();
 			}
 		},
 		{
 			pattern: utterances.mountain,
 			callback: (response, convo) => {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
 				convo.onBoard.timeZone = timeZones.mountain;
-				confirmTimeZone(response, convo);
-				convo.next();
-			}
-		},
-		{
-			pattern: buttonValues.timeZones.pacific.value,
-			callback: (response, convo) => {
-				convo.onBoard.timeZone = timeZones.pacific;
-				confirmTimeZone(response, convo);
+				startNewPlanFlow(response, convo);
 				convo.next();
 			}
 		},
 		{
 			pattern: utterances.pacific,
 			callback: (response, convo) => {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
 				convo.onBoard.timeZone = timeZones.pacific;
-				confirmTimeZone(response, convo);
-				convo.next();
-			}
-		},
-		{
-			pattern: buttonValues.timeZones.other.value,
-			callback: (response, convo) => {
-				askOtherTimeZoneOptions(response, convo);
+				startNewPlanFlow(response, convo);
 				convo.next();
 			}
 		},
 		{
 			pattern: utterances.other,
 			callback: (response, convo) => {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
 				askOtherTimeZoneOptions(response, convo);
 				convo.next();
 			}
@@ -392,7 +308,18 @@ function askForTimeZone(response, convo) {
 
 }
 
-// for now we do not provide this
+function startNewPlanFlow(response, convo) {
+
+	const { timeZone: { tz, name } } = convo.onBoard;
+
+	convo.say(`Awesome, I have you in the *${name}* timezone! Now, let's win our first day together :grin:`);
+	convo.onBoard.postOnboardDecision = intentConfig.START_DAY;
+	convo.next();
+}
+
+/**
+ * 		Currently these functions are deprecated
+ */
 function askOtherTimeZoneOptions(response, convo) {
 
 	convo.say("As a time-based sidekick, I need to have your timezone to be effective");
@@ -451,54 +378,26 @@ function confirmTimeZone(response, convo) {
 		]
 	}, [
 		{
-			pattern: buttonValues.thatsIncorrect.value,
-			callback: (response, convo) => {
-				askForTimeZone(response, convo);
-				convo.next();
-			}
-		},
-		{
 			pattern: utterances.no,
 			callback: (response, convo) => {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
 				convo.say(`Oops, okay!`);
 				askForTimeZone(response, convo);
 				convo.next();
 			}
 		},
 		{
-			pattern: buttonValues.thatsCorrect.value,
-			callback: (response, convo) => {
-				displayTokiOptions(response, convo);
-				convo.next();
-			}
-		},
-		{
 			pattern: utterances.yesOrCorrect,
 			callback: (response, convo) => {
-
-				console.log("\n\n\n ~~ said yes or correct ~~ \n\n\n");
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
-				convo.say(`Fantastic!`);
-				displayTokiOptions(response, convo);
+				convo.say("Fantastic! Let's get started with your first plan :grin:");
+				convo.onBoard.postOnboardDecision = intentConfig.START_DAY;
 				convo.next();
 			}
 		},
 		{ // everything else other than that's incorrect or "no" should be treated as yes
 			default: true,
 			callback: (response, convo) => {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
-
-				convo.say(`Fantastic!`);
-				displayTokiOptions(response, convo);
+				convo.say("Fantastic! Let's get started with your first plan :grin:");
+				convo.onBoard.postOnboardDecision = intentConfig.START_DAY;
 				convo.next();
 			}
 		}
