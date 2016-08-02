@@ -20,6 +20,7 @@ export function getNewPlanAttachments(prioritizedTasks) {
 			attachment_type: 'default',
 			callback_id: "TASK_LIST_MESSAGE",
 			fallback: "Let's get your priorities",
+			color: colorsHash.grey.hex,
 			actions: [
 				{
 						name: buttonValues.doneAddingTasks.name,

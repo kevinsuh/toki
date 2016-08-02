@@ -50,6 +50,7 @@ function getNewPlanAttachments(prioritizedTasks) {
 		attachment_type: 'default',
 		callback_id: "TASK_LIST_MESSAGE",
 		fallback: "Let's get your priorities",
+		color: _constants.colorsHash.grey.hex,
 		actions: [{
 			name: _constants.buttonValues.doneAddingTasks.name,
 			text: doneTasksButton,

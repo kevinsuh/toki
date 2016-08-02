@@ -57,7 +57,7 @@ export function startNewPlanFlow(convo) {
 				convo.newPlan.prioritizedTasks = prioritizedTasks;
 
 				if (onboardVersion) {
-					convo.say(`Excellent! Now let's choose one priority to work on`);
+					convo.say(`Excellent! Now let's choose the priority to work on first`);
 					convo.say(`Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"`);
 				} else {
 					convo.say(`Excellent!`);
@@ -102,7 +102,7 @@ export function startNewPlanFlow(convo) {
 					convo.newPlan.prioritizedTasks = prioritizedTasks;
 
 					if (onboardVersion) {
-						convo.say(`Excellent! Now let's choose one priority to work on`);
+						convo.say(`Excellent! Now let's choose a priority to work on`);
 						convo.say(`Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"`);
 					} else {
 						convo.say(`Excellent!`);
@@ -232,10 +232,19 @@ function getTimeToTask(convo) {
 		});
 	}
 
-	convo.say("Let's do it :weight_lifter:");
 
 	let timeExample = moment().tz(tz).add(90, "minutes").format("h:mma");
 
+	if (onboardVersion) {
+		convo.say(`Boom :boom:! Let's put our first focused work session towards \`${taskString}\``);
+		convo.say(`This isn't necessarily how long you think the task will take -- instead, think of it as dedicated time towards your most important things for the day. This structure and clarity helps you *enter flow* more easily, as well as *protect your time* from yourself and others`);
+		convo.say(`If you aren't done with the task after your first session, you can easily start another one towards it :muscle:`);
+	} else {
+		convo.say("Boom! Let's do it :boom:");
+	}
+
+	// we should have helper text here as well for the first time
+	// push back on 90 / 60 / 30 here... should have higher minute intervals that we then automatically put in breaks for (we can communicate here)
 	convo.ask({
 		text: `How long do you want to work on \`${taskString}\` for? (you can say \`for 90 minutes\` or \`until ${timeExample}\`)`,
 		attachments: [
@@ -321,7 +330,7 @@ function startOnTask(convo) {
 
 	let timeExample = moment().tz(tz).add(10, "minutes").format("h:mma");
 	convo.ask({
-		text: `When would you like to start? (\`in 10 minutes\` or \`at ${timeExample}\`)`,
+		text: `When would you like to start? (you can say \`in 10 minutes\` or \`at ${timeExample}\`)`,
 		attachments: [
 			{
 				attachment_type: 'default',
@@ -348,7 +357,7 @@ function startOnTask(convo) {
 			pattern: utterances.containsNow,
 			callback: (response, convo) => {
 
-				convo.say("Okay! Let's do this now :muscle:");
+				convo.say("Okay! Let's do this now :punch:");
 				if (onboardVersion) {
 					whoDoYouWantToInclude(convo);
 				}
@@ -452,7 +461,7 @@ function whoDoYouWantToInclude(convo) {
 						let userNameStrings               = commaSeparateOutTaskArray(userNames);
 
 						convo.say(`Great! I'll notify ${userNameStrings} about your daily priorities from now on`);
-						convo.say("If you want to change who you include, you can always `update settings`");
+						convo.say("If you want to change who you include, you can always `update settings`!");
 						convo.next();
 
 					})
