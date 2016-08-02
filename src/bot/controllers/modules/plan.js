@@ -17,8 +17,8 @@ import { witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArr
 
 export function startNewPlanFlow(convo) {
 
-	const { task: { bot }, newPlan: { daySplit, onboardVersion } } = convo;
-	let { newPlan: { prioritizedTasks } }                      = convo;
+	const { task: { bot }, newPlan: { SlackUserId, daySplit, onboardVersion } } = convo;
+	let { newPlan: { prioritizedTasks } } = convo;
 
 	let contextDay = "today";
 	if (daySplit != constants.MORNING.word) {
@@ -65,15 +65,7 @@ export function startNewPlanFlow(convo) {
 			callback: function(response, convo) {
 
 				convo.newPlan.prioritizedTasks = prioritizedTasks;
-
-				if (onboardVersion) {
-					convo.say(`Excellent! Now let's choose the priority to work on first`);
-					convo.say(`Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"`);
-				} else {
-					convo.say(`Excellent!`);
-				}
-
-				chooseFirstTask(convo);
+				confirmUserPriorities(convo);
 				convo.next();
 
 			}
@@ -111,14 +103,7 @@ export function startNewPlanFlow(convo) {
 
 					convo.newPlan.prioritizedTasks = prioritizedTasks;
 
-					if (onboardVersion) {
-						convo.say(`Excellent! Now let's choose a priority to work on`);
-						convo.say(`Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"`);
-					} else {
-						convo.say(`Excellent!`);
-					}
-
-					chooseFirstTask(convo);
+					confirmUserPriorities(convo);
 					convo.next();
 
 				}
@@ -126,6 +111,58 @@ export function startNewPlanFlow(convo) {
 			}
 		}
 	]);
+
+}
+
+function confirmUserPriorities(convo) {
+
+	const { task: { bot }, newPlan: { SlackUserId, daySplit, onboardVersion } } = convo;
+	let { newPlan: { prioritizedTasks } } = convo;
+
+	if (onboardVersion) {
+
+		convo.say(`Excellent! Now let's choose the priority to work on first`);
+		convo.say(`Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"`);
+		chooseFirstTask(convo);
+		convo.next();
+
+	} else {
+
+		// say who is getting included
+		models.SlackUser.find({
+			where: [`"SlackUserId" = ?`, SlackUserId]
+		})
+		.then((slackUser) => {
+
+			let responseMessage = `Excellent!`;
+
+			if (slackUser) {
+
+				slackUser.getIncluded({
+					include: [ models.User ]
+				})
+				.then((includedSlackUsers) => {
+
+					if (includedSlackUsers.length > 0) {
+						let names       = includedSlackUsers.map(includedSlackUser => includedSlackUser.dataValues.User.nickName);
+						let nameStrings = commaSeparateOutTaskArray(names);
+						responseMessage = `${responseMessage} I just let ${nameStrings} know about your priorities :raised_hands:`;
+					}
+
+					convo.say(responseMessage);
+					chooseFirstTask(convo);
+					convo.next();
+
+				})
+
+			} else {
+				convo.say(responseMessage);
+				chooseFirstTask(convo);
+				convo.next();
+			}
+
+		})
+	}
 
 }
 
@@ -335,12 +372,12 @@ function getTimeToTask(convo) {
 
 function startOnTask(convo) {
 
-	const { tz, daySplit, onboardVersion, startTask } = convo.newPlan;
+	const { tz, daySplit, onboardVersion, startTask, SlackUserId } = convo.newPlan;
 	let { newPlan: { prioritizedTasks } }         = convo;
 
 	let timeExample = moment().tz(tz).add(10, "minutes").format("h:mma");
 	convo.ask({
-		text: `When would you like to start? (you can say \`in 10 minutes\` or \`at ${timeExample}\`)`,
+		text: `When do you want to get started? (you can say \`in 10 minutes\` or \`at ${timeExample}\`)`,
 		attachments: [
 			{
 				attachment_type: 'default',
@@ -394,7 +431,7 @@ function startOnTask(convo) {
 						minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
 					}
 					let timeString = customTimeObject.format("h:mm a");
-					convo.say(`Okay! I'll make sure to get you at ${timeString} :timer_clock:`);
+					convo.say(`Okay! I'll see you at ${timeString} to get started :timer_clock:`);
 					if (onboardVersion) {
 						whoDoYouWantToInclude(convo);
 					}

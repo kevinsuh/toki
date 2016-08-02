@@ -98,7 +98,7 @@ export default function(controller) {
 					convo.on('end', (convo) => {
 
 						const { newPlan } = convo;
-						let { exitEarly, prioritizedTasks, startTask, startTime } = newPlan;
+						let { exitEarly, prioritizedTasks, startTask, startTime, includeSlackUserIds } = newPlan;
 
 						closeOldRemindersAndSessions(user);
 
@@ -165,7 +165,17 @@ export default function(controller) {
 										})
 									});
 								});
-							})
+							});
+
+							// include who you want to include in your list
+							if (includeSlackUserIds) {
+								includeSlackUserIds.forEach((IncludedSlackUserId) => {
+									models.Include.create({
+										IncluderSlackUserId: SlackUserId,
+										IncludedSlackUserId
+									})
+								})
+							}
 						})
 
 						console.log("here is new plan object:\n");

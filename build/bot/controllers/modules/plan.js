@@ -44,6 +44,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function startNewPlanFlow(convo) {
 	var bot = convo.task.bot;
 	var _convo$newPlan = convo.newPlan;
+	var SlackUserId = _convo$newPlan.SlackUserId;
 	var daySplit = _convo$newPlan.daySplit;
 	var onboardVersion = _convo$newPlan.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
@@ -88,15 +89,7 @@ function startNewPlanFlow(convo) {
 		callback: function callback(response, convo) {
 
 			convo.newPlan.prioritizedTasks = prioritizedTasks;
-
-			if (onboardVersion) {
-				convo.say('Excellent! Now let\'s choose the priority to work on first');
-				convo.say('Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"');
-			} else {
-				convo.say('Excellent!');
-			}
-
-			chooseFirstTask(convo);
+			confirmUserPriorities(convo);
 			convo.next();
 		}
 	}, { // this is additional task added in this case.
@@ -132,26 +125,70 @@ function startNewPlanFlow(convo) {
 
 				convo.newPlan.prioritizedTasks = prioritizedTasks;
 
-				if (onboardVersion) {
-					convo.say('Excellent! Now let\'s choose a priority to work on');
-					convo.say('Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"');
-				} else {
-					convo.say('Excellent!');
-				}
-
-				chooseFirstTask(convo);
+				confirmUserPriorities(convo);
 				convo.next();
 			}
 		}
 	}]);
 }
 
+function confirmUserPriorities(convo) {
+	var bot = convo.task.bot;
+	var _convo$newPlan2 = convo.newPlan;
+	var SlackUserId = _convo$newPlan2.SlackUserId;
+	var daySplit = _convo$newPlan2.daySplit;
+	var onboardVersion = _convo$newPlan2.onboardVersion;
+	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+
+
+	if (onboardVersion) {
+
+		convo.say('Excellent! Now let\'s choose the priority to work on first');
+		convo.say('Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"');
+		chooseFirstTask(convo);
+		convo.next();
+	} else {
+
+		// say who is getting included
+		_models2.default.SlackUser.find({
+			where: ['"SlackUserId" = ?', SlackUserId]
+		}).then(function (slackUser) {
+
+			var responseMessage = 'Excellent!';
+
+			if (slackUser) {
+
+				slackUser.getIncluded({
+					include: [_models2.default.User]
+				}).then(function (includedSlackUsers) {
+
+					if (includedSlackUsers.length > 0) {
+						var names = includedSlackUsers.map(function (includedSlackUser) {
+							return includedSlackUser.dataValues.User.nickName;
+						});
+						var nameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(names);
+						responseMessage = responseMessage + ' I just let ' + nameStrings + ' know about your priorities :raised_hands:';
+					}
+
+					convo.say(responseMessage);
+					chooseFirstTask(convo);
+					convo.next();
+				});
+			} else {
+				convo.say(responseMessage);
+				chooseFirstTask(convo);
+				convo.next();
+			}
+		});
+	}
+}
+
 function chooseFirstTask(convo) {
 	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
 	var bot = convo.task.bot;
-	var _convo$newPlan2 = convo.newPlan;
-	var daySplit = _convo$newPlan2.daySplit;
-	var onboardVersion = _convo$newPlan2.onboardVersion;
+	var _convo$newPlan3 = convo.newPlan;
+	var daySplit = _convo$newPlan3.daySplit;
+	var onboardVersion = _convo$newPlan3.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -227,11 +264,11 @@ function chooseFirstTask(convo) {
 }
 
 function getTimeToTask(convo) {
-	var _convo$newPlan3 = convo.newPlan;
-	var tz = _convo$newPlan3.tz;
-	var daySplit = _convo$newPlan3.daySplit;
-	var onboardVersion = _convo$newPlan3.onboardVersion;
-	var startTask = _convo$newPlan3.startTask;
+	var _convo$newPlan4 = convo.newPlan;
+	var tz = _convo$newPlan4.tz;
+	var daySplit = _convo$newPlan4.daySplit;
+	var onboardVersion = _convo$newPlan4.onboardVersion;
+	var startTask = _convo$newPlan4.startTask;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -336,17 +373,18 @@ function getTimeToTask(convo) {
 }
 
 function startOnTask(convo) {
-	var _convo$newPlan4 = convo.newPlan;
-	var tz = _convo$newPlan4.tz;
-	var daySplit = _convo$newPlan4.daySplit;
-	var onboardVersion = _convo$newPlan4.onboardVersion;
-	var startTask = _convo$newPlan4.startTask;
+	var _convo$newPlan5 = convo.newPlan;
+	var tz = _convo$newPlan5.tz;
+	var daySplit = _convo$newPlan5.daySplit;
+	var onboardVersion = _convo$newPlan5.onboardVersion;
+	var startTask = _convo$newPlan5.startTask;
+	var SlackUserId = _convo$newPlan5.SlackUserId;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
 	var timeExample = (0, _momentTimezone2.default)().tz(tz).add(10, "minutes").format("h:mma");
 	convo.ask({
-		text: 'When would you like to start? (you can say `in 10 minutes` or `at ' + timeExample + '`)',
+		text: 'When do you want to get started? (you can say `in 10 minutes` or `at ' + timeExample + '`)',
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "DO_TASK_NOW",
@@ -395,7 +433,7 @@ function startOnTask(convo) {
 					minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
 				}
 				var timeString = customTimeObject.format("h:mm a");
-				convo.say('Okay! I\'ll make sure to get you at ' + timeString + ' :timer_clock:');
+				convo.say('Okay! I\'ll see you at ' + timeString + ' to get started :timer_clock:');
 				if (onboardVersion) {
 					whoDoYouWantToInclude(convo);
 				}
@@ -485,9 +523,9 @@ function whoDoYouWantToInclude(convo) {
 function prioritizeTasks(convo) {
 	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
 	var bot = convo.task.bot;
-	var _convo$newPlan5 = convo.newPlan;
-	var daySplit = _convo$newPlan5.daySplit;
-	var onboardVersion = _convo$newPlan5.onboardVersion;
+	var _convo$newPlan6 = convo.newPlan;
+	var daySplit = _convo$newPlan6.daySplit;
+	var onboardVersion = _convo$newPlan6.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 

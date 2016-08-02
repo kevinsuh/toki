@@ -93,6 +93,7 @@ exports.default = function (controller) {
 						var prioritizedTasks = newPlan.prioritizedTasks;
 						var startTask = newPlan.startTask;
 						var startTime = newPlan.startTime;
+						var includeSlackUserIds = newPlan.includeSlackUserIds;
 
 
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
@@ -159,6 +160,16 @@ exports.default = function (controller) {
 									});
 								});
 							});
+
+							// include who you want to include in your list
+							if (includeSlackUserIds) {
+								includeSlackUserIds.forEach(function (IncludedSlackUserId) {
+									_models2.default.Include.create({
+										IncluderSlackUserId: SlackUserId,
+										IncludedSlackUserId: IncludedSlackUserId
+									});
+								});
+							}
 						});
 
 						console.log("here is new plan object:\n");
