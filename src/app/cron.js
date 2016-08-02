@@ -1,5 +1,6 @@
 import { bots } from '../bot/controllers';
 import { controller } from '../bot/controllers';
+import { finalizeTimeAndTasksToStart } from '../bot/controllers/modules/startWorkSessionFunctions'
 import { constants } from './lib/constants';
 
 // sequelize models
@@ -125,7 +126,7 @@ var checkForReminders = () => {
 			})
 			.then((user) => {
 
-				const { SlackUser: { TeamId, SlackUserId } } = user;
+				const { SlackUser: { tz, TeamId, SlackUserId } } = user;
 
 				models.Team.find({
 					where: { TeamId }
@@ -168,10 +169,44 @@ var checkForReminders = () => {
 							}, (err, convo) => {
 
 								if (convo) {
-									var customNote = reminder.customNote ? `(\`${reminder.customNote}\`)` : '';
-									var message = `Hey! You wanted a reminder ${customNote} :smiley: :alarm_clock: `;
 
-									convo.say(message);
+									if (reminder.type == "start_work") {
+										// this type of reminder will immediately ask user if they want to get started
+										reminder.getDailyTask({
+											include: [ models.Task ]
+										})
+										.then((dailyTask) => {
+
+											convo.sessionStart = {
+												SlackUserId,
+												tz
+											}
+
+											if (dailyTask) {
+												convo.sessionStart.dailyTask = dailyTask;
+												finalizeTimeAndTasksToStart(convo);
+											} else {
+												convo.say(`Hey! Let's get started on that work session :smiley:`);
+												convo.next();
+											}
+
+										})
+
+									} else {
+										// standard reminder
+										var customNote = reminder.customNote ? `(\`${reminder.customNote}\`)` : '';
+										var message = `Hey! You wanted a reminder ${customNote}:alarm_clock: `;
+										convo.say(message);
+									}
+
+									convo.on('end', (convo) => {
+
+										console.log("\n\n\n end of start session ");
+										console.log(convo.sessionStart);
+										console.log("\n\n\n");
+
+									})
+
 								}
 								
 							});

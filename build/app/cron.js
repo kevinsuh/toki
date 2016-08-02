@@ -16,6 +16,8 @@ exports.default = function () {
 
 var _controllers = require('../bot/controllers');
 
+var _startWorkSessionFunctions = require('../bot/controllers/modules/startWorkSessionFunctions');
+
 var _constants = require('./lib/constants');
 
 var _models = require('./models');
@@ -132,6 +134,7 @@ var checkForReminders = function checkForReminders() {
 				});
 			}).then(function (user) {
 				var _user$SlackUser = user.SlackUser;
+				var tz = _user$SlackUser.tz;
 				var TeamId = _user$SlackUser.TeamId;
 				var SlackUserId = _user$SlackUser.SlackUserId;
 
@@ -174,10 +177,39 @@ var checkForReminders = function checkForReminders() {
 							}, function (err, convo) {
 
 								if (convo) {
-									var customNote = reminder.customNote ? '(`' + reminder.customNote + '`)' : '';
-									var message = 'Hey! You wanted a reminder ' + customNote + ' :smiley: :alarm_clock: ';
 
-									convo.say(message);
+									if (reminder.type == "start_work") {
+										// this type of reminder will immediately ask user if they want to get started
+										reminder.getDailyTask({
+											include: [_models2.default.Task]
+										}).then(function (dailyTask) {
+
+											convo.sessionStart = {
+												SlackUserId: SlackUserId,
+												tz: tz
+											};
+
+											if (dailyTask) {
+												convo.sessionStart.dailyTask = dailyTask;
+												(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);
+											} else {
+												convo.say('Hey! Let\'s get started on that work session :smiley:');
+												convo.next();
+											}
+										});
+									} else {
+										// standard reminder
+										var customNote = reminder.customNote ? '(`' + reminder.customNote + '`)' : '';
+										var message = 'Hey! You wanted a reminder ' + customNote + ':alarm_clock: ';
+										convo.say(message);
+									}
+
+									convo.on('end', function (convo) {
+
+										console.log("\n\n\n end of start session ");
+										console.log(convo.sessionStart);
+										console.log("\n\n\n");
+									});
 								}
 							});
 						}

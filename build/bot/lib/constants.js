@@ -116,7 +116,7 @@ exports.colorsArray = colorsArray;
 var buttonValues = exports.buttonValues = {
 	startNow: {
 		name: "START_NOW",
-		value: "START_NOW"
+		value: "Yes, let's start!"
 	},
 	checkIn: {
 		name: "CHECK_IN",
@@ -124,11 +124,11 @@ var buttonValues = exports.buttonValues = {
 	},
 	changeTask: {
 		name: "CHANGE_TASK",
-		value: "CHANGE_TASK"
+		value: "Let's change tasks"
 	},
 	changeSessionTime: {
 		name: "CHANGE_SESSION_TIME",
-		value: "CHANGE_SESSION_TIME"
+		value: "Let's change times"
 	},
 	changeCheckinTime: {
 		name: "CHANGE_CHECKIN_TIME",
