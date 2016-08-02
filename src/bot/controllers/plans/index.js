@@ -102,64 +102,71 @@ export default function(controller) {
 
 						closeOldRemindersAndSessions(user);
 
-						if (exitEarly) {
-							return;
-						}
-
-						// we only know minutes information of first task
+						// save startTask information
 						startTask.taskObject = {
 							...prioritizedTasks[startTask.index],
 							minutes: startTask.minutes
 						};
+						prioritizedTasks[startTask.index] = startTask.taskObject;
 
-						prioritizedTasks.splice(startTask.index, 1);
-						prioritizedTasks.unshift(startTask.taskObject); // put this in first
-
-						// first turn off all existing daily tasks
-						user.getDailyTasks({
-							where: [`"DailyTask"."type" = ?`, "live"]
-						})
-						.then((dailyTasks) => {
-							let dailyTaskIds = dailyTasks.map(dailyTask => dailyTask.id);
-							if (dailyTaskIds.length == 0) {
-								dailyTaskIds = [0]
-							};
-							models.DailyTask.update({
-								type: "archived"
-							}, {
-								where: [ `"DailyTasks"."id" IN (?)`, dailyTaskIds ]
-							})
-							.then((dailyTasks) => {
-								prioritizedTasks.forEach((task, index) => {
-									const priority = index + 1;
-									const { text, minutes } = task;
-									models.Task.create({
-										text
-									})
-									.then((task) => {
-										task.createDailyTask({
-											minutes,
-											priority,
-											UserId
-										});
-									})
-								});
-							});
-						})
-
-						if (startTime) {
-							// when the reminder comes, it will ask for the highest priority
-							// task that is not done yet. right now schema is: when user
-							// decides to work on something else, it will put that as highest 
-							// priorty. does highest priority mean doing it first?
-							models.Reminder.create({
-								UserId,
-								remindTime: startTime,
-								type: "start_work"
-							})
+						if (exitEarly) {
+							return;
 						}
 
+						// create plan
+						models.SessionGroup.create({
+							type: "start_work",
+							UserId
+						})
+						.then((sessionGroup) => {
 
+							// then, create the 3 priorities for today
+							user.getDailyTasks({
+								where: [`"DailyTask"."type" = ?`, "live"]
+							})
+							.then((dailyTasks) => {
+								let dailyTaskIds = dailyTasks.map(dailyTask => dailyTask.id);
+								if (dailyTaskIds.length == 0) {
+									dailyTaskIds = [0]
+								};
+								models.DailyTask.update({
+									type: "archived"
+								}, {
+									where: [ `"DailyTasks"."id" IN (?)`, dailyTaskIds ]
+								})
+								.then((dailyTasks) => {
+									prioritizedTasks.forEach((task, index) => {
+										const priority = index + 1;
+										const { text, minutes } = task;
+										models.Task.create({
+											text
+										})
+										.then((task) => {
+											task.createDailyTask({
+												minutes,
+												priority,
+												UserId
+											})
+											.then((dailyTask) => {
+												const DailyTaskId = dailyTask.id;
+
+												if (index == startTask.index) {
+													if (startTime) {
+														// if you asked for a queued reminder
+														models.Reminder.create({
+															UserId,
+															remindTime: startTime,
+															type: "start_work",
+															DailyTaskId
+														})
+													}
+												}
+											})
+										})
+									});
+								});
+							})
+						})
 
 						console.log("here is new plan object:\n");
 						console.log(convo.newPlan);

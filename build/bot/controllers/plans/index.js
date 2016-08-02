@@ -97,62 +97,69 @@ exports.default = function (controller) {
 
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 
+						// save startTask information
+						startTask.taskObject = _extends({}, prioritizedTasks[startTask.index], {
+							minutes: startTask.minutes
+						});
+						prioritizedTasks[startTask.index] = startTask.taskObject;
+
 						if (exitEarly) {
 							return;
 						}
 
-						// we only know minutes information of first task
-						startTask.taskObject = _extends({}, prioritizedTasks[startTask.index], {
-							minutes: startTask.minutes
-						});
+						// create plan
+						_models2.default.SessionGroup.create({
+							type: "start_work",
+							UserId: UserId
+						}).then(function (sessionGroup) {
 
-						prioritizedTasks.splice(startTask.index, 1);
-						prioritizedTasks.unshift(startTask.taskObject); // put this in first
-
-						// first turn off all existing daily tasks
-						user.getDailyTasks({
-							where: ['"DailyTask"."type" = ?', "live"]
-						}).then(function (dailyTasks) {
-							var dailyTaskIds = dailyTasks.map(function (dailyTask) {
-								return dailyTask.id;
-							});
-							if (dailyTaskIds.length == 0) {
-								dailyTaskIds = [0];
-							};
-							_models2.default.DailyTask.update({
-								type: "archived"
-							}, {
-								where: ['"DailyTasks"."id" IN (?)', dailyTaskIds]
+							// then, create the 3 priorities for today
+							user.getDailyTasks({
+								where: ['"DailyTask"."type" = ?', "live"]
 							}).then(function (dailyTasks) {
-								prioritizedTasks.forEach(function (task, index) {
-									var priority = index + 1;
-									var text = task.text;
-									var minutes = task.minutes;
+								var dailyTaskIds = dailyTasks.map(function (dailyTask) {
+									return dailyTask.id;
+								});
+								if (dailyTaskIds.length == 0) {
+									dailyTaskIds = [0];
+								};
+								_models2.default.DailyTask.update({
+									type: "archived"
+								}, {
+									where: ['"DailyTasks"."id" IN (?)', dailyTaskIds]
+								}).then(function (dailyTasks) {
+									prioritizedTasks.forEach(function (task, index) {
+										var priority = index + 1;
+										var text = task.text;
+										var minutes = task.minutes;
 
-									_models2.default.Task.create({
-										text: text
-									}).then(function (task) {
-										task.createDailyTask({
-											minutes: minutes,
-											priority: priority,
-											UserId: UserId
+										_models2.default.Task.create({
+											text: text
+										}).then(function (task) {
+											task.createDailyTask({
+												minutes: minutes,
+												priority: priority,
+												UserId: UserId
+											}).then(function (dailyTask) {
+												var DailyTaskId = dailyTask.id;
+
+												if (index == startTask.index) {
+													if (startTime) {
+														// if you asked for a queued reminder
+														_models2.default.Reminder.create({
+															UserId: UserId,
+															remindTime: startTime,
+															type: "start_work",
+															DailyTaskId: DailyTaskId
+														});
+													}
+												}
+											});
 										});
 									});
 								});
 							});
 						});
-
-						if (startTime) {
-							// when the reminder comes, it will ask for the highest priority
-							// task that is not done yet. right now schema is: when user
-							// decides to work on something else, it will put that as highest 
-							// priorty. does highest priority mean doing it first?
-							_models2.default.Reminder.create({
-								UserId: UserId,
-								remindTime: startTime,
-								type: "start_work"
-							});
-						}
 
 						console.log("here is new plan object:\n");
 						console.log(convo.newPlan);

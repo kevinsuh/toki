@@ -5,12 +5,14 @@ module.exports = function(sequelize, DataTypes) {
     UserId: DataTypes.INTEGER,
     customNote: DataTypes.STRING,
     open: DataTypes.BOOLEAN,
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
+    DailyTaskId: DataTypes.INTEGER
   }, {
     classMethods: {
       associate: function(models) {
         // associations can be defined here
         Reminder.belongsTo(models.User);
+        Reminder.belongsTo(models.DailyTask);
       }
     }
   });
