@@ -1,6 +1,6 @@
 import { bots } from '../bot/controllers';
 import { controller } from '../bot/controllers';
-import { finalizeTimeAndTasksToStart } from '../bot/controllers/modules/startWorkSessionFunctions'
+import { finalizeTimeAndTasksToStart, startSessionWithConvoObject } from '../bot/controllers/modules/startWorkSessionFunctions'
 import { constants } from './lib/constants';
 import { startSessionOptionsAttachments } from '../bot/lib/constants';
 import { closeOldRemindersAndSessions } from '../bot/lib/miscHelpers';
@@ -184,7 +184,9 @@ var checkForReminders = () => {
 
 											convo.sessionStart = {
 												SlackUserId,
-												tz
+												UserId,
+												tz,
+												bot
 											}
 
 											if (dailyTask) {
@@ -214,38 +216,7 @@ var checkForReminders = () => {
 											console.log(convo.sessionStart);
 											console.log("\n\n\n");
 
-											const { SlackUserId, tz, dailyTask, minutes, calculatedTimeObject } = convo.sessionStart;
-
-											let startTime = moment();
-											// endTime is from when you hit start
-											let endTime   = moment().add(minutes, 'minutes');
-
-											models.WorkSession.create({
-												UserId,
-												startTime,
-												endTime
-											})
-											.then((workSession) => {
-
-												let dailyTaskIds = [dailyTask.dataValues.id];
-												workSession.setDailyTasks(dailyTaskIds);
-
-												let taskString    = dailyTask.dataValues.Task.text;
-												let minutesString = convertMinutesToHoursString(minutes);
-												let timeString    = endTime.format("h:mma");
-
-												bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-
-													convo.say("Let's do it :boom:!");
-													convo.say(`Good luck with \`${taskString}\`! See you in ${minutesString} at *${timeString}*`);
-													convo.say({
-														text: `Your focused work session starts now :weight_lifter:`,
-														attachments: startSessionOptionsAttachments
-													});
-
-												});
-
-											})
+											startSessionWithConvoObject(convo.sessionStart);
 
 
 										}, 1000);

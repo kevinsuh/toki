@@ -293,7 +293,8 @@ function convertArrayToTaskListMessage(taskArray) {
 		taskListMessage += taskListMessageBody;
 	}
 
-	if (!options.dontCalculateMinutes && remainingTasks.length > 0) {
+	// DEPRECATED.
+	if (false && !options.dontCalculateMinutes && remainingTasks.length > 0) {
 		// taskListMessages default to show calculated minutes
 		var totalMinutes = options.totalMinutes;
 
@@ -340,9 +341,9 @@ function createTaskListMessageBody(taskArray, options) {
 			var timeString = convertMinutesToHoursString(minutesInt);
 
 			if (options.emphasizeMinutes) {
-				minutesMessage = ' *_(' + timeString + ')_*';
+				minutesMessage = ' *_(for ' + timeString + ')_*';
 			} else {
-				minutesMessage = ' (' + timeString + ')';
+				minutesMessage = ' (for ' + timeString + ')';
 			}
 		}
 
