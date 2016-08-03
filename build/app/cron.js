@@ -16,8 +16,6 @@ exports.default = function () {
 
 var _controllers = require('../bot/controllers');
 
-var _startWorkSessionFunctions = require('../bot/controllers/modules/startWorkSessionFunctions');
-
 var _constants = require('./lib/constants');
 
 var _constants2 = require('../bot/lib/constants');
@@ -186,38 +184,13 @@ var checkForReminders = function checkForReminders() {
 										include: [_models2.default.Task]
 									}).then(function (dailyTask) {
 
-										bot.startPrivateConversation({
-											user: SlackUserId
-										}, function (err, convo) {
+										// get current session
+										var config = {
+											SlackUserId: SlackUserId,
+											dailyTaskToWorkOn: dailyTask
+										};
 
-											convo.sessionStart = {
-												SlackUserId: SlackUserId,
-												UserId: UserId,
-												tz: tz,
-												bot: bot
-											};
-
-											if (dailyTask) {
-												convo.sessionStart.dailyTask = dailyTask;
-											} else {
-												convo.say('Hey! Time to start on a work session :smiley:');
-											}
-
-											(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);
-											convo.next();
-
-											convo.on('end', function (convo) {
-
-												(0, _miscHelpers.closeOldRemindersAndSessions)(user);
-
-												setTimeout(function () {
-													console.log("\n\n\n end of start session ");
-													console.log(convo.sessionStart);
-													console.log("\n\n\n");
-													(0, _startWorkSessionFunctions.startSessionWithConvoObject)(convo.sessionStart);
-												}, 1000);
-											});
-										});
+										_controllers.controller.trigger('begin_session', [bot, config]);
 									});
 								} else {
 

@@ -3,7 +3,6 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.startSessionStartConversation = startSessionStartConversation;
 exports.finalizeTimeAndTasksToStart = finalizeTimeAndTasksToStart;
 exports.startSessionWithConvoObject = startSessionWithConvoObject;
 
@@ -33,19 +32,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * 		START WORK SESSION CONVERSATION FLOW FUNCTIONS
  */
 
-// user just started conversation and is choosing which tasks to work on
-// this is the starting point to all other functions here!
-function startSessionStartConversation(response, convo) {
-	var task = convo.task;
-	var bot = task.bot;
-	var source_message = task.source_message;
-
-
-	convo.say("Let's do it :weight_lifter:");
-	askWhichTaskToWorkOn(convo);
-	convo.next();
-}
-
 /**
  *    ENTRY POINTS INTO THE ACTUAL SESSION (FINALIZE CONFIRM)
  */
@@ -58,6 +44,7 @@ function finalizeTimeAndTasksToStart(convo) {
 	var dailyTask = _convo$sessionStart.dailyTask;
 	var calculatedTimeObject = _convo$sessionStart.calculatedTimeObject;
 	var minutes = _convo$sessionStart.minutes;
+	var currentSession = _convo$sessionStart.currentSession;
 
 	var now = (0, _momentTimezone2.default)();
 
@@ -77,8 +64,13 @@ function finalizeTimeAndTasksToStart(convo) {
 	var timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
 	var calculatedTime = calculatedTimeObject.format("h:mma");
 
+	var question = 'Ready to work on ' + taskText + ' for ' + timeString + ' until *' + calculatedTime + '*?';
+	if (currentSession) {
+		question = 'You\'re currently working on `' + currentSession.sessionTasks + '` and have ' + currentSession.minutesString + ' remaining. Would you like to work on ' + taskText + ' for ' + timeString + ' until *' + calculatedTime + '* instead?';
+	}
+
 	convo.ask({
-		text: 'Ready to work on ' + taskText + ' for ' + timeString + ' until *' + calculatedTime + '*?',
+		text: question,
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "START_SESSION",
@@ -127,7 +119,14 @@ function finalizeTimeAndTasksToStart(convo) {
 		callback: function callback(response, convo) {
 
 			convo.sessionStart.confirmStart = false;
-			convo.say("Okay! Let me know when you're ready to `start a session` for one of your priorities :grin: ");
+			if (currentSession) {
+				convo.say({
+					text: 'Okay! Good luck on `' + currentSession.sessionTasks + '`. See you at *' + currentSession.endTimeString + '* :weight_lifter:',
+					attachments: _constants.startSessionOptionsAttachments
+				});
+			} else {
+				convo.say("Okay, let me know if you still want to start a `new session` for one of your priorities :grin:");
+			}
 			convo.next();
 		}
 	}, { // this is failure point. restart with question
@@ -166,7 +165,7 @@ function askWhichTaskToWorkOn(convo) {
 			var noDailyTask = false;
 			var taskArray = dailyTasks.filter(function (currentDailyTask) {
 				if (!dailyTask) {
-					// weird bug where no dailyTask associated with START_WORK reminder
+					// uncommon situation where reminder has no dailyTask
 					noDailyTask = true;
 					return true;
 				} else if (currentDailyTask.dataValues.id != dailyTask.dataValues.id) {
