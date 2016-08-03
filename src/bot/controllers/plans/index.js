@@ -34,6 +34,26 @@ export default function(controller) {
 
 	});
 
+	controller.hears(['daily_tasks', 'add_daily_task', 'completed_task'], 'direct_message', wit.hears, (bot, message) => {
+
+		const { text, channel } = message;
+		const SlackUserId       = message.user;
+
+		let config = { SlackUserId, message };
+
+		// wit may pick up "add check in" as add_daily_task
+		if (utterances.startsWithAdd.test(text) && utterances.containsCheckin.test(text)) {
+			if (utterances.containsOnlyCheckin.test(text)){
+				config.reminder_type = "work_session";
+			}
+			controller.trigger(`ask_for_reminder`, [ bot, config ]);
+			return;
+		};
+
+		controller.trigger(`plan_command_center`, [ bot, config ]);
+
+	});
+
 	/**
 	* 	~ NEW PLAN FOR YOUR DAY ~
 	* 	1) get your 3 priorities

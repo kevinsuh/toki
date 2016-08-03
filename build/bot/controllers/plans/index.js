@@ -28,6 +28,26 @@ exports.default = function (controller) {
 		}, 1000);
 	});
 
+	controller.hears(['daily_tasks', 'add_daily_task', 'completed_task'], 'direct_message', _index.wit.hears, function (bot, message) {
+		var text = message.text;
+		var channel = message.channel;
+
+		var SlackUserId = message.user;
+
+		var config = { SlackUserId: SlackUserId, message: message };
+
+		// wit may pick up "add check in" as add_daily_task
+		if (_botResponses.utterances.startsWithAdd.test(text) && _botResponses.utterances.containsCheckin.test(text)) {
+			if (_botResponses.utterances.containsOnlyCheckin.test(text)) {
+				config.reminder_type = "work_session";
+			}
+			controller.trigger('ask_for_reminder', [bot, config]);
+			return;
+		};
+
+		controller.trigger('plan_command_center', [bot, config]);
+	});
+
 	/**
  * 	~ NEW PLAN FOR YOUR DAY ~
  * 	1) get your 3 priorities

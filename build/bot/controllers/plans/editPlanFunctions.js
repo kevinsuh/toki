@@ -261,9 +261,9 @@ function sayTasksForToday(convo) {
 			// this is not working consistently enough to implement right now
 			attachments = (0, _miscHelpers.getEndOfPlanCommandOptionAttachments)(attachmentOptions);
 		} else {
-			var taskMessage = "Here are your tasks for today :memo::";
+			var taskMessage = "Here are your priorities for today :memo::";
 			if (options.onlyRemainingTasks) {
-				taskMessage = "Here are your remaining tasks for today :memo::";
+				taskMessage = "Here are your remaining priorities for today :memo::";
 			}
 			if (!options.noTitle) {
 				convo.say(taskMessage);
@@ -395,21 +395,21 @@ function completeTasksFlow(convo) {
 	var baseMessage = '';
 
 	if (changedPlanCommands) {
-		baseMessage = 'Okay! Which of your task(s) above would you like to';
+		baseMessage = 'Okay! Which priority above would you like to';
 	} else {
-		baseMessage = 'Which of your task(s) above would you like to';
+		baseMessage = 'Which priority above would you like to';
 		sayTasksForToday(convo, options);
 	}
 
 	var wordSwapCount = 0;
-	var message = wordSwapMessage(baseMessage, "check off?", wordSwapCount);
+	var message = wordSwapMessage(baseMessage, "complete?", wordSwapCount);
 
 	convo.ask({
 		text: message,
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "TASK_COMPLETE",
-			fallback: "Which of your task(s) would you like to check off?"
+			fallback: "Which priority would you like to complete?"
 		}]
 	}, [{
 		pattern: _botResponses.utterances.noAndNeverMind,
@@ -418,7 +418,7 @@ function completeTasksFlow(convo) {
 			// delete the plan if "never mind"
 			(0, _messageHelpers.deleteMostRecentPlanMessage)(response.channel, bot);
 
-			convo.say("Okay, let me know if you still want to check off tasks! :wave: ");
+			convo.say("Okay, let me know if you still want to complete priorities! :wave: ");
 			convo.next();
 		}
 	}, {
@@ -579,9 +579,9 @@ function deleteTasksFlow(convo) {
 	var baseMessage = '';
 
 	if (changedPlanCommands) {
-		baseMessage = 'Okay! Which of your task(s) above would you like to';
+		baseMessage = 'Okay! Which priority above would you like to';
 	} else {
-		baseMessage = 'Which of your task(s) above would you like to';
+		baseMessage = 'Which priority above would you like to';
 		sayTasksForToday(convo, options);
 	}
 
@@ -593,7 +593,7 @@ function deleteTasksFlow(convo) {
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "TASK_DELETE",
-			fallback: "Which of your task(s) would you like to delete?"
+			fallback: "Which priority would you like to delete?"
 		}]
 	}, [{
 		pattern: _botResponses.utterances.noAndNeverMind,
@@ -602,7 +602,7 @@ function deleteTasksFlow(convo) {
 			// delete the plan if "never mind"
 			(0, _messageHelpers.deleteMostRecentPlanMessage)(response.channel, bot);
 
-			convo.say("Okay, let me know if you still want to delete tasks! :wave: ");
+			convo.say("Okay, let me know if you still want to delete any priority! :wave: ");
 			convo.next();
 		}
 	}, {
