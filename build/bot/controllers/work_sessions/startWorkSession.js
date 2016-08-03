@@ -87,14 +87,20 @@ exports.default = function (controller) {
 
 				convo.on('end', function (convo) {
 
-					(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+					console.log("\n\n\n end of start session ");
+					console.log(convo.sessionStart);
+					console.log("\n\n\n");
 
-					setTimeout(function () {
-						console.log("\n\n\n end of start session ");
-						console.log(convo.sessionStart);
-						console.log("\n\n\n");
-						(0, _startWorkSessionFunctions.startSessionWithConvoObject)(convo.sessionStart);
-					}, 1000);
+					if (convo.confirmStart) {
+						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+						setTimeout(function () {
+							(0, _startWorkSessionFunctions.startSessionWithConvoObject)(convo.sessionStart);
+						}, 500);
+					} else {
+						setTimeout(function () {
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+						}, 750);
+					}
 				});
 			});
 		});

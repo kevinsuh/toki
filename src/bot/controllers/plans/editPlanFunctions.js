@@ -189,8 +189,6 @@ function sayEndOfPlanMessage(convo) {
 			}
 			workSessionMessage = `${workSessionMessage}You're working on \`${sessionTasks}\` and have ${minutesString} remaining for the session`;
 			convo.say(workSessionMessage);
-		} else {
-			convo.say(`Let me know if there's anything you want to do :muscle: \`i.e. lets do task 2\``);
 		}
 
 	}
@@ -1084,7 +1082,7 @@ function workOnTasksFlow(convo) {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
-				convo.say("Okay, let me know if you still want to work towards an outcome :muscle:");
+				convo.say("Okay, let me know if you still want to start a `new session` for one of your priorities :grin:");
 				convo.next();
 			}
 		},

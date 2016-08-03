@@ -95,14 +95,20 @@ export default function(controller) {
 
 				convo.on('end', (convo) => {
 
-					closeOldRemindersAndSessions(user);
+					console.log("\n\n\n end of start session ");
+					console.log(convo.sessionStart);
+					console.log("\n\n\n");
 
-					setTimeout(() => {
-						console.log("\n\n\n end of start session ");
-						console.log(convo.sessionStart);
-						console.log("\n\n\n");
-						startSessionWithConvoObject(convo.sessionStart);
-					}, 1000);
+					if (convo.confirmStart) {
+						closeOldRemindersAndSessions(user);
+						setTimeout(() => {
+							startSessionWithConvoObject(convo.sessionStart);
+						}, 500);
+					} else {
+						setTimeout(() => {
+							resumeQueuedReachouts(bot, { SlackUserId });
+						}, 750);
+					}
 
 				})
 			

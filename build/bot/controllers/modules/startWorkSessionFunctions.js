@@ -119,7 +119,14 @@ function finalizeTimeAndTasksToStart(convo) {
 		callback: function callback(response, convo) {
 
 			convo.sessionStart.confirmStart = false;
-			convo.say("Okay! Let me know when you're ready to `start a session` for one of your priorities :grin: ");
+			if (currentSession) {
+				convo.say({
+					text: 'Okay! Good luck on `' + currentSession.sessionTasks + '`. See you at *' + currentSession.endTimeString + '* :weight_lifter:',
+					attachments: _constants.startSessionOptionsAttachments
+				});
+			} else {
+				convo.say("Okay, let me know if you still want to start a `new session` for one of your priorities :grin:");
+			}
 			convo.next();
 		}
 	}, { // this is failure point. restart with question
