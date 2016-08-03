@@ -355,7 +355,8 @@ exports.default = function (controller) {
 							taskNumbers: taskNumbers,
 							changePlanCommand: {
 								decision: false
-							}
+							},
+							currentSession: false
 						};
 
 						// if you are changing between commands, we will
@@ -378,6 +379,7 @@ exports.default = function (controller) {
 							var startSession = _convo$planEdit.startSession;
 							var dailyTasksToWorkOn = _convo$planEdit.dailyTasksToWorkOn;
 							var changePlanCommand = _convo$planEdit.changePlanCommand;
+							var currentSession = _convo$planEdit.currentSession;
 
 
 							console.log("\n\n\n at end of convo planEdit");
@@ -397,7 +399,8 @@ exports.default = function (controller) {
 
 								var _config2 = {
 									SlackUserId: SlackUserId,
-									dailyTaskToWorkOn: dailyTasksToWorkOn[0]
+									dailyTaskToWorkOn: dailyTasksToWorkOn[0],
+									currentSession: currentSession
 								};
 								var _bot = convo.planEdit.bot;
 								controller.trigger('begin_session', [_bot, _config2]);
@@ -434,31 +437,37 @@ exports.default = function (controller) {
        		}
        	})
        }
-       	// delete tasks if requested
-       if (dailyTaskIdsToDelete.length > 0) {
-       	models.DailyTask.update({
-       		type: "deleted"
-       	}, {
-       		where: [`"DailyTasks"."id" in (?)`, dailyTaskIdsToDelete]
-       	})
-       }
-       	// complete tasks if requested
-       if (dailyTaskIdsToComplete.length > 0) {
-       	models.DailyTask.findAll({
-       		where: [`"DailyTask"."id" in (?)`, dailyTaskIdsToComplete],
-       		include: [models.Task]
-       	})
-       	.then((dailyTasks) => {
-       			var completedTaskIds = dailyTasks.map((dailyTask) => {
-       			return dailyTask.TaskId;
-       		});
-       			models.Task.update({
-       			done: true
-       		}, {
-       			where: [`"Tasks"."id" in (?)`, completedTaskIds]
-       		})
-       	})
-       }
+       */
+
+							// delete tasks if requested
+							if (dailyTaskIdsToDelete.length > 0) {
+								_models2.default.DailyTask.update({
+									type: "deleted"
+								}, {
+									where: ['"DailyTasks"."id" in (?)', dailyTaskIdsToDelete]
+								});
+							}
+
+							// complete tasks if requested
+							if (dailyTaskIdsToComplete.length > 0) {
+								_models2.default.DailyTask.findAll({
+									where: ['"DailyTask"."id" in (?)', dailyTaskIdsToComplete],
+									include: [_models2.default.Task]
+								}).then(function (dailyTasks) {
+
+									var completedTaskIds = dailyTasks.map(function (dailyTask) {
+										return dailyTask.TaskId;
+									});
+
+									_models2.default.Task.update({
+										done: true
+									}, {
+										where: ['"Tasks"."id" in (?)', completedTaskIds]
+									});
+								});
+							}
+
+							/*
        	// update daily tasks if requested
        if (dailyTasksToUpdate.length > 0) {
        	dailyTasksToUpdate.forEach((dailyTask) => {

@@ -174,10 +174,12 @@ var checkForReminders = () => {
 								})
 								.then((dailyTask) => {
 
+									// get current session
 									let config = { 
 										SlackUserId,
 										dailyTaskToWorkOn: dailyTask
-									}
+									};
+									
 									controller.trigger(`begin_session`, [ bot, config ]);
 									
 								})

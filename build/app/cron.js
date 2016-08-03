@@ -184,10 +184,12 @@ var checkForReminders = function checkForReminders() {
 										include: [_models2.default.Task]
 									}).then(function (dailyTask) {
 
+										// get current session
 										var config = {
 											SlackUserId: SlackUserId,
 											dailyTaskToWorkOn: dailyTask
 										};
+
 										_controllers.controller.trigger('begin_session', [bot, config]);
 									});
 								} else {

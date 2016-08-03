@@ -56,7 +56,7 @@ export default function(controller) {
 	 */
 	controller.on('begin_session', (bot, config) => {
 
-		const { SlackUserId, dailyTaskToWorkOn } = config;
+		const { SlackUserId, dailyTaskToWorkOn, currentSession } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -80,7 +80,8 @@ export default function(controller) {
 					SlackUserId,
 					UserId,
 					tz,
-					bot
+					bot,
+					currentSession
 				}
 
 				if (dailyTaskToWorkOn) {

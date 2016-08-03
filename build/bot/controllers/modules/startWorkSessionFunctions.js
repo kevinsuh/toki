@@ -44,6 +44,7 @@ function finalizeTimeAndTasksToStart(convo) {
 	var dailyTask = _convo$sessionStart.dailyTask;
 	var calculatedTimeObject = _convo$sessionStart.calculatedTimeObject;
 	var minutes = _convo$sessionStart.minutes;
+	var currentSession = _convo$sessionStart.currentSession;
 
 	var now = (0, _momentTimezone2.default)();
 
@@ -63,8 +64,13 @@ function finalizeTimeAndTasksToStart(convo) {
 	var timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
 	var calculatedTime = calculatedTimeObject.format("h:mma");
 
+	var question = 'Ready to work on ' + taskText + ' for ' + timeString + ' until *' + calculatedTime + '*?';
+	if (currentSession) {
+		question = 'You\'re currently working on `' + currentSession.sessionTasks + '` and have ' + currentSession.minutesString + ' remaining. Would you like to work on ' + taskText + ' for ' + timeString + ' until *' + calculatedTime + '* instead?';
+	}
+
 	convo.ask({
-		text: 'Ready to work on ' + taskText + ' for ' + timeString + ' until *' + calculatedTime + '*?',
+		text: question,
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "START_SESSION",

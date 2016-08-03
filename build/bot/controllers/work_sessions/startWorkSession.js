@@ -46,6 +46,7 @@ exports.default = function (controller) {
 	controller.on('begin_session', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
 		var dailyTaskToWorkOn = config.dailyTaskToWorkOn;
+		var currentSession = config.currentSession;
 
 
 		_models2.default.User.find({
@@ -71,7 +72,8 @@ exports.default = function (controller) {
 					SlackUserId: SlackUserId,
 					UserId: UserId,
 					tz: tz,
-					bot: bot
+					bot: bot,
+					currentSession: currentSession
 				};
 
 				if (dailyTaskToWorkOn) {

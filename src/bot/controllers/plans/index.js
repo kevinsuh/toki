@@ -367,7 +367,8 @@ export default function(controller) {
 							taskNumbers,
 							changePlanCommand: {
 								decision: false
-							}
+							},
+							currentSession: false
 						}
 
 						// if you are changing between commands, we will
@@ -382,7 +383,7 @@ export default function(controller) {
 						
 						convo.on('end', (convo) => {
 							
-							var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate, startSession, dailyTasksToWorkOn, changePlanCommand } = convo.planEdit;
+							var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate, startSession, dailyTasksToWorkOn, changePlanCommand, currentSession } = convo.planEdit;
 
 							console.log("\n\n\n at end of convo planEdit")
 							console.log(convo.planEdit);
@@ -401,7 +402,8 @@ export default function(controller) {
 
 								let config = {
 									SlackUserId,
-									dailyTaskToWorkOn: dailyTasksToWorkOn[0]
+									dailyTaskToWorkOn: dailyTasksToWorkOn[0],
+									currentSession
 								}
 								let bot = convo.planEdit.bot;
 								controller.trigger(`begin_session`, [ bot, config ]);
@@ -440,6 +442,7 @@ export default function(controller) {
 									}
 								})
 							}
+							*/
 
 							// delete tasks if requested
 							if (dailyTaskIdsToDelete.length > 0) {
@@ -469,6 +472,8 @@ export default function(controller) {
 									})
 								})
 							}
+
+							/*
 
 							// update daily tasks if requested
 							if (dailyTasksToUpdate.length > 0) {

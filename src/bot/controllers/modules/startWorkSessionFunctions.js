@@ -19,7 +19,7 @@ import { colorsArray, THANK_YOU, buttonValues, colorsHash, startSessionOptionsAt
 // confirm task and time in one place and start if it's good
 export function finalizeTimeAndTasksToStart(convo) {
 
-	const { SlackUserId, tz, dailyTask, calculatedTimeObject, minutes }  = convo.sessionStart;
+	const { SlackUserId, tz, dailyTask, calculatedTimeObject, minutes, currentSession }  = convo.sessionStart;
 	let now = moment();
 
 	// we need both time and task in order to start session
@@ -38,8 +38,13 @@ export function finalizeTimeAndTasksToStart(convo) {
 	let timeString     = convertMinutesToHoursString(minutes);
 	let calculatedTime = calculatedTimeObject.format("h:mma");
 
+	let question = `Ready to work on ${taskText} for ${timeString} until *${calculatedTime}*?`;
+	if (currentSession) {
+		question = `You're currently working on \`${currentSession.sessionTasks}\` and have ${currentSession.minutesString} remaining. Would you like to work on ${taskText} for ${timeString} until *${calculatedTime}* instead?`;
+	}
+
 	convo.ask({
-		text: `Ready to work on ${taskText} for ${timeString} until *${calculatedTime}*?`,
+		text: question,
 		attachments:[
 			{
 				attachment_type: 'default',
