@@ -1051,7 +1051,7 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 // work on which task flow
 function workOnTasksFlow(convo) {
 
-	let { planEdit: { bot, dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
+	let { planEdit: { bot, dailyTasks, changePlanCommand, changedPlanCommands, openWorkSession, currentSession } } = convo;
 
 	// say task list, then ask which ones to complete
 	let options = { onlyRemainingTasks: true, startPlan: true };
@@ -1065,8 +1065,13 @@ function workOnTasksFlow(convo) {
 		sayTasksForToday(convo, options);
 	}
 
+	let wordSwap      = "work towards?";
 	let wordSwapCount = 0;
-	let message       = wordSwapMessage(baseMessage, "work towards?", wordSwapCount);
+
+	if (openWorkSession && currentSession)
+		wordSwap = "work towards instead?";
+
+	let message       = wordSwapMessage(baseMessage, wordSwap, wordSwapCount);
 
 	convo.ask({
 		text: message,
@@ -1110,7 +1115,7 @@ function workOnTasksFlow(convo) {
 
 						// if user tries completing task again, just update the text
 						wordSwapCount++;
-						let text = wordSwapMessage(baseMessage, "work on?", wordSwapCount);
+						let text = wordSwapMessage(baseMessage, wordSwap, wordSwapCount);
 						let convoAskQuestionUpdate = getMostRecentMessageToUpdate(response.channel, bot);
 						if (convoAskQuestionUpdate) {
 							convoAskQuestionUpdate.text = text;

@@ -1,6 +1,5 @@
 import { bots } from '../bot/controllers';
 import { controller } from '../bot/controllers';
-import { finalizeTimeAndTasksToStart, startSessionWithConvoObject } from '../bot/controllers/modules/startWorkSessionFunctions'
 import { constants } from './lib/constants';
 import { startSessionOptionsAttachments } from '../bot/lib/constants';
 import { closeOldRemindersAndSessions } from '../bot/lib/miscHelpers';
@@ -136,7 +135,7 @@ var checkForReminders = () => {
 				})
 				.then((team) => {
 					const { token } = team;
-					var bot = bots[token];
+					let bot = bots[token];
 
 					if (bot) {
 
@@ -175,40 +174,12 @@ var checkForReminders = () => {
 								})
 								.then((dailyTask) => {
 
-									bot.startPrivateConversation({
-										user: SlackUserId
-									}, (err, convo) => {
-
-										convo.sessionStart = {
-											SlackUserId,
-											UserId,
-											tz,
-											bot
-										}
-
-										if (dailyTask) {
-											convo.sessionStart.dailyTask = dailyTask;
-										} else {
-											convo.say(`Hey! Time to start on a work session :smiley:`);
-										}
-
-										finalizeTimeAndTasksToStart(convo);
-										convo.next();
-
-										convo.on('end', (convo) => {
-
-											closeOldRemindersAndSessions(user);
-
-											setTimeout(() => {
-												console.log("\n\n\n end of start session ");
-												console.log(convo.sessionStart);
-												console.log("\n\n\n");
-												startSessionWithConvoObject(convo.sessionStart);
-											}, 1000);
-
-										})
+									let config = { 
+										SlackUserId,
+										dailyTaskToWorkOn: dailyTask
+									}
+									controller.trigger(`begin_session`, [ bot, config ]);
 									
-									});
 								})
 
 							} else {

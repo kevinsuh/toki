@@ -1078,6 +1078,8 @@ function workOnTasksFlow(convo) {
 	var dailyTasks = _convo$planEdit15.dailyTasks;
 	var changePlanCommand = _convo$planEdit15.changePlanCommand;
 	var changedPlanCommands = _convo$planEdit15.changedPlanCommands;
+	var openWorkSession = _convo$planEdit15.openWorkSession;
+	var currentSession = _convo$planEdit15.currentSession;
 
 	// say task list, then ask which ones to complete
 
@@ -1092,8 +1094,12 @@ function workOnTasksFlow(convo) {
 		sayTasksForToday(convo, options);
 	}
 
+	var wordSwap = "work towards?";
 	var wordSwapCount = 0;
-	var message = wordSwapMessage(baseMessage, "work towards?", wordSwapCount);
+
+	if (openWorkSession && currentSession) wordSwap = "work towards instead?";
+
+	var message = wordSwapMessage(baseMessage, wordSwap, wordSwapCount);
 
 	convo.ask({
 		text: message,
@@ -1135,7 +1141,7 @@ function workOnTasksFlow(convo) {
 
 					// if user tries completing task again, just update the text
 					wordSwapCount++;
-					var _text3 = wordSwapMessage(baseMessage, "work on?", wordSwapCount);
+					var _text3 = wordSwapMessage(baseMessage, wordSwap, wordSwapCount);
 					var convoAskQuestionUpdate = (0, _messageHelpers.getMostRecentMessageToUpdate)(response.channel, bot);
 					if (convoAskQuestionUpdate) {
 						convoAskQuestionUpdate.text = _text3;

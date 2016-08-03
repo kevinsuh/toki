@@ -397,17 +397,19 @@ export default function(controller) {
 
 							resumeQueuedReachouts(bot, { SlackUserId });
 
-							/*
 							if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
-								var config = {
+
+								let config = {
 									SlackUserId,
-									dailyTasksToWorkOn
+									dailyTaskToWorkOn: dailyTasksToWorkOn[0]
 								}
-								config.intent = intentConfig.START_SESSION;
-								controller.trigger(`new_session_group_decision`, [ bot, config ]);
+								let bot = convo.planEdit.bot;
+								controller.trigger(`begin_session`, [ bot, config ]);
 								return;
+
 							}
 
+							/*
 							// add new tasks if they got added
 							if (newTasks.length > 0) {
 								var priority = dailyTasks.length;

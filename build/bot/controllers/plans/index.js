@@ -393,17 +393,19 @@ exports.default = function (controller) {
 
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 
+							if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
+
+								var _config2 = {
+									SlackUserId: SlackUserId,
+									dailyTaskToWorkOn: dailyTasksToWorkOn[0]
+								};
+								var _bot = convo.planEdit.bot;
+								controller.trigger('begin_session', [_bot, _config2]);
+								return;
+							}
+
 							/*
-       if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
-       	var config = {
-       		SlackUserId,
-       		dailyTasksToWorkOn
-       	}
-       	config.intent = intentConfig.START_SESSION;
-       	controller.trigger(`new_session_group_decision`, [ bot, config ]);
-       	return;
-       }
-       	// add new tasks if they got added
+       // add new tasks if they got added
        if (newTasks.length > 0) {
        	var priority = dailyTasks.length;
        	// add the priorities
