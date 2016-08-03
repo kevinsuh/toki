@@ -2,11 +2,14 @@ import { bots } from '../bot/controllers';
 import { controller } from '../bot/controllers';
 import { finalizeTimeAndTasksToStart } from '../bot/controllers/modules/startWorkSessionFunctions'
 import { constants } from './lib/constants';
+import { startSessionOptionsAttachments } from '../bot/lib/constants';
+import { closeOldRemindersAndSessions } from '../bot/lib/miscHelpers';
+import { convertMinutesToHoursString } from '../bot/lib/messageHelpers';
 
 // sequelize models
 import models from './models';
 
-import moment from 'moment';
+import moment from 'moment-timezone';
 
 // the cron file!
 export default function() {
@@ -162,10 +165,12 @@ var checkForReminders = () => {
 							})
 
 						} else {
+
+							const SlackUserId = user.SlackUser.SlackUserId 
 							// alarm is up for reminder
 							// send the message!
 							bot.startPrivateConversation({
-								user: user.SlackUser.SlackUserId 
+								user: SlackUserId
 							}, (err, convo) => {
 
 								if (convo) {
@@ -201,9 +206,48 @@ var checkForReminders = () => {
 
 									convo.on('end', (convo) => {
 
-										console.log("\n\n\n end of start session ");
-										console.log(convo.sessionStart);
-										console.log("\n\n\n");
+										closeOldRemindersAndSessions(user);
+
+										setTimeout(() => {
+
+											console.log("\n\n\n end of start session ");
+											console.log(convo.sessionStart);
+											console.log("\n\n\n");
+
+											const { SlackUserId, tz, dailyTask, minutes, calculatedTimeObject } = convo.sessionStart;
+
+											let startTime = moment();
+											// endTime is from when you hit start
+											let endTime   = moment().add(minutes, 'minutes');
+
+											models.WorkSession.create({
+												UserId,
+												startTime,
+												endTime
+											})
+											.then((workSession) => {
+
+												let dailyTaskIds = [dailyTask.dataValues.id];
+												workSession.setDailyTasks(dailyTaskIds);
+
+												let taskString    = dailyTask.dataValues.Task.text;
+												let minutesString = convertMinutesToHoursString(minutes);
+												let timeString    = endTime.format("h:mma");
+
+												bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+													convo.say(`Good luck with \`${taskString}\`! See you in ${minutesString} at *${timeString}*`);
+													convo.say({
+														text: `Your focused work session starts now :weight_lifter:`,
+														attachments: startSessionOptionsAttachments
+													});
+
+												});
+
+											})
+
+
+										}, 1000);
 
 									})
 

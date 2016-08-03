@@ -20,20 +20,26 @@ var _startWorkSessionFunctions = require('../bot/controllers/modules/startWorkSe
 
 var _constants = require('./lib/constants');
 
+var _constants2 = require('../bot/lib/constants');
+
+var _miscHelpers = require('../bot/lib/miscHelpers');
+
+var _messageHelpers = require('../bot/lib/messageHelpers');
+
 var _models = require('./models');
 
 var _models2 = _interopRequireDefault(_models);
 
-var _moment = require('moment');
+var _momentTimezone = require('moment-timezone');
 
-var _moment2 = _interopRequireDefault(_moment);
+var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var checkForSessions = function checkForSessions() {
 
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
-	var now = (0, _moment2.default)().format("YYYY-MM-DD HH:mm:ss Z");
+	var now = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss Z");
 
 	// get the most recent work session! assume this is the one user is working on
 	_models2.default.WorkSession.findAll({
@@ -107,7 +113,7 @@ var checkForSessions = function checkForSessions() {
 var checkForReminders = function checkForReminders() {
 
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
-	var now = (0, _moment2.default)().format("YYYY-MM-DD HH:mm:ss Z");
+	var now = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss Z");
 
 	_models2.default.Reminder.findAll({
 		where: ['"remindTime" < ? AND open = ?', now, true]
@@ -170,48 +176,92 @@ var checkForReminders = function checkForReminders() {
 								}
 							});
 						} else {
-							// alarm is up for reminder
-							// send the message!
-							bot.startPrivateConversation({
-								user: user.SlackUser.SlackUserId
-							}, function (err, convo) {
+							(function () {
 
-								if (convo) {
+								var SlackUserId = user.SlackUser.SlackUserId;
+								// alarm is up for reminder
+								// send the message!
+								bot.startPrivateConversation({
+									user: SlackUserId
+								}, function (err, convo) {
 
-									if (reminder.type == "start_work") {
-										// this type of reminder will immediately ask user if they want to get started
-										reminder.getDailyTask({
-											include: [_models2.default.Task]
-										}).then(function (dailyTask) {
+									if (convo) {
 
-											convo.sessionStart = {
-												SlackUserId: SlackUserId,
-												tz: tz
-											};
+										if (reminder.type == "start_work") {
+											// this type of reminder will immediately ask user if they want to get started
+											reminder.getDailyTask({
+												include: [_models2.default.Task]
+											}).then(function (dailyTask) {
 
-											if (dailyTask) {
-												convo.sessionStart.dailyTask = dailyTask;
-												(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);
-											} else {
-												convo.say('Hey! Let\'s get started on that work session :smiley:');
-												convo.next();
-											}
+												convo.sessionStart = {
+													SlackUserId: SlackUserId,
+													tz: tz
+												};
+
+												if (dailyTask) {
+													convo.sessionStart.dailyTask = dailyTask;
+													(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);
+												} else {
+													convo.say('Hey! Let\'s get started on that work session :smiley:');
+													convo.next();
+												}
+											});
+										} else {
+											// standard reminder
+											var customNote = reminder.customNote ? '(`' + reminder.customNote + '`)' : '';
+											var message = 'Hey! You wanted a reminder ' + customNote + ':alarm_clock: ';
+											convo.say(message);
+										}
+
+										convo.on('end', function (convo) {
+
+											(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+
+											setTimeout(function () {
+
+												console.log("\n\n\n end of start session ");
+												console.log(convo.sessionStart);
+												console.log("\n\n\n");
+
+												var _convo$sessionStart = convo.sessionStart;
+												var SlackUserId = _convo$sessionStart.SlackUserId;
+												var tz = _convo$sessionStart.tz;
+												var dailyTask = _convo$sessionStart.dailyTask;
+												var minutes = _convo$sessionStart.minutes;
+												var calculatedTimeObject = _convo$sessionStart.calculatedTimeObject;
+
+
+												var startTime = (0, _momentTimezone2.default)();
+												// endTime is from when you hit start
+												var endTime = (0, _momentTimezone2.default)().add(minutes, 'minutes');
+
+												_models2.default.WorkSession.create({
+													UserId: UserId,
+													startTime: startTime,
+													endTime: endTime
+												}).then(function (workSession) {
+
+													var dailyTaskIds = [dailyTask.dataValues.id];
+													workSession.setDailyTasks(dailyTaskIds);
+
+													var taskString = dailyTask.dataValues.Task.text;
+													var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+													var timeString = endTime.format("h:mma");
+
+													bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+														convo.say('Good luck with `' + taskString + '`! See you in ' + minutesString + ' at *' + timeString + '*');
+														convo.say({
+															text: 'Your focused work session starts now :weight_lifter:',
+															attachments: _constants2.startSessionOptionsAttachments
+														});
+													});
+												});
+											}, 1000);
 										});
-									} else {
-										// standard reminder
-										var customNote = reminder.customNote ? '(`' + reminder.customNote + '`)' : '';
-										var message = 'Hey! You wanted a reminder ' + customNote + ':alarm_clock: ';
-										convo.say(message);
 									}
-
-									convo.on('end', function (convo) {
-
-										console.log("\n\n\n end of start session ");
-										console.log(convo.sessionStart);
-										console.log("\n\n\n");
-									});
-								}
-							});
+								});
+							})();
 						}
 					}
 				});

@@ -279,7 +279,7 @@ function confirmTimeForTasks(convo) {
 	if (minutes) {
 		var now = (0, _momentTimezone2.default)().tz(tz);
 		var calculatedTimeObject = now.add(minutes, 'minutes');
-		var calculatedTimeString = calculatedTimeObject.format("h:mm a");
+		var calculatedTimeString = calculatedTimeObject.format("h:mma");
 
 		convo.sessionStart.minutes = minutes;
 		convo.sessionStart.calculatedTime = calculatedTimeString;
