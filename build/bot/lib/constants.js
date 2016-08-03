@@ -238,7 +238,7 @@ var buttonValues = exports.buttonValues = {
 	},
 	neverMind: {
 		name: "NEVER_MIND",
-		value: "NEVER_MIND"
+		value: "Never mind!"
 	},
 	startDay: {
 		name: "START_DAY",

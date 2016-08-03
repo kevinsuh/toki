@@ -297,7 +297,7 @@ function createTaskListMessageBody(taskArray, options) {
 			priority = '';
 		}
 
-		if (priority > 0) {
+		if (priority > 0 && !options.dontUsePriority) {
 			count = priority;
 		} else {
 			count++;

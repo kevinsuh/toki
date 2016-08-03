@@ -159,39 +159,54 @@ function askWhichTaskToWorkOn(convo) {
 	var _convo$sessionStart2 = convo.sessionStart;
 	var SlackUserId = _convo$sessionStart2.SlackUserId;
 	var dailyTasks = _convo$sessionStart2.dailyTasks;
+	var dailyTask = _convo$sessionStart2.dailyTask;
 
 	if (!dailyTasks) {
 		getUserDailyTasks(convo);
 	} else {
-		var bot = convo.task.bot;
+		(function () {
+			var bot = convo.task.bot;
 
-		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
-		if (question == '') {
-			question = 'Which task would you like to work on instead?';
-		}
-		var message = question + '\n' + taskListMessage;
-		convo.ask({
-			text: message,
-			attachments: [{
-				attachment_type: 'default',
-				callback_id: "START_SESSION",
-				fallback: "I was unable to process your decision",
-				color: _constants.colorsHash.grey.hex
-			}]
-		}, [{
-			pattern: _botResponses.utterances.noAndNeverMind,
-			callback: function callback(response, convo) {
-				convo.say("Okay! Let me know when you're ready to `start a session` :grin: ");
-				convo.next();
+			var taskArray = dailyTasks.filter(function (currentDailyTask) {
+				if (currentDailyTask.dataValues.id != dailyTask.dataValues.id) return true;
+			});
+			var options = { dontUsePriority: true };
+			var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
+			if (question == '') {
+				question = 'Which task would you like to work on instead?';
 			}
-		}, {
-			default: true,
-			callback: function callback(response, convo) {
-				// user inputed task #'s, not new task button
-				confirmTasks(response, convo);
-				convo.next();
-			}
-		}]);
+			var message = question + '\n' + taskListMessage;
+			convo.ask({
+				text: message,
+				attachments: [{
+					attachment_type: 'default',
+					callback_id: "START_SESSION",
+					fallback: "I was unable to process your decision",
+					color: _constants.colorsHash.grey.hex,
+					actions: [{
+						name: _constants.buttonValues.neverMind.name,
+						text: "Never mind!",
+						value: _constants.buttonValues.neverMind.value,
+						type: "button"
+					}]
+				}]
+			}, [{
+				pattern: _botResponses.utterances.noAndNeverMind,
+				callback: function callback(response, convo) {
+					var taskText = dailyTask.dataValues ? '`' + dailyTask.dataValues.Task.text + '`' : 'your task';
+					convo.say('Sure thing! Let\'s stay working on ' + taskText);
+					confirmTimeForTask(convo);
+					convo.next();
+				}
+			}, {
+				default: true,
+				callback: function callback(response, convo) {
+					// user inputed task #'s, not new task button
+					confirmTasks(response, convo, taskArray);
+					convo.next();
+				}
+			}]);
+		})();
 	}
 }
 
@@ -216,19 +231,24 @@ function getUserDailyTasks(convo) {
 
 // if user decides to work on existing tasks
 function confirmTasks(response, convo) {
+	var taskArray = arguments.length <= 2 || arguments[2] === undefined ? [] : arguments[2];
 	var task = convo.task;
 	var bot = task.bot;
 	var source_message = task.source_message;
 	var dailyTasks = convo.sessionStart.dailyTasks;
 
 
-	var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
+	if (taskArray.length == 0) {
+		taskArray = dailyTasks;
+	}
+
+	var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, taskArray);
 	var taskIndexToWorkOn = taskNumbersToWorkOnArray[0] - 1;
 
 	if (taskIndexToWorkOn >= 0) {
 		if (taskNumbersToWorkOnArray.length == 1) {
 			// SUCCESS
-			convo.sessionStart.dailyTask = dailyTasks[taskIndexToWorkOn];
+			convo.sessionStart.dailyTask = taskArray[taskIndexToWorkOn];
 			confirmTimeForTask(convo);
 		} else {
 			// only one at a time
