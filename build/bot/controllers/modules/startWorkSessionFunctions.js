@@ -57,11 +57,12 @@ function finalizeTimeAndTasksToStart(convo) {
 	var tz = _convo$sessionStart.tz;
 	var dailyTask = _convo$sessionStart.dailyTask;
 	var calculatedTimeObject = _convo$sessionStart.calculatedTimeObject;
+	var minutes = _convo$sessionStart.minutes;
 
 	var now = (0, _momentTimezone2.default)();
 
 	// we need both time and task in order to start session
-	if (!calculatedTimeObject) {
+	if (!calculatedTimeObject || !minutes) {
 		confirmTimeForTask(convo);
 		return;
 	} else if (!dailyTask) {
@@ -73,11 +74,6 @@ function finalizeTimeAndTasksToStart(convo) {
 	var taskText = dailyTask.dataValues ? '`' + dailyTask.dataValues.Task.text + '`' : 'your task';
 
 	// will only be a single task now
-	var minutes = dailyTask.dataValues.minutes;
-	if (!minutes) {
-		minutes = Math.round(_momentTimezone2.default.duration(calculatedTimeObject.diff(now)).asMinutes());
-	}
-
 	var timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
 	var calculatedTime = calculatedTimeObject.format("h:mma");
 
@@ -286,7 +282,7 @@ function confirmTimeForTask(convo) {
 
 		finalizeTimeAndTasksToStart(convo);
 	} else {
-		// ask for how many minutes to work
+		// ask for how many minutes to work.
 		askForCustomTotalMinutes(convo);
 	}
 
@@ -343,8 +339,10 @@ function confirmCustomTotalMinutes(response, convo) {
 
 	var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
 	var customTimeString = customTimeObject.format("h:mm a");
+	var minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
 
 	convo.sessionStart.calculatedTimeObject = customTimeObject;
+	convo.sessionStart.minutes = minutes;
 
 	finalizeTimeAndTasksToStart(convo);
 }
@@ -354,14 +352,17 @@ function confirmCustomTotalMinutes(response, convo) {
  */
 
 function startSessionWithConvoObject(sessionStart) {
+
+	// all of these constants are necessary!
 	var bot = sessionStart.bot;
 	var SlackUserId = sessionStart.SlackUserId;
 	var dailyTask = sessionStart.dailyTask;
 	var calculatedTimeObject = sessionStart.calculatedTimeObject;
 	var UserId = sessionStart.UserId;
+	var minutes = sessionStart.minutes;
 
 
-	if (!bot || !SlackUserId || !UserId || !dailyTask || !calculatedTimeObject) {
+	if (!bot || !SlackUserId || !UserId || !dailyTask || !calculatedTimeObject || !minutes) {
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 			convo.say("Uh oh, something went wrong trying to `start your session` :dog: Let me know when you want to try again!");
 		});
@@ -369,9 +370,7 @@ function startSessionWithConvoObject(sessionStart) {
 	}
 
 	var startTime = (0, _momentTimezone2.default)();
-	var minutes = dailyTask.dataValues.minutes;
-	if (!minutes) {
-		minutes = Math.round(_momentTimezone2.default.duration(calculatedTimeObject.diff(startTime)).asMinutes());
+	if (!dailyTask.dataValues.minutes) {
 		// update dailyTask minutes here cause it hasn't existed up to this point
 		var DailyTaskId = dailyTask.dataValues.id;
 		_models2.default.DailyTask.update({

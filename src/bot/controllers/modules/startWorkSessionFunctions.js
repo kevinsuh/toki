@@ -33,11 +33,11 @@ export function startSessionStartConversation(response, convo) {
 // confirm task and time in one place and start if it's good
 export function finalizeTimeAndTasksToStart(convo) {
 
-	const { SlackUserId, tz, dailyTask, calculatedTimeObject }  = convo.sessionStart;
+	const { SlackUserId, tz, dailyTask, calculatedTimeObject, minutes }  = convo.sessionStart;
 	let now = moment();
 
 	// we need both time and task in order to start session
-	if (!calculatedTimeObject) {
+	if (!calculatedTimeObject || !minutes) {
 		confirmTimeForTask(convo);
 		return;
 	} else if (!dailyTask) {
@@ -49,11 +49,6 @@ export function finalizeTimeAndTasksToStart(convo) {
 	let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your task';
 
 	// will only be a single task now
-	let minutes = dailyTask.dataValues.minutes;
-	if (!minutes) {
-		minutes = Math.round(moment.duration(calculatedTimeObject.diff(now)).asMinutes());
-	}
-
 	let timeString     = convertMinutesToHoursString(minutes);
 	let calculatedTime = calculatedTimeObject.format("h:mma");
 
@@ -275,7 +270,7 @@ function confirmTimeForTask(convo) {
 		finalizeTimeAndTasksToStart(convo);
 
 	} else {
-		// ask for how many minutes to work
+		// ask for how many minutes to work.
 		askForCustomTotalMinutes(convo);
 
 	}
@@ -329,8 +324,10 @@ function confirmCustomTotalMinutes(response, convo) {
 
 	var customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
 	var customTimeString = customTimeObject.format("h:mm a");
+	let minutes          = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
 
 	convo.sessionStart.calculatedTimeObject = customTimeObject;
+	convo.sessionStart.minutes              = minutes;
 
 	finalizeTimeAndTasksToStart(convo);
 
@@ -343,9 +340,10 @@ function confirmCustomTotalMinutes(response, convo) {
 
 export function startSessionWithConvoObject(sessionStart) {
 
-	const { bot, SlackUserId, dailyTask, calculatedTimeObject, UserId } = sessionStart;
+	// all of these constants are necessary!
+	const { bot, SlackUserId, dailyTask, calculatedTimeObject, UserId, minutes } = sessionStart;
 
-	if (!bot || !SlackUserId || !UserId || !dailyTask || !calculatedTimeObject) {
+	if (!bot || !SlackUserId || !UserId || !dailyTask || !calculatedTimeObject || !minutes) {
 		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 			convo.say("Uh oh, something went wrong trying to `start your session` :dog: Let me know when you want to try again!");
 		});
@@ -353,9 +351,7 @@ export function startSessionWithConvoObject(sessionStart) {
 	}
 
 	let startTime = moment();
-	let minutes = dailyTask.dataValues.minutes;
-	if (!minutes) {
-		minutes = Math.round(moment.duration(calculatedTimeObject.diff(startTime)).asMinutes());
+	if (!dailyTask.dataValues.minutes) {
 		// update dailyTask minutes here cause it hasn't existed up to this point
 		let DailyTaskId = dailyTask.dataValues.id;
 		models.DailyTask.update({
