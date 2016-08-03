@@ -12,6 +12,7 @@ import notWitController from './notWit';
 import onboardController from './onboard';
 import buttonsController from './buttons';
 import plansController from './plans';
+import workSessionsController from './work_sessions';
 
 import models from '../../app/models';
 import { colorsArray, hoursForExpirationTime, startDayExpirationTime } from '../lib/constants';
@@ -200,6 +201,7 @@ export function customConfigBot(controller) {
 	settingsController(controller);
 	buttonsController(controller);
 	plansController(controller);
+	workSessionsController(controller);
 
 	// last because miscController will hold fallbacks
 	miscController(controller);

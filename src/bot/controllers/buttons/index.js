@@ -33,7 +33,6 @@ export default function(controller) {
 						]
 					})
 					.then((user) => {
-						bot.replyInteractive(message, `Keep at it!`);
 						controller.trigger(`done_session_snooze_button_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					});
 					break;
@@ -44,27 +43,19 @@ export default function(controller) {
 					controller.trigger(`done_session_no_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				case buttonValues.startSession.pause.value:
-					bot.replyInteractive(message, "Okay, let's pause!", () => {
-						controller.trigger(`session_pause_flow`, [ bot, { SlackUserId, botCallback: true }]);
-					});
+					controller.trigger(`session_pause_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				case buttonValues.startSession.addCheckIn.value:
 					controller.trigger(`session_add_checkin_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				case buttonValues.startSession.endEarly.value:
-					bot.replyInteractive(message, "Okay!", () => {
-						controller.trigger(`session_end_early_flow`, [ bot, { SlackUserId, botCallback: true }]);
-					});
+					controller.trigger(`session_end_early_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				case buttonValues.startSession.pause.endEarly.value:
-					bot.replyInteractive(message, "Okay!", () => {
-						controller.trigger(`session_end_early_flow`, [ bot, { SlackUserId, botCallback: true }]);
-					});
+					controller.trigger(`session_end_early_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				case buttonValues.startSession.resume.value:
-					bot.replyInteractive(message, "Okay, let's resume :arrow_forward:", () => {
-						controller.trigger(`session_resume_flow`, [ bot, { SlackUserId, botCallback: true }]);
-					});
+					controller.trigger(`session_resume_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
 				default: break;
 			}

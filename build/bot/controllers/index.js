@@ -58,6 +58,10 @@ var _plans = require('./plans');
 
 var _plans2 = _interopRequireDefault(_plans);
 
+var _work_sessions = require('./work_sessions');
+
+var _work_sessions2 = _interopRequireDefault(_work_sessions);
+
 var _models = require('../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
@@ -74,8 +78,10 @@ var _initiation = require('../actions/initiation');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// config modules
 require('dotenv').config();
+
+// config modules
+
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
@@ -253,6 +259,7 @@ function customConfigBot(controller) {
 	(0, _settings2.default)(controller);
 	(0, _buttons2.default)(controller);
 	(0, _plans2.default)(controller);
+	(0, _work_sessions2.default)(controller);
 
 	// last because miscController will hold fallbacks
 	(0, _misc2.default)(controller);

@@ -236,6 +236,7 @@ var checkForReminders = () => {
 
 												bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
+													convo.say("Let's do it :boom:!");
 													convo.say(`Good luck with \`${taskString}\`! See you in ${minutesString} at *${timeString}*`);
 													convo.say({
 														text: `Your focused work session starts now :weight_lifter:`,
