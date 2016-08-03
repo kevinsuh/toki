@@ -3,7 +3,6 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.startSessionStartConversation = startSessionStartConversation;
 exports.finalizeTimeAndTasksToStart = finalizeTimeAndTasksToStart;
 exports.startSessionWithConvoObject = startSessionWithConvoObject;
 
@@ -32,19 +31,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 /**
  * 		START WORK SESSION CONVERSATION FLOW FUNCTIONS
  */
-
-// user just started conversation and is choosing which tasks to work on
-// this is the starting point to all other functions here!
-function startSessionStartConversation(response, convo) {
-	var task = convo.task;
-	var bot = task.bot;
-	var source_message = task.source_message;
-
-
-	convo.say("Let's do it :weight_lifter:");
-	askWhichTaskToWorkOn(convo);
-	convo.next();
-}
 
 /**
  *    ENTRY POINTS INTO THE ACTUAL SESSION (FINALIZE CONFIRM)

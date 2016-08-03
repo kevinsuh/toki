@@ -17,6 +17,32 @@ export const intentConfig = {
 }
 
 export const constants = {
+	PLAN_DECISION: {
+		complete: {
+			word: "TASK_COMPLETE",
+			reg_exp: new RegExp(/(\bcomp[omplete]{3,}\b|\bche[heck]{1,}\b|\bcro[ross]{1,}\b)/i)
+		},
+		add: {
+			word: "TASK_ADD",
+			reg_exp: new RegExp(/\bad[ad]{1,}\b/i)
+		},
+		view: {
+			word: "TASK_VIEW",
+			reg_exp: new RegExp(/\bvi[iew]{1,}\b/i)
+		},
+		delete: {
+			word: "TASK_DELETE",
+			reg_exp: new RegExp(/\bdel[elete]{3,}\b/i)
+		},
+		edit: {
+			word: "TASK_EDIT",
+			reg_exp: new RegExp(/\bed[dit]{1,}\b/i)
+		},
+		work: {
+			word: "TASK_WORK",
+			reg_exp: new RegExp(/\b(do[o]?|wor[ork]{1,})\b/i)
+		}
+	},
 	FINISH_WORD: {
 		word: "done",
 		reg_exp: new RegExp(/^d[one]{2,}\b/i)

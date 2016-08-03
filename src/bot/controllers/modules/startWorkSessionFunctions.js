@@ -12,20 +12,6 @@ import { colorsArray, THANK_YOU, buttonValues, colorsHash, startSessionOptionsAt
  * 		START WORK SESSION CONVERSATION FLOW FUNCTIONS
  */
 
-
-// user just started conversation and is choosing which tasks to work on
-// this is the starting point to all other functions here!
-export function startSessionStartConversation(response, convo) {
-
-	const { task }                = convo;
-	const { bot, source_message } = task;
-
-	convo.say("Let's do it :weight_lifter:");
-	askWhichTaskToWorkOn(convo);
-	convo.next();
-
-}
-
 /**
  *    ENTRY POINTS INTO THE ACTUAL SESSION (FINALIZE CONFIRM)
  */
