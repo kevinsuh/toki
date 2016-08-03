@@ -167,65 +167,62 @@ var checkForReminders = () => {
 						} else {
 
 							const SlackUserId = user.SlackUser.SlackUserId 
-							// alarm is up for reminder
-							// send the message!
-							bot.startPrivateConversation({
-								user: SlackUserId
-							}, (err, convo) => {
 
-								if (convo) {
+							if (reminder.type == "start_work") {
+								// this type of reminder will immediately ask user if they want to get started
+								reminder.getDailyTask({
+									include: [ models.Task ]
+								})
+								.then((dailyTask) => {
 
-									if (reminder.type == "start_work") {
-										// this type of reminder will immediately ask user if they want to get started
-										reminder.getDailyTask({
-											include: [ models.Task ]
+									bot.startPrivateConversation({
+										user: SlackUserId
+									}, (err, convo) => {
+
+										convo.sessionStart = {
+											SlackUserId,
+											UserId,
+											tz,
+											bot
+										}
+
+										if (dailyTask) {
+											convo.sessionStart.dailyTask = dailyTask;
+										} else {
+											convo.say(`Hey! Time to start on a work session :smiley:`);
+										}
+
+										finalizeTimeAndTasksToStart(convo);
+										convo.next();
+
+										convo.on('end', (convo) => {
+
+											closeOldRemindersAndSessions(user);
+
+											setTimeout(() => {
+												console.log("\n\n\n end of start session ");
+												console.log(convo.sessionStart);
+												console.log("\n\n\n");
+												startSessionWithConvoObject(convo.sessionStart);
+											}, 1000);
+
 										})
-										.then((dailyTask) => {
+									
+									});
+								})
 
-											convo.sessionStart = {
-												SlackUserId,
-												UserId,
-												tz,
-												bot
-											}
+							} else {
 
-											if (dailyTask) {
-												convo.sessionStart.dailyTask = dailyTask;
-												finalizeTimeAndTasksToStart(convo);
-											} else {
-												convo.say(`Hey! Let's get started on that work session :smiley:`);
-												convo.next();
-											}
-
-										})
-
-									} else {
-										// standard reminder
-										var customNote = reminder.customNote ? `(\`${reminder.customNote}\`)` : '';
-										var message = `Hey! You wanted a reminder ${customNote}:alarm_clock: `;
-										convo.say(message);
-									}
-
-									convo.on('end', (convo) => {
-
-										closeOldRemindersAndSessions(user);
-
-										setTimeout(() => {
-
-											console.log("\n\n\n end of start session ");
-											console.log(convo.sessionStart);
-											console.log("\n\n\n");
-
-											startSessionWithConvoObject(convo.sessionStart);
-
-
-										}, 1000);
-
-									})
-
-								}
-								
-							});
+								bot.startPrivateConversation({
+									user: SlackUserId
+								}, (err, convo) => {
+									// standard reminder
+									var customNote = reminder.customNote ? `(\`${reminder.customNote}\`)` : '';
+									var message = `Hey! You wanted a reminder ${customNote}:alarm_clock: `;
+									convo.say(message);
+								});
+									
+							}
 						}
 
 					}

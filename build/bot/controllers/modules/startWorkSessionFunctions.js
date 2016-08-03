@@ -62,11 +62,11 @@ function finalizeTimeAndTasksToStart(convo) {
 	var now = (0, _momentTimezone2.default)();
 
 	// we need both time and task in order to start session
-	if (!calculatedTimeObject || !minutes) {
-		confirmTimeForTask(convo);
-		return;
-	} else if (!dailyTask) {
+	if (!dailyTask) {
 		askWhichTaskToWorkOn(convo);
+		return;
+	} else if (!calculatedTimeObject || !minutes) {
+		confirmTimeForTask(convo);
 		return;
 	}
 
@@ -163,14 +163,22 @@ function askWhichTaskToWorkOn(convo) {
 		(function () {
 			var bot = convo.task.bot;
 
+			var noDailyTask = false;
 			var taskArray = dailyTasks.filter(function (currentDailyTask) {
-				if (currentDailyTask.dataValues.id != dailyTask.dataValues.id) return true;
+				if (!dailyTask) {
+					// weird bug where no dailyTask associated with START_WORK reminder
+					noDailyTask = true;
+					return true;
+				} else if (currentDailyTask.dataValues.id != dailyTask.dataValues.id) {
+					return true;
+				}
 			});
 			var options = { dontUsePriority: true };
 			var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 			if (question == '') {
 				question = 'Which task would you like to work on instead?';
 			}
+			if (noDailyTask) question = 'Which task would you like to work on?';
 			var message = question + '\n' + taskListMessage;
 			convo.ask({
 				text: message,

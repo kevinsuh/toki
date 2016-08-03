@@ -37,11 +37,11 @@ export function finalizeTimeAndTasksToStart(convo) {
 	let now = moment();
 
 	// we need both time and task in order to start session
-	if (!calculatedTimeObject || !minutes) {
-		confirmTimeForTask(convo);
-		return;
-	} else if (!dailyTask) {
+	if (!dailyTask) {
 		askWhichTaskToWorkOn(convo);
+		return;
+	} else if (!calculatedTimeObject || !minutes) {
+		confirmTimeForTask(convo);
 		return;
 	}
 
@@ -144,15 +144,22 @@ function askWhichTaskToWorkOn(convo, question = '') {
 		getUserDailyTasks(convo);
 	} else {
 		const { task: { bot } } = convo;
+		let noDailyTask = false;
 		let taskArray = dailyTasks.filter((currentDailyTask) => {
-			if (currentDailyTask.dataValues.id != dailyTask.dataValues.id)
+			if (!dailyTask) {
+				// weird bug where no dailyTask associated with START_WORK reminder
+				noDailyTask = true;
 				return true;
+			} else if (currentDailyTask.dataValues.id != dailyTask.dataValues.id){
+				return true;
+			}
 		});
 		let options = { dontUsePriority: true }
 		let taskListMessage = convertArrayToTaskListMessage(taskArray, options);
 		if (question == '') {
 			question = `Which task would you like to work on instead?`
 		}
+		if (noDailyTask) question = `Which task would you like to work on?`
 		let message = `${question}\n${taskListMessage}`;
 		convo.ask({
 			text: message,

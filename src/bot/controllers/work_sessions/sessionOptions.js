@@ -104,7 +104,7 @@ export default function(controller) {
 								});
 
 								timeString = convertMinutesToHoursString(minutesRemaining);
-								message    = `Your session is paused :double_vertical_bar:. You have *${timeString}* remaining for ${tasksToWorkOnString}`;
+								message    = `Your session is paused :double_vertical_bar:. You have *${timeString}* remaining for \`${tasksToWorkOnString}\``;
 
 							}
 							// making this just a reminder now so that user can end his own session as he pleases
@@ -229,7 +229,7 @@ export default function(controller) {
 
 										bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 											convo.say({
-												text: `Good luck with ${tasksString}!\n\nSee you in ${timeString} at *${endTimeString}* :timer_clock:`,
+												text: `Resumed :arrow_forward:! Good luck with \`${tasksString}\`!\n\nSee you in ${timeString} at *${endTimeString}* :timer_clock:`,
 												attachments: startSessionOptionsAttachments
 											});
 											convo.next();
