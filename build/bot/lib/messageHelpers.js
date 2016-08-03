@@ -341,9 +341,9 @@ function createTaskListMessageBody(taskArray, options) {
 			var timeString = convertMinutesToHoursString(minutesInt);
 
 			if (options.emphasizeMinutes) {
-				minutesMessage = ' *_(for ' + timeString + ')_*';
+				minutesMessage = ' *_(' + timeString + ' remaining)_*';
 			} else {
-				minutesMessage = ' (for ' + timeString + ')';
+				minutesMessage = ' (' + timeString + ' remaining)';
 			}
 		}
 

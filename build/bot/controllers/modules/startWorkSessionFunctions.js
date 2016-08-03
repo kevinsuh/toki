@@ -152,7 +152,7 @@ function askWhichTaskToWorkOn(convo) {
 			var noDailyTask = false;
 			var taskArray = dailyTasks.filter(function (currentDailyTask) {
 				if (!dailyTask) {
-					// weird bug where no dailyTask associated with START_WORK reminder
+					// uncommon situation where reminder has no dailyTask
 					noDailyTask = true;
 					return true;
 				} else if (currentDailyTask.dataValues.id != dailyTask.dataValues.id) {

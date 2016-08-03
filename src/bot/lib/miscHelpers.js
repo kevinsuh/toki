@@ -311,25 +311,25 @@ export function getPlanCommandOptionAttachments(options = {}) {
 	let actions = [ 
 		{
 			name: buttonValues.planCommands.addTasks.name,
-			text: "Add Tasks",
+			text: "Add Priority",
 			value: buttonValues.planCommands.addTasks.value,
 			type: "button"
 		},
 		{
 				name: buttonValues.planCommands.completeTasks.name,
-				text: "Check Off Tasks",
+				text: "Complete Priority",
 				value: buttonValues.planCommands.completeTasks.value,
 				type: "button"
 		},
 		{
 				name: buttonValues.planCommands.deleteTasks.name,
-				text: "Delete Tasks",
+				text: "Delete Priority",
 				value: buttonValues.planCommands.deleteTasks.value,
 				type: "button"
 		},
 		{
 				name: buttonValues.planCommands.workOnTasks.name,
-				text: "Work on Tasks",
+				text: "New Session",
 				value: buttonValues.planCommands.workOnTasks.value,
 				type: "button"
 		}];

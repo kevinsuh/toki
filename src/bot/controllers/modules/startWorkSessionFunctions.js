@@ -132,8 +132,7 @@ function askWhichTaskToWorkOn(convo, question = '') {
 		const { task: { bot } } = convo;
 		let noDailyTask = false;
 		let taskArray = dailyTasks.filter((currentDailyTask) => {
-			if (!dailyTask) {
-				// weird bug where no dailyTask associated with START_WORK reminder
+			if (!dailyTask) { // uncommon situation where reminder has no dailyTask
 				noDailyTask = true;
 				return true;
 			} else if (currentDailyTask.dataValues.id != dailyTask.dataValues.id){

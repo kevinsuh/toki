@@ -139,12 +139,6 @@ function specificCommandFlow(convo) {
 			break;
 	}
 
-	// sayEndOfPlanMessage(convo);
-
-	// if (remainingTasks.length == 0) {
-	// 	askForTaskListOptionsIfNoRemainingTasks(convo);
-	// }
-
 	convo.next();
 
 }
@@ -152,8 +146,6 @@ function specificCommandFlow(convo) {
 /**
  * 			~~ editTaskListFunctions Helper Messages ~~
  */
-
-
 function getRemainingTasks(fullTaskArray, newTasks) {
 	var remainingTasks = [];
 	fullTaskArray.forEach((task) => {
@@ -193,11 +185,9 @@ function sayEndOfPlanMessage(convo) {
 				// currently paused
 				minutes       = storedWorkSession.dataValues.minutes;
 				minutesString = convertMinutesToHoursString(minutes);
-				workSessionMessage = `Your session is still paused :double_vertical_bar: You have *${minutesString}* remaining for ${sessionTasks}`;
-			} else {
-				// currently live (handled by checkWorkSessionForLiveTasks)
-				// workSessionMessage = `You're currently in a session for ${sessionTasks} until *${endTimeString}* (${minutesString} left)`;
+				workSessionMessage = `Your session is still paused :double_vertical_bar:. `;
 			}
+			workSessionMessage = `${workSessionMessage}You're working on \`${sessionTasks}\` and have ${minutesString} remaining for the session`;
 			convo.say(workSessionMessage);
 		} else {
 			convo.say(`Let me know if there's anything you want to do :muscle: \`i.e. lets do task 2\``);
@@ -251,6 +241,7 @@ function sayTasksForToday(convo, options = {}) {
 			text: taskListMessage,
 			attachments
 		});
+		sayEndOfPlanMessage(convo);
 	}
 
 }
@@ -275,7 +266,6 @@ function viewTasksFlow(convo) {
 	// say task list, then ask which ones to complete
 	let options = { noTitle: true, endOfPlan: true, homeBase: true };
 	sayTasksForToday(convo, options);
-	sayEndOfPlanMessage(convo);
 	convo.next();
 
 }
@@ -448,7 +438,6 @@ function completeTasksFlow(convo) {
 							let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
 
 							singleLineCompleteTask(convo, taskNumbersToCompleteArray);
-							sayEndOfPlanMessage(convo);
 
 						} else {
 							convo.say("Oops, I don't totally understand :dog:. Let's try this again");
@@ -634,7 +623,6 @@ function deleteTasksFlow(convo) {
 							deleteMostRecentPlanMessage(response.channel, bot);
 
 							singleLineDeleteTask(convo, taskNumbersToDeleteArray);
-							sayEndOfPlanMessage(convo);
 
 						} else {
 							convo.say("Oops, I don't totally understand :dog:. Let's try this again");
@@ -1013,8 +1001,6 @@ function addNewTasksToTaskList(response, convo) {
 	let options = { dontUseDataValues: true, onlyRemainingTasks: true, customTaskListMessage: taskListMessage };
 	sayTasksForToday(convo, options);
 
-	sayEndOfPlanMessage(convo);
-
 	convo.next();
 
 }
@@ -1073,31 +1059,27 @@ function workOnTasksFlow(convo) {
 	let baseMessage = '';
 
 	if (changedPlanCommands) {
-		baseMessage = `Okay! Which of your task(s) above would you like to`;
+		baseMessage = `Okay! Which priority above would you like to`;
 	} else {
-		baseMessage = `Which of your task(s) above would you like to`;
+		baseMessage = `Which priority above would you like to`;
 		sayTasksForToday(convo, options);
 	}
 
 	let wordSwapCount = 0;
-	let message       = wordSwapMessage(baseMessage, "work on?", wordSwapCount);
+	let message       = wordSwapMessage(baseMessage, "work towards?", wordSwapCount);
 
 	convo.ask({
 		text: message,
-		attachments: [ {
+		attachments: [{
 			attachment_type: 'default',
-			callback_id: "TASK_WORK",
-			fallback: "Which of your task(s) would you like to work on?"
+			callback_id: "CHOOSE_FROM_PLAN",
+			fallback: "Which priority would you like to work towards?"
 		}]
 	}, [
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
-
-				// delete the plan if "never mind"
-				deleteMostRecentPlanMessage(response.channel, bot);
-
-				convo.say("Okay, let me know if you still want to work on a task :muscle: ");
+				convo.say("Okay, let me know if you still want to work towards an outcome :muscle:");
 				convo.next();
 			}
 		},
@@ -1110,27 +1092,18 @@ function workOnTasksFlow(convo) {
 					text = response.actions[0].value;
 				}
 
-				// if key word exists, we are stopping early and do the other flow!
 				if (constants.PLAN_DECISION.add.reg_exp.test(text) || constants.PLAN_DECISION.complete.reg_exp.test(text) || constants.PLAN_DECISION.delete.reg_exp.test(text)) {
 
-					// let's delete the most recent ask message
-					deleteConvoAskMessage(response.channel, bot);
-
-					// handling add task flow differently -- we will delete plan for now
-					if (constants.PLAN_DECISION.add.reg_exp.test(text)) {
-						deleteMostRecentPlanMessage(response.channel, bot);
-					}
-
+					// CHANGE COMMANDS
+					
 					changePlanCommand.decision = true;
 					changePlanCommand.text     = text
-				}
-
-				if (changePlanCommand.decision) {
 					convo.stop();
 					convo.next();
 				} else {
 
-					// otherwise do the expected, default decision!
+					// DO EXPECTED, DEFAULT DECISION
+					
 					let taskNumbersToWorkOnArray = convertTaskNumberStringToArray(response.text, dailyTasks);
 
 					if (constants.PLAN_DECISION.work.reg_exp.test(text) && !taskNumbersToWorkOnArray) {
@@ -1146,21 +1119,17 @@ function workOnTasksFlow(convo) {
 
 					} else {
 
-						if (taskNumbersToWorkOnArray) {
+						// ACTUAL FLOW OF CHOOSING TASK TO WORK ON
 
-							// delete the plan if you finish completing a task
-							deleteMostRecentPlanMessage(response.channel, bot);
+						if (taskNumbersToWorkOnArray) {
 
 							// say task list, then ask which ones to complete
 							let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
 
 							singleLineWorkOnTask(convo, taskNumbersToWorkOnArray);
-							// sayTasksForToday(convo, options);
-							// sayEndOfPlanMessage(convo);
 
 						} else {
-							convo.say("Oops, I don't totally understand :dog:. Let's try this again");
-							convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+							convo.say("Oops, I don't totally understand :dog:. Please pick one priority from your remaining list like `priority 2` or say `never mind`");
 							convo.repeat();
 						}
 						convo.next();

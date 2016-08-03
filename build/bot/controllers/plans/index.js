@@ -363,16 +363,18 @@ exports.default = function (controller) {
 							console.log("\n\n\n at end of convo planEdit");
 							console.log(convo.planEdit);
 
+							// this means we are changing the plan!
+							if (changePlanCommand.decision) {
+								var _message = { text: changePlanCommand.text };
+								var _config = { SlackUserId: SlackUserId, message: _message, changePlanCommand: changePlanCommand };
+								controller.trigger('plan_command_center', [bot, _config]);
+								return;
+							}
+
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+
 							/*
-       	// this means we are changing the plan!
-       if (changePlanCommand.decision) {
-       	let message = { text: changePlanCommand.text };
-       	let config = { SlackUserId, message, changePlanCommand }
-       	controller.trigger(`plan_command_center`, [ bot, config ]);
-       	return;
-       }
-       	resumeQueuedReachouts(bot, { SlackUserId });
-       	if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
+       if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
        	var config = {
        		SlackUserId,
        		dailyTasksToWorkOn
@@ -458,7 +460,7 @@ exports.default = function (controller) {
        		checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
        	}
        }, 750);
-       	*/
+       */
 						});
 					});
 				});

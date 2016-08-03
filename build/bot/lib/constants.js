@@ -405,19 +405,19 @@ var buttonValues = exports.buttonValues = {
 	planCommands: { // value will be NL single line commands
 		deleteTasks: {
 			name: "PLAN_DELETE_TASKS",
-			value: "delete tasks"
+			value: "delete priorities"
 		},
 		completeTasks: {
 			name: "PLAN_COMPLETE_TASKS",
-			value: "complete tasks"
+			value: "complete priorities"
 		},
 		addTasks: {
 			name: "PLAN_ADD_TASKS",
-			value: "add tasks"
+			value: "add priorities"
 		},
 		workOnTasks: {
 			name: "PLAN_WORK_ON_TASKS",
-			value: "work on tasks"
+			value: "work on priorities"
 		}
 	},
 	endOfPlanCommands: { // value will be NL single line commands

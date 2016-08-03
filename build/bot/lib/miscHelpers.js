@@ -333,22 +333,22 @@ function getPlanCommandOptionAttachments() {
 
 	var actions = [{
 		name: _constants.buttonValues.planCommands.addTasks.name,
-		text: "Add Tasks",
+		text: "Add Priority",
 		value: _constants.buttonValues.planCommands.addTasks.value,
 		type: "button"
 	}, {
 		name: _constants.buttonValues.planCommands.completeTasks.name,
-		text: "Check Off Tasks",
+		text: "Complete Priority",
 		value: _constants.buttonValues.planCommands.completeTasks.value,
 		type: "button"
 	}, {
 		name: _constants.buttonValues.planCommands.deleteTasks.name,
-		text: "Delete Tasks",
+		text: "Delete Priority",
 		value: _constants.buttonValues.planCommands.deleteTasks.value,
 		type: "button"
 	}, {
 		name: _constants.buttonValues.planCommands.workOnTasks.name,
-		text: "Work on Tasks",
+		text: "New Session",
 		value: _constants.buttonValues.planCommands.workOnTasks.value,
 		type: "button"
 	}];
