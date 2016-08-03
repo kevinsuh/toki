@@ -479,36 +479,36 @@ export const timeZones = {
 
 export const tokiOptionsAttachment = [
 	{
-		text: "planning which tasks you intend to work on each day",
-		color: colorsHash.blue.hex,
-		mrkdwn_in: [ "text" ],
-		attachment_type: "default",
-		callback_id: "TOKI_OPTIONS",
-		fallback: "Starting your day"
-	},
-	{
-		text: "launching work sessions to get those tasks done",
-		color: colorsHash.green.hex,
-		mrkdwn_in: [ "text" ],
-		attachment_type: "default",
-		callback_id: "TOKI_OPTIONS",
-		fallback: "Launching work sessions"
-	},
-	{
-		text: "setting reminders to keep you on top of your tasks and obligations",
-		color: colorsHash.yellow.hex,
-		mrkdwn_in: [ "text" ],
-		attachment_type: "default",
-		callback_id: "TOKI_OPTIONS",
-		fallback: "Setting reminders"
-	},
-	{
-		text: "adjusting your prioritized tasks on the fly",
+		text: "Instead of treating each day as a never-ending list of todos, I help you *identify the top 3 priorities* that define your day, *_and actually accomplish them_*",
 		color: colorsHash.salmon.hex,
 		mrkdwn_in: [ "text" ],
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
-		fallback: "Starting your day"
+		fallback: "Identify and do your 3 priorities"
+	},
+	{
+		text: "These are often the priorities that are difficult to make time for and get focused on, but are what *create big outcomes for yourself and your team*",
+		color: colorsHash.blue.hex,
+		mrkdwn_in: [ "text" ],
+		attachment_type: "default",
+		callback_id: "TOKI_OPTIONS",
+		fallback: "Do the most important things"
+	},
+	{
+		text: "I realize you likely work on more than three tasks each day. I'm here to make sure you *get 3 things done that are critically important to your day, but might get lost or pushed back* if you don't deliberately make time for them",
+		color: colorsHash.yellow.hex,
+		mrkdwn_in: [ "text" ],
+		attachment_type: "default",
+		callback_id: "TOKI_OPTIONS",
+		fallback: "Accomplish your 3 main priorities to win the day"
+	},
+	{
+		text: "I can also send these top 3 priorities with anyone on your team if you'd like to *share what you're working on*",
+		color: colorsHash.lavendar.hex,
+		mrkdwn_in: [ "text" ],
+		attachment_type: "default",
+		callback_id: "TOKI_OPTIONS",
+		fallback: "Share with your team"
 	}
 ]
 

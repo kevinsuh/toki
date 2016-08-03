@@ -99,7 +99,7 @@ function startOnBoardConversation(err, convo) {
 	
 	const { name } = convo;
 
-	convo.say(`Hey, nice to meet you! My name is Toki, and I'm here to help you win each day`);
+	convo.say(`Hey, ${name}! My name is Toki and I'm your personal sidekick to win each day`);
 	askForUserName(err, convo);
 }
 
@@ -210,9 +210,10 @@ function askForTimeZone(response, convo) {
 
 	const { task: { bot } } = convo;
 
-	convo.say(`Nice to virtually meet you, ${nickName}!`);
-	convo.say(`Instead of treating each day as a never-ending list of todo's, I'm here to help you identify the 3 priorities that define your day, and actually accomplish them`);
-	convo.say(`These are often the priorities that are difficult to make time for and get focused on, but are what create big outcomes for yourself and your team :weight_lifter:`);
+	convo.say({
+		text: `Nice to virtually meet you, ${nickName}! Here's how I help you win the day :trophy::`,
+		attachments: tokiOptionsAttachment
+	});
 
 	convo.ask({
 		text: `Since I help you make time for these outcomes, I need to know which *timezone* you are in!`,
@@ -221,7 +222,7 @@ function askForTimeZone(response, convo) {
 				attachment_type: 'default',
 				callback_id: "ONBOARD",
 				fallback: "What's your timezone?",
-				color: colorsHash.blue.hex,
+				color: colorsHash.grey.hex,
 				actions: [
 					{
 						name: buttonValues.timeZones.eastern.name,
@@ -312,7 +313,7 @@ function startNewPlanFlow(response, convo) {
 
 	const { timeZone: { tz, name } } = convo.onBoard;
 
-	convo.say(`Awesome, I have you in the *${name}* timezone! Now, let's win our first day together :grin:`);
+	convo.say(`Awesome, I have you in the *${name}* timezone! Now let's win our first day together :grin:`);
 	convo.onBoard.postOnboardDecision = intentConfig.START_DAY;
 	convo.next();
 }
