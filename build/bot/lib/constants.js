@@ -537,6 +537,14 @@ var buttonValues = exports.buttonValues = {
 		moveOn: {
 			name: "MOVE_ON",
 			value: "Let's move on!"
+		},
+		itWasSomethingElse: {
+			name: "DONE_SESSION_IT_WAS_SOMETHING_ELSE",
+			value: "it was something else!"
+		},
+		keepMyPriority: {
+			name: "DONE_SESSION_KEEP_MY_PRIORITIES",
+			value: "i'll keep my priorities!!"
 		}
 	},
 	doneWithBreak: {

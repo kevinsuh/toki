@@ -145,7 +145,7 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 	}, { // spentTimeOnSomethingElse
 		pattern: _botResponses.utterances.somethingElse,
 		callback: function callback(response, convo) {
-			askToReplacePriority(convo);
+			switchWorkedOnPriority(convo);
 			convo.next();
 		}
 	}, {
@@ -234,11 +234,82 @@ function askForAdditionalTimeToPriority(response, convo) {
 	}]);
 }
 
-function askToReplacePriority(convo) {
+function switchWorkedOnPriority(convo) {
 	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
 	var _convo$sessionDone3 = convo.sessionDone;
 	var dailyTasks = _convo$sessionDone3.dailyTasks;
-	var dailyTask = _convo$sessionDone3.currentSession.dailyTask;
+	var defaultBreakTime = _convo$sessionDone3.defaultBreakTime;
+
+
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
+	if (question == '') {
+		question = 'Which one of your 3 priorities did you work on?\n' + taskListMessage;
+	}
+
+	var buttonsValuesArray = [_constants.buttonValues.doneSession.itWasSomethingElse.value, _constants.buttonValues.neverMind.value];
+
+	var text = question;
+	var attachmentsConfig = { buttonsValuesArray: buttonsValuesArray };
+	var attachments = (0, _messageHelpers.getDoneSessionMessageAttachments)(attachmentsConfig);
+
+	convo.ask({
+		text: text,
+		attachments: attachments
+	}, [{ // spentTimeOnSomethingElse
+		pattern: _botResponses.utterances.somethingElse,
+		callback: function callback(response, convo) {
+			askToReplacePriority(convo);
+			convo.next();
+		}
+	}, {
+		// never mind
+		pattern: _botResponses.utterances.containsNoOrNeverMindOrNothing,
+		callback: function callback(response, convo) {
+
+			var buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriorityTonedDown.value, _constants.buttonValues.doneSession.didSomethingElse.value, _constants.buttonValues.doneSession.notDone.value, _constants.buttonValues.doneSession.extendSession.value];
+
+			var attachmentsConfig = { defaultBreakTime: defaultBreakTime, buttonsValuesArray: buttonsValuesArray };
+			var attachments = (0, _messageHelpers.getDoneSessionMessageAttachments)(attachmentsConfig);
+			var text = 'Okay! What would you like to do with this session?';
+			convoAskDoneSessionOptions(convo, text, attachments);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+
+			// needs to be a number, else repeat question
+			var taskNumberArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, dailyTasks);
+			if (taskNumberArray && taskNumberArray.length == 1) {
+
+				var taskNumber = taskNumberArray[0]; // only one
+
+				var dailyTaskIndexToReplace = taskNumber - 1;
+				convo.sessionDone.replacePriority.dailyTaskIndexToReplace = dailyTaskIndexToReplace;
+				convo.say('Let\'s gooooo. You\'re one step closer to winning the day!');
+				var _buttonsValuesArray2 = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.newSession.value, _constants.buttonValues.doneSession.viewPlan.value];
+				var _attachmentsConfig2 = { defaultBreakTime: defaultBreakTime, buttonsValuesArray: _buttonsValuesArray2 };
+				var _attachments2 = (0, _messageHelpers.getDoneSessionMessageAttachments)(_attachmentsConfig2);
+				var _text2 = 'Let\'s take a well-deserved break and get after it when you return';
+				convoAskDoneSessionOptions(convo, _text2, _attachments2);
+
+				convo.next();
+			} else {
+				// error
+				var _question = "Sorry, I didn't get that :thinking_face:. Let me know which priority you want to replace above `i.e. priority 2`";
+				askToReplacePriority(convo, _question);
+				convo.next();
+			}
+		}
+	}]);
+}
+
+function askToReplacePriority(convo) {
+	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
+	var _convo$sessionDone4 = convo.sessionDone;
+	var defaultBreakTime = _convo$sessionDone4.defaultBreakTime;
+	var dailyTasks = _convo$sessionDone4.dailyTasks;
+	var dailyTask = _convo$sessionDone4.currentSession.dailyTask;
 
 
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
@@ -246,20 +317,14 @@ function askToReplacePriority(convo) {
 		question = 'Great! If you want to log this with me, it will replace one of your priorities. Which priority would you like to replace?\n' + taskListMessage;
 	}
 
+	var buttonsValuesArray = [_constants.buttonValues.doneSession.keepMyPriority.value];
+	var attachmentsConfig = { defaultBreakTime: defaultBreakTime, buttonsValuesArray: buttonsValuesArray };
+	var attachments = (0, _messageHelpers.getDoneSessionMessageAttachments)(attachmentsConfig);
+	var text = question;
+
 	convo.ask({
-		text: question,
-		attachments: [{
-			attachment_type: 'default',
-			callback_id: "REPLACE_PRIORITY",
-			fallback: "Do you want to replace a priority?",
-			color: _constants.colorsHash.grey.hex,
-			actions: [{
-				name: _constants.buttonValues.keepPriority.name,
-				text: "I'll keep my priorities",
-				value: _constants.buttonValues.keepPriority.value,
-				type: "button"
-			}]
-		}]
+		text: text,
+		attachments: attachments
 	}, [{ // keepPriority
 		pattern: _botResponses.utterances.containsKeep,
 		callback: function callback(response, convo) {
@@ -288,8 +353,8 @@ function askToReplacePriority(convo) {
 				convo.next();
 			} else {
 				// error
-				var _question = "Sorry, I didn't get that :thinking_face:. Let me know which priority you want to replace above `i.e. priority 2`";
-				askToReplacePriority(convo, _question);
+				var _question2 = "Sorry, I didn't get that :thinking_face:. Let me know which priority you want to replace above `i.e. priority 2`";
+				askToReplacePriority(convo, _question2);
 				convo.next();
 			}
 		}
@@ -297,10 +362,10 @@ function askToReplacePriority(convo) {
 }
 
 function askForPriorityReplacement(convo) {
-	var _convo$sessionDone4 = convo.sessionDone;
-	var dailyTasks = _convo$sessionDone4.dailyTasks;
-	var dailyTaskIndexToReplace = _convo$sessionDone4.replacePriority.dailyTaskIndexToReplace;
-	var dailyTask = _convo$sessionDone4.currentSession.dailyTask;
+	var _convo$sessionDone5 = convo.sessionDone;
+	var dailyTasks = _convo$sessionDone5.dailyTasks;
+	var dailyTaskIndexToReplace = _convo$sessionDone5.replacePriority.dailyTaskIndexToReplace;
+	var dailyTask = _convo$sessionDone5.currentSession.dailyTask;
 
 
 	if (dailyTasks[dailyTaskIndexToReplace]) {
@@ -361,11 +426,11 @@ function askForPriorityReplacement(convo) {
 }
 
 function askForTimeToReplacementPriority(convo) {
-	var _convo$sessionDone5 = convo.sessionDone;
-	var tz = _convo$sessionDone5.tz;
-	var _convo$sessionDone5$r = _convo$sessionDone5.replacePriority;
-	var dailyTaskIndexToReplace = _convo$sessionDone5$r.dailyTaskIndexToReplace;
-	var newTaskText = _convo$sessionDone5$r.newTaskText;
+	var _convo$sessionDone6 = convo.sessionDone;
+	var tz = _convo$sessionDone6.tz;
+	var _convo$sessionDone6$r = _convo$sessionDone6.replacePriority;
+	var dailyTaskIndexToReplace = _convo$sessionDone6$r.dailyTaskIndexToReplace;
+	var newTaskText = _convo$sessionDone6$r.newTaskText;
 
 
 	if (newTaskText) {
@@ -395,12 +460,12 @@ function askForTimeToReplacementPriority(convo) {
 }
 
 function replaceDailyTasksWithNewPriority(convo) {
-	var _convo$sessionDone6 = convo.sessionDone;
-	var dailyTasks = _convo$sessionDone6.dailyTasks;
-	var _convo$sessionDone6$r = _convo$sessionDone6.replacePriority;
-	var dailyTaskIndexToReplace = _convo$sessionDone6$r.dailyTaskIndexToReplace;
-	var newTaskText = _convo$sessionDone6$r.newTaskText;
-	var additionalMinutes = _convo$sessionDone6$r.additionalMinutes;
+	var _convo$sessionDone7 = convo.sessionDone;
+	var dailyTasks = _convo$sessionDone7.dailyTasks;
+	var _convo$sessionDone7$r = _convo$sessionDone7.replacePriority;
+	var dailyTaskIndexToReplace = _convo$sessionDone7$r.dailyTaskIndexToReplace;
+	var newTaskText = _convo$sessionDone7$r.newTaskText;
+	var additionalMinutes = _convo$sessionDone7$r.additionalMinutes;
 
 
 	if (dailyTasks && dailyTasks[dailyTaskIndexToReplace] && newTaskText) {
@@ -428,10 +493,10 @@ function getBreakTime(response, convo) {
 	var _response$intentObjec3 = response.intentObject.entities;
 	var duration = _response$intentObjec3.duration;
 	var datetime = _response$intentObjec3.datetime;
-	var _convo$sessionDone7 = convo.sessionDone;
-	var tz = _convo$sessionDone7.tz;
-	var defaultBreakTime = _convo$sessionDone7.defaultBreakTime;
-	var UserId = _convo$sessionDone7.UserId;
+	var _convo$sessionDone8 = convo.sessionDone;
+	var tz = _convo$sessionDone8.tz;
+	var defaultBreakTime = _convo$sessionDone8.defaultBreakTime;
+	var UserId = _convo$sessionDone8.UserId;
 
 	var now = (0, _momentTimezone2.default)();
 
@@ -487,11 +552,11 @@ function getExtendSessionTime(response, convo) {
 	var _response$intentObjec4 = response.intentObject.entities;
 	var duration = _response$intentObjec4.duration;
 	var datetime = _response$intentObjec4.datetime;
-	var _convo$sessionDone8 = convo.sessionDone;
-	var tz = _convo$sessionDone8.tz;
-	var defaultSnoozeTime = _convo$sessionDone8.defaultSnoozeTime;
-	var UserId = _convo$sessionDone8.UserId;
-	var dailyTask = _convo$sessionDone8.currentSession.dailyTask;
+	var _convo$sessionDone9 = convo.sessionDone;
+	var tz = _convo$sessionDone9.tz;
+	var defaultSnoozeTime = _convo$sessionDone9.defaultSnoozeTime;
+	var UserId = _convo$sessionDone9.UserId;
+	var dailyTask = _convo$sessionDone9.currentSession.dailyTask;
 
 	var now = (0, _momentTimezone2.default)();
 

@@ -906,6 +906,30 @@ export function getDoneSessionMessageAttachments(config = {}) {
 					type: "button"
 				})
 				break;
+			case buttonValues.doneSession.itWasSomethingElse.value:
+				actions.push({
+					name: buttonValues.doneSession.itWasSomethingElse.name,
+					text: "Something else!",
+					value: buttonValues.doneSession.itWasSomethingElse.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.neverMind.value:
+				actions.push({
+					name: buttonValues.neverMind.name,
+					text: "Never mind",
+					value: buttonValues.neverMind.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.keepMyPriority.value:
+				actions.push({
+					name: buttonValues.doneSession.keepMyPriority.name,
+					text: "I'll keep my priorities",
+					value: buttonValues.doneSession.keepMyPriority.value,
+					type: "button"
+				})
+				break;
 			default: break;
 		}
 	});

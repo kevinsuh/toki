@@ -153,7 +153,7 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 		{ // spentTimeOnSomethingElse
 			pattern: utterances.somethingElse,
 			callback: (response, convo) => {
-				askToReplacePriority(convo);
+				switchWorkedOnPriority(convo);
 				convo.next();
 			}
 		},
@@ -249,33 +249,112 @@ function askForAdditionalTimeToPriority(response, convo) {
 
 }
 
+function switchWorkedOnPriority(convo, question = '') {
+
+	const { sessionDone: { dailyTasks, defaultBreakTime } } = convo;
+
+	let taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+	if (question == '') {
+		question = `Which one of your 3 priorities did you work on?\n${taskListMessage}`;
+	}
+
+	let buttonsValuesArray = [
+		buttonValues.doneSession.itWasSomethingElse.value,
+		buttonValues.neverMind.value
+	];
+
+	let text              = question;
+	let attachmentsConfig = { buttonsValuesArray };
+	let attachments       = getDoneSessionMessageAttachments(attachmentsConfig);
+
+	convo.ask({
+		text,
+		attachments
+	}, [
+		{ // spentTimeOnSomethingElse
+			pattern: utterances.somethingElse,
+			callback: (response, convo) => {
+				askToReplacePriority(convo);
+				convo.next();
+			}
+		},
+		{
+			// never mind
+			pattern: utterances.containsNoOrNeverMindOrNothing,
+			callback: (response, convo) => {
+
+				let buttonsValuesArray = [
+					buttonValues.doneSession.completedPriorityTonedDown.value,
+					buttonValues.doneSession.didSomethingElse.value,
+					buttonValues.doneSession.notDone.value,
+					buttonValues.doneSession.extendSession.value
+				];
+
+				let attachmentsConfig  = { defaultBreakTime, buttonsValuesArray };
+				let attachments = getDoneSessionMessageAttachments(attachmentsConfig);
+				let text = `Okay! What would you like to do with this session?`;
+				convoAskDoneSessionOptions(convo, text, attachments);
+				convo.next();
+
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+
+				// needs to be a number, else repeat question
+				let taskNumberArray = convertTaskNumberStringToArray(response.text, dailyTasks);
+				if (taskNumberArray && taskNumberArray.length == 1) {
+
+					let taskNumber = taskNumberArray[0]; // only one
+
+					let dailyTaskIndexToReplace = taskNumber - 1;
+					convo.sessionDone.replacePriority.dailyTaskIndexToReplace = dailyTaskIndexToReplace;
+					convo.say(`Let's gooooo. You're one step closer to winning the day!`);
+					let buttonsValuesArray = [
+						buttonValues.doneSession.takeBreak.value,
+						buttonValues.doneSession.newSession.value,
+						buttonValues.doneSession.viewPlan.value
+					];
+					let attachmentsConfig  = { defaultBreakTime, buttonsValuesArray };
+					let attachments = getDoneSessionMessageAttachments(attachmentsConfig);
+					let text = `Let's take a well-deserved break and get after it when you return`;
+					convoAskDoneSessionOptions(convo, text, attachments);
+
+					convo.next();
+
+				} else {
+					// error
+					let question = "Sorry, I didn't get that :thinking_face:. Let me know which priority you want to replace above `i.e. priority 2`";
+					askToReplacePriority(convo, question);
+					convo.next();
+				}
+
+			}
+		}
+	]);
+
+}
+
 function askToReplacePriority(convo, question = '') {
 
-	const { sessionDone: { dailyTasks, currentSession: { dailyTask } } } = convo;
+	const { sessionDone: { defaultBreakTime, dailyTasks, currentSession: { dailyTask } } } = convo;
 
 	let taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 	if (question == '') {
 		question = `Great! If you want to log this with me, it will replace one of your priorities. Which priority would you like to replace?\n${taskListMessage}`;
 	}
 
+	let buttonsValuesArray = [
+		buttonValues.doneSession.keepMyPriority.value
+	];
+	let attachmentsConfig = { defaultBreakTime, buttonsValuesArray };
+	let attachments       = getDoneSessionMessageAttachments(attachmentsConfig);
+	let text              = question;
+
 	convo.ask({
-		text: question,
-		attachments: [
-			{
-				attachment_type: 'default',
-				callback_id: "REPLACE_PRIORITY",
-				fallback: "Do you want to replace a priority?",
-				color: colorsHash.grey.hex,
-				actions: [
-					{
-							name: buttonValues.keepPriority.name,
-							text: "I'll keep my priorities",
-							value: buttonValues.keepPriority.value,
-							type: "button"
-					}
-				]
-			}
-		]
+		text,
+		attachments
 	}, [
 		{ // keepPriority
 			pattern: utterances.containsKeep,

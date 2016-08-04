@@ -925,6 +925,30 @@ function getDoneSessionMessageAttachments() {
 					type: "button"
 				});
 				break;
+			case _constants.buttonValues.doneSession.itWasSomethingElse.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.itWasSomethingElse.name,
+					text: "Something else!",
+					value: _constants.buttonValues.doneSession.itWasSomethingElse.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.neverMind.value:
+				actions.push({
+					name: _constants.buttonValues.neverMind.name,
+					text: "Never mind",
+					value: _constants.buttonValues.neverMind.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.keepMyPriority.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.keepMyPriority.name,
+					text: "I'll keep my priorities",
+					value: _constants.buttonValues.doneSession.keepMyPriority.value,
+					type: "button"
+				});
+				break;
 			default:
 				break;
 		}
