@@ -113,9 +113,9 @@ function doneSessionAskOptions(convo) {
 			convo.next();
 		}
 	}, { // extendSession
-		pattern: _botResponses.utterances.onlyContainsExtend,
+		pattern: _botResponses.utterances.containsExtend,
 		callback: function callback(response, convo) {
-			convo.say("You want to extend your session!");
+			getExtendSessionTime(response, convo);
 			convo.next();
 		}
 	}, { // viewPlan
@@ -140,6 +140,9 @@ function doneSessionAskOptions(convo) {
 		default: true,
 		callback: function callback(response, convo) {
 			convo.say("Sorry, I didn't get that :thinking_face:");
+			convo.say("What would you like to do?");
+			convo.repeat();
+			convo.next();
 		}
 	}]);
 }
@@ -168,13 +171,13 @@ function getBreakTime(response, convo) {
 			convo.say('The default break time is *' + _constants.TOKI_DEFAULT_BREAK_TIME + ' minutes*, but you can change it in your settings by telling me to `show settings`, or you can set a custom break time after any session by saying `break for 20 minutes`, or something like that :grinning:');
 			// first time not updating at convo end...
 			_models2.default.User.update({
-				defaultBreakTime: 10
+				defaultBreakTime: _constants.TOKI_DEFAULT_BREAK_TIME
 			}, {
 				where: ['"Users"."id" = ?', UserId]
 			});
 		}
 
-		customTimeObject = (0, _momentTimezone2.default)().add(_constants.TOKI_DEFAULT_BREAK_TIME, 'minutes');
+		customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(_constants.TOKI_DEFAULT_BREAK_TIME, 'minutes');
 	}
 
 	var customTimeString = customTimeObject.format("h:mm a");
@@ -184,6 +187,7 @@ function getBreakTime(response, convo) {
 		convo.say('I set your default break time to ' + durationMinutes + ' minutes and will check with you then');
 	}
 
+	// push the reminder
 	convo.sessionDone.reminders.push({
 		customNote: 'It\'s been ' + durationMinutes + ' minutes. Let me know when you\'re ready to start a session',
 		remindTime: customTimeObject,
@@ -197,6 +201,66 @@ function getBreakTime(response, convo) {
 		text: 'See you in ' + durationMinutes + ' minutes -- I\'ll let you know when your break is over :palm_tree:',
 		attachments: _constants.endBreakEarlyAttachments
 	});
+
+	convo.next();
+}
+
+// handle break time
+// if button click: default break time
+// if NL, default if no duration or datetime suggested
+function getExtendSessionTime(response, convo) {
+	var text = response.text;
+	var _response$intentObjec2 = response.intentObject.entities;
+	var duration = _response$intentObjec2.duration;
+	var datetime = _response$intentObjec2.datetime;
+	var _convo$sessionDone3 = convo.sessionDone;
+	var tz = _convo$sessionDone3.tz;
+	var defaultSnoozeTime = _convo$sessionDone3.defaultSnoozeTime;
+	var UserId = _convo$sessionDone3.UserId;
+	var dailyTask = _convo$sessionDone3.currentSession.dailyTask;
+
+	var now = (0, _momentTimezone2.default)();
+
+	var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+	if (!customTimeObject) {
+
+		// use default break time if it doesn't exist!
+		if (!defaultSnoozeTime && UserId) {
+			convo.say('Sure thing! Extend Session is all about keeping you in the flow (for future sessions :grin:)');
+			convo.say('You can either hit the Extend Session button, which defaults to *' + _constants.TOKI_DEFAULT_SNOOZE_TIME + '* minutes, or let me know how long you want to extend by saying `extend by 30 minutes` or `extend until 1pm` to keep your current session rolling');
+			convo.say('It’s good to take breaks after focusing for long periods of time, but I want to help you facilitate flow and get out of your way when you’re feeling it :raised_hands:');
+			// first time not updating at convo end...
+			_models2.default.User.update({
+				defaultSnoozeTime: _constants.TOKI_DEFAULT_SNOOZE_TIME
+			}, {
+				where: ['"Users"."id" = ?', UserId]
+			});
+		}
+
+		customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(defaultSnoozeTime, 'minutes');
+	}
+
+	var customTimeString = customTimeObject.format("h:mm a");
+	var durationMinutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+
+	// the extend session time object
+	convo.sessionDone.extendSession = customTimeObject;
+
+	if (!defaultSnoozeTime && UserId) {
+		convo.say({
+			text: 'I’ll see you at *' + customTimeString + '*! :clock1230: _P.S. you can change your default extend by saying `show settings`)_',
+			attachments: _constants.startSessionOptionsAttachments
+		});
+	} else {
+		/**
+   * 	MAIN EXREND SESSION MESSAGE
+   */
+		var taskText = dailyTask.Task.text;
+		convo.say({
+			text: 'You\'re unstoppable! Keep cranking on `' + taskText + '` :wrench: and I\'ll see you in ' + durationMinutes + ' minutes at *' + customTimeString + '*',
+			attachments: _constants.startSessionOptionsAttachments
+		});
+	}
 
 	convo.next();
 }

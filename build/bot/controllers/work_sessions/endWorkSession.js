@@ -75,9 +75,10 @@ exports.default = function (controller) {
 
 					workSession.update({
 						open: false,
-						endTime: now
+						endTime: endTime
 					}).then(function (workSession) {
 
+						var WorkSessionId = workSession.id;
 						var startTime = (0, _momentTimezone2.default)(workSession.startTime).tz(tz);
 						var endTime = (0, _momentTimezone2.default)(workSession.dataValues.endTime).tz(tz);
 						var endTimeString = endTime.format("h:mm a");
@@ -121,12 +122,14 @@ exports.default = function (controller) {
 												sessionTimerUp: sessionTimerUp,
 												reminders: [],
 												currentSession: {
+													WorkSessionId: WorkSessionId,
 													startTime: startTime,
 													endTime: endTime,
 													workSessionMinutes: workSessionMinutes,
 													workSessionTimeString: workSessionTimeString,
 													dailyTask: dailyTask
-												}
+												},
+												extendSession: false
 											};
 
 											if (storedWorkSession) {
@@ -140,14 +143,41 @@ exports.default = function (controller) {
 											(0, _endWorkSessionFunctions.doneSessionAskOptions)(convo);
 
 											convo.on('end', function (convo) {
-												var _convo$sessionDone = convo.sessionDone;
-												var SlackUserId = _convo$sessionDone.SlackUserId;
-												var dailyTask = _convo$sessionDone.dailyTask;
-
 
 												console.log("\n\n\n session is done!");
 												console.log(convo.sessionDone);
 												console.log("\n\n\n");
+
+												var _convo$sessionDone = convo.sessionDone;
+												var SlackUserId = _convo$sessionDone.SlackUserId;
+												var dailyTask = _convo$sessionDone.dailyTask;
+												var reminders = _convo$sessionDone.reminders;
+												var extendSession = _convo$sessionDone.extendSession;
+												var WorkSessionId = _convo$sessionDone.currentSession.WorkSessionId;
+
+												// if extend session, rest doesn't matter!
+
+												if (extendSession) {
+													workSession.update({
+														open: true,
+														live: true,
+														endTime: extendSession
+													});
+													return;
+												}
+
+												reminders.forEach(function (reminder) {
+													var remindTime = reminder.remindTime;
+													var customNote = reminder.customNote;
+													var type = reminder.type;
+
+													_models2.default.Reminder.create({
+														UserId: UserId,
+														remindTime: remindTime,
+														customNote: customNote,
+														type: type
+													});
+												});
 
 												(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 											});

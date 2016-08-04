@@ -86,10 +86,11 @@ export default function(controller) {
 
 					workSession.update({
 						open: false,
-						endTime: now
+						endTime
 					})
 					.then((workSession) => {
 
+						const WorkSessionId       = workSession.id;
 						let startTime             = moment(workSession.startTime).tz(tz);
 						let endTime               = moment(workSession.dataValues.endTime).tz(tz);
 						let endTimeString         = endTime.format("h:mm a");
@@ -136,12 +137,14 @@ export default function(controller) {
 												sessionTimerUp,
 												reminders: [],
 												currentSession: {
+													WorkSessionId,
 													startTime,
 													endTime,
 													workSessionMinutes,
 													workSessionTimeString,
 													dailyTask
-												}
+												},
+												extendSession: false
 											}
 
 											if (storedWorkSession) {
@@ -157,11 +160,32 @@ export default function(controller) {
 
 											convo.on('end', (convo) => {
 
-												const { SlackUserId, dailyTask } = convo.sessionDone;
-
 												console.log("\n\n\n session is done!");
 												console.log(convo.sessionDone);
 												console.log("\n\n\n");
+
+												const { SlackUserId, dailyTask, reminders, extendSession, currentSession: { WorkSessionId } } = convo.sessionDone;
+
+												// if extend session, rest doesn't matter!
+												if (extendSession) {
+													workSession.update({
+														open: true,
+														live: true,
+														endTime: extendSession
+													});
+													return;
+												}
+
+												reminders.forEach((reminder) => {
+													const { remindTime, customNote, type } = reminder;
+													models.Reminder.create({
+														UserId,
+														remindTime,
+														customNote,
+														type
+													});
+												});
+
 
 												resumeQueuedReachouts(bot, { SlackUserId });
 

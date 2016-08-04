@@ -35,6 +35,7 @@ export const utterances = {
 	containsSnooze: new RegExp(/(\bs[snooze]{4,}|\be[extend]{4,})/i),
 	onlyContainsSnooze: new RegExp(/^s[snooze]{4,}$/i),
 	onlyContainsExtend: new RegExp(/^e[extend]{4,}$/i),
+	containsExtend: new RegExp(/\bext[extend]{3,}\b/i),
 	containsElse: new RegExp(/\be[else]{2,}/i),
 	containsShowCommands: new RegExp(/(\bs[show]{2,}|\bc[commands]{4,})/i),
 	containsStartDay: new RegExp(/(\bs[start]{3,}|\bd[day]{2,})/i),
