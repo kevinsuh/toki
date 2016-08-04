@@ -4,9 +4,11 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
+var _utterances;
+
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-var utterances = exports.utterances = _defineProperty({
+var utterances = exports.utterances = (_utterances = {
 	yes: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|(\bd[o ]+[this]{2,})|(\bd[o ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
 	yesOrCorrect: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bc[correct]{4,})/i),
 	no: new RegExp(/((no|not|nah|nope|^n)\b|\bn[oahpe]{1,4}\b)/i),
@@ -70,5 +72,5 @@ var utterances = exports.utterances = _defineProperty({
 	containsNoOne: new RegExp(/\b(no one)\b/i),
 	somethingElse: new RegExp(/\bsome[omething]{3,}\b.*\bel[lse]{2,}\b/i),
 	containsEnough: new RegExp(/\beno[ough]{3,}\b/i)
-}, "containsNew", new RegExp(/\bnew[ew]*\b/i));
+}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _utterances);
 //# sourceMappingURL=botResponses.js.map

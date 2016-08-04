@@ -141,7 +141,9 @@ exports.default = function (controller) {
 															dailyTask: dailyTask,
 															additionalMinutes: false
 														},
-														extendSession: false
+														replacePriority: {},
+														extendSession: false,
+														postSessionDecision: false
 													};
 
 													if (storedWorkSession) {
@@ -165,6 +167,7 @@ exports.default = function (controller) {
 														var dailyTask = _convo$sessionDone.dailyTask;
 														var reminders = _convo$sessionDone.reminders;
 														var extendSession = _convo$sessionDone.extendSession;
+														var postSessionDecision = _convo$sessionDone.postSessionDecision;
 														var WorkSessionId = _convo$sessionDone.currentSession.WorkSessionId;
 
 														// if extend session, rest doesn't matter!
@@ -192,6 +195,17 @@ exports.default = function (controller) {
 														});
 
 														(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+
+														if (postSessionDecision) {
+															var _config = { SlackUserId: SlackUserId };
+															switch (postSessionDecision) {
+																case _constants.intentConfig.VIEW_PLAN:
+																	controller.trigger('plan_command_center', [bot, _config]);
+																	break;
+																default:
+																	break;
+															}
+														}
 													});
 												});
 											});
@@ -267,10 +281,6 @@ var _models2 = _interopRequireDefault(_models);
 var _messageHelpers = require('../../lib/messageHelpers');
 
 var _miscHelpers = require('../../lib/miscHelpers');
-
-var _intents = require('../../lib/intents');
-
-var _intents2 = _interopRequireDefault(_intents);
 
 var _constants = require('../../lib/constants');
 

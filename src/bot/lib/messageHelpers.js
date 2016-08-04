@@ -890,6 +890,23 @@ export function getDoneSessionMessageAttachments(config = {}) {
 					type: "button"
 				})
 				break;
+			case buttonValues.doneSession.didSomethingElse.value:
+				actions.push({
+					name: buttonValues.doneSession.didSomethingElse.name,
+					text: "Did something else",
+					value: buttonValues.doneSession.didSomethingElse.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.moveOn.value:
+				actions.push({
+					name: buttonValues.doneSession.moveOn.name,
+					text: "Move On",
+					value: buttonValues.doneSession.moveOn.value,
+					type: "button"
+				})
+				break;
+			default: break;
 		}
 	});
 

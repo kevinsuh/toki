@@ -24,7 +24,8 @@ var intentConfig = exports.intentConfig = {
 	START_DAY: 'start_day',
 	END_DAY: 'end_day',
 	START_SESSION: 'start_session',
-	END_SESSION: 'end_session'
+	END_SESSION: 'end_session',
+	VIEW_PLAN: 'view_plan'
 };
 
 var constants = exports.constants = {
@@ -525,13 +526,13 @@ var buttonValues = exports.buttonValues = {
 			name: "DONE_SESSION_NOT_DONE_WITH_PRIORITY",
 			value: "not yet done"
 		},
-		spentTimeOnSomethingElse: {
-			name: "DONE_SESSION_SPENT_TIME_SOMETHING_ELSE",
-			value: "I spent time on something else!"
+		didSomethingElse: {
+			name: "DONE_SESSION_DID_SOMETHING_ELSE",
+			value: "I did something else!"
 		},
-		spentEnoughTimeOnItToday: {
-			name: "DONE_SESSION_ENOUGH_TIME_FOR_TODAY",
-			value: "I've spent enough time on it today!"
+		moveOn: {
+			name: "MOVE_ON",
+			value: "Let's move on!"
 		}
 	},
 	doneWithBreak: {

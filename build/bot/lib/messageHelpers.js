@@ -909,6 +909,24 @@ function getDoneSessionMessageAttachments() {
 					type: "button"
 				});
 				break;
+			case _constants.buttonValues.doneSession.didSomethingElse.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.didSomethingElse.name,
+					text: "Did something else",
+					value: _constants.buttonValues.doneSession.didSomethingElse.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.moveOn.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.moveOn.name,
+					text: "Move On",
+					value: _constants.buttonValues.doneSession.moveOn.value,
+					type: "button"
+				});
+				break;
+			default:
+				break;
 		}
 	});
 

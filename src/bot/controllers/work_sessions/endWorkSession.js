@@ -8,11 +8,10 @@ import bodyParser from 'body-parser';
 import models from '../../../app/models';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, convertMinutesToHoursString, deleteConvoAskMessage, deleteMostRecentDoneSessionMessage } from '../../lib/messageHelpers';
 import { closeOldRemindersAndSessions, witTimeResponseToTimeZoneObject, prioritizeDailyTasks } from '../../lib/miscHelpers';
-import intentConfig from '../../lib/intents';
 
 import { bots, resumeQueuedReachouts } from '../index';
 
-import { colorsArray, buttonValues, colorsHash, TOKI_DEFAULT_SNOOZE_TIME, TOKI_DEFAULT_BREAK_TIME, sessionTimerDecisions, MINUTES_FOR_DONE_SESSION_TIMEOUT, pausedSessionOptionsAttachments, startSessionOptionsAttachments, TASK_DECISION, endBreakEarlyAttachments } from '../../lib/constants';
+import { colorsArray, buttonValues, colorsHash, TOKI_DEFAULT_SNOOZE_TIME, TOKI_DEFAULT_BREAK_TIME, sessionTimerDecisions, MINUTES_FOR_DONE_SESSION_TIMEOUT, pausedSessionOptionsAttachments, startSessionOptionsAttachments, TASK_DECISION, endBreakEarlyAttachments,  intentConfig } from '../../lib/constants';
 import { doneSessionAskOptions } from '../modules/endWorkSessionFunctions';
 
 // END OF A WORK SESSION
@@ -156,7 +155,9 @@ export default function(controller) {
 														dailyTask,
 														additionalMinutes: false
 													},
-													extendSession: false
+													replacePriority: {},
+													extendSession: false,
+													postSessionDecision: false
 												}
 
 												if (storedWorkSession) {
@@ -176,7 +177,7 @@ export default function(controller) {
 													console.log(convo.sessionDone);
 													console.log("\n\n\n");
 
-													const { SlackUserId, dailyTask, reminders, extendSession, currentSession: { WorkSessionId } } = convo.sessionDone;
+													const { SlackUserId, dailyTask, reminders, extendSession, postSessionDecision, currentSession: { WorkSessionId } } = convo.sessionDone;
 
 													// if extend session, rest doesn't matter!
 													if (extendSession) {
@@ -198,8 +199,17 @@ export default function(controller) {
 														});
 													});
 
-
 													resumeQueuedReachouts(bot, { SlackUserId });
+
+													if (postSessionDecision) {
+														const config = { SlackUserId };
+														switch (postSessionDecision) {
+															case (intentConfig.VIEW_PLAN):
+																controller.trigger(`plan_command_center`, [ bot, config ]);
+																break;
+															default: break;
+														}
+													}
 
 												})
 
