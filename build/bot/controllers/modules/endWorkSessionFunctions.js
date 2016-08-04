@@ -175,9 +175,10 @@ function getBreakTime(response, convo) {
 			}, {
 				where: ['"Users"."id" = ?', UserId]
 			});
+			customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(_constants.TOKI_DEFAULT_BREAK_TIME, 'minutes');
+		} else {
+			customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(defaultBreakTime, 'minutes');
 		}
-
-		customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(_constants.TOKI_DEFAULT_BREAK_TIME, 'minutes');
 	}
 
 	var customTimeString = customTimeObject.format("h:mm a");
@@ -235,9 +236,10 @@ function getExtendSessionTime(response, convo) {
 			}, {
 				where: ['"Users"."id" = ?', UserId]
 			});
+			customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(_constants.TOKI_DEFAULT_SNOOZE_TIME, 'minutes');
+		} else {
+			customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(defaultSnoozeTime, 'minutes');
 		}
-
-		customTimeObject = (0, _momentTimezone2.default)().tz(tz).add(defaultSnoozeTime, 'minutes');
 	}
 
 	var customTimeString = customTimeObject.format("h:mm a");
@@ -248,7 +250,7 @@ function getExtendSessionTime(response, convo) {
 
 	if (!defaultSnoozeTime && UserId) {
 		convo.say({
-			text: 'I’ll see you at *' + customTimeString + '*! :clock1230: _P.S. you can change your default extend by saying `show settings`)_',
+			text: 'I’ll see you at *' + customTimeString + '*! :clock1230: _(P.S. you can change your default extend by saying `show settings`)_',
 			attachments: _constants.startSessionOptionsAttachments
 		});
 	} else {
