@@ -303,17 +303,33 @@ function askForPriorityReplacement(convo) {
 	var dailyTask = _convo$sessionDone4.currentSession.dailyTask;
 
 
-	if (dailyTaskIndexToReplace) {
+	if (dailyTasks[dailyTaskIndexToReplace]) {
 
-		var _dailyTaskToReplace = dailyTasks[dailyTaskIndexToReplace];
-		var taskTextToReplace = _dailyTaskToReplace.dataValues.Task.text;
+		var dailyTaskToReplace = dailyTasks[dailyTaskIndexToReplace];
+		var taskTextToReplace = dailyTaskToReplace.dataValues.Task.text;
 
 		convo.ask('What did you do instead of `' + taskTextToReplace + '`?', function (response, convo) {
 			var newTaskText = response.text;
 			convo.sessionDone.replacePriority.newTaskText = newTaskText;
 			convo.ask({
 				text: 'Did you complete `' + newTaskText + '`?',
-				attachments: []
+				attachments: [{
+					attachment_type: 'default',
+					callback_id: "FINISH_REPLACEMENT_PRIORITY",
+					fallback: "Did you finish that prioritypriority?",
+					color: _constants.colorsHash.grey.hex,
+					actions: [{
+						name: _constants.buttonValues.yes.name,
+						text: "Yes :runner:",
+						value: _constants.buttonValues.yes.value,
+						type: "button"
+					}, {
+						name: _constants.buttonValues.no.name,
+						text: "No",
+						value: _constants.buttonValues.no.value,
+						type: "button"
+					}]
+				}]
 			}, [{
 				pattern: _botResponses.utterances.yes,
 				callback: function callback(response, convo) {
@@ -360,7 +376,7 @@ function askForTimeToReplacementPriority(convo) {
 
 				var now = (0, _momentTimezone2.default)();
 				var durationMinutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
-				convo.replacePriority.additionalMinutes = durationMinutes;
+				convo.sessionDone.replacePriority.additionalMinutes = durationMinutes;
 
 				replaceDailyTasksWithNewPriority(convo);
 				convo.say('This looks great! I updated your plan!');
@@ -380,16 +396,16 @@ function askForTimeToReplacementPriority(convo) {
 
 function replaceDailyTasksWithNewPriority(convo) {
 	var _convo$sessionDone6 = convo.sessionDone;
+	var dailyTasks = _convo$sessionDone6.dailyTasks;
 	var _convo$sessionDone6$r = _convo$sessionDone6.replacePriority;
 	var dailyTaskIndexToReplace = _convo$sessionDone6$r.dailyTaskIndexToReplace;
 	var newTaskText = _convo$sessionDone6$r.newTaskText;
 	var additionalMinutes = _convo$sessionDone6$r.additionalMinutes;
-	var dailyTasks = _convo$sessionDone6.dailyTasks;
 
 
-	if (dailyTasks && dailyTaskIndexToReplace && newTaskText) {
+	if (dailyTasks && dailyTasks[dailyTaskIndexToReplace] && newTaskText) {
 
-		dailyTaskToReplace = dailyTasks[dailyTaskIndexToReplace];
+		var dailyTaskToReplace = dailyTasks[dailyTaskIndexToReplace];
 		dailyTaskToReplace.text = newTaskText;
 		dailyTaskToReplace.type = "live";
 

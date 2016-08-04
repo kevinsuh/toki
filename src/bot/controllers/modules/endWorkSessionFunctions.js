@@ -327,7 +327,7 @@ function askForPriorityReplacement(convo) {
 
 	const { sessionDone: { dailyTasks, replacePriority: { dailyTaskIndexToReplace }, currentSession: { dailyTask } } } = convo;
 
-	if (dailyTaskIndexToReplace) {
+	if (dailyTasks[dailyTaskIndexToReplace]) {
 
 		let dailyTaskToReplace = dailyTasks[dailyTaskIndexToReplace];
 		let taskTextToReplace = dailyTaskToReplace.dataValues.Task.text;
@@ -337,7 +337,28 @@ function askForPriorityReplacement(convo) {
 			convo.sessionDone.replacePriority.newTaskText = newTaskText;
 			convo.ask({
 				text: `Did you complete \`${newTaskText}\`?`,
-				attachments: []
+				attachments: [
+					{
+						attachment_type: 'default',
+						callback_id: "FINISH_REPLACEMENT_PRIORITY",
+						fallback: "Did you finish that prioritypriority?",
+						color: colorsHash.grey.hex,
+						actions: [
+							{
+									name: buttonValues.yes.name,
+									text: "Yes :runner:",
+									value: buttonValues.yes.value,
+									type: "button"
+							},
+							{
+									name: buttonValues.no.name,
+									text: "No",
+									value: buttonValues.no.value,
+									type: "button"
+							}
+						]
+					}
+				]
 			}, [
 				{
 					pattern: utterances.yes,
@@ -384,7 +405,7 @@ function askForTimeToReplacementPriority(convo) {
 
 				let now = moment();
 				let durationMinutes  = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
-				convo.replacePriority.additionalMinutes = durationMinutes;
+				convo.sessionDone.replacePriority.additionalMinutes = durationMinutes;
 
 				replaceDailyTasksWithNewPriority(convo);
 				convo.say(`This looks great! I updated your plan!`);
@@ -405,11 +426,11 @@ function askForTimeToReplacementPriority(convo) {
 
 function replaceDailyTasksWithNewPriority(convo) {
 	
-	const { sessionDone: { replacePriority: { dailyTaskIndexToReplace, newTaskText, additionalMinutes }, dailyTasks } } = convo;
+	const { sessionDone: { dailyTasks, replacePriority: { dailyTaskIndexToReplace, newTaskText, additionalMinutes } } } = convo;
 
-	if (dailyTasks && dailyTaskIndexToReplace && newTaskText) {
+	if (dailyTasks && dailyTasks[dailyTaskIndexToReplace] && newTaskText) {
 
-		dailyTaskToReplace      = dailyTasks[dailyTaskIndexToReplace];
+		let dailyTaskToReplace  = dailyTasks[dailyTaskIndexToReplace];
 		dailyTaskToReplace.text = newTaskText;
 		dailyTaskToReplace.type = "live";
 

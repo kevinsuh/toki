@@ -371,7 +371,11 @@ export const buttonValues ={
 	},
 	yes: {
 		value: "YES",
-		name: "YES"
+		name: "yes!"
+	},
+	no: {
+		value: "NO",
+		name: "nope!"
 	},
 	remindMe: {
 		value: "REMIND_ME",

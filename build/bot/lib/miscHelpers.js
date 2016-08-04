@@ -382,22 +382,22 @@ function getEndOfPlanCommandOptionAttachments() {
 
 	var actions = [{
 		name: _constants.buttonValues.endOfPlanCommands.addTasks.name,
-		text: "Add Tasks",
+		text: "Add Priority",
 		value: _constants.buttonValues.endOfPlanCommands.addTasks.value,
 		type: "button"
 	}, {
 		name: _constants.buttonValues.endOfPlanCommands.completeTasks.name,
-		text: "Check Off Tasks",
+		text: "Complete Priority",
 		value: _constants.buttonValues.endOfPlanCommands.completeTasks.value,
 		type: "button"
 	}, {
 		name: _constants.buttonValues.endOfPlanCommands.deleteTasks.name,
-		text: "Delete Tasks",
+		text: "Delete Priority",
 		value: _constants.buttonValues.endOfPlanCommands.deleteTasks.value,
 		type: "button"
 	}, {
 		name: _constants.buttonValues.endOfPlanCommands.workOnTasks.name,
-		text: "Work on Tasks",
+		text: "Work on Priority",
 		value: _constants.buttonValues.endOfPlanCommands.workOnTasks.value,
 		type: "button"
 	}];
