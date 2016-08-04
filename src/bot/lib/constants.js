@@ -511,6 +511,10 @@ export const buttonValues ={
 			name: "DONE_SESSION_NOT_DONE_WITH_PRIORITY",
 			value: "not yet done"
 		}
+	},
+	doneWithBreak: {
+		name: "DONE_WITH_BREAK",
+		value: "let's do it"
 	}
 }
 
@@ -789,6 +793,22 @@ export const pausedSessionOptionsAttachments = [
 					name: buttonValues.startSession.pause.endEarly.name,
 					text: "End Session",
 					value: buttonValues.startSession.pause.endEarly.value,
+					type: "button"
+			}
+		]
+	}
+];
+
+export const endBreakEarlyAttachments = [
+	{
+		attachment_type: 'default',
+		callback_id: "END_BREAK_EARLY",
+		fallback: "I'm ready to get started!!",
+		actions: [
+			{
+					name: buttonValues.doneWithBreak.name,
+					text: "I'm back early!",
+					value: buttonValues.doneWithBreak.value,
 					type: "button"
 			}
 		]

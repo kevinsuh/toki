@@ -1,5 +1,5 @@
 import os from 'os';
-import { wit } from '../index';
+import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 
 import models from '../../../app/models';
@@ -25,7 +25,16 @@ export default function(controller) {
 	 * 		     				in a "SessionGroup" before
 	 * 		     			working on your session
 	 */
-	controller.hears(['start_session'], 'direct_message', wit.hears, (bot, message) => {
+	controller.hears(['start_session', 'is_back'], 'direct_message', wit.hears, (bot, message) => {
+
+		const { intentObject: { entities: { intent } } } = message;
+		let sessionIntent;
+		if (intent && intent.length > 0) {
+			sessionIntent = intent[0].value;
+		}
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
 		const SlackUserId = message.user;
 		const { text }    = message;
@@ -41,7 +50,25 @@ export default function(controller) {
 			channel: message.channel
 		});
 		setTimeout(() => {
-			controller.trigger(`plan_command_center`, [ bot, config ]);
+			models.User.find({
+				where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+				include: [ models.SlackUser ]
+			}).then((user) => {
+
+				const name = user.nickName || user.email;
+
+				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+						convo.say(`Welcome back, ${name}!`);
+					} else {
+						convo.say(" ");
+					}
+					convo.next();
+					convo.on('end', (convo) => {
+						controller.trigger(`plan_command_center`, [ bot, config ]);
+					})
+				});
+
+			});
 		}, 750);
 
 	});

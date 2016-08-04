@@ -109,7 +109,7 @@ function doneSessionAskOptions(convo) {
 	}, { // takeBreak
 		pattern: _botResponses.utterances.containsBreak,
 		callback: function callback(response, convo) {
-			convo.say("You want to take a break!");
+			getBreakTime(response, convo);
 			convo.next();
 		}
 	}, { // extendSession
@@ -142,5 +142,62 @@ function doneSessionAskOptions(convo) {
 			convo.say("Sorry, I didn't get that :thinking_face:");
 		}
 	}]);
+}
+
+// handle break time
+// if button click: default break time
+// if NL, default if no duration or datetime suggested
+function getBreakTime(response, convo) {
+	var text = response.text;
+	var _response$intentObjec = response.intentObject.entities;
+	var duration = _response$intentObjec.duration;
+	var datetime = _response$intentObjec.datetime;
+	var _convo$sessionDone2 = convo.sessionDone;
+	var tz = _convo$sessionDone2.tz;
+	var defaultBreakTime = _convo$sessionDone2.defaultBreakTime;
+	var UserId = _convo$sessionDone2.UserId;
+
+	var now = (0, _momentTimezone2.default)();
+
+	var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+	if (!customTimeObject) {
+
+		// use default break time if it doesn't exist!
+		if (!defaultBreakTime && UserId) {
+			convo.say('I recommend taking a break after working in a focused session -- it helps you stay fresh and focus even better when you jump back into your work');
+			convo.say('The default break time is *' + _constants.TOKI_DEFAULT_BREAK_TIME + ' minutes*, but you can change it in your settings by telling me to `show settings`, or you can set a custom break time after any session by saying `break for 20 minutes`, or something like that :grinning:');
+			// first time not updating at convo end...
+			_models2.default.User.update({
+				defaultBreakTime: 10
+			}, {
+				where: ['"Users"."id" = ?', UserId]
+			});
+		}
+
+		customTimeObject = (0, _momentTimezone2.default)().add(_constants.TOKI_DEFAULT_BREAK_TIME, 'minutes');
+	}
+
+	var customTimeString = customTimeObject.format("h:mm a");
+	var durationMinutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+
+	if (!defaultBreakTime && UserId) {
+		convo.say('I set your default break time to ' + durationMinutes + ' minutes and will check with you then');
+	}
+
+	convo.sessionDone.reminders.push({
+		customNote: 'It\'s been ' + durationMinutes + ' minutes. Let me know when you\'re ready to start a session',
+		remindTime: customTimeObject,
+		type: "break"
+	});
+
+	/**
+  * 	MAIN BREAK MESSAGE
+  */
+	convo.say({
+		text: 'See you in ' + durationMinutes + ' minutes -- I\'ll let you know when your break is over :palm_tree:',
+		attachments: _constants.endBreakEarlyAttachments
+	});
+
+	convo.next();
 }
 //# sourceMappingURL=endWorkSessionFunctions.js.map

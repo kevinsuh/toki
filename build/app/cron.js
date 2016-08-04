@@ -93,7 +93,9 @@ var checkForSessions = function checkForSessions() {
 						var bot = _controllers.bots[token];
 						if (bot) {
 							// alarm is up for session
-							_controllers.controller.trigger('session_timer_up', [bot, config]);
+							var sessionTimerUp = true;
+							config.sessionTimerUp = sessionTimerUp;
+							_controllers.controller.trigger('done_session_flow', [bot, { SlackUserId: SlackUserId, sessionTimerUp: sessionTimerUp }]);
 						}
 					});
 				});

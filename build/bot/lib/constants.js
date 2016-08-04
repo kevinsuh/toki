@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.intentConfig = exports.startDayExpirationTime = exports.dateOfNewPlanDayFlow = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.endBreakEarlyAttachments = exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.intentConfig = exports.startDayExpirationTime = exports.dateOfNewPlanDayFlow = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
@@ -521,6 +521,10 @@ var buttonValues = exports.buttonValues = {
 			name: "DONE_SESSION_NOT_DONE_WITH_PRIORITY",
 			value: "not yet done"
 		}
+	},
+	doneWithBreak: {
+		name: "DONE_WITH_BREAK",
+		value: "let's do it"
 	}
 };
 
@@ -751,6 +755,18 @@ var pausedSessionOptionsAttachments = exports.pausedSessionOptionsAttachments = 
 		name: buttonValues.startSession.pause.endEarly.name,
 		text: "End Session",
 		value: buttonValues.startSession.pause.endEarly.value,
+		type: "button"
+	}]
+}];
+
+var endBreakEarlyAttachments = exports.endBreakEarlyAttachments = [{
+	attachment_type: 'default',
+	callback_id: "END_BREAK_EARLY",
+	fallback: "I'm ready to get started!!",
+	actions: [{
+		name: buttonValues.doneWithBreak.name,
+		text: "I'm back early!",
+		value: buttonValues.doneWithBreak.value,
 		type: "button"
 	}]
 }];
