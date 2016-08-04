@@ -31,6 +31,7 @@ var utterances = exports.utterances = {
 	containsRedo: new RegExp(/\bre[re do]{2,}\b/i),
 	startsWithAdd: new RegExp(/^a[add]{2,}\b/i),
 	containsTask: new RegExp(/t[task]{2,}/i),
+	containsTaskOrPriority: new RegExp(/\b(t[task]{2,}|pr[riority]{4,})\b/i),
 	containsName: new RegExp(/n[name]{2,}/i),
 	containsTimeZone: new RegExp(/t[timezone ]{4,}/i),
 	containsPlan: new RegExp(/p[plan ]{2,}/i),

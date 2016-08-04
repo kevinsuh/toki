@@ -815,3 +815,74 @@ export function convertStringToNumbersArray(userInputString) {
 	}
 
 }
+
+export function getDoneSessionMessageAttachments(config = {}) {
+
+	const { buttonsValuesArray, defaultBreakTime } = config;
+
+	let actions = [];
+	buttonsValuesArray.forEach((buttonValue) => {
+		switch (buttonValue) {
+			case buttonValues.doneSession.completedPriority.value:
+				actions.push({
+					name: buttonValues.doneSession.completedPriority.name,
+					text: "Completed :sports_medal:",
+					value: buttonValues.doneSession.completedPriority.value,
+					type: "button",
+					style: "primary"
+				});
+				break;
+			case buttonValues.doneSession.takeBreak.value:
+				let breakText = defaultBreakTime ? `Break for ${defaultBreakTime} min` : `Take a break`;
+				actions.push({
+					name: buttonValues.doneSession.takeBreak.name,
+					text: breakText,
+					value: buttonValues.doneSession.takeBreak.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.extendSession.value:
+				actions.push({
+					name: buttonValues.doneSession.extendSession.name,
+					text: "Extend Session :timer_clock:",
+					value: buttonValues.doneSession.extendSession.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.viewPlan.value:
+				actions.push({
+					name: buttonValues.doneSession.viewPlan.name,
+					text: "View Plan",
+					value: buttonValues.doneSession.viewPlan.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.endDay.value:
+				actions.push({
+					name: buttonValues.doneSession.endDay.name,
+					text: "End Day",
+					value: buttonValues.doneSession.endDay.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.notDone.value:
+				actions.push({
+					name: buttonValues.doneSession.notDone.name,
+					text: "Not Done",
+					value: buttonValues.doneSession.notDone.value,
+					type: "button"
+				})
+				break;
+		}
+	});
+
+	let attachments = [{
+		attachment_type: 'default',
+		callback_id: "DONE_WITH_SESSION",
+		fallback: "Done with my session!",
+		actions
+	}]
+
+	return attachments;
+	
+}

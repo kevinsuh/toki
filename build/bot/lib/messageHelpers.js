@@ -27,6 +27,7 @@ exports.deleteMostRecentPlanMessage = deleteMostRecentPlanMessage;
 exports.deleteMostRecentDoneSessionMessage = deleteMostRecentDoneSessionMessage;
 exports.getTimeToTaskTextAttachmentWithTaskListMessage = getTimeToTaskTextAttachmentWithTaskListMessage;
 exports.convertStringToNumbersArray = convertStringToNumbersArray;
+exports.getDoneSessionMessageAttachments = getDoneSessionMessageAttachments;
 
 var _constants = require('./constants');
 
@@ -829,5 +830,77 @@ function convertStringToNumbersArray(userInputString) {
 	} else {
 		return numbersArray;
 	}
+}
+
+function getDoneSessionMessageAttachments() {
+	var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	var buttonsValuesArray = config.buttonsValuesArray;
+	var defaultBreakTime = config.defaultBreakTime;
+
+
+	var actions = [];
+	buttonsValuesArray.forEach(function (buttonValue) {
+		switch (buttonValue) {
+			case _constants.buttonValues.doneSession.completedPriority.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.completedPriority.name,
+					text: "Completed :sports_medal:",
+					value: _constants.buttonValues.doneSession.completedPriority.value,
+					type: "button",
+					style: "primary"
+				});
+				break;
+			case _constants.buttonValues.doneSession.takeBreak.value:
+				var breakText = defaultBreakTime ? 'Break for ' + defaultBreakTime + ' min' : 'Take a break';
+				actions.push({
+					name: _constants.buttonValues.doneSession.takeBreak.name,
+					text: breakText,
+					value: _constants.buttonValues.doneSession.takeBreak.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.extendSession.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.extendSession.name,
+					text: "Extend Session :timer_clock:",
+					value: _constants.buttonValues.doneSession.extendSession.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.viewPlan.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.viewPlan.name,
+					text: "View Plan",
+					value: _constants.buttonValues.doneSession.viewPlan.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.endDay.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.endDay.name,
+					text: "End Day",
+					value: _constants.buttonValues.doneSession.endDay.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.notDone.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.notDone.name,
+					text: "Not Done",
+					value: _constants.buttonValues.doneSession.notDone.value,
+					type: "button"
+				});
+				break;
+		}
+	});
+
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "DONE_WITH_SESSION",
+		fallback: "Done with my session!",
+		actions: actions
+	}];
+
+	return attachments;
 }
 //# sourceMappingURL=messageHelpers.js.map

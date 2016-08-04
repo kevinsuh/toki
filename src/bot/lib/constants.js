@@ -481,6 +481,32 @@ export const buttonValues ={
 			name: "INCLUDE_NO_ONE",
 			value: "No one for now!"
 		}
+	},
+	doneSession: {
+		completedPriority: {
+			name: "DONE_SESSION_COMPLETED_PRIORITY",
+			value: "completed my priority!"
+		},
+		takeBreak: {
+			name: "DONE_SESSION_TAKE_BREAK",
+			value: "take a break"
+		},
+		extendSession: {
+			name: "DONE_SESSION_EXTEND_SESSION",
+			value: "extend my session"
+		},
+		viewPlan: {
+			name: "DONE_SESSION_VIEW_PLAN",
+			value: "view my plan"
+		},
+		endDay: {
+			name: "DONE_SESSION_END_DAY",
+			value: "end my day"
+		},
+		notDone: {
+			name: "DONE_SESSION_NOT_DONE_WITH_PRIORITY",
+			value: "not yet done"
+		}
 	}
 }
 
@@ -764,5 +790,3 @@ export const pausedSessionOptionsAttachments = [
 		]
 	}
 ];
-
-

@@ -154,9 +154,9 @@ function askWhichTaskToWorkOn(convo, question = '') {
 		let options = { dontUsePriority: true }
 		let taskListMessage = convertArrayToTaskListMessage(taskArray, options);
 		if (question == '') {
-			question = `Which task would you like to work on instead?`
+			question = `Which priority would you like to work on instead?`
 		}
-		if (noDailyTask) question = `Which task would you like to work on?`
+		if (noDailyTask) question = `Which priority would you like to work on?`
 		let message = `${question}\n${taskListMessage}`;
 		convo.ask({
 			text: message,
@@ -180,9 +180,13 @@ function askWhichTaskToWorkOn(convo, question = '') {
 			{
 				pattern: utterances.noAndNeverMind,
 				callback: (response, convo) => {
-					let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your task';
-					convo.say(`Sure thing! Let's stay working on ${taskText}`);
-					confirmTimeForTask(convo)
+					if (dailyTask) {
+						let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your priority';
+						convo.say(`Sure thing! Let's stay working on ${taskText}`);
+						confirmTimeForTask(convo)
+					} else {
+						convo.say(`Okay! Let me know when you want to \`start a session\``);
+					}
 					convo.next();
 				}
 			},
@@ -295,7 +299,7 @@ function askForCustomTotalMinutes(convo) {
 	const { SlackUserId, tz, dailyTask } = convo.sessionStart;
 
 	// will only be a single task now
-	let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your task';
+	let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your priority';
 
 	convo.ask(`How long do you want to work on ${taskText} for?`, (response, convo) => {
 

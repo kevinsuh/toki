@@ -79,19 +79,21 @@ exports.default = function (controller) {
 				if (dailyTaskToWorkOn) {
 					convo.sessionStart.dailyTask = dailyTaskToWorkOn;
 				} else {
-					convo.say('Hey! Time to start on a work session :smiley:');
+					convo.say('Let\'s do it :punch:');
 				}
 
 				(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);
 				convo.next();
 
 				convo.on('end', function (convo) {
+					var sessionStart = convo.sessionStart;
+
 
 					console.log("\n\n\n end of start session ");
-					console.log(convo.sessionStart);
+					console.log(sessionStart);
 					console.log("\n\n\n");
 
-					if (convo.confirmStart) {
+					if (sessionStart.confirmStart) {
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 						setTimeout(function () {
 							(0, _startWorkSessionFunctions.startSessionWithConvoObject)(convo.sessionStart);
