@@ -58,6 +58,7 @@ export default function(controller) {
 				const name = user.nickName || user.email;
 
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+					if (sessionIntent == 'is_back') {
 						convo.say(`Welcome back, ${name}!`);
 					} else {
 						convo.say(" ");
