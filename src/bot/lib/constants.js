@@ -483,6 +483,10 @@ export const buttonValues ={
 		}
 	},
 	doneSession: {
+		completedPriorityTonedDown: {
+			name: "DONE_SESSION_TONED_DOWN_COMPLETED_PRIORITY",
+			value: "completed my priority early"
+		},
 		completedPriority: {
 			name: "DONE_SESSION_COMPLETED_PRIORITY",
 			value: "completed my priority!"

@@ -73,7 +73,7 @@ function doneSessionAskOptions(convo) {
 			// send message if time is still remaining
 			convo.say('Your session for `' + taskText + '` is up. Excellent work!');
 
-			buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.extendSession.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.endDay.value];
+			buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.extendSession.value, _constants.buttonValues.doneSession.completedPriorityTonedDown.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.endDay.value];
 		}
 	} else {
 
@@ -82,6 +82,7 @@ function doneSessionAskOptions(convo) {
 		if (finishedTimeToTask) {
 			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.notDone.value, _constants.buttonValues.doneSession.endDay.value];
 		} else {
+
 			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.endDay.value];
 		}
 	}
@@ -99,27 +100,47 @@ function doneSessionAskOptions(convo) {
 	convo.ask({
 		text: text,
 		attachments: attachments
-	}, [{
+	}, [{ // completedPriority
+		pattern: _botResponses.utterances.containsCompleteOrCheckOrCross,
+		callback: function callback(response, convo) {
+			convo.say("You want to complete your priority!");
+			convo.next();
+		}
+	}, { // takeBreak
 		pattern: _botResponses.utterances.containsBreak,
-		callback: function callback(response, convo) {}
+		callback: function callback(response, convo) {
+			convo.say("You want to take a break!");
+			convo.next();
+		}
+	}, { // extendSession
+		pattern: _botResponses.utterances.onlyContainsExtend,
+		callback: function callback(response, convo) {
+			convo.say("You want to extend your session!");
+			convo.next();
+		}
+	}, { // viewPlan
+		pattern: _botResponses.utterances.containsPlan,
+		callback: function callback(response, convo) {
+			convo.say("You want to view your plan!");
+			convo.next();
+		}
+	}, { // endDay
+		pattern: _botResponses.utterances.endDay,
+		callback: function callback(response, convo) {
+			convo.say("You want to end your day!");
+			convo.next();
+		}
+	}, { // notDone
+		pattern: _botResponses.utterances.notDone,
+		callback: function callback(response, convo) {
+			convo.say("You aren't done with your priority yet!");
+			convo.next();
+		}
 	}, {
-		pattern: _botResponses.utterances.containsBreak,
-		callback: function callback(response, convo) {}
-	}, {
-		pattern: _botResponses.utterances.containsBreak,
-		callback: function callback(response, convo) {}
-	}, {
-		pattern: _botResponses.utterances.containsBreak,
-		callback: function callback(response, convo) {}
-	}, {
-		pattern: _botResponses.utterances.containsBreak,
-		callback: function callback(response, convo) {}
-	}, {
-		pattern: _botResponses.utterances.containsBreak,
-		callback: function callback(response, convo) {}
-	}, {
-		pattern: _botResponses.utterances.containsBreak,
-		callback: function callback(response, convo) {}
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say("Sorry, I didn't get that :thinking_face:");
+		}
 	}]);
 }
 //# sourceMappingURL=endWorkSessionFunctions.js.map

@@ -832,6 +832,14 @@ export function getDoneSessionMessageAttachments(config = {}) {
 					style: "primary"
 				});
 				break;
+			case buttonValues.doneSession.completedPriorityTonedDown.value:
+				actions.push({
+					name: buttonValues.doneSession.completedPriorityTonedDown.name,
+					text: "Priority Completed",
+					value: buttonValues.doneSession.completedPriorityTonedDown.value,
+					type: "button"
+				});
+				break;
 			case buttonValues.doneSession.takeBreak.value:
 				let breakText = defaultBreakTime ? `Break for ${defaultBreakTime} min` : `Take a break`;
 				actions.push({

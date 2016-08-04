@@ -851,6 +851,14 @@ function getDoneSessionMessageAttachments() {
 					style: "primary"
 				});
 				break;
+			case _constants.buttonValues.doneSession.completedPriorityTonedDown.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.completedPriorityTonedDown.name,
+					text: "Priority Completed",
+					value: _constants.buttonValues.doneSession.completedPriorityTonedDown.value,
+					type: "button"
+				});
+				break;
 			case _constants.buttonValues.doneSession.takeBreak.value:
 				var breakText = defaultBreakTime ? 'Break for ' + defaultBreakTime + ' min' : 'Take a break';
 				actions.push({

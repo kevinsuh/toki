@@ -68,9 +68,15 @@ exports.default = function (controller) {
 
 				if (workSession) {
 
-					// WE CLOSE THE WORK SESSION HERE
-					// get info about this session
+					// only update endTime if it is less than current endTime
 					var now = (0, _momentTimezone2.default)();
+
+					var _moment = (0, _momentTimezone2.default)(workSession.dataValues.endTime);
+
+					var endTime = _moment.endTime;
+
+					if (now < endTime) endTime = now;
+
 					workSession.update({
 						open: false,
 						endTime: now
@@ -216,80 +222,97 @@ exports.default = function (controller) {
 
 			var UserId = user.id;
 
-			var tz = user.SlackUser.tz;
-			var defaultSnoozeTime = user.defaultSnoozeTime;
-			var defaultBreakTime = user.defaultBreakTime;
+			if (workSession) {
 
-			var startTime = (0, _momentTimezone2.default)(workSession.startTime).tz(tz);
-			var endTime = (0, _momentTimezone2.default)(workSession.endTime).tz(tz);
-			var endTimeString = endTime.format("h:mm a");
-			var workSessionMinutes = Math.round(_momentTimezone2.default.duration(endTime.diff(startTime)).asMinutes());
-			var workSessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(workSessionMinutes);
+				// only update endTime if it is less than current endTime
+				var now = (0, _momentTimezone2.default)();
 
-			user.getDailyTasks({
-				where: ['"DailyTask"."id" IN (?) AND "Task"."done" = ?', dailyTaskIds, false],
-				include: [_models2.default.Task]
-			}).then(function (dailyTasks) {
+				var _moment2 = (0, _momentTimezone2.default)(workSession.dataValues.endTime);
 
-				if (dailyTasks.length > 0) {
+				var endTime = _moment2.endTime;
 
-					// cancel all old reminders
-					user.getReminders({
-						where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break", "done_session_snooze"]]
-					}).then(function (oldReminders) {
-						oldReminders.forEach(function (reminder) {
-							reminder.update({
-								"open": false
+				if (now < endTime) endTime = now;
+
+				workSession.update({
+					open: false,
+					endTime: endTime
+				}).then(function (workSession) {
+					var tz = user.SlackUser.tz;
+					var defaultSnoozeTime = user.defaultSnoozeTime;
+					var defaultBreakTime = user.defaultBreakTime;
+
+					var startTime = (0, _momentTimezone2.default)(workSession.startTime).tz(tz);
+					var endTime = (0, _momentTimezone2.default)(workSession.endTime).tz(tz);
+					var endTimeString = endTime.format("h:mm a");
+					var workSessionMinutes = Math.round(_momentTimezone2.default.duration(endTime.diff(startTime)).asMinutes());
+					var workSessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(workSessionMinutes);
+
+					user.getDailyTasks({
+						where: ['"DailyTask"."id" IN (?) AND "Task"."done" = ?', dailyTaskIds, false],
+						include: [_models2.default.Task]
+					}).then(function (dailyTasks) {
+
+						if (dailyTasks.length > 0) {
+
+							// cancel all old reminders
+							user.getReminders({
+								where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break", "done_session_snooze"]]
+							}).then(function (oldReminders) {
+								oldReminders.forEach(function (reminder) {
+									reminder.update({
+										"open": false
+									});
+								});
 							});
-						});
-					});
 
-					var dailyTask = dailyTasks[0]; // one task per session
+							var dailyTask = dailyTasks[0]; // one task per session
 
-					// do our math update to daily task here
-					var minutesSpent = dailyTask.minutesSpent;
-					minutesSpent += workSessionMinutes;
-					dailyTask.update({
-						minutesSpent: minutesSpent
-					}).then(function (dailyTask) {
+							// do our math update to daily task here
+							var minutesSpent = dailyTask.minutesSpent;
+							minutesSpent += workSessionMinutes;
+							dailyTask.update({
+								minutesSpent: minutesSpent
+							}).then(function (dailyTask) {
 
-						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-							convo.sessionDone = {
-								UserId: UserId,
-								SlackUserId: SlackUserId,
-								defaultBreakTime: defaultBreakTime,
-								defaultSnoozeTime: defaultSnoozeTime,
-								tz: tz,
-								dailyTask: dailyTask,
-								sessionTimerUp: sessionTimerUp,
-								doneSessionEarly: doneSessionEarly,
-								reminders: [],
-								currentSession: {
-									startTime: startTime,
-									endTime: endTime,
-									workSessionMinutes: workSessionMinutes,
-									workSessionTimeString: workSessionTimeString,
-									dailyTask: dailyTask
-								}
-							};
+									convo.sessionDone = {
+										UserId: UserId,
+										SlackUserId: SlackUserId,
+										defaultBreakTime: defaultBreakTime,
+										defaultSnoozeTime: defaultSnoozeTime,
+										tz: tz,
+										dailyTask: dailyTask,
+										sessionTimerUp: sessionTimerUp,
+										doneSessionEarly: doneSessionEarly,
+										reminders: [],
+										currentSession: {
+											startTime: startTime,
+											endTime: endTime,
+											workSessionMinutes: workSessionMinutes,
+											workSessionTimeString: workSessionTimeString,
+											dailyTask: dailyTask
+										}
+									};
 
-							(0, _endWorkSessionFunctions.doneSessionAskOptions)(convo);
+									(0, _endWorkSessionFunctions.doneSessionAskOptions)(convo);
 
-							convo.on('end', function (convo) {
-								var _convo$sessionDone2 = convo.sessionDone;
-								var SlackUserId = _convo$sessionDone2.SlackUserId;
-								var dailyTask = _convo$sessionDone2.dailyTask;
+									convo.on('end', function (convo) {
+										var _convo$sessionDone2 = convo.sessionDone;
+										var SlackUserId = _convo$sessionDone2.SlackUserId;
+										var dailyTask = _convo$sessionDone2.dailyTask;
 
 
-								console.log("\n\n\n session is done!");
-								console.log(convo.sessionDone);
-								console.log("\n\n\n");
+										console.log("\n\n\n session is done!");
+										console.log(convo.sessionDone);
+										console.log("\n\n\n");
+									});
+								});
 							});
-						});
+						}
 					});
-				}
-			});
+				});
+			}
 		});
 	});
 };

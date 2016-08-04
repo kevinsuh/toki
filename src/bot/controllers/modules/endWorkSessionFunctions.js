@@ -53,6 +53,7 @@ export function doneSessionAskOptions(convo) {
 			buttonsValuesArray = [
 				buttonValues.doneSession.takeBreak.value,
 				buttonValues.doneSession.extendSession.value,
+				buttonValues.doneSession.completedPriorityTonedDown.value,
 				buttonValues.doneSession.viewPlan.value,
 				buttonValues.doneSession.endDay.value
 			];
@@ -71,6 +72,7 @@ export function doneSessionAskOptions(convo) {
 
 			
 		} else {
+
 			buttonsValuesArray = [
 				buttonValues.doneSession.completedPriority.value,
 				buttonValues.doneSession.takeBreak.value,
@@ -95,46 +97,52 @@ export function doneSessionAskOptions(convo) {
 		text,
 		attachments
 	}, [
-		{
+		{ // completedPriority
+			pattern: utterances.containsCompleteOrCheckOrCross,
+			callback: (response, convo) => {
+				convo.say("You want to complete your priority!");
+				convo.next();
+			}
+		},
+		{ // takeBreak
 			pattern: utterances.containsBreak,
 			callback: (response, convo) => {
-
+				convo.say("You want to take a break!");
+				convo.next();
+			}
+		},
+		{ // extendSession
+			pattern: utterances.onlyContainsExtend,
+			callback: (response, convo) => {
+				convo.say("You want to extend your session!");
+				convo.next();
+			}
+		},
+		{ // viewPlan
+			pattern: utterances.containsPlan,
+			callback: (response, convo) => {
+				convo.say("You want to view your plan!");
+				convo.next();
+			}
+		},
+		{ // endDay
+			pattern: utterances.endDay,
+			callback: (response, convo) => {
+				convo.say("You want to end your day!");
+				convo.next();
+			}
+		},
+		{ // notDone
+			pattern: utterances.notDone,
+			callback: (response, convo) => {
+				convo.say("You aren't done with your priority yet!");
+				convo.next();
 			}
 		},
 		{
-			pattern: utterances.containsBreak,
+			default: true,
 			callback: (response, convo) => {
-
-			}
-		},
-		{
-			pattern: utterances.containsBreak,
-			callback: (response, convo) => {
-
-			}
-		},
-		{
-			pattern: utterances.containsBreak,
-			callback: (response, convo) => {
-
-			}
-		},
-		{
-			pattern: utterances.containsBreak,
-			callback: (response, convo) => {
-
-			}
-		},
-		{
-			pattern: utterances.containsBreak,
-			callback: (response, convo) => {
-
-			}
-		},
-		{
-			pattern: utterances.containsBreak,
-			callback: (response, convo) => {
-
+				convo.say("Sorry, I didn't get that :thinking_face:");
 			}
 		}
 	]);
