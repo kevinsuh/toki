@@ -858,6 +858,14 @@ export function getDoneSessionMessageAttachments(config = {}) {
 					type: "button"
 				})
 				break;
+			case buttonValues.doneSession.newSession.value:
+				actions.push({
+					name: buttonValues.doneSession.newSession.name,
+					text: "New Session",
+					value: buttonValues.doneSession.newSession.value,
+					type: "button"
+				})
+				break;
 			case buttonValues.doneSession.viewPlan.value:
 				actions.push({
 					name: buttonValues.doneSession.viewPlan.name,

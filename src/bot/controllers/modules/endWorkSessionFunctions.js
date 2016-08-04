@@ -21,7 +21,6 @@ export function doneSessionAskOptions(convo) {
 
 	let text;
 	let buttonsValuesArray = [];
-	let attachmentsConfig  = { defaultBreakTime, defaultSnoozeTime };
 	let minutesDifference  = minutes - minutesSpent;
 	let timeSpentString    = convertMinutesToHoursString(minutesSpent);
 
@@ -90,8 +89,14 @@ export function doneSessionAskOptions(convo) {
 		text = `You've worked for ${workSessionTimeString} on \`${taskText}\` and have ${minutesDifference} minutes remaining`;
 	}
 
-	attachmentsConfig.buttonsValuesArray = buttonsValuesArray;
+	let attachmentsConfig  = { defaultBreakTime, defaultSnoozeTime, buttonsValuesArray };
 	let attachments = getDoneSessionMessageAttachments(attachmentsConfig);
+	convoAskDoneSessionOptions(convo, text, attachments);
+
+}
+
+// this will actually ask the convo options in a modular, DRY way
+function convoAskDoneSessionOptions(convo, text, attachments) {
 
 	convo.ask({
 		text,
@@ -118,6 +123,13 @@ export function doneSessionAskOptions(convo) {
 				convo.next();
 			}
 		},
+		{ // newSession
+			pattern: utterances.containsNew,
+			callback: (response, convo) => {
+				convo.say("You want a new session!");
+				convo.next();
+			}
+		},
 		{ // viewPlan
 			pattern: utterances.containsPlan,
 			callback: (response, convo) => {
@@ -135,17 +147,180 @@ export function doneSessionAskOptions(convo) {
 		{ // notDone
 			pattern: utterances.notDone,
 			callback: (response, convo) => {
-				convo.say("You aren't done with your priority yet!");
+				askForAdditionalTimeToPriority(response, convo);
+				convo.next();
+			}
+		},
+		{
+			// no or never mind to exit this flow
+			pattern: utterances.containsNoOrNeverMindOrNothing,
+			callback: (response, convo) => {
+				convo.say(`Okay! Let me know when you want to make progress on \`another priority\` :muscle:`);
 				convo.next();
 			}
 		},
 		{
 			default: true,
 			callback: (response, convo) => {
-				convo.say("Sorry, I didn't get that :thinking_face:");
-				convo.say("What would you like to do?");
-				convo.repeat();
+				text = "Sorry, I didn't get that :thinking_face:. What would you like to do?";
+				attachments = []
+				convoAskDoneSessionOptions(convo, text, attachments);
 				convo.next();
+			}
+		}
+	]);
+
+}
+
+function askForAdditionalTimeToPriority(response, convo) {
+
+	let { intentObject: { entities: { duration, datetime } } } = response;
+	const { sessionDone: { tz, dailyTasks, defaultSnoozeTime, UserId, currentSession: { dailyTask } } } = convo;
+
+	let taskText = dailyTask.Task.text;
+	let text = `Got it - let's adjust your plan accordingly. How much additional time would you like to allocate to \`${taskText}\` for the rest of today?`
+	convo.ask({
+		text,
+		attachments: [
+			{
+				attachment_type: 'default',
+				callback_id: "NOT_DONE_WITH_PRIORITY",
+				fallback: "How much more time would you like to allocate to your priority?",
+				color: colorsHash.grey.hex,
+				actions: [
+					{
+							name: buttonValues.doneSession.spentTimeOnSomethingElse.name,
+							text: "Spent time on something else",
+							value: buttonValues.doneSession.spentTimeOnSomethingElse.value,
+							type: "button"
+					},
+					{
+							name: buttonValues.doneSession.spentEnoughTimeOnItToday.name,
+							text: "Spent enough time on it today",
+							value: buttonValues.doneSession.spentEnoughTimeOnItToday.value,
+							type: "button"
+					}
+				]
+			}
+		]
+	}, [
+		{ // spentTimeOnSomethingElse
+			pattern: utterances.somethingElse,
+			callback: (response, convo) => {
+				askToReplacePriority(convo);
+				convo.next();
+			}
+		},
+		{ // spentEnoughTimeOnItToday
+			pattern: utterances.containsEnough,
+			callback: (response, convo) => {
+				
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+
+				// default will be time. if no customTimeObject, repeat question
+				let { text, intentObject: { entities: { duration, datetime } } } = response;
+				let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+				let now = moment();
+
+				if (!customTimeObject) {
+					convo.say("Sorry, I didn't get that :thinking_face:");
+					convo.repeat();
+				} else {
+
+					// success and user wants additional time to priority!
+
+					let durationMinutes  = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
+					convo.sessionDone.additionalMinutes = durationMinutes;
+
+					let buttonsValuesArray = [
+						buttonValues.doneSession.takeBreak.value,
+						buttonValues.doneSession.newSession.value,
+						buttonValues.doneSession.viewPlan.value
+					];
+
+					let attachmentsConfig  = { defaultBreakTime, defaultSnoozeTime, buttonsValuesArray };
+					let attachments = getDoneSessionMessageAttachments(attachmentsConfig);
+					let text = `Got it! I added ${durationMinutes} minutes to this priority. Would you like to take a break?`
+					convoAskDoneSessionOptions(convo, text, attachments);
+
+				}
+
+				convo.next();
+
+			}
+		}
+	]);
+
+}
+
+function askToReplacePriority(convo, question = '') {
+
+	const { sessionDone: { dailyTasks, currentSession: { dailyTask } } } = convo;
+
+	let taskListMessage = convertArrayToTaskListMessage(dailyTasks);
+	if (question == '') {
+		question = `Great! If you want to log this with me, it will replace one of your priorities. Which priority would you like to replace?\n${taskListMessage}`;
+	}
+
+	convo.ask({
+		text: question,
+		attachments: [
+			{
+				attachment_type: 'default',
+				callback_id: "REPLACE_PRIORITY",
+				fallback: "Do you want to replace a priority?",
+				color: colorsHash.grey.hex,
+				actions: [
+					{
+							name: buttonValues.keepPriority.name,
+							text: "I'll keep my priorities",
+							value: buttonValues.keepPriority.value,
+							type: "button"
+					}
+				]
+			}
+		]
+	}, [
+		{ // keepPriority
+			pattern: utterances.containsKeep,
+			callback: (response, convo) => {
+
+				let buttonsValuesArray = [
+					buttonValues.doneSession.takeBreak.value,
+					buttonValues.doneSession.newSession.value,
+					buttonValues.doneSession.viewPlan.value
+				];
+
+				let attachmentsConfig  = { defaultBreakTime, buttonsValuesArray };
+				let attachments = getDoneSessionMessageAttachments(attachmentsConfig);
+				let text = `Good work! Now let’s refocus back on another priority for today after a quick break`;
+				convoAskDoneSessionOptions(convo, text, attachments);
+				convo.next();
+
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+
+				// needs to be a number, else repeat question
+				let taskNumberArray = convertTaskNumberStringToArray(response.text, dailyTasks);
+				if (taskNumberArray && taskNumberArray.length == 1) {
+					let taskNumber = taskNumberArray[0]; // only one
+					convo.say(`awesome you chose priority: ${taskNumber}`);
+					convo.next();
+				} else {
+					// error
+					let question = "Sorry, I didn't get that :thinking_face:. Let me know which priority you want to replace above `i.e. priority 2`";
+					askToReplacePriority(convo, question);
+					convo.next();
+				}
+
 			}
 		}
 	]);

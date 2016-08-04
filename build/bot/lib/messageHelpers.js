@@ -877,6 +877,14 @@ function getDoneSessionMessageAttachments() {
 					type: "button"
 				});
 				break;
+			case _constants.buttonValues.doneSession.newSession.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.newSession.name,
+					text: "New Session",
+					value: _constants.buttonValues.doneSession.newSession.value,
+					type: "button"
+				});
+				break;
 			case _constants.buttonValues.doneSession.viewPlan.value:
 				actions.push({
 					name: _constants.buttonValues.doneSession.viewPlan.name,

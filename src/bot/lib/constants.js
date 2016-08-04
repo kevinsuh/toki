@@ -499,6 +499,10 @@ export const buttonValues ={
 			name: "DONE_SESSION_EXTEND_SESSION",
 			value: "extend my session"
 		},
+		newSession: {
+			name: "DONE_SESSION_NEW_SESSION",
+			value: "new session"
+		},
 		viewPlan: {
 			name: "DONE_SESSION_VIEW_PLAN",
 			value: "view my plan"
@@ -510,11 +514,23 @@ export const buttonValues ={
 		notDone: {
 			name: "DONE_SESSION_NOT_DONE_WITH_PRIORITY",
 			value: "not yet done"
+		},
+		spentTimeOnSomethingElse: {
+			name: "DONE_SESSION_SPENT_TIME_SOMETHING_ELSE",
+			value: "I spent time on something else!"
+		},
+		spentEnoughTimeOnItToday: {
+			name: "DONE_SESSION_ENOUGH_TIME_FOR_TODAY",
+			value: "I've spent enough time on it today!"
 		}
 	},
 	doneWithBreak: {
 		name: "DONE_WITH_BREAK",
 		value: "let's do it"
+	},
+	keepPriority: {
+		name: "KEEP_PRIORITY",
+		value: "i'll keep my priorities"
 	}
 }
 

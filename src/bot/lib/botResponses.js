@@ -4,6 +4,7 @@ export const utterances = {
 	no: new RegExp(/((no|not|nah|nope|^n)\b|\bn[oahpe]{1,4}\b)/i),
 	noAndNeverMind: new RegExp(/^n([oahpet]{1,5}|e[ever mind]{4,}|[vm]{1,4})\b/i),
 	onlyNeverMind: new RegExp(/^ne[ever mind]{4,}$/i),
+	containsNoOrNeverMindOrNothing: new RegExp(/\bn(oth[othing]{2,5}|[oahpet]{1,5}|e[ever mind]{4,}|[vm]{1,4})\b/i),
 	startsWithNever: new RegExp(/^ne[never]{3,}\b/i),
 	specificYes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|\by[esahp]{2,}\b|\bs[ure]{2,}\b)/i),
 	endDay: new RegExp(/\be[end ]{2,}\b.*\bd[day]{2,}/i),
@@ -58,5 +59,8 @@ export const utterances = {
 	deleteTasks: new RegExp(/^(d[delete ]{3,}[tasks ]{0,})\b/i),
 	containsResetOrUndo: new RegExp(/\b(r[reset]{3,}|u[undo]{2,})\b/i),
 	startsWithHelp: new RegExp(/^(hel[elp]{1,4})\b/i),
-	containsNoOne: new RegExp(/\b(no one)\b/i)
+	containsNoOne: new RegExp(/\b(no one)\b/i),
+	somethingElse: new RegExp(/\bsome[omething]{3,}\b.*\bel[lse]{2,}\b/i),
+	containsEnough: new RegExp(/\beno[ough]{3,}\b/i),
+	containsNew: new RegExp(/\bnew[ew]*\b/i)
 }
