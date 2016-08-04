@@ -33,6 +33,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function doneSessionAskOptions(convo) {
 	var _convo$sessionDone = convo.sessionDone;
 	var defaultBreakTime = _convo$sessionDone.defaultBreakTime;
+	var defaultSnoozeTime = _convo$sessionDone.defaultSnoozeTime;
 	var doneSessionEarly = _convo$sessionDone.doneSessionEarly;
 	var sessionTimerUp = _convo$sessionDone.sessionTimerUp;
 	var _convo$sessionDone$cu = _convo$sessionDone.currentSession;
@@ -49,7 +50,7 @@ function doneSessionAskOptions(convo) {
 
 	var text = void 0;
 	var buttonsValuesArray = [];
-	var attachmentsConfig = { defaultBreakTime: defaultBreakTime };
+	var attachmentsConfig = { defaultBreakTime: defaultBreakTime, defaultSnoozeTime: defaultSnoozeTime };
 	var minutesDifference = minutes - minutesSpent;
 	var timeSpentString = (0, _messageHelpers.convertMinutesToHoursString)(minutesSpent);
 
@@ -59,21 +60,37 @@ function doneSessionAskOptions(convo) {
 		convo.say('Cool, let\'s end early!');
 	}
 
+	// provide customized attachments based on situation
 	if (sessionTimerUp) {
-		buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.extendSession.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.endDay.value];
+
 		// triggered by sessionTimerUp
-		if (finishedTimeToTask) {} else {}
+
+		if (finishedTimeToTask) {
+
+			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.notDone.value, _constants.buttonValues.doneSession.extendSession.value, _constants.buttonValues.doneSession.endDay.value];
+		} else {
+
+			// send message if time is still remaining
+			convo.say('Your session for `' + taskText + '` is up. Excellent work!');
+
+			buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.extendSession.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.endDay.value];
+		}
 	} else {
-		// NL "done session"
+
+		// triggered by NL "done session"
+
 		if (finishedTimeToTask) {
 			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.notDone.value, _constants.buttonValues.doneSession.endDay.value];
-
-			text = 'Great work! The time you allotted for `' + taskText + '` is up -- you\'ve worked for ' + timeSpentString + ' on this. Would you like to mark it as complete for the day?';
 		} else {
 			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.endDay.value];
-
-			text = 'You\'ve worked for ' + workSessionTimeString + ' on `' + taskText + '` and have ' + minutesDifference + ' minutes remaining';
 		}
+	}
+
+	// text is dependent on whether minutes remaining or not
+	if (finishedTimeToTask) {
+		text = 'Great work! The time you allotted for `' + taskText + '` is up -- you\'ve worked for ' + timeSpentString + ' on this. Would you like to mark it as complete for the day?';
+	} else {
+		text = 'You\'ve worked for ' + workSessionTimeString + ' on `' + taskText + '` and have ' + minutesDifference + ' minutes remaining';
 	}
 
 	attachmentsConfig.buttonsValuesArray = buttonsValuesArray;

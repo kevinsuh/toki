@@ -64,7 +64,7 @@ export default function(controller) {
 		})
 		.then((user) => {
 
-			const { SlackUser: { tz }, defaultBreakTime } = user;
+			const { SlackUser: { tz }, defaultBreakTime, defaultSnoozeTime } = user;
 			const UserId = user.id;
 
 			user.getWorkSessions({
@@ -126,6 +126,7 @@ export default function(controller) {
 												UserId,
 												SlackUserId,
 												defaultBreakTime,
+												defaultSnoozeTime,
 												tz,
 												dailyTask,
 												doneSessionEarly,
@@ -218,6 +219,110 @@ export default function(controller) {
 
 		});
 
+	});
+
+	/**
+	 * 			~~ SESSION_TIMER FUNCTIONALITIES ~~
+	 */
+	
+	// session timer triggered by cron-job
+	controller.on('session_timer_up', (bot, config) => {
+
+		const { SlackUserId, workSession } = config;
+		const sessionTimerUp   = true;
+		const doneSessionEarly = false;
+
+		let dailyTaskIds = workSession.DailyTasks.map((dailyTask) => {
+			return dailyTask.id;
+		});
+
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			const UserId = user.id;
+
+			const { SlackUser: { tz }, defaultSnoozeTime, defaultBreakTime } = user;
+			let startTime             = moment(workSession.startTime).tz(tz);
+			let endTime               = moment(workSession.endTime).tz(tz);
+			let endTimeString         = endTime.format("h:mm a");
+			let workSessionMinutes    = Math.round(moment.duration(endTime.diff(startTime)).asMinutes());
+			let workSessionTimeString = convertMinutesToHoursString(workSessionMinutes);
+
+			user.getDailyTasks({
+				where: [ `"DailyTask"."id" IN (?) AND "Task"."done" = ?`, dailyTaskIds, false ],
+				include: [ models.Task ]
+			})
+			.then((dailyTasks) => {
+
+				if (dailyTasks.length > 0) {
+
+					// cancel all old reminders
+					user.getReminders({
+						where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break", "done_session_snooze"] ]
+					}).
+					then((oldReminders) => {
+						oldReminders.forEach((reminder) => {
+							reminder.update({
+								"open": false
+							})
+						});
+					});
+
+					let dailyTask = dailyTasks[0]; // one task per session
+
+					// do our math update to daily task here
+					let minutesSpent = dailyTask.minutesSpent;
+					minutesSpent += workSessionMinutes;
+					dailyTask.update({
+						minutesSpent
+					})
+					.then((dailyTask) => {
+
+						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+							convo.sessionDone = {
+								UserId,
+								SlackUserId,
+								defaultBreakTime,
+								defaultSnoozeTime,
+								tz,
+								dailyTask,
+								sessionTimerUp,
+								doneSessionEarly,
+								reminders: [],
+								currentSession: {
+									startTime,
+									endTime,
+									workSessionMinutes,
+									workSessionTimeString,
+									dailyTask
+								}
+							}
+
+							doneSessionAskOptions(convo);
+
+
+							convo.on('end', (convo) => {
+
+								const { SlackUserId, dailyTask } = convo.sessionDone;
+
+								console.log("\n\n\n session is done!");
+								console.log(convo.sessionDone);
+								console.log("\n\n\n");
+
+							})
+
+						});
+
+					});
+				}
+			});
+		})
 	});
 
 }

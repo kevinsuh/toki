@@ -818,7 +818,7 @@ export function convertStringToNumbersArray(userInputString) {
 
 export function getDoneSessionMessageAttachments(config = {}) {
 
-	const { buttonsValuesArray, defaultBreakTime } = config;
+	const { buttonsValuesArray, defaultBreakTime, defaultSnoozeTime } = config;
 
 	let actions = [];
 	buttonsValuesArray.forEach((buttonValue) => {
@@ -842,9 +842,10 @@ export function getDoneSessionMessageAttachments(config = {}) {
 				})
 				break;
 			case buttonValues.doneSession.extendSession.value:
+				let extendText = defaultSnoozeTime ? `Extend for ${defaultSnoozeTime} min` : `Extend Session`;
 				actions.push({
 					name: buttonValues.doneSession.extendSession.name,
-					text: "Extend Session :timer_clock:",
+					text: extendText,
 					value: buttonValues.doneSession.extendSession.value,
 					type: "button"
 				})

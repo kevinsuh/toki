@@ -13,7 +13,7 @@ import { colorsArray, THANK_YOU, buttonValues, colorsHash } from '../../lib/cons
  */
 export function doneSessionAskOptions(convo) {
 
-	const { defaultBreakTime, doneSessionEarly, sessionTimerUp, currentSession: { dailyTask, workSessionTimeString } } = convo.sessionDone;
+	const { defaultBreakTime, defaultSnoozeTime, doneSessionEarly, sessionTimerUp, currentSession: { dailyTask, workSessionTimeString } } = convo.sessionDone;
 
 	// minutesSpent is updated here, after closing the workSession
 	const { minutesSpent, minutes } = dailyTask.dataValues;
@@ -21,7 +21,7 @@ export function doneSessionAskOptions(convo) {
 
 	let text;
 	let buttonsValuesArray = [];
-	let attachmentsConfig  = { defaultBreakTime };
+	let attachmentsConfig  = { defaultBreakTime, defaultSnoozeTime };
 	let minutesDifference  = minutes - minutesSpent;
 	let timeSpentString    = convertMinutesToHoursString(minutesSpent);
 
@@ -31,21 +31,37 @@ export function doneSessionAskOptions(convo) {
 		convo.say(`Cool, let's end early!`);
 	}
 
+	// provide customized attachments based on situation
 	if (sessionTimerUp) {
-		buttonsValuesArray = [
-			buttonValues.doneSession.takeBreak.value,
-			buttonValues.doneSession.extendSession.value,
-			buttonValues.doneSession.viewPlan.value,
-			buttonValues.doneSession.endDay.value
-		];
+
 		// triggered by sessionTimerUp
+		
 		if (finishedTimeToTask) {
+
+			buttonsValuesArray = [
+				buttonValues.doneSession.completedPriority.value,
+				buttonValues.doneSession.notDone.value,
+				buttonValues.doneSession.extendSession.value,
+				buttonValues.doneSession.endDay.value
+			];
 
 		} else {
 
+			// send message if time is still remaining
+			convo.say(`Your session for \`${taskText}\` is up. Excellent work!`);
+
+			buttonsValuesArray = [
+				buttonValues.doneSession.takeBreak.value,
+				buttonValues.doneSession.extendSession.value,
+				buttonValues.doneSession.viewPlan.value,
+				buttonValues.doneSession.endDay.value
+			];
+
 		}
 	} else {
-		// NL "done session"
+
+		// triggered by NL "done session"
+		
 		if (finishedTimeToTask) {
 			buttonsValuesArray = [
 				buttonValues.doneSession.completedPriority.value,
@@ -53,7 +69,7 @@ export function doneSessionAskOptions(convo) {
 				buttonValues.doneSession.endDay.value
 			];
 
-			text = `Great work! The time you allotted for \`${taskText}\` is up -- you've worked for ${timeSpentString} on this. Would you like to mark it as complete for the day?`;
+			
 		} else {
 			buttonsValuesArray = [
 				buttonValues.doneSession.completedPriority.value,
@@ -61,9 +77,15 @@ export function doneSessionAskOptions(convo) {
 				buttonValues.doneSession.viewPlan.value,
 				buttonValues.doneSession.endDay.value
 			];
-				
-			text = `You've worked for ${workSessionTimeString} on \`${taskText}\` and have ${minutesDifference} minutes remaining`;
+			
 		}
+	}
+
+	// text is dependent on whether minutes remaining or not
+	if (finishedTimeToTask) {
+		text = `Great work! The time you allotted for \`${taskText}\` is up -- you've worked for ${timeSpentString} on this. Would you like to mark it as complete for the day?`;
+	} else {
+		text = `You've worked for ${workSessionTimeString} on \`${taskText}\` and have ${minutesDifference} minutes remaining`;
 	}
 
 	attachmentsConfig.buttonsValuesArray = buttonsValuesArray;

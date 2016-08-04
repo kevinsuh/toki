@@ -836,6 +836,7 @@ function getDoneSessionMessageAttachments() {
 	var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 	var buttonsValuesArray = config.buttonsValuesArray;
 	var defaultBreakTime = config.defaultBreakTime;
+	var defaultSnoozeTime = config.defaultSnoozeTime;
 
 
 	var actions = [];
@@ -860,9 +861,10 @@ function getDoneSessionMessageAttachments() {
 				});
 				break;
 			case _constants.buttonValues.doneSession.extendSession.value:
+				var extendText = defaultSnoozeTime ? 'Extend for ' + defaultSnoozeTime + ' min' : 'Extend Session';
 				actions.push({
 					name: _constants.buttonValues.doneSession.extendSession.name,
-					text: "Extend Session :timer_clock:",
+					text: extendText,
 					value: _constants.buttonValues.doneSession.extendSession.value,
 					type: "button"
 				});
