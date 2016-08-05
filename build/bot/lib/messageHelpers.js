@@ -335,16 +335,18 @@ function createTaskListMessageBody(taskArray, options) {
 
 		if (!options.dontShowMinutes && task.minutes) {
 
-			var minutesInt = parseInt(task.minutes);
+			var minutesInt = Math.round(task.minutes);
 			if (!isNaN(minutesInt) && !task.done) {
 				options.totalMinutes += minutesInt;
 			}
-			var timeString = convertMinutesToHoursString(minutesInt);
 
-			if (options.emphasizeMinutes) {
-				minutesMessage = ' *_(' + timeString + ' remaining)_*';
-			} else {
+			var minutesSpent = Math.round(task.minutesSpent);
+			var minutesRemaining = minutesInt - minutesSpent;
+			if (minutesRemaining > 0) {
+				var timeString = convertMinutesToHoursString(minutesRemaining);
 				minutesMessage = ' (' + timeString + ' remaining)';
+			} else {
+				if (!task.done) minutesMessage = ' (_no time remaining_)';
 			}
 		}
 
