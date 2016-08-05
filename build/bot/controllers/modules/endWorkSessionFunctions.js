@@ -75,10 +75,10 @@ function doneSessionAskOptions(convo) {
 		// triggered by NL "done session"
 
 		if (finishedTimeToTask) {
-			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.notDone.value, _constants.buttonValues.doneSession.endDay.value];
+			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.notDone.value];
 		} else {
 
-			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.endDay.value];
+			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.viewPlan.value];
 		}
 	}
 
@@ -87,6 +87,11 @@ function doneSessionAskOptions(convo) {
 		text = 'Great work! The time you allotted for `' + taskText + '` is up -- you\'ve worked for ' + timeSpentString + ' on this. Would you like to mark it as complete for the day?';
 	} else {
 		text = 'You\'ve worked for ' + workSessionTimeString + ' on `' + taskText + '` and have ' + minutesDifference + ' minutes remaining';
+	}
+
+	// if minutes is NULL, then we will have custom question
+	if (!minutes) {
+		text = 'You\'ve worked for ' + workSessionTimeString + ' on `' + taskText + '`. Would you like to mark it as complete for the day?';
 	}
 
 	var attachmentsConfig = { defaultBreakTime: defaultBreakTime, defaultSnoozeTime: defaultSnoozeTime, buttonsValuesArray: buttonsValuesArray };
@@ -180,7 +185,7 @@ function askForAdditionalTimeToPriority(response, convo) {
 
 	var taskText = dailyTask.Task.text;
 	var text = 'Got it - let\'s adjust your plan accordingly. How much additional time would you like to allocate to `' + taskText + '` for the rest of today?';
-	buttonsValuesArray = [_constants.buttonValues.doneSession.didSomethingElse.value, _constants.buttonValues.doneSession.moveOn.value];
+	var buttonsValuesArray = [_constants.buttonValues.doneSession.didSomethingElse.value, _constants.buttonValues.doneSession.moveOn.value];
 	var attachmentsConfig = { buttonsValuesArray: buttonsValuesArray };
 	var attachments = (0, _messageHelpers.getDoneSessionMessageAttachments)(attachmentsConfig);
 	convo.ask({
@@ -308,7 +313,7 @@ function askToReplacePriority(convo) {
 
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
 	if (question == '') {
-		question = 'Great! If you want to log this with me, it will replace one of your priorities. Which priority would you like to replace?\n' + taskListMessage;
+		question = 'Okay! If you want to log this with me, it will replace one of your priorities. Which priority above would you like to replace?';
 	}
 
 	var buttonsValuesArray = [_constants.buttonValues.doneSession.keepMyPriority.value];
@@ -370,46 +375,6 @@ function askForPriorityReplacement(convo) {
 		convo.ask('What did you do instead of `' + taskTextToReplace + '`?', function (response, convo) {
 			var newTaskText = response.text;
 			convo.sessionDone.priorityDecision.replacePriority.newTaskText = newTaskText;
-			convo.ask({
-				text: 'Did you complete `' + newTaskText + '`?',
-				attachments: [{
-					attachment_type: 'default',
-					callback_id: "FINISH_REPLACEMENT_PRIORITY",
-					fallback: "Did you finish that prioritypriority?",
-					color: _constants.colorsHash.grey.hex,
-					actions: [{
-						name: _constants.buttonValues.yes.name,
-						text: "Yes :runner:",
-						value: _constants.buttonValues.yes.value,
-						type: "button"
-					}, {
-						name: _constants.buttonValues.no.name,
-						text: "No",
-						value: _constants.buttonValues.no.value,
-						type: "button"
-					}]
-				}]
-			}, [{
-				pattern: _botResponses.utterances.yes,
-				callback: function callback(response, convo) {
-					convo.say('You\'re a star :star:. I updated your plan!');
-					convo.sessionDone.priorityDecision.replacePriority.completedPriority = true;
-					convo.next();
-				}
-			}, {
-				pattern: _botResponses.utterances.no,
-				callback: function callback(response, convo) {
-					askForTimeToReplacementPriority(convo);
-					convo.next();
-				}
-			}, {
-				default: true,
-				callback: function callback(response, convo) {
-					convo.say('Hmm I didn\'t get that :thinking_face:');
-					convo.repeat();
-					convo.next();
-				}
-			}]);
 			convo.next();
 		});
 	} else {

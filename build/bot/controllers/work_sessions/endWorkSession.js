@@ -166,6 +166,7 @@ exports.default = function (controller) {
 														console.log("\n\n\n");
 
 														var _convo$sessionDone = convo.sessionDone;
+														var UserId = _convo$sessionDone.UserId;
 														var SlackUserId = _convo$sessionDone.SlackUserId;
 														var reminders = _convo$sessionDone.reminders;
 														var extendSession = _convo$sessionDone.extendSession;
@@ -208,14 +209,55 @@ exports.default = function (controller) {
 
 
 														if (Object.keys(switchPriority).length > 0) {
+															var newPriorityIndex = switchPriority.newPriorityIndex;
+
+															console.log("\n\n\nokay dealing with switch priority!");
+															console.log(dailyTasks[newPriorityIndex]);
+															var newDailyTask = dailyTasks[newPriorityIndex];
+
+															// 1. undo minutesSpent to dailyTask
+															var _minutesSpent = dailyTask.dataValues.minutesSpent;
+
+															_minutesSpent -= workSessionMinutes;
+															dailyTask.update({
+																minutesSpent: _minutesSpent
+															});
+
+															// 2. replace the dailyTask associated with current workSession
+															_models2.default.WorkSessionTask.destroy({
+																where: ['"WorkSessionTasks"."WorkSessionId" = ?', WorkSessionId]
+															});
+															_models2.default.WorkSessionTask.create({
+																WorkSessionId: WorkSessionId,
+																DailyTaskId: newDailyTask.dataValues.id
+															}).then(function () {
+																// 3. re-open workSession and re-trigger `done_session` flow
+																_models2.default.WorkSession.update({
+																	open: true
+																}, {
+																	where: ['"WorkSessions"."id" = ?', WorkSessionId]
+																}).then(function () {
+
+																	bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+																		convo.say('Okay! I put time towards that priority instead');
+																		convo.next();
+																		convo.on('end', function (convo) {
+																			controller.trigger('done_session_flow', [bot, { SlackUserId: SlackUserId }]);
+																		});
+																	});
+																	return;
+																});
+															});
+														} else if (Object.keys(replacePriority).length > 0) {
 															(function () {
-																var newPriorityIndex = switchPriority.newPriorityIndex;
+																var dailyTaskIndexToReplace = replacePriority.dailyTaskIndexToReplace;
+																var newTaskText = replacePriority.newTaskText;
 
-																console.log("\n\n\nokay dealing with switch priority!");
-																console.log(dailyTasks[newPriorityIndex]);
-																var newDailyTask = dailyTasks[newPriorityIndex];
+																console.log("\n\n\n replacing this task:");
+																console.log(dailyTasks[dailyTaskIndexToReplace]);
+																console.log(replacePriority);
 
-																// 1. undo minutesSpent to dailyTask
+																// 1. undo minutes to task
 																var minutesSpent = dailyTask.dataValues.minutesSpent;
 
 																minutesSpent -= workSessionMinutes;
@@ -223,48 +265,57 @@ exports.default = function (controller) {
 																	minutesSpent: minutesSpent
 																});
 
-																// 2. update workSession back on
-																// 3. update workSession.dailyTasks to this task!
-																_models2.default.WorkSession.update({
-																	open: true
+																// 2. change dailyTasks ("delete" the original one, then create this new one w/ NULL minutesAllocated)
+																var dailyTaskToReplace = dailyTasks[dailyTaskIndexToReplace];
+																var _dailyTaskToReplace$d = dailyTaskToReplace.dataValues;
+																var id = _dailyTaskToReplace$d.id;
+																var priority = _dailyTaskToReplace$d.priority;
+
+																_models2.default.DailyTask.update({
+																	type: "deleted"
 																}, {
-																	where: ['"WorkSessions"."id" = ?', WorkSessionId]
-																}).then(function (workSession) {
-																	// delete existing dailyTasks associated
-																	// with the workSession,
-																	// then replace with new dailyTask
-																	_models2.default.WorkSessionTask.destroy({
-																		where: ['"WorkSessionTasks"."WorkSessionId" = ?', WorkSessionId]
-																	}).then(function () {
+																	where: ['"DailyTasks"."id" = ?', id]
+																});
+																_models2.default.Task.create({
+																	text: newTaskText
+																}).then(function (task) {
+																	task.createDailyTask({
+																		priority: priority,
+																		UserId: UserId
+																	}).then(function (dailyTask) {
+
+																		// 3. replace newly created dailyTask as the dailyTask to the workSession
+																		var DailyTaskId = dailyTask.id;
+																		_models2.default.WorkSessionTask.destroy({
+																			where: ['"WorkSessionTasks"."WorkSessionId" = ?', WorkSessionId]
+																		});
 																		_models2.default.WorkSessionTask.create({
 																			WorkSessionId: WorkSessionId,
-																			DailyTaskId: newDailyTask.dataValues.id
-																		});
-																		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-																			convo.say('Okay! I put time towards that priority instead');
-																			convo.next();
-																			convo.on('end', function (convo) {
-																				controller.trigger('done_session_flow', [bot, { SlackUserId: SlackUserId }]);
+																			DailyTaskId: DailyTaskId
+																		}).then(function () {
+																			// 4. re-open work session and go through `done_session` flow
+																			_models2.default.WorkSession.update({
+																				open: true
+																			}, {
+																				where: ['"WorkSessions"."id" = ?', WorkSessionId]
+																			}).then(function () {
+
+																				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+																					convo.say('Nice, that new priority looks great!');
+																					convo.next();
+																					convo.on('end', function (convo) {
+																						controller.trigger('done_session_flow', [bot, { SlackUserId: SlackUserId }]);
+																					});
+																				});
+																				return;
 																			});
 																		});
-																		return;
 																	});
 																});
+
+																// 4. re-open the workSession and launch into `session-done` flow
+
 															})();
-														} else if (Object.keys(replacePriority).length > 0) {
-															var dailyTaskIndexToReplace = replacePriority.dailyTaskIndexToReplace;
-															var newTaskText = replacePriority.newTaskText;
-															var additionalMinutes = replacePriority.additionalMinutes;
-
-															console.log("\n\n\n replacing this task:");
-															console.log(dailyTasks[dailyTaskIndexToReplace]);
-															console.log(replacePriority);
-
-															// 1. undo minutes to task
-
-															// if no additional minutes, then no more minutes to what you used this session for, and set it to completed
-
-															// if additional minutes, do minutesSpent on this session + the additional minutes, and that task is no longer completed
 														} else {
 															// COMPLETED!!!!
 															bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {

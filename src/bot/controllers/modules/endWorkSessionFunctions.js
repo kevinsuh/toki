@@ -64,8 +64,7 @@ export function doneSessionAskOptions(convo) {
 		if (finishedTimeToTask) {
 			buttonsValuesArray = [
 				buttonValues.doneSession.completedPriority.value,
-				buttonValues.doneSession.notDone.value,
-				buttonValues.doneSession.endDay.value
+				buttonValues.doneSession.notDone.value
 			];
 
 			
@@ -74,8 +73,7 @@ export function doneSessionAskOptions(convo) {
 			buttonsValuesArray = [
 				buttonValues.doneSession.completedPriority.value,
 				buttonValues.doneSession.takeBreak.value,
-				buttonValues.doneSession.viewPlan.value,
-				buttonValues.doneSession.endDay.value
+				buttonValues.doneSession.viewPlan.value
 			];
 			
 		}
@@ -86,6 +84,11 @@ export function doneSessionAskOptions(convo) {
 		text = `Great work! The time you allotted for \`${taskText}\` is up -- you've worked for ${timeSpentString} on this. Would you like to mark it as complete for the day?`;
 	} else {
 		text = `You've worked for ${workSessionTimeString} on \`${taskText}\` and have ${minutesDifference} minutes remaining`;
+	}
+
+	// if minutes is NULL, then we will have custom question
+	if (!minutes) {
+		text = `You've worked for ${workSessionTimeString} on \`${taskText}\`. Would you like to mark it as complete for the day?`;
 	}
 
 	let attachmentsConfig  = { defaultBreakTime, defaultSnoozeTime, buttonsValuesArray };
@@ -181,11 +184,11 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 function askForAdditionalTimeToPriority(response, convo) {
 
 	let { intentObject: { entities: { duration, datetime } } } = response;
-	const { sessionDone: { tz, dailyTasks, defaultSnoozeTime, UserId, currentSession: { dailyTask } } } = convo;
+	const { sessionDone: { tz, dailyTasks, defaultSnoozeTime, defaultBreakTime UserId, currentSession: { dailyTask } } } = convo;
 
 	let taskText = dailyTask.Task.text;
 	let text = `Got it - let's adjust your plan accordingly. How much additional time would you like to allocate to \`${taskText}\` for the rest of today?`;
-	buttonsValuesArray = [
+	let buttonsValuesArray = [
 		buttonValues.doneSession.didSomethingElse.value,
 		buttonValues.doneSession.moveOn.value
 	];
@@ -332,7 +335,7 @@ function askToReplacePriority(convo, question = '') {
 
 	let taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 	if (question == '') {
-		question = `Great! If you want to log this with me, it will replace one of your priorities. Which priority would you like to replace?\n${taskListMessage}`;
+		question = `Okay! If you want to log this with me, it will replace one of your priorities. Which priority above would you like to replace?`;
 	}
 
 	let buttonsValuesArray = [
@@ -404,57 +407,9 @@ function askForPriorityReplacement(convo) {
 		convo.ask(`What did you do instead of \`${taskTextToReplace}\`?`, (response, convo) => {
 			let newTaskText = response.text;
 			convo.sessionDone.priorityDecision.replacePriority.newTaskText = newTaskText;
-			convo.ask({
-				text: `Did you complete \`${newTaskText}\`?`,
-				attachments: [
-					{
-						attachment_type: 'default',
-						callback_id: "FINISH_REPLACEMENT_PRIORITY",
-						fallback: "Did you finish that prioritypriority?",
-						color: colorsHash.grey.hex,
-						actions: [
-							{
-									name: buttonValues.yes.name,
-									text: "Yes :runner:",
-									value: buttonValues.yes.value,
-									type: "button"
-							},
-							{
-									name: buttonValues.no.name,
-									text: "No",
-									value: buttonValues.no.value,
-									type: "button"
-							}
-						]
-					}
-				]
-			}, [
-				{
-					pattern: utterances.yes,
-					callback: (response, convo) => {
-						convo.say(`You're a star :star:. I updated your plan!`);
-						convo.sessionDone.priorityDecision.replacePriority.completedPriority = true;
-						convo.next();
-					}
-				},
-				{
-					pattern: utterances.no,
-					callback: (response, convo) => {
-						askForTimeToReplacementPriority(convo);
-						convo.next();
-					}
-				},
-				{
-					default: true,
-					callback: (response, convo) => {
-						convo.say(`Hmm I didn't get that :thinking_face:`);
-						convo.repeat();
-						convo.next();
-					}
-				}
-			])
 			convo.next();
 		})
+
 	} else {
 		let question = "What priority would you like to replace?";
 		askToReplacePriority(convo, question);

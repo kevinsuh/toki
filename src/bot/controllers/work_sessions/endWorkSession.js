@@ -182,7 +182,7 @@ export default function(controller) {
 													console.log(convo.sessionDone.priorityDecision);
 													console.log("\n\n\n");
 
-													const { SlackUserId, reminders, extendSession, postSessionDecision, currentSession: { WorkSessionId, workSessionMinutes, dailyTask }, priorityDecision } = convo.sessionDone;
+													const { UserId, SlackUserId, reminders, extendSession, postSessionDecision, currentSession: { WorkSessionId, workSessionMinutes, dailyTask }, priorityDecision } = convo.sessionDone;
 
 													// if extend session, rest doesn't matter!
 													if (extendSession) {
@@ -222,26 +222,24 @@ export default function(controller) {
 															minutesSpent
 														});
 
-														// 2. update workSession back on
-														// 3. update workSession.dailyTasks to this task!
-														models.WorkSession.update({
-															open: true
-														}, {
-															where: [`"WorkSessions"."id" = ?`, WorkSessionId]
+														// 2. replace the dailyTask associated with current workSession
+														models.WorkSessionTask.destroy({
+															where: [`"WorkSessionTasks"."WorkSessionId" = ?`, WorkSessionId]
 														})
-														.then((workSession) => {
-															// delete existing dailyTasks associated
-															// with the workSession,
-															// then replace with new dailyTask
-															models.WorkSessionTask.destroy({
-																where: [`"WorkSessionTasks"."WorkSessionId" = ?`, WorkSessionId]
+														models.WorkSessionTask.create({
+															WorkSessionId,
+															DailyTaskId: newDailyTask.dataValues.id
+														})
+														.then(() => {
+															// 3. re-open workSession and re-trigger `done_session` flow
+															models.WorkSession.update({
+																open: true
+															}, {
+																where: [`"WorkSessions"."id" = ?`, WorkSessionId]
 															})
 															.then(() => {
-																models.WorkSessionTask.create({
-																	WorkSessionId,
-																	DailyTaskId: newDailyTask.dataValues.id
-																})
-																bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+																bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 																	convo.say(`Okay! I put time towards that priority instead`);
 																	convo.next();
 																	convo.on('end', (convo) => {
@@ -249,21 +247,76 @@ export default function(controller) {
 																	})
 																});
 																return;
-															});
+															})
 														})
 
-
 													} else if (Object.keys(replacePriority).length > 0) {
-														const { dailyTaskIndexToReplace, newTaskText, additionalMinutes } = replacePriority;
+														const { dailyTaskIndexToReplace, newTaskText } = replacePriority;
 														console.log("\n\n\n replacing this task:");
 														console.log(dailyTasks[dailyTaskIndexToReplace]);
 														console.log(replacePriority);
 
 														// 1. undo minutes to task
+														let { minutesSpent } = dailyTask.dataValues;
+														minutesSpent -= workSessionMinutes;
+														dailyTask.update({
+															minutesSpent
+														});
 
-														// if no additional minutes, then no more minutes to what you used this session for, and set it to completed
+														// 2. change dailyTasks ("delete" the original one, then create this new one w/ NULL minutesAllocated)
+														let dailyTaskToReplace = dailyTasks[dailyTaskIndexToReplace];
+														const { id, priority } = dailyTaskToReplace.dataValues;
+														models.DailyTask.update({
+															type: "deleted"
+														},{
+															where: [`"DailyTasks"."id" = ?`, id]
+														})
+														models.Task.create({
+															text: newTaskText
+														})
+														.then((task) => {
+															task.createDailyTask({
+																priority,
+																UserId
+															})
+															.then((dailyTask) => {
+
+																// 3. replace newly created dailyTask as the dailyTask to the workSession
+																const DailyTaskId = dailyTask.id;
+																models.WorkSessionTask.destroy({
+																	where: [`"WorkSessionTasks"."WorkSessionId" = ?`, WorkSessionId]
+																})
+																models.WorkSessionTask.create({
+																	WorkSessionId,
+																	DailyTaskId
+																})
+																.then(() => {
+																	// 4. re-open work session and go through `done_session` flow
+																	models.WorkSession.update({
+																		open: true
+																	}, {
+																		where: [`"WorkSessions"."id" = ?`, WorkSessionId]
+																	})
+																	.then(() => {
+
+																		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+																			convo.say(`Nice, that new priority looks great!`);
+																			convo.next();
+																			convo.on('end', (convo) => {
+																				controller.trigger(`done_session_flow`, [bot, { SlackUserId }]);
+																			})
+																		});
+																		return;
+
+																	})
+																})
+															})
+														})
 														
-														// if additional minutes, do minutesSpent on this session + the additional minutes, and that task is no longer completed
+
+														
+														// 4. re-open the workSession and launch into `session-done` flow
+
 														
 													} else {
 														// COMPLETED!!!!
