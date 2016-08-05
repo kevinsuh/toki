@@ -509,5 +509,56 @@ export default function(controller) {
 			})
 		})
 	});
+	
+
+	/**
+	 * 		ENDING YOUR PLAN
+	 */
+	controller.on(`end_plan_flow`, (bot, config) => {
+		const { SlackUserId } = config;
+
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [
+				models.SlackUser
+			]
+		})
+		.then((user) => {
+
+			// get the most recent start_work session group to measure
+			// a day's worth of work
+			user.getSessionGroups({
+				order: `"SessionGroup"."createdAt" DESC`,
+				where: [`"SessionGroup"."type" = ?`, "start_work"],
+				limit: 1
+			})
+			.then((sessionGroups) => {
+				
+				const startSessionGroup   = sessionGroups[0]; // the start day
+
+				user.getDailyTasks({
+					where: [`"DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?`, startSessionGroup.dataValues.createdAt, "live"],
+					include: [ models.Task ],
+					order: `"DailyTask"."priority" ASC`
+				})
+				.then((dailyTasks) => {
+
+					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+						convo.say("Okay! Let's end our day!");
+						convo.next();
+
+						convo.on('end', (convo) => {
+							resumeQueuedReachouts(bot, { SlackUserId });
+						});
+						
+					});
+
+				});
+
+			});
+
+		});
+	})
 
 }

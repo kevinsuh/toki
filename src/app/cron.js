@@ -81,7 +81,9 @@ var checkForSessions = () => {
 						var bot = bots[token];
 						if (bot) {
 							// alarm is up for session
-							controller.trigger('session_timer_up', [bot, config]);
+							const sessionTimerUp  = true;
+							config.sessionTimerUp = sessionTimerUp
+							controller.trigger(`done_session_flow`, [bot, { SlackUserId, sessionTimerUp }]);
 						}
 					});
 

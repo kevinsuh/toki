@@ -1052,7 +1052,7 @@ function workOnTasksFlow(convo) {
 	let { planEdit: { bot, dailyTasks, changePlanCommand, changedPlanCommands, openWorkSession, currentSession } } = convo;
 
 	// say task list, then ask which ones to complete
-	let options = { onlyRemainingTasks: true, startPlan: true };
+	let options = { onlyRemainingTasks: true };
 
 	let baseMessage = '';
 

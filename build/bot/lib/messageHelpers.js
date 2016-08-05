@@ -27,6 +27,7 @@ exports.deleteMostRecentPlanMessage = deleteMostRecentPlanMessage;
 exports.deleteMostRecentDoneSessionMessage = deleteMostRecentDoneSessionMessage;
 exports.getTimeToTaskTextAttachmentWithTaskListMessage = getTimeToTaskTextAttachmentWithTaskListMessage;
 exports.convertStringToNumbersArray = convertStringToNumbersArray;
+exports.getDoneSessionMessageAttachments = getDoneSessionMessageAttachments;
 
 var _constants = require('./constants');
 
@@ -278,7 +279,7 @@ function convertArrayToTaskListMessage(taskArray) {
 	// add completed tasks to right place
 	var taskListMessageBody = '';
 	if (completedTasks.length > 0) {
-		taskListMessage = options.noKarets ? '*Completed Tasks:*\n' : '> *Completed Tasks:*\n';
+		taskListMessage = options.noKarets ? '*Completed Priorities:*\n' : '> *Completed Priorities:*\n';
 		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
 		taskListMessage += taskListMessageBody;
 	}
@@ -287,7 +288,7 @@ function convertArrayToTaskListMessage(taskArray) {
 		// add remaining tasks to right place
 		if (completedTasks.length > 0) {
 			// only remaining tasks, no completed tasks
-			taskListMessage += options.noKarets ? '\n*Remaining Tasks:*\n' : '>\n>*Remaining Tasks:*\n';
+			taskListMessage += options.noKarets ? '\n*Remaining Priorities:*\n' : '>\n>*Remaining Priorities:*\n';
 		}
 		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
 		taskListMessage += taskListMessageBody;
@@ -334,16 +335,18 @@ function createTaskListMessageBody(taskArray, options) {
 
 		if (!options.dontShowMinutes && task.minutes) {
 
-			var minutesInt = parseInt(task.minutes);
+			var minutesInt = Math.round(task.minutes);
 			if (!isNaN(minutesInt) && !task.done) {
 				options.totalMinutes += minutesInt;
 			}
-			var timeString = convertMinutesToHoursString(minutesInt);
 
-			if (options.emphasizeMinutes) {
-				minutesMessage = ' *_(' + timeString + ' remaining)_*';
-			} else {
+			var minutesSpent = Math.round(task.minutesSpent);
+			var minutesRemaining = minutesInt - minutesSpent;
+			if (minutesRemaining > 0) {
+				var timeString = convertMinutesToHoursString(minutesRemaining);
 				minutesMessage = ' (' + timeString + ' remaining)';
+			} else {
+				if (!task.done) minutesMessage = ' (_no time remaining_)';
 			}
 		}
 
@@ -572,10 +575,12 @@ function prioritizeTaskArrayFromUserInput(taskObjectArray, input) {
 
 // returns tasks separated into red blocks
 function commaSeparateOutTaskArray(a) {
+	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var codeBlock = config.codeBlock;
 
-	// put into red blocks
+
 	a = a.map(function (a) {
-		return '' + a;
+		return codeBlock ? '`' + a + '`' : '' + a;
 	});
 
 	// make into string
@@ -829,5 +834,145 @@ function convertStringToNumbersArray(userInputString) {
 	} else {
 		return numbersArray;
 	}
+}
+
+function getDoneSessionMessageAttachments() {
+	var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	var buttonsValuesArray = config.buttonsValuesArray;
+	var defaultBreakTime = config.defaultBreakTime;
+	var defaultSnoozeTime = config.defaultSnoozeTime;
+
+
+	var actions = [];
+	buttonsValuesArray.forEach(function (buttonValue) {
+		switch (buttonValue) {
+			case _constants.buttonValues.doneSession.completedPriority.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.completedPriority.name,
+					text: "Completed :sports_medal:",
+					value: _constants.buttonValues.doneSession.completedPriority.value,
+					type: "button",
+					style: "primary"
+				});
+				break;
+			case _constants.buttonValues.doneSession.completedPriorityTonedDown.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.completedPriorityTonedDown.name,
+					text: "Priority Completed",
+					value: _constants.buttonValues.doneSession.completedPriorityTonedDown.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.takeBreak.value:
+				var breakText = defaultBreakTime ? 'Break for ' + defaultBreakTime + ' min' : 'Take a break';
+				actions.push({
+					name: _constants.buttonValues.doneSession.takeBreak.name,
+					text: breakText,
+					value: _constants.buttonValues.doneSession.takeBreak.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.extendSession.value:
+				var extendText = defaultSnoozeTime ? 'Extend for ' + defaultSnoozeTime + ' min' : 'Extend Session';
+				actions.push({
+					name: _constants.buttonValues.doneSession.extendSession.name,
+					text: extendText,
+					value: _constants.buttonValues.doneSession.extendSession.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.newSession.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.newSession.name,
+					text: "New Session",
+					value: _constants.buttonValues.doneSession.newSession.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.viewPlan.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.viewPlan.name,
+					text: "View Plan",
+					value: _constants.buttonValues.doneSession.viewPlan.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.endDay.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.endDay.name,
+					text: "End Day",
+					value: _constants.buttonValues.doneSession.endDay.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.notDone.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.notDone.name,
+					text: "Not Done",
+					value: _constants.buttonValues.doneSession.notDone.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.didSomethingElse.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.didSomethingElse.name,
+					text: "Did something else",
+					value: _constants.buttonValues.doneSession.didSomethingElse.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.moveOn.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.moveOn.name,
+					text: "Let's move On",
+					value: _constants.buttonValues.doneSession.moveOn.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.itWasSomethingElse.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.itWasSomethingElse.name,
+					text: "Something else!",
+					value: _constants.buttonValues.doneSession.itWasSomethingElse.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.neverMind.value:
+				actions.push({
+					name: _constants.buttonValues.neverMind.name,
+					text: "Never mind",
+					value: _constants.buttonValues.neverMind.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.keepMyPriority.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.keepMyPriority.name,
+					text: "I'll keep my priorities",
+					value: _constants.buttonValues.doneSession.keepMyPriority.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.doneSession.beBackLater.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.beBackLater.name,
+					text: "Be back later",
+					value: _constants.buttonValues.doneSession.beBackLater.value,
+					type: "button"
+				});
+				break;
+			default:
+				break;
+		}
+	});
+
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "DONE_WITH_SESSION",
+		fallback: "Done with my session!",
+		actions: actions
+	}];
+
+	return attachments;
 }
 //# sourceMappingURL=messageHelpers.js.map

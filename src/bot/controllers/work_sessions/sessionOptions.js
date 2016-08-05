@@ -356,7 +356,7 @@ export default function(controller) {
 
 };
 
-function notInSessionWouldYouLikeToStartOne(config) {
+export function notInSessionWouldYouLikeToStartOne(config) {
 	const { bot, SlackUserId, controller } = config;
 	if (bot && SlackUserId && controller) {
 		bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
@@ -387,7 +387,7 @@ function notInSessionWouldYouLikeToStartOne(config) {
 			convo.next();
 			convo.on('end', (convo) => {
 				if (convo.startSession) {
-					controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
+					controller.trigger(`begin_session`, [ bot, { SlackUserId } ]);
 				}
 				setTimeout(() => {
 					resumeQueuedReachouts(bot, { SlackUserId });

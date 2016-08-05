@@ -3,15 +3,22 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-var utterances = exports.utterances = {
+
+var _utterances;
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var utterances = exports.utterances = (_utterances = {
 	yes: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|(\bd[o ]+[this]{2,})|(\bd[o ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
 	yesOrCorrect: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bc[correct]{4,})/i),
 	no: new RegExp(/((no|not|nah|nope|^n)\b|\bn[oahpe]{1,4}\b)/i),
 	noAndNeverMind: new RegExp(/^n([oahpet]{1,5}|e[ever mind]{4,}|[vm]{1,4})\b/i),
 	onlyNeverMind: new RegExp(/^ne[ever mind]{4,}$/i),
+	containsNoOrNeverMindOrNothing: new RegExp(/\bn(oth[othing]{2,5}|[oahpet]{1,5}|e[ever mind]{4,}|[vm]{1,4})\b/i),
 	startsWithNever: new RegExp(/^ne[never]{3,}\b/i),
 	specificYes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|\by[esahp]{2,}\b|\bs[ure]{2,}\b)/i),
-	endDay: new RegExp(/(\be[end ]{2,}\bd[day]{2,})/i),
+	endDay: new RegExp(/\be[end ]{2,}\b.*\bd[day]{2,}/i),
+	notDone: new RegExp(/\bn[not]{2,}\b.*\bdo[one]{2,}/i),
 	containsNew: new RegExp(/(\bn[new]{2,}\b)/i),
 	containsCheckin: new RegExp(/(\bch[check in]{3,}\b|\br[reminder]{4,}\b|\bn[note]{2,}\b)/i),
 	containsOnlyCheckin: new RegExp(/(\bch[check -in]{4,}\b)/i),
@@ -31,19 +38,21 @@ var utterances = exports.utterances = {
 	containsRedo: new RegExp(/\bre[re do]{2,}\b/i),
 	startsWithAdd: new RegExp(/^a[add]{2,}\b/i),
 	containsTask: new RegExp(/t[task]{2,}/i),
+	containsTaskOrPriority: new RegExp(/\b(t[task]{2,}|pr[riority]{4,})\b/i),
 	containsName: new RegExp(/n[name]{2,}/i),
 	containsTimeZone: new RegExp(/t[timezone ]{4,}/i),
-	containsPlan: new RegExp(/p[plan ]{2,}/i),
+	containsPlan: new RegExp(/\bpl[lan]{2,}\b/i),
 	containsAdditional: new RegExp(/\ba[additional]{4,}/i),
 	containsSnooze: new RegExp(/(\bs[snooze]{4,}|\be[extend]{4,})/i),
 	onlyContainsSnooze: new RegExp(/^s[snooze]{4,}$/i),
 	onlyContainsExtend: new RegExp(/^e[extend]{4,}$/i),
+	containsExtend: new RegExp(/\bext[extend]{3,}\b/i),
 	containsElse: new RegExp(/\be[else]{2,}/i),
 	containsShowCommands: new RegExp(/(\bs[show]{2,}|\bc[commands]{4,})/i),
 	containsStartDay: new RegExp(/(\bs[start]{3,}|\bd[day]{2,})/i),
 	containsSettings: new RegExp(/\bs[settings]{4,}/i),
 	containsEditTaskList: new RegExp(/(\be[edit ]{2,}\b(l[list]{2,}|t[task]{2,}|p[plan]{2,})\b)/i),
-	containsCompleteOrCheckOrCross: new RegExp(/(\bc[complete]{5,}|\bc[check]{3,}|\bc[cross]{3,})/i),
+	containsCompleteOrCheckOrCross: new RegExp(/(\bcom[omplete]{4,}|\bch[heck]{2,}|\bcr[ross]{3,})/i),
 	containsDeleteOrRemove: new RegExp(/(\bd[delete]{4,}|\br[remove]{3,})/i),
 	containsTime: new RegExp(/(\bt[time]{2,})/i),
 	containsCancel: new RegExp(/(\bc[cancel]{4,})/i),
@@ -60,6 +69,8 @@ var utterances = exports.utterances = {
 	deleteTasks: new RegExp(/^(d[delete ]{3,}[tasks ]{0,})\b/i),
 	containsResetOrUndo: new RegExp(/\b(r[reset]{3,}|u[undo]{2,})\b/i),
 	startsWithHelp: new RegExp(/^(hel[elp]{1,4})\b/i),
-	containsNoOne: new RegExp(/\b(no one)\b/i)
-};
+	containsNoOne: new RegExp(/\b(no one)\b/i),
+	somethingElse: new RegExp(/\bsome[omething]{3,}\b.*\bel[lse]{2,}\b/i),
+	containsEnough: new RegExp(/\beno[ough]{3,}\b/i)
+}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _utterances);
 //# sourceMappingURL=botResponses.js.map

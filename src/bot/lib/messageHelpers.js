@@ -251,7 +251,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 	// add completed tasks to right place
 	var taskListMessageBody = '';
 	if (completedTasks.length > 0) {
-		taskListMessage = (options.noKarets ? `*Completed Tasks:*\n` : `> *Completed Tasks:*\n`);
+		taskListMessage = (options.noKarets ? `*Completed Priorities:*\n` : `> *Completed Priorities:*\n`);
 		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
 		taskListMessage += taskListMessageBody;
 	}
@@ -260,7 +260,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		// add remaining tasks to right place
 		if (completedTasks.length > 0) {
 			// only remaining tasks, no completed tasks
-			taskListMessage += (options.noKarets ? `\n*Remaining Tasks:*\n` : `>\n>*Remaining Tasks:*\n`);
+			taskListMessage += (options.noKarets ? `\n*Remaining Priorities:*\n` : `>\n>*Remaining Priorities:*\n`);
 		}
 		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
 		taskListMessage += taskListMessageBody;
@@ -305,17 +305,21 @@ function createTaskListMessageBody(taskArray, options) {
 
 		if (!options.dontShowMinutes && task.minutes) {
 
-			var minutesInt = parseInt(task.minutes);
+			let minutesInt = Math.round(task.minutes);
 			if (!isNaN(minutesInt) && !task.done) {
 				options.totalMinutes += minutesInt;
 			}
-			var timeString = convertMinutesToHoursString(minutesInt);
 
-			if (options.emphasizeMinutes) {
-				minutesMessage = ` *_(${timeString} remaining)_*`;
-			} else {
+			let minutesSpent = Math.round(task.minutesSpent);
+			let minutesRemaining = minutesInt - minutesSpent;
+			if (minutesRemaining > 0) {
+				let timeString = convertMinutesToHoursString(minutesRemaining);
 				minutesMessage = ` (${timeString} remaining)`;
+			} else {
+				if (!task.done)
+					minutesMessage = ` (_no time remaining_)`;
 			}
+
 		}
 
 		// completed tasks do not have count
@@ -550,11 +554,12 @@ export function prioritizeTaskArrayFromUserInput(taskObjectArray, input) {
 }
 
 // returns tasks separated into red blocks
-export function commaSeparateOutTaskArray(a) {
+export function commaSeparateOutTaskArray(a, config = {}) {
 
-	// put into red blocks
+	const { codeBlock } = config;
+
 	a = a.map((a) => {
-		return `${a}`;
+		return (codeBlock ? `\`${a}\`` : `${a}`);
 	})
 
 	// make into string
@@ -814,4 +819,141 @@ export function convertStringToNumbersArray(userInputString) {
 		return numbersArray;
 	}
 
+}
+
+export function getDoneSessionMessageAttachments(config = {}) {
+
+	const { buttonsValuesArray, defaultBreakTime, defaultSnoozeTime } = config;
+
+	let actions = [];
+	buttonsValuesArray.forEach((buttonValue) => {
+		switch (buttonValue) {
+			case buttonValues.doneSession.completedPriority.value:
+				actions.push({
+					name: buttonValues.doneSession.completedPriority.name,
+					text: "Completed :sports_medal:",
+					value: buttonValues.doneSession.completedPriority.value,
+					type: "button",
+					style: "primary"
+				});
+				break;
+			case buttonValues.doneSession.completedPriorityTonedDown.value:
+				actions.push({
+					name: buttonValues.doneSession.completedPriorityTonedDown.name,
+					text: "Priority Completed",
+					value: buttonValues.doneSession.completedPriorityTonedDown.value,
+					type: "button"
+				});
+				break;
+			case buttonValues.doneSession.takeBreak.value:
+				let breakText = defaultBreakTime ? `Break for ${defaultBreakTime} min` : `Take a break`;
+				actions.push({
+					name: buttonValues.doneSession.takeBreak.name,
+					text: breakText,
+					value: buttonValues.doneSession.takeBreak.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.extendSession.value:
+				let extendText = defaultSnoozeTime ? `Extend for ${defaultSnoozeTime} min` : `Extend Session`;
+				actions.push({
+					name: buttonValues.doneSession.extendSession.name,
+					text: extendText,
+					value: buttonValues.doneSession.extendSession.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.newSession.value:
+				actions.push({
+					name: buttonValues.doneSession.newSession.name,
+					text: "New Session",
+					value: buttonValues.doneSession.newSession.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.viewPlan.value:
+				actions.push({
+					name: buttonValues.doneSession.viewPlan.name,
+					text: "View Plan",
+					value: buttonValues.doneSession.viewPlan.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.endDay.value:
+				actions.push({
+					name: buttonValues.doneSession.endDay.name,
+					text: "End Day",
+					value: buttonValues.doneSession.endDay.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.notDone.value:
+				actions.push({
+					name: buttonValues.doneSession.notDone.name,
+					text: "Not Done",
+					value: buttonValues.doneSession.notDone.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.didSomethingElse.value:
+				actions.push({
+					name: buttonValues.doneSession.didSomethingElse.name,
+					text: "Did something else",
+					value: buttonValues.doneSession.didSomethingElse.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.moveOn.value:
+				actions.push({
+					name: buttonValues.doneSession.moveOn.name,
+					text: "Let's move On",
+					value: buttonValues.doneSession.moveOn.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.itWasSomethingElse.value:
+				actions.push({
+					name: buttonValues.doneSession.itWasSomethingElse.name,
+					text: "Something else!",
+					value: buttonValues.doneSession.itWasSomethingElse.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.neverMind.value:
+				actions.push({
+					name: buttonValues.neverMind.name,
+					text: "Never mind",
+					value: buttonValues.neverMind.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.keepMyPriority.value:
+				actions.push({
+					name: buttonValues.doneSession.keepMyPriority.name,
+					text: "I'll keep my priorities",
+					value: buttonValues.doneSession.keepMyPriority.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.beBackLater.value:
+				actions.push({
+					name: buttonValues.doneSession.beBackLater.name,
+					text: "Be back later",
+					value: buttonValues.doneSession.beBackLater.value,
+					type: "button"
+				})
+				break;
+			default: break;
+		}
+	});
+
+	let attachments = [{
+		attachment_type: 'default',
+		callback_id: "DONE_WITH_SESSION",
+		fallback: "Done with my session!",
+		actions
+	}]
+
+	return attachments;
+	
 }

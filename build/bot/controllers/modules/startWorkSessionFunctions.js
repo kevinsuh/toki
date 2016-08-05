@@ -69,6 +69,9 @@ function finalizeTimeAndTasksToStart(convo) {
 		question = 'You\'re currently working on `' + currentSession.sessionTasks + '` and have ' + currentSession.minutesString + ' remaining. Would you like to work on ' + taskText + ' for ' + timeString + ' until *' + calculatedTime + '* instead?';
 	}
 
+	convo.say('Let’s keep cranking on ' + taskText + ' and start a focused session now :wrench:');
+	question = 'How long would you like to focus on ' + taskText + '? You still have 97 minutes set aside for this today';
+
 	convo.ask({
 		text: question,
 		attachments: [{
@@ -78,19 +81,32 @@ function finalizeTimeAndTasksToStart(convo) {
 			fallback: "I was unable to process your decision",
 			actions: [{
 				name: _constants.buttonValues.startNow.name,
-				text: "Yes :punch:",
+				text: "97 minutes",
+				value: _constants.buttonValues.startNow.value,
+				type: "button",
+				style: "primary"
+			}, {
+				name: _constants.buttonValues.startNow.name,
+				text: "60 minutes",
+				value: _constants.buttonValues.startNow.value,
+				type: "button",
+				style: "primary"
+			}, {
+				name: _constants.buttonValues.startNow.name,
+				text: "45 minutes",
+				value: _constants.buttonValues.startNow.value,
+				type: "button",
+				style: "primary"
+			}, {
+				name: _constants.buttonValues.startNow.name,
+				text: "30 minutes",
 				value: _constants.buttonValues.startNow.value,
 				type: "button",
 				style: "primary"
 			}, {
 				name: _constants.buttonValues.changeTask.name,
-				text: "Change Task",
+				text: "Change Priority",
 				value: _constants.buttonValues.changeTask.value,
-				type: "button"
-			}, {
-				name: _constants.buttonValues.changeSessionTime.name,
-				text: "Change Time",
-				value: _constants.buttonValues.changeSessionTime.value,
 				type: "button"
 			}]
 		}]
@@ -175,9 +191,9 @@ function askWhichTaskToWorkOn(convo) {
 			var options = { dontUsePriority: true };
 			var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
 			if (question == '') {
-				question = 'Which task would you like to work on instead?';
+				question = 'Which priority would you like to work on instead?';
 			}
-			if (noDailyTask) question = 'Which task would you like to work on?';
+			if (noDailyTask) question = 'Which priority would you like to work on?';
 			var message = question + '\n' + taskListMessage;
 			convo.ask({
 				text: message,
@@ -196,9 +212,13 @@ function askWhichTaskToWorkOn(convo) {
 			}, [{
 				pattern: _botResponses.utterances.noAndNeverMind,
 				callback: function callback(response, convo) {
-					var taskText = dailyTask.dataValues ? '`' + dailyTask.dataValues.Task.text + '`' : 'your task';
-					convo.say('Sure thing! Let\'s stay working on ' + taskText);
-					confirmTimeForTask(convo);
+					if (dailyTask) {
+						var taskText = dailyTask.dataValues ? '`' + dailyTask.dataValues.Task.text + '`' : 'your priority';
+						convo.say('Sure thing! Let\'s stay working on ' + taskText);
+						confirmTimeForTask(convo);
+					} else {
+						convo.say('Okay! Let me know when you want to `start a session`');
+					}
 					convo.next();
 				}
 			}, {
@@ -278,13 +298,17 @@ function confirmTimeForTask(convo) {
 
 	// will only be a single task now
 
-	var minutes = dailyTask.dataValues.minutes;
+	var minutesAllocated = dailyTask.dataValues.minutes;
+	var minutesSpent = dailyTask.dataValues.minutesSpent;
 
-	if (minutes) {
+	var minutesRemaining = minutesAllocated - minutesSpent;
+
+	if (minutesRemaining > 0) {
+
 		var now = (0, _momentTimezone2.default)().tz(tz);
-		var calculatedTimeObject = now.add(minutes, 'minutes');
+		var calculatedTimeObject = now.add(minutesRemaining, 'minutes');
 
-		convo.sessionStart.minutes = minutes;
+		convo.sessionStart.minutes = minutesRemaining;
 		convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
 
 		finalizeTimeAndTasksToStart(convo);
@@ -312,7 +336,7 @@ function askForCustomTotalMinutes(convo) {
 
 	// will only be a single task now
 
-	var taskText = dailyTask.dataValues ? '`' + dailyTask.dataValues.Task.text + '`' : 'your task';
+	var taskText = dailyTask.dataValues ? '`' + dailyTask.dataValues.Task.text + '`' : 'your priority';
 
 	convo.ask('How long do you want to work on ' + taskText + ' for?', function (response, convo) {
 		var entities = response.intentObject.entities;

@@ -13,7 +13,9 @@ export const intentConfig = {
 	START_DAY: 'start_day',
 	END_DAY: 'end_day',
 	START_SESSION: 'start_session',
-	END_SESSION: 'end_session'
+	END_SESSION: 'end_session',
+	VIEW_PLAN: 'view_plan',
+	END_PLAN: 'end_plan'
 }
 
 export const constants = {
@@ -370,7 +372,11 @@ export const buttonValues ={
 	},
 	yes: {
 		value: "YES",
-		name: "YES"
+		name: "yes!"
+	},
+	no: {
+		value: "NO",
+		name: "nope!"
 	},
 	remindMe: {
 		value: "REMIND_ME",
@@ -481,6 +487,68 @@ export const buttonValues ={
 			name: "INCLUDE_NO_ONE",
 			value: "No one for now!"
 		}
+	},
+	doneSession: {
+		completedPriorityTonedDown: {
+			name: "DONE_SESSION_TONED_DOWN_COMPLETED_PRIORITY",
+			value: "completed my priority early"
+		},
+		completedPriority: {
+			name: "DONE_SESSION_COMPLETED_PRIORITY",
+			value: "completed my priority!"
+		},
+		takeBreak: {
+			name: "DONE_SESSION_TAKE_BREAK",
+			value: "take a break"
+		},
+		extendSession: {
+			name: "DONE_SESSION_EXTEND_SESSION",
+			value: "extend my session"
+		},
+		newSession: {
+			name: "DONE_SESSION_NEW_SESSION",
+			value: "new session"
+		},
+		viewPlan: {
+			name: "DONE_SESSION_VIEW_PLAN",
+			value: "view my plan"
+		},
+		endDay: {
+			name: "DONE_SESSION_END_DAY",
+			value: "end my day"
+		},
+		notDone: {
+			name: "DONE_SESSION_NOT_DONE_WITH_PRIORITY",
+			value: "not yet done"
+		},
+		didSomethingElse: {
+			name: "DONE_SESSION_DID_SOMETHING_ELSE",
+			value: "I did something else!"
+		},
+		moveOn: {
+			name: "MOVE_ON",
+			value: "Let's move on!"
+		},
+		itWasSomethingElse: {
+			name: "DONE_SESSION_IT_WAS_SOMETHING_ELSE",
+			value: "it was something else!"
+		},
+		keepMyPriority: {
+			name: "DONE_SESSION_KEEP_MY_PRIORITIES",
+			value: "i'll keep my priorities!!"
+		},
+		beBackLater: {
+			name: "DONE_SESSION_BE_BACK_LATER",
+			value: "i'll be back later!"
+		}
+	},
+	doneWithBreak: {
+		name: "DONE_WITH_BREAK",
+		value: "let's do it"
+	},
+	keepPriority: {
+		name: "KEEP_PRIORITY",
+		value: "i'll keep my priorities"
 	}
 }
 
@@ -765,4 +833,18 @@ export const pausedSessionOptionsAttachments = [
 	}
 ];
 
-
+export const endBreakEarlyAttachments = [
+	{
+		attachment_type: 'default',
+		callback_id: "END_BREAK_EARLY",
+		fallback: "I'm ready to get started!!",
+		actions: [
+			{
+					name: buttonValues.doneWithBreak.name,
+					text: "I'm back early!",
+					value: buttonValues.doneWithBreak.value,
+					type: "button"
+			}
+		]
+	}
+];

@@ -498,6 +498,48 @@ exports.default = function (controller) {
 			});
 		});
 	});
+
+	/**
+  * 		ENDING YOUR PLAN
+  */
+	controller.on('end_plan_flow', function (bot, config) {
+		var SlackUserId = config.SlackUserId;
+
+
+		_models2.default.User.find({
+			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+			include: [_models2.default.SlackUser]
+		}).then(function (user) {
+
+			// get the most recent start_work session group to measure
+			// a day's worth of work
+			user.getSessionGroups({
+				order: '"SessionGroup"."createdAt" DESC',
+				where: ['"SessionGroup"."type" = ?', "start_work"],
+				limit: 1
+			}).then(function (sessionGroups) {
+
+				var startSessionGroup = sessionGroups[0]; // the start day
+
+				user.getDailyTasks({
+					where: ['"DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?', startSessionGroup.dataValues.createdAt, "live"],
+					include: [_models2.default.Task],
+					order: '"DailyTask"."priority" ASC'
+				}).then(function (dailyTasks) {
+
+					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+						convo.say("Okay! Let's end our day!");
+						convo.next();
+
+						convo.on('end', function (convo) {
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+						});
+					});
+				});
+			});
+		});
+	});
 };
 
 var _index = require('../index');

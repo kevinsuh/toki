@@ -14,7 +14,16 @@ exports.default = function (controller) {
   * 		     				in a "SessionGroup" before
   * 		     			working on your session
   */
-	controller.hears(['start_session'], 'direct_message', _index.wit.hears, function (bot, message) {
+	controller.hears(['start_session', 'is_back'], 'direct_message', _index.wit.hears, function (bot, message) {
+		var intent = message.intentObject.entities.intent;
+
+		var sessionIntent = void 0;
+		if (intent && intent.length > 0) {
+			sessionIntent = intent[0].value;
+		}
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
 
 		var SlackUserId = message.user;
 		var text = message.text;
@@ -31,7 +40,25 @@ exports.default = function (controller) {
 			channel: message.channel
 		});
 		setTimeout(function () {
-			controller.trigger('plan_command_center', [bot, config]);
+			_models2.default.User.find({
+				where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+				include: [_models2.default.SlackUser]
+			}).then(function (user) {
+
+				var name = user.nickName || user.email;
+
+				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+					if (sessionIntent == 'is_back') {
+						convo.say('Welcome back, ' + name + '!');
+					} else {
+						convo.say(" ");
+					}
+					convo.next();
+					convo.on('end', function (convo) {
+						controller.trigger('plan_command_center', [bot, config]);
+					});
+				});
+			});
 		}, 750);
 	});
 
@@ -79,19 +106,21 @@ exports.default = function (controller) {
 				if (dailyTaskToWorkOn) {
 					convo.sessionStart.dailyTask = dailyTaskToWorkOn;
 				} else {
-					convo.say('Hey! Time to start on a work session :smiley:');
+					convo.say('Let\'s do it :punch:');
 				}
 
 				(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);
 				convo.next();
 
 				convo.on('end', function (convo) {
+					var sessionStart = convo.sessionStart;
+
 
 					console.log("\n\n\n end of start session ");
-					console.log(convo.sessionStart);
+					console.log(sessionStart);
 					console.log("\n\n\n");
 
-					if (convo.confirmStart) {
+					if (sessionStart.confirmStart) {
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 						setTimeout(function () {
 							(0, _startWorkSessionFunctions.startSessionWithConvoObject)(convo.sessionStart);

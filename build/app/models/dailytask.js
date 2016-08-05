@@ -7,6 +7,9 @@ module.exports = function (sequelize, DataTypes) {
     TaskId: DataTypes.INTEGER,
     type: { type: DataTypes.STRING,
       defaultValue: "live"
+    },
+    minutesSpent: { type: DataTypes.INTEGER,
+      defaultValue: 0
     }
   }, {
     classMethods: {
