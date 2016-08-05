@@ -312,17 +312,6 @@ export default function(controller) {
 																})
 															})
 														})
-														
-
-														
-														// 4. re-open the workSession and launch into `session-done` flow
-
-														
-													} else {
-														// COMPLETED!!!!
-														bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-															convo.say(`Let's goooo. You're one step closer to winning the day! You have `)
-														});
 													}
 
 												})
