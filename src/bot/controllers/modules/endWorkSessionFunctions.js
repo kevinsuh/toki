@@ -185,7 +185,7 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 		{ // endDay
 			pattern: utterances.endDay,
 			callback: (response, convo) => {
-				convo.say("You want to end your day!");
+				convo.sessionDone.postSessionDecision = intentConfig.END_PLAN;
 				convo.next();
 			}
 		},

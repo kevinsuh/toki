@@ -25,7 +25,8 @@ var intentConfig = exports.intentConfig = {
 	END_DAY: 'end_day',
 	START_SESSION: 'start_session',
 	END_SESSION: 'end_session',
-	VIEW_PLAN: 'view_plan'
+	VIEW_PLAN: 'view_plan',
+	END_PLAN: 'end_plan'
 };
 
 var constants = exports.constants = {

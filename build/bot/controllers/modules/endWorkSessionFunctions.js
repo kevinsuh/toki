@@ -177,7 +177,7 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 	}, { // endDay
 		pattern: _botResponses.utterances.endDay,
 		callback: function callback(response, convo) {
-			convo.say("You want to end your day!");
+			convo.sessionDone.postSessionDecision = _constants.intentConfig.END_PLAN;
 			convo.next();
 		}
 	}, { // notDone

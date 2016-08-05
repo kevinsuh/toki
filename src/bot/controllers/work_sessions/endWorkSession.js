@@ -351,6 +351,9 @@ export default function(controller) {
 																case (intentConfig.START_SESSION):
 																	controller.trigger(`begin_session`, [ bot, config ]);
 																	break;
+																case (intentConfig.END_PLAN):
+																	controller.trigger(`end_plan_flow`, [ bot, config ]);
+																	break;
 																default: break;
 															}
 														}, 750);

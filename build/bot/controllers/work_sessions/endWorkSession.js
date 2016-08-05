@@ -351,6 +351,9 @@ exports.default = function (controller) {
 																	case _constants.intentConfig.START_SESSION:
 																		controller.trigger('begin_session', [bot, config]);
 																		break;
+																	case _constants.intentConfig.END_PLAN:
+																		controller.trigger('end_plan_flow', [bot, config]);
+																		break;
 																	default:
 																		break;
 																}
