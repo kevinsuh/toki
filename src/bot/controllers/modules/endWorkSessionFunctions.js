@@ -236,7 +236,9 @@ function askForAdditionalTimeToPriority(response, convo) {
 	let { intentObject: { entities: { duration, datetime } } } = response;
 	const { sessionDone: { tz, dailyTasks, defaultSnoozeTime, defaultBreakTime, UserId, currentSession: { dailyTask } } } = convo;
 
+	const { minutesSpent } = dailyTask.dataValues;
 	let taskText = dailyTask.Task.text;
+
 	let text = `Got it - let's adjust your plan accordingly. *How much additional time* would you like to allocate to \`${taskText}\` for the rest of today?`;
 	let buttonsValuesArray = [
 		buttonValues.doneSession.didSomethingElse.value,
@@ -261,6 +263,19 @@ function askForAdditionalTimeToPriority(response, convo) {
 		{ // moveOn
 			pattern: utterances.moveOn,
 			callback: (response, convo) => {
+				let timeSpentString = convertMinutesToHoursString(minutesSpent);
+
+				let buttonsValuesArray = [
+					buttonValues.doneSession.takeBreak.value,
+					buttonValues.doneSession.newSession.value,
+					buttonValues.doneSession.viewPlan.value,
+					buttonValues.doneSession.beBackLater.value
+				];
+
+				let attachmentsConfig = { defaultBreakTime, buttonsValuesArray };
+				let attachments       = getDoneSessionMessageAttachments(attachmentsConfig);
+				let text              = `Kudos! You spent ${timeSpentString} on \`${taskText}\` today. Let’s take a break and queue up your next priority when you get back`;
+				convoAskDoneSessionOptions(convo, text, attachments);
 				
 				convo.next();
 			}
@@ -291,7 +306,7 @@ function askForAdditionalTimeToPriority(response, convo) {
 						buttonValues.doneSession.beBackLater.value
 					];
 
-					let attachmentsConfig  = { defaultBreakTime, defaultSnoozeTime, buttonsValuesArray };
+					let attachmentsConfig  = { defaultBreakTime, buttonsValuesArray };
 					let attachments = getDoneSessionMessageAttachments(attachmentsConfig);
 					let text = `Got it! I added ${durationMinutes} minutes to this priority. Would you like to take a break?`
 					convoAskDoneSessionOptions(convo, text, attachments);

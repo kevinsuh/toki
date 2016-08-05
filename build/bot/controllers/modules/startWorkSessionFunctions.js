@@ -69,6 +69,9 @@ function finalizeTimeAndTasksToStart(convo) {
 		question = 'You\'re currently working on `' + currentSession.sessionTasks + '` and have ' + currentSession.minutesString + ' remaining. Would you like to work on ' + taskText + ' for ' + timeString + ' until *' + calculatedTime + '* instead?';
 	}
 
+	convo.say('Let’s keep cranking on ' + taskText + ' and start a focused session now :wrench:');
+	question = 'How long would you like to focus on ' + taskText + '? You still have 97 minutes set aside for this today';
+
 	convo.ask({
 		text: question,
 		attachments: [{
@@ -78,19 +81,32 @@ function finalizeTimeAndTasksToStart(convo) {
 			fallback: "I was unable to process your decision",
 			actions: [{
 				name: _constants.buttonValues.startNow.name,
-				text: "Yes :punch:",
+				text: "97 minutes",
+				value: _constants.buttonValues.startNow.value,
+				type: "button",
+				style: "primary"
+			}, {
+				name: _constants.buttonValues.startNow.name,
+				text: "60 minutes",
+				value: _constants.buttonValues.startNow.value,
+				type: "button",
+				style: "primary"
+			}, {
+				name: _constants.buttonValues.startNow.name,
+				text: "45 minutes",
+				value: _constants.buttonValues.startNow.value,
+				type: "button",
+				style: "primary"
+			}, {
+				name: _constants.buttonValues.startNow.name,
+				text: "30 minutes",
 				value: _constants.buttonValues.startNow.value,
 				type: "button",
 				style: "primary"
 			}, {
 				name: _constants.buttonValues.changeTask.name,
-				text: "Change Task",
+				text: "Change Priority",
 				value: _constants.buttonValues.changeTask.value,
-				type: "button"
-			}, {
-				name: _constants.buttonValues.changeSessionTime.name,
-				text: "Change Time",
-				value: _constants.buttonValues.changeSessionTime.value,
 				type: "button"
 			}]
 		}]

@@ -227,9 +227,10 @@ function askForAdditionalTimeToPriority(response, convo) {
 	var defaultBreakTime = _convo$sessionDone3.defaultBreakTime;
 	var UserId = _convo$sessionDone3.UserId;
 	var dailyTask = _convo$sessionDone3.currentSession.dailyTask;
-
+	var minutesSpent = dailyTask.dataValues.minutesSpent;
 
 	var taskText = dailyTask.Task.text;
+
 	var text = 'Got it - let\'s adjust your plan accordingly. *How much additional time* would you like to allocate to `' + taskText + '` for the rest of today?';
 	var buttonsValuesArray = [_constants.buttonValues.doneSession.didSomethingElse.value, _constants.buttonValues.doneSession.moveOn.value];
 	var attachmentsConfig = { buttonsValuesArray: buttonsValuesArray };
@@ -249,6 +250,14 @@ function askForAdditionalTimeToPriority(response, convo) {
 	}, { // moveOn
 		pattern: _botResponses.utterances.moveOn,
 		callback: function callback(response, convo) {
+			var timeSpentString = (0, _messageHelpers.convertMinutesToHoursString)(minutesSpent);
+
+			var buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.newSession.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.beBackLater.value];
+
+			var attachmentsConfig = { defaultBreakTime: defaultBreakTime, buttonsValuesArray: buttonsValuesArray };
+			var attachments = (0, _messageHelpers.getDoneSessionMessageAttachments)(attachmentsConfig);
+			var text = 'Kudos! You spent ' + timeSpentString + ' on `' + taskText + '` today. Let’s take a break and queue up your next priority when you get back';
+			convoAskDoneSessionOptions(convo, text, attachments);
 
 			convo.next();
 		}
@@ -277,7 +286,7 @@ function askForAdditionalTimeToPriority(response, convo) {
 
 				var _buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.newSession.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.beBackLater.value];
 
-				var _attachmentsConfig = { defaultBreakTime: defaultBreakTime, defaultSnoozeTime: defaultSnoozeTime, buttonsValuesArray: _buttonsValuesArray };
+				var _attachmentsConfig = { defaultBreakTime: defaultBreakTime, buttonsValuesArray: _buttonsValuesArray };
 				var _attachments = (0, _messageHelpers.getDoneSessionMessageAttachments)(_attachmentsConfig);
 				var _text = 'Got it! I added ' + durationMinutes + ' minutes to this priority. Would you like to take a break?';
 				convoAskDoneSessionOptions(convo, _text, _attachments);

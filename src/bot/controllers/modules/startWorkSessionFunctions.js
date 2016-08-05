@@ -43,6 +43,9 @@ export function finalizeTimeAndTasksToStart(convo) {
 		question = `You're currently working on \`${currentSession.sessionTasks}\` and have ${currentSession.minutesString} remaining. Would you like to work on ${taskText} for ${timeString} until *${calculatedTime}* instead?`;
 	}
 
+	convo.say(`Let’s keep cranking on ${taskText} and start a focused session now :wrench:`);
+	question = `How long would you like to focus on ${taskText}? You still have 97 minutes set aside for this today`;
+
 	convo.ask({
 		text: question,
 		attachments:[
@@ -54,21 +57,36 @@ export function finalizeTimeAndTasksToStart(convo) {
 				actions: [
 					{
 							name: buttonValues.startNow.name,
-							text: "Yes :punch:",
+							text: "97 minutes",
+							value: buttonValues.startNow.value,
+							type: "button",
+							style: "primary"
+					},
+					{
+							name: buttonValues.startNow.name,
+							text: "60 minutes",
+							value: buttonValues.startNow.value,
+							type: "button",
+							style: "primary"
+					},
+					{
+							name: buttonValues.startNow.name,
+							text: "45 minutes",
+							value: buttonValues.startNow.value,
+							type: "button",
+							style: "primary"
+					},
+					{
+							name: buttonValues.startNow.name,
+							text: "30 minutes",
 							value: buttonValues.startNow.value,
 							type: "button",
 							style: "primary"
 					},
 					{
 							name: buttonValues.changeTask.name,
-							text: "Change Task",
+							text: "Change Priority",
 							value: buttonValues.changeTask.value,
-							type: "button"
-					},
-					{
-							name: buttonValues.changeSessionTime.name,
-							text: "Change Time",
-							value: buttonValues.changeSessionTime.value,
 							type: "button"
 					}
 				]
