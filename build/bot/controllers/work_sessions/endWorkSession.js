@@ -282,37 +282,8 @@ exports.default = function (controller) {
 					});
 				} else {
 
-					// want to be end a session when they arent currently in one
-					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-						convo.ask('You aren\'t in a session right now! Would you like to start one?', [{
-							pattern: _botResponses.utterances.yes,
-							callback: function callback(response, convo) {
-								convo.startSession = true;
-								convo.next();
-							}
-						}, {
-							pattern: _botResponses.utterances.no,
-							callback: function callback(response, convo) {
-								convo.say('Okay! I\'ll be here when you\'re ready to crank again :wrench: ');
-								convo.next();
-							}
-						}, {
-							default: true,
-							callback: function callback(response, convo) {
-								convo.say("Sorry, I didn't get that. Please tell me `yes` or `no` to the question!");
-								convo.repeat();
-								convo.next();
-							}
-						}]);
-						convo.next();
-						convo.on('end', function (convo) {
-							if (convo.startSession) {
-								controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
-							} else {
-								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-							}
-						});
-					});
+					var _config = { bot: bot, controller: controller, SlackUserId: SlackUserId };
+					(0, _sessionOptions.notInSessionWouldYouLikeToStartOne)(_config);
 				}
 			});
 		});
@@ -350,6 +321,8 @@ var _miscHelpers = require('../../lib/miscHelpers');
 var _constants = require('../../lib/constants');
 
 var _endWorkSessionFunctions = require('../modules/endWorkSessionFunctions');
+
+var _sessionOptions = require('./sessionOptions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 //# sourceMappingURL=endWorkSession.js.map

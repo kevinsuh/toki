@@ -324,6 +324,8 @@ exports.default = function (controller) {
 	});
 };
 
+exports.notInSessionWouldYouLikeToStartOne = notInSessionWouldYouLikeToStartOne;
+
 var _os = require('os');
 
 var _os2 = _interopRequireDefault(_os);
@@ -363,8 +365,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 ;
 
 // ALL OF THE TIMEOUT FUNCTIONALITIES
-
-
 function notInSessionWouldYouLikeToStartOne(config) {
 	var bot = config.bot;
 	var SlackUserId = config.SlackUserId;
@@ -395,7 +395,7 @@ function notInSessionWouldYouLikeToStartOne(config) {
 			convo.next();
 			convo.on('end', function (convo) {
 				if (convo.startSession) {
-					controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+					controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
 				}
 				setTimeout(function () {
 					(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });

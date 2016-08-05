@@ -14,6 +14,8 @@ import { bots, resumeQueuedReachouts } from '../index';
 import { colorsArray, buttonValues, colorsHash, TOKI_DEFAULT_SNOOZE_TIME, TOKI_DEFAULT_BREAK_TIME, sessionTimerDecisions, MINUTES_FOR_DONE_SESSION_TIMEOUT, pausedSessionOptionsAttachments, startSessionOptionsAttachments, TASK_DECISION, endBreakEarlyAttachments,  intentConfig } from '../../lib/constants';
 import { doneSessionAskOptions } from '../modules/endWorkSessionFunctions';
 
+import { notInSessionWouldYouLikeToStartOne } from './sessionOptions';
+
 // END OF A WORK SESSION
 export default function(controller) {
 
@@ -286,41 +288,8 @@ export default function(controller) {
 
 				} else {
 
-					// want to be end a session when they arent currently in one
-					bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-						convo.ask(`You aren't in a session right now! Would you like to start one?`, [
-							{
-								pattern: utterances.yes,
-								callback: (response, convo) => {
-									convo.startSession = true;
-									convo.next();
-								}
-							},
-							{
-								pattern: utterances.no,
-								callback: (response, convo) => {
-									convo.say(`Okay! I'll be here when you're ready to crank again :wrench: `);
-									convo.next();
-								}
-							},
-							{
-								default: true,
-								callback: (response, convo) => {
-									convo.say("Sorry, I didn't get that. Please tell me `yes` or `no` to the question!");
-									convo.repeat();
-									convo.next();
-								}
-							}
-						]);
-						convo.next();
-						convo.on('end', (convo) => {
-							if (convo.startSession) {
-								controller.trigger('begin_session', [bot, { SlackUserId }]);
-							} else {
-								resumeQueuedReachouts(bot, { SlackUserId });
-							}
-						});
-					});
+					let config = { bot, controller, SlackUserId };
+					notInSessionWouldYouLikeToStartOne(config);
 
 				}
 
