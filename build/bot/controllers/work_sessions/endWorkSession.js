@@ -106,7 +106,7 @@ exports.default = function (controller) {
 
 										// get all live daily tasks for use
 										user.getDailyTasks({
-											where: ['"DailyTask"."type" = ?', "live"],
+											where: ['"DailyTask"."type" = ? AND "Task"."done" = ?', "live", false],
 											order: '"DailyTask"."priority" ASC',
 											include: [_models2.default.Task]
 										}).then(function (dailyTasks) {
@@ -217,6 +217,8 @@ exports.default = function (controller) {
 																done: true
 															}, {
 																where: ['"Tasks"."id" = ?', dailyTask.dataValues.Task.id]
+															}).then(function () {
+																(0, _miscHelpers.prioritizeDailyTasks)(user);
 															});
 														} else {
 
@@ -337,6 +339,19 @@ exports.default = function (controller) {
 																	});
 																})();
 															}
+														}
+
+														if (postSessionDecision) {
+															setTimeout(function () {
+																var config = { SlackUserId: SlackUserId };
+																switch (postSessionDecision) {
+																	case _constants.intentConfig.VIEW_PLAN:
+																		controller.trigger('plan_command_center', [bot, config]);
+																		break;
+																	default:
+																		break;
+																}
+															}, 750);
 														}
 													});
 												});

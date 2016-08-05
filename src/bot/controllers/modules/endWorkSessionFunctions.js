@@ -72,8 +72,9 @@ export function doneSessionAskOptions(convo) {
 		} else {
 
 			buttonsValuesArray = [
-				buttonValues.doneSession.completedPriority.value,
 				buttonValues.doneSession.takeBreak.value,
+				buttonValues.doneSession.completedPriorityTonedDown.value,
+				buttonValues.doneSession.didSomethingElse.value,
 				buttonValues.doneSession.viewPlan.value,
 				buttonValues.doneSession.beBackLater.value
 			];
@@ -176,6 +177,7 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 		{ // viewPlan
 			pattern: utterances.containsPlan,
 			callback: (response, convo) => {
+				convo.say(`Got it`);
 				convo.sessionDone.postSessionDecision = intentConfig.VIEW_PLAN;
 				convo.next();
 			}
@@ -310,7 +312,7 @@ function switchWorkedOnPriority(convo, question = '') {
 
 	let taskListMessage = convertArrayToTaskListMessage(dailyTasks);
 	if (question == '') {
-		question = `Which one of your 3 priorities did you work on?\n${taskListMessage}`;
+		question = `Which one of your ${dailyTasks.length} remaining priorities did you work on?\n${taskListMessage}`;
 	}
 
 	let buttonsValuesArray = [

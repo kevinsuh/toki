@@ -78,7 +78,7 @@ function doneSessionAskOptions(convo) {
 			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.notDone.value, _constants.buttonValues.doneSession.didSomethingElse.value];
 		} else {
 
-			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.beBackLater.value];
+			buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.completedPriorityTonedDown.value, _constants.buttonValues.doneSession.didSomethingElse.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.beBackLater.value];
 		}
 	}
 
@@ -170,6 +170,7 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 	}, { // viewPlan
 		pattern: _botResponses.utterances.containsPlan,
 		callback: function callback(response, convo) {
+			convo.say('Got it');
 			convo.sessionDone.postSessionDecision = _constants.intentConfig.VIEW_PLAN;
 			convo.next();
 		}
@@ -296,7 +297,7 @@ function switchWorkedOnPriority(convo) {
 
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks);
 	if (question == '') {
-		question = 'Which one of your 3 priorities did you work on?\n' + taskListMessage;
+		question = 'Which one of your ' + dailyTasks.length + ' remaining priorities did you work on?\n' + taskListMessage;
 	}
 
 	var buttonsValuesArray = [_constants.buttonValues.doneSession.itWasSomethingElse.value, _constants.buttonValues.neverMind.value];
