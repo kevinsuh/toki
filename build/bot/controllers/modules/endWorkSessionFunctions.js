@@ -68,7 +68,7 @@ function doneSessionAskOptions(convo) {
 			// send message if time is still remaining
 			convo.say('Your session for `' + taskText + '` is up. Excellent work!');
 
-			buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.extendSession.value, _constants.buttonValues.doneSession.completedPriorityTonedDown.value, _constants.buttonValues.doneSession.didSomethingElse.value, _constants.buttonValues.doneSession.viewPlan.value];
+			buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.extendSession.value, _constants.buttonValues.doneSession.completedPriorityTonedDown.value, _constants.buttonValues.doneSession.didSomethingElse.value, _constants.buttonValues.doneSession.beBackLater.value];
 		}
 	} else {
 
@@ -78,7 +78,7 @@ function doneSessionAskOptions(convo) {
 			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.notDone.value, _constants.buttonValues.doneSession.didSomethingElse.value];
 		} else {
 
-			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.viewPlan.value];
+			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.beBackLater.value];
 		}
 	}
 
@@ -91,7 +91,7 @@ function doneSessionAskOptions(convo) {
 
 	// if minutes is NULL, then we will have custom question
 	if (!minutes) {
-		text = 'You\'ve worked for ' + workSessionTimeString + ' on `' + taskText + '`. Would you like to mark it as complete for the day?';
+		text = 'You\'ve worked for ' + workSessionTimeString + ' on `' + taskText + '`. Did you complete this priority?';
 	}
 
 	var attachmentsConfig = { defaultBreakTime: defaultBreakTime, defaultSnoozeTime: defaultSnoozeTime, buttonsValuesArray: buttonsValuesArray };
@@ -153,11 +153,17 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 			switchWorkedOnPriority(convo);
 			convo.next();
 		}
+	}, { // spentTimeOnSomethingElse
+		pattern: _botResponses.utterances.containsBackLater,
+		callback: function callback(response, convo) {
+			convo.say('Okay! I\'ll be here when you want to make progress with a `new session` :muscle:');
+			convo.next();
+		}
 	}, {
 		// no or never mind to exit this flow
 		pattern: _botResponses.utterances.containsNoOrNeverMindOrNothing,
 		callback: function callback(response, convo) {
-			convo.say('Okay! Let me know when you want to make progress on `another priority` :muscle:');
+			convo.say('Okay! I\'ll be here when you want to make progress with a `new session` :muscle:');
 			convo.next();
 		}
 	}, {
@@ -185,7 +191,7 @@ function askForAdditionalTimeToPriority(response, convo) {
 
 
 	var taskText = dailyTask.Task.text;
-	var text = 'Got it - let\'s adjust your plan accordingly. How much additional time would you like to allocate to `' + taskText + '` for the rest of today?';
+	var text = 'Got it - let\'s adjust your plan accordingly. *How much additional time* would you like to allocate to `' + taskText + '` for the rest of today?';
 	var buttonsValuesArray = [_constants.buttonValues.doneSession.didSomethingElse.value, _constants.buttonValues.doneSession.moveOn.value];
 	var attachmentsConfig = { buttonsValuesArray: buttonsValuesArray };
 	var attachments = (0, _messageHelpers.getDoneSessionMessageAttachments)(attachmentsConfig);
@@ -228,9 +234,9 @@ function askForAdditionalTimeToPriority(response, convo) {
 				// success and user wants additional time to priority!
 
 				var durationMinutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
-				convo.sessionDone.additionalMinutes = durationMinutes;
+				convo.sessionDone.currentSession.additionalMinutes = durationMinutes;
 
-				var _buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.newSession.value, _constants.buttonValues.doneSession.viewPlan.value];
+				var _buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.newSession.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.beBackLater.value];
 
 				var _attachmentsConfig = { defaultBreakTime: defaultBreakTime, defaultSnoozeTime: defaultSnoozeTime, buttonsValuesArray: _buttonsValuesArray };
 				var _attachments = (0, _messageHelpers.getDoneSessionMessageAttachments)(_attachmentsConfig);
@@ -332,7 +338,7 @@ function askToReplacePriority(convo) {
 		pattern: _botResponses.utterances.containsKeep,
 		callback: function callback(response, convo) {
 
-			var buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.newSession.value, _constants.buttonValues.doneSession.viewPlan.value];
+			var buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.newSession.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.beBackLater.value];
 
 			var attachmentsConfig = { defaultBreakTime: defaultBreakTime, buttonsValuesArray: buttonsValuesArray };
 			var attachments = (0, _messageHelpers.getDoneSessionMessageAttachments)(attachmentsConfig);

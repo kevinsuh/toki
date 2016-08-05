@@ -53,7 +53,7 @@ export function doneSessionAskOptions(convo) {
 				buttonValues.doneSession.extendSession.value,
 				buttonValues.doneSession.completedPriorityTonedDown.value,
 				buttonValues.doneSession.didSomethingElse.value,
-				buttonValues.doneSession.viewPlan.value
+				buttonValues.doneSession.beBackLater.value
 			];
 
 		}
@@ -74,7 +74,8 @@ export function doneSessionAskOptions(convo) {
 			buttonsValuesArray = [
 				buttonValues.doneSession.completedPriority.value,
 				buttonValues.doneSession.takeBreak.value,
-				buttonValues.doneSession.viewPlan.value
+				buttonValues.doneSession.viewPlan.value,
+				buttonValues.doneSession.beBackLater.value
 			];
 			
 		}
@@ -89,7 +90,7 @@ export function doneSessionAskOptions(convo) {
 
 	// if minutes is NULL, then we will have custom question
 	if (!minutes) {
-		text = `You've worked for ${workSessionTimeString} on \`${taskText}\`. Would you like to mark it as complete for the day?`;
+		text = `You've worked for ${workSessionTimeString} on \`${taskText}\`. Did you complete this priority?`;
 	}
 
 	let attachmentsConfig  = { defaultBreakTime, defaultSnoozeTime, buttonsValuesArray };
@@ -161,11 +162,18 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 				convo.next();
 			}
 		},
+		{ // spentTimeOnSomethingElse
+			pattern: utterances.containsBackLater,
+			callback: (response, convo) => {
+				convo.say(`Okay! I'll be here when you want to make progress with a \`new session\` :muscle:`);
+				convo.next();
+			}
+		},
 		{
 			// no or never mind to exit this flow
 			pattern: utterances.containsNoOrNeverMindOrNothing,
 			callback: (response, convo) => {
-				convo.say(`Okay! Let me know when you want to make progress on \`another priority\` :muscle:`);
+				convo.say(`Okay! I'll be here when you want to make progress with a \`new session\` :muscle:`);
 				convo.next();
 			}
 		},
@@ -188,7 +196,7 @@ function askForAdditionalTimeToPriority(response, convo) {
 	const { sessionDone: { tz, dailyTasks, defaultSnoozeTime, defaultBreakTime, UserId, currentSession: { dailyTask } } } = convo;
 
 	let taskText = dailyTask.Task.text;
-	let text = `Got it - let's adjust your plan accordingly. How much additional time would you like to allocate to \`${taskText}\` for the rest of today?`;
+	let text = `Got it - let's adjust your plan accordingly. *How much additional time* would you like to allocate to \`${taskText}\` for the rest of today?`;
 	let buttonsValuesArray = [
 		buttonValues.doneSession.didSomethingElse.value,
 		buttonValues.doneSession.moveOn.value
@@ -233,12 +241,13 @@ function askForAdditionalTimeToPriority(response, convo) {
 					// success and user wants additional time to priority!
 
 					let durationMinutes  = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
-					convo.sessionDone.additionalMinutes = durationMinutes;
+					convo.sessionDone.currentSession.additionalMinutes = durationMinutes;
 
 					let buttonsValuesArray = [
 						buttonValues.doneSession.takeBreak.value,
 						buttonValues.doneSession.newSession.value,
-						buttonValues.doneSession.viewPlan.value
+						buttonValues.doneSession.viewPlan.value,
+						buttonValues.doneSession.beBackLater.value
 					];
 
 					let attachmentsConfig  = { defaultBreakTime, defaultSnoozeTime, buttonsValuesArray };
@@ -360,7 +369,8 @@ function askToReplacePriority(convo, question = '') {
 				let buttonsValuesArray = [
 					buttonValues.doneSession.takeBreak.value,
 					buttonValues.doneSession.newSession.value,
-					buttonValues.doneSession.viewPlan.value
+					buttonValues.doneSession.viewPlan.value,
+					buttonValues.doneSession.beBackLater.value
 				];
 
 				let attachmentsConfig  = { defaultBreakTime, buttonsValuesArray };

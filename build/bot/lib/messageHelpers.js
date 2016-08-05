@@ -949,6 +949,14 @@ function getDoneSessionMessageAttachments() {
 					type: "button"
 				});
 				break;
+			case _constants.buttonValues.doneSession.beBackLater.value:
+				actions.push({
+					name: _constants.buttonValues.doneSession.beBackLater.name,
+					text: "Be back later",
+					value: _constants.buttonValues.doneSession.beBackLater.value,
+					type: "button"
+				});
+				break;
 			default:
 				break;
 		}

@@ -930,6 +930,14 @@ export function getDoneSessionMessageAttachments(config = {}) {
 					type: "button"
 				})
 				break;
+			case buttonValues.doneSession.beBackLater.value:
+				actions.push({
+					name: buttonValues.doneSession.beBackLater.name,
+					text: "Be back later",
+					value: buttonValues.doneSession.beBackLater.value,
+					type: "button"
+				})
+				break;
 			default: break;
 		}
 	});

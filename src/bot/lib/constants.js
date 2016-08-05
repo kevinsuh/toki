@@ -535,6 +535,10 @@ export const buttonValues ={
 		keepMyPriority: {
 			name: "DONE_SESSION_KEEP_MY_PRIORITIES",
 			value: "i'll keep my priorities!!"
+		},
+		beBackLater: {
+			name: "DONE_SESSION_BE_BACK_LATER",
+			value: "i'll be back later!"
 		}
 	},
 	doneWithBreak: {
