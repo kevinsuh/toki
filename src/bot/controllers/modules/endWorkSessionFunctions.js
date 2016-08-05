@@ -39,8 +39,8 @@ export function doneSessionAskOptions(convo) {
 			buttonsValuesArray = [
 				buttonValues.doneSession.completedPriority.value,
 				buttonValues.doneSession.notDone.value,
-				buttonValues.doneSession.didSomethingElse.value,
-				buttonValues.doneSession.extendSession.value
+				buttonValues.doneSession.extendSession.value,
+				buttonValues.doneSession.didSomethingElse.value
 			];
 
 		} else {
@@ -170,7 +170,7 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 		{ // newSession
 			pattern: utterances.containsNew,
 			callback: (response, convo) => {
-				convo.say("You want a new session!");
+				convo.sessionDone.postSessionDecision = intentConfig.START_SESSION;
 				convo.next();
 			}
 		},
@@ -239,7 +239,7 @@ function askForAdditionalTimeToPriority(response, convo) {
 	const { minutesSpent } = dailyTask.dataValues;
 	let taskText = dailyTask.Task.text;
 
-	let text = `Got it - let's adjust your plan accordingly. *How much additional time* would you like to allocate to \`${taskText}\` for the rest of today?`;
+	let text = `Got it - let's adjust your plan accordingly. *How much additional time* \`i.e. 1 more hour\` would you like to allocate to \`${taskText}\` for the rest of today?`;
 	let buttonsValuesArray = [
 		buttonValues.doneSession.didSomethingElse.value,
 		buttonValues.doneSession.moveOn.value

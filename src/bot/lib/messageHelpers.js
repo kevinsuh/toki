@@ -906,7 +906,7 @@ export function getDoneSessionMessageAttachments(config = {}) {
 			case buttonValues.doneSession.moveOn.value:
 				actions.push({
 					name: buttonValues.doneSession.moveOn.name,
-					text: "Move On",
+					text: "Let's move On",
 					value: buttonValues.doneSession.moveOn.value,
 					type: "button"
 				})

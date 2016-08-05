@@ -924,7 +924,7 @@ function getDoneSessionMessageAttachments() {
 			case _constants.buttonValues.doneSession.moveOn.value:
 				actions.push({
 					name: _constants.buttonValues.doneSession.moveOn.name,
-					text: "Move On",
+					text: "Let's move On",
 					value: _constants.buttonValues.doneSession.moveOn.value,
 					type: "button"
 				});

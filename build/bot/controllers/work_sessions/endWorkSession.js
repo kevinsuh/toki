@@ -348,6 +348,9 @@ exports.default = function (controller) {
 																	case _constants.intentConfig.VIEW_PLAN:
 																		controller.trigger('plan_command_center', [bot, config]);
 																		break;
+																	case _constants.intentConfig.START_SESSION:
+																		controller.trigger('begin_session', [bot, config]);
+																		break;
 																	default:
 																		break;
 																}

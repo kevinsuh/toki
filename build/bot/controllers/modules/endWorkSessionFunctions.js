@@ -62,7 +62,7 @@ function doneSessionAskOptions(convo) {
 
 		if (finishedTimeToTask) {
 
-			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.notDone.value, _constants.buttonValues.doneSession.didSomethingElse.value, _constants.buttonValues.doneSession.extendSession.value];
+			buttonsValuesArray = [_constants.buttonValues.doneSession.completedPriority.value, _constants.buttonValues.doneSession.notDone.value, _constants.buttonValues.doneSession.extendSession.value, _constants.buttonValues.doneSession.didSomethingElse.value];
 		} else {
 
 			// send message if time is still remaining
@@ -164,7 +164,7 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 	}, { // newSession
 		pattern: _botResponses.utterances.containsNew,
 		callback: function callback(response, convo) {
-			convo.say("You want a new session!");
+			convo.sessionDone.postSessionDecision = _constants.intentConfig.START_SESSION;
 			convo.next();
 		}
 	}, { // viewPlan
@@ -231,7 +231,7 @@ function askForAdditionalTimeToPriority(response, convo) {
 
 	var taskText = dailyTask.Task.text;
 
-	var text = 'Got it - let\'s adjust your plan accordingly. *How much additional time* would you like to allocate to `' + taskText + '` for the rest of today?';
+	var text = 'Got it - let\'s adjust your plan accordingly. *How much additional time* `i.e. 1 more hour` would you like to allocate to `' + taskText + '` for the rest of today?';
 	var buttonsValuesArray = [_constants.buttonValues.doneSession.didSomethingElse.value, _constants.buttonValues.doneSession.moveOn.value];
 	var attachmentsConfig = { buttonsValuesArray: buttonsValuesArray };
 	var attachments = (0, _messageHelpers.getDoneSessionMessageAttachments)(attachmentsConfig);
