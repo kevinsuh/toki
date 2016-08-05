@@ -212,8 +212,11 @@ exports.default = function (controller) {
 														// COMPLETED!!!!
 
 														if (completeDailyTask) {
-															bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-																convo.say('Let\'s goooo. You\'re one step closer to winning the day! You have ');
+															// mark the task as complete, then show updated plan list
+															_models2.default.Task.update({
+																done: true
+															}, {
+																where: ['"Tasks"."id" = ?', dailyTask.dataValues.Task.id]
 															});
 														} else {
 

@@ -99,6 +99,45 @@ export function doneSessionAskOptions(convo) {
 
 }
 
+function completePriorityForSession(convo) {
+
+	let { sessionDone: { tz, dailyTasks, defaultBreakTime, UserId, currentSession: { dailyTask } } } = convo;
+
+	convo.sessionDone.priorityDecision.completeDailyTask = true;
+
+	let unCompletedDailyTasks = dailyTasks.filter((currentDailyTask) => {
+		if (currentDailyTask.dataValues && (currentDailyTask.dataValues.id != dailyTask.dataValues.id)) {
+			return true;
+		}
+	});
+
+	let dailyTaskTexts = unCompletedDailyTasks.map((dailyTask) => {
+		return dailyTask.dataValues.Task.text;
+	})
+
+	let config = { codeBlock: true }
+	let tasksString = commaSeparateOutTaskArray(dailyTaskTexts, config);
+
+	convo.say(`Let’s go! You’re one step closer to winning the day! You have ${tasksString} remaining`);
+
+	let buttonsValuesArray = [
+		buttonValues.doneSession.takeBreak.value,
+		buttonValues.doneSession.newSession.value,
+		buttonValues.doneSession.viewPlan.value,
+		buttonValues.doneSession.beBackLater.value
+	];
+
+	let attachmentsConfig = { defaultBreakTime, buttonsValuesArray };
+	let attachments       = getDoneSessionMessageAttachments(attachmentsConfig);
+
+	let text = `Let’s take a well-deserved break and get after it when you return`;
+
+	convoAskDoneSessionOptions(convo, text, attachments);
+
+	convo.next();
+
+}
+
 // this will actually ask the convo options in a modular, DRY way
 function convoAskDoneSessionOptions(convo, text, attachments) {
 
@@ -109,7 +148,7 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 		{ // completedPriority
 			pattern: utterances.containsCompleteOrCheckOrCross,
 			callback: (response, convo) => {
-				convo.priorityDecision.completeDailyTask = true;
+				completePriorityForSession(convo);
 				convo.next();
 			}
 		},

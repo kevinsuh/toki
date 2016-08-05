@@ -251,7 +251,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 	// add completed tasks to right place
 	var taskListMessageBody = '';
 	if (completedTasks.length > 0) {
-		taskListMessage = (options.noKarets ? `*Completed Tasks:*\n` : `> *Completed Tasks:*\n`);
+		taskListMessage = (options.noKarets ? `*Completed Priorities:*\n` : `> *Completed Priorities:*\n`);
 		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
 		taskListMessage += taskListMessageBody;
 	}
@@ -260,7 +260,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		// add remaining tasks to right place
 		if (completedTasks.length > 0) {
 			// only remaining tasks, no completed tasks
-			taskListMessage += (options.noKarets ? `\n*Remaining Tasks:*\n` : `>\n>*Remaining Tasks:*\n`);
+			taskListMessage += (options.noKarets ? `\n*Remaining Priorities:*\n` : `>\n>*Remaining Priorities:*\n`);
 		}
 		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
 		taskListMessage += taskListMessageBody;
@@ -550,11 +550,12 @@ export function prioritizeTaskArrayFromUserInput(taskObjectArray, input) {
 }
 
 // returns tasks separated into red blocks
-export function commaSeparateOutTaskArray(a) {
+export function commaSeparateOutTaskArray(a, config = {}) {
 
-	// put into red blocks
+	const { codeBlock } = config;
+
 	a = a.map((a) => {
-		return `${a}`;
+		return (codeBlock ? `\`${a}\`` : `${a}`);
 	})
 
 	// make into string

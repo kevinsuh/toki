@@ -279,7 +279,7 @@ function convertArrayToTaskListMessage(taskArray) {
 	// add completed tasks to right place
 	var taskListMessageBody = '';
 	if (completedTasks.length > 0) {
-		taskListMessage = options.noKarets ? '*Completed Tasks:*\n' : '> *Completed Tasks:*\n';
+		taskListMessage = options.noKarets ? '*Completed Priorities:*\n' : '> *Completed Priorities:*\n';
 		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
 		taskListMessage += taskListMessageBody;
 	}
@@ -288,7 +288,7 @@ function convertArrayToTaskListMessage(taskArray) {
 		// add remaining tasks to right place
 		if (completedTasks.length > 0) {
 			// only remaining tasks, no completed tasks
-			taskListMessage += options.noKarets ? '\n*Remaining Tasks:*\n' : '>\n>*Remaining Tasks:*\n';
+			taskListMessage += options.noKarets ? '\n*Remaining Priorities:*\n' : '>\n>*Remaining Priorities:*\n';
 		}
 		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
 		taskListMessage += taskListMessageBody;
@@ -573,10 +573,12 @@ function prioritizeTaskArrayFromUserInput(taskObjectArray, input) {
 
 // returns tasks separated into red blocks
 function commaSeparateOutTaskArray(a) {
+	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var codeBlock = config.codeBlock;
 
-	// put into red blocks
+
 	a = a.map(function (a) {
-		return '' + a;
+		return codeBlock ? '`' + a + '`' : '' + a;
 	});
 
 	// make into string
