@@ -1081,7 +1081,7 @@ function workOnTasksFlow(convo) {
 
 	// say task list, then ask which ones to complete
 
-	var options = { onlyRemainingTasks: true, startPlan: true };
+	var options = { onlyRemainingTasks: true };
 
 	var baseMessage = '';
 

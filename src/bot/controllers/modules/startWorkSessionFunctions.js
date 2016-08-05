@@ -266,13 +266,17 @@ function confirmTimeForTask(convo) {
 	const { SlackUserId, tz, dailyTask }  = convo.sessionStart;
 
 	// will only be a single task now
-	let minutes = dailyTask.dataValues.minutes;
+	let minutesAllocated = dailyTask.dataValues.minutes;
+	let minutesSpent     = dailyTask.dataValues.minutesSpent;
 
-	if (minutes) {
+	let minutesRemaining = minutesAllocated - minutesSpent;
+
+	if (minutesRemaining > 0) {
+
 		let now = moment().tz(tz);
-		let calculatedTimeObject = now.add(minutes, 'minutes');
+		let calculatedTimeObject = now.add(minutesRemaining, 'minutes');
 
-		convo.sessionStart.minutes              = minutes;
+		convo.sessionStart.minutes              = minutesRemaining;
 		convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
 
 		finalizeTimeAndTasksToStart(convo);

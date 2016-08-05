@@ -282,13 +282,17 @@ function confirmTimeForTask(convo) {
 
 	// will only be a single task now
 
-	var minutes = dailyTask.dataValues.minutes;
+	var minutesAllocated = dailyTask.dataValues.minutes;
+	var minutesSpent = dailyTask.dataValues.minutesSpent;
 
-	if (minutes) {
+	var minutesRemaining = minutesAllocated - minutesSpent;
+
+	if (minutesRemaining > 0) {
+
 		var now = (0, _momentTimezone2.default)().tz(tz);
-		var calculatedTimeObject = now.add(minutes, 'minutes');
+		var calculatedTimeObject = now.add(minutesRemaining, 'minutes');
 
-		convo.sessionStart.minutes = minutes;
+		convo.sessionStart.minutes = minutesRemaining;
 		convo.sessionStart.calculatedTimeObject = calculatedTimeObject;
 
 		finalizeTimeAndTasksToStart(convo);
