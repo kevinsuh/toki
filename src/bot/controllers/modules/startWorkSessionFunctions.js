@@ -6,7 +6,7 @@ import { dateStringToMomentTimeZone, witTimeResponseToTimeZoneObject, witDuratio
 
 import intentConfig from '../../lib/intents';
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsArray, THANK_YOU, buttonValues, colorsHash, startSessionOptionsAttachments } from '../../lib/constants';
+import { colorsArray, THANK_YOU, buttonValues, colorsHash, startSessionOptionsAttachments, pausedSessionOptionsAttachments } from '../../lib/constants';
 
 /**
  * 		START WORK SESSION CONVERSATION FLOW FUNCTIONS
@@ -41,7 +41,12 @@ export function finalizeTimeAndTasksToStart(convo) {
 	let question = `Ready to work on ${taskText} for ${timeString} until *${calculatedTime}*?`;
 	if (currentSession) {
 
-		question = `You're currently in a session for \`${currentSession.sessionTasks}\` and have *${currentSession.minutesString}* remaining! Would you like to cancel that and start a new session instead?`;
+		if (currentSession.isPaused) {
+			question = `You're in a *paused* session for \`${currentSession.sessionTasks}\` and have *${currentSession.minutesString}* remaining! Would you like to cancel that and start a new session instead?`;
+		} else {
+			question = `You're currently in a session for \`${currentSession.sessionTasks}\` and have *${currentSession.minutesString}* remaining! Would you like to cancel that and start a new session instead?`;
+		}
+			
 		convo.ask(question, [
 			{
 				pattern: utterances.yes,
@@ -54,9 +59,25 @@ export function finalizeTimeAndTasksToStart(convo) {
 			{
 				pattern: utterances.no,
 				callback: (response, convo) => {
-					convo.say(`Okay! See you in ${currentSession.minutesString} then`);
-					convo.say(`You can always let me know if you're \`done\` with a session early :grin:`);
+
+					let text = '';
+					let attachments = [];
+
+					if (currentSession.isPaused) {
+						text        = `Got it. Let me know when you want to *resume* and get going again :arrow_forward:!`;
+						attachments = pausedSessionOptionsAttachments;
+					} else {
+						text        = `Okay! Keep it up and I'll see you in ${currentSession.minutesString} :weight_lifter:`;
+						attachments = startSessionOptionsAttachments;
+					}
+
+					convo.say({
+						text,
+						attachments
+					});
+
 					convo.next();
+
 				}
 			},
 			{

@@ -559,6 +559,10 @@ var buttonValues = exports.buttonValues = {
 	keepPriority: {
 		name: "KEEP_PRIORITY",
 		value: "i'll keep my priorities"
+	},
+	doneEarly: {
+		name: "SESSION_DONE_EARLY",
+		value: "im done!"
 	}
 };
 
@@ -768,9 +772,9 @@ var startSessionOptionsAttachments = exports.startSessionOptionsAttachments = [{
 		value: buttonValues.startSession.addCheckIn.value,
 		type: "button"
 	}, {
-		name: buttonValues.startSession.endEarly.name,
+		name: buttonValues.doneEarly.name,
 		text: "End Session Early",
-		value: buttonValues.startSession.endEarly.value,
+		value: buttonValues.doneEarly.value,
 		type: "button"
 	}]
 }];
@@ -786,9 +790,9 @@ var pausedSessionOptionsAttachments = exports.pausedSessionOptionsAttachments = 
 		type: "button",
 		style: "primary"
 	}, {
-		name: buttonValues.startSession.pause.endEarly.name,
+		name: buttonValues.doneEarly.name,
 		text: "End Session",
-		value: buttonValues.startSession.pause.endEarly.value,
+		value: buttonValues.doneEarly.value,
 		type: "button"
 	}]
 }];

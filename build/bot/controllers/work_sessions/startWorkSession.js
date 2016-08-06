@@ -151,7 +151,15 @@ exports.default = function (controller) {
 
 									if (storedWorkSession) {
 										currentSession.isPaused = true;
+
+										minutes = Math.round(storedWorkSession.dataValues.minutes);
+										minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+
+										currentSession.minutes = minutes;
+										currentSession.minutesString = minutesString;
 									}
+
+									console.log(currentSession);
 
 									convo.sessionStart.currentSession = currentSession;
 									(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);

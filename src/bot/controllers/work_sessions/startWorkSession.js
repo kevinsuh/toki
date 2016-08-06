@@ -148,7 +148,7 @@ export default function(controller) {
 
 								let dailyTaskTexts = dailyTasks.map((dailyTask) => {
 									return dailyTask.dataValues.Task.text;
-								})
+								});
 
 								let sessionTasks = commaSeparateOutTaskArray(dailyTaskTexts);
 
@@ -162,7 +162,16 @@ export default function(controller) {
 
 								if (storedWorkSession) {
 									currentSession.isPaused = true;
+
+									minutes       = Math.round(storedWorkSession.dataValues.minutes);
+									minutesString = convertMinutesToHoursString(minutes);
+
+									currentSession.minutes       = minutes;
+									currentSession.minutesString = minutesString;
+									
 								}
+
+								console.log(currentSession);
 
 								convo.sessionStart.currentSession = currentSession;
 								finalizeTimeAndTasksToStart(convo);

@@ -67,7 +67,12 @@ function finalizeTimeAndTasksToStart(convo) {
 	var question = 'Ready to work on ' + taskText + ' for ' + timeString + ' until *' + calculatedTime + '*?';
 	if (currentSession) {
 
-		question = 'You\'re currently in a session for `' + currentSession.sessionTasks + '` and have *' + currentSession.minutesString + '* remaining! Would you like to cancel that and start a new session instead?';
+		if (currentSession.isPaused) {
+			question = 'You\'re in a *paused* session for `' + currentSession.sessionTasks + '` and have *' + currentSession.minutesString + '* remaining! Would you like to cancel that and start a new session instead?';
+		} else {
+			question = 'You\'re currently in a session for `' + currentSession.sessionTasks + '` and have *' + currentSession.minutesString + '* remaining! Would you like to cancel that and start a new session instead?';
+		}
+
 		convo.ask(question, [{
 			pattern: _botResponses.utterances.yes,
 			callback: function callback(response, convo) {
@@ -78,8 +83,23 @@ function finalizeTimeAndTasksToStart(convo) {
 		}, {
 			pattern: _botResponses.utterances.no,
 			callback: function callback(response, convo) {
-				convo.say('Okay! See you in ' + currentSession.minutesString + ' then');
-				convo.say('You can always let me know if you\'re `done` with a session early :grin:');
+
+				var text = '';
+				var attachments = [];
+
+				if (currentSession.isPaused) {
+					text = 'Got it. Let me know when you want to *resume* and get going again :arrow_forward:!';
+					attachments = _constants.pausedSessionOptionsAttachments;
+				} else {
+					text = 'Okay! Keep it up and I\'ll see you in ' + currentSession.minutesString + ' :weight_lifter:';
+					attachments = _constants.startSessionOptionsAttachments;
+				}
+
+				convo.say({
+					text: text,
+					attachments: attachments
+				});
+
 				convo.next();
 			}
 		}, {

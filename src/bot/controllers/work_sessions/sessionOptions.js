@@ -61,6 +61,7 @@ export default function(controller) {
 						// GOOD TO PAUSE NOW
 						const workSessionId  = workSession.id;
 						const endTime        = moment(workSession.endTime);
+						const startTime      = moment(workSession.startTime);
 						let now              = moment();
 						let minutesRemaining = Math.round((moment.duration(endTime.diff(now)).asMinutes() * 100)) / 100; // 2 decimal places
 
@@ -91,10 +92,27 @@ export default function(controller) {
 
 								/**
 								 * 		~~ GOOD TO GO TO PAUSE SESSION! ~~
+								 * 			add minutes to count when pausing
+								 * 		since you are creating new workSession each time
 								 */
 								
+								let workSessionMinutes = Math.round(moment.duration(now.diff(startTime)).asMinutes());
+
+								let dailyTask    = dailyTasks[0];
+								if (!dailyTask){
+									// FAILURE FAILURE SHOULD NEVER HAPPEN
+									// (this means no dailyTask attached to workSession)
+									return;
+								}
+								let minutesSpent = dailyTask.minutesSpent;
+								minutesSpent     += workSessionMinutes;
+
+								dailyTask.update({
+									minutesSpent
+								});
+
 								workSession.update({
-									endTime: moment(),
+									endTime: now,
 									live: false
 								});
 
@@ -104,7 +122,8 @@ export default function(controller) {
 								});
 
 								timeString = convertMinutesToHoursString(minutesRemaining);
-								message    = `Your session is paused :double_vertical_bar:. You have *${timeString}* remaining for \`${tasksToWorkOnString}\``;
+								let workSessionTimeString = convertMinutesToHoursString(workSessionMinutes);
+								message    = `Your session is paused :double_vertical_bar:. You've worked for ${workSessionTimeString} so far and have ${timeString} remaining for \`${tasksToWorkOnString}\``;
 
 							}
 							// making this just a reminder now so that user can end his own session as he pleases
@@ -339,20 +358,6 @@ export default function(controller) {
 			});
 		});
 	})
-
-	controller.on(`session_end_early_flow`, (bot, config) => {
-
-		const { SlackUserId, botCallback, storedWorkSession } = config;
-
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
-			bot          = bots[botToken];
-		}
-
-		controller.trigger(`done_session_flow`, [bot, config]);
-
-	});
 
 };
 

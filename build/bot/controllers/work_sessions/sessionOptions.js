@@ -46,6 +46,7 @@ exports.default = function (controller) {
 							// GOOD TO PAUSE NOW
 							var workSessionId = workSession.id;
 							var endTime = (0, _momentTimezone2.default)(workSession.endTime);
+							var startTime = (0, _momentTimezone2.default)(workSession.startTime);
 							var now = (0, _momentTimezone2.default)();
 							var minutesRemaining = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes() * 100) / 100; // 2 decimal places
 
@@ -75,10 +76,27 @@ exports.default = function (controller) {
 
 									/**
           * 		~~ GOOD TO GO TO PAUSE SESSION! ~~
+          * 			add minutes to count when pausing
+          * 		since you are creating new workSession each time
           */
 
+									var workSessionMinutes = Math.round(_momentTimezone2.default.duration(now.diff(startTime)).asMinutes());
+
+									var dailyTask = dailyTasks[0];
+									if (!dailyTask) {
+										// FAILURE FAILURE SHOULD NEVER HAPPEN
+										// (this means no dailyTask attached to workSession)
+										return;
+									}
+									var minutesSpent = dailyTask.minutesSpent;
+									minutesSpent += workSessionMinutes;
+
+									dailyTask.update({
+										minutesSpent: minutesSpent
+									});
+
 									workSession.update({
-										endTime: (0, _momentTimezone2.default)(),
+										endTime: now,
 										live: false
 									});
 
@@ -88,7 +106,8 @@ exports.default = function (controller) {
 									});
 
 									timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutesRemaining);
-									message = 'Your session is paused :double_vertical_bar:. You have *' + timeString + '* remaining for `' + tasksToWorkOnString + '`';
+									var workSessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(workSessionMinutes);
+									message = 'Your session is paused :double_vertical_bar:. You\'ve worked for ' + workSessionTimeString + ' so far and have ' + timeString + ' remaining for `' + tasksToWorkOnString + '`';
 								}
 								// making this just a reminder now so that user can end his own session as he pleases
 								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
@@ -306,21 +325,6 @@ exports.default = function (controller) {
 				}
 			});
 		});
-	});
-
-	controller.on('session_end_early_flow', function (bot, config) {
-		var SlackUserId = config.SlackUserId;
-		var botCallback = config.botCallback;
-		var storedWorkSession = config.storedWorkSession;
-
-
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
-			bot = _index.bots[botToken];
-		}
-
-		controller.trigger('done_session_flow', [bot, config]);
 	});
 };
 

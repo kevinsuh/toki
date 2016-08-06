@@ -48,12 +48,6 @@ export default function(controller) {
 				case buttonValues.startSession.addCheckIn.value:
 					controller.trigger(`session_add_checkin_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
-				case buttonValues.startSession.endEarly.value:
-					controller.trigger(`session_end_early_flow`, [ bot, { SlackUserId, botCallback: true }]);
-					break;
-				case buttonValues.startSession.pause.endEarly.value:
-					controller.trigger(`session_end_early_flow`, [ bot, { SlackUserId, botCallback: true }]);
-					break;
 				case buttonValues.startSession.resume.value:
 					controller.trigger(`session_resume_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
