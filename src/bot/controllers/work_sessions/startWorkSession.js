@@ -110,18 +110,74 @@ export default function(controller) {
 					SlackUserId,
 					UserId,
 					tz,
-					bot,
-					currentSession
+					bot
 				}
 
 				if (dailyTaskToWorkOn) {
 					convo.sessionStart.dailyTask = dailyTaskToWorkOn;
 				}
 
-				// if no dailyTask, we will suggest one in `startWorkSessionFunctions`
-				finalizeTimeAndTasksToStart(convo);
-				
-				convo.next();
+				// check for openWorkSession, before starting flow
+				user.getWorkSessions({
+					where: [`"open" = ?`, true]
+				})
+				.then((workSessions) => {
+
+					let currentSession = false;
+
+					if (workSessions.length > 0) {
+
+						let openWorkSession = workSessions[0];
+						openWorkSession.getStoredWorkSession({
+							where: [ `"StoredWorkSession"."live" = ?`, true ]
+						})
+						.then((storedWorkSession) => {
+							openWorkSession.getDailyTasks({
+								include: [ models.Task ]
+							})
+							.then((dailyTasks) => {
+
+								// if there is an already open session we will store it
+								// and if it is paused
+
+								let now           = moment();
+								let endTime       = moment(openWorkSession.endTime);
+								let endTimeString = endTime.format("h:mm a");
+								let minutes       = Math.round(moment.duration(endTime.diff(now)).asMinutes());
+								var minutesString = convertMinutesToHoursString(minutes);
+
+								let dailyTaskTexts = dailyTasks.map((dailyTask) => {
+									return dailyTask.dataValues.Task.text;
+								})
+
+								let sessionTasks = commaSeparateOutTaskArray(dailyTaskTexts);
+
+								currentSession = {
+									minutes,
+									minutesString,
+									sessionTasks,
+									endTimeString,
+									storedWorkSession
+								}
+
+								if (storedWorkSession) {
+									currentSession.isPaused = true;
+								}
+
+								convo.sessionStart.currentSession = currentSession;
+								finalizeTimeAndTasksToStart(convo);
+								convo.next();
+
+							});
+						});
+
+					} else {
+						convo.sessionStart.currentSession = currentSession;
+						finalizeTimeAndTasksToStart(convo);
+						convo.next();
+					}
+
+				});
 
 				convo.on('end', (convo) => {
 
@@ -136,6 +192,12 @@ export default function(controller) {
 						setTimeout(() => {
 							startSessionWithConvoObject(convo.sessionStart);
 						}, 500);
+					} else if (sessionStart.confirmOverRideSession) {
+						closeOldRemindersAndSessions(user);
+						setTimeout(() => {
+							controller.trigger(`begin_session`, [bot, { SlackUserId }]);
+						}, 700)
+							
 					} else {
 						setTimeout(() => {
 							resumeQueuedReachouts(bot, { SlackUserId });

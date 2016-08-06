@@ -101,18 +101,70 @@ exports.default = function (controller) {
 					SlackUserId: SlackUserId,
 					UserId: UserId,
 					tz: tz,
-					bot: bot,
-					currentSession: currentSession
+					bot: bot
 				};
 
 				if (dailyTaskToWorkOn) {
 					convo.sessionStart.dailyTask = dailyTaskToWorkOn;
 				}
 
-				// if no dailyTask, we will suggest one in `startWorkSessionFunctions`
-				(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);
+				// check for openWorkSession, before starting flow
+				user.getWorkSessions({
+					where: ['"open" = ?', true]
+				}).then(function (workSessions) {
 
-				convo.next();
+					var currentSession = false;
+
+					if (workSessions.length > 0) {
+						(function () {
+
+							var openWorkSession = workSessions[0];
+							openWorkSession.getStoredWorkSession({
+								where: ['"StoredWorkSession"."live" = ?', true]
+							}).then(function (storedWorkSession) {
+								openWorkSession.getDailyTasks({
+									include: [_models2.default.Task]
+								}).then(function (dailyTasks) {
+
+									// if there is an already open session we will store it
+									// and if it is paused
+
+									var now = (0, _momentTimezone2.default)();
+									var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime);
+									var endTimeString = endTime.format("h:mm a");
+									var minutes = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
+									var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+
+									var dailyTaskTexts = dailyTasks.map(function (dailyTask) {
+										return dailyTask.dataValues.Task.text;
+									});
+
+									var sessionTasks = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
+
+									currentSession = {
+										minutes: minutes,
+										minutesString: minutesString,
+										sessionTasks: sessionTasks,
+										endTimeString: endTimeString,
+										storedWorkSession: storedWorkSession
+									};
+
+									if (storedWorkSession) {
+										currentSession.isPaused = true;
+									}
+
+									convo.sessionStart.currentSession = currentSession;
+									(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);
+									convo.next();
+								});
+							});
+						})();
+					} else {
+						convo.sessionStart.currentSession = currentSession;
+						(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);
+						convo.next();
+					}
+				});
 
 				convo.on('end', function (convo) {
 					var sessionStart = convo.sessionStart;
@@ -127,6 +179,11 @@ exports.default = function (controller) {
 						setTimeout(function () {
 							(0, _startWorkSessionFunctions.startSessionWithConvoObject)(convo.sessionStart);
 						}, 500);
+					} else if (sessionStart.confirmOverRideSession) {
+						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+						setTimeout(function () {
+							controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+						}, 700);
 					} else {
 						setTimeout(function () {
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });

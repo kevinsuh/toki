@@ -40,92 +40,120 @@ export function finalizeTimeAndTasksToStart(convo) {
 
 	let question = `Ready to work on ${taskText} for ${timeString} until *${calculatedTime}*?`;
 	if (currentSession) {
-		question = `You're currently working on \`${currentSession.sessionTasks}\` and have ${currentSession.minutesString} remaining. Would you like to work on ${taskText} for ${timeString} until *${calculatedTime}* instead?`;
-	}
 
-	let minutesRemaining = dailyTask.dataValues.minutes - dailyTask.dataValues.minutesSpent;
-
-	// new flow!
-	convo.say(`Let’s keep cranking on ${taskText} with a focused session :wrench:`);
-
-	if (minutesRemaining > 0 ) {
-
-		question = `How long would you like to focus on ${taskText}? You still have *${minutesRemaining} minutes* set aside for this today`;
-
-		let attachments = getMinutesSuggestionAttachments(minutesRemaining);
-
-		convo.ask({
-			text: question,
-			attachments
-		},
-		[
+		question = `You're currently in a session for \`${currentSession.sessionTasks}\` and have *${currentSession.minutesString}* remaining! Would you like to cancel that and start a new session instead?`;
+		convo.ask(question, [
 			{
-				pattern: utterances.containsChangeTask,
-				callback: function(response, convo) {
-					convo.say("Okay, let's change tasks!");
-					askWhichTaskToWorkOn(convo);
+				pattern: utterances.yes,
+				callback: (response, convo) => {
+					convo.sessionStart.confirmOverRideSession = true;
+					convo.say(`Okay, sounds good to me!`);
 					convo.next();
 				}
 			},
 			{
-				pattern: utterances.containsChangeTime,
-				callback: function(response, convo) {
-					askForCustomTotalMinutes(convo);
+				pattern: utterances.no,
+				callback: (response, convo) => {
+					convo.say(`Okay! See you in ${currentSession.minutesString} then`);
+					convo.say(`You can always let me know if you're \`done\` with a session early :grin:`);
 					convo.next();
 				}
 			},
 			{
-				pattern: utterances.noAndNeverMind,
-				callback: function(response, convo) {
-
-					convo.sessionStart.confirmStart = false;
-					if (currentSession) {
-						convo.say({
-							text: `Okay! Good luck on \`${currentSession.sessionTasks}\`. See you at *${currentSession.endTimeString}* :weight_lifter:`,
-							attachments: startSessionOptionsAttachments
-						});
-					} else {
-						convo.say("Okay, let me know if you still want to start a `new session` for one of your priorities :grin:");
-					}
-					convo.next();
-
-				}
-			},
-			{ // if duration or date, then we can start
 				default: true,
-				callback: function(response, convo) {
-
-				let { intentObject: { entities } } = response;
-
-				let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
-
-				if (customTimeObject) {
-					let minutes          = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
-
-					convo.sessionStart.calculatedTimeObject = customTimeObject;
-					convo.sessionStart.minutes              = minutes;
-					convo.sessionStart.confirmStart         = true;
-
-					convo.next();
-
-				} else {
-					convo.say("I didn't quite get that :thinking_face:");
+				callback: (response, convo) => {
+					convo.say("Sorry, I didn't catch that");
 					convo.repeat();
 					convo.next();
 				}
-
 			}
-		}
-	]);
+		]);
 
 	} else {
+		let minutesRemaining = dailyTask.dataValues.minutes - dailyTask.dataValues.minutesSpent;
 
-		convo.say(`Wait!`);
-		confirmTimeForTask(convo);
-		convo.next();
+		// new flow!
+		convo.say(`Let’s keep cranking on ${taskText} with a focused session :wrench:`);
 
+		if (minutesRemaining > 0 ) {
+
+			question = `How long would you like to focus on ${taskText}? You still have *${minutesRemaining} minutes* set aside for this today`;
+
+			let attachments = getMinutesSuggestionAttachments(minutesRemaining);
+
+			convo.ask({
+				text: question,
+				attachments
+			},
+			[
+				{
+					pattern: utterances.containsChangeTask,
+					callback: function(response, convo) {
+						convo.say("Okay, let's change tasks!");
+						askWhichTaskToWorkOn(convo);
+						convo.next();
+					}
+				},
+				{
+					pattern: utterances.containsChangeTime,
+					callback: function(response, convo) {
+						askForCustomTotalMinutes(convo);
+						convo.next();
+					}
+				},
+				{
+					pattern: utterances.noAndNeverMind,
+					callback: function(response, convo) {
+
+						convo.sessionStart.confirmStart = false;
+						if (currentSession) {
+							convo.say({
+								text: `Okay! Good luck on \`${currentSession.sessionTasks}\`. See you at *${currentSession.endTimeString}* :weight_lifter:`,
+								attachments: startSessionOptionsAttachments
+							});
+						} else {
+							convo.say("Okay, let me know if you still want to start a `new session` for one of your priorities :grin:");
+						}
+						convo.next();
+
+					}
+				},
+				{ // if duration or date, then we can start
+					default: true,
+					callback: function(response, convo) {
+
+					let { intentObject: { entities } } = response;
+
+					let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+
+					if (customTimeObject) {
+						let minutes          = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
+
+						convo.sessionStart.calculatedTimeObject = customTimeObject;
+						convo.sessionStart.minutes              = minutes;
+						convo.sessionStart.confirmStart         = true;
+
+						convo.next();
+
+					} else {
+						convo.say("I didn't quite get that :thinking_face:");
+						convo.repeat();
+						convo.next();
+					}
+
+				}
+			}
+		]);
+
+		} else {
+
+			convo.say(`Wait!`);
+			confirmTimeForTask(convo);
+			convo.next();
+
+		}
 	}
-		
+
 }
 
 /**
