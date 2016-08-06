@@ -26,11 +26,8 @@ export default function(controller) {
 
 		const { SlackUserId, botCallback } = config;
 
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			let botToken = bot.config.token;
-			bot          = bots[botToken];
-		}
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -123,7 +120,7 @@ export default function(controller) {
 
 								timeString = convertMinutesToHoursString(minutesRemaining);
 								let workSessionTimeString = convertMinutesToHoursString(workSessionMinutes);
-								message    = `Your session is paused :double_vertical_bar:. You've worked for ${workSessionTimeString} so far and have ${timeString} remaining for \`${tasksToWorkOnString}\``;
+								message    = `Your session is paused :double_vertical_bar:. You've worked for ${workSessionTimeString} towards \`${tasksToWorkOnString}\` and have *${timeString} remaining* in this session`;
 
 							}
 							// making this just a reminder now so that user can end his own session as he pleases
@@ -154,13 +151,10 @@ export default function(controller) {
 
 	controller.on(`session_resume_flow`, (bot, config) => {
 
-		const { SlackUserId, botCallback } = config;
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			let botToken = bot.config.token;
-			bot          = bots[botToken];
-		}
+		const { SlackUserId, botCallback } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -191,7 +185,7 @@ export default function(controller) {
 
 						workSession.getDailyTasks({
 							include: [ models.Task ],
-							where: [`"Task"."done" = ? AND "DailyTask"."type" = ?`, false, "live"]
+							where: [`"DailyTask"."type" = ?`, "live"]
 						})
 						.then((dailyTasks) => {
 
@@ -307,13 +301,10 @@ export default function(controller) {
 
 	controller.on(`session_add_checkin_flow`, (bot, config) => {
 
-		const { SlackUserId, botCallback } = config;
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
-			bot          = bots[botToken];
-		}
+		const { SlackUserId } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],

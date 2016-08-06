@@ -347,7 +347,7 @@ function createTaskListMessageBody(taskArray, options) {
  * @return {string}         hour + minutes
  */
 export function convertMinutesToHoursString(minutes) {
-	minutes = parseInt(minutes);
+	minutes = Math.round(minutes);
 	var hours = 0;
 	while (minutes - 60 >= 0) {
 		hours++;
@@ -364,7 +364,9 @@ export function convertMinutesToHoursString(minutes) {
 
 	if (minutes == 0) {
 		content = content.slice(0, -1);
-	} else if (minutes == 1) {
+	}
+
+	if (minutes == 1) {
 		content = `${content}${minutes} minute`;
 	} else {
 		content = `${content}${minutes} minutes`;

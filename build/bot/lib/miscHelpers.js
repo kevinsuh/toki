@@ -438,6 +438,11 @@ function getDailyTaskForSession(dailyTasks) {
 	if (!startDailyTask) {
 		// if you couldn't find one, this means we have to go through the ones that are not completed
 		dailyTasks.some(function (dailyTask) {
+			var _dailyTask$dataValues2 = dailyTask.dataValues;
+			var minutes = _dailyTask$dataValues2.minutes;
+			var minutesSpent = _dailyTask$dataValues2.minutesSpent;
+			var done = _dailyTask$dataValues2.Task.done;
+
 			if (!done) {
 				startDailyTask = dailyTask;
 				return true;

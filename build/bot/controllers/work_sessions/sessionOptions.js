@@ -15,11 +15,8 @@ exports.default = function (controller) {
 		var botCallback = config.botCallback;
 
 
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
-			bot = _index.bots[botToken];
-		}
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
 
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
@@ -107,7 +104,7 @@ exports.default = function (controller) {
 
 									timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutesRemaining);
 									var workSessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(workSessionMinutes);
-									message = 'Your session is paused :double_vertical_bar:. You\'ve worked for ' + workSessionTimeString + ' so far and have ' + timeString + ' remaining for `' + tasksToWorkOnString + '`';
+									message = 'Your session is paused :double_vertical_bar:. You\'ve worked for ' + workSessionTimeString + ' towards `' + tasksToWorkOnString + '` and have *' + timeString + ' remaining* in this session';
 								}
 								// making this just a reminder now so that user can end his own session as he pleases
 								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
@@ -134,15 +131,13 @@ exports.default = function (controller) {
 	});
 
 	controller.on('session_resume_flow', function (bot, config) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
 		var SlackUserId = config.SlackUserId;
 		var botCallback = config.botCallback;
 
-
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
-			bot = _index.bots[botToken];
-		}
 
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
@@ -170,7 +165,7 @@ exports.default = function (controller) {
 
 							workSession.getDailyTasks({
 								include: [_models2.default.Task],
-								where: ['"Task"."done" = ? AND "DailyTask"."type" = ?', false, "live"]
+								where: ['"DailyTask"."type" = ?', "live"]
 							}).then(function (dailyTasks) {
 
 								if (dailyTasks.length > 0) {
@@ -280,15 +275,12 @@ exports.default = function (controller) {
 	});
 
 	controller.on('session_add_checkin_flow', function (bot, config) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
 		var SlackUserId = config.SlackUserId;
-		var botCallback = config.botCallback;
 
-
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
-			bot = _index.bots[botToken];
-		}
 
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],

@@ -424,6 +424,7 @@ export function getDailyTaskForSession(dailyTasks) {
 	if (!startDailyTask) {
 		// if you couldn't find one, this means we have to go through the ones that are not completed
 		dailyTasks.some((dailyTask) => {
+			const { minutes, minutesSpent, Task: { done } } = dailyTask.dataValues;
 			if (!done) {
 				startDailyTask = dailyTask;
 				return true;
@@ -431,6 +432,6 @@ export function getDailyTaskForSession(dailyTasks) {
 		})
 	};
 	return startDailyTask;
-	
+
 }
 

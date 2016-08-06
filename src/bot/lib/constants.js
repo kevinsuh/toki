@@ -167,10 +167,6 @@ export const buttonValues ={
 				value: "START_SESSION_PAUSE_END_EARLY"
 			}
 		},
-		addCheckIn: {
-			name: "START_SESSION_ADD_CHECK_IN",
-			value: "START_SESSION_ADD_CHECK_IN"
-		},
 		endEarly: {
 			name: "START_SESSION_END_EARLY",
 			value: "START_SESSION_END_EARLY"
@@ -553,7 +549,11 @@ export const buttonValues ={
 	doneEarly: {
 		name: "SESSION_DONE_EARLY",
 		value: "im done!"
-	}
+	},
+	addCheckIn: {
+		name: "SESSION_ADD_CHECK_IN",
+		value: "let's add a check in!"
+	},
 }
 
 export const timeZones = {
@@ -799,9 +799,9 @@ export const startSessionOptionsAttachments = [
 					type: "button"
 			},
 			{
-					name: buttonValues.startSession.addCheckIn.name,
+					name: buttonValues.addCheckIn.name,
 					text: "Add check-in",
-					value: buttonValues.startSession.addCheckIn.value,
+					value: buttonValues.addCheckIn.value,
 					type: "button"
 			},
 			{
