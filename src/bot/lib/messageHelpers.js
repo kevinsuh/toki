@@ -957,3 +957,71 @@ export function getDoneSessionMessageAttachments(config = {}) {
 	return attachments;
 	
 }
+
+export function getMinutesSuggestionAttachments(minutesRemaining) {
+
+	let minutesSuggestions    = [30, 45, 60, 90];
+	let customIndexSuggestion = 0;
+
+	minutesSuggestions.some((minutesSuggestion, index) => {
+		customIndexSuggestion = index;
+
+		if (minutesRemaining - minutesSuggestion < 0) {
+			return true;
+		} else {
+			const nextIndex = index+1;
+			if (minutesSuggestions[nextIndex]) {
+
+				if (minutesRemaining - minutesSuggestions[nextIndex] < 0) {
+
+					// round up or down?
+					let currentIndexValue = Math.abs(minutesSuggestion - minutesRemaining);
+					let nextIndexValue = Math.abs(minutesSuggestions[nextIndex] - minutesRemaining);
+					if (nextIndexValue < currentIndexValue) {
+						customIndexSuggestion = nextIndex;
+					}
+					return true;
+
+				}
+			}
+		}
+	});
+
+	if (minutesRemaining > 110) {
+		// put a cap on this
+		minutesRemaining = 90;
+	}
+
+	minutesSuggestions[customIndexSuggestion] = minutesRemaining;
+
+	let attachments = [
+		{
+			attachment_type: 'default',
+			callback_id: "START_SESSION",
+			color: colorsHash.turquoise.hex,
+			fallback: "I was unable to process your decision",
+			actions: []
+		}
+	];
+
+	minutesSuggestions.forEach((minutesSuggestion) => {
+		let action = {
+			name: buttonValues.startNow.name,
+			text: `${minutesSuggestion} minutes`,
+			value: `${minutesSuggestion} minutes`,
+			type: "button",
+			style: "primary"
+		}
+		attachments[0].actions.push(action);
+	});
+
+	attachments[0].actions.push({
+		name: buttonValues.changeTask.name,
+		text: "Change Priority",
+		value: buttonValues.changeTask.value,
+		type: "button"
+	});
+
+	return attachments;
+
+}

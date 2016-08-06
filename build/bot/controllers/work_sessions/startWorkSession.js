@@ -55,7 +55,9 @@ exports.default = function (controller) {
 					}
 					convo.next();
 					convo.on('end', function (convo) {
-						controller.trigger('plan_command_center', [bot, config]);
+						// new session we'll automatically send to begin_session now
+						controller.trigger('begin_session', [bot, config]);
+						// controller.trigger(`plan_command_center`, [ bot, config ]);
 					});
 				});
 			});
@@ -105,11 +107,11 @@ exports.default = function (controller) {
 
 				if (dailyTaskToWorkOn) {
 					convo.sessionStart.dailyTask = dailyTaskToWorkOn;
-				} else {
-					convo.say('Let\'s do it :punch:');
 				}
 
+				// if no dailyTask, we will suggest one in `startWorkSessionFunctions`
 				(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);
+
 				convo.next();
 
 				convo.on('end', function (convo) {

@@ -28,6 +28,7 @@ exports.deleteMostRecentDoneSessionMessage = deleteMostRecentDoneSessionMessage;
 exports.getTimeToTaskTextAttachmentWithTaskListMessage = getTimeToTaskTextAttachmentWithTaskListMessage;
 exports.convertStringToNumbersArray = convertStringToNumbersArray;
 exports.getDoneSessionMessageAttachments = getDoneSessionMessageAttachments;
+exports.getMinutesSuggestionAttachments = getMinutesSuggestionAttachments;
 
 var _constants = require('./constants');
 
@@ -972,6 +973,70 @@ function getDoneSessionMessageAttachments() {
 		fallback: "Done with my session!",
 		actions: actions
 	}];
+
+	return attachments;
+}
+
+function getMinutesSuggestionAttachments(minutesRemaining) {
+
+	var minutesSuggestions = [30, 45, 60, 90];
+	var customIndexSuggestion = 0;
+
+	minutesSuggestions.some(function (minutesSuggestion, index) {
+		customIndexSuggestion = index;
+
+		if (minutesRemaining - minutesSuggestion < 0) {
+			return true;
+		} else {
+			var nextIndex = index + 1;
+			if (minutesSuggestions[nextIndex]) {
+
+				if (minutesRemaining - minutesSuggestions[nextIndex] < 0) {
+
+					// round up or down?
+					var currentIndexValue = Math.abs(minutesSuggestion - minutesRemaining);
+					var nextIndexValue = Math.abs(minutesSuggestions[nextIndex] - minutesRemaining);
+					if (nextIndexValue < currentIndexValue) {
+						customIndexSuggestion = nextIndex;
+					}
+					return true;
+				}
+			}
+		}
+	});
+
+	if (minutesRemaining > 110) {
+		// put a cap on this
+		minutesRemaining = 90;
+	}
+
+	minutesSuggestions[customIndexSuggestion] = minutesRemaining;
+
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "START_SESSION",
+		color: _constants.colorsHash.turquoise.hex,
+		fallback: "I was unable to process your decision",
+		actions: []
+	}];
+
+	minutesSuggestions.forEach(function (minutesSuggestion) {
+		var action = {
+			name: _constants.buttonValues.startNow.name,
+			text: minutesSuggestion + ' minutes',
+			value: minutesSuggestion + ' minutes',
+			type: "button",
+			style: "primary"
+		};
+		attachments[0].actions.push(action);
+	});
+
+	attachments[0].actions.push({
+		name: _constants.buttonValues.changeTask.name,
+		text: "Change Priority",
+		value: _constants.buttonValues.changeTask.value,
+		type: "button"
+	});
 
 	return attachments;
 }

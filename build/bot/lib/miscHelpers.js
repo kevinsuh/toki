@@ -21,6 +21,7 @@ exports.prioritizeDailyTasks = prioritizeDailyTasks;
 exports.mapTimeToTaskArray = mapTimeToTaskArray;
 exports.getPlanCommandOptionAttachments = getPlanCommandOptionAttachments;
 exports.getEndOfPlanCommandOptionAttachments = getEndOfPlanCommandOptionAttachments;
+exports.getDailyTaskForSession = getDailyTaskForSession;
 
 var _models = require('../../app/models');
 
@@ -415,5 +416,34 @@ function getEndOfPlanCommandOptionAttachments() {
 	});
 
 	return optionsAttachment;
+}
+
+function getDailyTaskForSession(dailyTasks) {
+
+	var startDailyTask = false;
+	dailyTasks.some(function (dailyTask) {
+		// this loops through all "live" dailyTasks, EVEN COMPLETED ONES
+		var _dailyTask$dataValues = dailyTask.dataValues;
+		var minutes = _dailyTask$dataValues.minutes;
+		var minutesSpent = _dailyTask$dataValues.minutesSpent;
+		var done = _dailyTask$dataValues.Task.done;
+
+		if (!done) {
+			if (minutes > minutesSpent) {
+				startDailyTask = dailyTask;
+				return true;
+			}
+		}
+	});
+	if (!startDailyTask) {
+		// if you couldn't find one, this means we have to go through the ones that are not completed
+		dailyTasks.some(function (dailyTask) {
+			if (!done) {
+				startDailyTask = dailyTask;
+				return true;
+			}
+		});
+	};
+	return startDailyTask;
 }
 //# sourceMappingURL=miscHelpers.js.map
