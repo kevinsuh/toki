@@ -164,6 +164,7 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 	}, { // newSession
 		pattern: _botResponses.utterances.containsNew,
 		callback: function callback(response, convo) {
+			convo.say('Alright, you\'re crushing it.');
 			convo.sessionDone.postSessionDecision = _constants.intentConfig.START_SESSION;
 			convo.next();
 		}

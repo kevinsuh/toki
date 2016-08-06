@@ -91,14 +91,23 @@ function finalizeTimeAndTasksToStart(convo) {
 			}
 		}]);
 	} else {
-		var minutesRemaining = dailyTask.dataValues.minutes - dailyTask.dataValues.minutesSpent;
+		var _dailyTask$dataValues = dailyTask.dataValues;
+		var _minutes = _dailyTask$dataValues.minutes;
+		var minutesSpent = _dailyTask$dataValues.minutesSpent;
 
-		// new flow!
-		convo.say('Let’s keep cranking on ' + taskText + ' with a focused session :wrench:');
+		var minutesRemaining = _minutes - minutesSpent;
 
 		if (minutesRemaining > 0) {
 
-			question = 'How long would you like to focus on ' + taskText + '? You still have *' + minutesRemaining + ' minutes* set aside for this today';
+			if (minutesSpent == 0) {
+				// new flow!
+				convo.say('Let’s crank on ' + taskText + ' with a focused session :wrench:');
+				question = 'How long would you like to focus on ' + taskText + '? You have *' + minutesRemaining + ' minutes* set aside for this today';
+			} else {
+				// new flow!
+				convo.say('Let’s keep cranking on ' + taskText + ' with a focused session :wrench:');
+				question = 'How long would you like to focus on ' + taskText + '? You still have *' + minutesRemaining + ' minutes* set aside for this today';
+			}
 
 			var attachments = (0, _messageHelpers.getMinutesSuggestionAttachments)(minutesRemaining);
 
@@ -142,10 +151,10 @@ function finalizeTimeAndTasksToStart(convo) {
 					var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
 
 					if (customTimeObject) {
-						var _minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+						var _minutes2 = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
 
 						convo.sessionStart.calculatedTimeObject = customTimeObject;
-						convo.sessionStart.minutes = _minutes;
+						convo.sessionStart.minutes = _minutes2;
 						convo.sessionStart.confirmStart = true;
 
 						convo.next();

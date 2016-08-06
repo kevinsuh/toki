@@ -170,6 +170,7 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 		{ // newSession
 			pattern: utterances.containsNew,
 			callback: (response, convo) => {
+				convo.say(`Alright, you're crushing it.`);
 				convo.sessionDone.postSessionDecision = intentConfig.START_SESSION;
 				convo.next();
 			}

@@ -70,15 +70,22 @@ export function finalizeTimeAndTasksToStart(convo) {
 		]);
 
 	} else {
-		let minutesRemaining = dailyTask.dataValues.minutes - dailyTask.dataValues.minutesSpent;
 
-		// new flow!
-		convo.say(`Let’s keep cranking on ${taskText} with a focused session :wrench:`);
+		const { minutes, minutesSpent } = dailyTask.dataValues;
+		let minutesRemaining            = minutes - minutesSpent;
 
 		if (minutesRemaining > 0 ) {
 
-			question = `How long would you like to focus on ${taskText}? You still have *${minutesRemaining} minutes* set aside for this today`;
-
+			if (minutesSpent == 0) {
+				// new flow!
+				convo.say(`Let’s crank on ${taskText} with a focused session :wrench:`);
+				question = `How long would you like to focus on ${taskText}? You have *${minutesRemaining} minutes* set aside for this today`;
+			} else {
+				// new flow!
+				convo.say(`Let’s keep cranking on ${taskText} with a focused session :wrench:`);
+				question = `How long would you like to focus on ${taskText}? You still have *${minutesRemaining} minutes* set aside for this today`;
+			}
+			
 			let attachments = getMinutesSuggestionAttachments(minutesRemaining);
 
 			convo.ask({
