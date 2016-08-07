@@ -168,7 +168,7 @@ export default function(controller) {
 
 									currentSession.minutes       = minutes;
 									currentSession.minutesString = minutesString;
-									
+
 								}
 
 								console.log(currentSession);
@@ -207,7 +207,14 @@ export default function(controller) {
 							controller.trigger(`begin_session`, [bot, { SlackUserId }]);
 						}, 700)
 							
-					} else {
+					} else if (sessionStart.endDay) {
+						// this should rarely ever, ever happen.
+						closeOldRemindersAndSessions(user);
+						setTimeout(() => {
+							controller.trigger(`end_plan_flow`, [bot, { SlackUserId }]);
+						}, 700)
+
+					}else {
 						setTimeout(() => {
 							resumeQueuedReachouts(bot, { SlackUserId });
 						}, 750);

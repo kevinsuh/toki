@@ -192,6 +192,12 @@ exports.default = function (controller) {
 						setTimeout(function () {
 							controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
 						}, 700);
+					} else if (sessionStart.endDay) {
+						// this should rarely ever, ever happen.
+						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+						setTimeout(function () {
+							controller.trigger('end_plan_flow', [bot, { SlackUserId: SlackUserId }]);
+						}, 700);
 					} else {
 						setTimeout(function () {
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });

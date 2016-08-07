@@ -211,64 +211,75 @@ function askWhichTaskToWorkOn(convo) {
 	var dailyTasks = _convo$sessionStart2.dailyTasks;
 	var dailyTask = _convo$sessionStart2.dailyTask;
 
+
 	if (!dailyTasks) {
 		getUserDailyTasks(convo);
 	} else {
-		(function () {
-			var bot = convo.task.bot;
 
-			var noDailyTask = false;
-			var taskArray = dailyTasks.filter(function (currentDailyTask) {
-				if (!dailyTask) {
-					// uncommon situation where reminder has no dailyTask
-					noDailyTask = true;
-					return true;
-				} else if (currentDailyTask.dataValues.id != dailyTask.dataValues.id) {
-					return true;
-				}
-			});
-			var options = { dontUsePriority: true };
-			var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
-			if (question == '') {
-				question = 'Which priority would you like to work on instead?';
-			}
-			if (noDailyTask) question = 'Which priority would you like to work on?';
-			var message = question + '\n' + taskListMessage;
-			convo.ask({
-				text: message,
-				attachments: [{
-					attachment_type: 'default',
-					callback_id: "START_SESSION",
-					fallback: "I was unable to process your decision",
-					color: _constants.colorsHash.grey.hex,
-					actions: [{
-						name: _constants.buttonValues.neverMind.name,
-						text: "Never mind!",
-						value: _constants.buttonValues.neverMind.value,
-						type: "button"
-					}]
-				}]
-			}, [{
-				pattern: _botResponses.utterances.noAndNeverMind,
-				callback: function callback(response, convo) {
-					if (dailyTask) {
-						var taskText = dailyTask.dataValues ? '`' + dailyTask.dataValues.Task.text + '`' : 'your priority';
-						convo.say('Sure thing! Let\'s stay working on ' + taskText);
-						confirmTimeForTask(convo);
-					} else {
-						convo.say('Okay! Let me know when you want to `start a session`');
+		// THIS IS A TEST TO SEE IF THERE ARE EVEN WORKABLE DAILY TASKS
+		var oneDailyTaskToWorkOn = (0, _miscHelpers.getDailyTaskForSession)(dailyTasks);
+		if (!oneDailyTaskToWorkOn) {
+			// THIS SHOULD NEVER HAPPEN
+			convo.say('You don\'t have any more priorities to work on! You\'ve won the day!');
+			convo.sessionStart.endDay = true;
+			convo.next();
+		} else {
+			(function () {
+				var bot = convo.task.bot;
+
+				var noDailyTask = false;
+				var taskArray = dailyTasks.filter(function (currentDailyTask) {
+					if (!dailyTask) {
+						// uncommon situation where reminder has no dailyTask
+						noDailyTask = true;
+						return true;
+					} else if (currentDailyTask.dataValues.id != dailyTask.dataValues.id) {
+						return true;
 					}
-					convo.next();
+				});
+				var options = { dontUsePriority: true };
+				var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, options);
+				if (question == '') {
+					question = 'Which priority would you like to work on instead?';
 				}
-			}, {
-				default: true,
-				callback: function callback(response, convo) {
-					// user inputed task #'s, not new task button
-					confirmTasks(response, convo, taskArray);
-					convo.next();
-				}
-			}]);
-		})();
+				if (noDailyTask) question = 'Which priority would you like to work on?';
+				var message = question + '\n' + taskListMessage;
+				convo.ask({
+					text: message,
+					attachments: [{
+						attachment_type: 'default',
+						callback_id: "START_SESSION",
+						fallback: "I was unable to process your decision",
+						color: _constants.colorsHash.grey.hex,
+						actions: [{
+							name: _constants.buttonValues.neverMind.name,
+							text: "Never mind!",
+							value: _constants.buttonValues.neverMind.value,
+							type: "button"
+						}]
+					}]
+				}, [{
+					pattern: _botResponses.utterances.noAndNeverMind,
+					callback: function callback(response, convo) {
+						if (dailyTask) {
+							var taskText = dailyTask.dataValues ? '`' + dailyTask.dataValues.Task.text + '`' : 'your priority';
+							convo.say('Sure thing! Let\'s stay working on ' + taskText);
+							confirmTimeForTask(convo);
+						} else {
+							convo.say('Okay! Let me know when you want to `start a session`');
+						}
+						convo.next();
+					}
+				}, {
+					default: true,
+					callback: function callback(response, convo) {
+						// user inputed task #'s, not new task button
+						confirmTasks(response, convo, taskArray);
+						convo.next();
+					}
+				}]);
+			})();
+		}
 	}
 }
 

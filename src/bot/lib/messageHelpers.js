@@ -1011,8 +1011,10 @@ export function getMinutesSuggestionAttachments(minutesRemaining) {
 			name: buttonValues.startNow.name,
 			text: `${minutesSuggestion} minutes`,
 			value: `${minutesSuggestion} minutes`,
-			type: "button",
-			style: "primary"
+			type: "button"
+		}
+		if (minutesSuggestion == minutesRemaining) {
+			action["style"] = "primary";
 		}
 		attachments[0].actions.push(action);
 	});

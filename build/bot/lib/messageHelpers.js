@@ -1027,9 +1027,11 @@ function getMinutesSuggestionAttachments(minutesRemaining) {
 			name: _constants.buttonValues.startNow.name,
 			text: minutesSuggestion + ' minutes',
 			value: minutesSuggestion + ' minutes',
-			type: "button",
-			style: "primary"
+			type: "button"
 		};
+		if (minutesSuggestion == minutesRemaining) {
+			action["style"] = "primary";
+		}
 		attachments[0].actions.push(action);
 	});
 

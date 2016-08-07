@@ -195,67 +195,78 @@ function askWhichTaskToWorkOn(convo, question = '') {
 	// convo.say("I recommend working for at least 30 minutes at a time, so if you want to work on shorter tasks, try to pick several to get over that 30 minute threshold :smiley:");
 
 	const { SlackUserId, dailyTasks, dailyTask }  = convo.sessionStart;
+
 	if (!dailyTasks) {
 		getUserDailyTasks(convo);
 	} else {
-		const { task: { bot } } = convo;
-		let noDailyTask = false;
-		let taskArray = dailyTasks.filter((currentDailyTask) => {
-			if (!dailyTask) { // uncommon situation where reminder has no dailyTask
-				noDailyTask = true;
-				return true;
-			} else if (currentDailyTask.dataValues.id != dailyTask.dataValues.id){
-				return true;
-			}
-		});
-		let options = { dontUsePriority: true }
-		let taskListMessage = convertArrayToTaskListMessage(taskArray, options);
-		if (question == '') {
-			question = `Which priority would you like to work on instead?`
-		}
-		if (noDailyTask) question = `Which priority would you like to work on?`
-		let message = `${question}\n${taskListMessage}`;
-		convo.ask({
-			text: message,
-			attachments:[
-				{
-					attachment_type: 'default',
-					callback_id: "START_SESSION",
-					fallback: "I was unable to process your decision",
-					color: colorsHash.grey.hex,
-					actions: [
-						{
-								name: buttonValues.neverMind.name,
-								text: "Never mind!",
-								value: buttonValues.neverMind.value,
-								type: "button",
-						}
-					]
+
+		// THIS IS A TEST TO SEE IF THERE ARE EVEN WORKABLE DAILY TASKS
+		let oneDailyTaskToWorkOn = getDailyTaskForSession(dailyTasks);
+		if (!oneDailyTaskToWorkOn) {
+			// THIS SHOULD NEVER HAPPEN
+			convo.say(`You don't have any more priorities to work on! You've won the day!`);
+			convo.sessionStart.endDay = true;
+			convo.next();
+		} else {
+			const { task: { bot } } = convo;
+			let noDailyTask = false;
+			let taskArray = dailyTasks.filter((currentDailyTask) => {
+				if (!dailyTask) { // uncommon situation where reminder has no dailyTask
+					noDailyTask = true;
+					return true;
+				} else if (currentDailyTask.dataValues.id != dailyTask.dataValues.id){
+					return true;
 				}
-			]
-		},[
-			{
-				pattern: utterances.noAndNeverMind,
-				callback: (response, convo) => {
-					if (dailyTask) {
-						let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your priority';
-						convo.say(`Sure thing! Let's stay working on ${taskText}`);
-						confirmTimeForTask(convo)
-					} else {
-						convo.say(`Okay! Let me know when you want to \`start a session\``);
+			});
+			let options = { dontUsePriority: true }
+			let taskListMessage = convertArrayToTaskListMessage(taskArray, options);
+			if (question == '') {
+				question = `Which priority would you like to work on instead?`
+			}
+			if (noDailyTask) question = `Which priority would you like to work on?`
+			let message = `${question}\n${taskListMessage}`;
+			convo.ask({
+				text: message,
+				attachments:[
+					{
+						attachment_type: 'default',
+						callback_id: "START_SESSION",
+						fallback: "I was unable to process your decision",
+						color: colorsHash.grey.hex,
+						actions: [
+							{
+									name: buttonValues.neverMind.name,
+									text: "Never mind!",
+									value: buttonValues.neverMind.value,
+									type: "button",
+							}
+						]
 					}
-					convo.next();
+				]
+			},[
+				{
+					pattern: utterances.noAndNeverMind,
+					callback: (response, convo) => {
+						if (dailyTask) {
+							let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your priority';
+							convo.say(`Sure thing! Let's stay working on ${taskText}`);
+							confirmTimeForTask(convo)
+						} else {
+							convo.say(`Okay! Let me know when you want to \`start a session\``);
+						}
+						convo.next();
+					}
+				},
+				{
+					default: true,
+					callback: (response, convo) => {
+						// user inputed task #'s, not new task button
+						confirmTasks(response, convo, taskArray);
+						convo.next();
+					}
 				}
-			},
-			{
-				default: true,
-				callback: (response, convo) => {
-					// user inputed task #'s, not new task button
-					confirmTasks(response, convo, taskArray);
-					convo.next();
-				}
-			}
-		]);
+			]);
+		}
 	}
 }
 
