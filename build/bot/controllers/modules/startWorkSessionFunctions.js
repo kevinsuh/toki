@@ -122,11 +122,11 @@ function finalizeTimeAndTasksToStart(convo) {
 			if (minutesSpent == 0) {
 				// new flow!
 				convo.say('Let’s crank on ' + taskText + ' with a focused session :wrench:');
-				question = 'How long would you like to focus on ' + taskText + '? You have *' + minutesRemaining + ' minutes* set aside for this today';
+				question = 'How long would you like to focus on ' + taskText + ' for? You have *' + minutesRemaining + ' minutes* set aside for this today';
 			} else {
 				// new flow!
 				convo.say('Let’s keep cranking on ' + taskText + ' with a focused session :wrench:');
-				question = 'How long would you like to focus on ' + taskText + '? You still have *' + minutesRemaining + ' minutes* set aside for this today';
+				question = 'How long would you like to focus on ' + taskText + ' for? You still have *' + minutesRemaining + ' minutes* set aside for this today';
 			}
 
 			var attachments = (0, _messageHelpers.getMinutesSuggestionAttachments)(minutesRemaining);
@@ -495,7 +495,7 @@ function startSessionWithConvoObject(sessionStart) {
 			convo.say("Let's do it :boom:!");
 			convo.say('Good luck with `' + taskString + '`! See you in ' + minutesString + ' at *' + timeString + '*');
 			convo.say({
-				text: 'Your focused work session starts now :weight_lifter:',
+				text: ':weight_lifter: Your focused work session starts now :weight_lifter:',
 				attachments: _constants.startSessionOptionsAttachments
 			});
 		});

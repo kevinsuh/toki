@@ -307,7 +307,7 @@ function getTimeToTask(convo) {
 	// we should have helper text here as well for the first time
 	// push back on 90 / 60 / 30 here... should have higher minute intervals that we then automatically put in breaks for (we can communicate here)
 	convo.ask({
-		text: 'How long do you want to work on `' + taskString + '` for? (you can also say `for 90 minutes` or `until ' + timeExample + '`)',
+		text: 'How much time do you want to allocate towards `' + taskString + '` today? (you can also say `for 90 minutes` or `until ' + timeExample + '`)',
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "MINUTES_SUGGESTION",
@@ -414,7 +414,7 @@ function startOnTask(convo) {
 		pattern: _botResponses.utterances.containsNow,
 		callback: function callback(response, convo) {
 
-			convo.say("Okay! Let's do this now :punch:");
+			convo.say('You\'re crushing this ' + daySplit + ' :punch:');
 			convo.newPlan.startNow = true;
 			if (onboardVersion) {
 				whoDoYouWantToInclude(convo);
