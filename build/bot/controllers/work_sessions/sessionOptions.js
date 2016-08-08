@@ -368,7 +368,7 @@ function notInSessionWouldYouLikeToStartOne(config) {
 
 	if (bot && SlackUserId && controller) {
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-			convo.ask('You\'re not in a session right now! Would you like to start one :muscle:?', [{
+			convo.ask('You\'re not in a session right now! Would you like to start one?', [{
 				pattern: _botResponses.utterances.yes,
 				callback: function callback(response, convo) {
 					convo.startSession = true;

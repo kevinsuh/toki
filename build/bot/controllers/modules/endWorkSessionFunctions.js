@@ -48,6 +48,7 @@ function doneSessionAskOptions(convo) {
 	var buttonsValuesArray = [];
 	var minutesDifference = minutes - minutesSpent;
 	var timeSpentString = (0, _messageHelpers.convertMinutesToHoursString)(minutesSpent);
+	var minutesRemainingString = (0, _messageHelpers.convertMinutesToHoursString)(minutesDifference);
 
 	var finishedTimeToTask = minutesSpent >= minutes ? true : false;
 
@@ -86,7 +87,7 @@ function doneSessionAskOptions(convo) {
 	if (finishedTimeToTask) {
 		text = 'Great work! The time you allotted for `' + taskText + '` is up -- you\'ve worked for ' + timeSpentString + ' on this. Would you like to mark it as complete for the day?';
 	} else {
-		text = 'You\'ve worked for ' + workSessionTimeString + ' on `' + taskText + '` and have ' + minutesDifference + ' minutes remaining';
+		text = 'You\'ve worked for ' + workSessionTimeString + ' on `' + taskText + '` and have ' + minutesRemainingString + ' remaining';
 	}
 
 	// if minutes is NULL, then we will have custom question

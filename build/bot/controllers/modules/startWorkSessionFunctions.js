@@ -65,6 +65,8 @@ function finalizeTimeAndTasksToStart(convo) {
 	var calculatedTime = calculatedTimeObject.format("h:mma");
 
 	var question = 'Ready to work on ' + taskText + ' for ' + timeString + ' until *' + calculatedTime + '*?';
+
+	// already in session, can only be in one
 	if (currentSession) {
 
 		if (currentSession.isPaused) {
@@ -111,6 +113,9 @@ function finalizeTimeAndTasksToStart(convo) {
 			}
 		}]);
 	} else {
+
+		// normal flow for starting a session
+
 		var _dailyTask$dataValues = dailyTask.dataValues;
 		var _minutes = _dailyTask$dataValues.minutes;
 		var minutesSpent = _dailyTask$dataValues.minutesSpent;
@@ -139,12 +144,6 @@ function finalizeTimeAndTasksToStart(convo) {
 				callback: function callback(response, convo) {
 					convo.say("Okay, let's change tasks!");
 					askWhichTaskToWorkOn(convo);
-					convo.next();
-				}
-			}, {
-				pattern: _botResponses.utterances.containsChangeTime,
-				callback: function callback(response, convo) {
-					askForCustomTotalMinutes(convo);
 					convo.next();
 				}
 			}, {
@@ -187,7 +186,6 @@ function finalizeTimeAndTasksToStart(convo) {
 			}]);
 		} else {
 
-			convo.say('Wait!');
 			confirmTimeForTask(convo);
 			convo.next();
 		}
@@ -361,6 +359,9 @@ function confirmTimeForTask(convo) {
 
 	// will only be a single task now
 
+	var taskText = dailyTask.dataValues ? '`' + dailyTask.dataValues.Task.text + '`' : 'your priority';
+
+	// will only be a single task now
 	var minutesAllocated = dailyTask.dataValues.minutes;
 	var minutesSpent = dailyTask.dataValues.minutesSpent;
 
@@ -376,20 +377,14 @@ function confirmTimeForTask(convo) {
 
 		finalizeTimeAndTasksToStart(convo);
 	} else {
-		convo.say('You have no time remaining for this priority!');
-		// ask for how many minutes to work.
-		askForCustomTotalMinutes(convo);
+		convo.say('You have no time remaining for ' + taskText + ' today!');
+		askToAddMinutesToTask(convo);
 	}
 
 	convo.next();
 }
 
-/**
- *      WANTS CUSTOM TIME TO TASKS
- */
-
-// ask for custom amount of time to work on
-function askForCustomTotalMinutes(convo) {
+function askToAddMinutesToTask(convo) {
 	var task = convo.task;
 	var bot = task.bot;
 	var source_message = task.source_message;
@@ -402,20 +397,44 @@ function askForCustomTotalMinutes(convo) {
 
 	var taskText = dailyTask.dataValues ? '`' + dailyTask.dataValues.Task.text + '`' : 'your priority';
 
-	convo.ask('How long do you want to work on ' + taskText + ' for?', function (response, convo) {
-		var entities = response.intentObject.entities;
-		// for time to tasks, these wit intents are the only ones that makes sense
-
-		if (entities.duration || entities.datetime) {
-			confirmCustomTotalMinutes(response, convo);
-		} else {
-			// invalid
-			convo.say("I'm sorry, I didn't catch that :dog:");
-			convo.repeat();
+	convo.ask({
+		text: 'Do you want to complete this for today, or add time to it? (you can say something like `2 more hours`)',
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "START_SESSION",
+			fallback: "Add more minutes to this priority?",
+			color: _constants.colorsHash.grey.hex,
+			actions: [{
+				name: _constants.buttonValues.doneSession.completedPriorityTonedDown.name,
+				text: "Complete :sports_medal:",
+				value: _constants.buttonValues.doneSession.completedPriorityTonedDown.value,
+				type: "button"
+			}]
+		}]
+	}, [{
+		pattern: _botResponses.utterances.containsCompleteOrCheckOrCross,
+		callback: function callback(response, convo) {
+			convo.say('You are a star :star:');
+			convo.sessionStart.completeDailyTask = true;
+			convo.next();
 		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			var entities = response.intentObject.entities;
+			// for time to tasks, these wit intents are the only ones that makes sense
 
-		convo.next();
-	});
+			if (entities.duration || entities.datetime) {
+				confirmCustomTotalMinutes(response, convo);
+			} else {
+				// invalid
+				convo.say("I'm sorry, I didn't catch that :dog:");
+				convo.repeat();
+			}
+
+			convo.next();
+		}
+	}]);
 };
 
 function confirmCustomTotalMinutes(response, convo) {

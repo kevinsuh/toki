@@ -190,31 +190,46 @@ export default function(controller) {
 
 				convo.on('end', (convo) => {
 
-					const { sessionStart } = convo;
+					const { sessionStart, sessionStart: { dailyTask, completeDailyTask, confirmStart, confirmOverRideSession, endDay } } = convo;
 
 					console.log("\n\n\n end of start session ");
 					console.log(sessionStart);
 					console.log("\n\n\n");
 
-					if (sessionStart.confirmStart) {
+					if (completeDailyTask) {
+						// complete current priority and restart `begin_session`
+						
+						closeOldRemindersAndSessions(user);
+						const TaskId = dailyTask.dataValues.Task.id;
+						models.Task.update({
+							done: true
+						}, {
+							where: [`"Tasks"."id" = ?`, TaskId]
+						})
+						.then(() => {
+							controller.trigger(`begin_session`, [bot, { SlackUserId }]);
+						});
+
+					} else if (confirmStart) {
+						// start the session!
 						closeOldRemindersAndSessions(user);
 						setTimeout(() => {
 							startSessionWithConvoObject(convo.sessionStart);
 						}, 500);
-					} else if (sessionStart.confirmOverRideSession) {
+					} else if (confirmOverRideSession) {
+						// cancel current session and restart `begin_session`
 						closeOldRemindersAndSessions(user);
 						setTimeout(() => {
 							controller.trigger(`begin_session`, [bot, { SlackUserId }]);
 						}, 700)
-							
 					} else if (sessionStart.endDay) {
-						// this should rarely ever, ever happen.
+						// this should rarely ever, ever happen. (i.e. NEVER)
 						closeOldRemindersAndSessions(user);
 						setTimeout(() => {
 							controller.trigger(`end_plan_flow`, [bot, { SlackUserId }]);
 						}, 700)
 
-					}else {
+					} else {
 						setTimeout(() => {
 							resumeQueuedReachouts(bot, { SlackUserId });
 						}, 750);

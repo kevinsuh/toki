@@ -176,24 +176,44 @@ exports.default = function (controller) {
 
 				convo.on('end', function (convo) {
 					var sessionStart = convo.sessionStart;
+					var _convo$sessionStart = convo.sessionStart;
+					var dailyTask = _convo$sessionStart.dailyTask;
+					var completeDailyTask = _convo$sessionStart.completeDailyTask;
+					var confirmStart = _convo$sessionStart.confirmStart;
+					var confirmOverRideSession = _convo$sessionStart.confirmOverRideSession;
+					var endDay = _convo$sessionStart.endDay;
 
 
 					console.log("\n\n\n end of start session ");
 					console.log(sessionStart);
 					console.log("\n\n\n");
 
-					if (sessionStart.confirmStart) {
+					if (completeDailyTask) {
+						// complete current priority and restart `begin_session`
+
+						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+						var TaskId = dailyTask.dataValues.Task.id;
+						_models2.default.Task.update({
+							done: true
+						}, {
+							where: ['"Tasks"."id" = ?', TaskId]
+						}).then(function () {
+							controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+						});
+					} else if (confirmStart) {
+						// start the session!
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 						setTimeout(function () {
 							(0, _startWorkSessionFunctions.startSessionWithConvoObject)(convo.sessionStart);
 						}, 500);
-					} else if (sessionStart.confirmOverRideSession) {
+					} else if (confirmOverRideSession) {
+						// cancel current session and restart `begin_session`
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 						setTimeout(function () {
 							controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
 						}, 700);
 					} else if (sessionStart.endDay) {
-						// this should rarely ever, ever happen.
+						// this should rarely ever, ever happen. (i.e. NEVER)
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 						setTimeout(function () {
 							controller.trigger('end_plan_flow', [bot, { SlackUserId: SlackUserId }]);

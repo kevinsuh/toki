@@ -39,6 +39,8 @@ export function finalizeTimeAndTasksToStart(convo) {
 	let calculatedTime = calculatedTimeObject.format("h:mma");
 
 	let question = `Ready to work on ${taskText} for ${timeString} until *${calculatedTime}*?`;
+
+	// already in session, can only be in one
 	if (currentSession) {
 
 		if (currentSession.isPaused) {
@@ -92,10 +94,12 @@ export function finalizeTimeAndTasksToStart(convo) {
 
 	} else {
 
+		// normal flow for starting a session
+
 		const { minutes, minutesSpent } = dailyTask.dataValues;
 		let minutesRemaining            = minutes - minutesSpent;
 
-		if (minutesRemaining > 0 ) {
+		if (minutesRemaining > 0) {
 
 			if (minutesSpent == 0) {
 				// new flow!
@@ -119,13 +123,6 @@ export function finalizeTimeAndTasksToStart(convo) {
 					callback: function(response, convo) {
 						convo.say("Okay, let's change tasks!");
 						askWhichTaskToWorkOn(convo);
-						convo.next();
-					}
-				},
-				{
-					pattern: utterances.containsChangeTime,
-					callback: function(response, convo) {
-						askForCustomTotalMinutes(convo);
 						convo.next();
 					}
 				},
@@ -175,7 +172,6 @@ export function finalizeTimeAndTasksToStart(convo) {
 
 		} else {
 
-			convo.say(`Wait!`);
 			confirmTimeForTask(convo);
 			convo.next();
 
@@ -346,6 +342,9 @@ function confirmTimeForTask(convo) {
 	const { SlackUserId, tz, dailyTask }  = convo.sessionStart;
 
 	// will only be a single task now
+	let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your priority';
+
+	// will only be a single task now
 	let minutesAllocated = dailyTask.dataValues.minutes;
 	let minutesSpent     = dailyTask.dataValues.minutesSpent;
 
@@ -362,21 +361,15 @@ function confirmTimeForTask(convo) {
 		finalizeTimeAndTasksToStart(convo);
 
 	} else {
-		convo.say(`You have no time remaining for this priority!`);
-		// ask for how many minutes to work.
-		askForCustomTotalMinutes(convo);
+		convo.say(`You have no time remaining for ${taskText} today!`);
+		askToAddMinutesToTask(convo);
 	}
 
 	convo.next();
 
 }
 
-/**
- *      WANTS CUSTOM TIME TO TASKS
- */
-
-// ask for custom amount of time to work on
-function askForCustomTotalMinutes(convo) {
+function askToAddMinutesToTask(convo) {
 
 	const { task }                       = convo;
 	const { bot, source_message }        = task;
@@ -385,21 +378,52 @@ function askForCustomTotalMinutes(convo) {
 	// will only be a single task now
 	let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your priority';
 
-	convo.ask(`How long do you want to work on ${taskText} for?`, (response, convo) => {
+	convo.ask({
+		text: `Do you want to complete this for today, or add time to it? (you can say something like \`2 more hours\`)`,
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "START_SESSION",
+				fallback: "Add more minutes to this priority?",
+				color: colorsHash.grey.hex,
+				actions: [
+					{
+							name: buttonValues.doneSession.completedPriorityTonedDown.name,
+							text: "Complete :sports_medal:",
+							value: buttonValues.doneSession.completedPriorityTonedDown.value,
+							type: "button"
+					}
+				]
+			}
+		]
+	}, [
+		{
+			pattern: utterances.containsCompleteOrCheckOrCross,
+			callback: (response, convo) => {
+				convo.say(`You are a star :star:`);
+				convo.sessionStart.completeDailyTask = true;
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
 
-		var { intentObject: { entities } } = response;
-		// for time to tasks, these wit intents are the only ones that makes sense
-		if (entities.duration || entities.datetime) {
-			confirmCustomTotalMinutes(response, convo);
-		} else {
-			// invalid
-			convo.say("I'm sorry, I didn't catch that :dog:");
-			convo.repeat();
+				let { intentObject: { entities } } = response;
+				// for time to tasks, these wit intents are the only ones that makes sense
+				if (entities.duration || entities.datetime) {
+					confirmCustomTotalMinutes(response, convo);
+				} else {
+					// invalid
+					convo.say("I'm sorry, I didn't catch that :dog:");
+					convo.repeat();
+				}
+
+				convo.next();
+
+			}
 		}
-
-		convo.next();
-
-	});
+	]);
 
 };
 
