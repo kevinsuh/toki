@@ -18,6 +18,9 @@ exports.default = function (controller) {
 	// WIT FOR `new_plan_flow`
 	controller.hears(['start_day'], 'direct_message', _index.wit.hears, function (bot, message) {
 
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
 		var SlackUserId = message.user;
 
 		bot.send({
@@ -37,6 +40,9 @@ exports.default = function (controller) {
 		var channel = message.channel;
 
 		var SlackUserId = message.user;
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
 
 		var config = { SlackUserId: SlackUserId, message: message };
 
@@ -249,7 +255,7 @@ exports.default = function (controller) {
 		if (botCallback) {
 			// if botCallback, need to get the correct bot
 			var botToken = bot.config.token;
-			bot = bots[botToken];
+			bot = _index.bots[botToken];
 		}
 
 		var taskNumbers = (0, _messageHelpers.convertStringToNumbersArray)(text);
@@ -317,7 +323,7 @@ exports.default = function (controller) {
 		if (botCallback) {
 			// if botCallback, need to get the correct bot
 			var botToken = bot.config.token;
-			bot = bots[botToken];
+			bot = _index.bots[botToken];
 		}
 
 		_models2.default.User.find({

@@ -1,4 +1,4 @@
-import { wit } from '../index';
+import { bots, wit } from '../index';
 import moment from 'moment-timezone';
 
 import models from '../../../app/models';
@@ -23,6 +23,9 @@ export default function(controller) {
 	// WIT FOR `new_plan_flow`
 	controller.hears(['start_day'], 'direct_message', wit.hears, (bot, message) => {
 
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
 		const SlackUserId = message.user;
 
 		bot.send({
@@ -42,6 +45,9 @@ export default function(controller) {
 
 		const { text, channel } = message;
 		const SlackUserId       = message.user;
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
 		let config = { SlackUserId, message };
 
