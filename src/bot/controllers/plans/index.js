@@ -20,6 +20,7 @@ import { resumeQueuedReachouts } from '../index';
 // base controller for new plan
 export default function(controller) {
 
+	// WIT FOR `new_plan_flow`
 	controller.hears(['start_day'], 'direct_message', wit.hears, (bot, message) => {
 
 		const SlackUserId = message.user;
@@ -34,6 +35,9 @@ export default function(controller) {
 
 	});
 
+	/**
+	 * 	EDIT PLAN FLOW
+	 */
 	controller.hears(['daily_tasks', 'add_daily_task', 'completed_task'], 'direct_message', wit.hears, (bot, message) => {
 
 		const { text, channel } = message;

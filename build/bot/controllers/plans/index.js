@@ -15,6 +15,7 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
 exports.default = function (controller) {
 
+	// WIT FOR `new_plan_flow`
 	controller.hears(['start_day'], 'direct_message', _index.wit.hears, function (bot, message) {
 
 		var SlackUserId = message.user;
@@ -28,6 +29,9 @@ exports.default = function (controller) {
 		}, 1000);
 	});
 
+	/**
+  * 	EDIT PLAN FLOW
+  */
 	controller.hears(['daily_tasks', 'add_daily_task', 'completed_task'], 'direct_message', _index.wit.hears, function (bot, message) {
 		var text = message.text;
 		var channel = message.channel;

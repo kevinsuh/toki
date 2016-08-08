@@ -227,53 +227,49 @@ function sayEndOfPlanMessage(convo) {
 
 function sayTasksForToday(convo) {
 	var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+
+	// different options for 1-2 priorities vs 3 priorities
+
 	var _convo$planEdit4 = convo.planEdit;
 	var dailyTasks = _convo$planEdit4.dailyTasks;
 	var newTasks = _convo$planEdit4.newTasks;
 
 	var remainingTasks = getRemainingTasks(dailyTasks, newTasks);
 
-	if (dailyTasks.length > 0 && (!options.onlyRemainingTasks || options.onlyRemainingTasks && remainingTasks.length > 0)) {
-		options.segmentCompleted = true;
-		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
-		if (options.customTaskListMessage) {
-			taskListMessage = options.customTaskListMessage;
-		}
+	options.segmentCompleted = true;
 
-		var attachmentOptions = {};
-		if (options.scope) {
-			attachmentOptions.scope = options.scope;
-		}
-		var attachments = [];
+	var buttonsValuesArray = [];
 
-		if (options.startPlan) {
-			taskListMessage = 'Here\'s your plan for today :memo::\n' + taskListMessage;
-			attachments = (0, _miscHelpers.getPlanCommandOptionAttachments)(attachmentOptions);
-		} else if (options.endOfPlan) {
-			if (options.homeBase) {
-				taskListMessage = 'Here\'s today\'s plan :memo::\n' + taskListMessage;
-			} else {
-				taskListMessage = 'Here\'s your plan for today :memo::\n' + taskListMessage;
-			}
+	if (dailyTasks.length > 0 && dailyTasks.length < 3) {
+		// 1-2 priorities
 
-			// this is not working consistently enough to implement right now
-			attachments = (0, _miscHelpers.getEndOfPlanCommandOptionAttachments)(attachmentOptions);
-		} else {
-			var taskMessage = "Here are your priorities for today :memo::";
-			if (options.onlyRemainingTasks) {
-				taskMessage = "Here are your remaining priorities for today :memo::";
-			}
-			if (!options.noTitle) {
-				convo.say(taskMessage);
-			}
-		}
-
-		convo.say({
-			text: taskListMessage,
-			attachments: attachments
-		});
-		sayEndOfPlanMessage(convo);
+		buttonsValuesArray = [_constants.buttonValues.planCommands.addPriority.value, _constants.buttonValues.planCommands.deletePriority.value, _constants.buttonValues.planCommands.completePriority.value, _constants.buttonValues.planCommands.workOnPriority.value, _constants.buttonValues.planCommands.endDay.value];
+	} else {
+		// 3 priorities
+		buttonsValuesArray = [_constants.buttonValues.planCommands.revisePriority.value, _constants.buttonValues.planCommands.deletePriority.value, _constants.buttonValues.planCommands.completePriority.value, _constants.buttonValues.planCommands.workOnPriority.value, _constants.buttonValues.planCommands.endDay.value];
 	}
+
+	var attachmentsConfig = { buttonsValuesArray: buttonsValuesArray };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
+	var attachments = (0, _messageHelpers.getPlanCommandCenterAttachments)(attachmentsConfig);
+
+	if (options.onlyRemainingTasks) {
+		convo.say("Here are your remaining priorities for today :memo::");
+	} else {
+		taskListMessage = 'Here\'s today\'s plan :memo::\n' + taskListMessage;
+	}
+
+	if (options.customTaskListMessage) {
+		taskListMessage = options.customTaskListMessage;
+	}
+
+	convo.say({
+		text: taskListMessage,
+		attachments: attachments
+	});
+
+	sayEndOfPlanMessage(convo);
 }
 
 function wordSwapMessage(baseMessage, word, wordSwapCount) {

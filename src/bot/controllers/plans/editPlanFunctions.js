@@ -7,9 +7,9 @@ import models from '../../../app/models';
 
 import { randomInt, utterances } from '../../lib/botResponses';
 import { colorsHash, buttonValues, FINISH_WORD, RESET, taskListMessageDoneButtonAttachment, taskListMessageAddMoreTasksAndResetTimesButtonAttachment, taskListMessageAddMoreTasksButtonAttachment, pausedSessionOptionsAttachments, startSessionOptionsAttachments, constants } from '../../lib/constants';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, getMostRecentTaskListMessageToUpdate, getMostRecentMessageToUpdate, deleteConvoAskMessage, convertMinutesToHoursString, getTimeToTaskTextAttachmentWithTaskListMessage, deleteMostRecentTaskListMessage, deleteMostRecentPlanMessage } from '../../lib/messageHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertResponseObjectsToTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, commaSeparateOutTaskArray, getMostRecentTaskListMessageToUpdate, getMostRecentMessageToUpdate, deleteConvoAskMessage, convertMinutesToHoursString, getTimeToTaskTextAttachmentWithTaskListMessage, deleteMostRecentTaskListMessage, deleteMostRecentPlanMessage, getPlanCommandCenterAttachments } from '../../lib/messageHelpers';
 
-import { consoleLog, witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray, getPlanCommandOptionAttachments, getEndOfPlanCommandOptionAttachments } from '../../lib/miscHelpers';
+import { consoleLog, witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray } from '../../lib/miscHelpers';
 
 // this one shows the task list message and asks for options
 export function startEditPlanConversation(convo) {
@@ -197,50 +197,57 @@ function sayEndOfPlanMessage(convo) {
 
 function sayTasksForToday(convo, options = {}) {
 
+	// different options for 1-2 priorities vs 3 priorities
+
 	const { planEdit: { dailyTasks, newTasks } } = convo;
 	let remainingTasks = getRemainingTasks(dailyTasks, newTasks);
 
-	if (dailyTasks.length > 0 && (!options.onlyRemainingTasks || (options.onlyRemainingTasks && remainingTasks.length > 0))) {
-		options.segmentCompleted = true;
-		let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
-		if (options.customTaskListMessage) {
-			taskListMessage = options.customTaskListMessage;
-		}
-		
-		let attachmentOptions = {};
-		if (options.scope){
-			attachmentOptions.scope = options.scope;
-		}
-		let attachments = [];
+	options.segmentCompleted = true;
 
-		if (options.startPlan) {
-			taskListMessage = `Here's your plan for today :memo::\n${taskListMessage}`;
-			attachments     = getPlanCommandOptionAttachments(attachmentOptions);
-		} else if (options.endOfPlan) {
-			if (options.homeBase) {
-				taskListMessage = `Here's today's plan :memo::\n${taskListMessage}`;
-			} else {
-				taskListMessage = `Here's your plan for today :memo::\n${taskListMessage}`;
-			}
-			
-			// this is not working consistently enough to implement right now
-			attachments     = getEndOfPlanCommandOptionAttachments(attachmentOptions);
-		} else {
-			let taskMessage = "Here are your priorities for today :memo::"
-			if (options.onlyRemainingTasks) {
-				taskMessage = "Here are your remaining priorities for today :memo::";
-			}
-			if (!options.noTitle) {
-				convo.say(taskMessage);
-			}
-		}
+	let buttonsValuesArray = [];
 
-		convo.say({
-			text: taskListMessage,
-			attachments
-		});
-		sayEndOfPlanMessage(convo);
+	if (dailyTasks.length > 0 && dailyTasks.length < 3) {
+		// 1-2 priorities
+
+		buttonsValuesArray = [
+			buttonValues.planCommands.addPriority.value,
+			buttonValues.planCommands.deletePriority.value,
+			buttonValues.planCommands.completePriority.value,
+			buttonValues.planCommands.workOnPriority.value,
+			buttonValues.planCommands.endDay.value
+		];
+
+	} else {
+		// 3 priorities
+		buttonsValuesArray = [
+			buttonValues.planCommands.revisePriority.value,
+			buttonValues.planCommands.deletePriority.value,
+			buttonValues.planCommands.completePriority.value,
+			buttonValues.planCommands.workOnPriority.value,
+			buttonValues.planCommands.endDay.value
+		];
 	}
+
+	let attachmentsConfig = { buttonsValuesArray };
+	let taskListMessage   = convertArrayToTaskListMessage(dailyTasks, options);
+	let attachments       = getPlanCommandCenterAttachments(attachmentsConfig);
+
+	if (options.onlyRemainingTasks) {
+		convo.say("Here are your remaining priorities for today :memo::");
+	} else {
+		taskListMessage = `Here's today's plan :memo::\n${taskListMessage}`;
+	}
+
+	if (options.customTaskListMessage) {
+		taskListMessage = options.customTaskListMessage;
+	}
+
+	convo.say({
+		text: taskListMessage,
+		attachments
+	});
+
+	sayEndOfPlanMessage(convo);
 
 }
 

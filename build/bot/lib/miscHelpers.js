@@ -19,8 +19,6 @@ exports.consoleLog = consoleLog;
 exports.closeOldRemindersAndSessions = closeOldRemindersAndSessions;
 exports.prioritizeDailyTasks = prioritizeDailyTasks;
 exports.mapTimeToTaskArray = mapTimeToTaskArray;
-exports.getPlanCommandOptionAttachments = getPlanCommandOptionAttachments;
-exports.getEndOfPlanCommandOptionAttachments = getEndOfPlanCommandOptionAttachments;
 exports.getDailyTaskForSession = getDailyTaskForSession;
 
 var _models = require('../../app/models');
@@ -317,105 +315,6 @@ function mapTimeToTaskArray(taskArray, timeToTasksArray) {
 		});
 	});
 	return taskArray;
-}
-
-// get button attachments for your plan list
-function getPlanCommandOptionAttachments() {
-	var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-
-	var optionsAttachment = [{
-		attachment_type: 'default',
-		callback_id: "PLAN_OPTIONS",
-		fallback: "What do you want to do with your plan?",
-		color: _constants.colorsHash.grey.hex,
-		actions: []
-	}];
-
-	var actions = [{
-		name: _constants.buttonValues.planCommands.addTasks.name,
-		text: "Add Priority",
-		value: _constants.buttonValues.planCommands.addTasks.value,
-		type: "button"
-	}, {
-		name: _constants.buttonValues.planCommands.completeTasks.name,
-		text: "Complete Priority",
-		value: _constants.buttonValues.planCommands.completeTasks.value,
-		type: "button"
-	}, {
-		name: _constants.buttonValues.planCommands.deleteTasks.name,
-		text: "Delete Priority",
-		value: _constants.buttonValues.planCommands.deleteTasks.value,
-		type: "button"
-	}, {
-		name: _constants.buttonValues.planCommands.workOnTasks.name,
-		text: "New Session",
-		value: _constants.buttonValues.planCommands.workOnTasks.value,
-		type: "button"
-	}];
-
-	var scope = options.scope;
-
-	actions.forEach(function (action) {
-		var value = action.value;
-
-		if (scope == "add" && value == _constants.buttonValues.planCommands.addTasks.value) return;
-		if (scope == "complete" && value == _constants.buttonValues.planCommands.completeTasks.value) return;
-		if (scope == "delete" && value == _constants.buttonValues.planCommands.deleteTasks.value) return;
-		if (scope == "work" && value == _constants.buttonValues.planCommands.workOnTasks.value) return;
-		optionsAttachment[0].actions.push(action);
-	});
-
-	return optionsAttachment;
-}
-
-function getEndOfPlanCommandOptionAttachments() {
-	var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-
-	var optionsAttachment = [{
-		attachment_type: 'default',
-		callback_id: "END_OF_PLAN_OPTIONS",
-		fallback: "What do you want to do with your plan?",
-		color: _constants.colorsHash.grey.hex,
-		actions: []
-	}];
-
-	var actions = [{
-		name: _constants.buttonValues.endOfPlanCommands.addTasks.name,
-		text: "Add Priority",
-		value: _constants.buttonValues.endOfPlanCommands.addTasks.value,
-		type: "button"
-	}, {
-		name: _constants.buttonValues.endOfPlanCommands.completeTasks.name,
-		text: "Complete Priority",
-		value: _constants.buttonValues.endOfPlanCommands.completeTasks.value,
-		type: "button"
-	}, {
-		name: _constants.buttonValues.endOfPlanCommands.deleteTasks.name,
-		text: "Delete Priority",
-		value: _constants.buttonValues.endOfPlanCommands.deleteTasks.value,
-		type: "button"
-	}, {
-		name: _constants.buttonValues.endOfPlanCommands.workOnTasks.name,
-		text: "Work on Priority",
-		value: _constants.buttonValues.endOfPlanCommands.workOnTasks.value,
-		type: "button"
-	}];
-
-	var scope = options.scope;
-
-	actions.forEach(function (action) {
-		var value = action.value;
-
-		if (scope == "add" && value == _constants.buttonValues.endOfPlanCommands.addTasks.value) return;
-		if (scope == "complete" && value == _constants.buttonValues.endOfPlanCommands.completeTasks.value) return;
-		if (scope == "delete" && value == _constants.buttonValues.endOfPlanCommands.deleteTasks.value) return;
-		if (scope == "work" && value == _constants.buttonValues.endOfPlanCommands.workOnTasks.value) return;
-		optionsAttachment[0].actions.push(action);
-	});
-
-	return optionsAttachment;
 }
 
 function getDailyTaskForSession(dailyTasks) {

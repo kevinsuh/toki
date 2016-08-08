@@ -398,39 +398,29 @@ export const buttonValues ={
 		name: "UNDO_TASK_DELETE"
 	},
 	planCommands: { // value will be NL single line commands
-		deleteTasks: {
-			name: "PLAN_DELETE_TASKS",
-			value: "delete priorities"
+		deletePriority: {
+			name: "PLAN_DELETE_PRIORITY",
+			value: "delete priority"
 		},
-		completeTasks: {
-			name: "PLAN_COMPLETE_TASKS",
-			value: "complete priorities"
+		completePriority: {
+			name: "PLAN_COMPLETE_PRIORITY",
+			value: "complete priority"
 		},
-		addTasks: {
-			name: "PLAN_ADD_TASKS",
-			value: "add priorities"
+		addPriority: {
+			name: "PLAN_ADD_PRIORITY",
+			value: "add priority"
 		},
-		workOnTasks: {
-			name: "PLAN_WORK_ON_TASKS",
-			value: "work on priorities"
-		}
-	},
-	endOfPlanCommands: { // value will be NL single line commands
-		deleteTasks: {
-			name: "END_OF_PLAN_DELETE_TASKS",
-			value: "END_OF_PLAN_DELETE_TASKS"
+		workOnPriority: {
+			name: "PLAN_WORK_ON_PRIORITY",
+			value: "work on priority"
 		},
-		completeTasks: {
-			name: "END_OF_PLAN_COMPLETE_TASKS",
-			value: "END_OF_PLAN_COMPLETE_TASKS"
+		revisePriority: {
+			name: "PLAN_REVISE_PRIORITY",
+			value: "revise priority"
 		},
-		addTasks: {
-			name: "END_OF_PLAN_ADD_TASKS",
-			value: "END_OF_PLAN_ADD_TASKS"
-		},
-		workOnTasks: {
-			name: "END_OF_PLAN_WORK_ON_TASKS",
-			value: "END_OF_PLAN_WORK_ON_TASKS"
+		endDay: {
+			name: "PLAN_END_DAY",
+			value: "end my day"
 		}
 	},
 	redoTasks: {
