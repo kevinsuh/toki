@@ -181,6 +181,7 @@ exports.default = function (controller) {
 					var completeDailyTask = _convo$sessionStart.completeDailyTask;
 					var confirmStart = _convo$sessionStart.confirmStart;
 					var confirmOverRideSession = _convo$sessionStart.confirmOverRideSession;
+					var addMinutesToDailyTask = _convo$sessionStart.addMinutesToDailyTask;
 					var endDay = _convo$sessionStart.endDay;
 
 
@@ -200,12 +201,21 @@ exports.default = function (controller) {
 						}).then(function () {
 							controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
 						});
-					} else if (confirmStart) {
-						// start the session!
-						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
-						setTimeout(function () {
-							(0, _startWorkSessionFunctions.startSessionWithConvoObject)(convo.sessionStart);
-						}, 500);
+					} else if (addMinutesToDailyTask) {
+						// add minutes to current priority and restart `begin_session`
+
+						var _dailyTask$dataValues = dailyTask.dataValues;
+						var id = _dailyTask$dataValues.id;
+						var minutesSpent = _dailyTask$dataValues.minutesSpent;
+
+						var minutes = minutesSpent + addMinutesToDailyTask;
+						_models2.default.DailyTask.update({
+							minutes: minutes
+						}, {
+							where: ['"DailyTasks"."id" = ?', id]
+						}).then(function () {
+							controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+						});
 					} else if (confirmOverRideSession) {
 						// cancel current session and restart `begin_session`
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
@@ -218,6 +228,12 @@ exports.default = function (controller) {
 						setTimeout(function () {
 							controller.trigger('end_plan_flow', [bot, { SlackUserId: SlackUserId }]);
 						}, 700);
+					} else if (confirmStart) {
+						// start the session!
+						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+						setTimeout(function () {
+							(0, _startWorkSessionFunctions.startSessionWithConvoObject)(convo.sessionStart);
+						}, 500);
 					} else {
 						setTimeout(function () {
 							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });

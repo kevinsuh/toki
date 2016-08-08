@@ -385,6 +385,7 @@ function confirmTimeForTask(convo) {
 }
 
 function askToAddMinutesToTask(convo) {
+	var question = arguments.length <= 1 || arguments[1] === undefined ? 'Do you want to complete this for today, or add time to it? (you can say something like `2 more hours`)' : arguments[1];
 	var task = convo.task;
 	var bot = task.bot;
 	var source_message = task.source_message;
@@ -396,9 +397,10 @@ function askToAddMinutesToTask(convo) {
 	// will only be a single task now
 
 	var taskText = dailyTask.dataValues ? '`' + dailyTask.dataValues.Task.text + '`' : 'your priority';
+	var now = (0, _momentTimezone2.default)().tz(tz);
 
 	convo.ask({
-		text: 'Do you want to complete this for today, or add time to it? (you can say something like `2 more hours`)',
+		text: question,
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "START_SESSION",
@@ -424,12 +426,22 @@ function askToAddMinutesToTask(convo) {
 			var entities = response.intentObject.entities;
 			// for time to tasks, these wit intents are the only ones that makes sense
 
-			if (entities.duration || entities.datetime) {
-				confirmCustomTotalMinutes(response, convo);
+			var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+			if (customTimeObject) {
+
+				var minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+
+				// add minutes to task and exit
+				convo.sessionStart.addMinutesToDailyTask = minutes;
+
+				var timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+				convo.say('Woo! I added ' + timeString + ' :raised_hands:');
+				convo.next();
 			} else {
 				// invalid
 				convo.say("I'm sorry, I didn't catch that :dog:");
-				convo.repeat();
+				var _question2 = 'How much more time did you want to add to ' + taskText + ' today?';
+				askToAddMinutesToTask(convo, _question2);
 			}
 
 			convo.next();
