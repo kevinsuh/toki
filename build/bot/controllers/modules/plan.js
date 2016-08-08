@@ -237,6 +237,17 @@ function chooseFirstTask(convo) {
 				if (taskIndexToWorkOn >= 0) {
 					if (taskNumbersToWorkOnArray.length == 1) {
 						convo.newPlan.startTask.index = taskIndexToWorkOn;
+
+						var taskString = prioritizedTasks[convo.newPlan.startTask.index].text;
+
+						if (onboardVersion) {
+							convo.say('Boom :boom:! Let\'s put our first focused work session towards `' + taskString + '`');
+							convo.say('This isn\'t necessarily how long you think each task will take -- instead, think of it as dedicated time towards your most important things for the day. This structure helps you *enter flow* more easily, as well as *protect your time* from yourself and others');
+							convo.say('If you aren\'t done with the task after your first session, you can easily start another one towards it :muscle:');
+						} else {
+							convo.say("Boom! Let's do it :boom:");
+						}
+
 						getTimeToTask(convo);
 					} else {
 						// only one at a time
@@ -293,24 +304,21 @@ function getTimeToTask(convo) {
 
 	var timeExample = (0, _momentTimezone2.default)().tz(tz).add(90, "minutes").format("h:mma");
 
-	if (onboardVersion) {
-		convo.say('Boom :boom:! Let\'s put our first focused work session towards `' + taskString + '`');
-		convo.say('This isn\'t necessarily how long you think each task will take -- instead, think of it as dedicated time towards your most important things for the day. This structure helps you *enter flow* more easily, as well as *protect your time* from yourself and others');
-		convo.say('If you aren\'t done with the task after your first session, you can easily start another one towards it :muscle:');
-	} else {
-		convo.say("Boom! Let's do it :boom:");
-	}
-
 	// we should have helper text here as well for the first time
 	// push back on 90 / 60 / 30 here... should have higher minute intervals that we then automatically put in breaks for (we can communicate here)
 	convo.ask({
-		text: 'How long do you want to work on `' + taskString + '` for? (you can say `for 90 minutes` or `until ' + timeExample + '`)',
+		text: 'How much time do you want to allocate towards `' + taskString + '` today? (you can also say `for 90 minutes` or `until ' + timeExample + '`)',
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "MINUTES_SUGGESTION",
 			fallback: "How long do you want to work on this task for?",
 			color: _constants.colorsHash.grey.hex,
 			actions: [{
+				name: _constants.buttonValues.workOnTaskFor.ninetyMinutes.name,
+				text: "120 minutes",
+				value: "120 minutes",
+				type: "button"
+			}, {
 				name: _constants.buttonValues.workOnTaskFor.ninetyMinutes.name,
 				text: "90 minutes",
 				value: _constants.buttonValues.workOnTaskFor.ninetyMinutes.value,
@@ -383,8 +391,9 @@ function startOnTask(convo) {
 
 
 	var timeExample = (0, _momentTimezone2.default)().tz(tz).add(10, "minutes").format("h:mma");
+	var taskString = prioritizedTasks[startTask.index].text;
 	convo.ask({
-		text: 'When do you want to get started? (you can say `in 10 minutes` or `at ' + timeExample + '`)',
+		text: 'When do you want to get started on `' + taskString + '`? (you can also say `in 10 minutes` or `at ' + timeExample + '`)',
 		attachments: [{
 			attachment_type: 'default',
 			callback_id: "DO_TASK_NOW",
@@ -405,7 +414,8 @@ function startOnTask(convo) {
 		pattern: _botResponses.utterances.containsNow,
 		callback: function callback(response, convo) {
 
-			convo.say("Okay! Let's do this now :punch:");
+			convo.say('You\'re crushing this ' + daySplit + ' :punch:');
+			convo.newPlan.startNow = true;
 			if (onboardVersion) {
 				whoDoYouWantToInclude(convo);
 			}

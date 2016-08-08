@@ -119,7 +119,7 @@ export default function(controller) {
 					convo.on('end', (convo) => {
 
 						const { newPlan } = convo;
-						let { exitEarly, prioritizedTasks, startTask, startTime, includeSlackUserIds } = newPlan;
+						let { exitEarly, prioritizedTasks, startTask, startTime, includeSlackUserIds, startNow } = newPlan;
 
 						closeOldRemindersAndSessions(user);
 
@@ -180,6 +180,9 @@ export default function(controller) {
 															type: "start_work",
 															DailyTaskId
 														})
+													} else if (startNow) {
+														// start now!
+														controller.trigger(`begin_session`, [ bot, { SlackUserId } ]);
 													}
 												}
 											})

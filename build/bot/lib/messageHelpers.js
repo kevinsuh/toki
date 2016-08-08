@@ -28,6 +28,7 @@ exports.deleteMostRecentDoneSessionMessage = deleteMostRecentDoneSessionMessage;
 exports.getTimeToTaskTextAttachmentWithTaskListMessage = getTimeToTaskTextAttachmentWithTaskListMessage;
 exports.convertStringToNumbersArray = convertStringToNumbersArray;
 exports.getDoneSessionMessageAttachments = getDoneSessionMessageAttachments;
+exports.getMinutesSuggestionAttachments = getMinutesSuggestionAttachments;
 
 var _constants = require('./constants');
 
@@ -374,7 +375,7 @@ function createTaskListMessageBody(taskArray, options) {
  * @return {string}         hour + minutes
  */
 function convertMinutesToHoursString(minutes) {
-	minutes = parseInt(minutes);
+	minutes = Math.round(minutes);
 	var hours = 0;
 	while (minutes - 60 >= 0) {
 		hours++;
@@ -391,7 +392,9 @@ function convertMinutesToHoursString(minutes) {
 
 	if (minutes == 0) {
 		content = content.slice(0, -1);
-	} else if (minutes == 1) {
+	}
+
+	if (minutes == 1) {
 		content = '' + content + minutes + ' minute';
 	} else {
 		content = '' + content + minutes + ' minutes';
@@ -972,6 +975,72 @@ function getDoneSessionMessageAttachments() {
 		fallback: "Done with my session!",
 		actions: actions
 	}];
+
+	return attachments;
+}
+
+function getMinutesSuggestionAttachments(minutesRemaining) {
+
+	var minutesSuggestions = [30, 45, 60, 90];
+	var customIndexSuggestion = 0;
+
+	minutesSuggestions.some(function (minutesSuggestion, index) {
+		customIndexSuggestion = index;
+
+		if (minutesRemaining - minutesSuggestion < 0) {
+			return true;
+		} else {
+			var nextIndex = index + 1;
+			if (minutesSuggestions[nextIndex]) {
+
+				if (minutesRemaining - minutesSuggestions[nextIndex] < 0) {
+
+					// round up or down?
+					var currentIndexValue = Math.abs(minutesSuggestion - minutesRemaining);
+					var nextIndexValue = Math.abs(minutesSuggestions[nextIndex] - minutesRemaining);
+					if (nextIndexValue < currentIndexValue) {
+						customIndexSuggestion = nextIndex;
+					}
+					return true;
+				}
+			}
+		}
+	});
+
+	if (minutesRemaining > 110) {
+		// put a cap on this
+		minutesRemaining = 90;
+	}
+
+	minutesSuggestions[customIndexSuggestion] = minutesRemaining;
+
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "START_SESSION",
+		color: _constants.colorsHash.turquoise.hex,
+		fallback: "I was unable to process your decision",
+		actions: []
+	}];
+
+	minutesSuggestions.forEach(function (minutesSuggestion) {
+		var action = {
+			name: _constants.buttonValues.startNow.name,
+			text: minutesSuggestion + ' minutes',
+			value: minutesSuggestion + ' minutes',
+			type: "button"
+		};
+		if (minutesSuggestion == minutesRemaining) {
+			action["style"] = "primary";
+		}
+		attachments[0].actions.push(action);
+	});
+
+	attachments[0].actions.push({
+		name: _constants.buttonValues.changeTask.name,
+		text: "Change Priority",
+		value: _constants.buttonValues.changeTask.value,
+		type: "button"
+	});
 
 	return attachments;
 }

@@ -55,7 +55,9 @@ exports.default = function (controller) {
 					}
 					convo.next();
 					convo.on('end', function (convo) {
-						controller.trigger('plan_command_center', [bot, config]);
+						// new session we'll automatically send to begin_session now
+						controller.trigger('begin_session', [bot, config]);
+						// controller.trigger(`plan_command_center`, [ bot, config ]);
 					});
 				});
 			});
@@ -99,28 +101,135 @@ exports.default = function (controller) {
 					SlackUserId: SlackUserId,
 					UserId: UserId,
 					tz: tz,
-					bot: bot,
-					currentSession: currentSession
+					bot: bot
 				};
 
 				if (dailyTaskToWorkOn) {
 					convo.sessionStart.dailyTask = dailyTaskToWorkOn;
-				} else {
-					convo.say('Let\'s do it :punch:');
 				}
 
-				(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);
-				convo.next();
+				// check for openWorkSession, before starting flow
+				user.getWorkSessions({
+					where: ['"open" = ?', true]
+				}).then(function (workSessions) {
+
+					var currentSession = false;
+
+					if (workSessions.length > 0) {
+						(function () {
+
+							var openWorkSession = workSessions[0];
+							openWorkSession.getStoredWorkSession({
+								where: ['"StoredWorkSession"."live" = ?', true]
+							}).then(function (storedWorkSession) {
+								openWorkSession.getDailyTasks({
+									include: [_models2.default.Task]
+								}).then(function (dailyTasks) {
+
+									// if there is an already open session we will store it
+									// and if it is paused
+
+									var now = (0, _momentTimezone2.default)();
+									var endTime = (0, _momentTimezone2.default)(openWorkSession.endTime);
+									var endTimeString = endTime.format("h:mm a");
+									var minutes = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
+									var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+
+									var dailyTaskTexts = dailyTasks.map(function (dailyTask) {
+										return dailyTask.dataValues.Task.text;
+									});
+
+									var sessionTasks = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts);
+
+									currentSession = {
+										minutes: minutes,
+										minutesString: minutesString,
+										sessionTasks: sessionTasks,
+										endTimeString: endTimeString,
+										storedWorkSession: storedWorkSession
+									};
+
+									if (storedWorkSession) {
+										currentSession.isPaused = true;
+
+										minutes = Math.round(storedWorkSession.dataValues.minutes);
+										minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+
+										currentSession.minutes = minutes;
+										currentSession.minutesString = minutesString;
+									}
+
+									console.log(currentSession);
+
+									convo.sessionStart.currentSession = currentSession;
+									(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);
+									convo.next();
+								});
+							});
+						})();
+					} else {
+						convo.sessionStart.currentSession = currentSession;
+						(0, _startWorkSessionFunctions.finalizeTimeAndTasksToStart)(convo);
+						convo.next();
+					}
+				});
 
 				convo.on('end', function (convo) {
 					var sessionStart = convo.sessionStart;
+					var _convo$sessionStart = convo.sessionStart;
+					var dailyTask = _convo$sessionStart.dailyTask;
+					var completeDailyTask = _convo$sessionStart.completeDailyTask;
+					var confirmStart = _convo$sessionStart.confirmStart;
+					var confirmOverRideSession = _convo$sessionStart.confirmOverRideSession;
+					var addMinutesToDailyTask = _convo$sessionStart.addMinutesToDailyTask;
+					var endDay = _convo$sessionStart.endDay;
 
 
 					console.log("\n\n\n end of start session ");
 					console.log(sessionStart);
 					console.log("\n\n\n");
 
-					if (sessionStart.confirmStart) {
+					if (completeDailyTask) {
+						// complete current priority and restart `begin_session`
+
+						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+						var TaskId = dailyTask.dataValues.Task.id;
+						_models2.default.Task.update({
+							done: true
+						}, {
+							where: ['"Tasks"."id" = ?', TaskId]
+						}).then(function () {
+							controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+						});
+					} else if (addMinutesToDailyTask) {
+						// add minutes to current priority and restart `begin_session`
+
+						var _dailyTask$dataValues = dailyTask.dataValues;
+						var id = _dailyTask$dataValues.id;
+						var minutesSpent = _dailyTask$dataValues.minutesSpent;
+
+						var minutes = minutesSpent + addMinutesToDailyTask;
+						_models2.default.DailyTask.update({
+							minutes: minutes
+						}, {
+							where: ['"DailyTasks"."id" = ?', id]
+						}).then(function () {
+							controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+						});
+					} else if (confirmOverRideSession) {
+						// cancel current session and restart `begin_session`
+						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+						setTimeout(function () {
+							controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+						}, 700);
+					} else if (sessionStart.endDay) {
+						// this should rarely ever, ever happen. (i.e. NEVER)
+						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+						setTimeout(function () {
+							controller.trigger('end_plan_flow', [bot, { SlackUserId: SlackUserId }]);
+						}, 700);
+					} else if (confirmStart) {
+						// start the session!
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 						setTimeout(function () {
 							(0, _startWorkSessionFunctions.startSessionWithConvoObject)(convo.sessionStart);

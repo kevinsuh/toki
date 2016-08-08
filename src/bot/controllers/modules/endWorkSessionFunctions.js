@@ -19,9 +19,10 @@ export function doneSessionAskOptions(convo) {
 	let taskText = dailyTask.Task.text;
 
 	let text;
-	let buttonsValuesArray = [];
-	let minutesDifference  = minutes - minutesSpent;
-	let timeSpentString    = convertMinutesToHoursString(minutesSpent);
+	let buttonsValuesArray     = [];
+	let minutesDifference      = minutes - minutesSpent;
+	let timeSpentString        = convertMinutesToHoursString(minutesSpent);
+	let minutesRemainingString = convertMinutesToHoursString(minutesDifference);
 
 	let finishedTimeToTask = minutesSpent >= minutes ? true: false;
 
@@ -86,7 +87,7 @@ export function doneSessionAskOptions(convo) {
 	if (finishedTimeToTask) {
 		text = `Great work! The time you allotted for \`${taskText}\` is up -- you've worked for ${timeSpentString} on this. Would you like to mark it as complete for the day?`;
 	} else {
-		text = `You've worked for ${workSessionTimeString} on \`${taskText}\` and have ${minutesDifference} minutes remaining`;
+		text = `You've worked for ${workSessionTimeString} on \`${taskText}\` and have ${minutesRemainingString} remaining`;
 	}
 
 	// if minutes is NULL, then we will have custom question
@@ -170,6 +171,7 @@ function convoAskDoneSessionOptions(convo, text, attachments) {
 		{ // newSession
 			pattern: utterances.containsNew,
 			callback: (response, convo) => {
+				convo.say(`Alright, you're crushing it.`);
 				convo.sessionDone.postSessionDecision = intentConfig.START_SESSION;
 				convo.next();
 			}

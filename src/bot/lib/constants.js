@@ -167,10 +167,6 @@ export const buttonValues ={
 				value: "START_SESSION_PAUSE_END_EARLY"
 			}
 		},
-		addCheckIn: {
-			name: "START_SESSION_ADD_CHECK_IN",
-			value: "START_SESSION_ADD_CHECK_IN"
-		},
 		endEarly: {
 			name: "START_SESSION_END_EARLY",
 			value: "START_SESSION_END_EARLY"
@@ -549,7 +545,15 @@ export const buttonValues ={
 	keepPriority: {
 		name: "KEEP_PRIORITY",
 		value: "i'll keep my priorities"
-	}
+	},
+	doneEarly: {
+		name: "SESSION_DONE_EARLY",
+		value: "im done!"
+	},
+	addCheckIn: {
+		name: "SESSION_ADD_CHECK_IN",
+		value: "let's add a check in!"
+	},
 }
 
 export const timeZones = {
@@ -795,15 +799,15 @@ export const startSessionOptionsAttachments = [
 					type: "button"
 			},
 			{
-					name: buttonValues.startSession.addCheckIn.name,
+					name: buttonValues.addCheckIn.name,
 					text: "Add check-in",
-					value: buttonValues.startSession.addCheckIn.value,
+					value: buttonValues.addCheckIn.value,
 					type: "button"
 			},
 			{
-					name: buttonValues.startSession.endEarly.name,
+					name: buttonValues.doneEarly.name,
 					text: "End Session Early",
-					value: buttonValues.startSession.endEarly.value,
+					value: buttonValues.doneEarly.value,
 					type: "button"
 			}
 		]
@@ -824,9 +828,9 @@ export const pausedSessionOptionsAttachments = [
 					style: "primary"
 			},
 			{
-					name: buttonValues.startSession.pause.endEarly.name,
+					name: buttonValues.doneEarly.name,
 					text: "End Session",
-					value: buttonValues.startSession.pause.endEarly.value,
+					value: buttonValues.doneEarly.value,
 					type: "button"
 			}
 		]

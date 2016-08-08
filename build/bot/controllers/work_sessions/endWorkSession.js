@@ -9,6 +9,9 @@ exports.default = function (controller) {
 	// User explicitly wants to finish session early (wit intent)
 	controller.hears(['done_session'], 'direct_message', _index.wit.hears, function (bot, message) {
 
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
 		/**
    * 			check if user has open session (should only be one)
    * 					if yes, trigger finish and end_session flow
@@ -150,11 +153,7 @@ exports.default = function (controller) {
 													};
 
 													if (storedWorkSession) {
-														workSessionMinutes = storedWorkSession.dataValues.minutes;
-														workSessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(workSessionMinutes);
-														// currently paused
-														convo.doneSessionEarly.currentSession.isPaused = true;
-														convo.doneSessionEarly.currentSession.workSessionTimeString = workSessionTimeString;
+														convo.sessionDone.currentSession.isPaused = true;
 													}
 
 													(0, _endWorkSessionFunctions.doneSessionAskOptions)(convo);

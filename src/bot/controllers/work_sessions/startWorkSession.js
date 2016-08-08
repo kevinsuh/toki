@@ -65,7 +65,9 @@ export default function(controller) {
 					}
 					convo.next();
 					convo.on('end', (convo) => {
-						controller.trigger(`plan_command_center`, [ bot, config ]);
+						// new session we'll automatically send to begin_session now
+						controller.trigger(`begin_session`, [ bot, config ]);
+						// controller.trigger(`plan_command_center`, [ bot, config ]);
 					})
 				});
 
@@ -108,28 +110,135 @@ export default function(controller) {
 					SlackUserId,
 					UserId,
 					tz,
-					bot,
-					currentSession
+					bot
 				}
 
 				if (dailyTaskToWorkOn) {
 					convo.sessionStart.dailyTask = dailyTaskToWorkOn;
-				} else {
-					convo.say(`Let's do it :punch:`);
 				}
 
-				finalizeTimeAndTasksToStart(convo);
-				convo.next();
+				// check for openWorkSession, before starting flow
+				user.getWorkSessions({
+					where: [`"open" = ?`, true]
+				})
+				.then((workSessions) => {
+
+					let currentSession = false;
+
+					if (workSessions.length > 0) {
+
+						let openWorkSession = workSessions[0];
+						openWorkSession.getStoredWorkSession({
+							where: [ `"StoredWorkSession"."live" = ?`, true ]
+						})
+						.then((storedWorkSession) => {
+							openWorkSession.getDailyTasks({
+								include: [ models.Task ]
+							})
+							.then((dailyTasks) => {
+
+								// if there is an already open session we will store it
+								// and if it is paused
+
+								let now           = moment();
+								let endTime       = moment(openWorkSession.endTime);
+								let endTimeString = endTime.format("h:mm a");
+								let minutes       = Math.round(moment.duration(endTime.diff(now)).asMinutes());
+								var minutesString = convertMinutesToHoursString(minutes);
+
+								let dailyTaskTexts = dailyTasks.map((dailyTask) => {
+									return dailyTask.dataValues.Task.text;
+								});
+
+								let sessionTasks = commaSeparateOutTaskArray(dailyTaskTexts);
+
+								currentSession = {
+									minutes,
+									minutesString,
+									sessionTasks,
+									endTimeString,
+									storedWorkSession
+								}
+
+								if (storedWorkSession) {
+									currentSession.isPaused = true;
+
+									minutes       = Math.round(storedWorkSession.dataValues.minutes);
+									minutesString = convertMinutesToHoursString(minutes);
+
+									currentSession.minutes       = minutes;
+									currentSession.minutesString = minutesString;
+
+								}
+
+								console.log(currentSession);
+
+								convo.sessionStart.currentSession = currentSession;
+								finalizeTimeAndTasksToStart(convo);
+								convo.next();
+
+							});
+						});
+
+					} else {
+						convo.sessionStart.currentSession = currentSession;
+						finalizeTimeAndTasksToStart(convo);
+						convo.next();
+					}
+
+				});
 
 				convo.on('end', (convo) => {
 
-					const { sessionStart } = convo;
+					const { sessionStart, sessionStart: { dailyTask, completeDailyTask, confirmStart, confirmOverRideSession, addMinutesToDailyTask, endDay } } = convo;
 
 					console.log("\n\n\n end of start session ");
 					console.log(sessionStart);
 					console.log("\n\n\n");
 
-					if (sessionStart.confirmStart) {
+					if (completeDailyTask) {
+						// complete current priority and restart `begin_session`
+						
+						closeOldRemindersAndSessions(user);
+						const TaskId = dailyTask.dataValues.Task.id;
+						models.Task.update({
+							done: true
+						}, {
+							where: [`"Tasks"."id" = ?`, TaskId]
+						})
+						.then(() => {
+							controller.trigger(`begin_session`, [bot, { SlackUserId }]);
+						});
+
+					} else if (addMinutesToDailyTask) {
+						// add minutes to current priority and restart `begin_session`
+						
+						const { id, minutesSpent} = dailyTask.dataValues;
+						const minutes = minutesSpent + addMinutesToDailyTask;
+						models.DailyTask.update({
+							minutes
+						}, {
+							where: [`"DailyTasks"."id" = ?`, id]
+						})
+						.then(() => {
+							controller.trigger(`begin_session`, [bot, { SlackUserId }]);
+						})
+
+					} else if (confirmOverRideSession) {
+						// cancel current session and restart `begin_session`
+						closeOldRemindersAndSessions(user);
+						setTimeout(() => {
+							controller.trigger(`begin_session`, [bot, { SlackUserId }]);
+						}, 700)
+					} else if (sessionStart.endDay) {
+						// this should rarely ever, ever happen. (i.e. NEVER)
+						closeOldRemindersAndSessions(user);
+						setTimeout(() => {
+							controller.trigger(`end_plan_flow`, [bot, { SlackUserId }]);
+						}, 700)
+
+					} else if (confirmStart) {
+						// start the session!
 						closeOldRemindersAndSessions(user);
 						setTimeout(() => {
 							startSessionWithConvoObject(convo.sessionStart);

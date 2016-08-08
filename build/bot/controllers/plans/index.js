@@ -114,6 +114,7 @@ exports.default = function (controller) {
 						var startTask = newPlan.startTask;
 						var startTime = newPlan.startTime;
 						var includeSlackUserIds = newPlan.includeSlackUserIds;
+						var startNow = newPlan.startNow;
 
 
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
@@ -173,6 +174,9 @@ exports.default = function (controller) {
 															type: "start_work",
 															DailyTaskId: DailyTaskId
 														});
+													} else if (startNow) {
+														// start now!
+														controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
 													}
 												}
 											});

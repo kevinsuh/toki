@@ -1,12 +1,12 @@
 import moment from 'moment-timezone';
 
 import models from '../../../app/models';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, deleteConvoAskMessage, convertMinutesToHoursString } from '../../lib/messageHelpers';
-import { dateStringToMomentTimeZone, witTimeResponseToTimeZoneObject, witDurationToMinutes, witDurationToTimeZoneObject} from '../../lib/miscHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, convertTaskNumberStringToArray, deleteConvoAskMessage, convertMinutesToHoursString, getMinutesSuggestionAttachments } from '../../lib/messageHelpers';
+import { dateStringToMomentTimeZone, witTimeResponseToTimeZoneObject, witDurationToMinutes, witDurationToTimeZoneObject, getDailyTaskForSession } from '../../lib/miscHelpers';
 
 import intentConfig from '../../lib/intents';
 import { randomInt, utterances } from '../../lib/botResponses';
-import { colorsArray, THANK_YOU, buttonValues, colorsHash, startSessionOptionsAttachments } from '../../lib/constants';
+import { colorsArray, THANK_YOU, buttonValues, colorsHash, startSessionOptionsAttachments, pausedSessionOptionsAttachments } from '../../lib/constants';
 
 /**
  * 		START WORK SESSION CONVERSATION FLOW FUNCTIONS
@@ -39,110 +39,145 @@ export function finalizeTimeAndTasksToStart(convo) {
 	let calculatedTime = calculatedTimeObject.format("h:mma");
 
 	let question = `Ready to work on ${taskText} for ${timeString} until *${calculatedTime}*?`;
+
+	// already in session, can only be in one
 	if (currentSession) {
-		question = `You're currently working on \`${currentSession.sessionTasks}\` and have ${currentSession.minutesString} remaining. Would you like to work on ${taskText} for ${timeString} until *${calculatedTime}* instead?`;
+
+		if (currentSession.isPaused) {
+			question = `You're in a *paused* session for \`${currentSession.sessionTasks}\` and have *${currentSession.minutesString}* remaining! Would you like to cancel that and start a new session instead?`;
+		} else {
+			question = `You're currently in a session for \`${currentSession.sessionTasks}\` and have *${currentSession.minutesString}* remaining! Would you like to cancel that and start a new session instead?`;
+		}
+			
+		convo.ask(question, [
+			{
+				pattern: utterances.yes,
+				callback: (response, convo) => {
+					convo.sessionStart.confirmOverRideSession = true;
+					convo.say(`Okay, sounds good to me!`);
+					convo.next();
+				}
+			},
+			{
+				pattern: utterances.no,
+				callback: (response, convo) => {
+
+					let text = '';
+					let attachments = [];
+
+					if (currentSession.isPaused) {
+						text        = `Got it. Let me know when you want to *resume* and get going again :arrow_forward:!`;
+						attachments = pausedSessionOptionsAttachments;
+					} else {
+						text        = `Okay! Keep it up and I'll see you in ${currentSession.minutesString} :weight_lifter:`;
+						attachments = startSessionOptionsAttachments;
+					}
+
+					convo.say({
+						text,
+						attachments
+					});
+
+					convo.next();
+
+				}
+			},
+			{
+				default: true,
+				callback: (response, convo) => {
+					convo.say("Sorry, I didn't catch that");
+					convo.repeat();
+					convo.next();
+				}
+			}
+		]);
+
+	} else {
+
+		// normal flow for starting a session
+
+		const { minutes, minutesSpent } = dailyTask.dataValues;
+		let minutesRemaining            = minutes - minutesSpent;
+
+		if (minutesRemaining > 0) {
+
+			if (minutesSpent == 0) {
+				// new flow!
+				convo.say(`Let’s crank on ${taskText} with a focused session :wrench:`);
+				question = `How long would you like to focus on ${taskText} for? You have *${minutesRemaining} minutes* set aside for this today`;
+			} else {
+				// new flow!
+				convo.say(`Let’s keep cranking on ${taskText} with a focused session :wrench:`);
+				question = `How long would you like to focus on ${taskText} for? You still have *${minutesRemaining} minutes* set aside for this today`;
+			}
+			
+			let attachments = getMinutesSuggestionAttachments(minutesRemaining);
+
+			convo.ask({
+				text: question,
+				attachments
+			},
+			[
+				{
+					pattern: utterances.containsChangeTask,
+					callback: function(response, convo) {
+						convo.say("Okay, let's change tasks!");
+						askWhichTaskToWorkOn(convo);
+						convo.next();
+					}
+				},
+				{
+					pattern: utterances.noAndNeverMind,
+					callback: function(response, convo) {
+
+						convo.sessionStart.confirmStart = false;
+						if (currentSession) {
+							convo.say({
+								text: `Okay! Good luck on \`${currentSession.sessionTasks}\`. See you at *${currentSession.endTimeString}* :weight_lifter:`,
+								attachments: startSessionOptionsAttachments
+							});
+						} else {
+							convo.say("Okay, let me know if you still want to start a `new session` for one of your priorities :grin:");
+						}
+						convo.next();
+
+					}
+				},
+				{ // if duration or date, then we can start
+					default: true,
+					callback: function(response, convo) {
+
+					let { intentObject: { entities } } = response;
+
+					let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+
+					if (customTimeObject) {
+						let minutes          = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
+
+						convo.sessionStart.calculatedTimeObject = customTimeObject;
+						convo.sessionStart.minutes              = minutes;
+						convo.sessionStart.confirmStart         = true;
+
+						convo.next();
+
+					} else {
+						convo.say("I didn't quite get that :thinking_face:");
+						convo.repeat();
+						convo.next();
+					}
+
+				}
+			}
+		]);
+
+		} else {
+
+			confirmTimeForTask(convo);
+			convo.next();
+
+		}
 	}
 
-	convo.say(`Let’s keep cranking on ${taskText} and start a focused session now :wrench:`);
-	question = `How long would you like to focus on ${taskText}? You still have 97 minutes set aside for this today`;
-
-	convo.ask({
-		text: question,
-		attachments:[
-			{
-				attachment_type: 'default',
-				callback_id: "START_SESSION",
-				color: colorsHash.turquoise.hex,
-				fallback: "I was unable to process your decision",
-				actions: [
-					{
-							name: buttonValues.startNow.name,
-							text: "97 minutes",
-							value: buttonValues.startNow.value,
-							type: "button",
-							style: "primary"
-					},
-					{
-							name: buttonValues.startNow.name,
-							text: "60 minutes",
-							value: buttonValues.startNow.value,
-							type: "button",
-							style: "primary"
-					},
-					{
-							name: buttonValues.startNow.name,
-							text: "45 minutes",
-							value: buttonValues.startNow.value,
-							type: "button",
-							style: "primary"
-					},
-					{
-							name: buttonValues.startNow.name,
-							text: "30 minutes",
-							value: buttonValues.startNow.value,
-							type: "button",
-							style: "primary"
-					},
-					{
-							name: buttonValues.changeTask.name,
-							text: "Change Priority",
-							value: buttonValues.changeTask.value,
-							type: "button"
-					}
-				]
-			}
-		]
-	},
-	[
-		{
-			pattern: utterances.containsChangeTask,
-			callback: function(response, convo) {
-				convo.say("Okay, let's change tasks!");
-				askWhichTaskToWorkOn(convo);
-				convo.next();
-			}
-		},
-		{
-			pattern: utterances.containsChangeTime,
-			callback: function(response, convo) {
-				askForCustomTotalMinutes(convo);
-				convo.next();
-			}
-		},
-		{ // NL equivalent to buttonValues.startNow.value
-			pattern: utterances.yes,
-			callback: function(response, convo) {
-				convo.sessionStart.confirmStart = true;
-				convo.stop();
-				convo.next();
-			}
-		},
-		{
-			pattern: utterances.noAndNeverMind,
-			callback: function(response, convo) {
-
-				convo.sessionStart.confirmStart = false;
-				if (currentSession) {
-					convo.say({
-						text: `Okay! Good luck on \`${currentSession.sessionTasks}\`. See you at *${currentSession.endTimeString}* :weight_lifter:`,
-						attachments: startSessionOptionsAttachments
-					});
-				} else {
-					convo.say("Okay, let me know if you still want to start a `new session` for one of your priorities :grin:");
-				}
-				convo.next();
-
-			}
-		},
-		{ // this is failure point. restart with question
-			default: true,
-			callback: function(response, convo) {
-				convo.say("I didn't quite get that :thinking_face:");
-				convo.repeat();
-				convo.next();
-			}
-		}
-	]);
 }
 
 /**
@@ -156,73 +191,84 @@ function askWhichTaskToWorkOn(convo, question = '') {
 	// convo.say("I recommend working for at least 30 minutes at a time, so if you want to work on shorter tasks, try to pick several to get over that 30 minute threshold :smiley:");
 
 	const { SlackUserId, dailyTasks, dailyTask }  = convo.sessionStart;
+
 	if (!dailyTasks) {
 		getUserDailyTasks(convo);
 	} else {
-		const { task: { bot } } = convo;
-		let noDailyTask = false;
-		let taskArray = dailyTasks.filter((currentDailyTask) => {
-			if (!dailyTask) { // uncommon situation where reminder has no dailyTask
-				noDailyTask = true;
-				return true;
-			} else if (currentDailyTask.dataValues.id != dailyTask.dataValues.id){
-				return true;
-			}
-		});
-		let options = { dontUsePriority: true }
-		let taskListMessage = convertArrayToTaskListMessage(taskArray, options);
-		if (question == '') {
-			question = `Which priority would you like to work on instead?`
-		}
-		if (noDailyTask) question = `Which priority would you like to work on?`
-		let message = `${question}\n${taskListMessage}`;
-		convo.ask({
-			text: message,
-			attachments:[
-				{
-					attachment_type: 'default',
-					callback_id: "START_SESSION",
-					fallback: "I was unable to process your decision",
-					color: colorsHash.grey.hex,
-					actions: [
-						{
-								name: buttonValues.neverMind.name,
-								text: "Never mind!",
-								value: buttonValues.neverMind.value,
-								type: "button",
-						}
-					]
+
+		// THIS IS A TEST TO SEE IF THERE ARE EVEN WORKABLE DAILY TASKS
+		let oneDailyTaskToWorkOn = getDailyTaskForSession(dailyTasks);
+		if (!oneDailyTaskToWorkOn) {
+			// THIS SHOULD NEVER HAPPEN
+			convo.say(`You don't have any more priorities to work on! You've won the day!`);
+			convo.sessionStart.endDay = true;
+			convo.next();
+		} else {
+			const { task: { bot } } = convo;
+			let noDailyTask = false;
+			let taskArray = dailyTasks.filter((currentDailyTask) => {
+				if (!dailyTask) { // uncommon situation where reminder has no dailyTask
+					noDailyTask = true;
+					return true;
+				} else if (currentDailyTask.dataValues.id != dailyTask.dataValues.id){
+					return true;
 				}
-			]
-		},[
-			{
-				pattern: utterances.noAndNeverMind,
-				callback: (response, convo) => {
-					if (dailyTask) {
-						let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your priority';
-						convo.say(`Sure thing! Let's stay working on ${taskText}`);
-						confirmTimeForTask(convo)
-					} else {
-						convo.say(`Okay! Let me know when you want to \`start a session\``);
+			});
+			let options = { dontUsePriority: true }
+			let taskListMessage = convertArrayToTaskListMessage(taskArray, options);
+			if (question == '') {
+				question = `Which priority would you like to work on instead?`
+			}
+			if (noDailyTask) question = `Which priority would you like to work on?`
+			let message = `${question}\n${taskListMessage}`;
+			convo.ask({
+				text: message,
+				attachments:[
+					{
+						attachment_type: 'default',
+						callback_id: "START_SESSION",
+						fallback: "I was unable to process your decision",
+						color: colorsHash.grey.hex,
+						actions: [
+							{
+									name: buttonValues.neverMind.name,
+									text: "Never mind!",
+									value: buttonValues.neverMind.value,
+									type: "button",
+							}
+						]
 					}
-					convo.next();
+				]
+			},[
+				{
+					pattern: utterances.noAndNeverMind,
+					callback: (response, convo) => {
+						if (dailyTask) {
+							let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your priority';
+							convo.say(`Sure thing! Let's stay working on ${taskText}`);
+							confirmTimeForTask(convo)
+						} else {
+							convo.say(`Okay! Let me know when you want to \`start a session\``);
+						}
+						convo.next();
+					}
+				},
+				{
+					default: true,
+					callback: (response, convo) => {
+						// user inputed task #'s, not new task button
+						confirmTasks(response, convo, taskArray);
+						convo.next();
+					}
 				}
-			},
-			{
-				default: true,
-				callback: (response, convo) => {
-					// user inputed task #'s, not new task button
-					confirmTasks(response, convo, taskArray);
-					convo.next();
-				}
-			}
-		]);
+			]);
+		}
 	}
 }
 
 function getUserDailyTasks(convo) {
 
-	const { SlackUserId }  = convo.sessionStart;
+	const { SlackUserId, dailyTask }  = convo.sessionStart;
 
 	models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -231,12 +277,24 @@ function getUserDailyTasks(convo) {
 		.then((user) => {
 			user.getDailyTasks({
 				where: [`"DailyTask"."type" = ?`, "live"],
-				include: [ models.Task ]
+				include: [ models.Task ],
+				order: `"DailyTask"."priority" ASC`
 			})
 			.then((dailyTasks) => {
 				dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
 				convo.sessionStart.dailyTasks = dailyTasks;
-				askWhichTaskToWorkOn(convo);
+
+				// here is where we will automatically suggest a dailyTask based on our specific decision
+				// if we can find a dailyTask, we can go straight to confirm
+				// Otherwise, we must ask user which one they want to work on
+				let dailyTask = getDailyTaskForSession(dailyTasks);
+				if (dailyTask) {
+					convo.sessionStart.dailyTask = dailyTask;
+					finalizeTimeAndTasksToStart(convo);
+				} else {
+					askWhichTaskToWorkOn(convo);
+				}
+
 			})
 		})
 
@@ -284,6 +342,9 @@ function confirmTimeForTask(convo) {
 	const { SlackUserId, tz, dailyTask }  = convo.sessionStart;
 
 	// will only be a single task now
+	let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your priority';
+
+	// will only be a single task now
 	let minutesAllocated = dailyTask.dataValues.minutes;
 	let minutesSpent     = dailyTask.dataValues.minutesSpent;
 
@@ -300,21 +361,15 @@ function confirmTimeForTask(convo) {
 		finalizeTimeAndTasksToStart(convo);
 
 	} else {
-		// ask for how many minutes to work.
-		askForCustomTotalMinutes(convo);
-
+		convo.say(`You have no time remaining for ${taskText} today!`);
+		askToAddMinutesToTask(convo);
 	}
 
 	convo.next();
 
 }
 
-/**
- *      WANTS CUSTOM TIME TO TASKS
- */
-
-// ask for custom amount of time to work on
-function askForCustomTotalMinutes(convo) {
+function askToAddMinutesToTask(convo, question = `Do you want to complete this for today, or add time to it? (you can say something like \`2 more hours\`)`) {
 
 	const { task }                       = convo;
 	const { bot, source_message }        = task;
@@ -322,22 +377,65 @@ function askForCustomTotalMinutes(convo) {
 
 	// will only be a single task now
 	let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your priority';
+	let now      = moment().tz(tz);
 
-	convo.ask(`How long do you want to work on ${taskText} for?`, (response, convo) => {
+	convo.ask({
+		text: question,
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "START_SESSION",
+				fallback: "Add more minutes to this priority?",
+				color: colorsHash.grey.hex,
+				actions: [
+					{
+							name: buttonValues.doneSession.completedPriorityTonedDown.name,
+							text: "Complete :sports_medal:",
+							value: buttonValues.doneSession.completedPriorityTonedDown.value,
+							type: "button"
+					}
+				]
+			}
+		]
+	}, [
+		{
+			pattern: utterances.containsCompleteOrCheckOrCross,
+			callback: (response, convo) => {
+				convo.say(`You are a star :star:`);
+				convo.sessionStart.completeDailyTask = true;
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
 
-		var { intentObject: { entities } } = response;
-		// for time to tasks, these wit intents are the only ones that makes sense
-		if (entities.duration || entities.datetime) {
-			confirmCustomTotalMinutes(response, convo);
-		} else {
-			// invalid
-			convo.say("I'm sorry, I didn't catch that :dog:");
-			convo.repeat();
+				let { intentObject: { entities } } = response;
+				// for time to tasks, these wit intents are the only ones that makes sense
+				let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+				if (customTimeObject) {
+
+					let minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
+
+					// add minutes to task and exit
+					convo.sessionStart.addMinutesToDailyTask = minutes;
+
+					let timeString = convertMinutesToHoursString(minutes);
+					convo.say(`Woo! I added ${timeString} :raised_hands:`);
+					convo.next();
+
+				} else {
+					// invalid
+					convo.say("I'm sorry, I didn't catch that :dog:");
+					let question = `How much more time did you want to add to ${taskText} today?`;
+					askToAddMinutesToTask(convo, question);
+				}
+
+				convo.next();
+
+			}
 		}
-
-		convo.next();
-
-	});
+	]);
 
 };
 
@@ -412,7 +510,7 @@ export function startSessionWithConvoObject(sessionStart) {
 			convo.say("Let's do it :boom:!");
 			convo.say(`Good luck with \`${taskString}\`! See you in ${minutesString} at *${timeString}*`);
 			convo.say({
-				text: `Your focused work session starts now :weight_lifter:`,
+				text: `:weight_lifter: Your focused work session starts now :weight_lifter:`,
 				attachments: startSessionOptionsAttachments
 			});
 

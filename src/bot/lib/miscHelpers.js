@@ -408,3 +408,30 @@ export function getEndOfPlanCommandOptionAttachments(options = {}) {
 
 }
 
+export function getDailyTaskForSession(dailyTasks) {
+
+	let startDailyTask = false;
+	dailyTasks.some((dailyTask) => {
+		// this loops through all "live" dailyTasks, EVEN COMPLETED ONES
+		const { minutes, minutesSpent, Task: { done } } = dailyTask.dataValues;
+		if (!done) {
+			if (minutes > minutesSpent) {
+				startDailyTask = dailyTask;
+				return true;
+			}
+		}
+	});
+	if (!startDailyTask) {
+		// if you couldn't find one, this means we have to go through the ones that are not completed
+		dailyTasks.some((dailyTask) => {
+			const { minutes, minutesSpent, Task: { done } } = dailyTask.dataValues;
+			if (!done) {
+				startDailyTask = dailyTask;
+				return true;
+			}
+		})
+	};
+	return startDailyTask;
+
+}
+
