@@ -960,6 +960,78 @@ export function getDoneSessionMessageAttachments(config = {}) {
 	
 }
 
+// get button attachments for your plan list
+export function getPlanCommandCenterAttachments(config = {}) {
+
+
+	const { buttonsValuesArray } = config;
+
+	let actions = [];
+	buttonsValuesArray.forEach((buttonValue) => {
+		switch (buttonValue) {
+			case buttonValues.planCommands.addPriority.value:
+				actions.push({
+					name: buttonValues.planCommands.addPriority.name,
+					text: "Add",
+					value: buttonValues.planCommands.addPriority.value,
+					type: "button"
+				});
+				break;
+			case buttonValues.planCommands.deletePriority.value:
+				actions.push({
+					name: buttonValues.planCommands.deletePriority.name,
+					text: "Remove",
+					value: buttonValues.planCommands.deletePriority.value,
+					type: "button"
+				});
+				break;
+			case buttonValues.planCommands.completePriority.value:
+				actions.push({
+					name: buttonValues.planCommands.completePriority.name,
+					text: "Complete",
+					value: buttonValues.planCommands.completePriority.value,
+					type: "button"
+				});
+				break;
+			case buttonValues.planCommands.workOnPriority.value:
+				actions.push({
+					name: buttonValues.planCommands.workOnPriority.name,
+					text: "Work",
+					value: buttonValues.planCommands.workOnPriority.value,
+					type: "button"
+				});
+				break;
+			case buttonValues.planCommands.revisePriority.value:
+				actions.push({
+					name: buttonValues.planCommands.revisePriority.name,
+					text: "Revise",
+					value: buttonValues.planCommands.revisePriority.value,
+					type: "button"
+				});
+				break;
+			case buttonValues.planCommands.endDay.value:
+				actions.push({
+					name: buttonValues.planCommands.endDay.name,
+					text: "End Day",
+					value: buttonValues.planCommands.endDay.value,
+					type: "button"
+				});
+				break;
+			default: break;
+		}
+	});
+
+	let attachments = [{
+		attachment_type: 'default',
+		callback_id: "PLAN_COMMAND_CENTER",
+		fallback: "What do you want to do with your priorities?",
+		actions
+	}]
+
+	return attachments;
+
+}
+
 export function getMinutesSuggestionAttachments(minutesRemaining) {
 
 	let minutesSuggestions    = [30, 45, 60, 90];

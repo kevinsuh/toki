@@ -28,6 +28,7 @@ exports.deleteMostRecentDoneSessionMessage = deleteMostRecentDoneSessionMessage;
 exports.getTimeToTaskTextAttachmentWithTaskListMessage = getTimeToTaskTextAttachmentWithTaskListMessage;
 exports.convertStringToNumbersArray = convertStringToNumbersArray;
 exports.getDoneSessionMessageAttachments = getDoneSessionMessageAttachments;
+exports.getPlanCommandCenterAttachments = getPlanCommandCenterAttachments;
 exports.getMinutesSuggestionAttachments = getMinutesSuggestionAttachments;
 
 var _constants = require('./constants');
@@ -973,6 +974,78 @@ function getDoneSessionMessageAttachments() {
 		attachment_type: 'default',
 		callback_id: "DONE_WITH_SESSION",
 		fallback: "Done with my session!",
+		actions: actions
+	}];
+
+	return attachments;
+}
+
+// get button attachments for your plan list
+function getPlanCommandCenterAttachments() {
+	var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	var buttonsValuesArray = config.buttonsValuesArray;
+
+
+	var actions = [];
+	buttonsValuesArray.forEach(function (buttonValue) {
+		switch (buttonValue) {
+			case _constants.buttonValues.planCommands.addPriority.value:
+				actions.push({
+					name: _constants.buttonValues.planCommands.addPriority.name,
+					text: "Add",
+					value: _constants.buttonValues.planCommands.addPriority.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.planCommands.deletePriority.value:
+				actions.push({
+					name: _constants.buttonValues.planCommands.deletePriority.name,
+					text: "Remove",
+					value: _constants.buttonValues.planCommands.deletePriority.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.planCommands.completePriority.value:
+				actions.push({
+					name: _constants.buttonValues.planCommands.completePriority.name,
+					text: "Complete",
+					value: _constants.buttonValues.planCommands.completePriority.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.planCommands.workOnPriority.value:
+				actions.push({
+					name: _constants.buttonValues.planCommands.workOnPriority.name,
+					text: "Work",
+					value: _constants.buttonValues.planCommands.workOnPriority.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.planCommands.revisePriority.value:
+				actions.push({
+					name: _constants.buttonValues.planCommands.revisePriority.name,
+					text: "Revise",
+					value: _constants.buttonValues.planCommands.revisePriority.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.planCommands.endDay.value:
+				actions.push({
+					name: _constants.buttonValues.planCommands.endDay.name,
+					text: "End Day",
+					value: _constants.buttonValues.planCommands.endDay.value,
+					type: "button"
+				});
+				break;
+			default:
+				break;
+		}
+	});
+
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "PLAN_COMMAND_CENTER",
+		fallback: "What do you want to do with your priorities?",
 		actions: actions
 	}];
 
