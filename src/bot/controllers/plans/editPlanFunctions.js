@@ -381,9 +381,6 @@ function completeTasksFlow(convo) {
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
 
-				// delete the plan if "never mind"
-				deleteMostRecentPlanMessage(response.channel, bot);
-
 				convo.say("Okay, let me know if you still want to complete priorities! :wave: ");
 				convo.next();
 			}
@@ -399,14 +396,6 @@ function completeTasksFlow(convo) {
 
 				// if key word exists, we are stopping early and do the other flow!
 				if (constants.PLAN_DECISION.add.reg_exp.test(text) || constants.PLAN_DECISION.delete.reg_exp.test(text) || constants.PLAN_DECISION.work.reg_exp.test(text)) {
-
-					// let's delete the most recent ask message
-					deleteConvoAskMessage(response.channel, bot);
-
-					// handling add task flow differently -- we will delete plan for now
-					if (constants.PLAN_DECISION.add.reg_exp.test(text)) {
-						deleteMostRecentPlanMessage(response.channel, bot);
-					}
 
 					changePlanCommand.decision = true;
 					changePlanCommand.text     = text
@@ -435,9 +424,6 @@ function completeTasksFlow(convo) {
 					} else {
 
 						if (taskNumbersToCompleteArray) {
-
-							// delete the plan if you finish completing a task
-							deleteMostRecentPlanMessage(response.channel, bot);
 
 							// say task list, then ask which ones to complete
 							let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
@@ -570,9 +556,6 @@ function deleteTasksFlow(convo) {
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
 
-				// delete the plan if "never mind"
-				deleteMostRecentPlanMessage(response.channel, bot);
-
 				convo.say("Okay, let me know if you still want to delete any priority! :wave: ");
 				convo.next();
 			}
@@ -588,14 +571,6 @@ function deleteTasksFlow(convo) {
 
 				// if key word exists, we are stopping early and do the other flow!
 				if (constants.PLAN_DECISION.add.reg_exp.test(text) || constants.PLAN_DECISION.complete.reg_exp.test(text) || constants.PLAN_DECISION.work.reg_exp.test(text)) {
-
-					// let's delete the most recent ask message
-					deleteConvoAskMessage(response.channel, bot);
-
-					// handling add task flow differently -- we will delete plan for now
-					if (constants.PLAN_DECISION.add.reg_exp.test(text)) {
-						deleteMostRecentPlanMessage(response.channel, bot);
-					}
 
 					changePlanCommand.decision = true;
 					changePlanCommand.text     = text
@@ -623,9 +598,6 @@ function deleteTasksFlow(convo) {
 					} else {
 
 						if (taskNumbersToDeleteArray) {
-
-							// delete the plan if you finish completing a task
-							deleteMostRecentPlanMessage(response.channel, bot);
 
 							singleLineDeleteTask(convo, taskNumbersToDeleteArray);
 
@@ -685,9 +657,6 @@ function addTasksFlow(convo) {
 		{
 			pattern: utterances.done,
 			callback: function(response, convo) {
-
-				// delete button when answered with NL
-				deleteConvoAskMessage(response.channel, bot);
 				
 				convo.say("Excellent!");
 				saveNewTaskResponses(tasksToAdd, convo);
@@ -698,11 +667,6 @@ function addTasksFlow(convo) {
 		{ // NL equivalent to buttonValues.neverMind.value
 			pattern: utterances.noAndNeverMind,
 			callback: function(response, convo) {
-
-				// delete the plan and this taskListMessage if "never mind"
-				deleteMostRecentTaskListMessage(response.channel, bot);
-				deleteMostRecentPlanMessage(response.channel, bot);
-
 				convo.say("Okay! Let me know whenever you want to add more tasks");
 				convo.next();
 			}
