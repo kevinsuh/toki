@@ -119,12 +119,22 @@ function specificCommandFlow(convo) {
 				deleteTasksFlow(convo);
 			}
 			break;
+		case constants.PLAN_DECISION.revise.word:
+			console.log(`\n\n ~~ user wants to revise tasks in specificCommandFlow ~~ \n\n`)
+			var taskNumberString = taskNumbers ? taskNumbers.join(",") : '';
+			var taskNumbersToReviseArray = convertTaskNumberStringToArray(taskNumberString, dailyTasks);
+			if (taskNumbersToReviseArray) {
+				// single line complete ability
+				singleLineReviseTask(convo, taskNumbersToReviseArray);
+			} else {
+				reviseTasksFlow(convo);
+			}
+			break;
 		case constants.PLAN_DECISION.edit.word:
 			console.log(`\n\n ~~ user wants to edit tasks in specificCommandFlow ~~ \n\n`)
 			viewTasksFlow(convo);
 			break;
 		case constants.PLAN_DECISION.work.word:
-
 			var taskNumberString         = taskNumbers ? taskNumbers.join(",") : '';
 			var taskNumbersToWorkOnArray = convertTaskNumberStringToArray(taskNumberString, dailyTasks);
 
@@ -277,6 +287,160 @@ function viewTasksFlow(convo) {
 }
 
 /**
+ * 				~~ REVISE TASK ~~
+ * 		this essentially deletes a task then adds one combined
+ */
+function singleLineReviseTask(convo, taskNumbersToReviseArray) {
+
+	let { dailyTasks } = convo.planEdit;
+	let dailyTasksToRevise = [];
+	dailyTasks.forEach((dailyTask, index) => {
+		const { dataValues: { priority, type, Task: { done } } } = dailyTask;
+		// not already completed and is live
+		if (taskNumbersToReviseArray.indexOf(priority) > -1 && !done && type == "live") {
+			dailyTasksToRevise.push(dailyTask);
+		}
+	});
+
+	if (dailyTasksToRevise.length > 0) {
+
+		// add to complete array for planEdit
+		let dailyTaskIdsToRevise = dailyTasksToRevise.map((dailyTask) => {
+			return dailyTask.dataValues.id;
+		});
+		convo.planEdit.dailyTaskIdsToDelete = dailyTaskIdsToRevise;
+
+		let dailyTaskTextsToRevise = dailyTasksToRevise.map((dailyTask) => {
+			return dailyTask.dataValues.Task.text;
+		});
+		let dailyTasksToReviseString = commaSeparateOutTaskArray(dailyTaskTextsToRevise);
+
+		convo.say({
+			text: `Got it -- I removed \`${dailyTasksToReviseString}\` from your plan today`
+		});
+		addTasksFlow(convo);
+		convo.next();
+
+	} else {
+		convo.say("I couldn't find that priority to revise!");
+		reviseTasksFlow(convo);
+	}
+
+	convo.next();
+
+}
+
+function reviseTasksFlow(convo) {
+
+	let { planEdit: { bot, dailyTasks, changePlanCommand, changedPlanCommands } } = convo;
+	convo.planEdit.inFlow = true;
+
+	// say task list, then ask which ones to check off
+	let options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, startPlan: true };
+
+	let baseMessage = '';
+
+	if (changedPlanCommands) {
+		baseMessage = `Okay! Which priority above do you want to`;
+	} else {
+		baseMessage = `Which priority above do you want to`;
+		sayTasksForToday(convo, options);
+	}
+
+	let wordSwapCount = 0;
+	let message       = wordSwapMessage(baseMessage, "revise?", wordSwapCount);
+
+	convo.ask({
+		text: message,
+		attachments: [ {
+			attachment_type: 'default',
+			callback_id: "TASK_REVISE",
+			fallback: "Which priority do you want to revise?",
+			actions: [
+				{
+					name: buttonValues.neverMind.name,
+					text: `Never mind!`,
+					value: buttonValues.neverMind.value,
+					type: `button`
+				}
+			]
+		}]
+	}, [
+		{
+			pattern: utterances.noAndNeverMind,
+			callback: (response, convo) => {
+
+				convo.say("Got it :thumbsup: If you need to revise a priority, just let me know");
+				convo.planEdit.showUpdatedPlan = true;
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+
+				let { text } = response;
+				if (response.actions && response.actions[0]) {
+					text = response.actions[0].value;
+				}
+
+				// if key word exists, we are stopping early and do the other flow!
+				if (constants.PLAN_DECISION.add.reg_exp.test(text) || constants.PLAN_DECISION.delete.reg_exp.test(text) || constants.PLAN_DECISION.work.reg_exp.test(text) || constants.PLAN_DECISION.revise.reg_exp.test(text)) {
+
+					changePlanCommand.decision = true;
+					changePlanCommand.text     = text
+
+				}
+
+				if (changePlanCommand.decision) {
+					convo.stop();
+					convo.next();
+				} else  {
+
+					// otherwise do the expected, default decision!
+					let taskNumbersToReviseArray = convertTaskNumberStringToArray(text, dailyTasks);
+
+					if (constants.PLAN_DECISION.revise.reg_exp.test(text) && !taskNumbersToReviseArray) {
+
+						// if user tries completing task again, just update the text
+						wordSwapCount++;
+						let text = wordSwapMessage(baseMessage, "revise?", wordSwapCount);
+						let convoAskQuestionUpdate = getMostRecentMessageToUpdate(response.channel, bot);
+						if (convoAskQuestionUpdate) {
+							convoAskQuestionUpdate.text = text;
+							bot.api.chat.update(convoAskQuestionUpdate);
+						}
+
+					} else {
+
+						if (taskNumbersToReviseArray) {
+
+							// say task list, then ask which ones to complete
+							let options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
+
+							singleLineReviseTask(convo, taskNumbersToReviseArray);
+
+						} else {
+							convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+							convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+							convo.repeat();
+						}
+
+						convo.next();
+
+					}
+					
+				}
+
+			}
+		}
+	]);
+
+	convo.next();
+
+}
+
+/**
  * 		~~ COMPLETE TASKS ~~
  */
 
@@ -317,7 +481,7 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 		convo.next();
 
 	} else {
-		convo.say("I couldn't find that task to check off!");
+		convo.say("I couldn't find that priority to check off!");
 		completeTasksFlow(convo);
 	}
 
@@ -380,7 +544,7 @@ function completeTasksFlow(convo) {
 				}
 
 				// if key word exists, we are stopping early and do the other flow!
-				if (constants.PLAN_DECISION.add.reg_exp.test(text) || constants.PLAN_DECISION.delete.reg_exp.test(text) || constants.PLAN_DECISION.work.reg_exp.test(text)) {
+				if (constants.PLAN_DECISION.add.reg_exp.test(text) || constants.PLAN_DECISION.delete.reg_exp.test(text) || constants.PLAN_DECISION.work.reg_exp.test(text) || constants.PLAN_DECISION.revise.reg_exp.test(text)) {
 
 					changePlanCommand.decision = true;
 					changePlanCommand.text     = text
@@ -522,7 +686,7 @@ function deleteTasksFlow(convo) {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
-				convo.say(":thumbsup: :punch: :runner:");
+				convo.say("Got it :thumbsup: Let me know if you still want to `delete a priority`");
 				convo.planEdit.showUpdatedPlan = true;
 				convo.next();
 			}
@@ -537,7 +701,7 @@ function deleteTasksFlow(convo) {
 				}
 
 				// if key word exists, we are stopping early and do the other flow!
-				if (constants.PLAN_DECISION.add.reg_exp.test(text) || constants.PLAN_DECISION.complete.reg_exp.test(text) || constants.PLAN_DECISION.work.reg_exp.test(text)) {
+				if (constants.PLAN_DECISION.add.reg_exp.test(text) || constants.PLAN_DECISION.complete.reg_exp.test(text) || constants.PLAN_DECISION.work.reg_exp.test(text) || constants.PLAN_DECISION.revise.reg_exp.test(text)) {
 
 					changePlanCommand.decision = true;
 					changePlanCommand.text     = text
@@ -758,7 +922,7 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 		convo.next();
 
 	} else {
-		convo.say(`I couldn't find that task to work on!`);
+		convo.say(`I couldn't find that priority to work on!`);
 		workOnTasksFlow(convo);
 	}
 
@@ -815,7 +979,7 @@ function workOnTasksFlow(convo) {
 					text = response.actions[0].value;
 				}
 
-				if (constants.PLAN_DECISION.add.reg_exp.test(text) || constants.PLAN_DECISION.complete.reg_exp.test(text) || constants.PLAN_DECISION.delete.reg_exp.test(text)) {
+				if (constants.PLAN_DECISION.add.reg_exp.test(text) || constants.PLAN_DECISION.complete.reg_exp.test(text) || constants.PLAN_DECISION.delete.reg_exp.test(text) || constants.PLAN_DECISION.revise.reg_exp.test(text)) {
 
 					// CHANGE COMMANDS
 					

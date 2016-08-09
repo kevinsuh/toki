@@ -302,6 +302,10 @@ export default function(controller) {
 					// do plan
 					config.planDecision = constants.PLAN_DECISION.work.word;
 					break;
+				case (text.match(constants.PLAN_DECISION.revise.reg_exp) || {}).input:
+					// do plan
+					config.planDecision = constants.PLAN_DECISION.revise.word;
+					break;
 				default:
 					config.planDecision = config.taskNumbers ? constants.PLAN_DECISION.work.word : constants.PLAN_DECISION.view.word;
 					break;
@@ -374,7 +378,6 @@ export default function(controller) {
 							newPriority: false,
 							dailyTaskIdsToDelete: [],
 							dailyTaskIdsToComplete: [],
-							dailyTasksToUpdate: [], // existing dailyTasks
 							openWorkSession,
 							planDecision,
 							taskNumbers,
@@ -393,13 +396,9 @@ export default function(controller) {
 						// this is the flow you expect for editing tasks
 						startEditPlanConversation(convo);
 
-						
 						convo.on('end', (convo) => {
 							
-							var { newPriority, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate, startSession, dailyTasksToWorkOn, changePlanCommand, currentSession, showUpdatedPlan } = convo.planEdit;
-
-							console.log("\n\n\n at end of convo planEdit")
-							console.log(convo.planEdit);
+							var { newPriority, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, startSession, dailyTasksToWorkOn, changePlanCommand, currentSession, showUpdatedPlan } = convo.planEdit;
 
 							// this means we are changing the plan!
 							if (changePlanCommand.decision) {
@@ -473,52 +472,24 @@ export default function(controller) {
 								})
 							}
 
-							// RE-SHOW PLAN
-							if (showUpdatedPlan) {
 
-								if (message && message.channel) {
-									bot.send({
-										type: "typing",
-										channel: message.channel
-									});
-								}
-
-								setTimeout(() => {
-									const config = { SlackUserId };
-									controller.trigger(`plan_command_center`, [ bot, config ]);
-								}, 750);
-
-							}
-
-							/*
-
-							// update daily tasks if requested
-							if (dailyTasksToUpdate.length > 0) {
-								dailyTasksToUpdate.forEach((dailyTask) => {
-									if (dailyTask.dataValues && dailyTask.minutes && dailyTask.text) {
-										const { minutes, text } = dailyTask;
-										models.DailyTask.update({
-											text,
-											minutes
-										}, {
-											where: [`"DailyTasks"."id" = ?`, dailyTask.dataValues.id]
-										})
-									}
-								})
+							if (message && message.channel) {
+								bot.send({
+									type: "typing",
+									channel: message.channel
+								});
 							}
 
 							setTimeout(() => {
-
-								setTimeout(() => {
-									prioritizeDailyTasks(user);
-								}, 1000);
-
-								// only check for live tasks if SOME action took place
-								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
+								
+								const config = { SlackUserId };
+								if (showUpdatedPlan) {
+									controller.trigger(`plan_command_center`, [ bot, config ]);
+								} else {
 									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
 								}
+									
 							}, 750);
-							*/
 	
 						});
 					});

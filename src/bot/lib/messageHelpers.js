@@ -1026,6 +1026,7 @@ export function getPlanCommandCenterAttachments(config = {}) {
 		attachment_type: 'default',
 		callback_id: "PLAN_COMMAND_CENTER",
 		fallback: "What do you want to do with your priorities?",
+		color: colorsHash.toki_purple.hex,
 		actions
 	}]
 

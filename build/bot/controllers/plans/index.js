@@ -292,6 +292,10 @@ exports.default = function (controller) {
 					// do plan
 					config.planDecision = _constants.constants.PLAN_DECISION.work.word;
 					break;
+				case (text.match(_constants.constants.PLAN_DECISION.revise.reg_exp) || {}).input:
+					// do plan
+					config.planDecision = _constants.constants.PLAN_DECISION.revise.word;
+					break;
 				default:
 					config.planDecision = config.taskNumbers ? _constants.constants.PLAN_DECISION.work.word : _constants.constants.PLAN_DECISION.view.word;
 					break;
@@ -363,7 +367,6 @@ exports.default = function (controller) {
 							newPriority: false,
 							dailyTaskIdsToDelete: [],
 							dailyTaskIdsToComplete: [],
-							dailyTasksToUpdate: [], // existing dailyTasks
 							openWorkSession: openWorkSession,
 							planDecision: planDecision,
 							taskNumbers: taskNumbers,
@@ -389,18 +392,14 @@ exports.default = function (controller) {
 							var SlackUserId = _convo$planEdit.SlackUserId;
 							var dailyTaskIdsToDelete = _convo$planEdit.dailyTaskIdsToDelete;
 							var dailyTaskIdsToComplete = _convo$planEdit.dailyTaskIdsToComplete;
-							var dailyTasksToUpdate = _convo$planEdit.dailyTasksToUpdate;
 							var startSession = _convo$planEdit.startSession;
 							var dailyTasksToWorkOn = _convo$planEdit.dailyTasksToWorkOn;
 							var changePlanCommand = _convo$planEdit.changePlanCommand;
 							var currentSession = _convo$planEdit.currentSession;
 							var showUpdatedPlan = _convo$planEdit.showUpdatedPlan;
 
-
-							console.log("\n\n\n at end of convo planEdit");
-							console.log(convo.planEdit);
-
 							// this means we are changing the plan!
+
 							if (changePlanCommand.decision) {
 								var _message = { text: changePlanCommand.text };
 								var _config = { SlackUserId: SlackUserId, message: _message, changePlanCommand: changePlanCommand };
@@ -472,47 +471,22 @@ exports.default = function (controller) {
 								});
 							}
 
-							// RE-SHOW PLAN
-							if (showUpdatedPlan) {
-
-								if (message && message.channel) {
-									bot.send({
-										type: "typing",
-										channel: message.channel
-									});
-								}
-
-								setTimeout(function () {
-									var config = { SlackUserId: SlackUserId };
-									controller.trigger('plan_command_center', [bot, config]);
-								}, 750);
+							if (message && message.channel) {
+								bot.send({
+									type: "typing",
+									channel: message.channel
+								});
 							}
 
-							/*
-       	// update daily tasks if requested
-       if (dailyTasksToUpdate.length > 0) {
-       	dailyTasksToUpdate.forEach((dailyTask) => {
-       		if (dailyTask.dataValues && dailyTask.minutes && dailyTask.text) {
-       			const { minutes, text } = dailyTask;
-       			models.DailyTask.update({
-       				text,
-       				minutes
-       			}, {
-       				where: [`"DailyTasks"."id" = ?`, dailyTask.dataValues.id]
-       			})
-       		}
-       	})
-       }
-       	setTimeout(() => {
-       		setTimeout(() => {
-       		prioritizeDailyTasks(user);
-       	}, 1000);
-       		// only check for live tasks if SOME action took place
-       	if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
-       		checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
-       	}
-       }, 750);
-       */
+							setTimeout(function () {
+
+								var config = { SlackUserId: SlackUserId };
+								if (showUpdatedPlan) {
+									controller.trigger('plan_command_center', [bot, config]);
+								} else {
+									checkWorkSessionForLiveTasks({ SlackUserId: SlackUserId, bot: bot, controller: controller });
+								}
+							}, 750);
 						});
 					});
 				});

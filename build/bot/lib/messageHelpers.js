@@ -1048,6 +1048,7 @@ function getPlanCommandCenterAttachments() {
 		attachment_type: 'default',
 		callback_id: "PLAN_COMMAND_CENTER",
 		fallback: "What do you want to do with your priorities?",
+		color: _constants.colorsHash.toki_purple.hex,
 		actions: actions
 	}];
 

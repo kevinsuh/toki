@@ -54,6 +54,10 @@ var constants = exports.constants = {
 		work: {
 			word: "TASK_WORK",
 			reg_exp: new RegExp(/\b(do[o]?|wor[ork]{1,})\b/i)
+		},
+		revise: {
+			word: "TASK_REVISE",
+			reg_exp: new RegExp(/\brev[ise]{2,4}\b/i)
 		}
 	},
 	FINISH_WORD: {
@@ -132,7 +136,7 @@ var colorsHash = exports.colorsHash = {
 		hex: "#F0D003"
 	},
 	toki_purple: {
-		hex: "#8127E5"
+		hex: "#8a3df0"
 	}
 };
 

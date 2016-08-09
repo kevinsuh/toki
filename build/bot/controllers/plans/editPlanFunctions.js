@@ -145,12 +145,22 @@ function specificCommandFlow(convo) {
 				deleteTasksFlow(convo);
 			}
 			break;
+		case _constants.constants.PLAN_DECISION.revise.word:
+			console.log('\n\n ~~ user wants to revise tasks in specificCommandFlow ~~ \n\n');
+			var taskNumberString = taskNumbers ? taskNumbers.join(",") : '';
+			var taskNumbersToReviseArray = (0, _messageHelpers.convertTaskNumberStringToArray)(taskNumberString, dailyTasks);
+			if (taskNumbersToReviseArray) {
+				// single line complete ability
+				singleLineReviseTask(convo, taskNumbersToReviseArray);
+			} else {
+				reviseTasksFlow(convo);
+			}
+			break;
 		case _constants.constants.PLAN_DECISION.edit.word:
 			console.log('\n\n ~~ user wants to edit tasks in specificCommandFlow ~~ \n\n');
 			viewTasksFlow(convo);
 			break;
 		case _constants.constants.PLAN_DECISION.work.word:
-
 			var taskNumberString = taskNumbers ? taskNumbers.join(",") : '';
 			var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(taskNumberString, dailyTasks);
 
@@ -300,21 +310,169 @@ function viewTasksFlow(convo) {
 }
 
 /**
+ * 				~~ REVISE TASK ~~
+ * 		this essentially deletes a task then adds one combined
+ */
+function singleLineReviseTask(convo, taskNumbersToReviseArray) {
+	var dailyTasks = convo.planEdit.dailyTasks;
+
+	var dailyTasksToRevise = [];
+	dailyTasks.forEach(function (dailyTask, index) {
+		var _dailyTask$dataValues = dailyTask.dataValues;
+		var priority = _dailyTask$dataValues.priority;
+		var type = _dailyTask$dataValues.type;
+		var done = _dailyTask$dataValues.Task.done;
+		// not already completed and is live
+
+		if (taskNumbersToReviseArray.indexOf(priority) > -1 && !done && type == "live") {
+			dailyTasksToRevise.push(dailyTask);
+		}
+	});
+
+	if (dailyTasksToRevise.length > 0) {
+
+		// add to complete array for planEdit
+		var dailyTaskIdsToRevise = dailyTasksToRevise.map(function (dailyTask) {
+			return dailyTask.dataValues.id;
+		});
+		convo.planEdit.dailyTaskIdsToDelete = dailyTaskIdsToRevise;
+
+		var dailyTaskTextsToRevise = dailyTasksToRevise.map(function (dailyTask) {
+			return dailyTask.dataValues.Task.text;
+		});
+		var dailyTasksToReviseString = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTextsToRevise);
+
+		convo.say({
+			text: 'Got it -- I removed `' + dailyTasksToReviseString + '` from your plan today'
+		});
+		addTasksFlow(convo);
+		convo.next();
+	} else {
+		convo.say("I couldn't find that priority to revise!");
+		reviseTasksFlow(convo);
+	}
+
+	convo.next();
+}
+
+function reviseTasksFlow(convo) {
+	var _convo$planEdit6 = convo.planEdit;
+	var bot = _convo$planEdit6.bot;
+	var dailyTasks = _convo$planEdit6.dailyTasks;
+	var changePlanCommand = _convo$planEdit6.changePlanCommand;
+	var changedPlanCommands = _convo$planEdit6.changedPlanCommands;
+
+	convo.planEdit.inFlow = true;
+
+	// say task list, then ask which ones to check off
+	var options = { onlyRemainingTasks: true, dontCalculateMinutes: true, noTitle: true, startPlan: true };
+
+	var baseMessage = '';
+
+	if (changedPlanCommands) {
+		baseMessage = 'Okay! Which priority above do you want to';
+	} else {
+		baseMessage = 'Which priority above do you want to';
+		sayTasksForToday(convo, options);
+	}
+
+	var wordSwapCount = 0;
+	var message = wordSwapMessage(baseMessage, "revise?", wordSwapCount);
+
+	convo.ask({
+		text: message,
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "TASK_REVISE",
+			fallback: "Which priority do you want to revise?",
+			actions: [{
+				name: _constants.buttonValues.neverMind.name,
+				text: 'Never mind!',
+				value: _constants.buttonValues.neverMind.value,
+				type: 'button'
+			}]
+		}]
+	}, [{
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+
+			convo.say("Got it :thumbsup: If you need to revise a priority, just let me know");
+			convo.planEdit.showUpdatedPlan = true;
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			var text = response.text;
+
+			if (response.actions && response.actions[0]) {
+				text = response.actions[0].value;
+			}
+
+			// if key word exists, we are stopping early and do the other flow!
+			if (_constants.constants.PLAN_DECISION.add.reg_exp.test(text) || _constants.constants.PLAN_DECISION.delete.reg_exp.test(text) || _constants.constants.PLAN_DECISION.work.reg_exp.test(text) || _constants.constants.PLAN_DECISION.revise.reg_exp.test(text)) {
+
+				changePlanCommand.decision = true;
+				changePlanCommand.text = text;
+			}
+
+			if (changePlanCommand.decision) {
+				convo.stop();
+				convo.next();
+			} else {
+
+				// otherwise do the expected, default decision!
+				var taskNumbersToReviseArray = (0, _messageHelpers.convertTaskNumberStringToArray)(text, dailyTasks);
+
+				if (_constants.constants.PLAN_DECISION.revise.reg_exp.test(text) && !taskNumbersToReviseArray) {
+
+					// if user tries completing task again, just update the text
+					wordSwapCount++;
+					var _text = wordSwapMessage(baseMessage, "revise?", wordSwapCount);
+					var convoAskQuestionUpdate = (0, _messageHelpers.getMostRecentMessageToUpdate)(response.channel, bot);
+					if (convoAskQuestionUpdate) {
+						convoAskQuestionUpdate.text = _text;
+						bot.api.chat.update(convoAskQuestionUpdate);
+					}
+				} else {
+
+					if (taskNumbersToReviseArray) {
+
+						// say task list, then ask which ones to complete
+						var _options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
+
+						singleLineReviseTask(convo, taskNumbersToReviseArray);
+					} else {
+						convo.say("Oops, I don't totally understand :dog:. Let's try this again");
+						convo.say("Please pick tasks from your remaining list like `tasks 1, 3 and 4` or say `never mind`");
+						convo.repeat();
+					}
+
+					convo.next();
+				}
+			}
+		}
+	}]);
+
+	convo.next();
+}
+
+/**
  * 		~~ COMPLETE TASKS ~~
  */
 
 // complete the tasks requested
 function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
-	var _convo$planEdit6 = convo.planEdit;
-	var dailyTasks = _convo$planEdit6.dailyTasks;
-	var dailyTaskIdsToComplete = _convo$planEdit6.dailyTaskIdsToComplete;
+	var _convo$planEdit7 = convo.planEdit;
+	var dailyTasks = _convo$planEdit7.dailyTasks;
+	var dailyTaskIdsToComplete = _convo$planEdit7.dailyTaskIdsToComplete;
 
 	var dailyTasksToComplete = [];
 	dailyTasks = dailyTasks.filter(function (dailyTask, index) {
-		var _dailyTask$dataValues = dailyTask.dataValues;
-		var priority = _dailyTask$dataValues.priority;
-		var type = _dailyTask$dataValues.type;
-		var done = _dailyTask$dataValues.Task.done;
+		var _dailyTask$dataValues2 = dailyTask.dataValues;
+		var priority = _dailyTask$dataValues2.priority;
+		var type = _dailyTask$dataValues2.type;
+		var done = _dailyTask$dataValues2.Task.done;
 
 		var stillNotCompleted = true;
 		// not already completed
@@ -345,7 +503,7 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 		convo.planEdit.showUpdatedPlan = true;
 		convo.next();
 	} else {
-		convo.say("I couldn't find that task to check off!");
+		convo.say("I couldn't find that priority to check off!");
 		completeTasksFlow(convo);
 	}
 
@@ -353,11 +511,11 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 }
 
 function completeTasksFlow(convo) {
-	var _convo$planEdit7 = convo.planEdit;
-	var bot = _convo$planEdit7.bot;
-	var dailyTasks = _convo$planEdit7.dailyTasks;
-	var changePlanCommand = _convo$planEdit7.changePlanCommand;
-	var changedPlanCommands = _convo$planEdit7.changedPlanCommands;
+	var _convo$planEdit8 = convo.planEdit;
+	var bot = _convo$planEdit8.bot;
+	var dailyTasks = _convo$planEdit8.dailyTasks;
+	var changePlanCommand = _convo$planEdit8.changePlanCommand;
+	var changedPlanCommands = _convo$planEdit8.changedPlanCommands;
 
 	convo.planEdit.inFlow = true;
 
@@ -407,7 +565,7 @@ function completeTasksFlow(convo) {
 			}
 
 			// if key word exists, we are stopping early and do the other flow!
-			if (_constants.constants.PLAN_DECISION.add.reg_exp.test(text) || _constants.constants.PLAN_DECISION.delete.reg_exp.test(text) || _constants.constants.PLAN_DECISION.work.reg_exp.test(text)) {
+			if (_constants.constants.PLAN_DECISION.add.reg_exp.test(text) || _constants.constants.PLAN_DECISION.delete.reg_exp.test(text) || _constants.constants.PLAN_DECISION.work.reg_exp.test(text) || _constants.constants.PLAN_DECISION.revise.reg_exp.test(text)) {
 
 				changePlanCommand.decision = true;
 				changePlanCommand.text = text;
@@ -425,10 +583,10 @@ function completeTasksFlow(convo) {
 
 					// if user tries completing task again, just update the text
 					wordSwapCount++;
-					var _text = wordSwapMessage(baseMessage, "complete?", wordSwapCount);
+					var _text2 = wordSwapMessage(baseMessage, "complete?", wordSwapCount);
 					var convoAskQuestionUpdate = (0, _messageHelpers.getMostRecentMessageToUpdate)(response.channel, bot);
 					if (convoAskQuestionUpdate) {
-						convoAskQuestionUpdate.text = _text;
+						convoAskQuestionUpdate.text = _text2;
 						bot.api.chat.update(convoAskQuestionUpdate);
 					}
 				} else {
@@ -436,7 +594,7 @@ function completeTasksFlow(convo) {
 					if (taskNumbersToCompleteArray) {
 
 						// say task list, then ask which ones to complete
-						var _options = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
+						var _options2 = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
 
 						singleLineCompleteTask(convo, taskNumbersToCompleteArray);
 					} else {
@@ -459,16 +617,16 @@ function completeTasksFlow(convo) {
  */
 
 function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
-	var _convo$planEdit8 = convo.planEdit;
-	var dailyTasks = _convo$planEdit8.dailyTasks;
-	var dailyTaskIdsToDelete = _convo$planEdit8.dailyTaskIdsToDelete;
+	var _convo$planEdit9 = convo.planEdit;
+	var dailyTasks = _convo$planEdit9.dailyTasks;
+	var dailyTaskIdsToDelete = _convo$planEdit9.dailyTaskIdsToDelete;
 
 	var dailyTasksToDelete = [];
 	dailyTasks = dailyTasks.filter(function (dailyTask, index) {
-		var _dailyTask$dataValues2 = dailyTask.dataValues;
-		var priority = _dailyTask$dataValues2.priority;
-		var type = _dailyTask$dataValues2.type;
-		var done = _dailyTask$dataValues2.Task.done;
+		var _dailyTask$dataValues3 = dailyTask.dataValues;
+		var priority = _dailyTask$dataValues3.priority;
+		var type = _dailyTask$dataValues3.type;
+		var done = _dailyTask$dataValues3.Task.done;
 
 		var stillNotDeleted = true;
 		// not already deleted
@@ -506,11 +664,11 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 }
 
 function deleteTasksFlow(convo) {
-	var _convo$planEdit9 = convo.planEdit;
-	var bot = _convo$planEdit9.bot;
-	var dailyTasks = _convo$planEdit9.dailyTasks;
-	var changePlanCommand = _convo$planEdit9.changePlanCommand;
-	var changedPlanCommands = _convo$planEdit9.changedPlanCommands;
+	var _convo$planEdit10 = convo.planEdit;
+	var bot = _convo$planEdit10.bot;
+	var dailyTasks = _convo$planEdit10.dailyTasks;
+	var changePlanCommand = _convo$planEdit10.changePlanCommand;
+	var changedPlanCommands = _convo$planEdit10.changedPlanCommands;
 
 	convo.planEdit.inFlow = true;
 
@@ -545,7 +703,7 @@ function deleteTasksFlow(convo) {
 	}, [{
 		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.say(":thumbsup: :punch: :runner:");
+			convo.say("Got it :thumbsup: Let me know if you still want to `delete a priority`");
 			convo.planEdit.showUpdatedPlan = true;
 			convo.next();
 		}
@@ -559,7 +717,7 @@ function deleteTasksFlow(convo) {
 			}
 
 			// if key word exists, we are stopping early and do the other flow!
-			if (_constants.constants.PLAN_DECISION.add.reg_exp.test(text) || _constants.constants.PLAN_DECISION.complete.reg_exp.test(text) || _constants.constants.PLAN_DECISION.work.reg_exp.test(text)) {
+			if (_constants.constants.PLAN_DECISION.add.reg_exp.test(text) || _constants.constants.PLAN_DECISION.complete.reg_exp.test(text) || _constants.constants.PLAN_DECISION.work.reg_exp.test(text) || _constants.constants.PLAN_DECISION.revise.reg_exp.test(text)) {
 
 				changePlanCommand.decision = true;
 				changePlanCommand.text = text;
@@ -577,10 +735,10 @@ function deleteTasksFlow(convo) {
 
 					// if user tries completing task again, just update the text
 					wordSwapCount++;
-					var _text2 = wordSwapMessage(baseMessage, "remove?", wordSwapCount);
+					var _text3 = wordSwapMessage(baseMessage, "remove?", wordSwapCount);
 					var convoAskQuestionUpdate = (0, _messageHelpers.getMostRecentMessageToUpdate)(response.channel, bot);
 					if (convoAskQuestionUpdate) {
-						convoAskQuestionUpdate.text = _text2;
+						convoAskQuestionUpdate.text = _text3;
 						bot.api.chat.update(convoAskQuestionUpdate);
 					}
 				} else {
@@ -608,12 +766,12 @@ function deleteTasksFlow(convo) {
 
 function addTasksFlow(convo) {
 	var source_message = convo.source_message;
-	var _convo$planEdit10 = convo.planEdit;
-	var bot = _convo$planEdit10.bot;
-	var dailyTasks = _convo$planEdit10.dailyTasks;
-	var newTasks = _convo$planEdit10.newTasks;
-	var actuallyWantToAddATask = _convo$planEdit10.actuallyWantToAddATask;
-	var changePlanCommand = _convo$planEdit10.changePlanCommand;
+	var _convo$planEdit11 = convo.planEdit;
+	var bot = _convo$planEdit11.bot;
+	var dailyTasks = _convo$planEdit11.dailyTasks;
+	var newTasks = _convo$planEdit11.newTasks;
+	var actuallyWantToAddATask = _convo$planEdit11.actuallyWantToAddATask;
+	var changePlanCommand = _convo$planEdit11.changePlanCommand;
 
 	// say task list, then ask for user to add tasks
 
@@ -665,14 +823,14 @@ function addTasksFlow(convo) {
 
 function addTimeToPriority(response, convo) {
 	var source_message = convo.source_message;
-	var _convo$planEdit11 = convo.planEdit;
-	var tz = _convo$planEdit11.tz;
-	var bot = _convo$planEdit11.bot;
-	var dailyTasks = _convo$planEdit11.dailyTasks;
-	var newTasks = _convo$planEdit11.newTasks;
-	var actuallyWantToAddATask = _convo$planEdit11.actuallyWantToAddATask;
-	var changePlanCommand = _convo$planEdit11.changePlanCommand;
-	var newPriority = _convo$planEdit11.newPriority;
+	var _convo$planEdit12 = convo.planEdit;
+	var tz = _convo$planEdit12.tz;
+	var bot = _convo$planEdit12.bot;
+	var dailyTasks = _convo$planEdit12.dailyTasks;
+	var newTasks = _convo$planEdit12.newTasks;
+	var actuallyWantToAddATask = _convo$planEdit12.actuallyWantToAddATask;
+	var changePlanCommand = _convo$planEdit12.changePlanCommand;
+	var newPriority = _convo$planEdit12.newPriority;
 
 
 	var newPriorityText = newPriority.text;
@@ -745,10 +903,10 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 	var dailyTasksToWorkOn = [];
 
 	dailyTasksToWorkOn = dailyTasks.filter(function (dailyTask, index) {
-		var _dailyTask$dataValues3 = dailyTask.dataValues;
-		var priority = _dailyTask$dataValues3.priority;
-		var type = _dailyTask$dataValues3.type;
-		var done = _dailyTask$dataValues3.Task.done;
+		var _dailyTask$dataValues4 = dailyTask.dataValues;
+		var priority = _dailyTask$dataValues4.priority;
+		var type = _dailyTask$dataValues4.type;
+		var done = _dailyTask$dataValues4.Task.done;
 
 		var workOnTask = false;
 		if (taskNumbersToWorkOnArray.indexOf(priority) > -1 && type == "live" && !done) {
@@ -772,7 +930,7 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 		convo.say(" ");
 		convo.next();
 	} else {
-		convo.say('I couldn\'t find that task to work on!');
+		convo.say('I couldn\'t find that priority to work on!');
 		workOnTasksFlow(convo);
 	}
 
@@ -781,13 +939,13 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 
 // work on which task flow
 function workOnTasksFlow(convo) {
-	var _convo$planEdit12 = convo.planEdit;
-	var bot = _convo$planEdit12.bot;
-	var dailyTasks = _convo$planEdit12.dailyTasks;
-	var changePlanCommand = _convo$planEdit12.changePlanCommand;
-	var changedPlanCommands = _convo$planEdit12.changedPlanCommands;
-	var openWorkSession = _convo$planEdit12.openWorkSession;
-	var currentSession = _convo$planEdit12.currentSession;
+	var _convo$planEdit13 = convo.planEdit;
+	var bot = _convo$planEdit13.bot;
+	var dailyTasks = _convo$planEdit13.dailyTasks;
+	var changePlanCommand = _convo$planEdit13.changePlanCommand;
+	var changedPlanCommands = _convo$planEdit13.changedPlanCommands;
+	var openWorkSession = _convo$planEdit13.openWorkSession;
+	var currentSession = _convo$planEdit13.currentSession;
 
 	// say task list, then ask which ones to complete
 
@@ -831,7 +989,7 @@ function workOnTasksFlow(convo) {
 				text = response.actions[0].value;
 			}
 
-			if (_constants.constants.PLAN_DECISION.add.reg_exp.test(text) || _constants.constants.PLAN_DECISION.complete.reg_exp.test(text) || _constants.constants.PLAN_DECISION.delete.reg_exp.test(text)) {
+			if (_constants.constants.PLAN_DECISION.add.reg_exp.test(text) || _constants.constants.PLAN_DECISION.complete.reg_exp.test(text) || _constants.constants.PLAN_DECISION.delete.reg_exp.test(text) || _constants.constants.PLAN_DECISION.revise.reg_exp.test(text)) {
 
 				// CHANGE COMMANDS
 
@@ -849,10 +1007,10 @@ function workOnTasksFlow(convo) {
 
 					// if user tries completing task again, just update the text
 					wordSwapCount++;
-					var _text3 = wordSwapMessage(baseMessage, wordSwap, wordSwapCount);
+					var _text4 = wordSwapMessage(baseMessage, wordSwap, wordSwapCount);
 					var convoAskQuestionUpdate = (0, _messageHelpers.getMostRecentMessageToUpdate)(response.channel, bot);
 					if (convoAskQuestionUpdate) {
-						convoAskQuestionUpdate.text = _text3;
+						convoAskQuestionUpdate.text = _text4;
 						bot.api.chat.update(convoAskQuestionUpdate);
 					}
 				} else {
@@ -862,7 +1020,7 @@ function workOnTasksFlow(convo) {
 					if (taskNumbersToWorkOnArray) {
 
 						// say task list, then ask which ones to complete
-						var _options2 = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
+						var _options3 = { dontUseDataValues: true, onlyRemainingTasks: true, endOfPlan: true };
 
 						singleLineWorkOnTask(convo, taskNumbersToWorkOnArray);
 					} else {
@@ -883,11 +1041,11 @@ function workOnTasksFlow(convo) {
  */
 
 function getTimeToTasks(response, convo) {
-	var _convo$planEdit13 = convo.planEdit;
-	var bot = _convo$planEdit13.bot;
-	var dailyTasks = _convo$planEdit13.dailyTasks;
-	var newTasks = _convo$planEdit13.newTasks;
-	var tz = _convo$planEdit13.tz;
+	var _convo$planEdit14 = convo.planEdit;
+	var bot = _convo$planEdit14.bot;
+	var dailyTasks = _convo$planEdit14.dailyTasks;
+	var newTasks = _convo$planEdit14.newTasks;
+	var tz = _convo$planEdit14.tz;
 
 	var options = { dontShowMinutes: true, dontCalculateMinutes: true, noKarets: true };
 
@@ -932,8 +1090,8 @@ function getTimeToTasks(response, convo) {
 				timeToTasksArray.pop();
 				taskArray = (0, _miscHelpers.mapTimeToTaskArray)(taskArray, timeToTasksArray);
 
-				var _options3 = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
-				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, _options3);
+				var _options4 = { dontUseDataValues: true, emphasizeMinutes: true, noKarets: true };
+				taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(taskArray, _options4);
 
 				attachments = (0, _messageHelpers.getTimeToTaskTextAttachmentWithTaskListMessage)(taskTextsArray, timeToTasksArray.length, taskListMessage);
 
@@ -1043,9 +1201,9 @@ function getTimeToTasks(response, convo) {
 function saveNewTaskResponses(tasksToAdd, convo) {
 
 	// get the newTasks!
-	var _convo$planEdit14 = convo.planEdit;
-	var dailyTasks = _convo$planEdit14.dailyTasks;
-	var newTasks = _convo$planEdit14.newTasks;
+	var _convo$planEdit15 = convo.planEdit;
+	var dailyTasks = _convo$planEdit15.dailyTasks;
+	var newTasks = _convo$planEdit15.newTasks;
 
 
 	if (tasksToAdd) {
@@ -1075,10 +1233,10 @@ function saveNewTaskResponses(tasksToAdd, convo) {
 
 // used for both edit time to tasks, as well as add new tasks!!
 function confirmTimeToTasks(convo) {
-	var _convo$planEdit15 = convo.planEdit;
-	var dailyTasks = _convo$planEdit15.dailyTasks;
-	var dailyTasksToUpdate = _convo$planEdit15.dailyTasksToUpdate;
-	var newTasks = _convo$planEdit15.newTasks;
+	var _convo$planEdit16 = convo.planEdit;
+	var dailyTasks = _convo$planEdit16.dailyTasks;
+	var dailyTasksToUpdate = _convo$planEdit16.dailyTasksToUpdate;
+	var newTasks = _convo$planEdit16.newTasks;
 
 
 	convo.ask("Are those times right?", [{
@@ -1120,9 +1278,9 @@ function confirmTimeToTasks(convo) {
 
 function addNewTasksToTaskList(response, convo) {
 	// combine the newTasks with dailyTasks
-	var _convo$planEdit16 = convo.planEdit;
-	var dailyTasks = _convo$planEdit16.dailyTasks;
-	var newTasks = _convo$planEdit16.newTasks;
+	var _convo$planEdit17 = convo.planEdit;
+	var dailyTasks = _convo$planEdit17.dailyTasks;
+	var newTasks = _convo$planEdit17.newTasks;
 
 
 	var taskArray = [];
