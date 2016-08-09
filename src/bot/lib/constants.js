@@ -34,7 +34,7 @@ export const constants = {
 		},
 		delete: {
 			word: "TASK_DELETE",
-			reg_exp: new RegExp(/\bdel[elete]{3,}\b/i)
+			reg_exp: new RegExp(/\b(del[elete]{2,8}|rem[move]{2,6})\b/i)
 		},
 		edit: {
 			word: "TASK_EDIT",
