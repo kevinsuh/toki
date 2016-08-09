@@ -376,6 +376,10 @@ function createTaskListMessageBody(taskArray, options) {
  * @return {string}         hour + minutes
  */
 function convertMinutesToHoursString(minutes) {
+	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var abbreviation = config.abbreviation;
+
+
 	minutes = Math.round(minutes);
 	var hours = 0;
 	while (minutes - 60 >= 0) {
@@ -386,19 +390,17 @@ function convertMinutesToHoursString(minutes) {
 	if (hours == 0) {
 		content = '';
 	} else if (hours == 1) {
-		content = hours + ' hour ';
+		content = abbreviation ? hours + ' hr ' : hours + ' hour ';
 	} else {
-		content = hours + ' hours ';
+		content = abbreviation ? hours + ' hrs ' : hours + ' hours ';
 	}
 
 	if (minutes == 0) {
 		content = content.slice(0, -1);
-	}
-
-	if (minutes == 1) {
-		content = '' + content + minutes + ' minute';
+	} else if (minutes == 1) {
+		content = abbreviation ? '' + content + minutes + ' min' : '' + content + minutes + ' minute';
 	} else {
-		content = '' + content + minutes + ' minutes';
+		content = abbreviation ? '' + content + minutes + ' min' : '' + content + minutes + ' minutes';
 	}
 
 	return content;
@@ -1096,9 +1098,10 @@ function getMinutesSuggestionAttachments(minutesRemaining) {
 	}];
 
 	minutesSuggestions.forEach(function (minutesSuggestion) {
+		var timeSuggestionString = convertMinutesToHoursString(minutesSuggestion, { abbreviation: true });
 		var action = {
 			name: _constants.buttonValues.startNow.name,
-			text: minutesSuggestion + ' minutes',
+			text: '' + timeSuggestionString,
 			value: minutesSuggestion + ' minutes',
 			type: "button"
 		};

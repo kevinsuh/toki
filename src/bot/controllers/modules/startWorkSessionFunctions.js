@@ -98,17 +98,18 @@ export function finalizeTimeAndTasksToStart(convo) {
 
 		const { minutes, minutesSpent } = dailyTask.dataValues;
 		let minutesRemaining            = minutes - minutesSpent;
+		let timeRemainingString         = convertMinutesToHoursString(minutesRemaining);
 
 		if (minutesRemaining > 0) {
 
 			if (minutesSpent == 0) {
 				// new flow!
 				convo.say(`Let’s crank on ${taskText} with a focused session :wrench:`);
-				question = `How long would you like to focus on ${taskText} for? You have *${minutesRemaining} minutes* set aside for this today`;
+				question = `How long would you like to focus on ${taskText} for? You have *${timeRemainingString}* set aside for this today`;
 			} else {
 				// new flow!
 				convo.say(`Let’s keep cranking on ${taskText} with a focused session :wrench:`);
-				question = `How long would you like to focus on ${taskText} for? You still have *${minutesRemaining} minutes* set aside for this today`;
+				question = `How long would you like to focus on ${taskText} for? You still have *${timeRemainingString}* set aside for this today`;
 			}
 			
 			let attachments = getMinutesSuggestionAttachments(minutesRemaining);

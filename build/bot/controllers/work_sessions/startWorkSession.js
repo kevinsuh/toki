@@ -39,29 +39,35 @@ exports.default = function (controller) {
 			type: "typing",
 			channel: message.channel
 		});
-		setTimeout(function () {
-			_models2.default.User.find({
-				where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
-				include: [_models2.default.SlackUser]
-			}).then(function (user) {
 
-				var name = user.nickName || user.email;
+		var taskNumbers = (0, _messageHelpers.convertStringToNumbersArray)(text);
+		if (taskNumbers) {
+			config.taskNumbers = taskNumbers;
+			controller.trigger('edit_plan_flow', [bot, config]);
+		} else {
+			setTimeout(function () {
+				_models2.default.User.find({
+					where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+					include: [_models2.default.SlackUser]
+				}).then(function (user) {
 
-				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-					if (sessionIntent == 'is_back') {
-						convo.say('Welcome back, ' + name + '!');
-					} else {
-						convo.say(" ");
-					}
-					convo.next();
-					convo.on('end', function (convo) {
-						// new session we'll automatically send to begin_session now
-						controller.trigger('begin_session', [bot, config]);
-						// controller.trigger(`plan_command_center`, [ bot, config ]);
+					var name = user.nickName || user.email;
+
+					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+						if (sessionIntent == 'is_back') {
+							convo.say('Welcome back, ' + name + '!');
+						} else {
+							convo.say(" ");
+						}
+						convo.next();
+						convo.on('end', function (convo) {
+							// new session we'll automatically send to begin_session now
+							controller.trigger('begin_session', [bot, config]);
+						});
 					});
 				});
-			});
-		}, 750);
+			}, 750);
+		}
 	});
 
 	/**

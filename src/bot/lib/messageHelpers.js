@@ -346,7 +346,10 @@ function createTaskListMessageBody(taskArray, options) {
  * @param  {int} minutes number of minutes
  * @return {string}         hour + minutes
  */
-export function convertMinutesToHoursString(minutes) {
+export function convertMinutesToHoursString(minutes, config = {}) {
+
+	const { abbreviation } = config;
+
 	minutes = Math.round(minutes);
 	var hours = 0;
 	while (minutes - 60 >= 0) {
@@ -357,19 +360,17 @@ export function convertMinutesToHoursString(minutes) {
 	if (hours == 0) {
 		content = ``;
 	} else if (hours == 1) {
-		content = `${hours} hour `;
+		content = abbreviation ? `${hours} hr ` : `${hours} hour `;
 	} else {
-		content = `${hours} hours `;
+		content = abbreviation ? `${hours} hrs ` : `${hours} hours `;
 	}
 
 	if (minutes == 0) {
 		content = content.slice(0, -1);
-	}
-
-	if (minutes == 1) {
-		content = `${content}${minutes} minute`;
+	} else if (minutes == 1) {
+		content = abbreviation ? `${content}${minutes} min` : `${content}${minutes} minute`;
 	} else {
-		content = `${content}${minutes} minutes`;
+		content = abbreviation ? `${content}${minutes} min` : `${content}${minutes} minutes`;
 	}
 
 	return content;
@@ -1079,9 +1080,10 @@ export function getMinutesSuggestionAttachments(minutesRemaining) {
 	];
 
 	minutesSuggestions.forEach((minutesSuggestion) => {
+		let timeSuggestionString = convertMinutesToHoursString(minutesSuggestion, { abbreviation: true });
 		let action = {
 			name: buttonValues.startNow.name,
-			text: `${minutesSuggestion} minutes`,
+			text: `${timeSuggestionString}`,
 			value: `${minutesSuggestion} minutes`,
 			type: "button"
 		}
