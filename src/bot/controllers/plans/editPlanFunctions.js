@@ -190,7 +190,7 @@ function sayEndOfPlanMessage(convo) {
 
 		let workSessionMessage = '';
 		if (openWorkSession && currentSession) {
-			
+
 			let { minutes, minutesString, sessionTasks, endTimeString, storedWorkSession } = currentSession;
 			let attachments = startSessionOptionsAttachments;
 			if (storedWorkSession) {
@@ -206,6 +206,7 @@ function sayEndOfPlanMessage(convo) {
 				text: workSessionMessage,
 				attachments
 			});
+			
 		}
 
 	}
@@ -773,6 +774,7 @@ function addTasksFlow(convo) {
 	// cannot add more than 3 priorities for the day!
 	if (dailyTasks.length >= 3) {
 		convo.say(`You can only have 3 priorities for the day! This is to make sure you don't overload your todo's, and instead focus on getting the most important things done each day. You can revise or remove one of your priorities if they aren't critical anymore`);
+		convo.planEdit.showUpdatedPlan = true;
 		convo.next();
 	} else {
 		convo.ask({
