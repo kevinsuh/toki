@@ -72,5 +72,5 @@ var utterances = exports.utterances = (_utterances = {
 	containsNoOne: new RegExp(/\b(no one)\b/i),
 	somethingElse: new RegExp(/\bsome[omething]{3,}\b.*\bel[lse]{2,}\b/i),
 	containsEnough: new RegExp(/\beno[ough]{3,}\b/i)
-}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _utterances);
+}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _utterances);
 //# sourceMappingURL=botResponses.js.map

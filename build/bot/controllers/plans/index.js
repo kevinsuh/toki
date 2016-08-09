@@ -360,7 +360,7 @@ exports.default = function (controller) {
 							SlackUserId: SlackUserId,
 							dailyTasks: dailyTasks,
 							updateTaskListMessageObject: {},
-							newTasks: [],
+							newPriority: false,
 							dailyTaskIdsToDelete: [],
 							dailyTaskIdsToComplete: [],
 							dailyTasksToUpdate: [], // existing dailyTasks
@@ -384,7 +384,7 @@ exports.default = function (controller) {
 
 						convo.on('end', function (convo) {
 							var _convo$planEdit = convo.planEdit;
-							var newTasks = _convo$planEdit.newTasks;
+							var newPriority = _convo$planEdit.newPriority;
 							var dailyTasks = _convo$planEdit.dailyTasks;
 							var SlackUserId = _convo$planEdit.SlackUserId;
 							var dailyTaskIdsToDelete = _convo$planEdit.dailyTaskIdsToDelete;
@@ -394,6 +394,7 @@ exports.default = function (controller) {
 							var dailyTasksToWorkOn = _convo$planEdit.dailyTasksToWorkOn;
 							var changePlanCommand = _convo$planEdit.changePlanCommand;
 							var currentSession = _convo$planEdit.currentSession;
+							var showUpdatedPlan = _convo$planEdit.showUpdatedPlan;
 
 
 							console.log("\n\n\n at end of convo planEdit");
@@ -421,37 +422,27 @@ exports.default = function (controller) {
 								return;
 							}
 
-							/*
-       // add new tasks if they got added
-       if (newTasks.length > 0) {
-       	var priority = dailyTasks.length;
-       	// add the priorities
-       	newTasks = newTasks.map((newTask) => {
-       		priority++;
-       		return {
-       			...newTask,
-       			priority
-       		};
-       	});
-       		newTasks.forEach((newTask) => {
-       		const { minutes, text, priority } = newTask;
-       		if (minutes && text) {
-       			models.Task.create({
-       				text
-       			})
-       			.then((task) => {
-       				const TaskId = task.id;
-       				models.DailyTask.create({
-       					TaskId,
-       					priority,
-       					minutes,
-       					UserId
-       				});
-       			});
-       		}
-       	})
-       }
-       */
+							if (newPriority) {
+								(function () {
+									var text = newPriority.text;
+									var minutes = newPriority.minutes;
+
+									_models2.default.Task.create({
+										text: text
+									}).then(function (task) {
+										var TaskId = task.id;
+										var priority = dailyTasks.length + 1;
+										_models2.default.DailyTask.create({
+											TaskId: TaskId,
+											priority: priority,
+											minutes: minutes,
+											UserId: UserId
+										}).then(function () {
+											(0, _miscHelpers.prioritizeDailyTasks)(user);
+										});
+									});
+								})();
+							}
 
 							// delete tasks if requested
 							if (dailyTaskIdsToDelete.length > 0) {
@@ -479,6 +470,22 @@ exports.default = function (controller) {
 										where: ['"Tasks"."id" in (?)', completedTaskIds]
 									});
 								});
+							}
+
+							// RE-SHOW PLAN
+							if (showUpdatedPlan) {
+
+								if (message && message.channel) {
+									bot.send({
+										type: "typing",
+										channel: message.channel
+									});
+								}
+
+								setTimeout(function () {
+									var config = { SlackUserId: SlackUserId };
+									controller.trigger('plan_command_center', [bot, config]);
+								}, 750);
 							}
 
 							/*

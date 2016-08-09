@@ -5,7 +5,7 @@ import models from '../../../app/models';
 
 import { utterances } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertStringToNumbersArray, commaSeparateOutTaskArray } from '../../lib/messageHelpers';
-import { getCurrentDaySplit, closeOldRemindersAndSessions } from '../../lib/miscHelpers';
+import { getCurrentDaySplit, closeOldRemindersAndSessions, prioritizeDailyTasks } from '../../lib/miscHelpers';
 import { constants, dateOfNewPlanDayFlow } from '../../lib/constants';
 
 import { startNewPlanFlow } from '../modules/plan';
@@ -371,7 +371,7 @@ export default function(controller) {
 							SlackUserId,
 							dailyTasks,
 							updateTaskListMessageObject: {},
-							newTasks: [],
+							newPriority: false,
 							dailyTaskIdsToDelete: [],
 							dailyTaskIdsToComplete: [],
 							dailyTasksToUpdate: [], // existing dailyTasks
@@ -396,7 +396,7 @@ export default function(controller) {
 						
 						convo.on('end', (convo) => {
 							
-							var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate, startSession, dailyTasksToWorkOn, changePlanCommand, currentSession } = convo.planEdit;
+							var { newPriority, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate, startSession, dailyTasksToWorkOn, changePlanCommand, currentSession, showUpdatedPlan } = convo.planEdit;
 
 							console.log("\n\n\n at end of convo planEdit")
 							console.log(convo.planEdit);
@@ -424,38 +424,25 @@ export default function(controller) {
 
 							}
 
-							/*
-							// add new tasks if they got added
-							if (newTasks.length > 0) {
-								var priority = dailyTasks.length;
-								// add the priorities
-								newTasks = newTasks.map((newTask) => {
-									priority++;
-									return {
-										...newTask,
-										priority
-									};
-								});
-
-								newTasks.forEach((newTask) => {
-									const { minutes, text, priority } = newTask;
-									if (minutes && text) {
-										models.Task.create({
-											text
-										})
-										.then((task) => {
-											const TaskId = task.id;
-											models.DailyTask.create({
-												TaskId,
-												priority,
-												minutes,
-												UserId
-											});
-										});
-									}
+							if (newPriority) {
+								const { text, minutes } = newPriority;
+								models.Task.create({
+									text
+								})
+								.then((task) => {
+									const TaskId = task.id;
+									const priority = dailyTasks.length + 1;
+									models.DailyTask.create({
+										TaskId,
+										priority,
+										minutes,
+										UserId
+									})
+									.then(() => {
+										prioritizeDailyTasks(user);
+									})
 								})
 							}
-							*/
 
 							// delete tasks if requested
 							if (dailyTaskIdsToDelete.length > 0) {
@@ -484,6 +471,23 @@ export default function(controller) {
 										where: [`"Tasks"."id" in (?)`, completedTaskIds]
 									})
 								})
+							}
+
+							// RE-SHOW PLAN
+							if (showUpdatedPlan) {
+
+								if (message && message.channel) {
+									bot.send({
+										type: "typing",
+										channel: message.channel
+									});
+								}
+
+								setTimeout(() => {
+									const config = { SlackUserId };
+									controller.trigger(`plan_command_center`, [ bot, config ]);
+								}, 750);
+
 							}
 
 							/*

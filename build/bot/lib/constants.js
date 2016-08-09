@@ -431,6 +431,14 @@ var buttonValues = exports.buttonValues = {
 		endDay: {
 			name: "PLAN_END_DAY",
 			value: "end my day"
+		},
+		actuallyDontWantToAddPriority: {
+			name: "PLAN_DONT_WANT_TO_ADD_PRIORITY",
+			value: "Never mind, I don't want to add another priority"
+		},
+		actuallyLetsRenamePriority: {
+			name: "PLAN_LETS_RENAME_PRIORITY",
+			value: "Actually, let's rename this priority"
 		}
 	},
 	redoTasks: {
