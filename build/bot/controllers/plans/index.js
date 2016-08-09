@@ -414,7 +414,6 @@ exports.default = function (controller) {
 							var changePlanCommand = _convo$planEdit.changePlanCommand;
 							var currentSession = _convo$planEdit.currentSession;
 							var showUpdatedPlan = _convo$planEdit.showUpdatedPlan;
-							var endPlan = _convo$planEdit.endPlan;
 
 							// this means we are changing the plan!
 
@@ -489,25 +488,18 @@ exports.default = function (controller) {
 								});
 							}
 
-							if (showUpdatedPlan || endPlan) {
-								if (message && message.channel) {
-									bot.send({
-										type: "typing",
-										channel: message.channel
-									});
-								}
-
-								setTimeout(function () {
-
-									var config = { SlackUserId: SlackUserId };
-
-									if (showUpdatedPlan) {
-										controller.trigger('plan_command_center', [bot, config]);
-									} else if (endPlan) {
-										controller.trigger('end_plan_flow', [bot, config]);
-									}
-								}, 750);
+							if (message && message.channel) {
+								bot.send({
+									type: "typing",
+									channel: message.channel
+								});
 							}
+
+							setTimeout(function () {
+
+								var config = { SlackUserId: SlackUserId, bot: bot, controller: controller, showUpdatedPlan: showUpdatedPlan };
+								(0, _editPlanFunctions.endOfPlanMessage)(config);
+							}, 750);
 						});
 					});
 				});

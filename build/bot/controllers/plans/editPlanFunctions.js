@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 exports.startEditPlanConversation = startEditPlanConversation;
+exports.endOfPlanMessage = endOfPlanMessage;
 
 var _os = require('os');
 
@@ -200,59 +201,15 @@ function getRemainingTasks(fullTaskArray, newTasks) {
 	return remainingTasks;
 }
 
-function sayEndOfPlanMessage(convo) {
-	var _convo$planEdit3 = convo.planEdit;
-	var openWorkSession = _convo$planEdit3.openWorkSession;
-	var currentSession = _convo$planEdit3.currentSession;
-	var dailyTasks = _convo$planEdit3.dailyTasks;
-	var newTasks = _convo$planEdit3.newTasks;
-
-
-	var remainingTasks = getRemainingTasks(dailyTasks, newTasks);
-
-	if (remainingTasks.length == 0) {
-
-		convo.say('You have no remaining priorities for today!');
-		// kick it to end_day!
-		convo.planEdit.endPlan = true;
-		convo.next();
-	} else {
-
-		var workSessionMessage = '';
-		if (openWorkSession && currentSession) {
-			var minutes = currentSession.minutes;
-			var minutesString = currentSession.minutesString;
-			var sessionTasks = currentSession.sessionTasks;
-			var endTimeString = currentSession.endTimeString;
-			var storedWorkSession = currentSession.storedWorkSession;
-
-			var attachments = _constants.startSessionOptionsAttachments;
-			if (storedWorkSession) {
-				// currently paused
-				minutes = storedWorkSession.dataValues.minutes;
-				minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
-				workSessionMessage = 'Your session is still paused :double_vertical_bar:. ';
-				attachments = _constants.pausedSessionOptionsAttachments;
-			}
-
-			workSessionMessage = workSessionMessage + ':weight_lifter: You have ' + minutesString + ' remaining in your session for `' + sessionTasks + '` :weight_lifter:';
-			convo.say({
-				text: workSessionMessage,
-				attachments: attachments
-			});
-		}
-	}
-}
-
 function sayTasksForToday(convo) {
 	var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
 
 	// different options for 1-2 priorities vs 3 priorities
 
-	var _convo$planEdit4 = convo.planEdit;
-	var dailyTasks = _convo$planEdit4.dailyTasks;
-	var newTasks = _convo$planEdit4.newTasks;
+	var _convo$planEdit3 = convo.planEdit;
+	var dailyTasks = _convo$planEdit3.dailyTasks;
+	var newTasks = _convo$planEdit3.newTasks;
 
 	var remainingTasks = getRemainingTasks(dailyTasks, newTasks);
 
@@ -288,8 +245,6 @@ function sayTasksForToday(convo) {
 		text: taskListMessage,
 		attachments: attachments
 	});
-
-	sayEndOfPlanMessage(convo);
 }
 
 function wordSwapMessage(baseMessage, word, wordSwapCount) {
@@ -305,11 +260,11 @@ function wordSwapMessage(baseMessage, word, wordSwapCount) {
  */
 
 function viewTasksFlow(convo) {
-	var _convo$planEdit5 = convo.planEdit;
-	var bot = _convo$planEdit5.bot;
-	var dailyTasks = _convo$planEdit5.dailyTasks;
-	var changePlanCommand = _convo$planEdit5.changePlanCommand;
-	var changedPlanCommands = _convo$planEdit5.changedPlanCommands;
+	var _convo$planEdit4 = convo.planEdit;
+	var bot = _convo$planEdit4.bot;
+	var dailyTasks = _convo$planEdit4.dailyTasks;
+	var changePlanCommand = _convo$planEdit4.changePlanCommand;
+	var changedPlanCommands = _convo$planEdit4.changedPlanCommands;
 
 	// say task list, then ask which ones to complete
 
@@ -365,11 +320,11 @@ function singleLineReviseTask(convo, taskNumbersToReviseArray) {
 }
 
 function reviseTasksFlow(convo) {
-	var _convo$planEdit6 = convo.planEdit;
-	var bot = _convo$planEdit6.bot;
-	var dailyTasks = _convo$planEdit6.dailyTasks;
-	var changePlanCommand = _convo$planEdit6.changePlanCommand;
-	var changedPlanCommands = _convo$planEdit6.changedPlanCommands;
+	var _convo$planEdit5 = convo.planEdit;
+	var bot = _convo$planEdit5.bot;
+	var dailyTasks = _convo$planEdit5.dailyTasks;
+	var changePlanCommand = _convo$planEdit5.changePlanCommand;
+	var changedPlanCommands = _convo$planEdit5.changedPlanCommands;
 
 	convo.planEdit.inFlow = true;
 
@@ -472,9 +427,9 @@ function reviseTasksFlow(convo) {
 
 // complete the tasks requested
 function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
-	var _convo$planEdit7 = convo.planEdit;
-	var dailyTasks = _convo$planEdit7.dailyTasks;
-	var dailyTaskIdsToComplete = _convo$planEdit7.dailyTaskIdsToComplete;
+	var _convo$planEdit6 = convo.planEdit;
+	var dailyTasks = _convo$planEdit6.dailyTasks;
+	var dailyTaskIdsToComplete = _convo$planEdit6.dailyTaskIdsToComplete;
 
 	var dailyTasksToComplete = [];
 	dailyTasks = dailyTasks.filter(function (dailyTask, index) {
@@ -520,11 +475,11 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 }
 
 function completeTasksFlow(convo) {
-	var _convo$planEdit8 = convo.planEdit;
-	var bot = _convo$planEdit8.bot;
-	var dailyTasks = _convo$planEdit8.dailyTasks;
-	var changePlanCommand = _convo$planEdit8.changePlanCommand;
-	var changedPlanCommands = _convo$planEdit8.changedPlanCommands;
+	var _convo$planEdit7 = convo.planEdit;
+	var bot = _convo$planEdit7.bot;
+	var dailyTasks = _convo$planEdit7.dailyTasks;
+	var changePlanCommand = _convo$planEdit7.changePlanCommand;
+	var changedPlanCommands = _convo$planEdit7.changedPlanCommands;
 
 	convo.planEdit.inFlow = true;
 
@@ -626,9 +581,9 @@ function completeTasksFlow(convo) {
  */
 
 function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
-	var _convo$planEdit9 = convo.planEdit;
-	var dailyTasks = _convo$planEdit9.dailyTasks;
-	var dailyTaskIdsToDelete = _convo$planEdit9.dailyTaskIdsToDelete;
+	var _convo$planEdit8 = convo.planEdit;
+	var dailyTasks = _convo$planEdit8.dailyTasks;
+	var dailyTaskIdsToDelete = _convo$planEdit8.dailyTaskIdsToDelete;
 
 	var dailyTasksToDelete = [];
 	dailyTasks = dailyTasks.filter(function (dailyTask, index) {
@@ -673,11 +628,11 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 }
 
 function deleteTasksFlow(convo) {
-	var _convo$planEdit10 = convo.planEdit;
-	var bot = _convo$planEdit10.bot;
-	var dailyTasks = _convo$planEdit10.dailyTasks;
-	var changePlanCommand = _convo$planEdit10.changePlanCommand;
-	var changedPlanCommands = _convo$planEdit10.changedPlanCommands;
+	var _convo$planEdit9 = convo.planEdit;
+	var bot = _convo$planEdit9.bot;
+	var dailyTasks = _convo$planEdit9.dailyTasks;
+	var changePlanCommand = _convo$planEdit9.changePlanCommand;
+	var changedPlanCommands = _convo$planEdit9.changedPlanCommands;
 
 	convo.planEdit.inFlow = true;
 
@@ -775,12 +730,12 @@ function deleteTasksFlow(convo) {
 
 function addTasksFlow(convo) {
 	var source_message = convo.source_message;
-	var _convo$planEdit11 = convo.planEdit;
-	var bot = _convo$planEdit11.bot;
-	var dailyTasks = _convo$planEdit11.dailyTasks;
-	var newTasks = _convo$planEdit11.newTasks;
-	var actuallyWantToAddATask = _convo$planEdit11.actuallyWantToAddATask;
-	var changePlanCommand = _convo$planEdit11.changePlanCommand;
+	var _convo$planEdit10 = convo.planEdit;
+	var bot = _convo$planEdit10.bot;
+	var dailyTasks = _convo$planEdit10.dailyTasks;
+	var newTasks = _convo$planEdit10.newTasks;
+	var actuallyWantToAddATask = _convo$planEdit10.actuallyWantToAddATask;
+	var changePlanCommand = _convo$planEdit10.changePlanCommand;
 
 	// say task list, then ask for user to add tasks
 
@@ -833,14 +788,14 @@ function addTasksFlow(convo) {
 
 function addTimeToPriority(response, convo) {
 	var source_message = convo.source_message;
-	var _convo$planEdit12 = convo.planEdit;
-	var tz = _convo$planEdit12.tz;
-	var bot = _convo$planEdit12.bot;
-	var dailyTasks = _convo$planEdit12.dailyTasks;
-	var newTasks = _convo$planEdit12.newTasks;
-	var actuallyWantToAddATask = _convo$planEdit12.actuallyWantToAddATask;
-	var changePlanCommand = _convo$planEdit12.changePlanCommand;
-	var newPriority = _convo$planEdit12.newPriority;
+	var _convo$planEdit11 = convo.planEdit;
+	var tz = _convo$planEdit11.tz;
+	var bot = _convo$planEdit11.bot;
+	var dailyTasks = _convo$planEdit11.dailyTasks;
+	var newTasks = _convo$planEdit11.newTasks;
+	var actuallyWantToAddATask = _convo$planEdit11.actuallyWantToAddATask;
+	var changePlanCommand = _convo$planEdit11.changePlanCommand;
+	var newPriority = _convo$planEdit11.newPriority;
 
 
 	var newPriorityText = newPriority.text;
@@ -949,13 +904,13 @@ function singleLineWorkOnTask(convo, taskNumbersToWorkOnArray) {
 
 // work on which task flow
 function workOnTasksFlow(convo) {
-	var _convo$planEdit13 = convo.planEdit;
-	var bot = _convo$planEdit13.bot;
-	var dailyTasks = _convo$planEdit13.dailyTasks;
-	var changePlanCommand = _convo$planEdit13.changePlanCommand;
-	var changedPlanCommands = _convo$planEdit13.changedPlanCommands;
-	var openWorkSession = _convo$planEdit13.openWorkSession;
-	var currentSession = _convo$planEdit13.currentSession;
+	var _convo$planEdit12 = convo.planEdit;
+	var bot = _convo$planEdit12.bot;
+	var dailyTasks = _convo$planEdit12.dailyTasks;
+	var changePlanCommand = _convo$planEdit12.changePlanCommand;
+	var changedPlanCommands = _convo$planEdit12.changedPlanCommands;
+	var openWorkSession = _convo$planEdit12.openWorkSession;
+	var currentSession = _convo$planEdit12.currentSession;
 
 	// say task list, then ask which ones to complete
 
@@ -1046,16 +1001,173 @@ function workOnTasksFlow(convo) {
 	convo.next();
 }
 
+// updated endOfPlan message with the appropriate context
+function endOfPlanMessage(config) {
+	var controller = config.controller;
+	var bot = config.bot;
+	var SlackUserId = config.SlackUserId;
+	var showUpdatedPlan = config.showUpdatedPlan;
+
+	var now = (0, _moment2.default)();
+
+	/**
+  * 		This will check for open work sessions
+  */
+	_models2.default.User.find({
+		where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+		include: [_models2.default.SlackUser]
+	}).then(function (user) {
+
+		var UserId = user.id;
+		var tz = user.SlackUser.tz;
+
+
+		user.getDailyTasks({
+			where: ['"DailyTask"."type" = ? AND "Task"."done" = ?', "live", false],
+			include: [_models2.default.Task]
+		}).then(function (dailyTasks) {
+
+			user.getWorkSessions({
+				where: ['"open" = ?', true]
+			}).then(function (workSessions) {
+
+				if (workSessions.length > 0) {
+					(function () {
+
+						// you are currently in an open session!
+
+						var workSession = workSessions[0];
+
+						var now = (0, _moment2.default)();
+						var endTime = (0, _moment2.default)(workSession.dataValues.endTime);
+						var minutesRemaining = Math.round(_moment2.default.duration(endTime.diff(now)).asMinutes());
+						var timeRemainingString = (0, _messageHelpers.convertMinutesToHoursString)(minutesRemaining);
+
+						workSession.getDailyTasks({
+							include: [_models2.default.Task]
+						}).then(function (dailyTasks) {
+
+							var dailyTask = dailyTasks[0]; // one task per session
+
+							if (dailyTask) {
+								(function () {
+									var taskString = dailyTask.Task.text;
+
+									if (dailyTask.type == "live" && !dailyTask.Task.done) {
+										// still a live, uncompleted task! send either paused or resumed session message
+										workSession.getStoredWorkSession({
+											where: ['"StoredWorkSession"."live" = ?', true]
+										}).then(function (storedWorkSession) {
+
+											var attachments = _constants.startSessionOptionsAttachments;
+											var workSessionMessage = '';
+
+											if (storedWorkSession) {
+												// handle if currently paused
+												minutesRemaining = storedWorkSession.dataValues.minutes;
+												timeRemainingString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+												workSessionMessage = 'Your session is still paused :double_vertical_bar:. ';
+												attachments = _constants.pausedSessionOptionsAttachments;
+											}
+
+											bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+												workSessionMessage = workSessionMessage + ':weight_lifter: You have ' + timeRemainingString + ' remaining in your session for `' + taskString + '` :weight_lifter:';
+												convo.say({
+													text: workSessionMessage,
+													attachments: attachments
+												});
+												convo.next();
+
+												convo.on('end', function (convo) {
+													(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+												});
+											});
+										});
+									} else {
+
+										// completed or removed the priority for your current session!
+										if (now < endTime) endTime = now;
+
+										workSession.update({
+											open: false,
+											endTime: endTime
+										}).then(function (workSession) {
+
+											var WorkSessionId = workSession.id;
+											var startTime = (0, _moment2.default)(workSession.dataValues.startTime).tz(tz);
+											var endTime = (0, _moment2.default)(workSession.dataValues.endTime).tz(tz);
+											var endTimeString = endTime.format("h:mm a");
+											var workSessionMinutes = Math.round(_moment2.default.duration(endTime.diff(startTime)).asMinutes());
+											var workSessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(workSessionMinutes);
+
+											var minutesSpent = dailyTask.minutesSpent;
+											minutesSpent += workSessionMinutes;
+											dailyTask.update({
+												minutesSpent: minutesSpent
+											}).then(function (dailyTask) {
+
+												bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+													var message = '';
+													if (dailyTask.dataValues.Task.done) {
+														message = 'Great job finishing `' + taskString + '` :raised_hands:!';
+													} else {
+														message = 'You are no longer working on `' + taskString + '`';
+													}
+
+													convo.say(message);
+													convo.next();
+
+													convo.on('end', function (convo) {
+
+														var config = { SlackUserId: SlackUserId };
+														controller.trigger('plan_command_center', [bot, config]);
+													});
+												});
+											});
+										});
+									}
+								})();
+							}
+						});
+					})();
+				} else {
+
+					// NOT in an open session right now
+					// no need to send a message, unless 0 remaining tasks
+
+					if (dailyTasks.length == 0) {
+						// no remaining tasks means we will end your day
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+							convo.say('You have no remaining priorities for today!');
+							convo.next();
+
+							convo.on('end', function (convo) {
+								var config = { SlackUserId: SlackUserId };
+								controller.trigger('end_plan_flow', [bot, config]);
+							});
+						});
+					} else if (showUpdatedPlan) {
+						controller.trigger('plan_command_center', [bot, config]);
+					}
+				}
+			});
+		});
+	});
+}
+
 /**
  * 		~~ DEPRECATED 8/9/16 ~~
  */
 
 function getTimeToTasks(response, convo) {
-	var _convo$planEdit14 = convo.planEdit;
-	var bot = _convo$planEdit14.bot;
-	var dailyTasks = _convo$planEdit14.dailyTasks;
-	var newTasks = _convo$planEdit14.newTasks;
-	var tz = _convo$planEdit14.tz;
+	var _convo$planEdit13 = convo.planEdit;
+	var bot = _convo$planEdit13.bot;
+	var dailyTasks = _convo$planEdit13.dailyTasks;
+	var newTasks = _convo$planEdit13.newTasks;
+	var tz = _convo$planEdit13.tz;
 
 	var options = { dontShowMinutes: true, dontCalculateMinutes: true, noKarets: true };
 
@@ -1211,9 +1323,9 @@ function getTimeToTasks(response, convo) {
 function saveNewTaskResponses(tasksToAdd, convo) {
 
 	// get the newTasks!
-	var _convo$planEdit15 = convo.planEdit;
-	var dailyTasks = _convo$planEdit15.dailyTasks;
-	var newTasks = _convo$planEdit15.newTasks;
+	var _convo$planEdit14 = convo.planEdit;
+	var dailyTasks = _convo$planEdit14.dailyTasks;
+	var newTasks = _convo$planEdit14.newTasks;
 
 
 	if (tasksToAdd) {
@@ -1243,10 +1355,10 @@ function saveNewTaskResponses(tasksToAdd, convo) {
 
 // used for both edit time to tasks, as well as add new tasks!!
 function confirmTimeToTasks(convo) {
-	var _convo$planEdit16 = convo.planEdit;
-	var dailyTasks = _convo$planEdit16.dailyTasks;
-	var dailyTasksToUpdate = _convo$planEdit16.dailyTasksToUpdate;
-	var newTasks = _convo$planEdit16.newTasks;
+	var _convo$planEdit15 = convo.planEdit;
+	var dailyTasks = _convo$planEdit15.dailyTasks;
+	var dailyTasksToUpdate = _convo$planEdit15.dailyTasksToUpdate;
+	var newTasks = _convo$planEdit15.newTasks;
 
 
 	convo.ask("Are those times right?", [{
@@ -1288,9 +1400,9 @@ function confirmTimeToTasks(convo) {
 
 function addNewTasksToTaskList(response, convo) {
 	// combine the newTasks with dailyTasks
-	var _convo$planEdit17 = convo.planEdit;
-	var dailyTasks = _convo$planEdit17.dailyTasks;
-	var newTasks = _convo$planEdit17.newTasks;
+	var _convo$planEdit16 = convo.planEdit;
+	var dailyTasks = _convo$planEdit16.dailyTasks;
+	var newTasks = _convo$planEdit16.newTasks;
 
 
 	var taskArray = [];

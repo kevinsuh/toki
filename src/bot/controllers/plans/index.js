@@ -9,7 +9,7 @@ import { getCurrentDaySplit, closeOldRemindersAndSessions, prioritizeDailyTasks 
 import { constants, dateOfNewPlanDayFlow } from '../../lib/constants';
 
 import { startNewPlanFlow } from '../modules/plan';
-import { startEditPlanConversation } from './editPlanFunctions';
+import { startEditPlanConversation, endOfPlanMessage } from './editPlanFunctions';
 
 /**
  * Starting a new plan for the day
@@ -416,7 +416,7 @@ export default function(controller) {
 
 						convo.on('end', (convo) => {
 							
-							var { newPriority, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, startSession, dailyTasksToWorkOn, changePlanCommand, currentSession, showUpdatedPlan, endPlan } = convo.planEdit;
+							var { newPriority, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, startSession, dailyTasksToWorkOn, changePlanCommand, currentSession, showUpdatedPlan } = convo.planEdit;
 
 							// this means we are changing the plan!
 							if (changePlanCommand.decision) {
@@ -490,27 +490,19 @@ export default function(controller) {
 								})
 							}
 
-							if (showUpdatedPlan || endPlan) {
-								if (message && message.channel) {
-									bot.send({
-										type: "typing",
-										channel: message.channel
-									});
-								}
-
-								setTimeout(() => {
-
-									const config = { SlackUserId };
-
-									if (showUpdatedPlan) {
-										controller.trigger(`plan_command_center`, [ bot, config ]);
-									} else if (endPlan) {
-										controller.trigger(`end_plan_flow`, [ bot, config ]);
-									}
-										
-								}, 750);
-
+							if (message && message.channel) {
+								bot.send({
+									type: "typing",
+									channel: message.channel
+								});
 							}
+
+							setTimeout(() => {
+
+								const config = { SlackUserId, bot, controller, showUpdatedPlan };
+								endOfPlanMessage(config);
+									
+							}, 750);
 	
 						});
 					});

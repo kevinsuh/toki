@@ -1,5 +1,5 @@
 import os from 'os';
-import { wit } from '../index';
+import { wit, resumeQueuedReachouts } from '../index';
 import http from 'http';
 import moment from 'moment';
 
@@ -175,47 +175,6 @@ function getRemainingTasks(fullTaskArray, newTasks) {
 	return remainingTasks;
 }
 
-
-function sayEndOfPlanMessage(convo) {
-
-	let { planEdit: { openWorkSession, currentSession, dailyTasks, newTasks } } = convo;
-
-	let remainingTasks = getRemainingTasks(dailyTasks, newTasks);
-
-	if (remainingTasks.length == 0) {
-
-		convo.say(`You have no remaining priorities for today!`);
-		// kick it to end_day!
-		convo.planEdit.endPlan = true;
-		convo.next();
-
-	} else {
-
-		let workSessionMessage = '';
-		if (openWorkSession && currentSession) {
-
-			let { minutes, minutesString, sessionTasks, endTimeString, storedWorkSession } = currentSession;
-			let attachments = startSessionOptionsAttachments;
-			if (storedWorkSession) {
-				// currently paused
-				minutes       = storedWorkSession.dataValues.minutes;
-				minutesString = convertMinutesToHoursString(minutes);
-				workSessionMessage = `Your session is still paused :double_vertical_bar:. `;
-				attachments = pausedSessionOptionsAttachments;
-			}
-
-			workSessionMessage = `${workSessionMessage}:weight_lifter: You have ${minutesString} remaining in your session for \`${sessionTasks}\` :weight_lifter:`;
-			convo.say({
-				text: workSessionMessage,
-				attachments
-			});
-
-		}
-
-	}
-
-}
-
 function sayTasksForToday(convo, options = {}) {
 
 	// different options for 1-2 priorities vs 3 priorities
@@ -268,8 +227,6 @@ function sayTasksForToday(convo, options = {}) {
 		text: taskListMessage,
 		attachments
 	});
-
-	sayEndOfPlanMessage(convo);
 
 }
 
@@ -1045,7 +1002,179 @@ function workOnTasksFlow(convo) {
 
 }
 
+// updated endOfPlan message with the appropriate context
+export function endOfPlanMessage(config) {
 
+	const { controller, bot, SlackUserId, showUpdatedPlan } = config;
+	let now = moment();
+
+	/**
+	 * 		This will check for open work sessions
+	 */
+	models.User.find({
+		where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+		include: [
+			models.SlackUser
+		]
+	})
+	.then((user) => {
+
+		const UserId = user.id;
+		const { SlackUser: { tz } } = user;
+
+		user.getDailyTasks({
+			where: [`"DailyTask"."type" = ? AND "Task"."done" = ?`, "live", false],
+			include: [models.Task]
+		})
+		.then((dailyTasks) => {
+			
+			user.getWorkSessions({
+				where: [`"open" = ?`, true ]
+			})
+			.then((workSessions) => {
+
+				
+				if (workSessions.length > 0) {
+
+					// you are currently in an open session!
+
+					let workSession = workSessions[0];
+
+					let now                 = moment();
+					let endTime             = moment(workSession.dataValues.endTime);
+					let minutesRemaining    = Math.round(moment.duration(endTime.diff(now)).asMinutes());
+					let timeRemainingString = convertMinutesToHoursString(minutesRemaining)
+
+					workSession.getDailyTasks({
+						include: [ models.Task ]
+					})
+					.then((dailyTasks) => {
+
+						let dailyTask = dailyTasks[0]; // one task per session
+
+						if (dailyTask) {
+							let taskString = dailyTask.Task.text;
+
+							if (dailyTask.type == "live" && !dailyTask.Task.done) {
+								// still a live, uncompleted task! send either paused or resumed session message
+								workSession.getStoredWorkSession({
+									where: [ `"StoredWorkSession"."live" = ?`, true ]
+								})
+								.then((storedWorkSession) => {
+
+									let attachments        = startSessionOptionsAttachments;
+									let workSessionMessage = '';
+
+									if (storedWorkSession) {
+										// handle if currently paused
+										minutesRemaining = storedWorkSession.dataValues.minutes;
+										timeRemainingString = convertMinutesToHoursString(minutes);
+										workSessionMessage = `Your session is still paused :double_vertical_bar:. `;
+										attachments = pausedSessionOptionsAttachments;
+									}
+
+									bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+										workSessionMessage = `${workSessionMessage}:weight_lifter: You have ${timeRemainingString} remaining in your session for \`${taskString}\` :weight_lifter:`;
+										convo.say({
+											text: workSessionMessage,
+											attachments
+										});
+										convo.next();
+
+										convo.on('end', (convo) => {
+											resumeQueuedReachouts(bot, { SlackUserId });
+										});
+
+									});
+
+								});
+
+							} else {
+
+								// completed or removed the priority for your current session!
+								if ( now < endTime )
+									endTime = now;
+
+								workSession.update({
+									open: false,
+									endTime
+								})
+								.then((workSession) => {
+
+									const WorkSessionId       = workSession.id;
+									let startTime             = moment(workSession.dataValues.startTime).tz(tz);
+									let endTime               = moment(workSession.dataValues.endTime).tz(tz);
+									let endTimeString         = endTime.format("h:mm a");
+									let workSessionMinutes    = Math.round(moment.duration(endTime.diff(startTime)).asMinutes());
+									let workSessionTimeString = convertMinutesToHoursString(workSessionMinutes);
+
+									let minutesSpent = dailyTask.minutesSpent;
+									minutesSpent     += workSessionMinutes;
+									dailyTask.update({
+										minutesSpent
+									})
+									.then((dailyTask) => {
+
+										bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+											let message = '';
+											if (dailyTask.dataValues.Task.done) {
+												message = `Great job finishing \`${taskString}\` :raised_hands:!`;
+											} else {
+												message = `You are no longer working on \`${taskString}\``;
+											}
+											
+											convo.say(message);
+											convo.next();
+
+											convo.on('end', (convo) => {
+												
+												let config = { SlackUserId };
+												controller.trigger(`plan_command_center`, [ bot, config ]);
+
+											});
+											
+										});
+									});
+
+								});
+
+							}
+
+						}
+					});
+
+				} else {
+
+					// NOT in an open session right now
+					// no need to send a message, unless 0 remaining tasks
+
+					if (dailyTasks.length == 0) {
+						// no remaining tasks means we will end your day
+						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+
+							convo.say(`You have no remaining priorities for today!`);
+							convo.next();
+
+							convo.on('end', (convo) => {
+								const config = { SlackUserId };
+								controller.trigger(`end_plan_flow`, [ bot, config ]);
+							});
+							
+						});
+					} else if (showUpdatedPlan) {
+						controller.trigger(`plan_command_center`, [ bot, config ]);
+					}
+				}
+
+			});
+
+		});
+			
+	});
+
+}
 
 
 
