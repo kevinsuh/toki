@@ -20,7 +20,6 @@ import { colorsArray, THANK_YOU, buttonValues, colorsHash, startSessionOptionsAt
 export function finalizeTimeAndTasksToStart(convo) {
 
 	const { SlackUserId, tz, dailyTask, calculatedTimeObject, minutes, currentSession }  = convo.sessionStart;
-	let now = moment();
 
 	// we need both time and task in order to start session
 	if (!dailyTask) {
@@ -150,6 +149,7 @@ export function finalizeTimeAndTasksToStart(convo) {
 
 					let { intentObject: { entities } } = response;
 
+					let now              = moment().tz(tz);
 					let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
 
 					if (customTimeObject) {
@@ -378,7 +378,6 @@ function askToAddMinutesToTask(convo, question = `Do you want to complete this f
 
 	// will only be a single task now
 	let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your priority';
-	let now      = moment().tz(tz);
 
 	convo.ask({
 		text: question,
@@ -411,6 +410,7 @@ function askToAddMinutesToTask(convo, question = `Do you want to complete this f
 			default: true,
 			callback: (response, convo) => {
 
+				let now                            = moment().tz(tz);
 				let { intentObject: { entities } } = response;
 				// for time to tasks, these wit intents are the only ones that makes sense
 				let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);

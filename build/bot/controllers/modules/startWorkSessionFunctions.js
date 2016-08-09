@@ -46,9 +46,8 @@ function finalizeTimeAndTasksToStart(convo) {
 	var minutes = _convo$sessionStart.minutes;
 	var currentSession = _convo$sessionStart.currentSession;
 
-	var now = (0, _momentTimezone2.default)();
-
 	// we need both time and task in order to start session
+
 	if (!dailyTask) {
 		askWhichTaskToWorkOn(convo);
 		return;
@@ -168,6 +167,7 @@ function finalizeTimeAndTasksToStart(convo) {
 					var entities = response.intentObject.entities;
 
 
+					var now = (0, _momentTimezone2.default)().tz(tz);
 					var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
 
 					if (customTimeObject) {
@@ -398,7 +398,6 @@ function askToAddMinutesToTask(convo) {
 	// will only be a single task now
 
 	var taskText = dailyTask.dataValues ? '`' + dailyTask.dataValues.Task.text + '`' : 'your priority';
-	var now = (0, _momentTimezone2.default)().tz(tz);
 
 	convo.ask({
 		text: question,
@@ -424,6 +423,8 @@ function askToAddMinutesToTask(convo) {
 	}, {
 		default: true,
 		callback: function callback(response, convo) {
+
+			var now = (0, _momentTimezone2.default)().tz(tz);
 			var entities = response.intentObject.entities;
 			// for time to tasks, these wit intents are the only ones that makes sense
 

@@ -190,15 +190,22 @@ function sayEndOfPlanMessage(convo) {
 
 		let workSessionMessage = '';
 		if (openWorkSession && currentSession) {
+			
 			let { minutes, minutesString, sessionTasks, endTimeString, storedWorkSession } = currentSession;
+			let attachments = startSessionOptionsAttachments;
 			if (storedWorkSession) {
 				// currently paused
 				minutes       = storedWorkSession.dataValues.minutes;
 				minutesString = convertMinutesToHoursString(minutes);
 				workSessionMessage = `Your session is still paused :double_vertical_bar:. `;
+				attachments = pausedSessionOptionsAttachments;
 			}
-			workSessionMessage = `${workSessionMessage}You're working on \`${sessionTasks}\` and have ${minutesString} remaining for the session`;
-			convo.say(workSessionMessage);
+
+			workSessionMessage = `${workSessionMessage}:weight_lifter: You have ${minutesString} remaining in your session for \`${sessionTasks}\` :weight_lifter:`;
+			convo.say({
+				text: workSessionMessage,
+				attachments
+			});
 		}
 
 	}

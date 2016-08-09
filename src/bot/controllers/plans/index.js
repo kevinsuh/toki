@@ -472,24 +472,22 @@ export default function(controller) {
 								})
 							}
 
-
-							if (message && message.channel) {
-								bot.send({
-									type: "typing",
-									channel: message.channel
-								});
-							}
-
-							setTimeout(() => {
-								
-								const config = { SlackUserId };
-								if (showUpdatedPlan) {
-									controller.trigger(`plan_command_center`, [ bot, config ]);
-								} else {
-									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
+							if (showUpdatedPlan) {
+								if (message && message.channel) {
+									bot.send({
+										type: "typing",
+										channel: message.channel
+									});
 								}
+
+								setTimeout(() => {
+
+									const config = { SlackUserId };
 									
-							}, 750);
+										controller.trigger(`plan_command_center`, [ bot, config ]);
+										
+								}, 750);
+							}
 	
 						});
 					});

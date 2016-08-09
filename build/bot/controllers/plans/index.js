@@ -471,22 +471,21 @@ exports.default = function (controller) {
 								});
 							}
 
-							if (message && message.channel) {
-								bot.send({
-									type: "typing",
-									channel: message.channel
-								});
-							}
-
-							setTimeout(function () {
-
-								var config = { SlackUserId: SlackUserId };
-								if (showUpdatedPlan) {
-									controller.trigger('plan_command_center', [bot, config]);
-								} else {
-									checkWorkSessionForLiveTasks({ SlackUserId: SlackUserId, bot: bot, controller: controller });
+							if (showUpdatedPlan) {
+								if (message && message.channel) {
+									bot.send({
+										type: "typing",
+										channel: message.channel
+									});
 								}
-							}, 750);
+
+								setTimeout(function () {
+
+									var config = { SlackUserId: SlackUserId };
+
+									controller.trigger('plan_command_center', [bot, config]);
+								}, 750);
+							}
 						});
 					});
 				});

@@ -223,14 +223,20 @@ function sayEndOfPlanMessage(convo) {
 			var endTimeString = currentSession.endTimeString;
 			var storedWorkSession = currentSession.storedWorkSession;
 
+			var attachments = _constants.startSessionOptionsAttachments;
 			if (storedWorkSession) {
 				// currently paused
 				minutes = storedWorkSession.dataValues.minutes;
 				minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
 				workSessionMessage = 'Your session is still paused :double_vertical_bar:. ';
+				attachments = _constants.pausedSessionOptionsAttachments;
 			}
-			workSessionMessage = workSessionMessage + 'You\'re working on `' + sessionTasks + '` and have ' + minutesString + ' remaining for the session';
-			convo.say(workSessionMessage);
+
+			workSessionMessage = workSessionMessage + ':weight_lifter: You have ' + minutesString + ' remaining in your session for `' + sessionTasks + '` :weight_lifter:';
+			convo.say({
+				text: workSessionMessage,
+				attachments: attachments
+			});
 		}
 	}
 }
