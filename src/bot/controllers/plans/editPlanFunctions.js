@@ -1093,6 +1093,7 @@ export function endOfPlanMessage(config) {
 							} else {
 
 								// completed or removed the priority for your current session!
+								// close the session, then update the minutes that you spent on that dailyTask
 								if ( now < endTime )
 									endTime = now;
 
@@ -1104,7 +1105,7 @@ export function endOfPlanMessage(config) {
 
 									const WorkSessionId       = workSession.id;
 									let startTime             = moment(workSession.dataValues.startTime).tz(tz);
-									let endTime               = moment(workSession.dataValues.endTime).tz(tz);
+									endTime                   = moment(workSession.dataValues.endTime).tz(tz);
 									let endTimeString         = endTime.format("h:mm a");
 									let workSessionMinutes    = Math.round(moment.duration(endTime.diff(startTime)).asMinutes());
 									let workSessionTimeString = convertMinutesToHoursString(workSessionMinutes);

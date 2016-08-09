@@ -1087,6 +1087,7 @@ function endOfPlanMessage(config) {
 									} else {
 
 										// completed or removed the priority for your current session!
+										// close the session, then update the minutes that you spent on that dailyTask
 										if (now < endTime) endTime = now;
 
 										workSession.update({
@@ -1096,7 +1097,7 @@ function endOfPlanMessage(config) {
 
 											var WorkSessionId = workSession.id;
 											var startTime = (0, _moment2.default)(workSession.dataValues.startTime).tz(tz);
-											var endTime = (0, _moment2.default)(workSession.dataValues.endTime).tz(tz);
+											endTime = (0, _moment2.default)(workSession.dataValues.endTime).tz(tz);
 											var endTimeString = endTime.format("h:mm a");
 											var workSessionMinutes = Math.round(_moment2.default.duration(endTime.diff(startTime)).asMinutes());
 											var workSessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(workSessionMinutes);
