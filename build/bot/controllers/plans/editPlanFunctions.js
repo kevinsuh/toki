@@ -212,7 +212,10 @@ function sayEndOfPlanMessage(convo) {
 
 	if (remainingTasks.length == 0) {
 
-		convo.say('You have no remaining priorities for today. Let me know when you want to `add priorities`!');
+		convo.say('You have no remaining priorities for today!');
+		// kick it to end_day!
+		convo.planEdit.endPlan = true;
+		convo.next();
 	} else {
 
 		var workSessionMessage = '';

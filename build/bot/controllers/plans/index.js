@@ -32,6 +32,23 @@ exports.default = function (controller) {
 		}, 1000);
 	});
 
+	// WIT FOR `end_plan_flow`
+	controller.hears(['end_day'], 'direct_message', _index.wit.hears, function (bot, message) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		var SlackUserId = message.user;
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(function () {
+			controller.trigger('end_plan_flow', [bot, { SlackUserId: SlackUserId }]);
+		}, 1000);
+	});
+
 	/**
   * 	EDIT PLAN FLOW
   */
@@ -397,6 +414,7 @@ exports.default = function (controller) {
 							var changePlanCommand = _convo$planEdit.changePlanCommand;
 							var currentSession = _convo$planEdit.currentSession;
 							var showUpdatedPlan = _convo$planEdit.showUpdatedPlan;
+							var endPlan = _convo$planEdit.endPlan;
 
 							// this means we are changing the plan!
 
@@ -471,7 +489,7 @@ exports.default = function (controller) {
 								});
 							}
 
-							if (showUpdatedPlan) {
+							if (showUpdatedPlan || endPlan) {
 								if (message && message.channel) {
 									bot.send({
 										type: "typing",
@@ -483,7 +501,11 @@ exports.default = function (controller) {
 
 									var config = { SlackUserId: SlackUserId };
 
-									controller.trigger('plan_command_center', [bot, config]);
+									if (showUpdatedPlan) {
+										controller.trigger('plan_command_center', [bot, config]);
+									} else if (endPlan) {
+										controller.trigger('end_plan_flow', [bot, config]);
+									}
 								}, 750);
 							}
 						});

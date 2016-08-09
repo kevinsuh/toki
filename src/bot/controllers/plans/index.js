@@ -38,6 +38,24 @@ export default function(controller) {
 
 	});
 
+	// WIT FOR `end_plan_flow`
+	controller.hears(['end_day'], 'direct_message', wit.hears, (bot, message) => {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
+		const SlackUserId = message.user;
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(()=>{
+			controller.trigger(`end_plan_flow`, [ bot, { SlackUserId }]);
+		}, 1000);
+
+	});
+
 	/**
 	 * 	EDIT PLAN FLOW
 	 */
@@ -398,7 +416,7 @@ export default function(controller) {
 
 						convo.on('end', (convo) => {
 							
-							var { newPriority, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, startSession, dailyTasksToWorkOn, changePlanCommand, currentSession, showUpdatedPlan } = convo.planEdit;
+							var { newPriority, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, startSession, dailyTasksToWorkOn, changePlanCommand, currentSession, showUpdatedPlan, endPlan } = convo.planEdit;
 
 							// this means we are changing the plan!
 							if (changePlanCommand.decision) {
@@ -472,7 +490,7 @@ export default function(controller) {
 								})
 							}
 
-							if (showUpdatedPlan) {
+							if (showUpdatedPlan || endPlan) {
 								if (message && message.channel) {
 									bot.send({
 										type: "typing",
@@ -483,10 +501,15 @@ export default function(controller) {
 								setTimeout(() => {
 
 									const config = { SlackUserId };
-									
+
+									if (showUpdatedPlan) {
 										controller.trigger(`plan_command_center`, [ bot, config ]);
+									} else if (endPlan) {
+										controller.trigger(`end_plan_flow`, [ bot, config ]);
+									}
 										
 								}, 750);
+
 							}
 	
 						});
