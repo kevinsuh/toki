@@ -296,20 +296,7 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 		return stillNotCompleted;
 	});
 
-	let priority = 1;
-	dailyTasks = dailyTasks.map((dailyTask) => {
-		dailyTask.dataValues.priority = priority;
-		priority++;
-		return dailyTask;
-	});
-
-	convo.planEdit.dailyTasks = dailyTasks;
-
 	if (dailyTasksToComplete.length > 0) {
-		let dailyTaskTextsToComplete = dailyTasksToComplete.map((dailyTask) => {
-			return dailyTask.dataValues.Task.text;
-		});
-		let dailyTasksToCompleteString = commaSeparateOutTaskArray(dailyTaskTextsToComplete);
 
 		// add to complete array for planEdit
 		dailyTaskIdsToComplete = dailyTasksToComplete.map((dailyTask) => {
@@ -317,29 +304,17 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 		});
 		convo.planEdit.dailyTaskIdsToComplete = dailyTaskIdsToComplete;
 
+		let dailyTaskTextsToComplete = dailyTasksToComplete.map((dailyTask) => {
+			return dailyTask.dataValues.Task.text;
+		});
+		let dailyTasksToCompleteString = commaSeparateOutTaskArray(dailyTaskTextsToComplete);
+
 		convo.say({
-			text: `Great work :punch:. I checked off ${dailyTasksToCompleteString}!`,
-			attachments: [ {
-				attachment_type: 'default',
-				callback_id: "UNDO_BUTTON",
-				fallback: "Here is your task list",
-				color: colorsHash.grey.hex,
-				actions: [
-					{
-							name: `${dailyTaskIdsToComplete}`,
-							text: "Wait, that's not right!",
-							value: buttonValues.undoTaskComplete.value,
-							type: "button"
-					}
-				]
-			}]
+			text: `Great work :punch:. I checked off \`${dailyTasksToCompleteString}\`!`
 		});
 
-		let options = { dontUseDataValues: true, onlyRemainingTasks: true };
-		if (convo.planEdit.inFlow) {
-			// options.endOfPlan = true;
-		}
-		sayTasksForToday(convo, options);
+		convo.planEdit.showUpdatedPlan = true;
+		convo.next();
 
 	} else {
 		convo.say("I couldn't find that task to check off!");
@@ -361,9 +336,9 @@ function completeTasksFlow(convo) {
 	let baseMessage = '';
 
 	if (changedPlanCommands) {
-		baseMessage = `Okay! Which priority above would you like to`;
+		baseMessage = `Okay! Which priority above did you`;
 	} else {
-		baseMessage = `Which priority above would you like to`;
+		baseMessage = `Which priority above did you`;
 		sayTasksForToday(convo, options);
 	}
 
@@ -375,14 +350,23 @@ function completeTasksFlow(convo) {
 		attachments: [ {
 			attachment_type: 'default',
 			callback_id: "TASK_COMPLETE",
-			fallback: "Which priority would you like to complete?"
+			fallback: "Which priority did you complete?",
+			actions: [
+				{
+					name: buttonValues.neverMind.name,
+					text: `Never mind!`,
+					value: buttonValues.neverMind.value,
+					type: `button`
+				}
+			]
 		}]
 	}, [
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
 
-				convo.say("Okay, let me know if you still want to complete priorities! :wave: ");
+				convo.say("Got it! If you need to mark a priority as completed, just let me know");
+				convo.planEdit.showUpdatedPlan = true;
 				convo.next();
 			}
 		},
@@ -415,7 +399,7 @@ function completeTasksFlow(convo) {
 
 						// if user tries completing task again, just update the text
 						wordSwapCount++;
-						let text = wordSwapMessage(baseMessage, "check off?", wordSwapCount);
+						let text = wordSwapMessage(baseMessage, "complete?", wordSwapCount);
 						let convoAskQuestionUpdate = getMostRecentMessageToUpdate(response.channel, bot);
 						if (convoAskQuestionUpdate) {
 							convoAskQuestionUpdate.text = text;
