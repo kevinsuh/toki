@@ -204,7 +204,7 @@ var buttonValues = exports.buttonValues = {
 	},
 	endDay: {
 		name: "END_DAY",
-		value: "END_DAY"
+		value: "end my day"
 	},
 	backLater: {
 		name: "BACK_LATER",

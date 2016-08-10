@@ -1148,21 +1148,57 @@ export function endOfPlanMessage(config) {
 
 				} else {
 
-					// NOT in an open session right now
-					// no need to send a message, unless 0 remaining tasks
-
+					// this means NO uncompleted priorities
 					if (dailyTasks.length == 0) {
-						// no remaining tasks means we will end your day
-						bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+						// let's see if user can still add another priority today
+						user.getDailyTasks({
+							where: [`"DailyTask"."type" = ?`, "live"]
+						})
+						.then((dailyTasks) => {
 
-							convo.say(`You have no remaining priorities for today!`);
-							convo.next();
-
-							convo.on('end', (convo) => {
-								const config = { SlackUserId };
+							if (dailyTasks.length >= 3) {
 								controller.trigger(`end_plan_flow`, [ bot, config ]);
-							});
-							
+							} else {
+
+								// ask if want to add another priority, or end day
+								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+									let prioritiesToAdd = 3 - dailyTasks.length;
+									let message;
+									if (prioritiesToAdd == 1) {
+										message = `You can still add ${prioritiesToAdd} more priority today`
+									} else {
+										message = `You can still add ${prioritiesToAdd} more priorities today`
+									};
+									message = `${message}! Would you like to add a priority, or end your day?`
+									convo.say({
+										text: message,
+										attachments:[
+											{
+												attachment_type: 'default',
+												callback_id: "FINISH_PRIORITIES_STILL_REMAINING",
+												fallback: "Would you like to add another priority?",
+												color: colorsHash.grey.hex,
+												actions: [
+													{
+															name: buttonValues.planCommands.addPriority.name,
+															text: "Add priority :muscle:",
+															value: buttonValues.planCommands.addPriority.value,
+															type: "button"
+													},
+													{
+															name: buttonValues.endDay.name,
+															text: "End day",
+															value: buttonValues.endDay.value,
+															type: "button"
+													},
+												]
+											}
+										]
+									});
+
+								});
+							}
 						});
 					} else if (showUpdatedPlan) {
 						controller.trigger(`plan_command_center`, [ bot, config ]);
