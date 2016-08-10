@@ -86,8 +86,8 @@ function askForReflection(convo) {
 			default: true,
 			callback: (response, convo) => {
 				convo.say(`Thank you for sharing!`);
-				convo.say(`You said: ${response.text}`);
 				convo.say(`I hope you have a great rest of the day and I’ll see you soon!`);
+				convo.dayEnd.reflection = response.text;
 				convo.next();
 			}
 		}

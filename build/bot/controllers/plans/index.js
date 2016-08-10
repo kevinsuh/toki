@@ -701,15 +701,41 @@ exports.default = function (controller) {
 							convo.dayEnd = {
 								wonDay: wonDay,
 								nickName: nickName,
-								dailyTasks: dailyTasks
+								dailyTasks: dailyTasks,
+								reflection: null
 							};
 
 							(0, _endPlanFunctions.startEndPlanConversation)(convo);
 							convo.next();
 
 							convo.on('end', function (convo) {
+								var _convo$dayEnd = convo.dayEnd;
+								var wonDay = _convo$dayEnd.wonDay;
+								var reflection = _convo$dayEnd.reflection;
+
+								var now = (0, _momentTimezone2.default)();
+
+								// end your day
+								_models2.default.SessionGroup.create({
+									type: 'end_work',
+									UserId: UserId,
+									reflection: reflection
+								});
+
+								(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-								controller.trigger('new_plan_flow', [bot, { SlackUserId: SlackUserId }]);
+								user.getDailyTasks({
+									where: ['"DailyTask"."type" = ?', "live"]
+								}).then(function (dailyTasks) {
+									var DailyTaskIds = dailyTasks.map(function (dailyTask) {
+										return dailyTask.id;
+									});
+									_models2.default.DailyTask.update({
+										type: "archived"
+									}, {
+										where: ['"DailyTasks"."id" IN (?)', DailyTaskIds]
+									});
+								});
 							});
 						});
 					});

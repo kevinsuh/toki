@@ -729,16 +729,41 @@ export default function(controller) {
 							convo.dayEnd = {
 								wonDay,
 								nickName,
-								dailyTasks
+								dailyTasks,
+								reflection: null
 							}
 
 							startEndPlanConversation(convo);
 							convo.next();
 
 							convo.on('end', (convo) => {
+
+								const { wonDay, reflection } = convo.dayEnd;
+								let now = moment();
+
+								// end your day
+								models.SessionGroup.create({
+									type: `end_work`,
+									UserId,
+									reflection
+								});
+
+								closeOldRemindersAndSessions(user);
 								resumeQueuedReachouts(bot, { SlackUserId });
-								controller.trigger(`new_plan_flow`, [ bot, { SlackUserId }]);
+								user.getDailyTasks({
+									where: [`"DailyTask"."type" = ?`, "live"]
+								})
+								.then((dailyTasks) => {
+									let DailyTaskIds = dailyTasks.map(dailyTask => dailyTask.id);
+									models.DailyTask.update({
+										type: "archived"
+									}, {
+										where: [ `"DailyTasks"."id" IN (?)`, DailyTaskIds ]
+									});
+								})
+
 							});
+
 						});
 						
 
