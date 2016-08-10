@@ -26,7 +26,8 @@ var intentConfig = exports.intentConfig = {
 	START_SESSION: 'start_session',
 	END_SESSION: 'end_session',
 	VIEW_PLAN: 'view_plan',
-	END_PLAN: 'end_plan'
+	END_PLAN: 'end_plan',
+	KEEP_WORKING: 'keep_working'
 };
 
 var constants = exports.constants = {
@@ -568,6 +569,14 @@ var buttonValues = exports.buttonValues = {
 	addCheckIn: {
 		name: "SESSION_ADD_CHECK_IN",
 		value: "let's add a check in!"
+	},
+	notToday: {
+		name: "NOT_TODAY",
+		value: "not today"
+	},
+	keepWorking: {
+		name: "KEEP_WORKING",
+		value: "i want to keep working"
 	}
 };
 

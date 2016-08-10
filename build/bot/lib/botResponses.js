@@ -59,7 +59,7 @@ var utterances = exports.utterances = (_utterances = {
 	containsContinue: new RegExp(/(\bc[continue]{5,})/i),
 	done: new RegExp(/(^d[done]{2,}$)/i),
 	noAdditional: new RegExp(/(\bn[no ]{1,}\ba[additional]{5,}\b|^no\b|^no[one]{2,4}$)/i),
-	containsKeep: new RegExp(/(\bke[ep]{2,}\b)/i),
+	containsKeep: new RegExp(/(\bke[ep]{2,6}\b)/i),
 	containsDifferentOrAnother: new RegExp(/\b(d[different]{5,}|a[another]{4,})\b/i),
 	eastern: new RegExp(/\b(e[eastern]{5,})\b/i),
 	central: new RegExp(/\b(c[central]{5,})\b/i),
@@ -72,5 +72,5 @@ var utterances = exports.utterances = (_utterances = {
 	containsNoOne: new RegExp(/\b(no one)\b/i),
 	somethingElse: new RegExp(/\bsome[omething]{3,}\b.*\bel[lse]{2,}\b/i),
 	containsEnough: new RegExp(/\beno[ough]{3,}\b/i)
-}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _utterances);
+}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "notToday", new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _utterances);
 //# sourceMappingURL=botResponses.js.map

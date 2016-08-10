@@ -45,8 +45,149 @@ exports.default = function (controller) {
 			channel: message.channel
 		});
 		setTimeout(function () {
-			controller.trigger('end_plan_flow', [bot, { SlackUserId: SlackUserId }]);
-		}, 1000);
+
+			// give them context and then the ability to end_day early
+			_models2.default.User.find({
+				where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+				include: [_models2.default.SlackUser]
+			}).then(function (user) {
+
+				var UserId = user.id;
+				var nickName = user.nickName;
+				var tz = user.SlackUser.tz;
+
+
+				user.getSessionGroups({
+					order: '"SessionGroup"."createdAt" DESC',
+					limit: 1
+				}).then(function (sessionGroups) {
+
+					var sessionGroup = sessionGroups[0];
+					var valid = true;
+
+					if (!sessionGroup || sessionGroup.type == "end_work") {
+						valid = false;
+					}
+
+					if (valid) {
+
+						// sessionGroup exists and it is most recently a start_day (so end_day makes sense here)
+						user.getDailyTasks({
+							where: ['"DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?', sessionGroup.dataValues.createdAt, "live"],
+							include: [_models2.default.Task],
+							order: '"DailyTask"."priority" ASC'
+						}).then(function (dailyTasks) {
+
+							dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
+
+							var completedDailyTasks = [];
+							var minutesWorked = 0;
+							dailyTasks.forEach(function (dailyTask) {
+								if (dailyTask.Task.done) {
+									completedDailyTasks.push(dailyTask);
+								}
+								minutesWorked += dailyTask.dataValues.minutesSpent;
+							});
+
+							var timeWorkedString = (0, _messageHelpers.convertMinutesToHoursString)(minutesWorked);
+
+							var options = {};
+							var completedTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(completedDailyTasks, options);
+
+							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+								convo.endDayDecision = false;
+								convo.wonDay = false;
+
+								convo.say('Hey ' + nickName + ', let\'s wrap up for the day :package:');
+								convo.say('You put *' + timeWorkedString + '* toward your top priorities today, completing:\n' + completedTaskListMessage);
+								convo.say('I define winning your day as time well spent, so if you felt your time was well spent at work today, you won the day. If you didn’t, that’s ok - I’m here tomorrow to help you be intentional about what you work on to get you closer to your goals');
+								convo.ask({
+									text: 'Did you feel like you won your day today?',
+									attachments: [{
+										attachment_type: 'default',
+										callback_id: "WIT_END_PLAN",
+										fallback: "Did you win your day?",
+										color: _constants.colorsHash.blue.hex,
+										actions: [{
+											name: _constants.buttonValues.yes.name,
+											text: "Yes! :punch:",
+											value: _constants.buttonValues.yes.value,
+											type: "button",
+											style: "primary"
+										}, {
+											name: _constants.buttonValues.notToday.name,
+											text: "Not today",
+											value: _constants.buttonValues.notToday.value,
+											type: "button"
+										}, {
+											name: _constants.buttonValues.keepWorking.name,
+											text: "Let's keep working!",
+											value: _constants.buttonValues.keepWorking.value,
+											type: "button"
+										}]
+									}]
+								}, [{
+									pattern: _botResponses.utterances.yes,
+									callback: function callback(response, convo) {
+										convo.wonDay = true;
+										convo.endDayDecision = _constants.intentConfig.END_DAY;
+										convo.next();
+									}
+								}, {
+									pattern: _botResponses.utterances.notToday,
+									callback: function callback(response, convo) {
+										convo.wonDay = false;
+										convo.endDayDecision = _constants.intentConfig.END_DAY;
+										convo.next();
+									}
+								}, {
+									pattern: _botResponses.utterances.containsKeep,
+									callback: function callback(response, convo) {
+										convo.say('Woo hoo! Let\'s do it');
+										convo.endDayDecision = _constants.intentConfig.KEEP_WORKING;
+										convo.next();
+									}
+								}, {
+									default: true,
+									callback: function callback(response, convo) {
+										convo.say('I didn\'t get that');
+										convo.repeat();
+										convo.next();
+									}
+								}]);
+
+								convo.next();
+
+								convo.on('end', function (convo) {
+									var endDayDecision = convo.endDayDecision;
+									var wonDay = convo.wonDay;
+									;
+									var config = { SlackUserId: SlackUserId, wonDay: wonDay };
+									if (endDayDecision == _constants.intentConfig.KEEP_WORKING) {
+										controller.trigger('plan_command_center', [bot, config]);
+									} else if (endDayDecision == _constants.intentConfig.END_DAY) {
+										controller.trigger('end_plan_flow', [bot, config]);
+									}
+								});
+							});
+						});
+					} else {
+
+						// user has not started a day recently
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+							convo.say("You haven't started a day yet!");
+							convo.next();
+
+							convo.on('end', function (convo) {
+								controller.trigger('new_plan_flow', [bot, { SlackUserId: SlackUserId }]);
+							});
+						});
+					}
+				});
+			});
+		}, 500);
 	});
 
 	/**
@@ -513,6 +654,9 @@ exports.default = function (controller) {
 	controller.on('end_plan_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
 
+
+		var wonDay = true;
+		if (typeof config.wonDay != 'undefined' && !config.wonDay) wonDay = config.wonDay;
 
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
