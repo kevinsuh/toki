@@ -113,28 +113,35 @@ function completePriorityForSession(convo) {
 		}
 	});
 
-	let dailyTaskTexts = unCompletedDailyTasks.map((dailyTask) => {
-		return dailyTask.dataValues.Task.text;
-	})
+	if (unCompletedDailyTasks.length == 0) {
+		convo.say(`You 've finished your top priorities for the day!`);
+		convo.sessionDone.noPrioritiesRemaining = true;
+		convo.next();
+	} else {
+		let dailyTaskTexts = unCompletedDailyTasks.map((dailyTask) => {
+			return dailyTask.dataValues.Task.text;
+		});
 
-	let config = { codeBlock: true }
-	let tasksString = commaSeparateOutTaskArray(dailyTaskTexts, config);
+		let config = { codeBlock: true }
+		let tasksString = commaSeparateOutTaskArray(dailyTaskTexts, config);
 
-	convo.say(`Let’s go! You’re one step closer to winning the day! You have ${tasksString} remaining`);
+		convo.say(`Let's go! You're one step closer to winning the day! You have ${tasksString} remaining`);
 
-	let buttonsValuesArray = [
-		buttonValues.doneSession.takeBreak.value,
-		buttonValues.doneSession.newSession.value,
-		buttonValues.doneSession.viewPlan.value,
-		buttonValues.doneSession.beBackLater.value
-	];
+		let buttonsValuesArray = [
+			buttonValues.doneSession.takeBreak.value,
+			buttonValues.doneSession.newSession.value,
+			buttonValues.doneSession.viewPlan.value,
+			buttonValues.doneSession.beBackLater.value
+		];
 
-	let attachmentsConfig = { defaultBreakTime, buttonsValuesArray };
-	let attachments       = getDoneSessionMessageAttachments(attachmentsConfig);
+		let attachmentsConfig = { defaultBreakTime, buttonsValuesArray };
+		let attachments       = getDoneSessionMessageAttachments(attachmentsConfig);
 
-	let text = `Let’s take a well-deserved break and get after it when you return`;
+		let text = `Let’s take a well-deserved break and get after it when you return`;
 
-	convoAskDoneSessionOptions(convo, text, attachments);
+		convoAskDoneSessionOptions(convo, text, attachments);
+	}
+
 
 	convo.next();
 

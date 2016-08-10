@@ -117,23 +117,29 @@ function completePriorityForSession(convo) {
 		}
 	});
 
-	var dailyTaskTexts = unCompletedDailyTasks.map(function (dailyTask) {
-		return dailyTask.dataValues.Task.text;
-	});
+	if (unCompletedDailyTasks.length == 0) {
+		convo.say('You \'ve finished your top priorities for the day!');
+		convo.sessionDone.noPrioritiesRemaining = true;
+		convo.next();
+	} else {
+		var dailyTaskTexts = unCompletedDailyTasks.map(function (dailyTask) {
+			return dailyTask.dataValues.Task.text;
+		});
 
-	var config = { codeBlock: true };
-	var tasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts, config);
+		var config = { codeBlock: true };
+		var tasksString = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTexts, config);
 
-	convo.say('Let’s go! You’re one step closer to winning the day! You have ' + tasksString + ' remaining');
+		convo.say('Let\'s go! You\'re one step closer to winning the day! You have ' + tasksString + ' remaining');
 
-	var buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.newSession.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.beBackLater.value];
+		var buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.newSession.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.beBackLater.value];
 
-	var attachmentsConfig = { defaultBreakTime: defaultBreakTime, buttonsValuesArray: buttonsValuesArray };
-	var attachments = (0, _messageHelpers.getDoneSessionMessageAttachments)(attachmentsConfig);
+		var attachmentsConfig = { defaultBreakTime: defaultBreakTime, buttonsValuesArray: buttonsValuesArray };
+		var attachments = (0, _messageHelpers.getDoneSessionMessageAttachments)(attachmentsConfig);
 
-	var text = 'Let’s take a well-deserved break and get after it when you return';
+		var text = 'Let’s take a well-deserved break and get after it when you return';
 
-	convoAskDoneSessionOptions(convo, text, attachments);
+		convoAskDoneSessionOptions(convo, text, attachments);
+	}
 
 	convo.next();
 }

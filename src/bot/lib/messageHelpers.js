@@ -134,9 +134,7 @@ export function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 		// if it's a valid number and within the remainingTasks length
 		if (taskNumber) {
 			taskNumber = parseInt(taskNumber[0]);
-			if (taskNumber <= remainingTasks.length) {
-				validTaskNumberArray.push(taskNumber);
-			}
+			validTaskNumberArray.push(taskNumber);
 		}
 
 	});
@@ -321,7 +319,8 @@ function createTaskListMessageBody(taskArray, options) {
 			if (reviewVersion) {
 				// review version: total minutes spent
 				timeString = convertMinutesToHoursString(minutesSpent);
-				minutesMessage = ` (for ${timeString})`;
+				if (minutesSpent > 0)
+					minutesMessage = ` (for ${timeString})`;
 			} else {
 				// live version: total minutes remaining
 				if (minutesRemaining > 0) {

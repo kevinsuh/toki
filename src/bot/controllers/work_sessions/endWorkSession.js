@@ -13,6 +13,7 @@ import { bots, resumeQueuedReachouts } from '../index';
 
 import { colorsArray, buttonValues, colorsHash, TOKI_DEFAULT_SNOOZE_TIME, TOKI_DEFAULT_BREAK_TIME, sessionTimerDecisions, MINUTES_FOR_DONE_SESSION_TIMEOUT, pausedSessionOptionsAttachments, startSessionOptionsAttachments, TASK_DECISION, endBreakEarlyAttachments,  intentConfig } from '../../lib/constants';
 import { doneSessionAskOptions } from '../modules/endWorkSessionFunctions';
+import { endOfPlanMessage } from '../plans/editPlanFunctions';
 
 import { notInSessionWouldYouLikeToStartOne } from './sessionOptions';
 
@@ -181,7 +182,7 @@ export default function(controller) {
 													console.log(convo.sessionDone.priorityDecision);
 													console.log("\n\n\n");
 
-													const { UserId, SlackUserId, reminders, extendSession, postSessionDecision, currentSession: { WorkSessionId, workSessionMinutes, dailyTask, additionalMinutes }, priorityDecision } = convo.sessionDone;
+													const { noPrioritiesRemaining, UserId, SlackUserId, reminders, extendSession, postSessionDecision, currentSession: { WorkSessionId, workSessionMinutes, dailyTask, additionalMinutes }, priorityDecision } = convo.sessionDone;
 
 													// if extend session, rest doesn't matter!
 													if (extendSession) {
@@ -205,11 +206,8 @@ export default function(controller) {
 
 													resumeQueuedReachouts(bot, { SlackUserId });
 
-
-
 													// this is where you do the math with passed in info
 													const { completeDailyTask, replacePriority, switchPriority } = priorityDecision;
-
 
 													// COMPLETED!!!!
 													if (completeDailyTask) {
@@ -338,6 +336,12 @@ export default function(controller) {
 																})
 															})
 														}
+													}
+
+													if (noPrioritiesRemaining) {
+														const config = { controller, bot, SlackUserId }
+														endOfPlanMessage(config);
+														return;
 													}
 
 													if (postSessionDecision) {

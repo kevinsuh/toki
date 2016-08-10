@@ -165,6 +165,7 @@ exports.default = function (controller) {
 														console.log("\n\n\n");
 
 														var _convo$sessionDone = convo.sessionDone;
+														var noPrioritiesRemaining = _convo$sessionDone.noPrioritiesRemaining;
 														var UserId = _convo$sessionDone.UserId;
 														var SlackUserId = _convo$sessionDone.SlackUserId;
 														var reminders = _convo$sessionDone.reminders;
@@ -340,6 +341,12 @@ exports.default = function (controller) {
 															}
 														}
 
+														if (noPrioritiesRemaining) {
+															var _config = { controller: controller, bot: bot, SlackUserId: SlackUserId };
+															(0, _editPlanFunctions.endOfPlanMessage)(_config);
+															return;
+														}
+
 														if (postSessionDecision) {
 															setTimeout(function () {
 																var config = { SlackUserId: SlackUserId };
@@ -369,8 +376,8 @@ exports.default = function (controller) {
 					});
 				} else {
 
-					var _config = { bot: bot, controller: controller, SlackUserId: SlackUserId };
-					(0, _sessionOptions.notInSessionWouldYouLikeToStartOne)(_config);
+					var _config2 = { bot: bot, controller: controller, SlackUserId: SlackUserId };
+					(0, _sessionOptions.notInSessionWouldYouLikeToStartOne)(_config2);
 				}
 			});
 		});
@@ -408,6 +415,8 @@ var _miscHelpers = require('../../lib/miscHelpers');
 var _constants = require('../../lib/constants');
 
 var _endWorkSessionFunctions = require('../modules/endWorkSessionFunctions');
+
+var _editPlanFunctions = require('../plans/editPlanFunctions');
 
 var _sessionOptions = require('./sessionOptions');
 
