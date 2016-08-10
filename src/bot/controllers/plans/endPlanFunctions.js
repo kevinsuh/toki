@@ -14,7 +14,7 @@ import { witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArr
 // this one shows the task list message and asks for options
 export function startEndPlanConversation(convo) {
 
-	const { dayEnd: { wonDay } } = convo;
+	const { dayEnd: { wonDay, wonDayStreak } } = convo;
 
 	const { dayEnd: { dailyTasks } } = convo;
 
@@ -36,8 +36,15 @@ export function startEndPlanConversation(convo) {
 		convo.say(`:trophy: *Congratulations on winning the day!* :trophy:`);
 		convo.say(`It's all about time well spent, and today you did just that`);
 		convo.say(`Here's what you got done:\n${completedTaskListMessage}`);
+		if (wonDayStreak > 1) {
+			convo.say(`*You’ve won the day ​2 days in a row* :fire:`);
+		}
 	} else {
-		convo.say(`We can do this together the next time! You still spent *${timeWorkedString}* working toward your top priorities`);
+		let message = `We can do this together the next time!`;
+		if (minutesWorked > 0) {
+			message = `${message} You still spent *${timeWorkedString}* working toward your top priorities`;
+		}
+		convo.say(message);
 	}
 
 	askForReflection(convo);
@@ -65,9 +72,9 @@ function askForReflection(convo) {
 				color: colorsHash.grey.hex,
 				actions: [
 					{
-							name: buttonValues.notShare.value,
-							text: "Not sharing today :grin:",
-							value: buttonValues.notShare.value,
+							name: buttonValues.notToday.value,
+							text: "Not today :grin:",
+							value: buttonValues.notToday.value,
 							type: "button"
 					}
 				]
@@ -75,7 +82,7 @@ function askForReflection(convo) {
 		]
 	},[
 		{
-			pattern: utterances.notShare,
+			pattern: utterances.notToday,
 			callback: (response, convo) => {
 				convo.say(`Got it!`);
 				convo.say(`I hope you have a great rest of the day and I’ll see you soon!`);

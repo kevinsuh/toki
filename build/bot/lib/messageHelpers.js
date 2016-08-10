@@ -311,9 +311,11 @@ function convertArrayToTaskListMessage(taskArray) {
 	if (reviewVersion && calculateMinutes) {
 		var totalMinutesSpent = options.totalMinutesSpent;
 
-		var timeString = convertMinutesToHoursString(totalMinutesSpent);
-		var totalMinutesContent = '\n*Time Well Spent: ' + timeString + ' :clock730:*';
-		taskListMessage += totalMinutesContent;
+		if (totalMinutesSpent > 0) {
+			var timeString = convertMinutesToHoursString(totalMinutesSpent);
+			var totalMinutesContent = '\n*Time Well Spent: ' + timeString + ' :clock730:*';
+			taskListMessage += totalMinutesContent;
+		}
 	}
 
 	return taskListMessage;

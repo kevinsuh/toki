@@ -114,7 +114,22 @@ export default function(controller) {
 								convo.wonDay         = false;
 
 								convo.say(`Hey ${nickName}, let's wrap up for the day :package:`);
-								convo.say(`You put *${timeWorkedString}* toward your top priorities today, completing ${completedTaskString}`);
+
+								let message = '';
+								if (minutesWorked > 0) {
+									message = `You put *${timeWorkedString}* toward your top priorities today`;
+									if (completedDailyTasks.length > 0) {
+										message = `${message}, completing ${completedTaskString}`;
+									}
+								}
+								if (completedDailyTasks.length > 0) {
+									message = `You completed ${completedTaskString}`;
+								}
+
+								if (message.length > 0) {
+									convo.say(message);
+								}
+									
 								convo.say(`I define winning your day as time well spent, so if you felt your time was well spent at work today, you won the day. If you didn’t, that’s ok - I’m here tomorrow to help you be intentional about what you work on to get you closer to your goals`);
 								convo.ask({
 									text: `*Did you feel like you won your day today?*`,
@@ -157,7 +172,7 @@ export default function(controller) {
 										}
 									},
 									{
-										pattern: utterances.notToday,
+										pattern: utterances.no,
 										callback: (response, convo) => {
 											convo.wonDay         = false;
 											convo.endDayDecision = intentConfig.END_DAY;
@@ -691,7 +706,16 @@ export default function(controller) {
 
 					// user has not started a day recently
 					// automatically trigger new_plan_flow
-					controller.trigger(`new_plan_flow`, [ bot, { SlackUserId }]);
+					// user has not started a day recently
+					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+						convo.say("You haven't started a day yet!");
+						convo.next();
+
+						convo.on('end', (convo) => {
+							controller.trigger(`new_plan_flow`, [ bot, { SlackUserId }]);
+						});
+					});
 				}
 
 					
@@ -739,63 +763,86 @@ export default function(controller) {
 
 				if (valid) {
 
-					// sessionGroup exists and it is most recently a start_day (so end_day makes sense here)
-					user.getDailyTasks({
-						where: [`"DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?`, sessionGroup.dataValues.createdAt, "live"],
-						include: [ models.Task ],
-						order: `"DailyTask"."priority" ASC`
+					user.getSessionGroups({
+						order: `"SessionGroup"."createdAt" DESC`,
+						where: [`"SessionGroup"."type" = ?`, "end_work"]
 					})
-					.then((dailyTasks) => {
+					.then((sessionGroups) => {
 
-						dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
-
-						// user has not started a day recently
-						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-
-							convo.dayEnd = {
-								wonDay,
-								nickName,
-								dailyTasks,
-								reflection: null
+						let wonDayStreak = 0;
+						sessionGroups.some((sessionGroup) => {
+							// count up backwards chronologically,
+							// until we hit a point user did not win day
+							if (!sessionGroup.wonDay) {
+								return true;
+							} else {
+								wonDayStreak++;
 							}
+						});
 
-							startEndPlanConversation(convo);
-							convo.next();
+						// include today!
+						if (wonDay)
+							wonDayStreak++;
 
-							convo.on('end', (convo) => {
+						user.getDailyTasks({
+							where: [`"DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?`, sessionGroup.dataValues.createdAt, "live"],
+							include: [ models.Task ],
+							order: `"DailyTask"."priority" ASC`
+						})
+						.then((dailyTasks) => {
 
-								const { wonDay, reflection } = convo.dayEnd;
-								let now = moment();
+							dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
 
-								// end your day
-								models.SessionGroup.create({
-									type: `end_work`,
-									UserId,
-									reflection
-								});
+							// user has not started a day recently
+							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-								closeOldRemindersAndSessions(user);
-								resumeQueuedReachouts(bot, { SlackUserId });
-								user.getDailyTasks({
-									where: [`"DailyTask"."type" = ?`, "live"]
-								})
-								.then((dailyTasks) => {
-									let DailyTaskIds = dailyTasks.map(dailyTask => dailyTask.id);
-									models.DailyTask.update({
-										type: "archived"
-									}, {
-										where: [ `"DailyTasks"."id" IN (?)`, DailyTaskIds ]
+								convo.dayEnd = {
+									wonDay,
+									wonDayStreak,
+									nickName,
+									dailyTasks,
+									reflection: null
+								}
+
+								startEndPlanConversation(convo);
+								convo.next();
+
+								convo.on('end', (convo) => {
+
+									const { wonDay, reflection } = convo.dayEnd;
+									let now = moment();
+
+									// end your day
+									models.SessionGroup.create({
+										type: `end_work`,
+										UserId,
+										reflection,
+										wonDay
 									});
-								})
+
+									closeOldRemindersAndSessions(user);
+									resumeQueuedReachouts(bot, { SlackUserId });
+									user.getDailyTasks({
+										where: [`"DailyTask"."type" = ?`, "live"]
+									})
+									.then((dailyTasks) => {
+										let DailyTaskIds = dailyTasks.map(dailyTask => dailyTask.id);
+										models.DailyTask.update({
+											type: "archived"
+										}, {
+											where: [ `"DailyTasks"."id" IN (?)`, DailyTaskIds ]
+										});
+									})
+
+								});
 
 							});
 
 						});
-						
-
-					});
+					})
 
 				} else {
+
 					// user has not started a day recently
 					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
@@ -806,6 +853,7 @@ export default function(controller) {
 							controller.trigger(`new_plan_flow`, [ bot, { SlackUserId }]);
 						});
 					});
+
 				}
 
 			});

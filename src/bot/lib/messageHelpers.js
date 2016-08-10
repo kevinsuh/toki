@@ -279,9 +279,11 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 	
 	if (reviewVersion && calculateMinutes) {
 		let { totalMinutesSpent } = options;
-		let timeString = convertMinutesToHoursString(totalMinutesSpent);
-		var totalMinutesContent = `\n*Time Well Spent: ${timeString} :clock730:*`;
-		taskListMessage += totalMinutesContent;
+		if (totalMinutesSpent > 0) {
+			let timeString = convertMinutesToHoursString(totalMinutesSpent);
+			var totalMinutesContent = `\n*Time Well Spent: ${timeString} :clock730:*`;
+			taskListMessage += totalMinutesContent;
+		}
 	}
 
 	return taskListMessage;
