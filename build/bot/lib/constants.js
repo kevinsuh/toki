@@ -45,7 +45,7 @@ var constants = exports.constants = {
 		},
 		delete: {
 			word: "TASK_DELETE",
-			reg_exp: new RegExp(/\bdel[elete]{3,}\b/i)
+			reg_exp: new RegExp(/\b(del[elete]{2,8}|rem[move]{2,6})\b/i)
 		},
 		edit: {
 			word: "TASK_EDIT",
@@ -54,6 +54,10 @@ var constants = exports.constants = {
 		work: {
 			word: "TASK_WORK",
 			reg_exp: new RegExp(/\b(do[o]?|wor[ork]{1,})\b/i)
+		},
+		revise: {
+			word: "TASK_REVISE",
+			reg_exp: new RegExp(/\brev[ise]{2,4}\b/i)
 		}
 	},
 	FINISH_WORD: {
@@ -132,7 +136,7 @@ var colorsHash = exports.colorsHash = {
 		hex: "#F0D003"
 	},
 	toki_purple: {
-		hex: "#8127E5"
+		hex: "#8a3df0"
 	}
 };
 
@@ -408,39 +412,37 @@ var buttonValues = exports.buttonValues = {
 		name: "UNDO_TASK_DELETE"
 	},
 	planCommands: { // value will be NL single line commands
-		deleteTasks: {
-			name: "PLAN_DELETE_TASKS",
-			value: "delete priorities"
+		deletePriority: {
+			name: "PLAN_DELETE_PRIORITY",
+			value: "delete priority"
 		},
-		completeTasks: {
-			name: "PLAN_COMPLETE_TASKS",
-			value: "complete priorities"
+		completePriority: {
+			name: "PLAN_COMPLETE_PRIORITY",
+			value: "complete priority"
 		},
-		addTasks: {
-			name: "PLAN_ADD_TASKS",
-			value: "add priorities"
+		addPriority: {
+			name: "PLAN_ADD_PRIORITY",
+			value: "add priority"
 		},
-		workOnTasks: {
-			name: "PLAN_WORK_ON_TASKS",
-			value: "work on priorities"
-		}
-	},
-	endOfPlanCommands: { // value will be NL single line commands
-		deleteTasks: {
-			name: "END_OF_PLAN_DELETE_TASKS",
-			value: "END_OF_PLAN_DELETE_TASKS"
+		workOnPriority: {
+			name: "PLAN_WORK_ON_PRIORITY",
+			value: "work on priority"
 		},
-		completeTasks: {
-			name: "END_OF_PLAN_COMPLETE_TASKS",
-			value: "END_OF_PLAN_COMPLETE_TASKS"
+		revisePriority: {
+			name: "PLAN_REVISE_PRIORITY",
+			value: "revise priority"
 		},
-		addTasks: {
-			name: "END_OF_PLAN_ADD_TASKS",
-			value: "END_OF_PLAN_ADD_TASKS"
+		endDay: {
+			name: "PLAN_END_DAY",
+			value: "end my day"
 		},
-		workOnTasks: {
-			name: "END_OF_PLAN_WORK_ON_TASKS",
-			value: "END_OF_PLAN_WORK_ON_TASKS"
+		actuallyDontWantToAddPriority: {
+			name: "PLAN_DONT_WANT_TO_ADD_PRIORITY",
+			value: "Never mind, I don't want to add another priority"
+		},
+		actuallyLetsRenamePriority: {
+			name: "PLAN_LETS_RENAME_PRIORITY",
+			value: "Actually, let's rename this priority"
 		}
 	},
 	redoTasks: {

@@ -28,6 +28,7 @@ exports.deleteMostRecentDoneSessionMessage = deleteMostRecentDoneSessionMessage;
 exports.getTimeToTaskTextAttachmentWithTaskListMessage = getTimeToTaskTextAttachmentWithTaskListMessage;
 exports.convertStringToNumbersArray = convertStringToNumbersArray;
 exports.getDoneSessionMessageAttachments = getDoneSessionMessageAttachments;
+exports.getPlanCommandCenterAttachments = getPlanCommandCenterAttachments;
 exports.getMinutesSuggestionAttachments = getMinutesSuggestionAttachments;
 
 var _constants = require('./constants');
@@ -375,6 +376,10 @@ function createTaskListMessageBody(taskArray, options) {
  * @return {string}         hour + minutes
  */
 function convertMinutesToHoursString(minutes) {
+	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var abbreviation = config.abbreviation;
+
+
 	minutes = Math.round(minutes);
 	var hours = 0;
 	while (minutes - 60 >= 0) {
@@ -385,19 +390,17 @@ function convertMinutesToHoursString(minutes) {
 	if (hours == 0) {
 		content = '';
 	} else if (hours == 1) {
-		content = hours + ' hour ';
+		content = abbreviation ? hours + ' hr ' : hours + ' hour ';
 	} else {
-		content = hours + ' hours ';
+		content = abbreviation ? hours + ' hrs ' : hours + ' hours ';
 	}
 
 	if (minutes == 0) {
 		content = content.slice(0, -1);
-	}
-
-	if (minutes == 1) {
-		content = '' + content + minutes + ' minute';
+	} else if (minutes == 1) {
+		content = abbreviation ? '' + content + minutes + ' min' : '' + content + minutes + ' minute';
 	} else {
-		content = '' + content + minutes + ' minutes';
+		content = abbreviation ? '' + content + minutes + ' min' : '' + content + minutes + ' minutes';
 	}
 
 	return content;
@@ -979,6 +982,79 @@ function getDoneSessionMessageAttachments() {
 	return attachments;
 }
 
+// get button attachments for your plan list
+function getPlanCommandCenterAttachments() {
+	var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	var buttonsValuesArray = config.buttonsValuesArray;
+
+
+	var actions = [];
+	buttonsValuesArray.forEach(function (buttonValue) {
+		switch (buttonValue) {
+			case _constants.buttonValues.planCommands.addPriority.value:
+				actions.push({
+					name: _constants.buttonValues.planCommands.addPriority.name,
+					text: "Add",
+					value: _constants.buttonValues.planCommands.addPriority.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.planCommands.deletePriority.value:
+				actions.push({
+					name: _constants.buttonValues.planCommands.deletePriority.name,
+					text: "Remove",
+					value: _constants.buttonValues.planCommands.deletePriority.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.planCommands.completePriority.value:
+				actions.push({
+					name: _constants.buttonValues.planCommands.completePriority.name,
+					text: "Complete",
+					value: _constants.buttonValues.planCommands.completePriority.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.planCommands.workOnPriority.value:
+				actions.push({
+					name: _constants.buttonValues.planCommands.workOnPriority.name,
+					text: "Work",
+					value: _constants.buttonValues.planCommands.workOnPriority.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.planCommands.revisePriority.value:
+				actions.push({
+					name: _constants.buttonValues.planCommands.revisePriority.name,
+					text: "Revise",
+					value: _constants.buttonValues.planCommands.revisePriority.value,
+					type: "button"
+				});
+				break;
+			case _constants.buttonValues.planCommands.endDay.value:
+				actions.push({
+					name: _constants.buttonValues.planCommands.endDay.name,
+					text: "End Day",
+					value: _constants.buttonValues.planCommands.endDay.value,
+					type: "button"
+				});
+				break;
+			default:
+				break;
+		}
+	});
+
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "PLAN_COMMAND_CENTER",
+		fallback: "What do you want to do with your priorities?",
+		color: _constants.colorsHash.toki_purple.hex,
+		actions: actions
+	}];
+
+	return attachments;
+}
+
 function getMinutesSuggestionAttachments(minutesRemaining) {
 
 	var minutesSuggestions = [30, 45, 60, 90];
@@ -1023,9 +1099,10 @@ function getMinutesSuggestionAttachments(minutesRemaining) {
 	}];
 
 	minutesSuggestions.forEach(function (minutesSuggestion) {
+		var timeSuggestionString = convertMinutesToHoursString(minutesSuggestion, { abbreviation: true });
 		var action = {
 			name: _constants.buttonValues.startNow.name,
-			text: minutesSuggestion + ' minutes',
+			text: '' + timeSuggestionString,
 			value: minutesSuggestion + ' minutes',
 			type: "button"
 		};

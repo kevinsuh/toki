@@ -64,4 +64,5 @@ export const utterances = {
 	containsEnough: new RegExp(/\beno[ough]{3,}\b/i),
 	containsNew: new RegExp(/\bnew[ew]*\b/i),
 	moveOn: new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i),
+	containsRename: new RegExp(/\bre[ name]{3,7}\b/i)
 }

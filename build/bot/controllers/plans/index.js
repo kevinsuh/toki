@@ -15,7 +15,11 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
 exports.default = function (controller) {
 
+	// WIT FOR `new_plan_flow`
 	controller.hears(['start_day'], 'direct_message', _index.wit.hears, function (bot, message) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
 
 		var SlackUserId = message.user;
 
@@ -28,11 +32,34 @@ exports.default = function (controller) {
 		}, 1000);
 	});
 
+	// WIT FOR `end_plan_flow`
+	controller.hears(['end_day'], 'direct_message', _index.wit.hears, function (bot, message) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		var SlackUserId = message.user;
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(function () {
+			controller.trigger('end_plan_flow', [bot, { SlackUserId: SlackUserId }]);
+		}, 1000);
+	});
+
+	/**
+  * 	EDIT PLAN FLOW
+  */
 	controller.hears(['daily_tasks', 'add_daily_task', 'completed_task'], 'direct_message', _index.wit.hears, function (bot, message) {
 		var text = message.text;
 		var channel = message.channel;
 
 		var SlackUserId = message.user;
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
 
 		var config = { SlackUserId: SlackUserId, message: message };
 
@@ -245,7 +272,7 @@ exports.default = function (controller) {
 		if (botCallback) {
 			// if botCallback, need to get the correct bot
 			var botToken = bot.config.token;
-			bot = bots[botToken];
+			bot = _index.bots[botToken];
 		}
 
 		var taskNumbers = (0, _messageHelpers.convertStringToNumbersArray)(text);
@@ -282,6 +309,10 @@ exports.default = function (controller) {
 					// do plan
 					config.planDecision = _constants.constants.PLAN_DECISION.work.word;
 					break;
+				case (text.match(_constants.constants.PLAN_DECISION.revise.reg_exp) || {}).input:
+					// do plan
+					config.planDecision = _constants.constants.PLAN_DECISION.revise.word;
+					break;
 				default:
 					config.planDecision = config.taskNumbers ? _constants.constants.PLAN_DECISION.work.word : _constants.constants.PLAN_DECISION.view.word;
 					break;
@@ -313,7 +344,7 @@ exports.default = function (controller) {
 		if (botCallback) {
 			// if botCallback, need to get the correct bot
 			var botToken = bot.config.token;
-			bot = bots[botToken];
+			bot = _index.bots[botToken];
 		}
 
 		_models2.default.User.find({
@@ -350,10 +381,9 @@ exports.default = function (controller) {
 							SlackUserId: SlackUserId,
 							dailyTasks: dailyTasks,
 							updateTaskListMessageObject: {},
-							newTasks: [],
+							newPriority: false,
 							dailyTaskIdsToDelete: [],
 							dailyTaskIdsToComplete: [],
-							dailyTasksToUpdate: [], // existing dailyTasks
 							openWorkSession: openWorkSession,
 							planDecision: planDecision,
 							taskNumbers: taskNumbers,
@@ -374,22 +404,19 @@ exports.default = function (controller) {
 
 						convo.on('end', function (convo) {
 							var _convo$planEdit = convo.planEdit;
-							var newTasks = _convo$planEdit.newTasks;
+							var newPriority = _convo$planEdit.newPriority;
 							var dailyTasks = _convo$planEdit.dailyTasks;
 							var SlackUserId = _convo$planEdit.SlackUserId;
 							var dailyTaskIdsToDelete = _convo$planEdit.dailyTaskIdsToDelete;
 							var dailyTaskIdsToComplete = _convo$planEdit.dailyTaskIdsToComplete;
-							var dailyTasksToUpdate = _convo$planEdit.dailyTasksToUpdate;
 							var startSession = _convo$planEdit.startSession;
 							var dailyTasksToWorkOn = _convo$planEdit.dailyTasksToWorkOn;
 							var changePlanCommand = _convo$planEdit.changePlanCommand;
 							var currentSession = _convo$planEdit.currentSession;
-
-
-							console.log("\n\n\n at end of convo planEdit");
-							console.log(convo.planEdit);
+							var showUpdatedPlan = _convo$planEdit.showUpdatedPlan;
 
 							// this means we are changing the plan!
+
 							if (changePlanCommand.decision) {
 								var _message = { text: changePlanCommand.text };
 								var _config = { SlackUserId: SlackUserId, message: _message, changePlanCommand: changePlanCommand };
@@ -411,37 +438,27 @@ exports.default = function (controller) {
 								return;
 							}
 
-							/*
-       // add new tasks if they got added
-       if (newTasks.length > 0) {
-       	var priority = dailyTasks.length;
-       	// add the priorities
-       	newTasks = newTasks.map((newTask) => {
-       		priority++;
-       		return {
-       			...newTask,
-       			priority
-       		};
-       	});
-       		newTasks.forEach((newTask) => {
-       		const { minutes, text, priority } = newTask;
-       		if (minutes && text) {
-       			models.Task.create({
-       				text
-       			})
-       			.then((task) => {
-       				const TaskId = task.id;
-       				models.DailyTask.create({
-       					TaskId,
-       					priority,
-       					minutes,
-       					UserId
-       				});
-       			});
-       		}
-       	})
-       }
-       */
+							if (newPriority) {
+								(function () {
+									var text = newPriority.text;
+									var minutes = newPriority.minutes;
+
+									_models2.default.Task.create({
+										text: text
+									}).then(function (task) {
+										var TaskId = task.id;
+										var priority = dailyTasks.length + 1;
+										_models2.default.DailyTask.create({
+											TaskId: TaskId,
+											priority: priority,
+											minutes: minutes,
+											UserId: UserId
+										}).then(function () {
+											(0, _miscHelpers.prioritizeDailyTasks)(user);
+										});
+									});
+								})();
+							}
 
 							// delete tasks if requested
 							if (dailyTaskIdsToDelete.length > 0) {
@@ -471,31 +488,18 @@ exports.default = function (controller) {
 								});
 							}
 
-							/*
-       	// update daily tasks if requested
-       if (dailyTasksToUpdate.length > 0) {
-       	dailyTasksToUpdate.forEach((dailyTask) => {
-       		if (dailyTask.dataValues && dailyTask.minutes && dailyTask.text) {
-       			const { minutes, text } = dailyTask;
-       			models.DailyTask.update({
-       				text,
-       				minutes
-       			}, {
-       				where: [`"DailyTasks"."id" = ?`, dailyTask.dataValues.id]
-       			})
-       		}
-       	})
-       }
-       	setTimeout(() => {
-       		setTimeout(() => {
-       		prioritizeDailyTasks(user);
-       	}, 1000);
-       		// only check for live tasks if SOME action took place
-       	if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
-       		checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
-       	}
-       }, 750);
-       */
+							if (message && message.channel) {
+								bot.send({
+									type: "typing",
+									channel: message.channel
+								});
+							}
+
+							setTimeout(function () {
+
+								var config = { SlackUserId: SlackUserId, bot: bot, controller: controller, showUpdatedPlan: showUpdatedPlan };
+								(0, _editPlanFunctions.endOfPlanMessage)(config);
+							}, 750);
 						});
 					});
 				});

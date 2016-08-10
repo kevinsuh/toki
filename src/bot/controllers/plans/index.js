@@ -1,15 +1,15 @@
-import { wit } from '../index';
+import { bots, wit } from '../index';
 import moment from 'moment-timezone';
 
 import models from '../../../app/models';
 
 import { utterances } from '../../lib/botResponses';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, convertStringToNumbersArray, commaSeparateOutTaskArray } from '../../lib/messageHelpers';
-import { getCurrentDaySplit, closeOldRemindersAndSessions } from '../../lib/miscHelpers';
+import { getCurrentDaySplit, closeOldRemindersAndSessions, prioritizeDailyTasks } from '../../lib/miscHelpers';
 import { constants, dateOfNewPlanDayFlow } from '../../lib/constants';
 
 import { startNewPlanFlow } from '../modules/plan';
-import { startEditPlanConversation } from './editPlanFunctions';
+import { startEditPlanConversation, endOfPlanMessage } from './editPlanFunctions';
 
 /**
  * Starting a new plan for the day
@@ -20,7 +20,11 @@ import { resumeQueuedReachouts } from '../index';
 // base controller for new plan
 export default function(controller) {
 
+	// WIT FOR `new_plan_flow`
 	controller.hears(['start_day'], 'direct_message', wit.hears, (bot, message) => {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
 		const SlackUserId = message.user;
 
@@ -34,10 +38,34 @@ export default function(controller) {
 
 	});
 
+	// WIT FOR `end_plan_flow`
+	controller.hears(['end_day'], 'direct_message', wit.hears, (bot, message) => {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
+		const SlackUserId = message.user;
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(()=>{
+			controller.trigger(`end_plan_flow`, [ bot, { SlackUserId }]);
+		}, 1000);
+
+	});
+
+	/**
+	 * 	EDIT PLAN FLOW
+	 */
 	controller.hears(['daily_tasks', 'add_daily_task', 'completed_task'], 'direct_message', wit.hears, (bot, message) => {
 
 		const { text, channel } = message;
 		const SlackUserId       = message.user;
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
 		let config = { SlackUserId, message };
 
@@ -292,6 +320,10 @@ export default function(controller) {
 					// do plan
 					config.planDecision = constants.PLAN_DECISION.work.word;
 					break;
+				case (text.match(constants.PLAN_DECISION.revise.reg_exp) || {}).input:
+					// do plan
+					config.planDecision = constants.PLAN_DECISION.revise.word;
+					break;
 				default:
 					config.planDecision = config.taskNumbers ? constants.PLAN_DECISION.work.word : constants.PLAN_DECISION.view.word;
 					break;
@@ -361,10 +393,9 @@ export default function(controller) {
 							SlackUserId,
 							dailyTasks,
 							updateTaskListMessageObject: {},
-							newTasks: [],
+							newPriority: false,
 							dailyTaskIdsToDelete: [],
 							dailyTaskIdsToComplete: [],
-							dailyTasksToUpdate: [], // existing dailyTasks
 							openWorkSession,
 							planDecision,
 							taskNumbers,
@@ -383,13 +414,9 @@ export default function(controller) {
 						// this is the flow you expect for editing tasks
 						startEditPlanConversation(convo);
 
-						
 						convo.on('end', (convo) => {
 							
-							var { newTasks, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, dailyTasksToUpdate, startSession, dailyTasksToWorkOn, changePlanCommand, currentSession } = convo.planEdit;
-
-							console.log("\n\n\n at end of convo planEdit")
-							console.log(convo.planEdit);
+							var { newPriority, dailyTasks, SlackUserId, dailyTaskIdsToDelete, dailyTaskIdsToComplete, startSession, dailyTasksToWorkOn, changePlanCommand, currentSession, showUpdatedPlan } = convo.planEdit;
 
 							// this means we are changing the plan!
 							if (changePlanCommand.decision) {
@@ -414,38 +441,25 @@ export default function(controller) {
 
 							}
 
-							/*
-							// add new tasks if they got added
-							if (newTasks.length > 0) {
-								var priority = dailyTasks.length;
-								// add the priorities
-								newTasks = newTasks.map((newTask) => {
-									priority++;
-									return {
-										...newTask,
-										priority
-									};
-								});
-
-								newTasks.forEach((newTask) => {
-									const { minutes, text, priority } = newTask;
-									if (minutes && text) {
-										models.Task.create({
-											text
-										})
-										.then((task) => {
-											const TaskId = task.id;
-											models.DailyTask.create({
-												TaskId,
-												priority,
-												minutes,
-												UserId
-											});
-										});
-									}
+							if (newPriority) {
+								const { text, minutes } = newPriority;
+								models.Task.create({
+									text
+								})
+								.then((task) => {
+									const TaskId = task.id;
+									const priority = dailyTasks.length + 1;
+									models.DailyTask.create({
+										TaskId,
+										priority,
+										minutes,
+										UserId
+									})
+									.then(() => {
+										prioritizeDailyTasks(user);
+									})
 								})
 							}
-							*/
 
 							// delete tasks if requested
 							if (dailyTaskIdsToDelete.length > 0) {
@@ -476,35 +490,19 @@ export default function(controller) {
 								})
 							}
 
-							/*
-
-							// update daily tasks if requested
-							if (dailyTasksToUpdate.length > 0) {
-								dailyTasksToUpdate.forEach((dailyTask) => {
-									if (dailyTask.dataValues && dailyTask.minutes && dailyTask.text) {
-										const { minutes, text } = dailyTask;
-										models.DailyTask.update({
-											text,
-											minutes
-										}, {
-											where: [`"DailyTasks"."id" = ?`, dailyTask.dataValues.id]
-										})
-									}
-								})
+							if (message && message.channel) {
+								bot.send({
+									type: "typing",
+									channel: message.channel
+								});
 							}
 
 							setTimeout(() => {
 
-								setTimeout(() => {
-									prioritizeDailyTasks(user);
-								}, 1000);
-
-								// only check for live tasks if SOME action took place
-								if (newTasks.length > 0 || dailyTaskIdsToDelete.length > 0 || dailyTaskIdsToComplete.length > 0 || dailyTasksToUpdate.length > 0) {
-									checkWorkSessionForLiveTasks({ SlackUserId, bot, controller });
-								}
+								const config = { SlackUserId, bot, controller, showUpdatedPlan };
+								endOfPlanMessage(config);
+									
 							}, 750);
-							*/
 	
 						});
 					});

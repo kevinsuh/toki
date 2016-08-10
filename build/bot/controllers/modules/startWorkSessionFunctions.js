@@ -46,9 +46,8 @@ function finalizeTimeAndTasksToStart(convo) {
 	var minutes = _convo$sessionStart.minutes;
 	var currentSession = _convo$sessionStart.currentSession;
 
-	var now = (0, _momentTimezone2.default)();
-
 	// we need both time and task in order to start session
+
 	if (!dailyTask) {
 		askWhichTaskToWorkOn(convo);
 		return;
@@ -121,17 +120,18 @@ function finalizeTimeAndTasksToStart(convo) {
 		var minutesSpent = _dailyTask$dataValues.minutesSpent;
 
 		var minutesRemaining = _minutes - minutesSpent;
+		var timeRemainingString = (0, _messageHelpers.convertMinutesToHoursString)(minutesRemaining);
 
 		if (minutesRemaining > 0) {
 
 			if (minutesSpent == 0) {
 				// new flow!
 				convo.say('Let’s crank on ' + taskText + ' with a focused session :wrench:');
-				question = 'How long would you like to focus on ' + taskText + ' for? You have *' + minutesRemaining + ' minutes* set aside for this today';
+				question = 'How long would you like to focus on ' + taskText + ' for? You have *' + timeRemainingString + '* set aside for this today';
 			} else {
 				// new flow!
 				convo.say('Let’s keep cranking on ' + taskText + ' with a focused session :wrench:');
-				question = 'How long would you like to focus on ' + taskText + ' for? You still have *' + minutesRemaining + ' minutes* set aside for this today';
+				question = 'How long would you like to focus on ' + taskText + ' for? You still have *' + timeRemainingString + '* set aside for this today';
 			}
 
 			var attachments = (0, _messageHelpers.getMinutesSuggestionAttachments)(minutesRemaining);
@@ -167,6 +167,7 @@ function finalizeTimeAndTasksToStart(convo) {
 					var entities = response.intentObject.entities;
 
 
+					var now = (0, _momentTimezone2.default)().tz(tz);
 					var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
 
 					if (customTimeObject) {
@@ -397,7 +398,6 @@ function askToAddMinutesToTask(convo) {
 	// will only be a single task now
 
 	var taskText = dailyTask.dataValues ? '`' + dailyTask.dataValues.Task.text + '`' : 'your priority';
-	var now = (0, _momentTimezone2.default)().tz(tz);
 
 	convo.ask({
 		text: question,
@@ -423,6 +423,8 @@ function askToAddMinutesToTask(convo) {
 	}, {
 		default: true,
 		callback: function callback(response, convo) {
+
+			var now = (0, _momentTimezone2.default)().tz(tz);
 			var entities = response.intentObject.entities;
 			// for time to tasks, these wit intents are the only ones that makes sense
 

@@ -49,30 +49,36 @@ export default function(controller) {
 			type: "typing",
 			channel: message.channel
 		});
-		setTimeout(() => {
-			models.User.find({
-				where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-				include: [ models.SlackUser ]
-			}).then((user) => {
 
-				const name = user.nickName || user.email;
+		let taskNumbers = convertStringToNumbersArray(text);
+		if (taskNumbers) {
+			config.taskNumbers = taskNumbers;
+			controller.trigger(`edit_plan_flow`, [ bot, config ]);
+		} else {
+			setTimeout(() => {
+				models.User.find({
+					where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+					include: [ models.SlackUser ]
+				}).then((user) => {
 
-				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-					if (sessionIntent == 'is_back') {
-						convo.say(`Welcome back, ${name}!`);
-					} else {
-						convo.say(" ");
-					}
-					convo.next();
-					convo.on('end', (convo) => {
-						// new session we'll automatically send to begin_session now
-						controller.trigger(`begin_session`, [ bot, config ]);
-						// controller.trigger(`plan_command_center`, [ bot, config ]);
-					})
+					const name = user.nickName || user.email;
+
+					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+						if (sessionIntent == 'is_back') {
+							convo.say(`Welcome back, ${name}!`);
+						} else {
+							convo.say(" ");
+						}
+						convo.next();
+						convo.on('end', (convo) => {
+							// new session we'll automatically send to begin_session now
+							controller.trigger(`begin_session`, [ bot, config ]);
+						})
+					});
+
 				});
-
-			});
-		}, 750);
+			}, 750);
+		}
 
 	});
 
