@@ -37,7 +37,7 @@ export function startEndPlanConversation(convo) {
 		convo.say(`It's all about time well spent, and today you did just that`);
 		convo.say(`Here's what you got done:\n${completedTaskListMessage}`);
 	} else {
-		convo.say(`We can do this together the next time! You still spent *${minutesWorked}* working toward your top priorities`);
+		convo.say(`We can do this together the next time! You still spent *${timeWorkedString}* working toward your top priorities`);
 	}
 
 	askForReflection(convo);
