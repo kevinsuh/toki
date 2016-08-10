@@ -899,7 +899,7 @@ function getDoneSessionMessageAttachments() {
 			case _constants.buttonValues.doneSession.completedPriorityTonedDown.value:
 				actions.push({
 					name: _constants.buttonValues.doneSession.completedPriorityTonedDown.name,
-					text: "Priority Completed",
+					text: "Completed :punch:",
 					value: _constants.buttonValues.doneSession.completedPriorityTonedDown.value,
 					type: "button"
 				});
