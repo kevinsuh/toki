@@ -6,7 +6,10 @@ module.exports = function (sequelize, DataTypes) {
       allowNull: false
     },
     UserId: DataTypes.INTEGER,
-    reflection: DataTypes.STRING
+    reflection: DataTypes.STRING,
+    wonDay: { type: DataTypes.BOOLEAN,
+      defaultValue: true
+    }
   }, {
     classMethods: {
       associate: function associate(models) {

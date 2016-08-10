@@ -45,8 +45,168 @@ exports.default = function (controller) {
 			channel: message.channel
 		});
 		setTimeout(function () {
-			controller.trigger('end_plan_flow', [bot, { SlackUserId: SlackUserId }]);
-		}, 1000);
+
+			// give them context and then the ability to end_day early
+			_models2.default.User.find({
+				where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+				include: [_models2.default.SlackUser]
+			}).then(function (user) {
+
+				var UserId = user.id;
+				var nickName = user.nickName;
+				var tz = user.SlackUser.tz;
+
+
+				user.getSessionGroups({
+					order: '"SessionGroup"."createdAt" DESC',
+					limit: 1
+				}).then(function (sessionGroups) {
+
+					var sessionGroup = sessionGroups[0];
+					var valid = true;
+
+					if (!sessionGroup || sessionGroup.type == "end_work") {
+						valid = false;
+					}
+
+					if (valid) {
+
+						// sessionGroup exists and it is most recently a start_day (so end_day makes sense here)
+						user.getDailyTasks({
+							where: ['"DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?', sessionGroup.dataValues.createdAt, "live"],
+							include: [_models2.default.Task],
+							order: '"DailyTask"."priority" ASC'
+						}).then(function (dailyTasks) {
+
+							dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
+
+							var completedDailyTasks = [];
+							var minutesWorked = 0;
+							dailyTasks.forEach(function (dailyTask) {
+								if (dailyTask.Task.done) {
+									completedDailyTasks.push(dailyTask);
+								}
+								minutesWorked += dailyTask.dataValues.minutesSpent;
+							});
+
+							var timeWorkedString = (0, _messageHelpers.convertMinutesToHoursString)(minutesWorked);
+
+							var options = { reviewVersion: true, noTitles: true };
+							var completedTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
+							var completedDailyTaskTexts = completedDailyTasks.map(function (dailyTask) {
+								return dailyTask.dataValues.Task.text;
+							});
+							var completedTaskString = (0, _messageHelpers.commaSeparateOutTaskArray)(completedDailyTaskTexts, { codeBlock: true });
+
+							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+								convo.endDayDecision = false;
+								convo.wonDay = false;
+
+								convo.say('Hey ' + nickName + ', let\'s wrap up for the day :package:');
+
+								var message = '';
+								if (minutesWorked > 0) {
+									message = 'You put *' + timeWorkedString + '* toward your top priorities today';
+									if (completedDailyTasks.length > 0) {
+										message = message + ', completing ' + completedTaskString;
+									}
+								}
+								if (completedDailyTasks.length > 0) {
+									message = 'You completed ' + completedTaskString;
+								}
+
+								if (message.length > 0) {
+									convo.say(message);
+								}
+
+								convo.say('I define winning your day as time well spent, so if you felt your time was well spent at work today, you won the day. If you didn’t, that’s ok - I’m here tomorrow to help you be intentional about what you work on to get you closer to your goals');
+								convo.ask({
+									text: '*Did you feel like you won your day today?*',
+									attachments: [{
+										attachment_type: 'default',
+										callback_id: "WIT_END_PLAN",
+										fallback: "Did you win your day?",
+										color: _constants.colorsHash.blue.hex,
+										actions: [{
+											name: _constants.buttonValues.yes.name,
+											text: "Yes! :punch:",
+											value: _constants.buttonValues.yes.value,
+											type: "button",
+											style: "primary"
+										}, {
+											name: _constants.buttonValues.notToday.name,
+											text: "Not today",
+											value: _constants.buttonValues.notToday.value,
+											type: "button"
+										}, {
+											name: _constants.buttonValues.keepWorking.name,
+											text: "Let's keep working!",
+											value: _constants.buttonValues.keepWorking.value,
+											type: "button"
+										}]
+									}]
+								}, [{
+									pattern: _botResponses.utterances.yes,
+									callback: function callback(response, convo) {
+										convo.wonDay = true;
+										convo.endDayDecision = _constants.intentConfig.END_DAY;
+										convo.next();
+									}
+								}, {
+									pattern: _botResponses.utterances.no,
+									callback: function callback(response, convo) {
+										convo.wonDay = false;
+										convo.endDayDecision = _constants.intentConfig.END_DAY;
+										convo.next();
+									}
+								}, {
+									pattern: _botResponses.utterances.containsKeep,
+									callback: function callback(response, convo) {
+										convo.say('Woo hoo! Let\'s do it');
+										convo.endDayDecision = _constants.intentConfig.KEEP_WORKING;
+										convo.next();
+									}
+								}, {
+									default: true,
+									callback: function callback(response, convo) {
+										convo.say('I didn\'t get that');
+										convo.repeat();
+										convo.next();
+									}
+								}]);
+
+								convo.next();
+
+								convo.on('end', function (convo) {
+									var endDayDecision = convo.endDayDecision;
+									var wonDay = convo.wonDay;
+									;
+									var config = { SlackUserId: SlackUserId, wonDay: wonDay };
+									if (endDayDecision == _constants.intentConfig.KEEP_WORKING) {
+										controller.trigger('plan_command_center', [bot, config]);
+									} else if (endDayDecision == _constants.intentConfig.END_DAY) {
+										controller.trigger('end_plan_flow', [bot, config]);
+									}
+								});
+							});
+						});
+					} else {
+
+						// user has not started a day recently
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+							convo.say("You haven't started a day yet!");
+							convo.next();
+
+							convo.on('end', function (convo) {
+								controller.trigger('new_plan_flow', [bot, { SlackUserId: SlackUserId }]);
+							});
+						});
+					}
+				});
+			});
+		}, 500);
 	});
 
 	/**
@@ -356,153 +516,183 @@ exports.default = function (controller) {
 			var tz = user.SlackUser.tz;
 
 
-			user.getWorkSessions({
-				where: ['"open" = ?', true]
-			}).then(function (workSessions) {
+			user.getSessionGroups({
+				order: '"SessionGroup"."createdAt" DESC',
+				limit: 1
+			}).then(function (sessionGroups) {
 
-				var openWorkSession = false;
-				if (workSessions.length > 0) {
-					openWorkSession = workSessions[0];
+				var sessionGroup = sessionGroups[0];
+				var valid = true;
+
+				// most recent one should be start_work, since that means you have started a new day
+				if (!sessionGroup || sessionGroup.type == "end_work") {
+					valid = false;
 				}
 
-				user.getDailyTasks({
-					where: ['"DailyTask"."type" = ?', "live"],
-					include: [_models2.default.Task],
-					order: '"Task"."done", "DailyTask"."priority" ASC'
-				}).then(function (dailyTasks) {
+				if (valid) {
+					user.getWorkSessions({
+						where: ['"open" = ?', true]
+					}).then(function (workSessions) {
 
-					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-
-						dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
-
-						convo.planEdit = {
-							bot: bot,
-							tz: tz,
-							SlackUserId: SlackUserId,
-							dailyTasks: dailyTasks,
-							updateTaskListMessageObject: {},
-							newPriority: false,
-							dailyTaskIdsToDelete: [],
-							dailyTaskIdsToComplete: [],
-							openWorkSession: openWorkSession,
-							planDecision: planDecision,
-							taskNumbers: taskNumbers,
-							changePlanCommand: {
-								decision: false
-							},
-							currentSession: false
-						};
-
-						// if you are changing between commands, we will
-						// store that information and have special config ability
-						if (config.changePlanCommand && config.changePlanCommand.decision) {
-							convo.planEdit.changedPlanCommands = true;
+						var openWorkSession = false;
+						if (workSessions.length > 0) {
+							openWorkSession = workSessions[0];
 						}
 
-						// this is the flow you expect for editing tasks
-						(0, _editPlanFunctions.startEditPlanConversation)(convo);
+						user.getDailyTasks({
+							where: ['"DailyTask"."type" = ?', "live"],
+							include: [_models2.default.Task],
+							order: '"Task"."done", "DailyTask"."priority" ASC'
+						}).then(function (dailyTasks) {
 
-						convo.on('end', function (convo) {
-							var _convo$planEdit = convo.planEdit;
-							var newPriority = _convo$planEdit.newPriority;
-							var dailyTasks = _convo$planEdit.dailyTasks;
-							var SlackUserId = _convo$planEdit.SlackUserId;
-							var dailyTaskIdsToDelete = _convo$planEdit.dailyTaskIdsToDelete;
-							var dailyTaskIdsToComplete = _convo$planEdit.dailyTaskIdsToComplete;
-							var startSession = _convo$planEdit.startSession;
-							var dailyTasksToWorkOn = _convo$planEdit.dailyTasksToWorkOn;
-							var changePlanCommand = _convo$planEdit.changePlanCommand;
-							var currentSession = _convo$planEdit.currentSession;
-							var showUpdatedPlan = _convo$planEdit.showUpdatedPlan;
+							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-							// this means we are changing the plan!
+								dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
 
-							if (changePlanCommand.decision) {
-								var _message = { text: changePlanCommand.text };
-								var _config = { SlackUserId: SlackUserId, message: _message, changePlanCommand: changePlanCommand };
-								controller.trigger('plan_command_center', [bot, _config]);
-								return;
-							}
-
-							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-
-							if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
-
-								var _config2 = {
+								convo.planEdit = {
+									bot: bot,
+									tz: tz,
 									SlackUserId: SlackUserId,
-									dailyTaskToWorkOn: dailyTasksToWorkOn[0],
-									currentSession: currentSession
+									dailyTasks: dailyTasks,
+									updateTaskListMessageObject: {},
+									newPriority: false,
+									dailyTaskIdsToDelete: [],
+									dailyTaskIdsToComplete: [],
+									openWorkSession: openWorkSession,
+									planDecision: planDecision,
+									taskNumbers: taskNumbers,
+									changePlanCommand: {
+										decision: false
+									},
+									currentSession: false
 								};
-								var _bot = convo.planEdit.bot;
-								controller.trigger('begin_session', [_bot, _config2]);
-								return;
-							}
 
-							if (newPriority) {
-								(function () {
-									var text = newPriority.text;
-									var minutes = newPriority.minutes;
+								// if you are changing between commands, we will
+								// store that information and have special config ability
+								if (config.changePlanCommand && config.changePlanCommand.decision) {
+									convo.planEdit.changedPlanCommands = true;
+								}
 
-									_models2.default.Task.create({
-										text: text
-									}).then(function (task) {
-										var TaskId = task.id;
-										var priority = dailyTasks.length + 1;
-										_models2.default.DailyTask.create({
-											TaskId: TaskId,
-											priority: priority,
-											minutes: minutes,
-											UserId: UserId
-										}).then(function () {
-											(0, _miscHelpers.prioritizeDailyTasks)(user);
+								// this is the flow you expect for editing tasks
+								(0, _editPlanFunctions.startEditPlanConversation)(convo);
+
+								convo.on('end', function (convo) {
+									var _convo$planEdit = convo.planEdit;
+									var newPriority = _convo$planEdit.newPriority;
+									var dailyTasks = _convo$planEdit.dailyTasks;
+									var SlackUserId = _convo$planEdit.SlackUserId;
+									var dailyTaskIdsToDelete = _convo$planEdit.dailyTaskIdsToDelete;
+									var dailyTaskIdsToComplete = _convo$planEdit.dailyTaskIdsToComplete;
+									var startSession = _convo$planEdit.startSession;
+									var dailyTasksToWorkOn = _convo$planEdit.dailyTasksToWorkOn;
+									var changePlanCommand = _convo$planEdit.changePlanCommand;
+									var currentSession = _convo$planEdit.currentSession;
+									var showUpdatedPlan = _convo$planEdit.showUpdatedPlan;
+
+									// this means we are changing the plan!
+
+									if (changePlanCommand.decision) {
+										var _message = { text: changePlanCommand.text };
+										var _config = { SlackUserId: SlackUserId, message: _message, changePlanCommand: changePlanCommand };
+										controller.trigger('plan_command_center', [bot, _config]);
+										return;
+									}
+
+									(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+
+									if (startSession && dailyTasksToWorkOn && dailyTasksToWorkOn.length > 0) {
+
+										var _config2 = {
+											SlackUserId: SlackUserId,
+											dailyTaskToWorkOn: dailyTasksToWorkOn[0],
+											currentSession: currentSession
+										};
+										var _bot = convo.planEdit.bot;
+										controller.trigger('begin_session', [_bot, _config2]);
+										return;
+									}
+
+									if (newPriority) {
+										(function () {
+											var text = newPriority.text;
+											var minutes = newPriority.minutes;
+
+											_models2.default.Task.create({
+												text: text
+											}).then(function (task) {
+												var TaskId = task.id;
+												var priority = dailyTasks.length + 1;
+												_models2.default.DailyTask.create({
+													TaskId: TaskId,
+													priority: priority,
+													minutes: minutes,
+													UserId: UserId
+												}).then(function () {
+													(0, _miscHelpers.prioritizeDailyTasks)(user);
+												});
+											});
+										})();
+									}
+
+									// delete tasks if requested
+									if (dailyTaskIdsToDelete.length > 0) {
+										_models2.default.DailyTask.update({
+											type: "deleted"
+										}, {
+											where: ['"DailyTasks"."id" in (?)', dailyTaskIdsToDelete]
 										});
-									});
-								})();
-							}
+									}
 
-							// delete tasks if requested
-							if (dailyTaskIdsToDelete.length > 0) {
-								_models2.default.DailyTask.update({
-									type: "deleted"
-								}, {
-									where: ['"DailyTasks"."id" in (?)', dailyTaskIdsToDelete]
+									// complete tasks if requested
+									if (dailyTaskIdsToComplete.length > 0) {
+										_models2.default.DailyTask.findAll({
+											where: ['"DailyTask"."id" in (?)', dailyTaskIdsToComplete],
+											include: [_models2.default.Task]
+										}).then(function (dailyTasks) {
+
+											var completedTaskIds = dailyTasks.map(function (dailyTask) {
+												return dailyTask.TaskId;
+											});
+
+											_models2.default.Task.update({
+												done: true
+											}, {
+												where: ['"Tasks"."id" in (?)', completedTaskIds]
+											});
+										});
+									}
+
+									if (message && message.channel) {
+										bot.send({
+											type: "typing",
+											channel: message.channel
+										});
+									}
+
+									setTimeout(function () {
+
+										var config = { SlackUserId: SlackUserId, bot: bot, controller: controller, showUpdatedPlan: showUpdatedPlan };
+										(0, _editPlanFunctions.endOfPlanMessage)(config);
+									}, 750);
 								});
-							}
-
-							// complete tasks if requested
-							if (dailyTaskIdsToComplete.length > 0) {
-								_models2.default.DailyTask.findAll({
-									where: ['"DailyTask"."id" in (?)', dailyTaskIdsToComplete],
-									include: [_models2.default.Task]
-								}).then(function (dailyTasks) {
-
-									var completedTaskIds = dailyTasks.map(function (dailyTask) {
-										return dailyTask.TaskId;
-									});
-
-									_models2.default.Task.update({
-										done: true
-									}, {
-										where: ['"Tasks"."id" in (?)', completedTaskIds]
-									});
-								});
-							}
-
-							if (message && message.channel) {
-								bot.send({
-									type: "typing",
-									channel: message.channel
-								});
-							}
-
-							setTimeout(function () {
-
-								var config = { SlackUserId: SlackUserId, bot: bot, controller: controller, showUpdatedPlan: showUpdatedPlan };
-								(0, _editPlanFunctions.endOfPlanMessage)(config);
-							}, 750);
+							});
 						});
 					});
-				});
+				} else {
+
+					// user has not started a day recently
+					// automatically trigger new_plan_flow
+					// user has not started a day recently
+					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+						convo.say("You haven't started a day yet!");
+						convo.next();
+
+						convo.on('end', function (convo) {
+							controller.trigger('new_plan_flow', [bot, { SlackUserId: SlackUserId }]);
+						});
+					});
+				}
 			});
 		});
 	});
@@ -514,37 +704,120 @@ exports.default = function (controller) {
 		var SlackUserId = config.SlackUserId;
 
 
+		var wonDay = true;
+		if (typeof config.wonDay != 'undefined' && !config.wonDay) wonDay = config.wonDay;
+
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 
-			// get the most recent start_work session group to measure
-			// a day's worth of work
+			var UserId = user.id;
+			var nickName = user.nickName;
+			var tz = user.SlackUser.tz;
+
+
 			user.getSessionGroups({
 				order: '"SessionGroup"."createdAt" DESC',
-				where: ['"SessionGroup"."type" = ?', "start_work"],
 				limit: 1
 			}).then(function (sessionGroups) {
 
-				var startSessionGroup = sessionGroups[0]; // the start day
+				var sessionGroup = sessionGroups[0];
+				var valid = true;
 
-				user.getDailyTasks({
-					where: ['"DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?', startSessionGroup.dataValues.createdAt, "live"],
-					include: [_models2.default.Task],
-					order: '"DailyTask"."priority" ASC'
-				}).then(function (dailyTasks) {
+				if (!sessionGroup || sessionGroup.type == "end_work") {
+					valid = false;
+				}
 
+				if (valid) {
+
+					user.getSessionGroups({
+						order: '"SessionGroup"."createdAt" DESC',
+						where: ['"SessionGroup"."type" = ?', "end_work"]
+					}).then(function (sessionGroups) {
+
+						var wonDayStreak = 0;
+						sessionGroups.some(function (sessionGroup) {
+							// count up backwards chronologically,
+							// until we hit a point user did not win day
+							if (!sessionGroup.wonDay) {
+								return true;
+							} else {
+								wonDayStreak++;
+							}
+						});
+
+						// include today!
+						if (wonDay) wonDayStreak++;
+
+						user.getDailyTasks({
+							where: ['"DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?', sessionGroup.dataValues.createdAt, "live"],
+							include: [_models2.default.Task],
+							order: '"DailyTask"."priority" ASC'
+						}).then(function (dailyTasks) {
+
+							dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
+
+							// user has not started a day recently
+							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+								convo.dayEnd = {
+									wonDay: wonDay,
+									wonDayStreak: wonDayStreak,
+									nickName: nickName,
+									dailyTasks: dailyTasks,
+									reflection: null
+								};
+
+								(0, _endPlanFunctions.startEndPlanConversation)(convo);
+								convo.next();
+
+								convo.on('end', function (convo) {
+									var _convo$dayEnd = convo.dayEnd;
+									var wonDay = _convo$dayEnd.wonDay;
+									var reflection = _convo$dayEnd.reflection;
+
+									var now = (0, _momentTimezone2.default)();
+
+									// end your day
+									_models2.default.SessionGroup.create({
+										type: 'end_work',
+										UserId: UserId,
+										reflection: reflection,
+										wonDay: wonDay
+									});
+
+									(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+									(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+									user.getDailyTasks({
+										where: ['"DailyTask"."type" = ?', "live"]
+									}).then(function (dailyTasks) {
+										var DailyTaskIds = dailyTasks.map(function (dailyTask) {
+											return dailyTask.id;
+										});
+										_models2.default.DailyTask.update({
+											type: "archived"
+										}, {
+											where: ['"DailyTasks"."id" IN (?)', DailyTaskIds]
+										});
+									});
+								});
+							});
+						});
+					});
+				} else {
+
+					// user has not started a day recently
 					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-						convo.say("Okay! Let's end our day!");
+						convo.say("You haven't started a day yet!");
 						convo.next();
 
 						convo.on('end', function (convo) {
-							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+							controller.trigger('new_plan_flow', [bot, { SlackUserId: SlackUserId }]);
 						});
 					});
-				});
+				}
 			});
 		});
 	});
@@ -571,6 +844,8 @@ var _constants = require('../../lib/constants');
 var _plan = require('../modules/plan');
 
 var _editPlanFunctions = require('./editPlanFunctions');
+
+var _endPlanFunctions = require('./endPlanFunctions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 //# sourceMappingURL=index.js.map

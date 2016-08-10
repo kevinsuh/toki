@@ -15,7 +15,8 @@ export const intentConfig = {
 	START_SESSION: 'start_session',
 	END_SESSION: 'end_session',
 	VIEW_PLAN: 'view_plan',
-	END_PLAN: 'end_plan'
+	END_PLAN: 'end_plan',
+	KEEP_WORKING: `keep_working`
 }
 
 export const constants = {
@@ -559,6 +560,18 @@ export const buttonValues ={
 		name: "SESSION_ADD_CHECK_IN",
 		value: "let's add a check in!"
 	},
+	notToday: {
+		name: "NOT_TODAY",
+		value: "not today"
+	},
+	keepWorking: {
+		name: "KEEP_WORKING",
+		value: "i want to keep working"
+	},
+	notShare: {
+		name: "LETS_NOT_SHARE",
+		value: "let's not share today"
+	}
 }
 
 export const timeZones = {
