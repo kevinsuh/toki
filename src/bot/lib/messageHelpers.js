@@ -211,9 +211,12 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 	var taskListMessage = '';
 	var count = 1;
 	var totalMinutes = 0;
+	options.totalMinutesSpent = 0;
 
 	options.totalMinutes = totalMinutes;
 	options.count        = count;
+
+	const { reviewVersion, calculateMinutes, noTitles } = options;
 	
 	// different format if has 1+ completed tasks (`segmentCompleted`)
 	var hasCompletedTasks = false;
@@ -251,7 +254,10 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 	// add completed tasks to right place
 	var taskListMessageBody = '';
 	if (completedTasks.length > 0) {
-		taskListMessage = (options.noKarets ? `*Completed Priorities:*\n` : `> *Completed Priorities:*\n`);
+		if (!noTitles){
+			taskListMessage = (options.noKarets ? `*Completed Priorities:*\n` : `> *Completed Priorities:*\n`);
+		}
+		
 		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
 		taskListMessage += taskListMessageBody;
 	}
@@ -260,17 +266,18 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		// add remaining tasks to right place
 		if (completedTasks.length > 0) {
 			// only remaining tasks, no completed tasks
-			taskListMessage += (options.noKarets ? `\n*Remaining Priorities:*\n` : `>\n>*Remaining Priorities:*\n`);
+			if (!noTitles) {
+				taskListMessage += (options.noKarets ? `\n*Remaining Priorities:*\n` : `>\n>*Remaining Priorities:*\n`);
+			}
 		}
 		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
 		taskListMessage += taskListMessageBody;
 	}
 	
-	// DEPRECATED.
-	if (false && !options.dontCalculateMinutes && remainingTasks.length > 0) { // taskListMessages default to show calculated minutes
-		var { totalMinutes } = options;
-		var timeString = convertMinutesToHoursString(totalMinutes);
-		var totalMinutesContent = `\n*Total time estimate: ${timeString} :clock730:*`;
+	if (reviewVersion && calculateMinutes) {
+		let { totalMinutesSpent } = options;
+		let timeString = convertMinutesToHoursString(totalMinutesSpent);
+		var totalMinutesContent = `\n*Time Well Spent: ${timeString} :clock730:*`;
 		taskListMessage += totalMinutesContent;
 	}
 
@@ -281,14 +288,52 @@ function createTaskListMessageBody(taskArray, options) {
 
 	var taskListMessage = '';
 
+	// if reviewVersion, we are adding the time we SPENT, not what we have remaining
+	const { reviewVersion, calculateMinutes, noTitles } = options;
+	let totalMinutesSpent = 0;
+
 	let count = 0;
 	taskArray.forEach((task, index) => {
 
 		// for when you get task from DB
-		var minutesMessage = '';
+		let minutesMessage = '';
 		if (!options.dontUseDataValues && task.dataValues) {
 			task = task.dataValues;
 		};
+
+		if (!options.dontShowMinutes && task.minutes) {
+
+			let minutesInt = Math.round(task.minutes);
+			if (!isNaN(minutesInt) && !task.done) {
+				options.totalMinutes += minutesInt;
+			}
+
+			let minutesSpent = Math.round(task.minutesSpent);
+			let minutesRemaining = minutesInt - minutesSpent;
+			totalMinutesSpent += minutesSpent;
+
+			let timeString = '';
+			if (reviewVersion) {
+				// review version: total minutes spent
+				timeString = convertMinutesToHoursString(minutesSpent);
+				minutesMessage = ` (for ${timeString})`;
+			} else {
+				// live version: total minutes remaining
+				if (minutesRemaining > 0) {
+					timeString = convertMinutesToHoursString(minutesRemaining);
+					minutesMessage = ` (${timeString} remaining)`;
+				} else {
+					if (!task.done)
+						minutesMessage = ` (_no time remaining_)`;
+				}
+			}
+
+		}
+
+		// in review version, only completed tasks for message
+		if (reviewVersion && !task.done) {
+			return;
+		}
 
 		let priority = task.priority;
 		if (!priority && task.dailyTask && task.DailyTask.dataValues) {
@@ -303,25 +348,6 @@ function createTaskListMessageBody(taskArray, options) {
 			count++;
 		}
 
-		if (!options.dontShowMinutes && task.minutes) {
-
-			let minutesInt = Math.round(task.minutes);
-			if (!isNaN(minutesInt) && !task.done) {
-				options.totalMinutes += minutesInt;
-			}
-
-			let minutesSpent = Math.round(task.minutesSpent);
-			let minutesRemaining = minutesInt - minutesSpent;
-			if (minutesRemaining > 0) {
-				let timeString = convertMinutesToHoursString(minutesRemaining);
-				minutesMessage = ` (${timeString} remaining)`;
-			} else {
-				if (!task.done)
-					minutesMessage = ` (_no time remaining_)`;
-			}
-
-		}
-
 		// completed tasks do not have count
 		var taskContent = ``;
 
@@ -331,12 +357,14 @@ function createTaskListMessageBody(taskArray, options) {
 		}
 		taskContent = `${taskContent}${task.text}${minutesMessage}`
 
-		taskContent = (task.done ? `~${taskContent}~\n` : `${taskContent}\n`);
+		taskContent = (task.done && !reviewVersion ? `~${taskContent}~\n` : `${taskContent}\n`);
 		taskContent = (options.noKarets ? taskContent : `> ${taskContent}`);
 
 		taskListMessage += taskContent;
 		
 	});
+
+	options.totalMinutesSpent = totalMinutesSpent;
 
 	return taskListMessage;
 }

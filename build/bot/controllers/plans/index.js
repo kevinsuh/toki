@@ -91,8 +91,12 @@ exports.default = function (controller) {
 
 							var timeWorkedString = (0, _messageHelpers.convertMinutesToHoursString)(minutesWorked);
 
-							var options = {};
-							var completedTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(completedDailyTasks, options);
+							var options = { reviewVersion: true, noTitles: true };
+							var completedTaskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
+							var completedDailyTaskTexts = completedDailyTasks.map(function (dailyTask) {
+								return dailyTask.dataValues.Task.text;
+							});
+							var completedTaskString = (0, _messageHelpers.commaSeparateOutTaskArray)(completedDailyTaskTexts, { codeBlock: true });
 
 							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
@@ -100,10 +104,10 @@ exports.default = function (controller) {
 								convo.wonDay = false;
 
 								convo.say('Hey ' + nickName + ', let\'s wrap up for the day :package:');
-								convo.say('You put *' + timeWorkedString + '* toward your top priorities today, completing:\n' + completedTaskListMessage);
+								convo.say('You put *' + timeWorkedString + '* toward your top priorities today, completing ' + completedTaskString);
 								convo.say('I define winning your day as time well spent, so if you felt your time was well spent at work today, you won the day. If you didn’t, that’s ok - I’m here tomorrow to help you be intentional about what you work on to get you closer to your goals');
 								convo.ask({
-									text: 'Did you feel like you won your day today?',
+									text: '*Did you feel like you won your day today?*',
 									attachments: [{
 										attachment_type: 'default',
 										callback_id: "WIT_END_PLAN",
@@ -663,32 +667,63 @@ exports.default = function (controller) {
 			include: [_models2.default.SlackUser]
 		}).then(function (user) {
 
-			// get the most recent start_work session group to measure
-			// a day's worth of work
+			var UserId = user.id;
+			var nickName = user.nickName;
+			var tz = user.SlackUser.tz;
+
+
 			user.getSessionGroups({
 				order: '"SessionGroup"."createdAt" DESC',
-				where: ['"SessionGroup"."type" = ?', "start_work"],
 				limit: 1
 			}).then(function (sessionGroups) {
 
-				var startSessionGroup = sessionGroups[0]; // the start day
+				var sessionGroup = sessionGroups[0];
+				var valid = true;
 
-				user.getDailyTasks({
-					where: ['"DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?', startSessionGroup.dataValues.createdAt, "live"],
-					include: [_models2.default.Task],
-					order: '"DailyTask"."priority" ASC'
-				}).then(function (dailyTasks) {
+				if (!sessionGroup || sessionGroup.type == "end_work") {
+					valid = false;
+				}
 
+				if (valid) {
+
+					// sessionGroup exists and it is most recently a start_day (so end_day makes sense here)
+					user.getDailyTasks({
+						where: ['"DailyTask"."createdAt" > ? AND "DailyTask"."type" = ?', sessionGroup.dataValues.createdAt, "live"],
+						include: [_models2.default.Task],
+						order: '"DailyTask"."priority" ASC'
+					}).then(function (dailyTasks) {
+
+						dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
+
+						// user has not started a day recently
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+							convo.dayEnd = {
+								wonDay: wonDay,
+								dailyTasks: dailyTasks
+							};
+
+							(0, _endPlanFunctions.startEndPlanConversation)(convo);
+							convo.next();
+
+							convo.on('end', function (convo) {
+								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+								controller.trigger('new_plan_flow', [bot, { SlackUserId: SlackUserId }]);
+							});
+						});
+					});
+				} else {
+					// user has not started a day recently
 					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-						convo.say("Okay! Let's end our day!");
+						convo.say("You haven't started a day yet!");
 						convo.next();
 
 						convo.on('end', function (convo) {
-							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+							controller.trigger('new_plan_flow', [bot, { SlackUserId: SlackUserId }]);
 						});
 					});
-				});
+				}
 			});
 		});
 	});
@@ -715,6 +750,8 @@ var _constants = require('../../lib/constants');
 var _plan = require('../modules/plan');
 
 var _editPlanFunctions = require('./editPlanFunctions');
+
+var _endPlanFunctions = require('./endPlanFunctions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 //# sourceMappingURL=index.js.map
