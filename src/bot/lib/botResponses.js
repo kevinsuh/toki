@@ -65,5 +65,6 @@ export const utterances = {
 	containsNew: new RegExp(/\bnew[ew]*\b/i),
 	moveOn: new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i),
 	notToday: new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i),
+	notShare: new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i),
 	containsRename: new RegExp(/\bre[ name]{3,7}\b/i)
 }

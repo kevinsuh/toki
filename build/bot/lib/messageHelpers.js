@@ -296,6 +296,7 @@ function convertArrayToTaskListMessage(taskArray) {
 	}
 
 	if (remainingTasks.length > 0) {
+
 		// add remaining tasks to right place
 		if (completedTasks.length > 0) {
 			// only remaining tasks, no completed tasks
@@ -326,8 +327,10 @@ function createTaskListMessageBody(taskArray, options) {
 	var reviewVersion = options.reviewVersion;
 	var calculateMinutes = options.calculateMinutes;
 	var noTitles = options.noTitles;
+	var totalMinutesSpent = options.totalMinutesSpent;
 
-	var totalMinutesSpent = 0;
+
+	console.log('totalMinutes spent outside loop: ' + totalMinutesSpent);
 
 	var count = 0;
 	taskArray.forEach(function (task, index) {
@@ -341,12 +344,11 @@ function createTaskListMessageBody(taskArray, options) {
 		if (!options.dontShowMinutes && task.minutes) {
 
 			var minutesInt = Math.round(task.minutes);
-			if (!isNaN(minutesInt) && !task.done) {
-				options.totalMinutes += minutesInt;
-			}
-
 			var minutesSpent = Math.round(task.minutesSpent);
 			var minutesRemaining = minutesInt - minutesSpent;
+
+			console.log('totalMinutes spent in loop: ' + totalMinutesSpent);
+
 			totalMinutesSpent += minutesSpent;
 
 			var timeString = '';

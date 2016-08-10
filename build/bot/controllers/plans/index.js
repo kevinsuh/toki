@@ -700,6 +700,7 @@ exports.default = function (controller) {
 
 							convo.dayEnd = {
 								wonDay: wonDay,
+								nickName: nickName,
 								dailyTasks: dailyTasks
 							};
 

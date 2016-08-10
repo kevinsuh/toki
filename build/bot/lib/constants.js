@@ -577,6 +577,10 @@ var buttonValues = exports.buttonValues = {
 	keepWorking: {
 		name: "KEEP_WORKING",
 		value: "i want to keep working"
+	},
+	notShare: {
+		name: "LETS_NOT_SHARE",
+		value: "let's not share today"
 	}
 };
 

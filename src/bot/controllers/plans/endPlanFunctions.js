@@ -16,17 +16,6 @@ export function startEndPlanConversation(convo) {
 
 	const { dayEnd: { wonDay } } = convo;
 
-	if (wonDay) {
-		startWonDayConversation(convo);
-	} else {
-		startDidNotWinDayConversation(convo);
-	}
-
-}
-
-// user has won the day!
-function startWonDayConversation(convo) {
-
 	const { dayEnd: { dailyTasks } } = convo;
 
 	let completedDailyTasks = [];
@@ -43,12 +32,65 @@ function startWonDayConversation(convo) {
 	let options = { reviewVersion: true, calculateMinutes: true, noTitles: true };
 	let completedTaskListMessage  = convertArrayToTaskListMessage(dailyTasks, options);
 
-	convo.say(`Congratulations on winning the day! It’s all about time well spent, and today you did just that :trophy:`);
-	convo.say(completedTaskListMessage);
+	if (wonDay) {
+		convo.say(`:trophy: *Congratulations on winning the day!* :trophy:`);
+		convo.say(`It's all about time well spent, and today you did just that`);
+		convo.say(`Here's what you got done:\n${completedTaskListMessage}`);
+	} else {
+		convo.say(`We can do this together the next time! You still spent *${minutesWorked}* working toward your top priorities`);
+	}
+
+	askForReflection(convo);
 
 }
 
-// user has not won the day!
-function startDidNotWinDayConversation(convo) {
+function askForReflection(convo) {
+	
+	const { dayEnd: { wonDay, nickName } } = convo;
+
+	let message = '';
+	if (wonDay) {
+		message = `What was the biggest factor that helped you focus on your most important priorities?`
+	} else {
+		message = `What was the biggest factor that prevented you from focusing on your most important priorities?`;
+	}
+
+	convo.ask({
+		text: message,
+		attachments:[
+			{
+				attachment_type: 'default',
+				callback_id: "END_PLAN_REFLECT",
+				fallback: "Do you want to reflect about today?",
+				color: colorsHash.grey.hex,
+				actions: [
+					{
+							name: buttonValues.notShare.value,
+							text: "Not sharing today :grin:",
+							value: buttonValues.notShare.value,
+							type: "button"
+					}
+				]
+			}
+		]
+	},[
+		{
+			pattern: utterances.notShare,
+			callback: (response, convo) => {
+				convo.say(`Got it!`);
+				convo.say(`I hope you have a great rest of the day and I’ll see you soon!`);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				convo.say(`Thank you for sharing!`);
+				convo.say(`You said: ${response.text}`);
+				convo.say(`I hope you have a great rest of the day and I’ll see you soon!`);
+				convo.next();
+			}
+		}
+	]);
 
 }

@@ -728,6 +728,7 @@ export default function(controller) {
 
 							convo.dayEnd = {
 								wonDay,
+								nickName,
 								dailyTasks
 							}
 

@@ -260,9 +260,11 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		
 		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
 		taskListMessage += taskListMessageBody;
+
 	}
 		
 	if (remainingTasks.length > 0) {
+
 		// add remaining tasks to right place
 		if (completedTasks.length > 0) {
 			// only remaining tasks, no completed tasks
@@ -272,6 +274,7 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 		}
 		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
 		taskListMessage += taskListMessageBody;
+
 	}
 	
 	if (reviewVersion && calculateMinutes) {
@@ -289,8 +292,9 @@ function createTaskListMessageBody(taskArray, options) {
 	var taskListMessage = '';
 
 	// if reviewVersion, we are adding the time we SPENT, not what we have remaining
-	const { reviewVersion, calculateMinutes, noTitles } = options;
-	let totalMinutesSpent = 0;
+	let { reviewVersion, calculateMinutes, noTitles, totalMinutesSpent } = options;
+
+	console.log(`totalMinutes spent outside loop: ${totalMinutesSpent}`);
 
 	let count = 0;
 	taskArray.forEach((task, index) => {
@@ -304,12 +308,11 @@ function createTaskListMessageBody(taskArray, options) {
 		if (!options.dontShowMinutes && task.minutes) {
 
 			let minutesInt = Math.round(task.minutes);
-			if (!isNaN(minutesInt) && !task.done) {
-				options.totalMinutes += minutesInt;
-			}
-
 			let minutesSpent = Math.round(task.minutesSpent);
 			let minutesRemaining = minutesInt - minutesSpent;
+
+			console.log(`totalMinutes spent in loop: ${totalMinutesSpent}`);
+
 			totalMinutesSpent += minutesSpent;
 
 			let timeString = '';
