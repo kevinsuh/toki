@@ -12,6 +12,7 @@ var CronJob = cron.CronJob;
 
 import { seedUsers, updateUsers, test } from './app/scripts';
 import { consoleLog, prioritizeDailyTasks } from './bot/lib/miscHelpers';
+import './app/globalHelpers';
 
 setTimeout(() => {
 	consoleLog("updating and seeding users");

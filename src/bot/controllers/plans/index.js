@@ -105,7 +105,7 @@ export default function(controller) {
 		.then((user) => {
 
 			const UserId = user.id;
-			const { SlackUser: { tz } } = user;
+			const { includeOthersDecision, SlackUser: { tz } } = user;
 
 			let daySplit = getCurrentDaySplit(tz);
 
@@ -122,16 +122,14 @@ export default function(controller) {
 
 					convo.newPlan = {
 						SlackUserId,
+						includeOthersDecision,
 						tz,
 						daySplit,
 						onboardVersion: false,
 						prioritizedTasks: [],
-						startTask: {
-							index: 0, // fail-safe default. should get updated in flow
-							minutes: 30 // fail-safe default. should get updated in flow
-						},
 						startTime: false, // default will be now
-						includeSlackUserIds: []
+						includeSlackUserIds: [],
+						pingTeamMembers: false // actual decision to ping
 					}
 
 					let day = moment().tz(tz).format('dddd');
@@ -150,16 +148,9 @@ export default function(controller) {
 					convo.on('end', (convo) => {
 
 						const { newPlan } = convo;
-						let { exitEarly, prioritizedTasks, startTask, startTime, includeSlackUserIds, startNow } = newPlan;
+						let { exitEarly, prioritizedTasks, startTime, includeSlackUserIds, startNow, includeOthersDecision, pingTeamMembers } = newPlan;
 
 						closeOldRemindersAndSessions(user);
-
-						// save startTask information
-						startTask.taskObject = {
-							...prioritizedTasks[startTask.index],
-							minutes: startTask.minutes
-						};
-						prioritizedTasks[startTask.index] = startTask.taskObject;
 
 						if (exitEarly) {
 							return;
@@ -187,7 +178,9 @@ export default function(controller) {
 									where: [ `"DailyTasks"."id" IN (?)`, dailyTaskIds ]
 								})
 								.then((dailyTasks) => {
+
 									prioritizedTasks.forEach((task, index) => {
+
 										const priority = index + 1;
 										const { text, minutes } = task;
 										models.Task.create({
@@ -200,37 +193,91 @@ export default function(controller) {
 												UserId
 											})
 											.then((dailyTask) => {
-												const DailyTaskId = dailyTask.id;
 
-												if (index == startTask.index) {
+												// this makes sure that this gets triggered only once!
+												if (priority == prioritizedTasks.length) {
+
 													if (startTime) {
 														// if you asked for a queued reminder
 														models.Reminder.create({
 															UserId,
 															remindTime: startTime,
-															type: "start_work",
-															DailyTaskId
-														})
+															type: "start_work"
+														});
 													} else if (startNow) {
 														// start now!
 														controller.trigger(`begin_session`, [ bot, { SlackUserId } ]);
 													}
+
+													// INCLUDE OTHERS FUNCTIONALITY
+													models.User.update({
+														includeOthersDecision
+													}, {
+														where: [ `"Users"."id" = ?`, UserId ]
+													})
+													.then((user) => {
+
+														if (includeOthersDecision == "YES_FOREVER") {
+															pingTeamMembers = true;
+														} else if (includeOthersDecision == "NO_FOREVER") {
+															pingTeamMembers = false;
+														}
+
+														// this is to create for future includes
+														if (includeSlackUserIds && includeSlackUserIds.length > 0) {
+
+															models.SlackUser.find({
+																where: [`"SlackUserId" = ?`, SlackUserId]
+															})
+															.then((slackUser) => {
+
+																slackUser.getIncluded({
+																	include: [ models.User ]
+																})
+																.then((includedSlackUsers) => {
+																	
+																	// only add in NEW slackUserIds to DB
+																	let alreadyIncludedSlackUserIds = includedSlackUsers.map(slackUser => slackUser.SlackUserId);
+																	includeSlackUserIds.forEach((IncludedSlackUserId) => {
+																		if (alreadyIncludedSlackUserIds.indexOf(IncludedSlackUserId) == -1) {
+																			models.Include.create({
+																				IncluderSlackUserId: SlackUserId,
+																				IncludedSlackUserId
+																			});
+																		}
+																	});
+
+																	// ping if desired
+																	if (pingTeamMembers) {
+																		includeSlackUserIds.forEach((includeSlackUserId) => {
+
+																			console.log(includeSlackUserId);
+
+																			bot.startPrivateConversation({ user: includeSlackUserId }, (err, convo) => {
+																				convo.say("HELLO TEST from kevin's priority!");
+																				convo.next();
+																			});
+
+																		});
+																	}
+
+																});
+
+															});
+
+														}
+
+													});
+
 												}
 											})
 										})
+
 									});
+
 								});
 							});
 
-							// include who you want to include in your list
-							if (includeSlackUserIds) {
-								includeSlackUserIds.forEach((IncludedSlackUserId) => {
-									models.Include.create({
-										IncluderSlackUserId: SlackUserId,
-										IncludedSlackUserId
-									})
-								})
-							}
 						})
 
 						console.log("here is new plan object:\n");

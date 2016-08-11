@@ -5,7 +5,7 @@ export const TOKI_DEFAULT_BREAK_TIME = 10;
 export const hoursForExpirationTime = 6;
 export const MINUTES_FOR_DONE_SESSION_TIMEOUT = 30;
 
-export const dateOfNewPlanDayFlow = "2016-07-30";
+export const dateOfNewPlanDayFlow = "2016-08-11";
 
 export const startDayExpirationTime = moment().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
 
@@ -151,6 +151,10 @@ export const buttonValues ={
 	changeTask: {
 		name: "CHANGE_TASK",
 		value: "Let's change tasks"
+	},
+	changePriority: {
+		name: "CHANGE_PRIORITY",
+		value: "Let's change priorities"
 	},
 	changeSessionTime: {
 		name: "CHANGE_SESSION_TIME",
@@ -571,6 +575,40 @@ export const buttonValues ={
 	notShare: {
 		name: "LETS_NOT_SHARE",
 		value: "let's not share today"
+	},
+	newPlan: {
+		redoLastPriority: {
+			name: "REDO_LAST_PRIORITY",
+			value: "redo last priority"
+		},
+		noMorePriorities: {
+			name: "NO_MORE_PRIORITIES",
+			value: "no more priorities"
+		}
+	},
+	noDontAskAgain: {
+		name: "NO_DONT_ASK_AGAIN",
+		value: "no, and don't ask again"
+	},
+	yesDontAskAgain: {
+		name: "YES_DONT_ASK_AGAIN",
+		value: "yes, and don't ask again"
+	},
+	next: {
+		name: "NEXT",
+		value: "next"
+	},
+	now: {
+		name: "NOW",
+		value: "now!"
+	},
+	inTenMinutes: {
+		name: "IN_TEN_MINUTES",
+		value: "in 10 minutes"
+	},
+	goBack: {
+		name: "GO_BACK",
+		value: "go back!"
 	}
 }
 

@@ -101,11 +101,12 @@ export function witTimeResponseToTimeZoneObject(response, tz) {
 
 	console.log("\n\n response obj in witTimeResponseToTimeZoneObject \n\n")
 
-	var { intentObject: { entities } } = response;
+	var { text, intentObject: { entities } } = response;
 	const { duration, datetime } = entities;
 
 	var now = moment();
 	var remindTimeStamp;
+
 	if ((!datetime && !duration) || !tz) {
 		remindTimeStamp = false; // not valid
 	} else {

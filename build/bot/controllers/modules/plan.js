@@ -47,446 +47,363 @@ function startNewPlanFlow(convo) {
 	var SlackUserId = _convo$newPlan.SlackUserId;
 	var daySplit = _convo$newPlan.daySplit;
 	var onboardVersion = _convo$newPlan.onboardVersion;
-	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
+	convo.newPlan.prioritizedTasks = [];
 
 	var contextDay = "today";
 	if (daySplit != _constants.constants.MORNING.word) {
 		contextDay = 'this ' + daySplit;
 	}
-	var question = 'What are the 3 outcomes you want to make happen ' + contextDay + '?';
+
+	var question = 'Let’s win ' + contextDay + '! What are up to 3 priorities you want to work toward today? These are the important outcomes that you want to put time toward achieving today, not necessarily specific tasks you want to check off your todo list';
 	if (onboardVersion) {
 		question = question + ' Please enter each one in a separate message';
 	}
 
-	prioritizedTasks = [];
-	var options = { dontShowMinutes: true, dontCalculateMinutes: true };
-	var taskListMessage = void 0;
+	addPriorityToList(convo);
+}
+
+// function to add a priority to your plan
+// this dynamically handles 1st, 2nd, 3rd priorities
+function addPriorityToList(convo) {
+	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+
+
+	var count = prioritizedTasks.length;
+	var countString = '';
+	var actions = [];
+
+	switch (count) {
+		case 0:
+			countString = 'first';
+			break;
+		case 1:
+			countString = 'second';
+			actions = [{
+				name: _constants.buttonValues.newPlan.noMorePriorities.name,
+				text: "No more priorities",
+				value: _constants.buttonValues.newPlan.noMorePriorities.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.newPlan.redoLastPriority.name,
+				text: "Redo last priority",
+				value: _constants.buttonValues.newPlan.redoLastPriority.value,
+				type: "button"
+			}];
+			break;
+		case 2:
+			countString = 'third';
+			actions = [{
+				name: _constants.buttonValues.newPlan.noMorePriorities.name,
+				text: "No more priorities",
+				value: _constants.buttonValues.newPlan.noMorePriorities.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.newPlan.redoLastPriority.name,
+				text: "Redo last priority",
+				value: _constants.buttonValues.newPlan.redoLastPriority.value,
+				type: "button"
+			}];
+			break;
+		default:
+			break;
+	};
+
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "ADD_PRIORITY",
+		fallback: "Do you want to add another priority?",
+		color: _constants.colorsHash.grey.hex,
+		actions: actions
+	}];
+	var message = 'What is the ' + countString + ' priority you want to work towards today?';
+
 	convo.ask({
-		text: question,
-		attachments: (0, _messageHelpers.getNewPlanAttachments)(prioritizedTasks)
+		text: message,
+		attachments: attachments
 	}, [{
-		pattern: _constants.buttonValues.redoTasks.value,
+		pattern: _botResponses.utterances.redo,
 		callback: function callback(response, convo) {
 
-			prioritizedTasks = [];
+			if (prioritizedTasks.length > 0) {
+				var task = prioritizedTasks.pop();
+				convo.say('Okay! I removed `' + task.text + '` from your list');
+			}
 			convo.newPlan.prioritizedTasks = prioritizedTasks;
-
-			convo.say("Okay! Let's try this again :repeat:");
-			startNewPlanFlow(convo);
+			addPriorityToList(convo);
 			convo.next();
 		}
 	}, {
-		pattern: _botResponses.utterances.onlyNeverMind,
+		pattern: _botResponses.utterances.noMore,
 		callback: function callback(response, convo) {
 
-			convo.say("Okay! Let me know when you're ready to plan :wave:");
-			convo.newPlan.exitEarly = true;
-			convo.next();
-		}
-	}, {
-		pattern: _botResponses.utterances.done,
-		callback: function callback(response, convo) {
-
-			convo.newPlan.prioritizedTasks = prioritizedTasks;
-			confirmUserPriorities(convo);
+			includeTeamMembers(convo);
 			convo.next();
 		}
 	}, { // this is additional task added in this case.
 		default: true,
 		callback: function callback(response, convo) {
+			var text = response.text;
 
-			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
+			var newTask = {
+				text: text,
+				newTask: true
+			};
+			prioritizedTasks.push(newTask);
 
-			var newTaskArray = (0, _messageHelpers.convertResponseObjectToNewTaskArray)(response);
-			newTaskArray.forEach(function (newTask) {
-				prioritizedTasks.push(newTask);
-			});
-
-			taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTasks, options);
-
-			updateTaskListMessageObject.text = question + '\n' + taskListMessage;
-
-			var attachments = (0, _messageHelpers.getNewPlanAttachments)(prioritizedTasks);
-
-			if (prioritizedTasks.length < 3) {
-				updateTaskListMessageObject.attachments = JSON.stringify(attachments);
-				bot.api.chat.update(updateTaskListMessageObject);
-			} else {
-
-				while (prioritizedTasks.length > 3) {
-					// only 3 priorities!
-					prioritizedTasks.pop();
-				}
-
-				// we move on, with default to undo.
-				updateTaskListMessageObject.attachments = JSON.stringify(_constants.taskListMessageNoButtonsAttachment);
-				bot.api.chat.update(updateTaskListMessageObject);
-
-				convo.newPlan.prioritizedTasks = prioritizedTasks;
-
-				confirmUserPriorities(convo);
-				convo.next();
+			var approvalWord = (0, _messageHelpers.getRandomApprovalWord)({ upperCase: true });
+			var message = approvalWord + '! I added `' + newTask.text + '`';
+			if (prioritizedTasks.length % 2 != 0) {
+				message = message + ' to your plan';
 			}
+			convo.say(message);
+
+			convo.newPlan.prioritizedTasks = prioritizedTasks;
+
+			if (prioritizedTasks.length >= 3) {
+				includeTeamMembers(convo);
+			} else {
+				// ask again!
+				addPriorityToList(convo);
+			}
+
+			convo.next();
 		}
 	}]);
 }
 
-function confirmUserPriorities(convo) {
+function includeTeamMembers(convo) {
 	var bot = convo.task.bot;
 	var _convo$newPlan2 = convo.newPlan;
 	var SlackUserId = _convo$newPlan2.SlackUserId;
 	var daySplit = _convo$newPlan2.daySplit;
 	var onboardVersion = _convo$newPlan2.onboardVersion;
-	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+	var includeOthersDecision = _convo$newPlan2.includeOthersDecision;
+	var _convo$newPlan3 = convo.newPlan;
+	var prioritizedTasks = _convo$newPlan3.prioritizedTasks;
+	var includeSlackUserIds = _convo$newPlan3.includeSlackUserIds;
 
 
-	if (onboardVersion) {
+	var options = { dontShowMinutes: true, dontCalculateMinutes: true };
+	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTasks, options);
 
-		convo.say('Excellent! Now let\'s choose the priority to work on first');
-		convo.say('Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"');
-		chooseFirstTask(convo);
-		convo.next();
-	} else {
+	convo.say('Here\'s your plan for today :pencil::\n' + taskListMessage);
 
-		// say who is getting included
-		_models2.default.SlackUser.find({
-			where: ['"SlackUserId" = ?', SlackUserId]
-		}).then(function (slackUser) {
+	// say who is getting included
+	_models2.default.SlackUser.find({
+		where: ['"SlackUserId" = ?', SlackUserId]
+	}).then(function (slackUser) {
 
-			var responseMessage = 'Excellent!';
+		var responseMessage = 'Excellent!';
 
-			if (slackUser) {
+		if (slackUser && includeOthersDecision != "NO_FOREVER") {
 
-				slackUser.getIncluded({
-					include: [_models2.default.User]
-				}).then(function (includedSlackUsers) {
+			slackUser.getIncluded({
+				include: [_models2.default.User]
+			}).then(function (includedSlackUsers) {
 
-					if (includedSlackUsers.length > 0) {
-						var names = includedSlackUsers.map(function (includedSlackUser) {
-							return includedSlackUser.dataValues.User.nickName;
-						});
-						var nameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(names);
-						responseMessage = responseMessage + ' I just let ' + nameStrings + ' know about your priorities :raised_hands:';
-					}
-
-					convo.say(responseMessage);
-					chooseFirstTask(convo);
-					convo.next();
+				includeSlackUserIds = includedSlackUsers.map(function (slackUser) {
+					return slackUser.SlackUserId;
 				});
-			} else {
-				convo.say(responseMessage);
-				chooseFirstTask(convo);
+				convo.newPlan.includeSlackUserIds = includeSlackUserIds;
+
+				if (includedSlackUsers.length > 0) {
+
+					// you have SlackUsers to ping, let's confirm thats what you want!
+					confirmPingToTeamMembers(convo, includedSlackUsers);
+				} else {
+
+					// user wants to include members!!!
+					askToIncludeTeamMembers(convo);
+				}
+
 				convo.next();
-			}
-		});
-	}
+			});
+		} else {
+
+			addTimeToPriorities(convo);
+			convo.next();
+		}
+	});
 }
 
-function chooseFirstTask(convo) {
-	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
+// confirm that you will ping team member
+// IF you are not "YES_FOREVER" with your decision
+function confirmPingToTeamMembers(convo, includedSlackUsers) {
+	var question = arguments.length <= 2 || arguments[2] === undefined ? '' : arguments[2];
 	var bot = convo.task.bot;
-	var _convo$newPlan3 = convo.newPlan;
-	var daySplit = _convo$newPlan3.daySplit;
-	var onboardVersion = _convo$newPlan3.onboardVersion;
+	var _convo$newPlan4 = convo.newPlan;
+	var SlackUserId = _convo$newPlan4.SlackUserId;
+	var daySplit = _convo$newPlan4.daySplit;
+	var onboardVersion = _convo$newPlan4.onboardVersion;
+	var includeOthersDecision = _convo$newPlan4.includeOthersDecision;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
+	// user has team members to include!!
 
-	if (question == '') // this is the default question!
-		question = 'Which of your ' + prioritizedTasks.length + ' priorities do you want to work on first?';
+	var names = includedSlackUsers.map(function (includedSlackUser) {
+		return includedSlackUser.dataValues.User.nickName;
+	});
+	var nameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(names);
 
-	if (prioritizedTasks.length == 1) {
-		// no need to choose if 1 task
-		convo.newPlan.startTask.index = 0;
-		getTimeToTask(convo);
-	} else {
-
-		// 2+ tasks means choosing one
-		var options = { dontShowMinutes: true, dontCalculateMinutes: true };
-		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTasks, options);
+	// this now requires a confirmation yes, unless you do yes-forever
+	if (question == '') question = 'I\'ll be sharing your priorities with *' + nameStrings + '* when you\'re done planning :raised_hands:';
+	if (includeOthersDecision != "YES_FOREVER") {
+		var attachments = [{
+			attachment_type: 'default',
+			callback_id: "INCLUDE_TEAM_MEMBER_DECISION",
+			fallback: "I'll include this to a team-member now",
+			color: _constants.colorsHash.grey.hex,
+			actions: [{
+				name: _constants.buttonValues.yes.name,
+				text: "Yes!",
+				value: _constants.buttonValues.yes.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.yesDontAskAgain.name,
+				text: "Yes - don't ask again",
+				value: _constants.buttonValues.yesDontAskAgain.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.notToday.name,
+				text: "Not today",
+				value: _constants.buttonValues.notToday.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.noDontAskAgain.name,
+				text: "No - don't ask again",
+				value: _constants.buttonValues.noDontAskAgain.value,
+				type: "button"
+			}]
+		}];
 
 		convo.ask({
-			text: question + '\n' + taskListMessage,
-			attachments: [{
-				attachment_type: 'default',
-				callback_id: "REDO_TASKS",
-				fallback: "Do you want to work on this task?",
-				color: _constants.colorsHash.grey.hex,
-				actions: [{
-					name: _constants.buttonValues.redoMyPriorities.name,
-					text: "Redo my priorities!",
-					value: _constants.buttonValues.redoMyPriorities.value,
-					type: "button"
-				}]
-			}]
+			text: question,
+			attachments: attachments
 		}, [{
-			pattern: _botResponses.utterances.containsRedo,
+			pattern: _botResponses.utterances.yesDontAskAgain,
 			callback: function callback(response, convo) {
 
-				convo.say("Okay! Let's try this again :repeat:");
-				startNewPlanFlow(convo);
+				convo.newPlan.includeOthersDecision = "YES_FOREVER";
+				convo.say('Sounds good! I\'ll ping *' + nameStrings + '* about your priorities automatically after each plan');
+				convo.say('If this ever changes, just ask me to `show settings`');
+
+				addTimeToPriorities(convo);
 				convo.next();
 			}
 		}, {
-			pattern: _botResponses.utterances.containsNumber,
+			pattern: _botResponses.utterances.noDontAskAgain,
 			callback: function callback(response, convo) {
 
-				var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, prioritizedTasks);
-				var taskIndexToWorkOn = taskNumbersToWorkOnArray[0] - 1;
+				convo.newPlan.includeOthersDecision = "NO_FOREVER";
+				convo.say('Sounds good! I won\'t ping anyone about your priorities and won\'t ask again');
+				convo.say('If this ever changes, just ask me to `show settings`');
+				addTimeToPriorities(convo);
+				convo.next();
+			}
+		}, {
+			pattern: _botResponses.utterances.yes,
+			callback: function callback(response, convo) {
 
-				if (taskIndexToWorkOn >= 0) {
-					if (taskNumbersToWorkOnArray.length == 1) {
-						convo.newPlan.startTask.index = taskIndexToWorkOn;
+				convo.newPlan.pingTeamMembers = true;
+				convo.say('Sounds good!');
+				convo.next();
+			}
+		}, {
+			pattern: _botResponses.utterances.notToday,
+			callback: function callback(response, convo) {
 
-						var taskString = prioritizedTasks[convo.newPlan.startTask.index].text;
-
-						if (onboardVersion) {
-							convo.say('Boom :boom:! Let\'s put our first focused work session towards `' + taskString + '`');
-							convo.say('This isn\'t necessarily how long you think each task will take -- instead, think of it as dedicated time towards your most important things for the day. This structure helps you *enter flow* more easily, as well as *protect your time* from yourself and others');
-							convo.say('If you aren\'t done with the task after your first session, you can easily start another one towards it :muscle:');
-						} else {
-							convo.say("Boom! Let's do it :boom:");
-						}
-
-						getTimeToTask(convo);
-					} else {
-						// only one at a time
-						convo.say("Let's work on one priority at a time!");
-						var _question = "Which one do you want to start with?";
-						chooseFirstTask(convo, _question);
-					}
-				} else {
-					convo.say("Sorry, I didn't catch that. Let me know a number `i.e. task 2`");
-					var _question2 = "Which of these do you want to start off with?";
-					chooseFirstTask(convo, _question2);
-				}
-
+				convo.say('Okay! I won\'t ping anyone about your priorities today');
+				convo.newPlan.pingTeamMembers = false;
 				convo.next();
 			}
 		}, {
 			default: true,
 			callback: function callback(response, convo) {
-				convo.say("Sorry, I didn't catch that. Let me know a number `i.e. task 2`");
-				convo.repeat();
+
+				convo.say('I\'m not sure what you mean!');
+				var question = 'Do you want me to share your priorities with *' + nameStrings + '* when you\'re done planning?';
+				confirmPingToTeamMembers(convo, includedSlackUsers, question);
 				convo.next();
 			}
 		}]);
+	} else {
+		// just say it and move on
+		convo.say(question);
+		addTimeToPriorities(convo);
 	}
 }
 
-function getTimeToTask(convo) {
-	var _convo$newPlan4 = convo.newPlan;
-	var tz = _convo$newPlan4.tz;
-	var daySplit = _convo$newPlan4.daySplit;
-	var onboardVersion = _convo$newPlan4.onboardVersion;
-	var startTask = _convo$newPlan4.startTask;
-	var prioritizedTasks = convo.newPlan.prioritizedTasks;
-
-
-	var taskString = prioritizedTasks[startTask.index].text;
-
-	// not used right now
-	var attachments = [];
-	if (prioritizedTasks.length > 1) {
-		attachments.push({
-			attachment_type: 'default',
-			callback_id: "CHANGE_TASK",
-			fallback: "Do you want to work on a different task?",
-			color: _constants.colorsHash.grey.hex,
-			actions: [{
-				name: _constants.buttonValues.workOnDifferentTask.name,
-				text: "Different task instead",
-				value: _constants.buttonValues.workOnDifferentTask.value,
-				type: "button"
-			}]
-		});
-	}
-
-	var timeExample = (0, _momentTimezone2.default)().tz(tz).add(90, "minutes").format("h:mma");
-
-	// we should have helper text here as well for the first time
-	// push back on 90 / 60 / 30 here... should have higher minute intervals that we then automatically put in breaks for (we can communicate here)
-	convo.ask({
-		text: 'How much time do you want to allocate towards `' + taskString + '` today? (you can also say `for 90 minutes` or `until ' + timeExample + '`)',
-		attachments: [{
-			attachment_type: 'default',
-			callback_id: "MINUTES_SUGGESTION",
-			fallback: "How long do you want to work on this task for?",
-			color: _constants.colorsHash.grey.hex,
-			actions: [{
-				name: _constants.buttonValues.workOnTaskFor.ninetyMinutes.name,
-				text: "120 minutes",
-				value: "120 minutes",
-				type: "button"
-			}, {
-				name: _constants.buttonValues.workOnTaskFor.ninetyMinutes.name,
-				text: "90 minutes",
-				value: _constants.buttonValues.workOnTaskFor.ninetyMinutes.value,
-				type: "button"
-			}, {
-				name: _constants.buttonValues.workOnTaskFor.sixtyMinutes.name,
-				text: "60 minutes",
-				value: _constants.buttonValues.workOnTaskFor.sixtyMinutes.value,
-				type: "button"
-			}, {
-				name: _constants.buttonValues.workOnTaskFor.thirtyMinutes.name,
-				text: "30 minutes",
-				value: _constants.buttonValues.workOnTaskFor.thirtyMinutes.value,
-				type: "button"
-			}]
-		}]
-	}, [{
-		pattern: _botResponses.utterances.containsDifferent,
-		callback: function callback(response, convo) {
-
-			convo.say("Okay! Let's do a different task");
-			var question = "What task do you want to start with instead?";
-			chooseFirstTask(convo, question);
-			convo.next();
-		}
-	}, {
-		default: true,
-		callback: function callback(response, convo) {
-
-			// use wit to decipher the relative time. if no time, then re-ask
-			var _response$intentObjec = response.intentObject.entities;
-			var duration = _response$intentObjec.duration;
-			var datetime = _response$intentObjec.datetime;
-
-			var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
-
-			var minutes = 0;
-			var now = (0, _momentTimezone2.default)();
-
-			if (customTimeObject) {
-				if (duration) {
-					minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
-				} else {
-					minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
-				}
-			}
-
-			if (minutes > 0) {
-				convo.say('Got it!');
-				convo.newPlan.startTask.minutes = minutes;
-				startOnTask(convo);
-			} else {
-				convo.say("Sorry, I didn't catch that. Let me know a time `i.e. 45 minutes`");
-				convo.repeat();
-			}
-
-			convo.next();
-		}
-	}]);
-}
-
-function startOnTask(convo) {
+function askToIncludeTeamMembers(convo) {
+	var bot = convo.task.bot;
 	var _convo$newPlan5 = convo.newPlan;
-	var tz = _convo$newPlan5.tz;
+	var SlackUserId = _convo$newPlan5.SlackUserId;
 	var daySplit = _convo$newPlan5.daySplit;
 	var onboardVersion = _convo$newPlan5.onboardVersion;
-	var startTask = _convo$newPlan5.startTask;
-	var SlackUserId = _convo$newPlan5.SlackUserId;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
-	var timeExample = (0, _momentTimezone2.default)().tz(tz).add(10, "minutes").format("h:mma");
-	var taskString = prioritizedTasks[startTask.index].text;
+	var message = 'Would you like to share your plan with a colleague? *Just mention a Slack username* like `@emily` and I’ll share your priorities with them';
+
+	if (onboardVersion) {
+		convo.say(message);
+		message = 'This makes it easy to communicate your outcomes for today, and make sure that you\'re working on the highest priority items for yourself and your team';
+	};
+
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "INCLUDE_TEAM_MEMBER",
+		fallback: "Do you want to include a team member?",
+		color: _constants.colorsHash.grey.hex,
+		actions: [{
+			name: _constants.buttonValues.notToday.name,
+			text: "Not today!",
+			value: _constants.buttonValues.notToday.value,
+			type: "button"
+		}, {
+			name: _constants.buttonValues.noDontAskAgain.name,
+			text: "No - dont ask again",
+			value: _constants.buttonValues.noDontAskAgain.value,
+			type: "button"
+		}, {
+			name: _constants.buttonValues.newPlan.redoLastPriority.name,
+			text: "Redo last priority",
+			value: _constants.buttonValues.newPlan.redoLastPriority.value,
+			type: "button"
+		}]
+	}];
+
 	convo.ask({
-		text: 'When do you want to get started on `' + taskString + '`? (you can also say `in 10 minutes` or `at ' + timeExample + '`)',
-		attachments: [{
-			attachment_type: 'default',
-			callback_id: "DO_TASK_NOW",
-			fallback: "Let's do it now!",
-			color: _constants.colorsHash.grey.hex,
-			actions: [{
-				name: _constants.buttonValues.startTaskIn.now.name,
-				text: "Let's do it now!",
-				value: _constants.buttonValues.startTaskIn.now.value,
-				type: "button"
-			}, {
-				name: _constants.buttonValues.startTaskIn.tenMinutes.name,
-				text: "In 10 minutes",
-				value: _constants.buttonValues.startTaskIn.tenMinutes.value,
-				type: "button"
-			}]
-		}] }, [{
-		pattern: _botResponses.utterances.containsNow,
+		text: message,
+		attachments: attachments
+	}, [{
+		pattern: _botResponses.utterances.notToday,
 		callback: function callback(response, convo) {
 
-			convo.say('You\'re crushing this ' + daySplit + ' :punch:');
-			convo.newPlan.startNow = true;
-			if (onboardVersion) {
-				whoDoYouWantToInclude(convo);
-			}
+			convo.say('Okay! I won\'t include anyone for today\'s plan');
+			convo.newPlan.pingTeamMembers = false;
+			addTimeToPriorities(convo);
 			convo.next();
 		}
 	}, {
-		default: true,
+		pattern: _botResponses.utterances.noDontAskAgain,
 		callback: function callback(response, convo) {
 
-			// use wit to decipher the relative time. if no time, then re-ask
-			var _response$intentObjec2 = response.intentObject.entities;
-			var duration = _response$intentObjec2.duration;
-			var datetime = _response$intentObjec2.datetime;
-
-			var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
-
-			var minutes = void 0;
-			var now = (0, _momentTimezone2.default)();
-			if (customTimeObject) {
-
-				convo.newPlan.startTime = customTimeObject;
-				if (duration) {
-					minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
-				} else {
-					minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
-				}
-				var timeString = customTimeObject.format("h:mm a");
-				convo.say('Okay! I\'ll see you at ' + timeString + ' to get started :timer_clock:');
-				if (onboardVersion) {
-					whoDoYouWantToInclude(convo);
-				}
-				convo.next();
-			} else {
-				convo.say("Sorry, I didn't catch that. Let me know a time `i.e. let's start in 10 minutes`");
-				convo.repeat();
-			}
-
+			convo.newPlan.includeOthersDecision = "NO_FOREVER";
+			convo.say('No worries! I won’t ask again. You can add someone to receive your priorities when you make them by saying `show settings`');
+			addTimeToPriorities(convo);
 			convo.next();
 		}
-	}]);
-}
-
-function whoDoYouWantToInclude(convo) {
-	var bot = convo.task.bot;
-	var daySplit = convo.newPlan.daySplit;
-	var prioritizedTasks = convo.newPlan.prioritizedTasks;
-
-	// we only ask this for the first time they make a new plan
-	// this is part of onboard flow
-
-	convo.say("One last thing! Is there anyone you want me to notify about your daily priorities?");
-	convo.say("This makes it easy for you to communicate your outcomes for today, and stay in sync with your team to ensure that you're working on your highest priority items");
-	convo.ask({
-		text: 'Simply let me know the people you want to include by entering their handles here `i.e. let\'s include @chip and @kevin`',
-		attachments: [{
-			attachment_type: 'default',
-			callback_id: "INCLUDE_NO_ONE",
-			fallback: "Who do you want to include?",
-			color: _constants.colorsHash.grey.hex,
-			actions: [{
-				name: _constants.buttonValues.include.noOne.name,
-				text: "No one for now!",
-				value: _constants.buttonValues.include.noOne.value,
-				type: "button"
-			}]
-		}]
-	}, [{
-		pattern: _botResponses.utterances.containsNoOne,
+	}, {
+		pattern: _botResponses.utterances.redo,
 		callback: function callback(response, convo) {
 
-			convo.say("Okay, you can always add this later by asking me to `update settings`!");
+			if (prioritizedTasks.length > 0) {
+				var task = prioritizedTasks.pop();
+				convo.say('Okay! I removed `' + task.text + '` from your list');
+			}
+			convo.newPlan.prioritizedTasks = prioritizedTasks;
+			addPriorityToList(convo);
 			convo.next();
 		}
 	}, {
@@ -513,12 +430,15 @@ function whoDoYouWantToInclude(convo) {
 					convo.newPlan.includeSlackUserIds = finalSlackUserIdsToInclude;
 					var userNameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(userNames);
 
-					convo.say('Great! I\'ll notify ' + userNameStrings + ' about your daily priorities from now on');
-					convo.say("If you want to change who you include, you can always `update settings`!");
+					convo.newPlan.pingTeamMembers = true;
+					convo.say('Great! After planning, I\'ll let *' + userNameStrings + '*  know that you’ll be focused on these priorities today');
+					convo.say("You can add someone to receive your priorities automatically when you make them each morning by saying `show settings`");
+					addTimeToPriorities(convo);
 					convo.next();
 				});
 			} else {
-				convo.say("You didn't include any users! I pick up who you want to include by their slack handles, like `@kevin`");
+
+				convo.say("You didn't include any users! I pick up who you want to include by their slack handles, like `@fulton`");
 				convo.repeat();
 			}
 
@@ -527,27 +447,338 @@ function whoDoYouWantToInclude(convo) {
 	}]);
 }
 
-/**
- * 		IRRELEVANT FOR CURRENT INTERATION
- */
-function prioritizeTasks(convo) {
-	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
+// add time to each of your priorities
+function addTimeToPriorities(convo) {
 	var bot = convo.task.bot;
 	var _convo$newPlan6 = convo.newPlan;
+	var tz = _convo$newPlan6.tz;
+	var SlackUserId = _convo$newPlan6.SlackUserId;
 	var daySplit = _convo$newPlan6.daySplit;
 	var onboardVersion = _convo$newPlan6.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
+	if (onboardVersion) {
+		explainTimeToPriorities(convo); // this is end of onboarding for this!
+		return;
+	}
+
+	var count = 0;
+	var countString = '';
+
+	prioritizedTasks.some(function (prioritizedTask) {
+		if (!prioritizedTask.minutes) {
+			return true;
+		}
+		count++;
+	});
+
+	var prioritizedTask = prioritizedTasks[count];
+	if (count == 0) {
+		convo.say('Let\'s start to put this together now :hammer:');
+	}
+
+	if (count >= prioritizedTasks.length) {
+		// count should never be greater, but this is a safety measure
+
+		startOnFirstTask(convo);
+		convo.next();
+	} else {
+
+		var text = 'How much time do you want to put toward `' + prioritizedTask.text + '` today?';
+		var attachments = [{
+			attachment_type: 'default',
+			callback_id: "REDO_PRIORITIES",
+			fallback: "Do you want to redo priorities?",
+			color: _constants.colorsHash.grey.hex,
+			actions: []
+		}];
+
+		if (count == 0) {
+			attachments[0].actions.push({
+				name: _constants.buttonValues.redoMyPriorities.name,
+				text: "Redo my priorities!",
+				value: _constants.buttonValues.redoMyPriorities.value,
+				type: "button"
+			});
+		} else {
+			attachments[0].actions.push({
+				name: _constants.buttonValues.goBack.name,
+				text: "Wait, go back!",
+				value: _constants.buttonValues.goBack.value,
+				type: "button"
+			});
+		}
+
+		convo.ask({
+			text: text,
+			attachments: attachments
+		}, [{
+			pattern: _botResponses.utterances.containsRedo,
+			callback: function callback(response, convo) {
+
+				convo.say("Okay! Let's redo your priorities! :repeat:");
+				convo.newPlan.prioritizedTasks = [];
+				convo.newPlan.onboardVersion = false;
+				addPriorityToList(convo);
+				convo.next();
+			}
+		}, {
+			pattern: _botResponses.utterances.goBack,
+			callback: function callback(response, convo) {
+
+				if (count > 0) {
+					convo.say("Okay! Let's go back");
+					count--;
+					delete prioritizedTasks[count].minutes;
+					convo.newPlan.prioritizedTasks = prioritizedTasks;
+					addTimeToPriorities(convo);
+				} else {
+					convo.say('You can\'t go back on your first task!');
+					convo.repeat();
+				}
+
+				convo.next();
+			}
+		}, {
+			default: true,
+			callback: function callback(response, convo) {
+
+				// use wit to decipher the relative time. if no time, then re-ask
+				var text = response.text;
+				var _response$intentObjec = response.intentObject.entities;
+				var duration = _response$intentObjec.duration;
+				var datetime = _response$intentObjec.datetime;
+
+				var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+
+				var minutes = 0;
+				var now = (0, _momentTimezone2.default)();
+
+				var isNum = /^\d+$/.test(text);
+
+				if (isNum) {
+					// if user just says "45"
+					minutes = parseInt(text);
+				} else if (customTimeObject) {
+					if (duration) {
+						minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
+					} else {
+						minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+					}
+				}
+
+				console.log('\n\n\nminutes to ' + prioritizedTask.text + ': ' + minutes + '\n\n\n');
+
+				if (minutes > 0) {
+
+					var timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+					convo.say('Got it! I set ' + timeString + ' to `' + prioritizedTask.text + '` :stopwatch:');
+					prioritizedTask.minutes = minutes;
+					convo.newPlan.prioritizedTasks[count] = prioritizedTask;
+					addTimeToPriorities(convo);
+				} else {
+
+					convo.say("Sorry, I didn't catch that. Let me know a time `i.e. 1 hour 45 minutes`");
+					convo.repeat();
+				}
+
+				convo.next();
+			}
+		}]);
+	}
+}
+
+// thoroughly explain why we're doing this!
+function explainTimeToPriorities(convo) {
+	var bot = convo.task.bot;
+	var _convo$newPlan7 = convo.newPlan;
+	var SlackUserId = _convo$newPlan7.SlackUserId;
+	var daySplit = _convo$newPlan7.daySplit;
+	var onboardVersion = _convo$newPlan7.onboardVersion;
+	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+
+
+	var priorityString = prioritizedTasks.length == 1 ? 'your ' + prioritizedTasks.length + ' priority' : 'each of your ' + prioritizedTasks.length + ' priorities';
+
+	convo.say('Now let\'s put time to spend toward ' + priorityString);
+	convo.say('Since this is your first time with me, let me briefly explain what\'s going on :grin:');
+
+	var text = 'This is *how long you’d like to work on each priority for the course of the day*, from 30 minutes to 4 hours or more';
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "INCLUDE_TEAM_MEMBER",
+		fallback: "Do you want to include a team member?",
+		color: _constants.colorsHash.green.hex,
+		actions: [{
+			name: _constants.buttonValues.next.name,
+			text: "Why do this?",
+			value: _constants.buttonValues.next.value,
+			type: "button"
+		}]
+	}];
+
+	convo.ask({
+		text: text,
+		attachments: attachments
+	}, function (response, convo) {
+
+		text = 'I’ll help you hold yourself accountable and *deliberately put time toward your main outcomes in chunks* that actually make sense for you and how you enter flow';
+		attachments[0].actions[0].text = 'I might misestimate!';
+
+		convo.ask({
+			text: text,
+			attachments: attachments
+		}, function (response, convo) {
+
+			text = 'If you finish sooner than expected, that’s fantastic! If it takes longer than expected, you can always extend time later';
+			attachments[0].actions[0].text = 'What gets shared?';
+
+			convo.ask({
+				text: text,
+				attachments: attachments
+			}, function (response, convo) {
+
+				text = 'I don’t communicate how long you spend working toward your outcomes to anyone else but you, so you can feel safe about your pace and time to getting the most important things done';
+				convo.say(text);
+				text = '*You define time well spent for yourself* and my goal is to help you follow through on it and actually build useful pictures of your day';
+				attachments[0].actions[0].text = 'Sounds great!';
+
+				convo.ask({
+					text: text,
+					attachments: attachments
+				}, function (response, convo) {
+
+					convo.newPlan.onboardVersion = false;
+					addTimeToPriorities(convo);
+					convo.next();
+				});
+
+				convo.next();
+			});
+
+			convo.next();
+		});
+
+		convo.next();
+	});
+}
+
+// start on the first task, with opportunity to change priority
+function startOnFirstTask(convo) {
+	var bot = convo.task.bot;
+	var _convo$newPlan8 = convo.newPlan;
+	var tz = _convo$newPlan8.tz;
+	var SlackUserId = _convo$newPlan8.SlackUserId;
+	var daySplit = _convo$newPlan8.daySplit;
+	var onboardVersion = _convo$newPlan8.onboardVersion;
+	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+
+
+	var prioritizedTask = prioritizedTasks[0];
+
+	var message = 'Let\'s get the day started with `' + prioritizedTask.text + '` :muscle:. When do you want to start?';
+
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "INCLUDE_TEAM_MEMBER",
+		fallback: "Do you want to include a team member?",
+		color: _constants.colorsHash.grey.hex,
+		actions: [{
+			name: _constants.buttonValues.now.name,
+			text: "Now! :horse_racing:",
+			value: _constants.buttonValues.now.value,
+			type: "button"
+		}, {
+			name: _constants.buttonValues.inTenMinutes.name,
+			text: "In 10 min :timer_clock:",
+			value: _constants.buttonValues.inTenMinutes.value,
+			type: "button"
+		}]
+	}];
+
+	if (prioritizedTasks.length > 1) {
+		attachments[0].actions.push({
+			name: _constants.buttonValues.changePriority.name,
+			text: "Do Different Priority",
+			value: _constants.buttonValues.changePriority.value,
+			type: "button"
+		});
+	}
+
+	convo.ask({
+		text: message,
+		attachments: attachments
+	}, [{
+		pattern: _botResponses.utterances.containsNow,
+		callback: function callback(response, convo) {
+
+			convo.say('You\'re crushing this ' + daySplit + ' :punch:');
+			convo.newPlan.startNow = true;
+			convo.next();
+		}
+	}, {
+		pattern: _botResponses.utterances.changePriority,
+		callback: function callback(response, convo) {
+
+			chooseFirstTask(convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+
+			// use wit to decipher the relative time. if no time, then re-ask
+			var _response$intentObjec2 = response.intentObject.entities;
+			var duration = _response$intentObjec2.duration;
+			var datetime = _response$intentObjec2.datetime;
+
+			var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+
+			var minutes = void 0;
+			var now = (0, _momentTimezone2.default)();
+			if (customTimeObject) {
+
+				convo.newPlan.startTime = customTimeObject;
+				if (duration) {
+					minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
+				} else {
+					minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+				}
+				var timeString = customTimeObject.format("h:mm a");
+				convo.say('Okay! I\'ll see you at ' + timeString + ' to get started :timer_clock:');
+				convo.next();
+			} else {
+				convo.say("Sorry, I didn't catch that. Let me know a time `i.e. let's start in 10 minutes`");
+				convo.repeat();
+			}
+
+			convo.next();
+		}
+	}]);
+
+	convo.next();
+}
+
+// this moves the chosen task as your #1 priority
+function chooseFirstTask(convo) {
+	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
+	var bot = convo.task.bot;
+	var _convo$newPlan9 = convo.newPlan;
+	var daySplit = _convo$newPlan9.daySplit;
+	var onboardVersion = _convo$newPlan9.onboardVersion;
+	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+
+
 	if (question == '') // this is the default question!
-		question = 'How would you rank your ' + prioritizedTasks.length + ' priorities in order of most meaningful to your day?';
+		question = 'Which of your ' + prioritizedTasks.length + ' priorities do you want to work on first?';
 
 	if (prioritizedTasks.length == 1) {
-		// 1 task needs no prioritizing
-		convo.newPlan.startTask.index = 0;
-		getTimeToTask(convo);
+		// no need to choose if 1 task
+		startOnFirstTask(convo);
 	} else {
-		// 2+ tasks need prioritizing
+
+		// 2+ tasks means you can choose your #1 priority
 		var options = { dontShowMinutes: true, dontCalculateMinutes: true };
 		var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTasks, options);
 
@@ -555,64 +786,60 @@ function prioritizeTasks(convo) {
 			text: question + '\n' + taskListMessage,
 			attachments: [{
 				attachment_type: 'default',
-				callback_id: "KEEP_TASK_ORDER",
-				fallback: "Let's keep this task order!",
+				callback_id: "REDO_TASKS",
+				fallback: "Do you want to work on this task?",
 				color: _constants.colorsHash.grey.hex,
 				actions: [{
-					name: _constants.buttonValues.keepTaskOrder.name,
-					text: "Keep this order!",
-					value: _constants.buttonValues.keepTaskOrder.value,
+					name: _constants.buttonValues.redoMyPriorities.name,
+					text: "Redo my priorities!",
+					value: _constants.buttonValues.redoMyPriorities.value,
 					type: "button"
 				}]
 			}]
 		}, [{
-			pattern: _botResponses.utterances.containsKeep,
+			pattern: _botResponses.utterances.containsRedo,
 			callback: function callback(response, convo) {
 
-				convo.say("This order looks great to me, too!");
+				convo.say("Okay! Let's try this again :repeat:");
+				convo.newPlan.prioritizedTasks = [];
+				addPriorityToList(convo);
+				convo.next();
+			}
+		}, {
+			pattern: _botResponses.utterances.containsNumber,
+			callback: function callback(response, convo) {
+
+				var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, prioritizedTasks);
+				var taskIndexToWorkOn = taskNumbersToWorkOnArray[0] - 1;
+
+				if (taskIndexToWorkOn >= 0) {
+
+					if (taskNumbersToWorkOnArray.length == 1) {
+
+						// move that one to front of array (top priority)
+						prioritizedTasks.move(taskIndexToWorkOn, 0);
+						convo.newPlan.prioritizedTasks = prioritizedTasks;
+						convo.say('Sounds great to me!');
+						startOnFirstTask(convo);
+					} else {
+						// only one at a time
+						convo.say("Let's work on one priority at a time!");
+						var _question = "Which one do you want to start with?";
+						chooseFirstTask(convo, _question);
+					}
+				} else {
+					convo.say("Sorry, I didn't catch that. Let me know a number `i.e. priority 2`");
+					var _question2 = "Which of these do you want to start off with?";
+					chooseFirstTask(convo, _question2);
+				}
+
 				convo.next();
 			}
 		}, {
 			default: true,
 			callback: function callback(response, convo) {
-
-				console.log("\n\n keep stuff");
-				console.log(response.text);
-
-				var taskNumbersToWorkOnArray = (0, _messageHelpers.convertTaskNumberStringToArray)(response.text, prioritizedTasks);
-
-				var necessaryNumbers = [];
-				for (var i = 0; i < prioritizedTasks.length; i++) {
-					var number = i + 1;
-					necessaryNumbers.push(number);
-				}
-
-				var newPrioritizedTaskNumbers = taskNumbersToWorkOnArray.slice();
-				// this tests if the arrays contain the same values or not
-				if (taskNumbersToWorkOnArray.sort().join(',') === necessaryNumbers.sort().join(',')) {
-					(function () {
-
-						var newPrioritizedTasks = [];
-						newPrioritizedTaskNumbers.forEach(function (taskNumber) {
-							var index = taskNumber - 1;
-							newPrioritizedTasks.push(prioritizedTasks[index]);
-						});
-						convo.newPlan.prioritizedTasks = newPrioritizedTasks;
-
-						convo.say("Love it!");
-						if (onboardVersion) {
-							whoDoYouWantToInclude(convo);
-						}
-					})();
-				} else {
-
-					necessaryNumbers.reverse();
-					var numberString = necessaryNumbers.join(", ");
-					convo.say("Sorry, I didn't catch that");
-					var repeatQuestion = 'Let me know how you would rank your ' + prioritizedTasks.length + ' priorities in order of importance by listing the numbers `i.e. ' + numberString + '`';
-					prioritizeTasks(convo, repeatQuestion);
-				}
-
+				convo.say("Sorry, I didn't catch that. Let me know a number `i.e. priority 2`");
+				convo.repeat();
 				convo.next();
 			}
 		}]);

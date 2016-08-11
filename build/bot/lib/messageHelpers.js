@@ -8,6 +8,7 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
                                                                                                                                                                                                                                                                    * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
                                                                                                                                                                                                                                                                    */
 
+exports.getRandomApprovalWord = getRandomApprovalWord;
 exports.getNewPlanAttachments = getNewPlanAttachments;
 exports.convertResponseObjectsToTaskArray = convertResponseObjectsToTaskArray;
 exports.convertResponseObjectToNewTaskArray = convertResponseObjectToNewTaskArray;
@@ -40,6 +41,21 @@ var _nlp_compromise = require('nlp_compromise');
 var _nlp_compromise2 = _interopRequireDefault(_nlp_compromise);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function getRandomApprovalWord(config) {
+	// gives you awesome, nice, sounds good, great, etc.
+	var approvalWords = ['nice', 'awesome', 'sounds good', 'great', 'fantastic', 'looking good', 'very nice', 'cool', 'boom', 'looks good'];
+	var approvalWord = approvalWords[Math.floor(Math.random() * approvalWords.length)];
+
+	if (config.upperCase) {
+		approvalWord = capitalizeFirstLetter(approvalWord);
+	}
+	return approvalWord;
+}
+
+function capitalizeFirstLetter(string) {
+	return string.charAt(0).toUpperCase() + string.slice(1);
+}
 
 function getNewPlanAttachments(prioritizedTasks) {
 
@@ -899,7 +915,7 @@ function getDoneSessionMessageAttachments() {
 			case _constants.buttonValues.doneSession.completedPriorityTonedDown.value:
 				actions.push({
 					name: _constants.buttonValues.doneSession.completedPriorityTonedDown.name,
-					text: "Priority Completed",
+					text: "Completed :punch:",
 					value: _constants.buttonValues.doneSession.completedPriorityTonedDown.value,
 					type: "button"
 				});
