@@ -13,7 +13,9 @@ module.exports = function(sequelize, DataTypes) {
     defaultBreakTime: DataTypes.INTEGER,
     includeOthersDecision: {  type: DataTypes.STRING,
                defaultValue: "default"
-          }
+          },
+    pingTime: { type: DataTypes.DATE
+    },
   }, {
 
     classMethods: {
