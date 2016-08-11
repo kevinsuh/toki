@@ -47,87 +47,123 @@ function startNewPlanFlow(convo) {
 	var SlackUserId = _convo$newPlan.SlackUserId;
 	var daySplit = _convo$newPlan.daySplit;
 	var onboardVersion = _convo$newPlan.onboardVersion;
-	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
+	convo.newPlan.prioritizedTasks = [];
 
 	var contextDay = "today";
 	if (daySplit != _constants.constants.MORNING.word) {
 		contextDay = 'this ' + daySplit;
 	}
-	var question = 'What are the 3 outcomes you want to make happen ' + contextDay + '?';
+
+	var question = 'Let’s win ' + contextDay + '! What are up to 3 priorities you want to work toward today? These are the important outcomes that you want to put time toward achieving today, not necessarily specific tasks you want to check off your todo list';
 	if (onboardVersion) {
 		question = question + ' Please enter each one in a separate message';
 	}
 
-	prioritizedTasks = [];
-	var options = { dontShowMinutes: true, dontCalculateMinutes: true };
-	var taskListMessage = void 0;
+	addPriorityToList(convo);
+}
+
+// function to add a priority to your plan
+// this dynamically handles 1st, 2nd, 3rd priorities
+function addPriorityToList(convo) {
+	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+
+
+	var count = prioritizedTasks.length;
+	var countString = '';
+	var actions = [];
+
+	switch (count) {
+		case 0:
+			countString = 'first';
+			break;
+		case 1:
+			countString = 'second';
+			actions = [{
+				name: _constants.buttonValues.newPlan.noMorePriorities.name,
+				text: "No more priorities",
+				value: _constants.buttonValues.newPlan.noMorePriorities.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.newPlan.redoLastPriority.name,
+				text: "Redo first priority",
+				value: _constants.buttonValues.newPlan.redoLastPriority.value,
+				type: "button"
+			}];
+			break;
+		case 2:
+			countString = 'third';
+			actions = [{
+				name: _constants.buttonValues.newPlan.noMorePriorities.name,
+				text: "No more priorities",
+				value: _constants.buttonValues.newPlan.noMorePriorities.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.newPlan.redoLastPriority.name,
+				text: "Redo second priority",
+				value: _constants.buttonValues.newPlan.redoLastPriority.value,
+				type: "button"
+			}];
+			break;
+		default:
+			break;
+	};
+
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "ADD_PRIORITY",
+		fallback: "Do you want to add another priority?",
+		color: _constants.colorsHash.grey.hex,
+		actions: actions
+	}];
+	var message = 'What is the ' + countString + ' priority you want to work towards today?';
+
 	convo.ask({
-		text: question,
-		attachments: (0, _messageHelpers.getNewPlanAttachments)(prioritizedTasks)
+		text: message,
+		attachments: attachments
 	}, [{
-		pattern: _constants.buttonValues.redoTasks.value,
+		pattern: _botResponses.utterances.redo,
 		callback: function callback(response, convo) {
 
-			prioritizedTasks = [];
+			if (prioritizedTasks.length > 0) {
+				var task = prioritizedTasks.pop();
+				convo.say('Okay! I removed `' + task.text + '` from your list');
+			}
 			convo.newPlan.prioritizedTasks = prioritizedTasks;
-
-			convo.say("Okay! Let's try this again :repeat:");
-			startNewPlanFlow(convo);
+			addPriorityToList(convo);
 			convo.next();
 		}
 	}, {
-		pattern: _botResponses.utterances.onlyNeverMind,
+		pattern: _botResponses.utterances.noMore,
 		callback: function callback(response, convo) {
 
-			convo.say("Okay! Let me know when you're ready to plan :wave:");
-			convo.newPlan.exitEarly = true;
-			convo.next();
-		}
-	}, {
-		pattern: _botResponses.utterances.done,
-		callback: function callback(response, convo) {
-
-			convo.newPlan.prioritizedTasks = prioritizedTasks;
 			confirmUserPriorities(convo);
 			convo.next();
 		}
 	}, { // this is additional task added in this case.
 		default: true,
 		callback: function callback(response, convo) {
+			var text = response.text;
 
-			var updateTaskListMessageObject = (0, _messageHelpers.getMostRecentTaskListMessageToUpdate)(response.channel, bot);
+			var newTask = {
+				text: text,
+				newTask: true
+			};
+			prioritizedTasks.push(newTask);
 
-			var newTaskArray = (0, _messageHelpers.convertResponseObjectToNewTaskArray)(response);
-			newTaskArray.forEach(function (newTask) {
-				prioritizedTasks.push(newTask);
-			});
+			var approvalWord = (0, _messageHelpers.getRandomApprovalWord)({ upperCase: true });
+			convo.say(approvalWord + '! I added `' + newTask.text + '`');
 
-			taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTasks, options);
+			convo.newPlan.prioritizedTasks = prioritizedTasks;
 
-			updateTaskListMessageObject.text = question + '\n' + taskListMessage;
-
-			var attachments = (0, _messageHelpers.getNewPlanAttachments)(prioritizedTasks);
-
-			if (prioritizedTasks.length < 3) {
-				updateTaskListMessageObject.attachments = JSON.stringify(attachments);
-				bot.api.chat.update(updateTaskListMessageObject);
-			} else {
-
-				while (prioritizedTasks.length > 3) {
-					// only 3 priorities!
-					prioritizedTasks.pop();
-				}
-
-				// we move on, with default to undo.
-				updateTaskListMessageObject.attachments = JSON.stringify(_constants.taskListMessageNoButtonsAttachment);
-				bot.api.chat.update(updateTaskListMessageObject);
-
-				convo.newPlan.prioritizedTasks = prioritizedTasks;
-
+			if (prioritizedTasks.length >= 3) {
 				confirmUserPriorities(convo);
-				convo.next();
+			} else {
+				// ask again!
+				addPriorityToList(convo);
 			}
+
+			convo.next();
 		}
 	}]);
 }

@@ -7,7 +7,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 
 import { utterances } from '../../lib/botResponses';
-import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, convertTaskNumberStringToArray, getMostRecentTaskListMessageToUpdate, deleteConvoAskMessage, convertResponseObjectToNewTaskArray, getTimeToTaskTextAttachmentWithTaskListMessage, commaSeparateOutTaskArray, getNewPlanAttachments } from '../../lib/messageHelpers';
+import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, convertTaskNumberStringToArray, getMostRecentTaskListMessageToUpdate, deleteConvoAskMessage, convertResponseObjectToNewTaskArray, getTimeToTaskTextAttachmentWithTaskListMessage, commaSeparateOutTaskArray, getNewPlanAttachments, getRandomApprovalWord } from '../../lib/messageHelpers';
 import { constants, colorsHash, buttonValues, taskListMessageNoButtonsAttachment } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray, getSlackUsersFromString } from '../../lib/miscHelpers';
 
@@ -18,53 +18,104 @@ import { witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArr
 export function startNewPlanFlow(convo) {
 
 	const { task: { bot }, newPlan: { SlackUserId, daySplit, onboardVersion } } = convo;
-	let { newPlan: { prioritizedTasks } } = convo;
+	convo.newPlan.prioritizedTasks = [];
 
 	let contextDay = "today";
 	if (daySplit != constants.MORNING.word) {
 		contextDay = `this ${daySplit}`;
 	}
-	let question = `What are the 3 outcomes you want to make happen ${contextDay}?`;
+
+	let question = `Let’s win ${contextDay}! What are up to 3 priorities you want to work toward today? These are the important outcomes that you want to put time toward achieving today, not necessarily specific tasks you want to check off your todo list`;
 	if (onboardVersion) {
 		question = `${question} Please enter each one in a separate message`;
 	}
 
-	prioritizedTasks = [];
-	let options = { dontShowMinutes: true, dontCalculateMinutes: true };
-	let taskListMessage;
+	addPriorityToList(convo);
+
+}
+
+// function to add a priority to your plan
+// this dynamically handles 1st, 2nd, 3rd priorities
+function addPriorityToList(convo) {
+
+	let { newPlan: { prioritizedTasks } } = convo;
+
+	let count       = prioritizedTasks.length;
+	let countString = '';
+	let actions     = [];
+
+	switch (count) {
+		case 0:
+			countString = 'first';
+			break;
+		case 1:
+			countString = 'second';
+			actions = [
+				{
+					name: buttonValues.newPlan.noMorePriorities.name,
+					text: "No more priorities",
+					value: buttonValues.newPlan.noMorePriorities.value,
+					type: "button"
+				},
+				{
+					name: buttonValues.newPlan.redoLastPriority.name,
+					text: "Redo first priority",
+					value: buttonValues.newPlan.redoLastPriority.value,
+					type: "button"
+				}
+			];
+			break;
+		case 2:
+			countString = 'third';
+			actions = [
+				{
+					name: buttonValues.newPlan.noMorePriorities.name,
+					text: "No more priorities",
+					value: buttonValues.newPlan.noMorePriorities.value,
+					type: "button"
+				},
+				{
+					name: buttonValues.newPlan.redoLastPriority.name,
+					text: "Redo second priority",
+					value: buttonValues.newPlan.redoLastPriority.value,
+					type: "button"
+				}
+			];
+			break;
+		default: break;
+	};
+
+	let attachments = [{
+		attachment_type: 'default',
+		callback_id: "ADD_PRIORITY",
+		fallback: "Do you want to add another priority?",
+		color: colorsHash.grey.hex,
+		actions
+	}];
+	let message = `What is the ${countString} priority you want to work towards today?`
+
 	convo.ask({
-		text: question,
-		attachments: getNewPlanAttachments(prioritizedTasks)
-	},
-	[
+		text: message,
+		attachments
+	}, [
 		{
-			pattern: buttonValues.redoTasks.value,
+			pattern: utterances.redo,
 			callback: function(response, convo) {
 
-				prioritizedTasks               = [];
+				if (prioritizedTasks.length > 0) {
+					let task = prioritizedTasks.pop();
+					convo.say(`Okay! I removed \`${task.text}\` from your list`);
+				}
 				convo.newPlan.prioritizedTasks = prioritizedTasks;
-
-				convo.say("Okay! Let's try this again :repeat:");
-				startNewPlanFlow(convo);
+				addPriorityToList(convo);
 				convo.next();
 
 			}
 		},
 		{
-			pattern: utterances.onlyNeverMind,
+			pattern: utterances.noMore,
 			callback: function(response, convo) {
 
-				convo.say("Okay! Let me know when you're ready to plan :wave:");
-				convo.newPlan.exitEarly = true;
-				convo.next();
-
-			}
-		},
-		{
-			pattern: utterances.done,
-			callback: function(response, convo) {
-
-				convo.newPlan.prioritizedTasks = prioritizedTasks;
 				confirmUserPriorities(convo);
 				convo.next();
 
@@ -74,45 +125,33 @@ export function startNewPlanFlow(convo) {
 			default: true,
 			callback: function(response, convo) {
 
-				const updateTaskListMessageObject = getMostRecentTaskListMessageToUpdate(response.channel, bot);
+				const { text } = response;
+				const newTask = {
+					text,
+					newTask: true
+				};
+				prioritizedTasks.push(newTask);
 
-				let newTaskArray = convertResponseObjectToNewTaskArray(response);
-				newTaskArray.forEach((newTask) => {
-					prioritizedTasks.push(newTask);
-				});
+				let approvalWord = getRandomApprovalWord({ upperCase: true });
+				convo.say(`${approvalWord}! I added \`${newTask.text}\``);
 
-				taskListMessage = convertArrayToTaskListMessage(prioritizedTasks, options);
+				convo.newPlan.prioritizedTasks = prioritizedTasks;
 
-				updateTaskListMessageObject.text = `${question}\n${taskListMessage}`;
-
-				let attachments = getNewPlanAttachments(prioritizedTasks);
-
-				if (prioritizedTasks.length < 3) {
-					updateTaskListMessageObject.attachments = JSON.stringify(attachments);
-					bot.api.chat.update(updateTaskListMessageObject);
-				} else {
-
-					while (prioritizedTasks.length > 3) {
-						// only 3 priorities!
-						prioritizedTasks.pop();
-					}
-
-					// we move on, with default to undo.
-					updateTaskListMessageObject.attachments = JSON.stringify(taskListMessageNoButtonsAttachment);
-					bot.api.chat.update(updateTaskListMessageObject);
-
-					convo.newPlan.prioritizedTasks = prioritizedTasks;
-
+				if (prioritizedTasks.length >= 3) {
 					confirmUserPriorities(convo);
-					convo.next();
-
+				} else {
+					// ask again!
+					addPriorityToList(convo);
 				}
-				
+
+				convo.next();
+
 			}
 		}
-	]);
+	])
 
 }
+
 
 function confirmUserPriorities(convo) {
 

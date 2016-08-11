@@ -16,7 +16,7 @@ var TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_BREAK_TIME = 10;
 var hoursForExpirationTime = exports.hoursForExpirationTime = 6;
 var MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = 30;
 
-var dateOfNewPlanDayFlow = exports.dateOfNewPlanDayFlow = "2016-07-30";
+var dateOfNewPlanDayFlow = exports.dateOfNewPlanDayFlow = "2016-08-11";
 
 var startDayExpirationTime = exports.startDayExpirationTime = (0, _moment2.default)().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
 
@@ -581,6 +581,16 @@ var buttonValues = exports.buttonValues = {
 	notShare: {
 		name: "LETS_NOT_SHARE",
 		value: "let's not share today"
+	},
+	newPlan: {
+		redoLastPriority: {
+			name: "REDO_LAST_PRIORITY",
+			value: "redo last priority"
+		},
+		noMorePriorities: {
+			name: "NO_MORE_PRIORITIES",
+			value: "no more priorities"
+		}
 	}
 };
 

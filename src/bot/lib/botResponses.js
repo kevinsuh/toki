@@ -25,7 +25,7 @@ export const utterances = {
 	containsAll: new RegExp(/\ba[all]{2,}/i),
 	containsAdd: new RegExp(/\ba[add]{1,}/i),
 	containsNow: new RegExp(/\bn[now]{1,}/i),
-	containsRedo: new RegExp(/\bre[re do]{2,}\b/i),
+	containsRedo: new RegExp(/\bre[re do]{2,5}\b/i),
 	startsWithAdd: new RegExp(/^a[add]{2,}\b/i),
 	containsTask: new RegExp(/t[task]{2,}/i),
 	containsTaskOrPriority: new RegExp(/\b(t[task]{2,}|pr[riority]{4,})\b/i),
@@ -66,5 +66,7 @@ export const utterances = {
 	moveOn: new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i),
 	notToday: new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i),
 	notShare: new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i),
-	containsRename: new RegExp(/\bre[ name]{3,7}\b/i)
+	containsRename: new RegExp(/\bre[ name]{3,7}\b/i),
+	noMore: new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i),
+	redo: new RegExp(/^re[re do]{2,5}\b/i)
 }

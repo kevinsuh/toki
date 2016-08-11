@@ -7,6 +7,21 @@ import { utterances } from './botResponses';
 
 import nlp from 'nlp_compromise';
 
+export function getRandomApprovalWord(config) {
+	// gives you awesome, nice, sounds good, great, etc.
+	let approvalWords = ['nice', 'awesome', 'sounds good', 'great', 'fantastic', 'looking good', 'very nice', 'cool', 'boom', 'looks good'];
+	let approvalWord  = approvalWords[Math.floor(Math.random()*approvalWords.length)];
+
+	if (config.upperCase) {
+		approvalWord = capitalizeFirstLetter(approvalWord);
+	}
+	return approvalWord;
+}
+
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 export function getNewPlanAttachments(prioritizedTasks) {
 
 	let doneTasksButton = "Let's move on";
