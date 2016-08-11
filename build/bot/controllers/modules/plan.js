@@ -153,7 +153,7 @@ function addPriorityToList(convo) {
 
 			var approvalWord = (0, _messageHelpers.getRandomApprovalWord)({ upperCase: true });
 			var message = approvalWord + '! I added `' + newTask.text + '`';
-			if (prioritizedTasks.length % 2 == 0) {
+			if (prioritizedTasks.length % 2 != 0) {
 				message = message + ' to your plan';
 			}
 			convo.say(message);
@@ -249,6 +249,7 @@ function includeTeamMembers(convo) {
 function addTimeToPriorities(convo) {
 	var bot = convo.task.bot;
 	var _convo$newPlan3 = convo.newPlan;
+	var tz = _convo$newPlan3.tz;
 	var SlackUserId = _convo$newPlan3.SlackUserId;
 	var daySplit = _convo$newPlan3.daySplit;
 	var onboardVersion = _convo$newPlan3.onboardVersion;
@@ -256,11 +257,70 @@ function addTimeToPriorities(convo) {
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
-	convo.say('ADDING TIME TO PRIORITIES!');
+	var count = 0;
+	var countString = '';
+
+	prioritizedTasks.some(function (prioritizedTask) {
+		if (!prioritizedTask.minutes) {
+			return true;
+		}
+		count++;
+	});
+
+	var prioritizedTask = prioritizedTasks[count];
+	if (count == 0) {
+		convo.say('Let\'s start to put this together now :hammer:');
+	}
+
+	if (count >= prioritizedTasks.length) {
+		// count should never be greater, but this is a safety measure
+
+		startOnFirstTask(convo);
+		convo.next();
+	} else {
+
+		convo.ask('How much time do you want to put toward `' + prioritizedTask.text + '` today?', function (response, convo) {
+
+			// use wit to decipher the relative time. if no time, then re-ask
+			var _response$intentObjec = response.intentObject.entities;
+			var duration = _response$intentObjec.duration;
+			var datetime = _response$intentObjec.datetime;
+
+			var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+
+			var minutes = 0;
+			var now = (0, _momentTimezone2.default)();
+
+			if (customTimeObject) {
+				if (duration) {
+					minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
+				} else {
+					minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+				}
+			}
+
+			console.log('\n\n\nminutes to ' + prioritizedTask.text + ': ' + minutes + '\n\n\n');
+
+			if (minutes > 0) {
+
+				var timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+				convo.say('Got it! I set ' + timeString + ' to `' + prioritizedTask.text + '` :stopwatch:');
+				prioritizedTask.minutes = minutes;
+				convo.newPlan.prioritizedTasks[count] = prioritizedTask;
+				addTimeToPriorities(convo);
+			} else {
+
+				convo.say("Sorry, I didn't catch that. Let me know a time `i.e. 1 hr 45 min`");
+				convo.repeat();
+			}
+
+			convo.next();
+		});
+	}
 }
 
-// thoroughly explain why we're doing this!
-function explainTimeToPriorities(convo) {
+// start on the first task, with opportunity to change priority
+function startOnFirstTask(convo) {
 	var bot = convo.task.bot;
 	var _convo$newPlan4 = convo.newPlan;
 	var SlackUserId = _convo$newPlan4.SlackUserId;
@@ -270,16 +330,34 @@ function explainTimeToPriorities(convo) {
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
-	var priorityString = prioritizedTasks.length == 1 ? prioritizedTasks.length + ' priority' : prioritizedTasks.length + ' priorities';
+	convo.say('Let\'s start on our first priority!!!');
+	console.log(prioritizedTasks);
+	convo.ask('whats up', function (response, convo) {});
+	convo.next();
+}
 
-	convo.say('Now let’s decide how much time to spend toward each of your ' + priorityString);
+// thoroughly explain why we're doing this!
+function explainTimeToPriorities(convo) {
+	var bot = convo.task.bot;
+	var _convo$newPlan5 = convo.newPlan;
+	var SlackUserId = _convo$newPlan5.SlackUserId;
+	var daySplit = _convo$newPlan5.daySplit;
+	var onboardVersion = _convo$newPlan5.onboardVersion;
+	var includeTeamMembers = _convo$newPlan5.includeTeamMembers;
+	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+
+
+	var priorityString = prioritizedTasks.length == 1 ? 'your ' + prioritizedTasks.length + ' priority' : 'each of your ' + prioritizedTasks.length + ' priorities';
+
+	convo.say('Now let\'s put time to spend toward ' + priorityString);
+	convo.say('Since this is your first time with me, let me briefly explain what\'s going on :grin:');
 
 	var text = 'This is *how long you’d like to work on each priority for the course of the day*, from 30 minutes to 4 hours or more';
 	var attachments = [{
 		attachment_type: 'default',
 		callback_id: "INCLUDE_TEAM_MEMBER",
 		fallback: "Do you want to include a team member?",
-		color: _constants.colorsHash.grey.hex,
+		color: _constants.colorsHash.green.hex,
 		actions: [{
 			name: _constants.buttonValues.next.name,
 			text: "Why do this?",
@@ -335,11 +413,11 @@ function explainTimeToPriorities(convo) {
 
 function askToIncludeTeamMembers(convo) {
 	var bot = convo.task.bot;
-	var _convo$newPlan5 = convo.newPlan;
-	var SlackUserId = _convo$newPlan5.SlackUserId;
-	var daySplit = _convo$newPlan5.daySplit;
-	var onboardVersion = _convo$newPlan5.onboardVersion;
-	var includeTeamMembers = _convo$newPlan5.includeTeamMembers;
+	var _convo$newPlan6 = convo.newPlan;
+	var SlackUserId = _convo$newPlan6.SlackUserId;
+	var daySplit = _convo$newPlan6.daySplit;
+	var onboardVersion = _convo$newPlan6.onboardVersion;
+	var includeTeamMembers = _convo$newPlan6.includeTeamMembers;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -380,7 +458,7 @@ function askToIncludeTeamMembers(convo) {
 		pattern: _botResponses.utterances.notToday,
 		callback: function callback(response, convo) {
 
-			convo.say('Okay! Let\'s not include anyone for today');
+			convo.say('Okay! I won\'t include anyone for today\'s plan');
 			if (onboardVersion) {
 				explainTimeToPriorities(convo);
 			} else {
@@ -460,9 +538,9 @@ function askToIncludeTeamMembers(convo) {
 function chooseFirstTask(convo) {
 	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
 	var bot = convo.task.bot;
-	var _convo$newPlan6 = convo.newPlan;
-	var daySplit = _convo$newPlan6.daySplit;
-	var onboardVersion = _convo$newPlan6.onboardVersion;
+	var _convo$newPlan7 = convo.newPlan;
+	var daySplit = _convo$newPlan7.daySplit;
+	var onboardVersion = _convo$newPlan7.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -549,11 +627,11 @@ function chooseFirstTask(convo) {
 }
 
 function getTimeToTask(convo) {
-	var _convo$newPlan7 = convo.newPlan;
-	var tz = _convo$newPlan7.tz;
-	var daySplit = _convo$newPlan7.daySplit;
-	var onboardVersion = _convo$newPlan7.onboardVersion;
-	var startTask = _convo$newPlan7.startTask;
+	var _convo$newPlan8 = convo.newPlan;
+	var tz = _convo$newPlan8.tz;
+	var daySplit = _convo$newPlan8.daySplit;
+	var onboardVersion = _convo$newPlan8.onboardVersion;
+	var startTask = _convo$newPlan8.startTask;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -623,9 +701,9 @@ function getTimeToTask(convo) {
 		callback: function callback(response, convo) {
 
 			// use wit to decipher the relative time. if no time, then re-ask
-			var _response$intentObjec = response.intentObject.entities;
-			var duration = _response$intentObjec.duration;
-			var datetime = _response$intentObjec.datetime;
+			var _response$intentObjec2 = response.intentObject.entities;
+			var duration = _response$intentObjec2.duration;
+			var datetime = _response$intentObjec2.datetime;
 
 			var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
 
@@ -655,12 +733,12 @@ function getTimeToTask(convo) {
 }
 
 function startOnTask(convo) {
-	var _convo$newPlan8 = convo.newPlan;
-	var tz = _convo$newPlan8.tz;
-	var daySplit = _convo$newPlan8.daySplit;
-	var onboardVersion = _convo$newPlan8.onboardVersion;
-	var startTask = _convo$newPlan8.startTask;
-	var SlackUserId = _convo$newPlan8.SlackUserId;
+	var _convo$newPlan9 = convo.newPlan;
+	var tz = _convo$newPlan9.tz;
+	var daySplit = _convo$newPlan9.daySplit;
+	var onboardVersion = _convo$newPlan9.onboardVersion;
+	var startTask = _convo$newPlan9.startTask;
+	var SlackUserId = _convo$newPlan9.SlackUserId;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -700,9 +778,9 @@ function startOnTask(convo) {
 		callback: function callback(response, convo) {
 
 			// use wit to decipher the relative time. if no time, then re-ask
-			var _response$intentObjec2 = response.intentObject.entities;
-			var duration = _response$intentObjec2.duration;
-			var datetime = _response$intentObjec2.datetime;
+			var _response$intentObjec3 = response.intentObject.entities;
+			var duration = _response$intentObjec3.duration;
+			var datetime = _response$intentObjec3.datetime;
 
 			var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
 
@@ -738,9 +816,9 @@ function startOnTask(convo) {
 function prioritizeTasks(convo) {
 	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
 	var bot = convo.task.bot;
-	var _convo$newPlan9 = convo.newPlan;
-	var daySplit = _convo$newPlan9.daySplit;
-	var onboardVersion = _convo$newPlan9.onboardVersion;
+	var _convo$newPlan10 = convo.newPlan;
+	var daySplit = _convo$newPlan10.daySplit;
+	var onboardVersion = _convo$newPlan10.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 

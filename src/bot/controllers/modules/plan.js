@@ -7,7 +7,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 
 import { utterances } from '../../lib/botResponses';
-import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, convertTaskNumberStringToArray, getMostRecentTaskListMessageToUpdate, deleteConvoAskMessage, convertResponseObjectToNewTaskArray, getTimeToTaskTextAttachmentWithTaskListMessage, commaSeparateOutTaskArray, getNewPlanAttachments, getRandomApprovalWord } from '../../lib/messageHelpers';
+import { convertResponseObjectsToTaskArray, convertArrayToTaskListMessage, convertTimeStringToMinutes, convertToSingleTaskObjectArray, prioritizeTaskArrayFromUserInput, convertTaskNumberStringToArray, convertResponseObjectToNewTaskArray, getTimeToTaskTextAttachmentWithTaskListMessage, commaSeparateOutTaskArray, getNewPlanAttachments, getRandomApprovalWord, convertMinutesToHoursString } from '../../lib/messageHelpers';
 import { constants, colorsHash, buttonValues, taskListMessageNoButtonsAttachment } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, witDurationToMinutes, mapTimeToTaskArray, getSlackUsersFromString } from '../../lib/miscHelpers';
 
@@ -134,7 +134,7 @@ function addPriorityToList(convo) {
 
 				let approvalWord = getRandomApprovalWord({ upperCase: true });
 				let message = `${approvalWord}! I added \`${newTask.text}\``;
-				if (prioritizedTasks.length % 2 == 0) {
+				if (prioritizedTasks.length % 2 != 0) {
 					message = `${message} to your plan`
 				}
 				convo.say(message);
@@ -235,10 +235,85 @@ function includeTeamMembers(convo) {
 // add time to each of your priorities
 function addTimeToPriorities(convo) {
 
+	const { task: { bot }, newPlan: { tz, SlackUserId, daySplit, onboardVersion, includeTeamMembers } } = convo;
+	let { newPlan: { prioritizedTasks } } = convo;
+
+	let count       = 0;
+	let countString = '';
+
+	prioritizedTasks.some((prioritizedTask) => {
+		if (!prioritizedTask.minutes) {
+			return true;
+		}
+		count++;
+	});
+
+	let prioritizedTask = prioritizedTasks[count];
+	if (count == 0) {
+		convo.say(`Let's start to put this together now :hammer:`);
+	}
+
+	if (count >= prioritizedTasks.length) { // count should never be greater, but this is a safety measure
+
+		startOnFirstTask(convo);
+		convo.next();
+
+	} else {
+
+		convo.ask(`How much time do you want to put toward \`${prioritizedTask.text}\` today?`, (response, convo) => {
+
+			// use wit to decipher the relative time. if no time, then re-ask
+			const { intentObject: { entities: { duration, datetime } } } = response;
+			let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+
+			let minutes = 0;
+			let now     = moment();
+
+			if (customTimeObject) {
+				if (duration) {
+					minutes = witDurationToMinutes(duration);
+				} else {
+					minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
+				}
+			}
+
+			console.log(`\n\n\nminutes to ${prioritizedTask.text}: ${minutes}\n\n\n`);
+
+			if (minutes > 0) {
+
+				let timeString = convertMinutesToHoursString(minutes);
+				convo.say(`Got it! I set ${timeString} to \`${prioritizedTask.text}\` :stopwatch:`);
+				prioritizedTask.minutes               = minutes;
+				convo.newPlan.prioritizedTasks[count] = prioritizedTask;
+				addTimeToPriorities(convo);
+
+			} else {
+
+				convo.say("Sorry, I didn't catch that. Let me know a time `i.e. 1 hr 45 min`");
+				convo.repeat();
+
+			}
+
+			convo.next();
+
+		});
+
+	}
+
+}
+
+// start on the first task, with opportunity to change priority
+function startOnFirstTask(convo) {
+
 	const { task: { bot }, newPlan: { SlackUserId, daySplit, onboardVersion, includeTeamMembers } } = convo;
 	let { newPlan: { prioritizedTasks } } = convo;
 
-	convo.say(`ADDING TIME TO PRIORITIES!`);
+	convo.say(`Let's start on our first priority!!!`);
+	console.log(prioritizedTasks);
+	convo.ask(`whats up`, (response, convo) => {
+
+	});
+	convo.next();
 
 }
 
@@ -248,16 +323,17 @@ function explainTimeToPriorities(convo) {
 	const { task: { bot }, newPlan: { SlackUserId, daySplit, onboardVersion, includeTeamMembers } } = convo;
 	let { newPlan: { prioritizedTasks } } = convo;
 
-	let priorityString = prioritizedTasks.length == 1 ? `${prioritizedTasks.length} priority` : `${prioritizedTasks.length} priorities`;
+	let priorityString = prioritizedTasks.length == 1 ? `your ${prioritizedTasks.length} priority` : `each of your ${prioritizedTasks.length} priorities`;
 
-	convo.say(`Now let’s decide how much time to spend toward each of your ${priorityString}`);
+	convo.say(`Now let's put time to spend toward ${priorityString}`);
+	convo.say(`Since this is your first time with me, let me briefly explain what's going on :grin:`);
 
 	let text = `This is *how long you’d like to work on each priority for the course of the day*, from 30 minutes to 4 hours or more`;
 	let attachments = [{
 		attachment_type: 'default',
 		callback_id: "INCLUDE_TEAM_MEMBER",
 		fallback: "Do you want to include a team member?",
-		color: colorsHash.grey.hex,
+		color: colorsHash.green.hex,
 		actions: [
 			{
 				name: buttonValues.next.name,
@@ -364,7 +440,7 @@ function askToIncludeTeamMembers(convo) {
 			pattern: utterances.notToday,
 			callback: function(response, convo) {
 
-				convo.say(`Okay! Let's not include anyone for today`);
+				convo.say(`Okay! I won't include anyone for today's plan`);
 				if (onboardVersion) {
 					explainTimeToPriorities(convo);
 				} else {
