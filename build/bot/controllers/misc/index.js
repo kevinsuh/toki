@@ -48,6 +48,49 @@ exports.default = function (controller) {
 		});
 	});
 
+	controller.on('user_morning_ping', function (bot, config) {
+		var SlackUserId = config.SlackUserId;
+
+		// IncluderSlackUserId is the one who's actually using Toki
+
+		_models2.default.User.find({
+			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+			include: [_models2.default.SlackUser]
+		}).then(function (user) {
+
+			var UserId = user.id;
+			var nickName = user.nickName;
+			var tz = user.SlackUser.tz;
+
+
+			var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');
+			var daySplit = (0, _miscHelpers.getCurrentDaySplit)(tz);
+
+			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+				convo.say('Good ' + daySplit + ', ' + nickName + '!');
+				var quote = (0, _messageHelpers.getRandomQuote)();
+
+				convo.say({
+					text: '*_"' + quote.message + '"_*\n-' + quote.author,
+					attachments: [{
+						attachment_type: 'default',
+						callback_id: "MORNING_PING_START_DAY",
+						fallback: "Let's start the day?",
+						color: _constants.colorsHash.grey.hex,
+						actions: [{
+							name: _constants.buttonValues.letsWinTheDay.name,
+							text: ":pencil:Let’s win the day:trophy:",
+							value: _constants.buttonValues.letsWinTheDay.value,
+							type: "button",
+							style: "primary"
+						}]
+					}]
+				});
+			});
+		});
+	});
+
 	controller.hears([_constants.constants.THANK_YOU.reg_exp], 'direct_message', function (bot, message) {
 		var SlackUserId = message.user;
 		bot.send({

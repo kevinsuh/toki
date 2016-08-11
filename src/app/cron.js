@@ -18,7 +18,50 @@ export default function() {
 	if (bots) {
 		checkForReminders();
 		checkForSessions();
+		checkForMorningPing();
 	}
+
+}
+
+var checkForMorningPing = () => {
+
+	// sequelize is in EST by default. include date offset to make it correct UTC wise
+	let now = moment().format("YYYY-MM-DD HH:mm:ss Z");
+
+	models.User.findAll({
+		where: [ `"pingTime" < ? AND "wantsPing" = ?`, now, true ],
+		include: [ models.SlackUser ]
+	}).then((users) => {
+
+		users.forEach((user) => {
+			const UserId                = user.id;
+			const { pingTime, SlackUser: { SlackUserId, tz, TeamId } } = user;
+
+			let day = moment().tz(tz).format('dddd');
+			if (day == "Saturday" || day == "Sunday") {
+				// don't do weekends for now!
+			} else {
+				// ping, then update to the next day
+				models.Team.find({
+					where: { TeamId }
+				})
+				.then((team) => {
+					const { token } = team;
+					var bot = bots[token];
+					if (bot) {
+						controller.trigger(`user_morning_ping`, [bot, { SlackUserId }]);
+						let nextDay = moment(pingTime).add(1, 'days');
+						models.User.update({
+							pingTime: nextDay
+						}, {
+							where: [`"id" = ?`,UserId]
+						});
+					}
+				});
+			}
+		})
+
+	});
 
 }
 

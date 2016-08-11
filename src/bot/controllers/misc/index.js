@@ -8,8 +8,8 @@ import models from '../../../app/models';
 
 import { utterances } from '../../lib/botResponses';
 import { colorsArray, constants, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, tokiOptionsExtendedAttachment } from '../../lib/constants';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, deleteConvoAskMessage } from '../../lib/messageHelpers';
-import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog } from '../../lib/miscHelpers';
+import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, getRandomQuote } from '../../lib/messageHelpers';
+import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog, getCurrentDaySplit } from '../../lib/miscHelpers';
 
 import { resumeQueuedReachouts } from '../index';
 
@@ -58,7 +58,51 @@ export default function(controller) {
 		});
 	});
 
-			
+	controller.on('user_morning_ping', (bot, config) => {
+
+		const { SlackUserId } = config;
+
+		// IncluderSlackUserId is the one who's actually using Toki
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+			include: [ models.SlackUser ]
+		}).then((user) => {
+
+			const UserId       = user.id;
+			const { nickName, SlackUser: { tz } } = user;
+
+			const day      = moment().tz(tz).format('dddd');
+			const daySplit = getCurrentDaySplit(tz);
+
+			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+				convo.say(`Good ${daySplit}, ${nickName}!`);
+				const quote = getRandomQuote();
+
+				convo.say({
+					text: `*_"${quote.message}"_*\n-${quote.author}`,
+					attachments:[
+						{
+							attachment_type: 'default',
+							callback_id: "MORNING_PING_START_DAY",
+							fallback: "Let's start the day?",
+							color: colorsHash.grey.hex,
+							actions: [
+								{
+										name: buttonValues.letsWinTheDay.name,
+										text: ":pencil:Let’s win the day:trophy:",
+										value: buttonValues.letsWinTheDay.value,
+										type: "button",
+										style: "primary"
+								}
+							]
+						}
+					]
+				});
+
+			});
+		});
+	});
 
 	controller.hears([constants.THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
 		const SlackUserId = message.user;

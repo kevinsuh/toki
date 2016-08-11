@@ -127,9 +127,9 @@ function askForPingTime(convo) {
 
 	let text = '';
 	if (wonDay) {
-		text = `To help you keep winning your days like today, I can proactively reach out in the morning to help you plan your day. *What time would you like me to check in* with you each weekday morning?`
+		text = `To help you keep winning your days like today, I can proactively reach out in the morning to help you plan your day. *What time would you like me to check in* with you each weekday morning? Please be specific, \`i.e. 8:30am\``;
 	} else {
-		text = `To give you a better shot to win the day as soon as possible, I can proactively reach out in the morning to help you plan your day. *What time would you like me to check in* with you each weekday morning?`;
+		text = `To give you a better shot to win the day as soon as possible, I can proactively reach out in the morning to help you plan your day. *What time would you like me to check in* with you each weekday morning? Please be specific, \`i.e. 8:30am\``;
 	}
 
 	let attachments = [{

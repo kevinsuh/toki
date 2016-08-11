@@ -139,7 +139,7 @@ export default function(controller) {
 					}
 
 					if (!convo.newPlan.onboardVersion) {
-						convo.say(`Happy ${day}, ${name}! Let's win the ${daySplit} :muscle:`);
+						convo.say(`Let's win this ${day}, ${name}! :muscle:`);
 					}
 
 					startNewPlanFlow(convo);
