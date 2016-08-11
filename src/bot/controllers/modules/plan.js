@@ -188,6 +188,11 @@ function includeTeamMembers(convo) {
 					let nameStrings = commaSeparateOutTaskArray(names);
 					responseMessage = `I'll be sharing your plan with *${nameStrings}* when you're done :raised_hands:`;
 					convo.say(responseMessage);
+					if (onboardVersion) {
+						explainTimeToPriorities(convo);
+					} else {
+						addTimeToPriorities(convo);
+					}
 
 				} else if (includeTeamMembers) {
 
@@ -197,24 +202,118 @@ function includeTeamMembers(convo) {
 				} else {
 
 					// user does not want to include members
-					
 					convo.say(responseMessage);
-					chooseFirstTask(convo);
+					if (onboardVersion) {
+						explainTimeToPriorities(convo);
+					} else {
+						addTimeToPriorities(convo);
+					}
 					convo.next();
 
 				}
+
+				convo.next();
 
 			})
 
 		} else {
 
 			convo.say(responseMessage);
-			chooseFirstTask(convo);
+			if (onboardVersion) {
+				explainTimeToPriorities(convo);
+			} else {
+				addTimeToPriorities(convo);
+			}
 			convo.next();
 
 		}
 
 	})
+
+}
+
+// add time to each of your priorities
+function addTimeToPriorities(convo) {
+
+	const { task: { bot }, newPlan: { SlackUserId, daySplit, onboardVersion, includeTeamMembers } } = convo;
+	let { newPlan: { prioritizedTasks } } = convo;
+
+	convo.say(`ADDING TIME TO PRIORITIES!`);
+
+}
+
+// thoroughly explain why we're doing this!
+function explainTimeToPriorities(convo) {
+
+	const { task: { bot }, newPlan: { SlackUserId, daySplit, onboardVersion, includeTeamMembers } } = convo;
+	let { newPlan: { prioritizedTasks } } = convo;
+
+	let priorityString = prioritizedTasks.length == 1 ? `${prioritizedTasks.length} priority` : `${prioritizedTasks.length} priorities`;
+
+	convo.say(`Now let’s decide how much time to spend toward each of your ${priorityString}`);
+
+	let text = `This is *how long you’d like to work on each priority for the course of the day*, from 30 minutes to 4 hours or more`;
+	let attachments = [{
+		attachment_type: 'default',
+		callback_id: "INCLUDE_TEAM_MEMBER",
+		fallback: "Do you want to include a team member?",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+				name: buttonValues.next.name,
+				text: "Why do this?",
+				value: buttonValues.next.value,
+				type: "button"
+			}
+		]
+	}];
+
+	convo.ask({
+		text,
+		attachments
+	}, (response, convo) => {
+
+		text = `I’ll help you hold yourself accountable and *deliberately put time toward your main outcomes in chunks* that actually make sense for you and how you enter flow`;
+		attachments[0].actions[0].text = `I might misestimate!`;
+
+		convo.ask({
+			text,
+			attachments
+		}, (response, convo) => {
+
+			text = `If you finish sooner than expected, that’s fantastic! If it takes longer than expected, you can always extend time later`;
+			attachments[0].actions[0].text = `What gets shared?`;
+
+			convo.ask({
+				text,
+				attachments
+			}, (response, convo) => {
+
+				text = `I don’t communicate how long you spend working toward your outcomes to anyone else but you, so you can feel safe about your pace and time to getting the most important things done`;
+				convo.say(text);
+				text = `*You define time well spent for yourself* and my goal is to help you follow through on it and actually build useful pictures of your day`;
+				attachments[0].actions[0].text = `Sounds great!`;
+
+				convo.ask({
+					text,
+					attachments
+				}, (response, convo) => {
+
+					addTimeToPriorities(convo);
+					convo.next();
+
+				});
+
+				convo.next();
+
+			});
+
+			convo.next();
+
+		});
+
+		convo.next();
+	});
 
 }
 
@@ -243,9 +342,9 @@ function askToIncludeTeamMembers(convo) {
 				type: "button"
 			},
 			{
-				name: buttonValues.newPlan.noMorePriorities.name,
+				name: buttonValues.noDontAskAgain.name,
 				text: "No - dont ask again",
-				value: buttonValues.newPlan.noMorePriorities.value,
+				value: buttonValues.noDontAskAgain.value,
 				type: "button"
 			},
 			{
@@ -266,6 +365,11 @@ function askToIncludeTeamMembers(convo) {
 			callback: function(response, convo) {
 
 				convo.say(`Okay! Let's not include anyone for today`);
+				if (onboardVersion) {
+					explainTimeToPriorities(convo);
+				} else {
+					addTimeToPriorities(convo);
+				}
 				convo.next();
 
 			}
@@ -276,6 +380,11 @@ function askToIncludeTeamMembers(convo) {
 
 				convo.newPlan.dontIncludeAnyonePermanent = true;
 				convo.say(`No worries! I won’t ask again. You can add someone to receive your priorities when you make them by saying \`show settings\``);
+				if (onboardVersion) {
+					explainTimeToPriorities(convo);
+				} else {
+					addTimeToPriorities(convo);
+				}
 				convo.next();
 
 			}
@@ -294,7 +403,7 @@ function askToIncludeTeamMembers(convo) {
 
 			}
 		},
-		{ // this is additional task added in this case.
+		{
 			default: true,
 			callback: function(response, convo) {
 
@@ -317,6 +426,11 @@ function askToIncludeTeamMembers(convo) {
 
 						convo.say(`Great! After planning, I'll let *${userNameStrings}*  know that you’ll be focused on these priorities today`);
 						convo.say("You can add someone to receive your priorities automatically when you make them each morning by saying `show settings`");
+						if (onboardVersion) {
+							explainTimeToPriorities(convo);
+						} else {
+							addTimeToPriorities(convo);
+						}
 						convo.next();
 
 					})
