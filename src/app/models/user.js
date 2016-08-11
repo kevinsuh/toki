@@ -16,6 +16,10 @@ module.exports = function(sequelize, DataTypes) {
           },
     pingTime: { type: DataTypes.DATE
     },
+    wantsPing: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    },
   }, {
 
     classMethods: {

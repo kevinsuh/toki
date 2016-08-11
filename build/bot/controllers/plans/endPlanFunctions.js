@@ -58,7 +58,10 @@ function startEndPlanConversation(convo) {
 	if (wonDay) {
 		convo.say(':trophy: *Congratulations on winning the day!* :trophy:');
 		convo.say('It\'s all about time well spent, and today you did just that');
-		convo.say('Here\'s what you got done:\n' + completedTaskListMessage);
+		if (completedDailyTasks.length > 0) {
+			convo.say('Here\'s what you got done:\n' + completedTaskListMessage);
+		}
+
 		if (wonDayStreak > 1) {
 			convo.say('*You’ve won the day ​2 days in a row* :fire:');
 		}
@@ -75,6 +78,8 @@ function startEndPlanConversation(convo) {
 
 function askForReflection(convo) {
 	var _convo$dayEnd2 = convo.dayEnd;
+	var wantsPing = _convo$dayEnd2.wantsPing;
+	var pingTime = _convo$dayEnd2.pingTime;
 	var wonDay = _convo$dayEnd2.wonDay;
 	var nickName = _convo$dayEnd2.nickName;
 
@@ -103,16 +108,99 @@ function askForReflection(convo) {
 	}, [{
 		pattern: _botResponses.utterances.notToday,
 		callback: function callback(response, convo) {
+
 			convo.say('Got it!');
-			convo.say('I hope you have a great rest of the day and I’ll see you soon!');
+
+			if (wantsPing && !pingTime) {
+				askForPingTime(convo);
+			} else {
+				convo.say('I hope you have a great rest of the day and I’ll see you soon!');
+			}
+
 			convo.next();
 		}
 	}, {
 		default: true,
 		callback: function callback(response, convo) {
+
 			convo.say('Thank you for sharing!');
-			convo.say('I hope you have a great rest of the day and I’ll see you soon!');
 			convo.dayEnd.reflection = response.text;
+
+			if (wantsPing && !pingTime) {
+				askForPingTime(convo);
+			} else {
+				convo.say('I hope you have a great rest of the day and I’ll see you soon!');
+			}
+
+			convo.next();
+		}
+	}]);
+}
+
+function askForPingTime(convo) {
+	var _convo$dayEnd3 = convo.dayEnd;
+	var tz = _convo$dayEnd3.tz;
+	var wantsPing = _convo$dayEnd3.wantsPing;
+	var pingTime = _convo$dayEnd3.pingTime;
+	var wonDay = _convo$dayEnd3.wonDay;
+	var nickName = _convo$dayEnd3.nickName;
+
+
+	var text = '';
+	if (wonDay) {
+		text = 'To help you keep winning your days like today, I can proactively reach out in the morning to help you plan your day. *What time would you like me to check in* with you each weekday morning?';
+	} else {
+		text = 'To give you a better shot to win the day as soon as possible, I can proactively reach out in the morning to help you plan your day. *What time would you like me to check in* with you each weekday morning?';
+	}
+
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "PING_USER",
+		fallback: "Do you want me to ping you in the morning?",
+		color: _constants.colorsHash.grey.hex,
+		actions: [{
+			name: _constants.buttonValues.no.name,
+			text: "No thanks",
+			value: _constants.buttonValues.no.value,
+			type: "button"
+		}]
+	}];
+
+	convo.ask({
+		text: text,
+		attachments: attachments
+	}, [{
+		pattern: _botResponses.utterances.no,
+		callback: function callback(response, convo) {
+
+			convo.dayEnd.wantsPing = false;
+			convo.say('If you want me to reach out, just say `show settings` and set the time for your morning check-in. I hope you have a great rest of the day and I’ll see you soon!');
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			var text = response.text;
+			var _response$intentObjec = response.intentObject.entities;
+			var duration = _response$intentObjec.duration;
+			var datetime = _response$intentObjec.datetime;
+
+			var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+			var now = (0, _moment2.default)();
+
+			if (!customTimeObject && !datetime) {
+
+				convo.say("Sorry, I didn't get that :thinking_face: let me know a time like `8:30am`");
+				convo.repeat();
+			} else {
+
+				// datetime success!
+				convo.dayEnd.pingTime = customTimeObject;
+				var timeString = customTimeObject.format("h:mm a");
+				convo.say('Great! I’ll reach out weekdays at ' + timeString + '. You can always change this by saying `show settings`');
+				convo.say('I hope you have a great rest of the day and I’ll see you soon!');
+			}
+
 			convo.next();
 		}
 	}]);

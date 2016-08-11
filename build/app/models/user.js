@@ -18,6 +18,10 @@ module.exports = function (sequelize, DataTypes) {
       defaultValue: "default"
     },
     pingTime: { type: DataTypes.DATE
+    },
+    wantsPing: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
     }
   }, {
 
