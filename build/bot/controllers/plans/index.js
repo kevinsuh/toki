@@ -119,7 +119,8 @@ exports.default = function (controller) {
 							minutes: 30 // fail-safe default. should get updated in flow
 						},
 						startTime: false, // default will be now
-						includeSlackUserIds: []
+						includeSlackUserIds: [],
+						includeTeamMembers: true
 					};
 
 					var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');

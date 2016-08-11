@@ -59,7 +59,7 @@ function addPriorityToList(convo) {
 				},
 				{
 					name: buttonValues.newPlan.redoLastPriority.name,
-					text: "Redo first priority",
+					text: "Redo last priority",
 					value: buttonValues.newPlan.redoLastPriority.value,
 					type: "button"
 				}
@@ -76,7 +76,7 @@ function addPriorityToList(convo) {
 				},
 				{
 					name: buttonValues.newPlan.redoLastPriority.name,
-					text: "Redo second priority",
+					text: "Redo last priority",
 					value: buttonValues.newPlan.redoLastPriority.value,
 					type: "button"
 				}
@@ -116,7 +116,7 @@ function addPriorityToList(convo) {
 			pattern: utterances.noMore,
 			callback: function(response, convo) {
 
-				confirmUserPriorities(convo);
+				includeTeamMembers(convo);
 				convo.next();
 
 			}
@@ -133,12 +133,16 @@ function addPriorityToList(convo) {
 				prioritizedTasks.push(newTask);
 
 				let approvalWord = getRandomApprovalWord({ upperCase: true });
-				convo.say(`${approvalWord}! I added \`${newTask.text}\``);
+				let message = `${approvalWord}! I added \`${newTask.text}\``;
+				if (prioritizedTasks.length % 2 == 0) {
+					message = `${message} to your plan`
+				}
+				convo.say(message);
 
 				convo.newPlan.prioritizedTasks = prioritizedTasks;
 
 				if (prioritizedTasks.length >= 3) {
-					confirmUserPriorities(convo);
+					includeTeamMembers(convo);
 				} else {
 					// ask again!
 					addPriorityToList(convo);
@@ -152,58 +156,191 @@ function addPriorityToList(convo) {
 
 }
 
+function includeTeamMembers(convo) {
 
-function confirmUserPriorities(convo) {
-
-	const { task: { bot }, newPlan: { SlackUserId, daySplit, onboardVersion } } = convo;
+	const { task: { bot }, newPlan: { SlackUserId, daySplit, onboardVersion, includeTeamMembers } } = convo;
 	let { newPlan: { prioritizedTasks } } = convo;
 
-	if (onboardVersion) {
+	let options         = { dontShowMinutes: true, dontCalculateMinutes: true };
+	let taskListMessage = convertArrayToTaskListMessage(prioritizedTasks, options);
 
-		convo.say(`Excellent! Now let's choose the priority to work on first`);
-		convo.say(`Unless you have a deadline, I recommend asking yourself *_"If this were the only thing I accomplished today, would I be satisfied for the day?_*"`);
-		chooseFirstTask(convo);
-		convo.next();
+	convo.say(`Now let’s view your plan for today :pencil::\n${taskListMessage}`);
 
-	} else {
+	// say who is getting included
+	models.SlackUser.find({
+		where: [`"SlackUserId" = ?`, SlackUserId]
+	})
+	.then((slackUser) => {
 
-		// say who is getting included
-		models.SlackUser.find({
-			where: [`"SlackUserId" = ?`, SlackUserId]
-		})
-		.then((slackUser) => {
+		let responseMessage = `Excellent!`;
 
-			let responseMessage = `Excellent!`;
+		if (slackUser) {
 
-			if (slackUser) {
+			slackUser.getIncluded({
+				include: [ models.User ]
+			})
+			.then((includedSlackUsers) => {
 
-				slackUser.getIncluded({
-					include: [ models.User ]
-				})
-				.then((includedSlackUsers) => {
+				if (includedSlackUsers.length > 0) {
 
-					if (includedSlackUsers.length > 0) {
-						let names       = includedSlackUsers.map(includedSlackUser => includedSlackUser.dataValues.User.nickName);
-						let nameStrings = commaSeparateOutTaskArray(names);
-						responseMessage = `${responseMessage} I just let ${nameStrings} know about your priorities :raised_hands:`;
-					}
+					// user has team members to include!!
+					let names       = includedSlackUsers.map(includedSlackUser => includedSlackUser.dataValues.User.nickName);
+					let nameStrings = commaSeparateOutTaskArray(names);
+					responseMessage = `I'll be sharing your plan with *${nameStrings}* when you're done :raised_hands:`;
+					convo.say(responseMessage);
 
+				} else if (includeTeamMembers) {
+
+					// user wants to include members!!!
+					askToIncludeTeamMembers(convo);
+
+				} else {
+
+					// user does not want to include members
+					
 					convo.say(responseMessage);
 					chooseFirstTask(convo);
 					convo.next();
 
-				})
+				}
 
-			} else {
-				convo.say(responseMessage);
-				chooseFirstTask(convo);
-				convo.next();
-			}
+			})
 
-		})
-	}
+		} else {
+
+			convo.say(responseMessage);
+			chooseFirstTask(convo);
+			convo.next();
+
+		}
+
+	})
 
 }
+
+function askToIncludeTeamMembers(convo) {
+
+	const { task: { bot }, newPlan: { SlackUserId, daySplit, onboardVersion, includeTeamMembers } } = convo;
+	let { newPlan: { prioritizedTasks } } = convo;
+
+	let message = `Would you like to share your plan with a colleague? *Just mention a Slack username* like \`@emily\` and I’ll share your priorities with them`;
+
+	if (onboardVersion) {
+		convo.say(message);
+		message = `This makes it easy to communicate your outcomes for today, and make sure that you're working on the highest priority items for yourself and your team`;
+	};
+
+	let attachments = [{
+		attachment_type: 'default',
+		callback_id: "INCLUDE_TEAM_MEMBER",
+		fallback: "Do you want to include a team member?",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+				name: buttonValues.notToday.name,
+				text: "Not today!",
+				value: buttonValues.notToday.value,
+				type: "button"
+			},
+			{
+				name: buttonValues.newPlan.noMorePriorities.name,
+				text: "No - dont ask again",
+				value: buttonValues.newPlan.noMorePriorities.value,
+				type: "button"
+			},
+			{
+				name: buttonValues.newPlan.redoLastPriority.name,
+				text: "Redo last priority",
+				value: buttonValues.newPlan.redoLastPriority.value,
+				type: "button"
+			}
+		]
+	}];
+
+	convo.ask({
+		text: message,
+		attachments
+	}, [
+		{
+			pattern: utterances.notToday,
+			callback: function(response, convo) {
+
+				convo.say(`Okay! Let's not include anyone for today`);
+				convo.next();
+
+			}
+		},
+		{
+			pattern: utterances.noDontAskAgain,
+			callback: function(response, convo) {
+
+				convo.newPlan.dontIncludeAnyonePermanent = true;
+				convo.say(`No worries! I won’t ask again. You can add someone to receive your priorities when you make them by saying \`show settings\``);
+				convo.next();
+
+			}
+		},
+		{
+			pattern: utterances.redo,
+			callback: function(response, convo) {
+
+				if (prioritizedTasks.length > 0) {
+					let task = prioritizedTasks.pop();
+					convo.say(`Okay! I removed \`${task.text}\` from your list`);
+				}
+				convo.newPlan.prioritizedTasks = prioritizedTasks;
+				addPriorityToList(convo);
+				convo.next();
+
+			}
+		},
+		{ // this is additional task added in this case.
+			default: true,
+			callback: function(response, convo) {
+
+				let { text } = response;
+
+				let includeSlackUserIds = getSlackUsersFromString(text);
+
+				if (includeSlackUserIds) {
+					models.SlackUser.findAll({
+						where: [ `"SlackUser"."SlackUserId" IN (?)`, includeSlackUserIds],
+						include: [ models.User ]
+					})
+					.then((slackUsers) => {
+
+						let userNames = slackUsers.map(slackUser => slackUser.dataValues.User.nickName );
+						let finalSlackUserIdsToInclude = slackUsers.map(slackUser => slackUser.dataValues.SlackUserId );
+
+						convo.newPlan.includeSlackUserIds = finalSlackUserIdsToInclude;
+						let userNameStrings               = commaSeparateOutTaskArray(userNames);
+
+						convo.say(`Great! After planning, I'll let *${userNameStrings}*  know that you’ll be focused on these priorities today`);
+						convo.say("You can add someone to receive your priorities automatically when you make them each morning by saying `show settings`");
+						convo.next();
+
+					})
+				} else {
+
+					convo.say("You didn't include any users! I pick up who you want to include by their slack handles, like `@fulton`");
+					convo.repeat();
+
+				}
+
+				convo.next();
+
+			}
+		}
+	]);
+
+}
+
+
+
+
+
+
+
 
 function chooseFirstTask(convo, question = '') {
 
@@ -457,7 +594,7 @@ function startOnTask(convo) {
 				convo.say(`You're crushing this ${daySplit} :punch:`);
 				convo.newPlan.startNow = true;
 				if (onboardVersion) {
-					whoDoYouWantToInclude(convo);
+					// whoDoYouWantToInclude(convo);
 				}
 				convo.next();
 
@@ -484,7 +621,7 @@ function startOnTask(convo) {
 					let timeString = customTimeObject.format("h:mm a");
 					convo.say(`Okay! I'll see you at ${timeString} to get started :timer_clock:`);
 					if (onboardVersion) {
-						whoDoYouWantToInclude(convo);
+						// whoDoYouWantToInclude(convo);
 					}
 					convo.next();
 
@@ -498,82 +635,6 @@ function startOnTask(convo) {
 			}
 		}
 	]);
-}
-
-function whoDoYouWantToInclude(convo) {
-
-	const { task: { bot }, newPlan: { daySplit } } = convo;
-	let { newPlan: { prioritizedTasks } } = convo;
-
-	// we only ask this for the first time they make a new plan
-	// this is part of onboard flow
-	convo.say("One last thing! Is there anyone you want me to notify about your daily priorities?");
-	convo.say("This makes it easy for you to communicate your outcomes for today, and stay in sync with your team to ensure that you're working on your highest priority items");
-	convo.ask({
-		text: `Simply let me know the people you want to include by entering their handles here \`i.e. let's include @chip and @kevin\``,
-		attachments: [
-			{
-				attachment_type: 'default',
-				callback_id: "INCLUDE_NO_ONE",
-				fallback: "Who do you want to include?",
-				color: colorsHash.grey.hex,
-				actions: [
-					{
-							name: buttonValues.include.noOne.name,
-							text: "No one for now!",
-							value: buttonValues.include.noOne.value,
-							type: "button"
-					}
-				]
-			}
-		]
-	}, [
-		{
-			pattern: utterances.containsNoOne,
-			callback: (response, convo) => {
-
-				convo.say("Okay, you can always add this later by asking me to `update settings`!");
-				convo.next();
-
-			}
-		},
-		{
-			default: true,
-			callback: (response, convo) => {
-
-				let { text } = response;
-
-				let includeSlackUserIds = getSlackUsersFromString(text);
-
-				if (includeSlackUserIds) {
-					models.SlackUser.findAll({
-						where: [ `"SlackUser"."SlackUserId" IN (?)`, includeSlackUserIds],
-						include: [ models.User ]
-					})
-					.then((slackUsers) => {
-
-						let userNames = slackUsers.map(slackUser => slackUser.dataValues.User.nickName );
-						let finalSlackUserIdsToInclude = slackUsers.map(slackUser => slackUser.dataValues.SlackUserId );
-
-						convo.newPlan.includeSlackUserIds = finalSlackUserIdsToInclude;
-						let userNameStrings               = commaSeparateOutTaskArray(userNames);
-
-						convo.say(`Great! I'll notify ${userNameStrings} about your daily priorities from now on`);
-						convo.say("If you want to change who you include, you can always `update settings`!");
-						convo.next();
-
-					})
-				} else {
-					convo.say("You didn't include any users! I pick up who you want to include by their slack handles, like `@kevin`");
-					convo.repeat();
-				}
-
-				convo.next();
-
-			}
-		}
-	]);
-
 }
 
 /**
@@ -652,7 +713,7 @@ function prioritizeTasks(convo, question = '') {
 						
 						convo.say("Love it!");
 						if (onboardVersion) {
-							whoDoYouWantToInclude(convo);
+							// whoDoYouWantToInclude(convo);
 						}
 
 					} else {

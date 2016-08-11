@@ -68,5 +68,7 @@ export const utterances = {
 	notShare: new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i),
 	containsRename: new RegExp(/\bre[ name]{3,7}\b/i),
 	noMore: new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i),
-	redo: new RegExp(/^re[re do]{2,5}\b/i)
+	redo: new RegExp(/^re[re do]{2,5}\b/i),
+	noDontAskAgain: new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i),
+	yesDontAskAgain: new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)
 }

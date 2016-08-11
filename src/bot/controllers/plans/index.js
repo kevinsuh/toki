@@ -131,7 +131,8 @@ export default function(controller) {
 							minutes: 30 // fail-safe default. should get updated in flow
 						},
 						startTime: false, // default will be now
-						includeSlackUserIds: []
+						includeSlackUserIds: [],
+						includeTeamMembers: true
 					}
 
 					let day = moment().tz(tz).format('dddd');

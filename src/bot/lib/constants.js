@@ -581,6 +581,10 @@ export const buttonValues ={
 			name: "NO_MORE_PRIORITIES",
 			value: "no more priorities"
 		}
+	},
+	noDontAskAgain: {
+		name: "NO_DONT_ASK_AGAIN",
+		value: "no, and don't ask again"
 	}
 }
 
