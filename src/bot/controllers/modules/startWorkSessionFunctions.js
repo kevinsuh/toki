@@ -331,7 +331,7 @@ function confirmTasks(response, convo, taskArray = []) {
 
 	let taskNumbersToWorkOnArray = convertTaskNumberStringToArray(response.text, taskArray);
 	let taskIndexToWorkOn        = taskNumbersToWorkOnArray[0] - 1;
-
+ 
 	if (taskIndexToWorkOn >= 0) {
 		if (taskNumbersToWorkOnArray.length == 1) {
 			// SUCCESS
@@ -487,7 +487,7 @@ function confirmCustomTotalMinutes(response, convo) {
 export function startSessionWithConvoObject(sessionStart) {
 
 	// all of these constants are necessary!
-	const { bot, SlackUserId, dailyTask, calculatedTimeObject, UserId, minutes } = sessionStart;
+	const { bot, SlackUserId, dailyTask, dailyTasks, calculatedTimeObject, UserId, minutes } = sessionStart;
 
 	if (!bot || !SlackUserId || !UserId || !dailyTask || !calculatedTimeObject || !minutes) {
 		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
@@ -533,6 +533,27 @@ export function startSessionWithConvoObject(sessionStart) {
 			});
 
 		});
+
+		// let's also reprioritize that dailyTask we're currently working on to the top
+		if (dailyTasks) {
+			let indexOfDailyTask = 0;
+			dailyTasks.some((currentDailyTask, index) => {
+				if (currentDailyTask.dataValues.id == dailyTask.dataValues.id) {
+					indexOfDailyTask = index;
+					return true;
+				}
+			});
+			dailyTasks.move(indexOfDailyTask, 0);
+			let priority = 0;
+			dailyTasks.forEach((dailyTask) => {
+				priority++;
+				models.DailyTask.update({
+					priority
+				}, {
+					where: [`"DailyTasks"."id" = ?`, dailyTask.dataValues.id]
+				});
+			})
+		}
 
 	})
 }

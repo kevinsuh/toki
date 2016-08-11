@@ -505,6 +505,7 @@ function startSessionWithConvoObject(sessionStart) {
 	var bot = sessionStart.bot;
 	var SlackUserId = sessionStart.SlackUserId;
 	var dailyTask = sessionStart.dailyTask;
+	var dailyTasks = sessionStart.dailyTasks;
 	var calculatedTimeObject = sessionStart.calculatedTimeObject;
 	var UserId = sessionStart.UserId;
 	var minutes = sessionStart.minutes;
@@ -552,6 +553,29 @@ function startSessionWithConvoObject(sessionStart) {
 				attachments: _constants.startSessionOptionsAttachments
 			});
 		});
+
+		// let's also reprioritize that dailyTask we're currently working on to the top
+		if (dailyTasks) {
+			(function () {
+				var indexOfDailyTask = 0;
+				dailyTasks.some(function (currentDailyTask, index) {
+					if (currentDailyTask.dataValues.id == dailyTask.dataValues.id) {
+						indexOfDailyTask = index;
+						return true;
+					}
+				});
+				dailyTasks.move(indexOfDailyTask, 0);
+				var priority = 0;
+				dailyTasks.forEach(function (dailyTask) {
+					priority++;
+					_models2.default.DailyTask.update({
+						priority: priority
+					}, {
+						where: ['"DailyTasks"."id" = ?', dailyTask.dataValues.id]
+					});
+				});
+			})();
+		}
 	});
 }
 //# sourceMappingURL=startWorkSessionFunctions.js.map
