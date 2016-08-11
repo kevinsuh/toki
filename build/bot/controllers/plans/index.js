@@ -235,12 +235,11 @@ exports.default = function (controller) {
 																	if (pingTeamMembers) {
 																		includeSlackUserIds.forEach(function (includeSlackUserId) {
 
-																			console.log(includeSlackUserId);
-
-																			bot.startPrivateConversation({ user: includeSlackUserId }, function (err, convo) {
-																				convo.say("HELLO TEST from kevin's priority!");
-																				convo.next();
-																			});
+																			var config = {
+																				IncluderSlackUserId: SlackUserId,
+																				IncludedSlackUserId: includeSlackUserId
+																			};
+																			controller.trigger('notify_team_member', [bot, config]);
 																		});
 																	}
 																});

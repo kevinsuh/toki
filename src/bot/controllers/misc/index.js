@@ -15,6 +15,51 @@ import { resumeQueuedReachouts } from '../index';
 
 export default function(controller) {
 
+	// we'll stick our notifications flow here for now
+	controller.on('notify_team_member', (bot, config) => {
+
+		const { IncluderSlackUserId, IncludedSlackUserId } = config;
+
+		// IncluderSlackUserId is the one who's actually using Toki
+		models.User.find({
+			where: [`"SlackUser"."SlackUserId" = ?`, IncluderSlackUserId ],
+			include: [ models.SlackUser ]
+		}).then((user) => {
+
+			const UserId       = user.id;
+			const { nickName } = user;
+
+			user.getDailyTasks({
+				where: [`"DailyTask"."type" = ?`, "live"],
+				include: [ models.Task ],
+				order: `"Task"."done", "DailyTask"."priority" ASC`
+			})
+			.then((dailyTasks) => {
+
+				dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
+
+				let options         = { dontShowMinutes: true, dontCalculateMinutes: true };
+				let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
+
+				if (IncludedSlackUserId) {
+					bot.startPrivateConversation({ user: IncludedSlackUserId }, (err, convo) => {
+
+						convo.notifyTeamMember = {
+							dailyTasks
+						};
+
+						convo.say(`Hey! ${nickName} wanted me to share their top priorities with you today:\n${taskListMessage}`);
+						convo.say(`If you have any questions about what ${nickName} is working on, please send them a Slack message :mailbox:`);
+
+					});
+				}
+
+			});
+		});
+	});
+
+			
+
 	controller.hears([constants.THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
 		const SlackUserId = message.user;
 		bot.send({

@@ -6,6 +6,48 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
+	// we'll stick our notifications flow here for now
+	controller.on('notify_team_member', function (bot, config) {
+		var IncluderSlackUserId = config.IncluderSlackUserId;
+		var IncludedSlackUserId = config.IncludedSlackUserId;
+
+		// IncluderSlackUserId is the one who's actually using Toki
+
+		_models2.default.User.find({
+			where: ['"SlackUser"."SlackUserId" = ?', IncluderSlackUserId],
+			include: [_models2.default.SlackUser]
+		}).then(function (user) {
+
+			var UserId = user.id;
+			var nickName = user.nickName;
+
+
+			user.getDailyTasks({
+				where: ['"DailyTask"."type" = ?', "live"],
+				include: [_models2.default.Task],
+				order: '"Task"."done", "DailyTask"."priority" ASC'
+			}).then(function (dailyTasks) {
+
+				dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
+
+				var options = { dontShowMinutes: true, dontCalculateMinutes: true };
+				var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(dailyTasks, options);
+
+				if (IncludedSlackUserId) {
+					bot.startPrivateConversation({ user: IncludedSlackUserId }, function (err, convo) {
+
+						convo.notifyTeamMember = {
+							dailyTasks: dailyTasks
+						};
+
+						convo.say('Hey! ' + nickName + ' wanted me to share their top priorities with you today:\n' + taskListMessage);
+						convo.say('If you have any questions about what ' + nickName + ' is working on, please send them a Slack message :mailbox:');
+					});
+				}
+			});
+		});
+	});
+
 	controller.hears([_constants.constants.THANK_YOU.reg_exp], 'direct_message', function (bot, message) {
 		var SlackUserId = message.user;
 		bot.send({
