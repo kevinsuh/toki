@@ -5,7 +5,7 @@ export const TOKI_DEFAULT_BREAK_TIME = 10;
 export const hoursForExpirationTime = 6;
 export const MINUTES_FOR_DONE_SESSION_TIMEOUT = 30;
 
-export const dateOfNewPlanDayFlow = "2016-08-14";
+export const dateOfNewPlanDayFlow = "2016-08-11";
 
 export const startDayExpirationTime = moment().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
 
