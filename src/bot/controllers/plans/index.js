@@ -126,10 +126,6 @@ export default function(controller) {
 						daySplit,
 						onboardVersion: false,
 						prioritizedTasks: [],
-						startTask: {
-							index: 0, // fail-safe default. should get updated in flow
-							minutes: 30 // fail-safe default. should get updated in flow
-						},
 						startTime: false, // default will be now
 						includeSlackUserIds: [],
 						includeTeamMembers: true
@@ -151,16 +147,9 @@ export default function(controller) {
 					convo.on('end', (convo) => {
 
 						const { newPlan } = convo;
-						let { exitEarly, prioritizedTasks, startTask, startTime, includeSlackUserIds, startNow } = newPlan;
+						let { exitEarly, prioritizedTasks, startTime, includeSlackUserIds, startNow } = newPlan;
 
 						closeOldRemindersAndSessions(user);
-
-						// save startTask information
-						startTask.taskObject = {
-							...prioritizedTasks[startTask.index],
-							minutes: startTask.minutes
-						};
-						prioritizedTasks[startTask.index] = startTask.taskObject;
 
 						if (exitEarly) {
 							return;
@@ -203,7 +192,7 @@ export default function(controller) {
 											.then((dailyTask) => {
 												const DailyTaskId = dailyTask.id;
 
-												if (index == startTask.index) {
+												if (index == 0) {
 													if (startTime) {
 														// if you asked for a queued reminder
 														models.Reminder.create({

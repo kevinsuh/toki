@@ -4,15 +4,6 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-/**
- * Starting a new plan for the day
- */
-
-// base controller for new plan
-
-
 exports.default = function (controller) {
 
 	// WIT FOR `new_plan_flow`
@@ -114,10 +105,6 @@ exports.default = function (controller) {
 						daySplit: daySplit,
 						onboardVersion: false,
 						prioritizedTasks: [],
-						startTask: {
-							index: 0, // fail-safe default. should get updated in flow
-							minutes: 30 // fail-safe default. should get updated in flow
-						},
 						startTime: false, // default will be now
 						includeSlackUserIds: [],
 						includeTeamMembers: true
@@ -140,19 +127,12 @@ exports.default = function (controller) {
 						var newPlan = convo.newPlan;
 						var exitEarly = newPlan.exitEarly;
 						var prioritizedTasks = newPlan.prioritizedTasks;
-						var startTask = newPlan.startTask;
 						var startTime = newPlan.startTime;
 						var includeSlackUserIds = newPlan.includeSlackUserIds;
 						var startNow = newPlan.startNow;
 
 
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
-
-						// save startTask information
-						startTask.taskObject = _extends({}, prioritizedTasks[startTask.index], {
-							minutes: startTask.minutes
-						});
-						prioritizedTasks[startTask.index] = startTask.taskObject;
 
 						if (exitEarly) {
 							return;
@@ -194,7 +174,7 @@ exports.default = function (controller) {
 											}).then(function (dailyTask) {
 												var DailyTaskId = dailyTask.id;
 
-												if (index == startTask.index) {
+												if (index == 0) {
 													if (startTime) {
 														// if you asked for a queued reminder
 														_models2.default.Reminder.create({
