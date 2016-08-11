@@ -1106,7 +1106,7 @@ function getPlanCommandCenterAttachments() {
 	return attachments;
 }
 
-function getMinutesSuggestionAttachments(minutesRemaining) {
+function getMinutesSuggestionAttachments(minutesRemaining, config) {
 
 	var minutesSuggestions = [30, 45, 60, 90];
 	var customIndexSuggestion = 0;
@@ -1163,12 +1163,16 @@ function getMinutesSuggestionAttachments(minutesRemaining) {
 		attachments[0].actions.push(action);
 	});
 
-	attachments[0].actions.push({
-		name: _constants.buttonValues.changeTask.name,
-		text: "Change Priority",
-		value: _constants.buttonValues.changeTask.value,
-		type: "button"
-	});
+	var noOtherPriorities = config.noOtherPriorities;
+
+	if (!noOtherPriorities) {
+		attachments[0].actions.push({
+			name: _constants.buttonValues.changeTask.name,
+			text: "Change Priority",
+			value: _constants.buttonValues.changeTask.value,
+			type: "button"
+		});
+	}
 
 	return attachments;
 }

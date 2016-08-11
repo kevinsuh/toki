@@ -22,7 +22,6 @@ var utterances = exports.utterances = (_utterances = {
 	containsNew: new RegExp(/(\bn[new]{2,}\b)/i),
 	containsCheckin: new RegExp(/(\bch[check in]{3,}\b|\br[reminder]{4,}\b|\bn[note]{2,}\b)/i),
 	containsOnlyCheckin: new RegExp(/(\bch[check -in]{4,}\b)/i),
-	containsChangeTask: new RegExp(/(ch[change ]{3,}t[task ]{2,})/i),
 	containsChangeTime: new RegExp(/(ch[change ]{3,}t[time ]{2,})/i),
 	containsAddNote: new RegExp(/(a[add ]{1,}n[note ]{2,})/i),
 	containsBreak: new RegExp(/(\bbr[reak ]{2,}\b)/i),
@@ -72,5 +71,5 @@ var utterances = exports.utterances = (_utterances = {
 	containsNoOne: new RegExp(/\b(no one)\b/i),
 	somethingElse: new RegExp(/\bsome[omething]{3,}\b.*\bel[lse]{2,}\b/i),
 	containsEnough: new RegExp(/\beno[ough]{3,}\b/i)
-}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "notToday", new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i)), _defineProperty(_utterances, "notShare", new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _defineProperty(_utterances, "noMore", new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i)), _defineProperty(_utterances, "redo", new RegExp(/^re[re do]{2,5}\b/i)), _defineProperty(_utterances, "noDontAskAgain", new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "yesDontAskAgain", new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "changePriority", new RegExp(/\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\bpriori[tiyes]{1,5}\b/i)), _defineProperty(_utterances, "goBack", new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)), _utterances);
+}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "notToday", new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i)), _defineProperty(_utterances, "notShare", new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _defineProperty(_utterances, "noMore", new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i)), _defineProperty(_utterances, "redo", new RegExp(/^re[re do]{2,5}\b/i)), _defineProperty(_utterances, "noDontAskAgain", new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "yesDontAskAgain", new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "changePriority", new RegExp(/\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\b(priori[tiyes]{1,5}|tas[sk]{1,5})\b/i)), _defineProperty(_utterances, "goBack", new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)), _utterances);
 //# sourceMappingURL=botResponses.js.map

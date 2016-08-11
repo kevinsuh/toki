@@ -19,7 +19,7 @@ import { colorsArray, THANK_YOU, buttonValues, colorsHash, startSessionOptionsAt
 // confirm task and time in one place and start if it's good
 export function finalizeTimeAndTasksToStart(convo) {
 
-	const { SlackUserId, tz, dailyTask, calculatedTimeObject, minutes, currentSession }  = convo.sessionStart;
+	const { SlackUserId, tz, dailyTask, dailyTasks, calculatedTimeObject, minutes, currentSession }  = convo.sessionStart;
 
 	// we need both time and task in order to start session
 	if (!dailyTask) {
@@ -110,8 +110,18 @@ export function finalizeTimeAndTasksToStart(convo) {
 				convo.say(`Let’s keep cranking on ${taskText} with a focused session :wrench:`);
 				question = `How long would you like to focus on ${taskText} for? You still have *${timeRemainingString}* set aside for this today`;
 			}
-			
-			let attachments = getMinutesSuggestionAttachments(minutesRemaining);
+
+			let otherTasksArray = dailyTasks.filter((currentDailyTask) => {
+				if (dailyTask && dailyTask.dataValues && currentDailyTask.dataValues.id != dailyTask.dataValues.id){
+					return true;
+				}
+			});
+			let config = {};
+			if (otherTasksArray.length == 0) {
+				config.noOtherPriorities = true;
+			}
+
+			let attachments = getMinutesSuggestionAttachments(minutesRemaining, config);
 
 			convo.ask({
 				text: question,
@@ -119,10 +129,17 @@ export function finalizeTimeAndTasksToStart(convo) {
 			},
 			[
 				{
-					pattern: utterances.containsChangeTask,
+					pattern: utterances.changePriority,
 					callback: function(response, convo) {
-						convo.say("Okay, let's change tasks!");
-						askWhichTaskToWorkOn(convo);
+
+						if (otherTasksArray.length == 0) {
+							convo.say(`This is your only remaining priority!`);
+							convo.repeat();
+						} else {
+							convo.say("Okay, let's change priorities!");
+							askWhichTaskToWorkOn(convo);
+						}
+
 						convo.next();
 					}
 				},

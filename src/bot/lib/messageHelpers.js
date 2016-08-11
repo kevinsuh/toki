@@ -1081,7 +1081,7 @@ export function getPlanCommandCenterAttachments(config = {}) {
 
 }
 
-export function getMinutesSuggestionAttachments(minutesRemaining) {
+export function getMinutesSuggestionAttachments(minutesRemaining, config) {
 
 	let minutesSuggestions    = [30, 45, 60, 90];
 	let customIndexSuggestion = 0;
@@ -1141,12 +1141,17 @@ export function getMinutesSuggestionAttachments(minutesRemaining) {
 		attachments[0].actions.push(action);
 	});
 
-	attachments[0].actions.push({
-		name: buttonValues.changeTask.name,
-		text: "Change Priority",
-		value: buttonValues.changeTask.value,
-		type: "button"
-	});
+	const { noOtherPriorities } = config;
+	if (!noOtherPriorities) {
+		attachments[0].actions.push({
+			name: buttonValues.changeTask.name,
+			text: "Change Priority",
+			value: buttonValues.changeTask.value,
+			type: "button"
+		});
+	}
+
+		
 
 	return attachments;
 

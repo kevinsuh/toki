@@ -12,7 +12,6 @@ export const utterances = {
 	containsNew: new RegExp(/(\bn[new]{2,}\b)/i),
 	containsCheckin: new RegExp(/(\bch[check in]{3,}\b|\br[reminder]{4,}\b|\bn[note]{2,}\b)/i),
 	containsOnlyCheckin: new RegExp(/(\bch[check -in]{4,}\b)/i),
-	containsChangeTask: new RegExp(/(ch[change ]{3,}t[task ]{2,})/i),
 	containsChangeTime: new RegExp(/(ch[change ]{3,}t[time ]{2,})/i),
 	containsAddNote: new RegExp(/(a[add ]{1,}n[note ]{2,})/i),
 	containsBreak: new RegExp(/(\bbr[reak ]{2,}\b)/i),
@@ -71,6 +70,6 @@ export const utterances = {
 	redo: new RegExp(/^re[re do]{2,5}\b/i),
 	noDontAskAgain: new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i),
 	yesDontAskAgain: new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i),
-	changePriority: new RegExp(/\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\bpriori[tiyes]{1,5}\b/i),
+	changePriority: new RegExp(/\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\b(priori[tiyes]{1,5}|tas[sk]{1,5})\b/i),
 	goBack: new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)
 }

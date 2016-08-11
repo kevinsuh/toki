@@ -42,6 +42,7 @@ function finalizeTimeAndTasksToStart(convo) {
 	var SlackUserId = _convo$sessionStart.SlackUserId;
 	var tz = _convo$sessionStart.tz;
 	var dailyTask = _convo$sessionStart.dailyTask;
+	var dailyTasks = _convo$sessionStart.dailyTasks;
 	var calculatedTimeObject = _convo$sessionStart.calculatedTimeObject;
 	var minutes = _convo$sessionStart.minutes;
 	var currentSession = _convo$sessionStart.currentSession;
@@ -123,68 +124,87 @@ function finalizeTimeAndTasksToStart(convo) {
 		var timeRemainingString = (0, _messageHelpers.convertMinutesToHoursString)(minutesRemaining);
 
 		if (minutesRemaining > 0) {
+			(function () {
 
-			if (minutesSpent == 0) {
-				// new flow!
-				convo.say('Let’s crank on ' + taskText + ' with a focused session :wrench:');
-				question = 'How long would you like to focus on ' + taskText + ' for? You have *' + timeRemainingString + '* set aside for this today';
-			} else {
-				// new flow!
-				convo.say('Let’s keep cranking on ' + taskText + ' with a focused session :wrench:');
-				question = 'How long would you like to focus on ' + taskText + ' for? You still have *' + timeRemainingString + '* set aside for this today';
-			}
-
-			var attachments = (0, _messageHelpers.getMinutesSuggestionAttachments)(minutesRemaining);
-
-			convo.ask({
-				text: question,
-				attachments: attachments
-			}, [{
-				pattern: _botResponses.utterances.containsChangeTask,
-				callback: function callback(response, convo) {
-					convo.say("Okay, let's change tasks!");
-					askWhichTaskToWorkOn(convo);
-					convo.next();
+				if (minutesSpent == 0) {
+					// new flow!
+					convo.say('Let’s crank on ' + taskText + ' with a focused session :wrench:');
+					question = 'How long would you like to focus on ' + taskText + ' for? You have *' + timeRemainingString + '* set aside for this today';
+				} else {
+					// new flow!
+					convo.say('Let’s keep cranking on ' + taskText + ' with a focused session :wrench:');
+					question = 'How long would you like to focus on ' + taskText + ' for? You still have *' + timeRemainingString + '* set aside for this today';
 				}
-			}, {
-				pattern: _botResponses.utterances.noAndNeverMind,
-				callback: function callback(response, convo) {
 
-					convo.sessionStart.confirmStart = false;
-					if (currentSession) {
-						convo.say({
-							text: 'Okay! Good luck on `' + currentSession.sessionTasks + '`. See you at *' + currentSession.endTimeString + '* :weight_lifter:',
-							attachments: _constants.startSessionOptionsAttachments
-						});
-					} else {
-						convo.say("Okay, let me know if you still want to start a `new session` for one of your priorities :grin:");
+				var otherTasksArray = dailyTasks.filter(function (currentDailyTask) {
+					if (dailyTask && dailyTask.dataValues && currentDailyTask.dataValues.id != dailyTask.dataValues.id) {
+						return true;
 					}
-					convo.next();
+				});
+				var config = {};
+				if (otherTasksArray.length == 0) {
+					config.noOtherPriorities = true;
 				}
-			}, { // if duration or date, then we can start
-				default: true,
-				callback: function callback(response, convo) {
-					var entities = response.intentObject.entities;
 
+				var attachments = (0, _messageHelpers.getMinutesSuggestionAttachments)(minutesRemaining, config);
 
-					var now = (0, _momentTimezone2.default)().tz(tz);
-					var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+				convo.ask({
+					text: question,
+					attachments: attachments
+				}, [{
+					pattern: _botResponses.utterances.changePriority,
+					callback: function callback(response, convo) {
 
-					if (customTimeObject) {
-						var _minutes2 = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
-
-						convo.sessionStart.calculatedTimeObject = customTimeObject;
-						convo.sessionStart.minutes = _minutes2;
-						convo.sessionStart.confirmStart = true;
+						if (otherTasksArray.length == 0) {
+							convo.say('This is your only remaining priority!');
+							convo.repeat();
+						} else {
+							convo.say("Okay, let's change priorities!");
+							askWhichTaskToWorkOn(convo);
+						}
 
 						convo.next();
-					} else {
-						convo.say("I didn't quite get that :thinking_face:");
-						convo.repeat();
+					}
+				}, {
+					pattern: _botResponses.utterances.noAndNeverMind,
+					callback: function callback(response, convo) {
+
+						convo.sessionStart.confirmStart = false;
+						if (currentSession) {
+							convo.say({
+								text: 'Okay! Good luck on `' + currentSession.sessionTasks + '`. See you at *' + currentSession.endTimeString + '* :weight_lifter:',
+								attachments: _constants.startSessionOptionsAttachments
+							});
+						} else {
+							convo.say("Okay, let me know if you still want to start a `new session` for one of your priorities :grin:");
+						}
 						convo.next();
 					}
-				}
-			}]);
+				}, { // if duration or date, then we can start
+					default: true,
+					callback: function callback(response, convo) {
+						var entities = response.intentObject.entities;
+
+
+						var now = (0, _momentTimezone2.default)().tz(tz);
+						var customTimeObject = (0, _miscHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+
+						if (customTimeObject) {
+							var _minutes2 = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+
+							convo.sessionStart.calculatedTimeObject = customTimeObject;
+							convo.sessionStart.minutes = _minutes2;
+							convo.sessionStart.confirmStart = true;
+
+							convo.next();
+						} else {
+							convo.say("I didn't quite get that :thinking_face:");
+							convo.repeat();
+							convo.next();
+						}
+					}
+				}]);
+			})();
 		} else {
 
 			confirmTimeForTask(convo);
