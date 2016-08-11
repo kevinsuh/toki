@@ -10,7 +10,10 @@ module.exports = function(sequelize, DataTypes) {
            },
     nickName: DataTypes.STRING,
     defaultSnoozeTime: DataTypes.INTEGER,
-    defaultBreakTime: DataTypes.INTEGER
+    defaultBreakTime: DataTypes.INTEGER,
+    dontIncludeOthers: {  type: DataTypes.BOOLEAN,
+               defaultValue: false
+          }
   }, {
 
     classMethods: {

@@ -130,6 +130,7 @@ function witTimeResponseToTimeZoneObject(response, tz) {
 
 	console.log("\n\n response obj in witTimeResponseToTimeZoneObject \n\n");
 
+	var text = response.text;
 	var entities = response.intentObject.entities;
 	var duration = entities.duration;
 	var datetime = entities.datetime;
@@ -137,6 +138,7 @@ function witTimeResponseToTimeZoneObject(response, tz) {
 
 	var now = (0, _momentTimezone2.default)();
 	var remindTimeStamp;
+
 	if (!datetime && !duration || !tz) {
 		remindTimeStamp = false; // not valid
 	} else {

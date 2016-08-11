@@ -105,7 +105,7 @@ export default function(controller) {
 		.then((user) => {
 
 			const UserId = user.id;
-			const { SlackUser: { tz } } = user;
+			const { dontIncludeOthers, SlackUser: { tz } } = user;
 
 			let daySplit = getCurrentDaySplit(tz);
 
@@ -122,13 +122,13 @@ export default function(controller) {
 
 					convo.newPlan = {
 						SlackUserId,
+						dontIncludeOthers,
 						tz,
 						daySplit,
 						onboardVersion: false,
 						prioritizedTasks: [],
 						startTime: false, // default will be now
-						includeSlackUserIds: [],
-						includeTeamMembers: true
+						includeSlackUserIds: []
 					}
 
 					let day = moment().tz(tz).format('dddd');
@@ -147,12 +147,20 @@ export default function(controller) {
 					convo.on('end', (convo) => {
 
 						const { newPlan } = convo;
-						let { exitEarly, prioritizedTasks, startTime, includeSlackUserIds, startNow } = newPlan;
+						let { exitEarly, prioritizedTasks, startTime, includeSlackUserIds, startNow, dontIncludeAnyonePermanent } = newPlan;
 
 						closeOldRemindersAndSessions(user);
 
 						if (exitEarly) {
 							return;
+						}
+
+						if (dontIncludeAnyonePermanent) {
+							models.User.update({
+								dontIncludeOthers: true
+							}, {
+								where: [ `"Users"."id" = ?`, UserId ]
+							});
 						}
 
 						// create plan

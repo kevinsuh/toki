@@ -84,6 +84,7 @@ exports.default = function (controller) {
 		}).then(function (user) {
 
 			var UserId = user.id;
+			var dontIncludeOthers = user.dontIncludeOthers;
 			var tz = user.SlackUser.tz;
 
 
@@ -101,13 +102,13 @@ exports.default = function (controller) {
 
 					convo.newPlan = {
 						SlackUserId: SlackUserId,
+						dontIncludeOthers: dontIncludeOthers,
 						tz: tz,
 						daySplit: daySplit,
 						onboardVersion: false,
 						prioritizedTasks: [],
 						startTime: false, // default will be now
-						includeSlackUserIds: [],
-						includeTeamMembers: true
+						includeSlackUserIds: []
 					};
 
 					var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');
@@ -130,12 +131,21 @@ exports.default = function (controller) {
 						var startTime = newPlan.startTime;
 						var includeSlackUserIds = newPlan.includeSlackUserIds;
 						var startNow = newPlan.startNow;
+						var dontIncludeAnyonePermanent = newPlan.dontIncludeAnyonePermanent;
 
 
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 
 						if (exitEarly) {
 							return;
+						}
+
+						if (dontIncludeAnyonePermanent) {
+							_models2.default.User.update({
+								dontIncludeOthers: true
+							}, {
+								where: ['"Users"."id" = ?', UserId]
+							});
 						}
 
 						// create plan

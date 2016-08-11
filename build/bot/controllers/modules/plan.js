@@ -179,13 +179,14 @@ function includeTeamMembers(convo) {
 	var daySplit = _convo$newPlan2.daySplit;
 	var onboardVersion = _convo$newPlan2.onboardVersion;
 	var includeTeamMembers = _convo$newPlan2.includeTeamMembers;
+	var dontIncludeOthers = _convo$newPlan2.dontIncludeOthers;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
 	var options = { dontShowMinutes: true, dontCalculateMinutes: true };
 	var taskListMessage = (0, _messageHelpers.convertArrayToTaskListMessage)(prioritizedTasks, options);
 
-	convo.say('Now let’s view your plan for today :pencil::\n' + taskListMessage);
+	convo.say('Here\'s your plan for today :pencil::\n' + taskListMessage);
 
 	// say who is getting included
 	_models2.default.SlackUser.find({
@@ -194,7 +195,7 @@ function includeTeamMembers(convo) {
 
 		var responseMessage = 'Excellent!';
 
-		if (slackUser) {
+		if (slackUser && !dontIncludeOthers) {
 
 			slackUser.getIncluded({
 				include: [_models2.default.User]
@@ -207,34 +208,22 @@ function includeTeamMembers(convo) {
 						return includedSlackUser.dataValues.User.nickName;
 					});
 					var nameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(names);
-					responseMessage = 'I\'ll be sharing your plan with *' + nameStrings + '* when you\'re done :raised_hands:';
-					convo.say(responseMessage);
+					convo.say('I\'ll be sharing your plan with *' + nameStrings + '* when you\'re done :raised_hands:');
 					if (onboardVersion) {
 						explainTimeToPriorities(convo);
 					} else {
 						addTimeToPriorities(convo);
 					}
-				} else if (includeTeamMembers) {
+				} else {
 
 					// user wants to include members!!!
 					askToIncludeTeamMembers(convo);
-				} else {
-
-					// user does not want to include members
-					convo.say(responseMessage);
-					if (onboardVersion) {
-						explainTimeToPriorities(convo);
-					} else {
-						addTimeToPriorities(convo);
-					}
-					convo.next();
 				}
 
 				convo.next();
 			});
 		} else {
 
-			convo.say(responseMessage);
 			if (onboardVersion) {
 				explainTimeToPriorities(convo);
 			} else {
@@ -245,88 +234,13 @@ function includeTeamMembers(convo) {
 	});
 }
 
-// thoroughly explain why we're doing this!
-function explainTimeToPriorities(convo) {
+function askToIncludeTeamMembers(convo) {
 	var bot = convo.task.bot;
 	var _convo$newPlan3 = convo.newPlan;
 	var SlackUserId = _convo$newPlan3.SlackUserId;
 	var daySplit = _convo$newPlan3.daySplit;
 	var onboardVersion = _convo$newPlan3.onboardVersion;
 	var includeTeamMembers = _convo$newPlan3.includeTeamMembers;
-	var prioritizedTasks = convo.newPlan.prioritizedTasks;
-
-
-	var priorityString = prioritizedTasks.length == 1 ? 'your ' + prioritizedTasks.length + ' priority' : 'each of your ' + prioritizedTasks.length + ' priorities';
-
-	convo.say('Now let\'s put time to spend toward ' + priorityString);
-	convo.say('Since this is your first time with me, let me briefly explain what\'s going on :grin:');
-
-	var text = 'This is *how long you’d like to work on each priority for the course of the day*, from 30 minutes to 4 hours or more';
-	var attachments = [{
-		attachment_type: 'default',
-		callback_id: "INCLUDE_TEAM_MEMBER",
-		fallback: "Do you want to include a team member?",
-		color: _constants.colorsHash.green.hex,
-		actions: [{
-			name: _constants.buttonValues.next.name,
-			text: "Why do this?",
-			value: _constants.buttonValues.next.value,
-			type: "button"
-		}]
-	}];
-
-	convo.ask({
-		text: text,
-		attachments: attachments
-	}, function (response, convo) {
-
-		text = 'I’ll help you hold yourself accountable and *deliberately put time toward your main outcomes in chunks* that actually make sense for you and how you enter flow';
-		attachments[0].actions[0].text = 'I might misestimate!';
-
-		convo.ask({
-			text: text,
-			attachments: attachments
-		}, function (response, convo) {
-
-			text = 'If you finish sooner than expected, that’s fantastic! If it takes longer than expected, you can always extend time later';
-			attachments[0].actions[0].text = 'What gets shared?';
-
-			convo.ask({
-				text: text,
-				attachments: attachments
-			}, function (response, convo) {
-
-				text = 'I don’t communicate how long you spend working toward your outcomes to anyone else but you, so you can feel safe about your pace and time to getting the most important things done';
-				convo.say(text);
-				text = '*You define time well spent for yourself* and my goal is to help you follow through on it and actually build useful pictures of your day';
-				attachments[0].actions[0].text = 'Sounds great!';
-
-				convo.ask({
-					text: text,
-					attachments: attachments
-				}, function (response, convo) {
-
-					addTimeToPriorities(convo);
-					convo.next();
-				});
-
-				convo.next();
-			});
-
-			convo.next();
-		});
-
-		convo.next();
-	});
-}
-
-function askToIncludeTeamMembers(convo) {
-	var bot = convo.task.bot;
-	var _convo$newPlan4 = convo.newPlan;
-	var SlackUserId = _convo$newPlan4.SlackUserId;
-	var daySplit = _convo$newPlan4.daySplit;
-	var onboardVersion = _convo$newPlan4.onboardVersion;
-	var includeTeamMembers = _convo$newPlan4.includeTeamMembers;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -447,12 +361,12 @@ function askToIncludeTeamMembers(convo) {
 // add time to each of your priorities
 function addTimeToPriorities(convo) {
 	var bot = convo.task.bot;
-	var _convo$newPlan5 = convo.newPlan;
-	var tz = _convo$newPlan5.tz;
-	var SlackUserId = _convo$newPlan5.SlackUserId;
-	var daySplit = _convo$newPlan5.daySplit;
-	var onboardVersion = _convo$newPlan5.onboardVersion;
-	var includeTeamMembers = _convo$newPlan5.includeTeamMembers;
+	var _convo$newPlan4 = convo.newPlan;
+	var tz = _convo$newPlan4.tz;
+	var SlackUserId = _convo$newPlan4.SlackUserId;
+	var daySplit = _convo$newPlan4.daySplit;
+	var onboardVersion = _convo$newPlan4.onboardVersion;
+	var includeTeamMembers = _convo$newPlan4.includeTeamMembers;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -538,6 +452,7 @@ function addTimeToPriorities(convo) {
 			callback: function callback(response, convo) {
 
 				// use wit to decipher the relative time. if no time, then re-ask
+				var text = response.text;
 				var _response$intentObjec = response.intentObject.entities;
 				var duration = _response$intentObjec.duration;
 				var datetime = _response$intentObjec.datetime;
@@ -547,7 +462,12 @@ function addTimeToPriorities(convo) {
 				var minutes = 0;
 				var now = (0, _momentTimezone2.default)();
 
-				if (customTimeObject) {
+				var isNum = /^\d+$/.test(text);
+
+				if (isNum) {
+					// if user just says "45"
+					minutes = parseInt(text);
+				} else if (customTimeObject) {
 					if (duration) {
 						minutes = (0, _miscHelpers.witDurationToMinutes)(duration);
 					} else {
@@ -574,6 +494,81 @@ function addTimeToPriorities(convo) {
 			}
 		}]);
 	}
+}
+
+// thoroughly explain why we're doing this!
+function explainTimeToPriorities(convo) {
+	var bot = convo.task.bot;
+	var _convo$newPlan5 = convo.newPlan;
+	var SlackUserId = _convo$newPlan5.SlackUserId;
+	var daySplit = _convo$newPlan5.daySplit;
+	var onboardVersion = _convo$newPlan5.onboardVersion;
+	var includeTeamMembers = _convo$newPlan5.includeTeamMembers;
+	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+
+
+	var priorityString = prioritizedTasks.length == 1 ? 'your ' + prioritizedTasks.length + ' priority' : 'each of your ' + prioritizedTasks.length + ' priorities';
+
+	convo.say('Now let\'s put time to spend toward ' + priorityString);
+	convo.say('Since this is your first time with me, let me briefly explain what\'s going on :grin:');
+
+	var text = 'This is *how long you’d like to work on each priority for the course of the day*, from 30 minutes to 4 hours or more';
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "INCLUDE_TEAM_MEMBER",
+		fallback: "Do you want to include a team member?",
+		color: _constants.colorsHash.green.hex,
+		actions: [{
+			name: _constants.buttonValues.next.name,
+			text: "Why do this?",
+			value: _constants.buttonValues.next.value,
+			type: "button"
+		}]
+	}];
+
+	convo.ask({
+		text: text,
+		attachments: attachments
+	}, function (response, convo) {
+
+		text = 'I’ll help you hold yourself accountable and *deliberately put time toward your main outcomes in chunks* that actually make sense for you and how you enter flow';
+		attachments[0].actions[0].text = 'I might misestimate!';
+
+		convo.ask({
+			text: text,
+			attachments: attachments
+		}, function (response, convo) {
+
+			text = 'If you finish sooner than expected, that’s fantastic! If it takes longer than expected, you can always extend time later';
+			attachments[0].actions[0].text = 'What gets shared?';
+
+			convo.ask({
+				text: text,
+				attachments: attachments
+			}, function (response, convo) {
+
+				text = 'I don’t communicate how long you spend working toward your outcomes to anyone else but you, so you can feel safe about your pace and time to getting the most important things done';
+				convo.say(text);
+				text = '*You define time well spent for yourself* and my goal is to help you follow through on it and actually build useful pictures of your day';
+				attachments[0].actions[0].text = 'Sounds great!';
+
+				convo.ask({
+					text: text,
+					attachments: attachments
+				}, function (response, convo) {
+
+					addTimeToPriorities(convo);
+					convo.next();
+				});
+
+				convo.next();
+			});
+
+			convo.next();
+		});
+
+		convo.next();
+	});
 }
 
 // start on the first task, with opportunity to change priority
