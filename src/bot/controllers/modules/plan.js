@@ -559,7 +559,7 @@ function addTimeToPriorities(convo) {
 
 					} else {
 
-						convo.say("Sorry, I didn't catch that. Let me know a time `i.e. 1 hr 45 min`");
+						convo.say("Sorry, I didn't catch that. Let me know a time `i.e. 1 hour 45 minutes`");
 						convo.repeat();
 
 					}

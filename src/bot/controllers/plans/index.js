@@ -177,7 +177,9 @@ export default function(controller) {
 									where: [ `"DailyTasks"."id" IN (?)`, dailyTaskIds ]
 								})
 								.then((dailyTasks) => {
+
 									prioritizedTasks.forEach((task, index) => {
+
 										const priority = index + 1;
 										const { text, minutes } = task;
 										models.Task.create({
@@ -190,17 +192,15 @@ export default function(controller) {
 												UserId
 											})
 											.then((dailyTask) => {
-												const DailyTaskId = dailyTask.id;
 
-												if (index == 0) {
+												if (priority == prioritizedTasks.length) {
 													if (startTime) {
 														// if you asked for a queued reminder
 														models.Reminder.create({
 															UserId,
 															remindTime: startTime,
-															type: "start_work",
-															DailyTaskId
-														})
+															type: "start_work"
+														});
 													} else if (startNow) {
 														// start now!
 														controller.trigger(`begin_session`, [ bot, { SlackUserId } ]);
@@ -208,7 +208,9 @@ export default function(controller) {
 												}
 											})
 										})
+
 									});
+
 								});
 							});
 

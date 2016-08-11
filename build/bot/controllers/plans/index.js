@@ -159,7 +159,9 @@ exports.default = function (controller) {
 								}, {
 									where: ['"DailyTasks"."id" IN (?)', dailyTaskIds]
 								}).then(function (dailyTasks) {
+
 									prioritizedTasks.forEach(function (task, index) {
+
 										var priority = index + 1;
 										var text = task.text;
 										var minutes = task.minutes;
@@ -172,16 +174,14 @@ exports.default = function (controller) {
 												priority: priority,
 												UserId: UserId
 											}).then(function (dailyTask) {
-												var DailyTaskId = dailyTask.id;
 
-												if (index == 0) {
+												if (priority == prioritizedTasks.length) {
 													if (startTime) {
 														// if you asked for a queued reminder
 														_models2.default.Reminder.create({
 															UserId: UserId,
 															remindTime: startTime,
-															type: "start_work",
-															DailyTaskId: DailyTaskId
+															type: "start_work"
 														});
 													} else if (startNow) {
 														// start now!
