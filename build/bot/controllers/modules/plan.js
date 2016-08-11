@@ -178,9 +178,10 @@ function includeTeamMembers(convo) {
 	var SlackUserId = _convo$newPlan2.SlackUserId;
 	var daySplit = _convo$newPlan2.daySplit;
 	var onboardVersion = _convo$newPlan2.onboardVersion;
-	var includeTeamMembers = _convo$newPlan2.includeTeamMembers;
-	var dontIncludeOthers = _convo$newPlan2.dontIncludeOthers;
-	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+	var includeOthersDecision = _convo$newPlan2.includeOthersDecision;
+	var _convo$newPlan3 = convo.newPlan;
+	var prioritizedTasks = _convo$newPlan3.prioritizedTasks;
+	var includeSlackUserIds = _convo$newPlan3.includeSlackUserIds;
 
 
 	var options = { dontShowMinutes: true, dontCalculateMinutes: true };
@@ -195,25 +196,21 @@ function includeTeamMembers(convo) {
 
 		var responseMessage = 'Excellent!';
 
-		if (slackUser && !dontIncludeOthers) {
+		if (slackUser && includeOthersDecision != "NO_FOREVER") {
 
 			slackUser.getIncluded({
 				include: [_models2.default.User]
 			}).then(function (includedSlackUsers) {
 
+				includeSlackUserIds = includedSlackUsers.map(function (slackUser) {
+					return slackUser.SlackUserId;
+				});
+				convo.newPlan.includeSlackUserIds = includeSlackUserIds;
+
 				if (includedSlackUsers.length > 0) {
 
-					// user has team members to include!!
-					var names = includedSlackUsers.map(function (includedSlackUser) {
-						return includedSlackUser.dataValues.User.nickName;
-					});
-					var nameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(names);
-					convo.say('I\'ll be sharing your plan with *' + nameStrings + '* when you\'re done :raised_hands:');
-					if (onboardVersion) {
-						explainTimeToPriorities(convo);
-					} else {
-						addTimeToPriorities(convo);
-					}
+					// you have SlackUsers to ping, let's confirm thats what you want!
+					confirmPingToTeamMembers(convo, includedSlackUsers);
 				} else {
 
 					// user wants to include members!!!
@@ -224,23 +221,125 @@ function includeTeamMembers(convo) {
 			});
 		} else {
 
-			if (onboardVersion) {
-				explainTimeToPriorities(convo);
-			} else {
-				addTimeToPriorities(convo);
-			}
+			addTimeToPriorities(convo);
 			convo.next();
 		}
 	});
 }
 
+// confirm that you will ping team member
+// IF you are not "YES_FOREVER" with your decision
+function confirmPingToTeamMembers(convo, includedSlackUsers) {
+	var question = arguments.length <= 2 || arguments[2] === undefined ? '' : arguments[2];
+	var bot = convo.task.bot;
+	var _convo$newPlan4 = convo.newPlan;
+	var SlackUserId = _convo$newPlan4.SlackUserId;
+	var daySplit = _convo$newPlan4.daySplit;
+	var onboardVersion = _convo$newPlan4.onboardVersion;
+	var includeOthersDecision = _convo$newPlan4.includeOthersDecision;
+	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+
+	// user has team members to include!!
+
+	var names = includedSlackUsers.map(function (includedSlackUser) {
+		return includedSlackUser.dataValues.User.nickName;
+	});
+	var nameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(names);
+
+	// this now requires a confirmation yes, unless you do yes-forever
+	if (question == '') question = 'I\'ll be sharing your priorities with *' + nameStrings + '* when you\'re done planning :raised_hands:';
+	if (includeOthersDecision != "YES_FOREVER") {
+		var attachments = [{
+			attachment_type: 'default',
+			callback_id: "INCLUDE_TEAM_MEMBER_DECISION",
+			fallback: "I'll include this to a team-member now",
+			color: _constants.colorsHash.grey.hex,
+			actions: [{
+				name: _constants.buttonValues.yes.name,
+				text: "Yes!",
+				value: _constants.buttonValues.yes.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.yesDontAskAgain.name,
+				text: "Yes - don't ask again",
+				value: _constants.buttonValues.yesDontAskAgain.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.notToday.name,
+				text: "Not today",
+				value: _constants.buttonValues.notToday.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.noDontAskAgain.name,
+				text: "No - don't ask again",
+				value: _constants.buttonValues.noDontAskAgain.value,
+				type: "button"
+			}]
+		}];
+
+		convo.ask({
+			text: question,
+			attachments: attachments
+		}, [{
+			pattern: _botResponses.utterances.yesDontAskAgain,
+			callback: function callback(response, convo) {
+
+				convo.newPlan.includeOthersDecision = "YES_FOREVER";
+				convo.say('Sounds good! I\'ll ping *' + nameStrings + '* about your priorities automatically after each plan');
+				convo.say('If this ever changes, just ask me to `show settings`');
+
+				addTimeToPriorities(convo);
+				convo.next();
+			}
+		}, {
+			pattern: _botResponses.utterances.noDontAskAgain,
+			callback: function callback(response, convo) {
+
+				convo.newPlan.includeOthersDecision = "NO_FOREVER";
+				convo.say('Sounds good! I won\'t ping anyone about your priorities and won\'t ask again');
+				convo.say('If this ever changes, just ask me to `show settings`');
+				addTimeToPriorities(convo);
+				convo.next();
+			}
+		}, {
+			pattern: _botResponses.utterances.yes,
+			callback: function callback(response, convo) {
+
+				convo.newPlan.pingTeamMembers = true;
+				convo.say('Sounds good!');
+				convo.next();
+			}
+		}, {
+			pattern: _botResponses.utterances.notToday,
+			callback: function callback(response, convo) {
+
+				convo.say('Okay! I won\'t ping anyone about your priorities today');
+				convo.newPlan.pingTeamMembers = false;
+				convo.next();
+			}
+		}, {
+			default: true,
+			callback: function callback(response, convo) {
+
+				convo.say('I\'m not sure what you mean!');
+				var question = 'Do you want me to share your priorities with *' + nameStrings + '* when you\'re done planning?';
+				confirmPingToTeamMembers(convo, includedSlackUsers, question);
+				convo.next();
+			}
+		}]);
+	} else {
+		// just say it and move on
+		convo.say(question);
+		addTimeToPriorities(convo);
+	}
+}
+
 function askToIncludeTeamMembers(convo) {
 	var bot = convo.task.bot;
-	var _convo$newPlan3 = convo.newPlan;
-	var SlackUserId = _convo$newPlan3.SlackUserId;
-	var daySplit = _convo$newPlan3.daySplit;
-	var onboardVersion = _convo$newPlan3.onboardVersion;
-	var includeTeamMembers = _convo$newPlan3.includeTeamMembers;
+	var _convo$newPlan5 = convo.newPlan;
+	var SlackUserId = _convo$newPlan5.SlackUserId;
+	var daySplit = _convo$newPlan5.daySplit;
+	var onboardVersion = _convo$newPlan5.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -282,24 +381,17 @@ function askToIncludeTeamMembers(convo) {
 		callback: function callback(response, convo) {
 
 			convo.say('Okay! I won\'t include anyone for today\'s plan');
-			if (onboardVersion) {
-				explainTimeToPriorities(convo);
-			} else {
-				addTimeToPriorities(convo);
-			}
+			convo.newPlan.pingTeamMembers = false;
+			addTimeToPriorities(convo);
 			convo.next();
 		}
 	}, {
 		pattern: _botResponses.utterances.noDontAskAgain,
 		callback: function callback(response, convo) {
 
-			convo.newPlan.dontIncludeAnyonePermanent = true;
+			convo.newPlan.includeOthersDecision = "NO_FOREVER";
 			convo.say('No worries! I won’t ask again. You can add someone to receive your priorities when you make them by saying `show settings`');
-			if (onboardVersion) {
-				explainTimeToPriorities(convo);
-			} else {
-				addTimeToPriorities(convo);
-			}
+			addTimeToPriorities(convo);
 			convo.next();
 		}
 	}, {
@@ -338,13 +430,10 @@ function askToIncludeTeamMembers(convo) {
 					convo.newPlan.includeSlackUserIds = finalSlackUserIdsToInclude;
 					var userNameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(userNames);
 
+					convo.newPlan.pingTeamMembers = true;
 					convo.say('Great! After planning, I\'ll let *' + userNameStrings + '*  know that you’ll be focused on these priorities today');
 					convo.say("You can add someone to receive your priorities automatically when you make them each morning by saying `show settings`");
-					if (onboardVersion) {
-						explainTimeToPriorities(convo);
-					} else {
-						addTimeToPriorities(convo);
-					}
+					addTimeToPriorities(convo);
 					convo.next();
 				});
 			} else {
@@ -361,14 +450,18 @@ function askToIncludeTeamMembers(convo) {
 // add time to each of your priorities
 function addTimeToPriorities(convo) {
 	var bot = convo.task.bot;
-	var _convo$newPlan4 = convo.newPlan;
-	var tz = _convo$newPlan4.tz;
-	var SlackUserId = _convo$newPlan4.SlackUserId;
-	var daySplit = _convo$newPlan4.daySplit;
-	var onboardVersion = _convo$newPlan4.onboardVersion;
-	var includeTeamMembers = _convo$newPlan4.includeTeamMembers;
+	var _convo$newPlan6 = convo.newPlan;
+	var tz = _convo$newPlan6.tz;
+	var SlackUserId = _convo$newPlan6.SlackUserId;
+	var daySplit = _convo$newPlan6.daySplit;
+	var onboardVersion = _convo$newPlan6.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
+
+	if (onboardVersion) {
+		explainTimeToPriorities(convo); // this is end of onboarding for this!
+		return;
+	}
 
 	var count = 0;
 	var countString = '';
@@ -499,11 +592,10 @@ function addTimeToPriorities(convo) {
 // thoroughly explain why we're doing this!
 function explainTimeToPriorities(convo) {
 	var bot = convo.task.bot;
-	var _convo$newPlan5 = convo.newPlan;
-	var SlackUserId = _convo$newPlan5.SlackUserId;
-	var daySplit = _convo$newPlan5.daySplit;
-	var onboardVersion = _convo$newPlan5.onboardVersion;
-	var includeTeamMembers = _convo$newPlan5.includeTeamMembers;
+	var _convo$newPlan7 = convo.newPlan;
+	var SlackUserId = _convo$newPlan7.SlackUserId;
+	var daySplit = _convo$newPlan7.daySplit;
+	var onboardVersion = _convo$newPlan7.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -557,6 +649,7 @@ function explainTimeToPriorities(convo) {
 					attachments: attachments
 				}, function (response, convo) {
 
+					convo.newPlan.onboardVersion = false;
 					addTimeToPriorities(convo);
 					convo.next();
 				});
@@ -574,12 +667,11 @@ function explainTimeToPriorities(convo) {
 // start on the first task, with opportunity to change priority
 function startOnFirstTask(convo) {
 	var bot = convo.task.bot;
-	var _convo$newPlan6 = convo.newPlan;
-	var tz = _convo$newPlan6.tz;
-	var SlackUserId = _convo$newPlan6.SlackUserId;
-	var daySplit = _convo$newPlan6.daySplit;
-	var onboardVersion = _convo$newPlan6.onboardVersion;
-	var includeTeamMembers = _convo$newPlan6.includeTeamMembers;
+	var _convo$newPlan8 = convo.newPlan;
+	var tz = _convo$newPlan8.tz;
+	var SlackUserId = _convo$newPlan8.SlackUserId;
+	var daySplit = _convo$newPlan8.daySplit;
+	var onboardVersion = _convo$newPlan8.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -672,9 +764,9 @@ function startOnFirstTask(convo) {
 function chooseFirstTask(convo) {
 	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
 	var bot = convo.task.bot;
-	var _convo$newPlan7 = convo.newPlan;
-	var daySplit = _convo$newPlan7.daySplit;
-	var onboardVersion = _convo$newPlan7.onboardVersion;
+	var _convo$newPlan9 = convo.newPlan;
+	var daySplit = _convo$newPlan9.daySplit;
+	var onboardVersion = _convo$newPlan9.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 

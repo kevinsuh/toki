@@ -590,6 +590,10 @@ export const buttonValues ={
 		name: "NO_DONT_ASK_AGAIN",
 		value: "no, and don't ask again"
 	},
+	yesDontAskAgain: {
+		name: "YES_DONT_ASK_AGAIN",
+		value: "yes, and don't ask again"
+	},
 	next: {
 		name: "NEXT",
 		value: "next"

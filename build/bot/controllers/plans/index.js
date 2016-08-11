@@ -84,7 +84,7 @@ exports.default = function (controller) {
 		}).then(function (user) {
 
 			var UserId = user.id;
-			var dontIncludeOthers = user.dontIncludeOthers;
+			var includeOthersDecision = user.includeOthersDecision;
 			var tz = user.SlackUser.tz;
 
 
@@ -102,13 +102,14 @@ exports.default = function (controller) {
 
 					convo.newPlan = {
 						SlackUserId: SlackUserId,
-						dontIncludeOthers: dontIncludeOthers,
+						includeOthersDecision: includeOthersDecision,
 						tz: tz,
 						daySplit: daySplit,
 						onboardVersion: false,
 						prioritizedTasks: [],
 						startTime: false, // default will be now
-						includeSlackUserIds: []
+						includeSlackUserIds: [],
+						pingTeamMembers: false // actual decision to ping
 					};
 
 					var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');
@@ -131,21 +132,14 @@ exports.default = function (controller) {
 						var startTime = newPlan.startTime;
 						var includeSlackUserIds = newPlan.includeSlackUserIds;
 						var startNow = newPlan.startNow;
-						var dontIncludeAnyonePermanent = newPlan.dontIncludeAnyonePermanent;
+						var includeOthersDecision = newPlan.includeOthersDecision;
+						var pingTeamMembers = newPlan.pingTeamMembers;
 
 
 						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 
 						if (exitEarly) {
 							return;
-						}
-
-						if (dontIncludeAnyonePermanent) {
-							_models2.default.User.update({
-								dontIncludeOthers: true
-							}, {
-								where: ['"Users"."id" = ?', UserId]
-							});
 						}
 
 						// create plan
@@ -185,7 +179,9 @@ exports.default = function (controller) {
 												UserId: UserId
 											}).then(function (dailyTask) {
 
+												// this makes sure that this gets triggered only once!
 												if (priority == prioritizedTasks.length) {
+
 													if (startTime) {
 														// if you asked for a queued reminder
 														_models2.default.Reminder.create({
@@ -197,22 +193,66 @@ exports.default = function (controller) {
 														// start now!
 														controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
 													}
+
+													// INCLUDE OTHERS FUNCTIONALITY
+													_models2.default.User.update({
+														includeOthersDecision: includeOthersDecision
+													}, {
+														where: ['"Users"."id" = ?', UserId]
+													}).then(function (user) {
+
+														if (includeOthersDecision == "YES_FOREVER") {
+															pingTeamMembers = true;
+														} else if (includeOthersDecision == "NO_FOREVER") {
+															pingTeamMembers = false;
+														}
+
+														// this is to create for future includes
+														if (includeSlackUserIds && includeSlackUserIds.length > 0) {
+
+															_models2.default.SlackUser.find({
+																where: ['"SlackUserId" = ?', SlackUserId]
+															}).then(function (slackUser) {
+
+																slackUser.getIncluded({
+																	include: [_models2.default.User]
+																}).then(function (includedSlackUsers) {
+
+																	// only add in NEW slackUserIds to DB
+																	var alreadyIncludedSlackUserIds = includedSlackUsers.map(function (slackUser) {
+																		return slackUser.SlackUserId;
+																	});
+																	includeSlackUserIds.forEach(function (IncludedSlackUserId) {
+																		if (alreadyIncludedSlackUserIds.indexOf(IncludedSlackUserId) == -1) {
+																			_models2.default.Include.create({
+																				IncluderSlackUserId: SlackUserId,
+																				IncludedSlackUserId: IncludedSlackUserId
+																			});
+																		}
+																	});
+
+																	// ping if desired
+																	if (pingTeamMembers) {
+																		includeSlackUserIds.forEach(function (includeSlackUserId) {
+
+																			console.log(includeSlackUserId);
+
+																			bot.startPrivateConversation({ user: includeSlackUserId }, function (err, convo) {
+																				convo.say("HELLO TEST from kevin's priority!");
+																				convo.next();
+																			});
+																		});
+																	}
+																});
+															});
+														}
+													});
 												}
 											});
 										});
 									});
 								});
 							});
-
-							// include who you want to include in your list
-							if (includeSlackUserIds) {
-								includeSlackUserIds.forEach(function (IncludedSlackUserId) {
-									_models2.default.Include.create({
-										IncluderSlackUserId: SlackUserId,
-										IncludedSlackUserId: IncludedSlackUserId
-									});
-								});
-							}
 						});
 
 						console.log("here is new plan object:\n");
