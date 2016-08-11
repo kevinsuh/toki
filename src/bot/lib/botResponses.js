@@ -70,5 +70,7 @@ export const utterances = {
 	noMore: new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i),
 	redo: new RegExp(/^re[re do]{2,5}\b/i),
 	noDontAskAgain: new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i),
-	yesDontAskAgain: new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)
+	yesDontAskAgain: new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i),
+	changePriority: new RegExp(/\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\bpriori[tiyes]{1,5}\b/i),
+	goBack: new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)
 }

@@ -32,6 +32,8 @@ var _scripts = require('./app/scripts');
 
 var _miscHelpers = require('./bot/lib/miscHelpers');
 
+require('./app/globalHelpers');
+
 var _controllers = require('./bot/controllers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }

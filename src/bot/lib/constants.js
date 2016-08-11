@@ -152,6 +152,10 @@ export const buttonValues ={
 		name: "CHANGE_TASK",
 		value: "Let's change tasks"
 	},
+	changePriority: {
+		name: "CHANGE_PRIORITY",
+		value: "Let's change priorities"
+	},
 	changeSessionTime: {
 		name: "CHANGE_SESSION_TIME",
 		value: "Let's change times"
@@ -589,6 +593,18 @@ export const buttonValues ={
 	next: {
 		name: "NEXT",
 		value: "next"
+	},
+	now: {
+		name: "NOW",
+		value: "now!"
+	},
+	inTenMinutes: {
+		name: "IN_TEN_MINUTES",
+		value: "in 10 minutes"
+	},
+	goBack: {
+		name: "GO_BACK",
+		value: "go back!"
 	}
 }
 
