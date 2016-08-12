@@ -28,174 +28,88 @@ export function test() {
 	})
 }
 
-export function updateUsers() {
+export function seedAndUpdateUsers(members) {
 
-	var env = process.env.NODE_ENV || 'development';
-	if (env == 'development') {
-		consoleLog("In development server of Toki");
-	  process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
-	} else {
-		consoleLog(`currently in ${env} environment`);
-	}
+	members.forEach((member) => {
 
-	for (var token in bots) {
+		const { id, team_id, name, tz } = member;
 
-		// only dev for dev! and prod for prod!
-		if (token == process.env.BOT_TOKEN) {
+		const SlackUserId = id;
 
-			const bot = bots[token];
+		models.SlackUser.find({
+			where: { SlackUserId }
+		})
+		.then((slackUser) => {
 
-			bot.api.users.list({
-				presence: 1
-			}, (err, response) => {
-				const { members } = response; // all members registered with your bot
+			if (slackUser) {
 
-				members.forEach((member) => {
+				slackUser.update({
+					TeamId: team_id,
+					SlackName: name
+				});
 
-					console.log(`updating member:`);
+				models.User.find({
+					where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+					include: [ models.SlackUser ]
+				})
+				.then((user) => {
 
-					const { id, team_id, name, tz } = member;
-
-					var SlackUserId = id;
-
-					models.SlackUser.find({
-						where: { SlackUserId }
-					})
-					.then((slackUser) => {
-
-						if (slackUser) {
-
-							slackUser.update({
-								TeamId: team_id,
-								tz
-							});
-
-							models.User.find({
-								where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-								include: [ models.SlackUser ]
-							})
-							.then((user) => {
-
-								if (member.profile && member.profile.email) {
-									const { profile: { email } } = member;
-									if (email) {
-										console.log(`email found!`);
-										user.update({
-											email,
-											nickName: name
-										});
-										return;
-									}
-								}
-
-							})
-
-						} else {
-
-							// create slack user!
-							// set through onboarding flow if first time user
-							models.SlackUser.create({
-								SlackUserId,
-								TeamId: team_id,
-								tz
-							})
-							.then((slackUser) => {
-
-								if (member.profile && member.profile.email) {
-
-									const { profile: { email } } = member;
-									if (!email) {
-										console.log("no email found");
-										return;
-									}
-
-									models.User.find({
-										where: [`"email" = ?`, email ]
-									})
-									.then((user) => {
-
-										if (user) {
-
-											user.update({
-												nickName: name
-											});
-											slackUser.update({
-												UserId: user.id
-											})
-											.then((slackUser) => {
-												controller.trigger('begin_onboard_flow', [ bot, { SlackUserId } ]);
-											})
-												
-
-										} else {
-
-											models.User.create({
-												email,
-												nickName: name
-											})
-											.then((user) => {
-												var UserId = user.id;
-												slackUser.update({
-													UserId
-												})
-												.then((slackUser) => {
-													controller.trigger('begin_onboard_flow', [ bot, { SlackUserId } ]);
-												})
-													
-											})
-										}
-									});
-
-								}
+					if (member.profile && member.profile.email) {
+						const { profile: { email } } = member;
+						if (email && user.email == '') {
+							console.log(`updating email!`);
+							user.update({
+								email
 							});
 						}
-					});
-				});
-			})
-		}
-	}
-}
+					}
+				})
 
+			} else {
 
-export function seedUsers() {
-
-	for (let token in bots) {
-		
-		bots[token].api.users.list({
-			presence: 1
-		}, (err, response) => {
-			const { members } = response; // all members registered with your bot
-
-			members.forEach((member) => {
-				const { id, team_id, name, tz } = member;
 				let email = '';
 				if (member.profile && member.profile.email)
 					email = member.profile.email;
 
-				models.SlackUser.find({
-					where: { SlackUserId: id }
+				models.User.find({
+					where: [`"email" = ?`, email ],
+					include: [ models.SlackUser ]
 				})
-				.then((slackUser) => {
-					if (!slackUser) {
-						console.log(`\n\n UNIQUE USER FOUND... CREATING ... \n\n`);
-						models.User.create({
-							nickName: name,
-							email
-						})
-						.then((user) => {
-							models.SlackUser.create({
-								SlackUserId: id,
-								UserId: user.id,
-								tz,
-								TeamId: team_id
-							});
-						});
-					}
-				})
+				.then((user) => {
 
-			});
-		})
-	}
+					if (user) {
+
+						if (user.SlackUser) {
+							console.log(`\n\n USER FOUND WITHOUT SLACKUSER (${name})... FIXING THAT ... \n\n`);
+							user.SlackUser.update({
+								UserId: user.id
+							})
+						} else {
+							console.log(`\n\n CREATING UNIQUE USER (${name}) ... \n\n`);
+							// more common situation
+							models.User.create({
+								nickName: name,
+								email
+							})
+							.then((user) => {
+								models.SlackUser.create({
+									SlackUserId,
+									UserId: user.id,
+									tz,
+									TeamId: team_id,
+									SlackName: name
+								});
+							});
+						}
+
+					}
+				});
+
+			}
+
+		});
+
+	})
 
 }
 

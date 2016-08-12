@@ -42,12 +42,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var CronJob = _cron2.default.CronJob; // modules 
 
 
-setTimeout(function () {
-	(0, _miscHelpers.consoleLog)("updating and seeding users");
-	// updateUsers(); // to fill in all users who are not in DB yet
-	(0, _scripts.seedUsers)();
-}, 5000);
-
 var app = (0, _express2.default)();
 
 // configuration 
@@ -140,7 +134,13 @@ _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
    * 		~~ START UP ZE BOTS ~~
    */
 		teamTokens.forEach(function (token) {
-			var bot = _controllers.controller.spawn({ token: token }).startRTM(function (err) {
+			var bot = _controllers.controller.spawn({ token: token, retry: 500 }).startRTM(function (err, bot, payload) {
+
+				if (payload) {
+					var teamMembers = payload.users; // array of user objects!
+					(0, _scripts.seedAndUpdateUsers)(teamMembers);
+				}
+
 				if (err) {
 					(0, _miscHelpers.consoleLog)('\'Error connecting to slack... :\' ' + err);
 				} else {

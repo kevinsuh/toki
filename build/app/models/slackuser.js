@@ -7,6 +7,7 @@ module.exports = function (sequelize, DataTypes) {
       type: DataTypes.STRING,
       primaryKey: true
     },
+    SlackName: DataTypes.STRING,
     tz: DataTypes.STRING,
     TeamId: DataTypes.STRING,
     scopes: DataTypes.STRING,
