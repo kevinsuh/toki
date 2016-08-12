@@ -55,7 +55,11 @@ var checkForMorningPing = () => {
 					const { token } = team;
 					var bot = bots[token];
 					if (bot) {
-						controller.trigger(`user_morning_ping`, [bot, { SlackUserId }]);
+						// delete most recent ping!
+						deleteMostRecentMorningPing(bot, SlackUserId);
+						setTimeout(() => {
+							controller.trigger(`user_morning_ping`, [bot, { SlackUserId }]);
+						}, 1500);
 						let nextDay = moment(pingTime).add(1, 'days');
 						models.User.update({
 							pingTime: nextDay
@@ -68,6 +72,39 @@ var checkForMorningPing = () => {
 		})
 
 	});
+
+}
+
+function deleteMostRecentMorningPing(bot, SlackUserId) {
+
+	bot.api.im.open({ user: SlackUserId }, (err, response) => {
+
+		if (response.channel && response.channel.id) {
+			let channel = response.channel.id;
+			bot.api.im.history({ channel }, (err, response) => {
+
+				if (response && response.messages && response.messages.length > 0) {
+
+					let mostRecentMessage = response.messages[0];
+
+					const { ts, attachments } = mostRecentMessage;
+					if (attachments && attachments.length > 0 && attachments[0].callback_id == `MORNING_PING_START_DAY` && ts) {
+
+						console.log("\n\n ~~ deleted ping day message! ~~ \n\n");
+						// if the most recent message was a morning ping day, then we will delete it!
+						let messageObject = {
+							channel,
+							ts
+						};
+						bot.api.chat.delete(messageObject);
+
+					}
+				}
+
+			});
+		}
+		
+	})
 
 }
 

@@ -70,11 +70,11 @@ exports.default = function (controller) {
 
 			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-				convo.say('Good ' + daySplit + ', ' + nickName + '!');
+				var goodMorningMessage = 'Good ' + daySplit + ', ' + nickName + '!';
 				var quote = (0, _messageHelpers.getRandomQuote)();
 
 				convo.say({
-					text: '*_"' + quote.message + '"_*\n-' + quote.author,
+					text: goodMorningMessage + '\n*_"' + quote.message + '"_*\n-' + quote.author,
 					attachments: [{
 						attachment_type: 'default',
 						callback_id: "MORNING_PING_START_DAY",

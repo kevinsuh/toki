@@ -28,16 +28,38 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * 		For fun one-off thingz
  */
 
-function test() {
-	_models2.default.SlackUser.find({
-		where: ['"SlackUser"."SlackUserId" = ?', "U121ZK15J"]
-	}).then(function (slackUser) {
-		slackUser.getIncluded({
-			include: [_models2.default.User]
-		}).then(function (includedSlackUsers) {
-			console.log("got slack users included!");
-			console.log(includedSlackUsers);
-		});
+function test(bot) {
+
+	// this to delete their last message if it was a morning ping!
+	var SlackUserId = '';
+	bot.api.im.open({ user: SlackUserId }, function (err, response) {
+
+		if (response.channel && response.channel.id) {
+			(function () {
+				var channel = response.channel.id;
+				bot.api.im.history({ channel: channel }, function (err, response) {
+
+					if (response && response.messages && response.messages.length > 0) {
+
+						var mostRecentMessage = response.messages[0];
+
+						var ts = mostRecentMessage.ts;
+						var attachments = mostRecentMessage.attachments;
+
+						if (attachments && attachments.length > 0 && attachments[0].callback_id == 'MORNING_PING_START_DAY' && ts) {
+
+							console.log("\n\n ~~ deleted ping day message! ~~ \n\n");
+							// if the most recent message was a morning ping day, then we will delete it!
+							var messageObject = {
+								channel: channel,
+								ts: ts
+							};
+							bot.api.chat.delete(messageObject);
+						}
+					}
+				});
+			})();
+		}
 	});
 }
 

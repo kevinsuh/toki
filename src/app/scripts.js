@@ -13,19 +13,40 @@ import moment from 'moment-timezone';
 
 import dotenv from 'dotenv';
 
-export function test() {
-	models.SlackUser.find({
-		where: [`"SlackUser"."SlackUserId" = ?`, "U121ZK15J"]
+export function test(bot) {
+
+	// this to delete their last message if it was a morning ping!
+	let SlackUserId = ``;
+	bot.api.im.open({ user: SlackUserId }, (err, response) => {
+
+		if (response.channel && response.channel.id) {
+			let channel = response.channel.id;
+			bot.api.im.history({ channel }, (err, response) => {
+
+				if (response && response.messages && response.messages.length > 0) {
+
+					let mostRecentMessage = response.messages[0];
+
+					const { ts, attachments } = mostRecentMessage;
+					if (attachments && attachments.length > 0 && attachments[0].callback_id == `MORNING_PING_START_DAY` && ts) {
+
+						console.log("\n\n ~~ deleted ping day message! ~~ \n\n");
+						// if the most recent message was a morning ping day, then we will delete it!
+						let messageObject = {
+							channel,
+							ts
+						};
+						bot.api.chat.delete(messageObject);
+
+					}
+				}
+
+			});
+		}
+		
 	})
-	.then((slackUser) => {
-		slackUser.getIncluded({
-			include: [ models.User ]
-		})
-		.then((includedSlackUsers) => {
-			console.log("got slack users included!");
-			console.log(includedSlackUsers);
-		})
-	})
+	
+
 }
 
 export function seedAndUpdateUsers(members) {

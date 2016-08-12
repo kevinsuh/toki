@@ -72,7 +72,11 @@ var checkForMorningPing = function checkForMorningPing() {
 
 					var bot = _controllers.bots[token];
 					if (bot) {
-						_controllers.controller.trigger('user_morning_ping', [bot, { SlackUserId: SlackUserId }]);
+						// delete most recent ping!
+						deleteMostRecentMorningPing(bot, SlackUserId);
+						setTimeout(function () {
+							_controllers.controller.trigger('user_morning_ping', [bot, { SlackUserId: SlackUserId }]);
+						}, 1500);
 						var _nextDay = (0, _momentTimezone2.default)(pingTime).add(1, 'days');
 						_models2.default.User.update({
 							pingTime: _nextDay
@@ -91,6 +95,39 @@ var checkForMorningPing = function checkForMorningPing() {
 
 // sequelize models
 
+
+function deleteMostRecentMorningPing(bot, SlackUserId) {
+
+	bot.api.im.open({ user: SlackUserId }, function (err, response) {
+
+		if (response.channel && response.channel.id) {
+			(function () {
+				var channel = response.channel.id;
+				bot.api.im.history({ channel: channel }, function (err, response) {
+
+					if (response && response.messages && response.messages.length > 0) {
+
+						var mostRecentMessage = response.messages[0];
+
+						var ts = mostRecentMessage.ts;
+						var attachments = mostRecentMessage.attachments;
+
+						if (attachments && attachments.length > 0 && attachments[0].callback_id == 'MORNING_PING_START_DAY' && ts) {
+
+							console.log("\n\n ~~ deleted ping day message! ~~ \n\n");
+							// if the most recent message was a morning ping day, then we will delete it!
+							var messageObject = {
+								channel: channel,
+								ts: ts
+							};
+							bot.api.chat.delete(messageObject);
+						}
+					}
+				});
+			})();
+		}
+	});
+}
 
 var checkForSessions = function checkForSessions() {
 

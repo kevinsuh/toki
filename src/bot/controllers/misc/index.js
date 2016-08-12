@@ -77,11 +77,11 @@ export default function(controller) {
 
 			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-				convo.say(`Good ${daySplit}, ${nickName}!`);
+				let goodMorningMessage = `Good ${daySplit}, ${nickName}!`;
 				const quote = getRandomQuote();
 
 				convo.say({
-					text: `*_"${quote.message}"_*\n-${quote.author}`,
+					text: `${goodMorningMessage}\n*_"${quote.message}"_*\n-${quote.author}`,
 					attachments:[
 						{
 							attachment_type: 'default',
