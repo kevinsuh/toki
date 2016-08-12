@@ -123,18 +123,6 @@ exports.default = function (controller) {
 	// this will send message if no other intent gets picked up
 	controller.hears([''], 'direct_message', _index.wit.hears, function (bot, message) {
 
-		if (message.text && message.text[0] == "/") {
-			// ignore all slash commands
-			console.log("\n\n ~~ ignoring a slash command ~~ \n\n");
-			return;
-		}
-
-		var SlackUserId = message.user;
-
-		(0, _miscHelpers.consoleLog)("in back up area!!!", message);
-
-		var SECRET_KEY = new RegExp(/^TOKI_T1ME/);
-
 		// user said something outside of wit's scope
 		if (!message.selectedIntent) {
 
@@ -142,49 +130,6 @@ exports.default = function (controller) {
 				type: "typing",
 				channel: message.channel
 			});
-			setTimeout(function () {
-
-				// different fallbacks based on reg exp
-				var text = message.text;
-
-
-				if (_constants.constants.THANK_YOU.reg_exp.test(text)) {
-					// user says thank you
-					bot.reply(message, "You're welcome!! :smile:");
-				} else if (SECRET_KEY.test(text)) {
-
-					(0, _miscHelpers.consoleLog)("UNLOCKED TOKI_T1ME!!!");
-					/*
-     		
-     *** ~~ TOP SECRET PASSWORD FOR TESTING FLOWS ~~ ***
-     		
-      */
-					controller.trigger('begin_onboard_flow', [bot, { SlackUserId: SlackUserId }]);
-				} else {
-					// end-all fallback
-					var options = [{ title: 'start a day', description: 'get started on your day' }, { title: 'start a session', description: 'start a work session with me' }, { title: 'end session early', description: 'end your current work session with me' }];
-					var colorsArrayLength = _constants.colorsArray.length;
-					var optionsAttachment = options.map(function (option, index) {
-						var colorsArrayIndex = index % colorsArrayLength;
-						return {
-							fields: [{
-								title: option.title,
-								value: option.description
-							}],
-							color: _constants.colorsArray[colorsArrayIndex].hex,
-							attachment_type: 'default',
-							callback_id: "SHOW OPTIONS",
-							fallback: option.description
-						};
-					});
-
-					bot.reply(message, {
-						text: "Hey! I'm here to help you with your 3 priorities for today. Let me know when you want to get started."
-					});
-				}
-
-				(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-			}, 1000);
 		}
 	});
 };
