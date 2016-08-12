@@ -176,9 +176,6 @@ function updateUsers() {
 
 function seedUsers() {
 
-	return;
-
-	var slackUserIds = []; // make sure only unique slack user ids are put in!
 	for (var token in _controllers.bots) {
 
 		_controllers.bots[token].api.users.list({
@@ -192,30 +189,27 @@ function seedUsers() {
 				var name = member.name;
 				var tz = member.tz;
 
-				// this helps us stay unique with SlackUserId
+				var email = '';
+				if (member.profile && member.profile.email) email = member.profile.email;
 
-				if (slackUserIds.indexOf(id) < 0) {
-					slackUserIds.push(id);
-					_models2.default.SlackUser.find({
-						where: { SlackUserId: id }
-					}).then(function (slackUser) {
-						if (!slackUser) {
-							(0, _miscHelpers.consoleLog)("Unique SlackUserId found... creating now");
-							var uniqueEmail = makeid();
-							_models2.default.User.create({
-								email: 'TEMPEMAILHOLDER' + uniqueEmail + '@gmail.com',
-								nickName: name
-							}).then(function (user) {
-								_models2.default.SlackUser.create({
-									SlackUserId: id,
-									UserId: user.id,
-									tz: tz,
-									TeamId: team_id
-								});
+				_models2.default.SlackUser.find({
+					where: { SlackUserId: id }
+				}).then(function (slackUser) {
+					if (!slackUser) {
+						console.log('\n\n UNIQUE USER FOUND... CREATING ... \n\n');
+						_models2.default.User.create({
+							nickName: name,
+							email: email
+						}).then(function (user) {
+							_models2.default.SlackUser.create({
+								SlackUserId: id,
+								UserId: user.id,
+								tz: tz,
+								TeamId: team_id
 							});
-						}
-					});
-				}
+						});
+					}
+				});
 			});
 		});
 	}

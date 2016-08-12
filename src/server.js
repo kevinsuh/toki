@@ -17,7 +17,7 @@ import './app/globalHelpers';
 setTimeout(() => {
 	consoleLog("updating and seeding users");
 	// updateUsers(); // to fill in all users who are not in DB yet
-	// seedUsers();
+	seedUsers();
 }, 5000)
 
 var app = express();
