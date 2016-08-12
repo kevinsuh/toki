@@ -427,6 +427,11 @@ export function convertMinutesToHoursString(minutes, config = {}) {
 		content = abbreviation ? `${content}${minutes} min` : `${content}${minutes} minutes`;
 	}
 
+	// for 0 time spent
+	if (minutes == 0 && hours == 0) {
+		content = `less than a minute`;
+	}
+
 	return content;
 }
 

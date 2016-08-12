@@ -134,7 +134,10 @@ export default function(controller) {
 
 										// do our math update to daily task here
 										let minutesSpent = dailyTask.minutesSpent;
-										minutesSpent += workSessionMinutes;
+										if (!storedWorkSession) {
+											// if paused, already added the work session minutes to dailyTask
+											minutesSpent += workSessionMinutes;
+										}
 										dailyTask.update({
 											minutesSpent
 										})
@@ -182,7 +185,7 @@ export default function(controller) {
 													console.log(convo.sessionDone.priorityDecision);
 													console.log("\n\n\n");
 
-													const { noPrioritiesRemaining, UserId, SlackUserId, reminders, extendSession, postSessionDecision, currentSession: { WorkSessionId, workSessionMinutes, dailyTask, additionalMinutes }, priorityDecision } = convo.sessionDone;
+													const { noPrioritiesRemaining, UserId, SlackUserId, reminders, extendSession, postSessionDecision, currentSession: { WorkSessionId, workSessionMinutes, dailyTask, additionalMinutes, isPaused }, priorityDecision } = convo.sessionDone;
 
 													// if extend session, rest doesn't matter!
 													if (extendSession) {
@@ -245,6 +248,17 @@ export default function(controller) {
 																minutesSpent
 															});
 
+															// ** if paused session, must add minutes to updated task **
+															if (isPaused) {
+																minutesSpent = newDailyTask.dataValues.minutesSpent;
+																minutesSpent += workSessionMinutes;
+																models.DailyTask.update({
+																	minutesSpent
+																}, {
+																	where: [ `"id" = ? `, newDailyTask.dataValues.id ]
+																})
+															}
+
 															// 2. replace the dailyTask associated with current workSession
 															models.WorkSessionTask.destroy({
 																where: [`"WorkSessionTasks"."WorkSessionId" = ?`, WorkSessionId]
@@ -298,9 +312,15 @@ export default function(controller) {
 																text: newTaskText
 															})
 															.then((task) => {
+																// ** if paused session, must add to replaced task **
+																let minutesSpent = 0;
+																if (isPaused) {
+																	minutesSpent = workSessionMinutes;
+																}
 																task.createDailyTask({
 																	priority,
-																	UserId
+																	UserId,
+																	minutesSpent
 																})
 																.then((dailyTask) => {
 

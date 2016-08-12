@@ -12,7 +12,7 @@ import { TOKI_DEFAULT_BREAK_TIME, TOKI_DEFAULT_SNOOZE_TIME, colorsArray, THANK_Y
  */
 export function doneSessionAskOptions(convo) {
 
-	const { defaultBreakTime, defaultSnoozeTime, doneSessionEarly, sessionTimerUp, currentSession: { dailyTask, workSessionTimeString } } = convo.sessionDone;
+	const { defaultBreakTime, defaultSnoozeTime, doneSessionEarly, sessionTimerUp, currentSession: { dailyTask, workSessionTimeString, isPaused } } = convo.sessionDone;
 
 	// minutesSpent is updated here, after closing the workSession
 	const { minutesSpent, minutes } = dailyTask.dataValues;
