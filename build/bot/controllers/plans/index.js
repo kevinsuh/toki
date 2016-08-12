@@ -119,7 +119,7 @@ exports.default = function (controller) {
 					}
 
 					if (!convo.newPlan.onboardVersion) {
-						convo.say('Happy ' + day + ', ' + name + '! Let\'s win the ' + daySplit + ' :muscle:');
+						convo.say('Let\'s win this ' + day + ', ' + name + '! :muscle:');
 					}
 
 					(0, _plan.startNewPlanFlow)(convo);
@@ -235,12 +235,11 @@ exports.default = function (controller) {
 																	if (pingTeamMembers) {
 																		includeSlackUserIds.forEach(function (includeSlackUserId) {
 
-																			console.log(includeSlackUserId);
-
-																			bot.startPrivateConversation({ user: includeSlackUserId }, function (err, convo) {
-																				convo.say("HELLO TEST from kevin's priority!");
-																				convo.next();
-																			});
+																			var config = {
+																				IncluderSlackUserId: SlackUserId,
+																				IncludedSlackUserId: includeSlackUserId
+																			};
+																			controller.trigger('notify_team_member', [bot, config]);
 																		});
 																	}
 																});
@@ -763,6 +762,8 @@ exports.default = function (controller) {
 
 			var UserId = user.id;
 			var nickName = user.nickName;
+			var wantsPing = user.wantsPing;
+			var pingTime = user.pingTime;
 			var tz = user.SlackUser.tz;
 
 
@@ -811,6 +812,9 @@ exports.default = function (controller) {
 							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
 								convo.dayEnd = {
+									tz: tz,
+									wantsPing: wantsPing,
+									pingTime: pingTime,
 									wonDay: wonDay,
 									wonDayStreak: wonDayStreak,
 									nickName: nickName,
@@ -825,6 +829,8 @@ exports.default = function (controller) {
 									var _convo$dayEnd = convo.dayEnd;
 									var wonDay = _convo$dayEnd.wonDay;
 									var reflection = _convo$dayEnd.reflection;
+									var wantsPing = _convo$dayEnd.wantsPing;
+									var pingTime = _convo$dayEnd.pingTime;
 
 									var now = (0, _momentTimezone2.default)();
 
@@ -844,11 +850,20 @@ exports.default = function (controller) {
 										var DailyTaskIds = dailyTasks.map(function (dailyTask) {
 											return dailyTask.id;
 										});
-										_models2.default.DailyTask.update({
-											type: "archived"
-										}, {
-											where: ['"DailyTasks"."id" IN (?)', DailyTaskIds]
-										});
+										if (DailyTaskIds.length > 0) {
+											_models2.default.DailyTask.update({
+												type: "archived"
+											}, {
+												where: ['"DailyTasks"."id" IN (?)', DailyTaskIds]
+											});
+										}
+									});
+
+									_models2.default.User.update({
+										pingTime: pingTime,
+										wantsPing: wantsPing
+									}, {
+										where: ['"id" = ?', UserId]
 									});
 								});
 							});

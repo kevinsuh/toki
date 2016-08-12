@@ -157,15 +157,30 @@ controller.on('team_join', function (bot, message) {
 								return user.SlackUser.update({
 									UserId: UserId,
 									SlackUserId: SlackUserId,
+									SlackName: nickName,
 									TeamId: TeamId
 								});
 							} else {
 								return _models2.default.SlackUser.create({
 									UserId: UserId,
 									SlackUserId: SlackUserId,
+									SlackName: nickName,
 									TeamId: TeamId
 								});
 							}
+						} else {
+							_models2.default.User.create({
+								email: email,
+								nickName: nickName
+							}).then(function (user) {
+								var UserId = user.id;
+								return user.SlackUser.create({
+									UserId: UserId,
+									SlackUserId: SlackUserId,
+									TeamId: TeamId,
+									SlackName: nickName
+								});
+							});
 						}
 					}).then(function (slackUser) {
 						controller.trigger('begin_onboard_flow', [bot, { SlackUserId: SlackUserId }]);

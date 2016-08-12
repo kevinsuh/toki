@@ -18,7 +18,95 @@ export default function() {
 	if (bots) {
 		checkForReminders();
 		checkForSessions();
+		checkForMorningPing();
 	}
+
+}
+
+var checkForMorningPing = () => {
+
+	// sequelize is in EST by default. include date offset to make it correct UTC wise
+	let now = moment().format("YYYY-MM-DD HH:mm:ss Z");
+
+	models.User.findAll({
+		where: [ `"pingTime" < ? AND "wantsPing" = ?`, now, true ],
+		include: [ models.SlackUser ]
+	}).then((users) => {
+
+		users.forEach((user) => {
+			const UserId                = user.id;
+			const { pingTime, SlackUser: { SlackUserId, tz, TeamId } } = user;
+
+			let day = moment().tz(tz).format('dddd');
+			if (day == "Saturday" || day == "Sunday") {
+				// don't trigger on weekends for now!
+				let nextDay = moment(pingTime).add(1, 'days');
+				models.User.update({
+					pingTime: nextDay
+				}, {
+					where: [`"id" = ?`, UserId]
+				});
+			} else {
+				// ping, then update to the next day
+				models.Team.find({
+					where: { TeamId }
+				})
+				.then((team) => {
+					const { token } = team;
+					var bot = bots[token];
+					if (bot) {
+						// delete most recent ping!
+						deleteMostRecentMorningPing(bot, SlackUserId);
+						setTimeout(() => {
+							controller.trigger(`user_morning_ping`, [bot, { SlackUserId }]);
+						}, 1500);
+						let nextDay = moment(pingTime).add(1, 'days');
+						models.User.update({
+							pingTime: nextDay
+						}, {
+							where: [`"id" = ?`,UserId]
+						});
+					}
+				});
+			}
+		})
+
+	});
+
+}
+
+// this deletes the most recent message, if it was a morning_ping message
+// this is to ensure that user does not get multitude of morning_ping messages stacked up, if they have not responded to one
+function deleteMostRecentMorningPing(bot, SlackUserId) {
+
+	bot.api.im.open({ user: SlackUserId }, (err, response) => {
+
+		if (response.channel && response.channel.id) {
+			let channel = response.channel.id;
+			bot.api.im.history({ channel }, (err, response) => {
+
+				if (response && response.messages && response.messages.length > 0) {
+
+					let mostRecentMessage = response.messages[0];
+
+					const { ts, attachments } = mostRecentMessage;
+					if (attachments && attachments.length > 0 && attachments[0].callback_id == `MORNING_PING_START_DAY` && ts) {
+
+						console.log("\n\n ~~ deleted ping day message! ~~ \n\n");
+						// if the most recent message was a morning ping day, then we will delete it!
+						let messageObject = {
+							channel,
+							ts
+						};
+						bot.api.chat.delete(messageObject);
+
+					}
+				}
+
+			});
+		}
+		
+	})
 
 }
 

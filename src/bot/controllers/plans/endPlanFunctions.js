@@ -35,7 +35,10 @@ export function startEndPlanConversation(convo) {
 	if (wonDay) {
 		convo.say(`:trophy: *Congratulations on winning the day!* :trophy:`);
 		convo.say(`It's all about time well spent, and today you did just that`);
-		convo.say(`Here's what you got done:\n${completedTaskListMessage}`);
+		if (completedDailyTasks.length > 0) {
+			convo.say(`Here's what you got done:\n${completedTaskListMessage}`);
+		}
+			
 		if (wonDayStreak > 1) {
 			convo.say(`*You’ve won the day ​2 days in a row* :fire:`);
 		}
@@ -53,7 +56,7 @@ export function startEndPlanConversation(convo) {
 
 function askForReflection(convo) {
 	
-	const { dayEnd: { wonDay, nickName } } = convo;
+	const { dayEnd: { wantsPing, pingTime, wonDay, nickName } } = convo;
 
 	let message = '';
 	if (wonDay) {
@@ -84,20 +87,109 @@ function askForReflection(convo) {
 		{
 			pattern: utterances.notToday,
 			callback: (response, convo) => {
+
 				convo.say(`Got it!`);
-				convo.say(`I hope you have a great rest of the day and I’ll see you soon!`);
+
+				if (wantsPing && !pingTime) {
+					askForPingTime(convo);
+				} else {
+					convo.say(`I hope you have a great rest of the day and I’ll see you soon!`);
+				}
+
 				convo.next();
+
 			}
 		},
 		{
 			default: true,
 			callback: (response, convo) => {
+
 				convo.say(`Thank you for sharing!`);
-				convo.say(`I hope you have a great rest of the day and I’ll see you soon!`);
 				convo.dayEnd.reflection = response.text;
+
+				if (wantsPing && !pingTime) {
+					askForPingTime(convo);
+				} else {
+					convo.say(`I hope you have a great rest of the day and I’ll see you soon!`);
+				}
+
 				convo.next();
+
 			}
 		}
 	]);
+
+}
+
+function askForPingTime(convo) {
+
+	const { dayEnd: { tz, wantsPing, pingTime, wonDay, nickName } } = convo;
+
+	let text = '';
+	if (wonDay) {
+		text = `To help you keep winning your days like today, I can proactively reach out in the morning to help you plan your day. *What time would you like me to check in* with you each weekday morning? Please be specific, \`i.e. 8:30am\``;
+	} else {
+		text = `To give you a better shot to win the day as soon as possible, I can proactively reach out in the morning to help you plan your day. *What time would you like me to check in* with you each weekday morning? Please be specific, \`i.e. 8:30am\``;
+	}
+
+	let attachments = [{
+		attachment_type: 'default',
+		callback_id: "PING_USER",
+		fallback: "Do you want me to ping you in the morning?",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+				name: buttonValues.no.name,
+				text: "No thanks",
+				value: buttonValues.no.value,
+				type: "button"
+			},
+		]
+	}];
+
+	convo.ask({
+		text,
+		attachments
+	}, [
+		{
+			pattern: utterances.no,
+			callback: function(response, convo) {
+
+				convo.dayEnd.wantsPing = false;
+				convo.say(`If you want me to reach out, just say \`show settings\` and set the time for your morning check-in. I hope you have a great rest of the day and I’ll see you soon!`);
+				convo.next();
+
+			}
+		},
+		{
+			default: true,
+			callback: function(response, convo) {
+
+				let { text, intentObject: { entities: { duration, datetime } } } = response;
+				let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+				let now = moment();
+
+				if (!customTimeObject && !datetime) {
+
+					convo.say("Sorry, I didn't get that :thinking_face: let me know a time like `8:30am`");
+					convo.repeat();
+
+				} else {
+
+					// datetime success!
+					convo.dayEnd.pingTime = customTimeObject;
+					let timeString = customTimeObject.format("h:mm a");
+					convo.say(`Great! I’ll reach out weekdays at ${timeString}. You can always change this by saying \`show settings\``);
+					convo.say(`I hope you have a great rest of the day and I’ll see you soon!`);
+
+				}
+
+				convo.next();
+
+			}
+		}
+	]);
+
+
 
 }

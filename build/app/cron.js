@@ -11,6 +11,7 @@ exports.default = function () {
 	if (_controllers.bots) {
 		checkForReminders();
 		checkForSessions();
+		checkForMorningPing();
 	}
 };
 
@@ -33,6 +34,102 @@ var _momentTimezone = require('moment-timezone');
 var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var checkForMorningPing = function checkForMorningPing() {
+
+	// sequelize is in EST by default. include date offset to make it correct UTC wise
+	var now = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss Z");
+
+	_models2.default.User.findAll({
+		where: ['"pingTime" < ? AND "wantsPing" = ?', now, true],
+		include: [_models2.default.SlackUser]
+	}).then(function (users) {
+
+		users.forEach(function (user) {
+			var UserId = user.id;
+			var pingTime = user.pingTime;
+			var _user$SlackUser = user.SlackUser;
+			var SlackUserId = _user$SlackUser.SlackUserId;
+			var tz = _user$SlackUser.tz;
+			var TeamId = _user$SlackUser.TeamId;
+
+
+			var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');
+			if (day == "Saturday" || day == "Sunday") {
+				// don't trigger on weekends for now!
+				var nextDay = (0, _momentTimezone2.default)(pingTime).add(1, 'days');
+				_models2.default.User.update({
+					pingTime: nextDay
+				}, {
+					where: ['"id" = ?', UserId]
+				});
+			} else {
+				// ping, then update to the next day
+				_models2.default.Team.find({
+					where: { TeamId: TeamId }
+				}).then(function (team) {
+					var token = team.token;
+
+					var bot = _controllers.bots[token];
+					if (bot) {
+						// delete most recent ping!
+						deleteMostRecentMorningPing(bot, SlackUserId);
+						setTimeout(function () {
+							_controllers.controller.trigger('user_morning_ping', [bot, { SlackUserId: SlackUserId }]);
+						}, 1500);
+						var _nextDay = (0, _momentTimezone2.default)(pingTime).add(1, 'days');
+						_models2.default.User.update({
+							pingTime: _nextDay
+						}, {
+							where: ['"id" = ?', UserId]
+						});
+					}
+				});
+			}
+		});
+	});
+};
+
+// this deletes the most recent message, if it was a morning_ping message
+// this is to ensure that user does not get multitude of morning_ping messages stacked up, if they have not responded to one
+
+
+// the cron file!
+
+
+// sequelize models
+function deleteMostRecentMorningPing(bot, SlackUserId) {
+
+	bot.api.im.open({ user: SlackUserId }, function (err, response) {
+
+		if (response.channel && response.channel.id) {
+			(function () {
+				var channel = response.channel.id;
+				bot.api.im.history({ channel: channel }, function (err, response) {
+
+					if (response && response.messages && response.messages.length > 0) {
+
+						var mostRecentMessage = response.messages[0];
+
+						var ts = mostRecentMessage.ts;
+						var attachments = mostRecentMessage.attachments;
+
+						if (attachments && attachments.length > 0 && attachments[0].callback_id == 'MORNING_PING_START_DAY' && ts) {
+
+							console.log("\n\n ~~ deleted ping day message! ~~ \n\n");
+							// if the most recent message was a morning ping day, then we will delete it!
+							var messageObject = {
+								channel: channel,
+								ts: ts
+							};
+							bot.api.chat.delete(messageObject);
+						}
+					}
+				});
+			})();
+		}
+	});
+}
 
 var checkForSessions = function checkForSessions() {
 
@@ -104,12 +201,6 @@ var checkForSessions = function checkForSessions() {
 	});
 };
 
-// the cron file!
-
-
-// sequelize models
-
-
 var checkForReminders = function checkForReminders() {
 
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
@@ -139,10 +230,10 @@ var checkForReminders = function checkForReminders() {
 					include: [_models2.default.SlackUser]
 				});
 			}).then(function (user) {
-				var _user$SlackUser = user.SlackUser;
-				var tz = _user$SlackUser.tz;
-				var TeamId = _user$SlackUser.TeamId;
-				var SlackUserId = _user$SlackUser.SlackUserId;
+				var _user$SlackUser2 = user.SlackUser;
+				var tz = _user$SlackUser2.tz;
+				var TeamId = _user$SlackUser2.TeamId;
+				var SlackUserId = _user$SlackUser2.SlackUserId;
 
 
 				_models2.default.Team.find({

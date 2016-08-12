@@ -242,9 +242,9 @@ function confirmPingToTeamMembers(convo, includedSlackUsers) {
 	// user has team members to include!!
 
 	var names = includedSlackUsers.map(function (includedSlackUser) {
-		return includedSlackUser.dataValues.User.nickName;
+		return includedSlackUser.dataValues.SlackName || includedSlackUser.dataValues.User.nickName;
 	});
-	var nameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(names);
+	var nameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(names, { slackNames: true });
 
 	// this now requires a confirmation yes, unless you do yes-forever
 	if (question == '') question = 'I\'ll be sharing your priorities with *' + nameStrings + '* when you\'re done planning :raised_hands:';
@@ -420,18 +420,18 @@ function askToIncludeTeamMembers(convo) {
 					include: [_models2.default.User]
 				}).then(function (slackUsers) {
 
-					var userNames = slackUsers.map(function (slackUser) {
-						return slackUser.dataValues.User.nickName;
+					var names = slackUsers.map(function (slackUser) {
+						return slackUser.dataValues.SlackName || slackUser.dataValues.User.nickName;
 					});
 					var finalSlackUserIdsToInclude = slackUsers.map(function (slackUser) {
 						return slackUser.dataValues.SlackUserId;
 					});
 
 					convo.newPlan.includeSlackUserIds = finalSlackUserIdsToInclude;
-					var userNameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(userNames);
+					var nameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(names, { slackNames: true });
 
 					convo.newPlan.pingTeamMembers = true;
-					convo.say('Great! After planning, I\'ll let *' + userNameStrings + '*  know that you’ll be focused on these priorities today');
+					convo.say('Great! After planning, I\'ll let *' + nameStrings + '*  know that you’ll be focused on these priorities today');
 					convo.say("You can add someone to receive your priorities automatically when you make them each morning by saying `show settings`");
 					addTimeToPriorities(convo);
 					convo.next();

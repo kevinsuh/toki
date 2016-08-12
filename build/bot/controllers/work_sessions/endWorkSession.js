@@ -118,7 +118,10 @@ exports.default = function (controller) {
 
 											// do our math update to daily task here
 											var minutesSpent = dailyTask.minutesSpent;
-											minutesSpent += workSessionMinutes;
+											if (!storedWorkSession) {
+												// if paused, already added the work session minutes to dailyTask
+												minutesSpent += workSessionMinutes;
+											}
 											dailyTask.update({
 												minutesSpent: minutesSpent
 											}).then(function (dailyTask) {
@@ -176,6 +179,7 @@ exports.default = function (controller) {
 														var workSessionMinutes = _convo$sessionDone$cu.workSessionMinutes;
 														var dailyTask = _convo$sessionDone$cu.dailyTask;
 														var additionalMinutes = _convo$sessionDone$cu.additionalMinutes;
+														var isPaused = _convo$sessionDone$cu.isPaused;
 														var priorityDecision = _convo$sessionDone.priorityDecision;
 
 														// if extend session, rest doesn't matter!
@@ -248,6 +252,17 @@ exports.default = function (controller) {
 																	minutesSpent: _minutesSpent2
 																});
 
+																// ** if paused session, must add minutes to updated task **
+																if (isPaused) {
+																	_minutesSpent2 = newDailyTask.dataValues.minutesSpent;
+																	_minutesSpent2 += workSessionMinutes;
+																	_models2.default.DailyTask.update({
+																		minutesSpent: _minutesSpent2
+																	}, {
+																		where: ['"id" = ? ', newDailyTask.dataValues.id]
+																	});
+																}
+
 																// 2. replace the dailyTask associated with current workSession
 																_models2.default.WorkSessionTask.destroy({
 																	where: ['"WorkSessionTasks"."WorkSessionId" = ?', WorkSessionId]
@@ -304,9 +319,15 @@ exports.default = function (controller) {
 																	_models2.default.Task.create({
 																		text: newTaskText
 																	}).then(function (task) {
+																		// ** if paused session, must add to replaced task **
+																		var minutesSpent = 0;
+																		if (isPaused) {
+																			minutesSpent = workSessionMinutes;
+																		}
 																		task.createDailyTask({
 																			priority: priority,
-																			UserId: UserId
+																			UserId: UserId,
+																			minutesSpent: minutesSpent
 																		}).then(function (dailyTask) {
 
 																			// 3. replace newly created dailyTask as the dailyTask to the workSession

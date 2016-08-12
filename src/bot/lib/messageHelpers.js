@@ -2,20 +2,27 @@
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
  */
 
-import { constants, buttonValues, colorsHash, taskListMessageNoButtonsAttachment } from './constants';
+import { constants, buttonValues, colorsHash, taskListMessageNoButtonsAttachment, quotes, approvalWords } from './constants';
 import { utterances } from './botResponses';
 
 import nlp from 'nlp_compromise';
 
-export function getRandomApprovalWord(config) {
+export function getRandomApprovalWord(config = {}) {
 	// gives you awesome, nice, sounds good, great, etc.
-	let approvalWords = ['nice', 'awesome', 'sounds good', 'great', 'fantastic', 'looking good', 'very nice', 'cool', 'boom', 'looks good'];
-	let approvalWord  = approvalWords[Math.floor(Math.random()*approvalWords.length)];
+	
+	let approvalWord = approvalWords[Math.floor(Math.random()*approvalWords.length)];
 
 	if (config.upperCase) {
 		approvalWord = capitalizeFirstLetter(approvalWord);
 	}
 	return approvalWord;
+}
+
+export function getRandomQuote(config = {}) {
+
+	let quote = quotes[Math.floor(Math.random()*quotes.length)];
+	return quote;
+
 }
 
 function capitalizeFirstLetter(string) {
@@ -420,6 +427,11 @@ export function convertMinutesToHoursString(minutes, config = {}) {
 		content = abbreviation ? `${content}${minutes} min` : `${content}${minutes} minutes`;
 	}
 
+	// for 0 time spent
+	if (minutes == 0 && hours == 0) {
+		content = `less than a minute`;
+	}
+
 	return content;
 }
 
@@ -606,10 +618,15 @@ export function prioritizeTaskArrayFromUserInput(taskObjectArray, input) {
 // returns tasks separated into red blocks
 export function commaSeparateOutTaskArray(a, config = {}) {
 
-	const { codeBlock } = config;
+	const { codeBlock, slackNames } = config;
 
 	a = a.map((a) => {
-		return (codeBlock ? `\`${a}\`` : `${a}`);
+		if (codeBlock) {
+			a = `\`${a}\``
+		} else if (slackNames) {
+			a = `@${a}`;
+		}
+		return a;
 	})
 
 	// make into string

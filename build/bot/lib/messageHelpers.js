@@ -9,6 +9,7 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
                                                                                                                                                                                                                                                                    */
 
 exports.getRandomApprovalWord = getRandomApprovalWord;
+exports.getRandomQuote = getRandomQuote;
 exports.getNewPlanAttachments = getNewPlanAttachments;
 exports.convertResponseObjectsToTaskArray = convertResponseObjectsToTaskArray;
 exports.convertResponseObjectToNewTaskArray = convertResponseObjectToNewTaskArray;
@@ -42,15 +43,25 @@ var _nlp_compromise2 = _interopRequireDefault(_nlp_compromise);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function getRandomApprovalWord(config) {
+function getRandomApprovalWord() {
+	var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
 	// gives you awesome, nice, sounds good, great, etc.
-	var approvalWords = ['nice', 'awesome', 'sounds good', 'great', 'fantastic', 'looking good', 'very nice', 'cool', 'boom', 'looks good'];
-	var approvalWord = approvalWords[Math.floor(Math.random() * approvalWords.length)];
+
+	var approvalWord = _constants.approvalWords[Math.floor(Math.random() * _constants.approvalWords.length)];
 
 	if (config.upperCase) {
 		approvalWord = capitalizeFirstLetter(approvalWord);
 	}
 	return approvalWord;
+}
+
+function getRandomQuote() {
+	var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+
+	var quote = _constants.quotes[Math.floor(Math.random() * _constants.quotes.length)];
+	return quote;
 }
 
 function capitalizeFirstLetter(string) {
@@ -454,6 +465,11 @@ function convertMinutesToHoursString(minutes) {
 		content = abbreviation ? '' + content + minutes + ' min' : '' + content + minutes + ' minutes';
 	}
 
+	// for 0 time spent
+	if (minutes == 0 && hours == 0) {
+		content = 'less than a minute';
+	}
+
 	return content;
 }
 
@@ -634,10 +650,16 @@ function prioritizeTaskArrayFromUserInput(taskObjectArray, input) {
 function commaSeparateOutTaskArray(a) {
 	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 	var codeBlock = config.codeBlock;
+	var slackNames = config.slackNames;
 
 
 	a = a.map(function (a) {
-		return codeBlock ? '`' + a + '`' : '' + a;
+		if (codeBlock) {
+			a = '`' + a + '`';
+		} else if (slackNames) {
+			a = '@' + a;
+		}
+		return a;
 	});
 
 	// make into string

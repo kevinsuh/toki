@@ -78,7 +78,7 @@ export const constants = {
 		reg_exp: new RegExp((/(:|[at]{2,}[ ]?[\d]+\b)/i))
 	},
 	MORNING: {
-		word: "day",
+		word: "morning",
 		hour: 0
 	},
 	AFTERNOON: {
@@ -609,6 +609,10 @@ export const buttonValues ={
 	goBack: {
 		name: "GO_BACK",
 		value: "go back!"
+	},
+	letsWinTheDay: {
+		name: "LETS_WIN_THE_DAY",
+		value: "lets win the day!"
 	}
 }
 
@@ -630,6 +634,51 @@ export const timeZones = {
 		name: "Pacific"
 	}
 }
+
+export const approvalWords = ['nice', 'awesome', 'sounds good', 'great', 'fantastic', 'looking good', 'very nice', 'cool', 'boom', 'looks good'];
+
+export const quotes = [
+	{
+		message: "By failing to prepare, you are preparing to fail.",
+		author: "Benjamin Franklin"
+	},
+	{
+		message: "Give me six hours to chop down a tree and I will spend the first four sharpening the axe.",
+		author: "Abraham Lincoln"
+	},
+	{
+		message: "If you don't know where you are going, you'll end up someplace else.",
+		author: "Yogi Berra"
+	},
+	{
+		message: "In preparing for battle I have always found that plans are useless, but planning is indispensable.",
+		author: "Dwight D. Eisenhower"
+	},
+	{
+		message: "Someone's sitting in the shade today because someone planted a tree a long time ago.",
+		author: "Warren Buffett"
+	},
+	{
+		message: "Unless commitment is made, there are only promises and hopes; but no plans.",
+		author: "Peter F. Drucker"
+	},
+	{
+		message: "Unfortunately, there seems to be far more opportunity out there than ability.... We should remember that good fortune often happens when opportunity meets with preparation.",
+		author: "Thomas A. Edison"
+	},
+	{
+		message: "I believe luck is preparation meeting opportunity. If you hadn’t been prepared when the opportunity came along, you wouldn’t have been lucky.",
+		author: "Oprah Winfrey"
+	},
+	{
+		message: "If I had an hour to solve a problem I'd spend 55 minutes thinking about the problem and 5 minutes thinking about solutions.",
+		author: "Albert Einstein"
+	},
+	{
+		message: "If you really look closely, most overnight successes took a long time.",
+		author: "Steve Jobs"
+	}
+]
 
 export const tokiOptionsAttachment = [
 	{

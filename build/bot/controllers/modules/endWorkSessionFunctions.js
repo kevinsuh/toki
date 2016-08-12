@@ -35,6 +35,7 @@ function doneSessionAskOptions(convo) {
 	var _convo$sessionDone$cu = _convo$sessionDone.currentSession;
 	var dailyTask = _convo$sessionDone$cu.dailyTask;
 	var workSessionTimeString = _convo$sessionDone$cu.workSessionTimeString;
+	var isPaused = _convo$sessionDone$cu.isPaused;
 
 	// minutesSpent is updated here, after closing the workSession
 

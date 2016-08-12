@@ -139,7 +139,7 @@ export default function(controller) {
 					}
 
 					if (!convo.newPlan.onboardVersion) {
-						convo.say(`Happy ${day}, ${name}! Let's win the ${daySplit} :muscle:`);
+						convo.say(`Let's win this ${day}, ${name}! :muscle:`);
 					}
 
 					startNewPlanFlow(convo);
@@ -251,12 +251,11 @@ export default function(controller) {
 																	if (pingTeamMembers) {
 																		includeSlackUserIds.forEach((includeSlackUserId) => {
 
-																			console.log(includeSlackUserId);
-
-																			bot.startPrivateConversation({ user: includeSlackUserId }, (err, convo) => {
-																				convo.say("HELLO TEST from kevin's priority!");
-																				convo.next();
-																			});
+																			const config = {
+																				IncluderSlackUserId: SlackUserId,
+																				IncludedSlackUserId: includeSlackUserId
+																			};
+																			controller.trigger(`notify_team_member`, [ bot, config ]);
 
 																		});
 																	}
@@ -811,7 +810,7 @@ export default function(controller) {
 		.then((user) => {
 
 			const UserId = user.id;
-			const { nickName, SlackUser: { tz } } = user;
+			const { nickName, wantsPing, pingTime, SlackUser: { tz } } = user;
 
 			user.getSessionGroups({
 				order: `"SessionGroup"."createdAt" DESC`,
@@ -862,6 +861,9 @@ export default function(controller) {
 							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
 								convo.dayEnd = {
+									tz,
+									wantsPing,
+									pingTime,
 									wonDay,
 									wonDayStreak,
 									nickName,
@@ -874,7 +876,7 @@ export default function(controller) {
 
 								convo.on('end', (convo) => {
 
-									const { wonDay, reflection } = convo.dayEnd;
+									const { wonDay, reflection, wantsPing, pingTime } = convo.dayEnd;
 									let now = moment();
 
 									// end your day
@@ -892,12 +894,21 @@ export default function(controller) {
 									})
 									.then((dailyTasks) => {
 										let DailyTaskIds = dailyTasks.map(dailyTask => dailyTask.id);
-										models.DailyTask.update({
-											type: "archived"
-										}, {
-											where: [ `"DailyTasks"."id" IN (?)`, DailyTaskIds ]
-										});
+										if (DailyTaskIds.length > 0) {
+											models.DailyTask.update({
+												type: "archived"
+											}, {
+												where: [ `"DailyTasks"."id" IN (?)`, DailyTaskIds ]
+											});
+										}
 									})
+
+									models.User.update({
+										pingTime,
+										wantsPing
+									}, {
+										where: [ `"id" = ?`, UserId]
+									});
 
 								});
 
