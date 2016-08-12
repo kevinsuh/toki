@@ -157,12 +157,14 @@ controller.on('team_join', function (bot, message) {
 								return user.SlackUser.update({
 									UserId: UserId,
 									SlackUserId: SlackUserId,
+									SlackName: nickName,
 									TeamId: TeamId
 								});
 							} else {
 								return _models2.default.SlackUser.create({
 									UserId: UserId,
 									SlackUserId: SlackUserId,
+									SlackName: nickName,
 									TeamId: TeamId
 								});
 							}
@@ -172,10 +174,11 @@ controller.on('team_join', function (bot, message) {
 								nickName: nickName
 							}).then(function (user) {
 								var UserId = user.id;
-								user.SlackUser.create({
+								return user.SlackUser.create({
 									UserId: UserId,
 									SlackUserId: SlackUserId,
-									TeamId: TeamId
+									TeamId: TeamId,
+									SlackName: nickName
 								});
 							});
 						}

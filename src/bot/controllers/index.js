@@ -96,12 +96,14 @@ controller.on('team_join', function (bot, message) {
 							return user.SlackUser.update({
 								UserId,
 								SlackUserId,
+								SlackName: nickName,
 								TeamId
 							});
 						} else {
 							return models.SlackUser.create({
 								UserId,
 								SlackUserId,
+								SlackName: nickName,
 								TeamId
 							});
 						}
@@ -112,13 +114,15 @@ controller.on('team_join', function (bot, message) {
 						})
 						.then((user) => {
 							const UserId = user.id;
-							user.SlackUser.create({
+							return user.SlackUser.create({
 								UserId,
 								SlackUserId,
-								TeamId
+								TeamId,
+								SlackName: nickName
 							});
 						})
 					}
+					
 				})
 				.then((slackUser) => {
 					controller.trigger('begin_onboard_flow', [ bot, { SlackUserId } ]);
