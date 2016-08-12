@@ -90,12 +90,14 @@ var checkForMorningPing = function checkForMorningPing() {
 	});
 };
 
+// this deletes the most recent message, if it was a morning_ping message
+// this is to ensure that user does not get multitude of morning_ping messages stacked up, if they have not responded to one
+
+
 // the cron file!
 
 
 // sequelize models
-
-
 function deleteMostRecentMorningPing(bot, SlackUserId) {
 
 	bot.api.im.open({ user: SlackUserId }, function (err, response) {
