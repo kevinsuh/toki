@@ -39,7 +39,13 @@ var checkForMorningPing = () => {
 
 			let day = moment().tz(tz).format('dddd');
 			if (day == "Saturday" || day == "Sunday") {
-				// don't do weekends for now!
+				// don't trigger on weekends for now!
+				let nextDay = moment(pingTime).add(1, 'days');
+				models.User.update({
+					pingTime: nextDay
+				}, {
+					where: [`"id" = ?`, UserId]
+				});
 			} else {
 				// ping, then update to the next day
 				models.Team.find({

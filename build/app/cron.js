@@ -56,7 +56,13 @@ var checkForMorningPing = function checkForMorningPing() {
 
 			var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');
 			if (day == "Saturday" || day == "Sunday") {
-				// don't do weekends for now!
+				// don't trigger on weekends for now!
+				var nextDay = (0, _momentTimezone2.default)(pingTime).add(1, 'days');
+				_models2.default.User.update({
+					pingTime: nextDay
+				}, {
+					where: ['"id" = ?', UserId]
+				});
 			} else {
 				// ping, then update to the next day
 				_models2.default.Team.find({
@@ -67,9 +73,9 @@ var checkForMorningPing = function checkForMorningPing() {
 					var bot = _controllers.bots[token];
 					if (bot) {
 						_controllers.controller.trigger('user_morning_ping', [bot, { SlackUserId: SlackUserId }]);
-						var nextDay = (0, _momentTimezone2.default)(pingTime).add(1, 'days');
+						var _nextDay = (0, _momentTimezone2.default)(pingTime).add(1, 'days');
 						_models2.default.User.update({
-							pingTime: nextDay
+							pingTime: _nextDay
 						}, {
 							where: ['"id" = ?', UserId]
 						});
