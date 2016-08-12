@@ -106,6 +106,9 @@ exports.default = function (controller) {
 				include: [_models2.default.Task],
 				order: '"Task"."done", "DailyTask"."priority" ASC'
 			}).then(function (dailyTasks) {
+
+				dailyTasks = (0, _messageHelpers.convertToSingleTaskObjectArray)(dailyTasks, "daily");
+
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
 					convo.sessionStart = {
@@ -232,7 +235,7 @@ exports.default = function (controller) {
 							// cancel current session and restart `begin_session`
 							(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 							setTimeout(function () {
-								controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+								controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId, dailyTaskToWorkOn: dailyTask }]);
 							}, 700);
 						} else if (sessionStart.endDay) {
 							// this should rarely ever, ever happen. (i.e. NEVER)
