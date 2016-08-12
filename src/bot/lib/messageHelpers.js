@@ -613,10 +613,15 @@ export function prioritizeTaskArrayFromUserInput(taskObjectArray, input) {
 // returns tasks separated into red blocks
 export function commaSeparateOutTaskArray(a, config = {}) {
 
-	const { codeBlock } = config;
+	const { codeBlock, slackNames } = config;
 
 	a = a.map((a) => {
-		return (codeBlock ? `\`${a}\`` : `${a}`);
+		if (codeBlock) {
+			a = `\`${a}\``
+		} else if (slackNames) {
+			a = `@${a}`;
+		}
+		return a;
 	})
 
 	// make into string

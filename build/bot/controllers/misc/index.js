@@ -20,7 +20,9 @@ exports.default = function (controller) {
 
 			var UserId = user.id;
 			var nickName = user.nickName;
+			var SlackName = user.SlackUser.SlackName;
 
+			var name = SlackName ? '@' + SlackName : nickName;
 
 			user.getDailyTasks({
 				where: ['"DailyTask"."type" = ?', "live"],
@@ -40,8 +42,8 @@ exports.default = function (controller) {
 							dailyTasks: dailyTasks
 						};
 
-						convo.say('Hey! ' + nickName + ' wanted me to share their top priorities with you today:\n' + taskListMessage);
-						convo.say('If you have any questions about what ' + nickName + ' is working on, please send them a Slack message :mailbox:');
+						convo.say('Hey! ' + name + ' wanted me to share their top priorities with you today:\n' + taskListMessage);
+						convo.say('If you have any questions about what ' + name + ' is working on, please send them a Slack message :mailbox:');
 					});
 				}
 			});

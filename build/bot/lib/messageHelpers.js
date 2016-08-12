@@ -645,10 +645,16 @@ function prioritizeTaskArrayFromUserInput(taskObjectArray, input) {
 function commaSeparateOutTaskArray(a) {
 	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 	var codeBlock = config.codeBlock;
+	var slackNames = config.slackNames;
 
 
 	a = a.map(function (a) {
-		return codeBlock ? '`' + a + '`' : '' + a;
+		if (codeBlock) {
+			a = '`' + a + '`';
+		} else if (slackNames) {
+			a = '@' + a;
+		}
+		return a;
 	});
 
 	// make into string

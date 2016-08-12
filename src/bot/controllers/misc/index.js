@@ -27,7 +27,8 @@ export default function(controller) {
 		}).then((user) => {
 
 			const UserId       = user.id;
-			const { nickName } = user;
+			const { nickName, SlackUser: { SlackName } } = user;
+			const name = SlackName ? `@${SlackName}` : nickName;
 
 			user.getDailyTasks({
 				where: [`"DailyTask"."type" = ?`, "live"],
@@ -48,8 +49,8 @@ export default function(controller) {
 							dailyTasks
 						};
 
-						convo.say(`Hey! ${nickName} wanted me to share their top priorities with you today:\n${taskListMessage}`);
-						convo.say(`If you have any questions about what ${nickName} is working on, please send them a Slack message :mailbox:`);
+						convo.say(`Hey! ${name} wanted me to share their top priorities with you today:\n${taskListMessage}`);
+						convo.say(`If you have any questions about what ${name} is working on, please send them a Slack message :mailbox:`);
 
 					});
 				}

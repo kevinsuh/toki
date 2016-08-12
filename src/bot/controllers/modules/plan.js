@@ -219,8 +219,8 @@ function confirmPingToTeamMembers(convo, includedSlackUsers, question = '') {
 	let { newPlan: { prioritizedTasks } } = convo;
 
 	// user has team members to include!!
-	let names       = includedSlackUsers.map(includedSlackUser => includedSlackUser.dataValues.User.nickName);
-	let nameStrings = commaSeparateOutTaskArray(names);
+	let names = includedSlackUsers.map(includedSlackUser => includedSlackUser.dataValues.SlackName || includedSlackUser.dataValues.User.nickName);
+	let nameStrings = commaSeparateOutTaskArray(names, { slackNames: true });
 
 	// this now requires a confirmation yes, unless you do yes-forever
 	if (question == '')
@@ -423,14 +423,14 @@ function askToIncludeTeamMembers(convo) {
 					})
 					.then((slackUsers) => {
 
-						let userNames = slackUsers.map(slackUser => slackUser.dataValues.User.nickName );
+						let names = slackUsers.map(slackUser => slackUser.dataValues.SlackName || slackUser.dataValues.User.nickName );
 						let finalSlackUserIdsToInclude = slackUsers.map(slackUser => slackUser.dataValues.SlackUserId );
 
 						convo.newPlan.includeSlackUserIds = finalSlackUserIdsToInclude;
-						let userNameStrings               = commaSeparateOutTaskArray(userNames);
+						let nameStrings                   = commaSeparateOutTaskArray(names, { slackNames: true });
 
 						convo.newPlan.pingTeamMembers = true;
-						convo.say(`Great! After planning, I'll let *${userNameStrings}*  know that you’ll be focused on these priorities today`);
+						convo.say(`Great! After planning, I'll let *${nameStrings}*  know that you’ll be focused on these priorities today`);
 						convo.say("You can add someone to receive your priorities automatically when you make them each morning by saying `show settings`");
 						addTimeToPriorities(convo);
 						convo.next();
