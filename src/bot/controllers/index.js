@@ -105,6 +105,19 @@ controller.on('team_join', function (bot, message) {
 								TeamId
 							});
 						}
+					} else {
+						models.User.create({
+							email,
+							nickName
+						})
+						.then((user) => {
+							const UserId = user.id;
+							user.SlackUser.create({
+								UserId,
+								SlackUserId,
+								TeamId
+							});
+						})
 					}
 				})
 				.then((slackUser) => {

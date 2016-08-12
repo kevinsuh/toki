@@ -166,6 +166,18 @@ controller.on('team_join', function (bot, message) {
 									TeamId: TeamId
 								});
 							}
+						} else {
+							_models2.default.User.create({
+								email: email,
+								nickName: nickName
+							}).then(function (user) {
+								var UserId = user.id;
+								user.SlackUser.create({
+									UserId: UserId,
+									SlackUserId: SlackUserId,
+									TeamId: TeamId
+								});
+							});
 						}
 					}).then(function (slackUser) {
 						controller.trigger('begin_onboard_flow', [bot, { SlackUserId: SlackUserId }]);
