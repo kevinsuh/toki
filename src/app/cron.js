@@ -1,11 +1,14 @@
 import { bots } from '../bot/controllers';
 import { controller } from '../bot/controllers';
 import { constants } from './lib/constants';
+import { startSessionOptionsAttachments } from '../bot/lib/constants';
+import { closeOldRemindersAndSessions } from '../bot/lib/miscHelpers';
+import { convertMinutesToHoursString } from '../bot/lib/messageHelpers';
 
 // sequelize models
 import models from './models';
 
-import moment from 'moment';
+import moment from 'moment-timezone';
 
 // the cron file!
 export default function() {
@@ -15,7 +18,95 @@ export default function() {
 	if (bots) {
 		checkForReminders();
 		checkForSessions();
+		checkForMorningPing();
 	}
+
+}
+
+var checkForMorningPing = () => {
+
+	// sequelize is in EST by default. include date offset to make it correct UTC wise
+	let now = moment().format("YYYY-MM-DD HH:mm:ss Z");
+
+	models.User.findAll({
+		where: [ `"pingTime" < ? AND "wantsPing" = ?`, now, true ],
+		include: [ models.SlackUser ]
+	}).then((users) => {
+
+		users.forEach((user) => {
+			const UserId                = user.id;
+			const { pingTime, SlackUser: { SlackUserId, tz, TeamId } } = user;
+
+			let day = moment().tz(tz).format('dddd');
+			if (day == "Saturday" || day == "Sunday") {
+				// don't trigger on weekends for now!
+				let nextDay = moment(pingTime).add(1, 'days');
+				models.User.update({
+					pingTime: nextDay
+				}, {
+					where: [`"id" = ?`, UserId]
+				});
+			} else {
+				// ping, then update to the next day
+				models.Team.find({
+					where: { TeamId }
+				})
+				.then((team) => {
+					const { token } = team;
+					var bot = bots[token];
+					if (bot) {
+						// delete most recent ping!
+						deleteMostRecentMorningPing(bot, SlackUserId);
+						setTimeout(() => {
+							controller.trigger(`user_morning_ping`, [bot, { SlackUserId }]);
+						}, 1500);
+						let nextDay = moment(pingTime).add(1, 'days');
+						models.User.update({
+							pingTime: nextDay
+						}, {
+							where: [`"id" = ?`,UserId]
+						});
+					}
+				});
+			}
+		})
+
+	});
+
+}
+
+// this deletes the most recent message, if it was a morning_ping message
+// this is to ensure that user does not get multitude of morning_ping messages stacked up, if they have not responded to one
+function deleteMostRecentMorningPing(bot, SlackUserId) {
+
+	bot.api.im.open({ user: SlackUserId }, (err, response) => {
+
+		if (response.channel && response.channel.id) {
+			let channel = response.channel.id;
+			bot.api.im.history({ channel }, (err, response) => {
+
+				if (response && response.messages && response.messages.length > 0) {
+
+					let mostRecentMessage = response.messages[0];
+
+					const { ts, attachments } = mostRecentMessage;
+					if (attachments && attachments.length > 0 && attachments[0].callback_id == `MORNING_PING_START_DAY` && ts) {
+
+						console.log("\n\n ~~ deleted ping day message! ~~ \n\n");
+						// if the most recent message was a morning ping day, then we will delete it!
+						let messageObject = {
+							channel,
+							ts
+						};
+						bot.api.chat.delete(messageObject);
+
+					}
+				}
+
+			});
+		}
+		
+	})
 
 }
 
@@ -78,7 +169,9 @@ var checkForSessions = () => {
 						var bot = bots[token];
 						if (bot) {
 							// alarm is up for session
-							controller.trigger('session_timer_up', [bot, config]);
+							const sessionTimerUp  = true;
+							config.sessionTimerUp = sessionTimerUp
+							controller.trigger(`done_session_flow`, [bot, { SlackUserId, sessionTimerUp }]);
 						}
 					});
 
@@ -125,14 +218,14 @@ var checkForReminders = () => {
 			})
 			.then((user) => {
 
-				const { SlackUser: { TeamId, SlackUserId } } = user;
+				const { SlackUser: { tz, TeamId, SlackUserId } } = user;
 
 				models.Team.find({
 					where: { TeamId }
 				})
 				.then((team) => {
 					const { token } = team;
-					var bot = bots[token];
+					let bot = bots[token];
 
 					if (bot) {
 
@@ -161,20 +254,37 @@ var checkForReminders = () => {
 							})
 
 						} else {
-							// alarm is up for reminder
-							// send the message!
-							bot.startPrivateConversation({
-								user: user.SlackUser.SlackUserId 
-							}, (err, convo) => {
 
-								if (convo) {
+							const SlackUserId = user.SlackUser.SlackUserId 
+
+							if (reminder.type == "start_work") {
+								// this type of reminder will immediately ask user if they want to get started
+								reminder.getDailyTask({
+									include: [ models.Task ]
+								})
+								.then((dailyTask) => {
+
+									// get current session
+									let config = { 
+										SlackUserId
+									};
+									
+									controller.trigger(`begin_session`, [ bot, config ]);
+									
+								})
+
+							} else {
+
+								bot.startPrivateConversation({
+									user: SlackUserId
+								}, (err, convo) => {
+									// standard reminder
 									var customNote = reminder.customNote ? `(\`${reminder.customNote}\`)` : '';
-									var message = `Hey! You wanted a reminder ${customNote} :smiley: :alarm_clock: `;
-
+									var message = `Hey! You wanted a reminder ${customNote}:alarm_clock: `;
 									convo.say(message);
-								}
-								
-							});
+								});
+									
+							}
 						}
 
 					}

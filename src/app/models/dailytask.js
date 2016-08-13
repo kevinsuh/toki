@@ -6,6 +6,9 @@ module.exports = function(sequelize, DataTypes) {
     TaskId: DataTypes.INTEGER,
     type: {  type: DataTypes.STRING,
              defaultValue: "live"
+          },
+    minutesSpent: {  type: DataTypes.INTEGER,
+                     defaultValue: 0
           }
   }, {
     classMethods: {
@@ -13,6 +16,7 @@ module.exports = function(sequelize, DataTypes) {
         DailyTask.belongsTo(models.Task);
         DailyTask.belongsTo(models.User);
         DailyTask.belongsToMany(models.WorkSession, { through: "WorkSessionTask" });
+        DailyTask.hasMany(models.Reminder);
       }
     }
   });

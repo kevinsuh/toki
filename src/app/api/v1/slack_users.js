@@ -7,7 +7,7 @@ var router = express.Router();
 
 import { bot } from '../../../server';
 import { controller } from '../../../bot/controllers';
-import { getTimeZoneOffsetForUser, seedDatabaseWithExistingSlackUsers } from '../../../bot/lib/slackApiHelpers';
+import { getTimeZoneOffsetForUser } from '../../../bot/lib/slackApiHelpers';
 import models from '../../models';
 
 /**
@@ -170,7 +170,6 @@ res.json({"hello":"world"});
   // })
   
 
-  // seedDatabaseWithExistingSlackUsers(bot);
   console.log("checking session:");
   // checkForSessions();
   

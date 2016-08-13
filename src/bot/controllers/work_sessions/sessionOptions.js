@@ -26,11 +26,8 @@ export default function(controller) {
 
 		const { SlackUserId, botCallback } = config;
 
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			let botToken = bot.config.token;
-			bot          = bots[botToken];
-		}
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -61,6 +58,7 @@ export default function(controller) {
 						// GOOD TO PAUSE NOW
 						const workSessionId  = workSession.id;
 						const endTime        = moment(workSession.endTime);
+						const startTime      = moment(workSession.startTime);
 						let now              = moment();
 						let minutesRemaining = Math.round((moment.duration(endTime.diff(now)).asMinutes() * 100)) / 100; // 2 decimal places
 
@@ -91,10 +89,27 @@ export default function(controller) {
 
 								/**
 								 * 		~~ GOOD TO GO TO PAUSE SESSION! ~~
+								 * 			add minutes to count when pausing
+								 * 		since you are creating new workSession each time
 								 */
 								
+								let workSessionMinutes = Math.round(moment.duration(now.diff(startTime)).asMinutes());
+
+								let dailyTask    = dailyTasks[0];
+								if (!dailyTask){
+									// FAILURE FAILURE SHOULD NEVER HAPPEN
+									// (this means no dailyTask attached to workSession)
+									return;
+								}
+								let minutesSpent = dailyTask.minutesSpent;
+								minutesSpent     += workSessionMinutes;
+
+								dailyTask.update({
+									minutesSpent
+								});
+
 								workSession.update({
-									endTime: moment(),
+									endTime: now,
 									live: false
 								});
 
@@ -104,7 +119,8 @@ export default function(controller) {
 								});
 
 								timeString = convertMinutesToHoursString(minutesRemaining);
-								message    = `Your session is paused :double_vertical_bar:. You have *${timeString}* remaining for ${tasksToWorkOnString}`;
+								let workSessionTimeString = convertMinutesToHoursString(workSessionMinutes);
+								message    = `Your session is paused :double_vertical_bar:. You've worked for ${workSessionTimeString} towards \`${tasksToWorkOnString}\` and have *${timeString} remaining* in this session`;
 
 							}
 							// making this just a reminder now so that user can end his own session as he pleases
@@ -135,13 +151,10 @@ export default function(controller) {
 
 	controller.on(`session_resume_flow`, (bot, config) => {
 
-		const { SlackUserId, botCallback } = config;
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			let botToken = bot.config.token;
-			bot          = bots[botToken];
-		}
+		const { SlackUserId, botCallback } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -172,7 +185,7 @@ export default function(controller) {
 
 						workSession.getDailyTasks({
 							include: [ models.Task ],
-							where: [`"Task"."done" = ? AND "DailyTask"."type" = ?`, false, "live"]
+							where: [`"DailyTask"."type" = ?`, "live"]
 						})
 						.then((dailyTasks) => {
 
@@ -229,7 +242,7 @@ export default function(controller) {
 
 										bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 											convo.say({
-												text: `Good luck with ${tasksString}!\n\nSee you in ${timeString} at *${endTimeString}* :timer_clock:`,
+												text: `Resumed :arrow_forward:! Good luck with \`${tasksString}\`!\n\nSee you in ${timeString} at *${endTimeString}* :timer_clock:`,
 												attachments: startSessionOptionsAttachments
 											});
 											convo.next();
@@ -288,13 +301,10 @@ export default function(controller) {
 
 	controller.on(`session_add_checkin_flow`, (bot, config) => {
 
-		const { SlackUserId, botCallback } = config;
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
-			bot          = bots[botToken];
-		}
+		const { SlackUserId } = config;
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
@@ -340,27 +350,13 @@ export default function(controller) {
 		});
 	})
 
-	controller.on(`session_end_early_flow`, (bot, config) => {
-
-		const { SlackUserId, botCallback, storedWorkSession } = config;
-
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
-			bot          = bots[botToken];
-		}
-
-		controller.trigger(`done_session_flow`, [bot, config]);
-
-	});
-
 };
 
-function notInSessionWouldYouLikeToStartOne(config) {
+export function notInSessionWouldYouLikeToStartOne(config) {
 	const { bot, SlackUserId, controller } = config;
 	if (bot && SlackUserId && controller) {
 		bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
-			convo.ask(`You're not in a session right now! Would you like to start one :muscle:?`, [
+			convo.ask(`Wait, you're not in a session right now! Would you like to start one?`, [
 				{
 					pattern: utterances.yes,
 					callback: (response, convo) => {
@@ -387,7 +383,7 @@ function notInSessionWouldYouLikeToStartOne(config) {
 			convo.next();
 			convo.on('end', (convo) => {
 				if (convo.startSession) {
-					controller.trigger(`confirm_new_session`, [ bot, { SlackUserId } ]);
+					controller.trigger(`begin_session`, [ bot, { SlackUserId } ]);
 				}
 				setTimeout(() => {
 					resumeQueuedReachouts(bot, { SlackUserId });

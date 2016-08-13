@@ -11,6 +11,7 @@ exports.default = function () {
 	if (_controllers.bots) {
 		checkForReminders();
 		checkForSessions();
+		checkForMorningPing();
 	}
 };
 
@@ -18,20 +19,122 @@ var _controllers = require('../bot/controllers');
 
 var _constants = require('./lib/constants');
 
+var _constants2 = require('../bot/lib/constants');
+
+var _miscHelpers = require('../bot/lib/miscHelpers');
+
+var _messageHelpers = require('../bot/lib/messageHelpers');
+
 var _models = require('./models');
 
 var _models2 = _interopRequireDefault(_models);
 
-var _moment = require('moment');
+var _momentTimezone = require('moment-timezone');
 
-var _moment2 = _interopRequireDefault(_moment);
+var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var checkForMorningPing = function checkForMorningPing() {
+
+	// sequelize is in EST by default. include date offset to make it correct UTC wise
+	var now = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss Z");
+
+	_models2.default.User.findAll({
+		where: ['"pingTime" < ? AND "wantsPing" = ?', now, true],
+		include: [_models2.default.SlackUser]
+	}).then(function (users) {
+
+		users.forEach(function (user) {
+			var UserId = user.id;
+			var pingTime = user.pingTime;
+			var _user$SlackUser = user.SlackUser;
+			var SlackUserId = _user$SlackUser.SlackUserId;
+			var tz = _user$SlackUser.tz;
+			var TeamId = _user$SlackUser.TeamId;
+
+
+			var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');
+			if (day == "Saturday" || day == "Sunday") {
+				// don't trigger on weekends for now!
+				var nextDay = (0, _momentTimezone2.default)(pingTime).add(1, 'days');
+				_models2.default.User.update({
+					pingTime: nextDay
+				}, {
+					where: ['"id" = ?', UserId]
+				});
+			} else {
+				// ping, then update to the next day
+				_models2.default.Team.find({
+					where: { TeamId: TeamId }
+				}).then(function (team) {
+					var token = team.token;
+
+					var bot = _controllers.bots[token];
+					if (bot) {
+						// delete most recent ping!
+						deleteMostRecentMorningPing(bot, SlackUserId);
+						setTimeout(function () {
+							_controllers.controller.trigger('user_morning_ping', [bot, { SlackUserId: SlackUserId }]);
+						}, 1500);
+						var _nextDay = (0, _momentTimezone2.default)(pingTime).add(1, 'days');
+						_models2.default.User.update({
+							pingTime: _nextDay
+						}, {
+							where: ['"id" = ?', UserId]
+						});
+					}
+				});
+			}
+		});
+	});
+};
+
+// this deletes the most recent message, if it was a morning_ping message
+// this is to ensure that user does not get multitude of morning_ping messages stacked up, if they have not responded to one
+
+
+// the cron file!
+
+
+// sequelize models
+function deleteMostRecentMorningPing(bot, SlackUserId) {
+
+	bot.api.im.open({ user: SlackUserId }, function (err, response) {
+
+		if (response.channel && response.channel.id) {
+			(function () {
+				var channel = response.channel.id;
+				bot.api.im.history({ channel: channel }, function (err, response) {
+
+					if (response && response.messages && response.messages.length > 0) {
+
+						var mostRecentMessage = response.messages[0];
+
+						var ts = mostRecentMessage.ts;
+						var attachments = mostRecentMessage.attachments;
+
+						if (attachments && attachments.length > 0 && attachments[0].callback_id == 'MORNING_PING_START_DAY' && ts) {
+
+							console.log("\n\n ~~ deleted ping day message! ~~ \n\n");
+							// if the most recent message was a morning ping day, then we will delete it!
+							var messageObject = {
+								channel: channel,
+								ts: ts
+							};
+							bot.api.chat.delete(messageObject);
+						}
+					}
+				});
+			})();
+		}
+	});
+}
 
 var checkForSessions = function checkForSessions() {
 
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
-	var now = (0, _moment2.default)().format("YYYY-MM-DD HH:mm:ss Z");
+	var now = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss Z");
 
 	// get the most recent work session! assume this is the one user is working on
 	_models2.default.WorkSession.findAll({
@@ -87,7 +190,9 @@ var checkForSessions = function checkForSessions() {
 						var bot = _controllers.bots[token];
 						if (bot) {
 							// alarm is up for session
-							_controllers.controller.trigger('session_timer_up', [bot, config]);
+							var sessionTimerUp = true;
+							config.sessionTimerUp = sessionTimerUp;
+							_controllers.controller.trigger('done_session_flow', [bot, { SlackUserId: SlackUserId, sessionTimerUp: sessionTimerUp }]);
 						}
 					});
 				});
@@ -96,16 +201,10 @@ var checkForSessions = function checkForSessions() {
 	});
 };
 
-// the cron file!
-
-
-// sequelize models
-
-
 var checkForReminders = function checkForReminders() {
 
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
-	var now = (0, _moment2.default)().format("YYYY-MM-DD HH:mm:ss Z");
+	var now = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss Z");
 
 	_models2.default.Reminder.findAll({
 		where: ['"remindTime" < ? AND open = ?', now, true]
@@ -131,9 +230,10 @@ var checkForReminders = function checkForReminders() {
 					include: [_models2.default.SlackUser]
 				});
 			}).then(function (user) {
-				var _user$SlackUser = user.SlackUser;
-				var TeamId = _user$SlackUser.TeamId;
-				var SlackUserId = _user$SlackUser.SlackUserId;
+				var _user$SlackUser2 = user.SlackUser;
+				var tz = _user$SlackUser2.tz;
+				var TeamId = _user$SlackUser2.TeamId;
+				var SlackUserId = _user$SlackUser2.SlackUserId;
 
 
 				_models2.default.Team.find({
@@ -167,19 +267,35 @@ var checkForReminders = function checkForReminders() {
 								}
 							});
 						} else {
-							// alarm is up for reminder
-							// send the message!
-							bot.startPrivateConversation({
-								user: user.SlackUser.SlackUserId
-							}, function (err, convo) {
+							(function () {
 
-								if (convo) {
-									var customNote = reminder.customNote ? '(`' + reminder.customNote + '`)' : '';
-									var message = 'Hey! You wanted a reminder ' + customNote + ' :smiley: :alarm_clock: ';
+								var SlackUserId = user.SlackUser.SlackUserId;
 
-									convo.say(message);
+								if (reminder.type == "start_work") {
+									// this type of reminder will immediately ask user if they want to get started
+									reminder.getDailyTask({
+										include: [_models2.default.Task]
+									}).then(function (dailyTask) {
+
+										// get current session
+										var config = {
+											SlackUserId: SlackUserId
+										};
+
+										_controllers.controller.trigger('begin_session', [bot, config]);
+									});
+								} else {
+
+									bot.startPrivateConversation({
+										user: SlackUserId
+									}, function (err, convo) {
+										// standard reminder
+										var customNote = reminder.customNote ? '(`' + reminder.customNote + '`)' : '';
+										var message = 'Hey! You wanted a reminder ' + customNote + ':alarm_clock: ';
+										convo.say(message);
+									});
 								}
-							});
+							})();
 						}
 					}
 				});

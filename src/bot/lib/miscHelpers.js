@@ -1,6 +1,35 @@
 import models from '../../app/models';
 import moment from 'moment-timezone';
-import { DURATION_INTENT, TIME_INTENT, buttonValues, colorsHash } from './constants';
+import { constants, buttonValues, colorsHash } from './constants';
+
+export function getSlackUsersFromString(string) {
+	let arrayString = string.split(/[<@>]/);
+	let slackUsers = [];
+	arrayString.forEach((string) => {
+		if (string[0] === "U") {
+			slackUsers.push(string);
+		}
+	});
+	if (slackUsers.length == 0) {
+		return false;
+	} else {
+		return slackUsers;
+	}
+}
+
+export function getCurrentDaySplit(tz) {
+	let daySplit = '';
+	let currentHour = moment().tz(tz).format("HH");
+	if (currentHour >= constants.AFTERNOON.hour && currentHour <= constants.EVENING.hour && false) {
+		daySplit = constants.AFTERNOON.word;
+	} else if (currentHour >= constants.EVENING.hour) {
+		daySplit = constants.EVENING.word;
+	} else {
+		daySplit = constants.MORNING.word;
+	}
+	return daySplit;
+}
+
 
 /**
  * this creates a moment object that takes in a timestamp
@@ -72,11 +101,12 @@ export function witTimeResponseToTimeZoneObject(response, tz) {
 
 	console.log("\n\n response obj in witTimeResponseToTimeZoneObject \n\n")
 
-	var { intentObject: { entities } } = response;
+	var { text, intentObject: { entities } } = response;
 	const { duration, datetime } = entities;
 
 	var now = moment();
 	var remindTimeStamp;
+
 	if ((!datetime && !duration) || !tz) {
 		remindTimeStamp = false; // not valid
 	} else {
@@ -102,7 +132,7 @@ export function witTimeResponseToTimeZoneObject(response, tz) {
 			}
 			
 			// handle if it is a duration configured intent
-			if (DURATION_INTENT.reg_exp.test(response.text) && !TIME_INTENT.reg_exp.test(response.text)) {
+			if (constants.DURATION_INTENT.reg_exp.test(response.text) && !constants.TIME_INTENT.reg_exp.test(response.text)) {
 
 				console.log("\n\n ~~ interpreted datetime as duration ~~ \n");
 				console.log(response.text);
@@ -176,9 +206,11 @@ export function consoleLog() {
 // to avoid cron job pushing in middle of convo
 export function closeOldRemindersAndSessions(user) {
 
+	let now = moment().format("YYYY-MM-DD HH:mm:ss Z");
+
 	// cancel old sessions and reminders as early as possible
 	user.getReminders({
-		where: [ `"open" = ? AND "type" IN (?)`, true, ["work_session", "break", "done_session_snooze"] ]
+		where: [ `"open" = ? AND "type" IN (?) AND "Reminder"."createdAt" < ? `, true, ["work_session", "break", "done_session_snooze"], now ]
 	}).
 	then((oldReminders) => {
 		oldReminders.forEach((reminder) => {
@@ -264,116 +296,30 @@ export function mapTimeToTaskArray(taskArray, timeToTasksArray) {
 	return taskArray;
 }
 
-// get button attachments for your plan list
-export function getPlanCommandOptionAttachments(options = {}) {
+export function getDailyTaskForSession(dailyTasks) {
 
-	let optionsAttachment = [
-		{
-			attachment_type: 'default',
-			callback_id: "PLAN_OPTIONS",
-			fallback: "What do you want to do with your plan?",
-			color: colorsHash.grey.hex,
-			actions: []
+	let startDailyTask = false;
+	dailyTasks.some((dailyTask) => {
+		// this loops through all "live" dailyTasks, EVEN COMPLETED ONES
+		const { minutes, minutesSpent, Task: { done } } = dailyTask.dataValues;
+		if (!done) {
+			if (minutes > minutesSpent) {
+				startDailyTask = dailyTask;
+				return true;
+			}
 		}
-	];
-
-	let actions = [ 
-		{
-			name: buttonValues.planCommands.addTasks.name,
-			text: "Add Tasks",
-			value: buttonValues.planCommands.addTasks.value,
-			type: "button"
-		},
-		{
-				name: buttonValues.planCommands.completeTasks.name,
-				text: "Check Off Tasks",
-				value: buttonValues.planCommands.completeTasks.value,
-				type: "button"
-		},
-		{
-				name: buttonValues.planCommands.deleteTasks.name,
-				text: "Delete Tasks",
-				value: buttonValues.planCommands.deleteTasks.value,
-				type: "button"
-		},
-		{
-				name: buttonValues.planCommands.workOnTasks.name,
-				text: "Work on Tasks",
-				value: buttonValues.planCommands.workOnTasks.value,
-				type: "button"
-		}];
-
-	let { scope } = options;
-	actions.forEach((action) => {
-		let { value } = action;
-		if (scope == "add" && value == buttonValues.planCommands.addTasks.value)
-			return;
-		if (scope == "complete" && value == buttonValues.planCommands.completeTasks.value)
-			return;
-		if (scope == "delete" && value == buttonValues.planCommands.deleteTasks.value)
-			return;
-		if (scope == "work" && value == buttonValues.planCommands.workOnTasks.value)
-			return;
-		optionsAttachment[0].actions.push(action);
 	});
-	
-	return optionsAttachment;
-
-}
-
-export function getEndOfPlanCommandOptionAttachments(options = {}) {
-
-	let optionsAttachment = [
-		{
-			attachment_type: 'default',
-			callback_id: "END_OF_PLAN_OPTIONS",
-			fallback: "What do you want to do with your plan?",
-			color: colorsHash.grey.hex,
-			actions: []
-		}
-	];
-
-	let actions = [ 
-		{
-			name: buttonValues.endOfPlanCommands.addTasks.name,
-			text: "Add Tasks",
-			value: buttonValues.endOfPlanCommands.addTasks.value,
-			type: "button"
-		},
-		{
-				name: buttonValues.endOfPlanCommands.completeTasks.name,
-				text: "Check Off Tasks",
-				value: buttonValues.endOfPlanCommands.completeTasks.value,
-				type: "button"
-		},
-		{
-				name: buttonValues.endOfPlanCommands.deleteTasks.name,
-				text: "Delete Tasks",
-				value: buttonValues.endOfPlanCommands.deleteTasks.value,
-				type: "button"
-		},
-		{
-				name: buttonValues.endOfPlanCommands.workOnTasks.name,
-				text: "Work on Tasks",
-				value: buttonValues.endOfPlanCommands.workOnTasks.value,
-				type: "button"
-		}];
-
-	let { scope } = options;
-	actions.forEach((action) => {
-		let { value } = action;
-		if (scope == "add" && value == buttonValues.endOfPlanCommands.addTasks.value)
-			return;
-		if (scope == "complete" && value == buttonValues.endOfPlanCommands.completeTasks.value)
-			return;
-		if (scope == "delete" && value == buttonValues.endOfPlanCommands.deleteTasks.value)
-			return;
-		if (scope == "work" && value == buttonValues.endOfPlanCommands.workOnTasks.value)
-			return;
-		optionsAttachment[0].actions.push(action);
-	});
-	
-	return optionsAttachment;
+	if (!startDailyTask) {
+		// if you couldn't find one, this means we have to go through the ones that are not completed
+		dailyTasks.some((dailyTask) => {
+			const { minutes, minutesSpent, Task: { done } } = dailyTask.dataValues;
+			if (!done) {
+				startDailyTask = dailyTask;
+				return true;
+			}
+		})
+	};
+	return startDailyTask;
 
 }
 

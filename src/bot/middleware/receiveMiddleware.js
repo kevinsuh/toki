@@ -6,152 +6,155 @@ export default (controller) => {
 
 	controller.middleware.receive.use(wit.receive);
 
-	controller.middleware.receive.use((bot, message, next) => {
+	// get sent messages from Toki, in order to update dynamically
+	controller.middleware.receive.use(getBotSentMessages);
 
-		const { token } = bot.config;
-		bot             = bots[token]; // use same bot every time
-
-		if (!bot) {
-			console.log("\n\n\n BOT NOT FOUND FOR SOME REASON");
-			console.log(message);
-			console.log("\n\n\n");
-			next();
-			return;
-		}
-
-		// sent messages organized by channel, and most recent 25 for them
-		if (!bot.sentMessages) {
-			bot.sentMessages = {};
-		}
-		var { bot_id, user, channel } = message;
-		if (bot_id && channel) {
-
-			if (bot.sentMessages[channel]) {
-
-				// only most recent 25 messages per channel
-				while (bot.sentMessages[channel].length > 25)
-					bot.sentMessages[channel].shift();
-
-				bot.sentMessages[channel].push(message);
-
-			} else {
-				bot.sentMessages[channel] = [ message ];
-			}
-
-		}
-		
-		next();
-
-	});
 
 	// middleware to handle the pausing of cron jobs
 	// this middleware will turn off all existing work sessions
 	// then add them to bot.queuedReachouts, which will be called
 	// at the end of each conversation to turn back on
-	controller.middleware.receive.use((bot, message, next) => {
+	controller.middleware.receive.use(pauseLiveWorkSessions);
 
-		var { bot_id, user, channel } = message;
+}
 
-		if (!bot || !message) {
-			console.log(`~~ Weird bug where bot or message not found ~~\n:`);
-			console.log(bot);
-			console.log(message);
-			next();
-			return;
+let pauseLiveWorkSessions = (bot, message, next) => {
+	var { bot_id, user, channel } = message;
+
+	if (!bot || !message) {
+		console.log(`~~ Weird bug where bot or message not found ~~\n:`);
+		console.log(bot);
+		console.log(message);
+		next();
+		return;
+	}
+
+	const { token } = bot.config;
+	bot             = bots[token]; // use same bot every time
+
+	if (!bot.queuedReachouts) {
+		bot.queuedReachouts = {};
+	}
+
+
+	if (message.user && message.type) {
+
+		// safeguard to prevent messages being sent by bot
+		var botSlackUserId = false;
+		if (bot && bot.identity && bot.identity.id) {
+			botSlackUserId = bot.identity.id;
 		}
 
-		const { token } = bot.config;
-		bot             = bots[token]; // use same bot every time
+		const SlackUserId = message.user;
 
-		if (!bot.queuedReachouts) {
-			bot.queuedReachouts = {};
+		// various safe measures against running pauseWorkSession functionality
+		var valid = true;
+		if (typeof SlackUserId != "string") {
+			console.log(`SlackUserId is not a string: ${SlackUserId}`);
+			valid = false;
+		} else if (botSlackUserId == SlackUserId) {
+			console.log(`This message is being sent by bot: ${SlackUserId}`);
+			valid = false;
+		} else if (message.text && message.text[0] == "/") {
+			console.log(`This message is a slash command: \`${message.text}\``);
+			valid = false;
 		}
 
+		if (message.type == "message" && message.text && valid) {
 
-		if (message.user && message.type) {
+			console.log(`\n ~~ this message affects pauseWorkSession middleware ~~ \n`);
 
-			// safeguard to prevent messages being sent by bot
-			var botSlackUserId = false;
-			if (bot && bot.identity && bot.identity.id) {
-				botSlackUserId = bot.identity.id;
-			}
+			// if found user, find the user
+			models.User.find({
+				where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+				include: [
+					models.SlackUser
+				]
+			})
+			.then((user) => {
 
-			const SlackUserId = message.user;
+				if (user) {
 
-			// various safe measures against running pauseWorkSession functionality
-			var valid = true;
-			if (typeof SlackUserId != "string") {
-				console.log(`SlackUserId is not a string: ${SlackUserId}`);
-				valid = false;
-			} else if (botSlackUserId == SlackUserId) {
-				console.log(`This message is being sent by bot: ${SlackUserId}`);
-				valid = false;
-			} else if (message.text && message.text[0] == "/") {
-				console.log(`This message is a slash command: \`${message.text}\``);
-				valid = false;
-			}
+					user.getWorkSessions({
+						where: [`"live" = ?`, true ]
+					})
+					.then((workSessions) => {
 
-			if (message.type == "message" && message.text && valid) {
+						// found a work session! (should be <= 1 per user)
+						if (workSessions.length > 0) {
 
-				console.log(`\n ~~ this message affects pauseWorkSession middleware ~~ \n`);
+							var pausedWorkSessions = [];
+							workSessions.forEach((workSession) => {
 
-				// if found user, find the user
-				models.User.find({
-					where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-					include: [
-						models.SlackUser
-					]
-				})
-				.then((user) => {
-
-					if (user) {
-
-						user.getWorkSessions({
-							where: [`"live" = ?`, true ]
-						})
-						.then((workSessions) => {
-
-							// found a work session! (should be <= 1 per user)
-							if (workSessions.length > 0) {
-
-								var pausedWorkSessions = [];
-								workSessions.forEach((workSession) => {
-
-									workSession.update({
-										live: false
-									});
-
-									pausedWorkSessions.push(workSession);
-
+								workSession.update({
+									live: false
 								});
 
-								// queued reachout has been created for this user
-								if (bot.queuedReachouts[SlackUserId] && bot.queuedReachouts[SlackUserId].workSessions) {
-									pausedWorkSessions.forEach((workSession) => {
-										bot.queuedReachouts[SlackUserId].workSessions.push(workSession);
-									});
-								} else {
-									bot.queuedReachouts[SlackUserId] = {
-										workSessions: pausedWorkSessions
-									}
+								pausedWorkSessions.push(workSession);
+
+							});
+
+							// queued reachout has been created for this user
+							if (bot.queuedReachouts[SlackUserId] && bot.queuedReachouts[SlackUserId].workSessions) {
+								pausedWorkSessions.forEach((workSession) => {
+									bot.queuedReachouts[SlackUserId].workSessions.push(workSession);
+								});
+							} else {
+								bot.queuedReachouts[SlackUserId] = {
+									workSessions: pausedWorkSessions
 								}
 							}
+						}
 
-							next();
-
-						})
-					} else {
 						next();
-					}
 
-				});
-			} else {
-				console.log(`\n ~~ this event did not affect pause middleware ~~ \n`);
-				next();
-			}
+					})
+				} else {
+					next();
+				}
 
+			});
+		} else {
+			console.log(`\n ~~ this event did not affect pause middleware ~~ \n`);
+			next();
 		}
 
-	})
+	}
+}
 
+
+let getBotSentMessages = (bot, message, next) => {
+	const { token } = bot.config;
+	bot             = bots[token]; // use same bot every time
+
+	if (!bot) {
+		console.log("\n\n\n BOT NOT FOUND FOR SOME REASON");
+		console.log(message);
+		console.log("\n\n\n");
+		next();
+		return;
+	}
+
+	// sent messages organized by channel, and most recent 25 for them
+	if (!bot.sentMessages) {
+		bot.sentMessages = {};
+	}
+	var { bot_id, user, channel } = message;
+	if (bot_id && channel) {
+
+		if (bot.sentMessages[channel]) {
+
+			// only most recent 25 messages per channel
+			while (bot.sentMessages[channel].length > 25)
+				bot.sentMessages[channel].shift();
+
+			bot.sentMessages[channel].push(message);
+
+		} else {
+			bot.sentMessages[channel] = [ message ];
+		}
+
+	}
+	
+	next();
 }

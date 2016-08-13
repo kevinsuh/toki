@@ -8,6 +8,8 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
+exports.getSlackUsersFromString = getSlackUsersFromString;
+exports.getCurrentDaySplit = getCurrentDaySplit;
 exports.createMomentObjectWithSpecificTimeZone = createMomentObjectWithSpecificTimeZone;
 exports.dateStringToMomentTimeZone = dateStringToMomentTimeZone;
 exports.witTimeResponseToTimeZoneObject = witTimeResponseToTimeZoneObject;
@@ -17,8 +19,7 @@ exports.consoleLog = consoleLog;
 exports.closeOldRemindersAndSessions = closeOldRemindersAndSessions;
 exports.prioritizeDailyTasks = prioritizeDailyTasks;
 exports.mapTimeToTaskArray = mapTimeToTaskArray;
-exports.getPlanCommandOptionAttachments = getPlanCommandOptionAttachments;
-exports.getEndOfPlanCommandOptionAttachments = getEndOfPlanCommandOptionAttachments;
+exports.getDailyTaskForSession = getDailyTaskForSession;
 
 var _models = require('../../app/models');
 
@@ -31,6 +32,34 @@ var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 var _constants = require('./constants');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function getSlackUsersFromString(string) {
+	var arrayString = string.split(/[<@>]/);
+	var slackUsers = [];
+	arrayString.forEach(function (string) {
+		if (string[0] === "U") {
+			slackUsers.push(string);
+		}
+	});
+	if (slackUsers.length == 0) {
+		return false;
+	} else {
+		return slackUsers;
+	}
+}
+
+function getCurrentDaySplit(tz) {
+	var daySplit = '';
+	var currentHour = (0, _momentTimezone2.default)().tz(tz).format("HH");
+	if (currentHour >= _constants.constants.AFTERNOON.hour && currentHour <= _constants.constants.EVENING.hour && false) {
+		daySplit = _constants.constants.AFTERNOON.word;
+	} else if (currentHour >= _constants.constants.EVENING.hour) {
+		daySplit = _constants.constants.EVENING.word;
+	} else {
+		daySplit = _constants.constants.MORNING.word;
+	}
+	return daySplit;
+}
 
 /**
  * this creates a moment object that takes in a timestamp
@@ -101,6 +130,7 @@ function witTimeResponseToTimeZoneObject(response, tz) {
 
 	console.log("\n\n response obj in witTimeResponseToTimeZoneObject \n\n");
 
+	var text = response.text;
 	var entities = response.intentObject.entities;
 	var duration = entities.duration;
 	var datetime = entities.datetime;
@@ -108,6 +138,7 @@ function witTimeResponseToTimeZoneObject(response, tz) {
 
 	var now = (0, _momentTimezone2.default)();
 	var remindTimeStamp;
+
 	if (!datetime && !duration || !tz) {
 		remindTimeStamp = false; // not valid
 	} else {
@@ -133,7 +164,7 @@ function witTimeResponseToTimeZoneObject(response, tz) {
 			}
 
 			// handle if it is a duration configured intent
-			if (_constants.DURATION_INTENT.reg_exp.test(response.text) && !_constants.TIME_INTENT.reg_exp.test(response.text)) {
+			if (_constants.constants.DURATION_INTENT.reg_exp.test(response.text) && !_constants.constants.TIME_INTENT.reg_exp.test(response.text)) {
 
 				console.log("\n\n ~~ interpreted datetime as duration ~~ \n");
 				console.log(response.text);
@@ -204,9 +235,11 @@ function consoleLog() {
 // to avoid cron job pushing in middle of convo
 function closeOldRemindersAndSessions(user) {
 
+	var now = (0, _momentTimezone2.default)().format("YYYY-MM-DD HH:mm:ss Z");
+
 	// cancel old sessions and reminders as early as possible
 	user.getReminders({
-		where: ['"open" = ? AND "type" IN (?)', true, ["work_session", "break", "done_session_snooze"]]
+		where: ['"open" = ? AND "type" IN (?) AND "Reminder"."createdAt" < ? ', true, ["work_session", "break", "done_session_snooze"], now]
 	}).then(function (oldReminders) {
 		oldReminders.forEach(function (reminder) {
 			reminder.update({
@@ -286,102 +319,37 @@ function mapTimeToTaskArray(taskArray, timeToTasksArray) {
 	return taskArray;
 }
 
-// get button attachments for your plan list
-function getPlanCommandOptionAttachments() {
-	var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+function getDailyTaskForSession(dailyTasks) {
 
+	var startDailyTask = false;
+	dailyTasks.some(function (dailyTask) {
+		// this loops through all "live" dailyTasks, EVEN COMPLETED ONES
+		var _dailyTask$dataValues = dailyTask.dataValues;
+		var minutes = _dailyTask$dataValues.minutes;
+		var minutesSpent = _dailyTask$dataValues.minutesSpent;
+		var done = _dailyTask$dataValues.Task.done;
 
-	var optionsAttachment = [{
-		attachment_type: 'default',
-		callback_id: "PLAN_OPTIONS",
-		fallback: "What do you want to do with your plan?",
-		color: _constants.colorsHash.grey.hex,
-		actions: []
-	}];
-
-	var actions = [{
-		name: _constants.buttonValues.planCommands.addTasks.name,
-		text: "Add Tasks",
-		value: _constants.buttonValues.planCommands.addTasks.value,
-		type: "button"
-	}, {
-		name: _constants.buttonValues.planCommands.completeTasks.name,
-		text: "Check Off Tasks",
-		value: _constants.buttonValues.planCommands.completeTasks.value,
-		type: "button"
-	}, {
-		name: _constants.buttonValues.planCommands.deleteTasks.name,
-		text: "Delete Tasks",
-		value: _constants.buttonValues.planCommands.deleteTasks.value,
-		type: "button"
-	}, {
-		name: _constants.buttonValues.planCommands.workOnTasks.name,
-		text: "Work on Tasks",
-		value: _constants.buttonValues.planCommands.workOnTasks.value,
-		type: "button"
-	}];
-
-	var scope = options.scope;
-
-	actions.forEach(function (action) {
-		var value = action.value;
-
-		if (scope == "add" && value == _constants.buttonValues.planCommands.addTasks.value) return;
-		if (scope == "complete" && value == _constants.buttonValues.planCommands.completeTasks.value) return;
-		if (scope == "delete" && value == _constants.buttonValues.planCommands.deleteTasks.value) return;
-		if (scope == "work" && value == _constants.buttonValues.planCommands.workOnTasks.value) return;
-		optionsAttachment[0].actions.push(action);
+		if (!done) {
+			if (minutes > minutesSpent) {
+				startDailyTask = dailyTask;
+				return true;
+			}
+		}
 	});
+	if (!startDailyTask) {
+		// if you couldn't find one, this means we have to go through the ones that are not completed
+		dailyTasks.some(function (dailyTask) {
+			var _dailyTask$dataValues2 = dailyTask.dataValues;
+			var minutes = _dailyTask$dataValues2.minutes;
+			var minutesSpent = _dailyTask$dataValues2.minutesSpent;
+			var done = _dailyTask$dataValues2.Task.done;
 
-	return optionsAttachment;
-}
-
-function getEndOfPlanCommandOptionAttachments() {
-	var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-
-	var optionsAttachment = [{
-		attachment_type: 'default',
-		callback_id: "END_OF_PLAN_OPTIONS",
-		fallback: "What do you want to do with your plan?",
-		color: _constants.colorsHash.grey.hex,
-		actions: []
-	}];
-
-	var actions = [{
-		name: _constants.buttonValues.endOfPlanCommands.addTasks.name,
-		text: "Add Tasks",
-		value: _constants.buttonValues.endOfPlanCommands.addTasks.value,
-		type: "button"
-	}, {
-		name: _constants.buttonValues.endOfPlanCommands.completeTasks.name,
-		text: "Check Off Tasks",
-		value: _constants.buttonValues.endOfPlanCommands.completeTasks.value,
-		type: "button"
-	}, {
-		name: _constants.buttonValues.endOfPlanCommands.deleteTasks.name,
-		text: "Delete Tasks",
-		value: _constants.buttonValues.endOfPlanCommands.deleteTasks.value,
-		type: "button"
-	}, {
-		name: _constants.buttonValues.endOfPlanCommands.workOnTasks.name,
-		text: "Work on Tasks",
-		value: _constants.buttonValues.endOfPlanCommands.workOnTasks.value,
-		type: "button"
-	}];
-
-	var scope = options.scope;
-
-	actions.forEach(function (action) {
-		var value = action.value;
-
-		if (scope == "add" && value == _constants.buttonValues.endOfPlanCommands.addTasks.value) return;
-		if (scope == "complete" && value == _constants.buttonValues.endOfPlanCommands.completeTasks.value) return;
-		if (scope == "delete" && value == _constants.buttonValues.endOfPlanCommands.deleteTasks.value) return;
-		if (scope == "work" && value == _constants.buttonValues.endOfPlanCommands.workOnTasks.value) return;
-		optionsAttachment[0].actions.push(action);
-	});
-
-	return optionsAttachment;
+			if (!done) {
+				startDailyTask = dailyTask;
+				return true;
+			}
+		});
+	};
+	return startDailyTask;
 }
 //# sourceMappingURL=miscHelpers.js.map

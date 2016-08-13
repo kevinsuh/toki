@@ -10,7 +10,16 @@ module.exports = function(sequelize, DataTypes) {
            },
     nickName: DataTypes.STRING,
     defaultSnoozeTime: DataTypes.INTEGER,
-    defaultBreakTime: DataTypes.INTEGER
+    defaultBreakTime: DataTypes.INTEGER,
+    includeOthersDecision: {  type: DataTypes.STRING,
+               defaultValue: "default"
+          },
+    pingTime: { type: DataTypes.DATE
+    },
+    wantsPing: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    },
   }, {
 
     classMethods: {

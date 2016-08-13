@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.EXIT_EARLY_WORDS = exports.TASK_DECISION = exports.TIME_INTENT = exports.DURATION_INTENT = exports.THANK_YOU = exports.RESET = exports.NONE = exports.FINISH_WORD = exports.startDayExpirationTime = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.endBreakEarlyAttachments = exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.quotes = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.intentConfig = exports.startDayExpirationTime = exports.dateOfNewPlanDayFlow = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
 
 var _moment = require('moment');
 
@@ -12,74 +12,95 @@ var _moment2 = _interopRequireDefault(_moment);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var TOKI_DEFAULT_SNOOZE_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = 15;
-
 var TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_BREAK_TIME = 10;
-
 var hoursForExpirationTime = exports.hoursForExpirationTime = 6;
-
 var MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = 30;
+
+var dateOfNewPlanDayFlow = exports.dateOfNewPlanDayFlow = "2016-08-11";
 
 var startDayExpirationTime = exports.startDayExpirationTime = (0, _moment2.default)().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
 
-var FINISH_WORD = exports.FINISH_WORD = {
-	word: "done",
-	reg_exp: new RegExp(/^d[one]{2,}\b/i)
+var intentConfig = exports.intentConfig = {
+	START_DAY: 'start_day',
+	END_DAY: 'end_day',
+	START_SESSION: 'start_session',
+	END_SESSION: 'end_session',
+	VIEW_PLAN: 'view_plan',
+	END_PLAN: 'end_plan',
+	KEEP_WORKING: 'keep_working'
 };
 
-var NONE = exports.NONE = {
-	word: "none",
-	reg_exp: new RegExp(/^[none]{3,}e$/i)
-};
-
-var RESET = exports.RESET = {
-	word: "reset",
-	reg_exp: new RegExp(/^r[reset]{3,}\b/i)
-};
-
-var THANK_YOU = exports.THANK_YOU = {
-	word: "thank you",
-	reg_exp: new RegExp(/(^t(?=.*n)[thanks you]{4,}\b|^t(?=.*n)[thanksyou]{5,}\b|^t(?=.*x)[thx]{2,4}\b|^ty[y]{0,}\b)/i)
-};
-
-// contains an intent for duration and not datetime
-var DURATION_INTENT = exports.DURATION_INTENT = {
-	word: "duration",
-	reg_exp: new RegExp(/((\b[\d]+( [hoursminutes]+\b|[hoursminutes]+\b))|([forin]{2,}[ ]?[\d]+\b)|(\bh[our]{2,}|\bm[inutes]{2,}))/i)
-};
-
-var TIME_INTENT = exports.TIME_INTENT = {
-	word: "time",
-	reg_exp: new RegExp(/(:|[at]{2,}[ ]?[\d]+\b)/i)
-};
-
-var TASK_DECISION = exports.TASK_DECISION = {
-	complete: {
-		word: "TASK_COMPLETE",
-		reg_exp: new RegExp(/(\bcomp[omplete]{3,}\b|\bche[heck]{1,}\b|\bcro[ross]{1,}\b)/i)
+var constants = exports.constants = {
+	PLAN_DECISION: {
+		complete: {
+			word: "TASK_COMPLETE",
+			reg_exp: new RegExp(/(\bcomp[omplete]{3,}\b|\bche[heck]{1,}\b|\bcro[ross]{1,}\b)/i)
+		},
+		add: {
+			word: "TASK_ADD",
+			reg_exp: new RegExp(/\bad[ad]{1,}\b/i)
+		},
+		view: {
+			word: "TASK_VIEW",
+			reg_exp: new RegExp(/\bvi[iew]{1,}\b/i)
+		},
+		delete: {
+			word: "TASK_DELETE",
+			reg_exp: new RegExp(/\b(del[elete]{2,8}|rem[move]{2,6})\b/i)
+		},
+		edit: {
+			word: "TASK_EDIT",
+			reg_exp: new RegExp(/\bed[dit]{1,}\b/i)
+		},
+		work: {
+			word: "TASK_WORK",
+			reg_exp: new RegExp(/\b(do[o]?|wor[ork]{1,})\b/i)
+		},
+		revise: {
+			word: "TASK_REVISE",
+			reg_exp: new RegExp(/\brev[ise]{2,4}\b/i)
+		}
 	},
-	add: {
-		word: "TASK_ADD",
-		reg_exp: new RegExp(/\bad[ad]{1,}\b/i)
+	FINISH_WORD: {
+		word: "done",
+		reg_exp: new RegExp(/^d[one]{2,}\b/i)
 	},
-	view: {
-		word: "TASK_VIEW",
-		reg_exp: new RegExp(/\bvi[iew]{1,}\b/i)
+	NONE: {
+		word: "none",
+		reg_exp: new RegExp(/^[none]{3,}e$/i)
 	},
-	delete: {
-		word: "TASK_DELETE",
-		reg_exp: new RegExp(/\bdel[elete]{3,}\b/i)
+	RESET: {
+		word: "reset",
+		reg_exp: new RegExp(/^r[reset]{3,}\b/i)
 	},
-	edit: {
-		word: "TASK_EDIT",
-		reg_exp: new RegExp(/\bed[dit]{1,}\b/i)
+	ANY_CHARACTER: {
+		reg_exp: new RegExp(/\D/i)
 	},
-	work: {
-		word: "TASK_WORK",
-		reg_exp: new RegExp(/\b(do[o]?|wor[ork]{1,})\b/i)
+	THANK_YOU: {
+		word: "thank you",
+		reg_exp: new RegExp(/(^t(?=.*n)[thanks you]{4,}\b|^t(?=.*n)[thanksyou]{5,}\b|^t(?=.*x)[thx]{2,4}\b|^ty[y]{0,}\b)/i)
+	},
+	DURATION_INTENT: {
+		word: "duration",
+		reg_exp: new RegExp(/((\b[\d]+( [hoursminutes]+\b|[hoursminutes]+\b))|([forin]{2,}[ ]?[\d]+\b)|(\bh[our]{2,}|\bm[inutes]{2,}))/i)
+	},
+	TIME_INTENT: {
+		word: "time",
+		reg_exp: new RegExp(/(:|[at]{2,}[ ]?[\d]+\b)/i)
+	},
+	MORNING: {
+		word: "morning",
+		hour: 0
+	},
+	AFTERNOON: {
+		word: "afternoon",
+		hour: 14
+	},
+	EVENING: {
+		word: "evening",
+		hour: 18
 	}
 };
-
-var EXIT_EARLY_WORDS = exports.EXIT_EARLY_WORDS = ['exit', 'stop', 'never mind', 'quit'];
 
 var colorsHash = exports.colorsHash = {
 	green: {
@@ -114,6 +135,9 @@ var colorsHash = exports.colorsHash = {
 	},
 	yellow: {
 		hex: "#F0D003"
+	},
+	toki_purple: {
+		hex: "#8a3df0"
 	}
 };
 
@@ -128,7 +152,7 @@ exports.colorsArray = colorsArray;
 var buttonValues = exports.buttonValues = {
 	startNow: {
 		name: "START_NOW",
-		value: "START_NOW"
+		value: "Yes, let's start!"
 	},
 	checkIn: {
 		name: "CHECK_IN",
@@ -136,11 +160,15 @@ var buttonValues = exports.buttonValues = {
 	},
 	changeTask: {
 		name: "CHANGE_TASK",
-		value: "CHANGE_TASK"
+		value: "Let's change tasks"
+	},
+	changePriority: {
+		name: "CHANGE_PRIORITY",
+		value: "Let's change priorities"
 	},
 	changeSessionTime: {
 		name: "CHANGE_SESSION_TIME",
-		value: "CHANGE_SESSION_TIME"
+		value: "Let's change times"
 	},
 	changeCheckinTime: {
 		name: "CHANGE_CHECKIN_TIME",
@@ -161,10 +189,6 @@ var buttonValues = exports.buttonValues = {
 				value: "START_SESSION_PAUSE_END_EARLY"
 			}
 		},
-		addCheckIn: {
-			name: "START_SESSION_ADD_CHECK_IN",
-			value: "START_SESSION_ADD_CHECK_IN"
-		},
 		endEarly: {
 			name: "START_SESSION_END_EARLY",
 			value: "START_SESSION_END_EARLY"
@@ -184,7 +208,7 @@ var buttonValues = exports.buttonValues = {
 	},
 	endDay: {
 		name: "END_DAY",
-		value: "END_DAY"
+		value: "end my day"
 	},
 	backLater: {
 		name: "BACK_LATER",
@@ -212,32 +236,32 @@ var buttonValues = exports.buttonValues = {
 	},
 	keepName: {
 		name: "KEEP_NAME",
-		value: "KEEP_NAME"
+		value: "I'll keep my name"
 	},
 	differentName: {
 		name: "DIFFERENT_NAME",
-		value: "DIFFERENT_NAME"
+		value: "I'll choose a different name"
 	},
 	timeZones: {
 		eastern: {
 			name: "EASTERN_TIME",
-			value: "EASTERN_TIME"
+			value: "Eastern timezone"
 		},
 		central: {
 			name: "CENTRAL_TIME",
-			value: "CENTRAL_TIME"
+			value: "Central timezone"
 		},
 		mountain: {
 			name: "MOUNTAIN_TIME",
-			value: "MOUNTAIN_TIME"
+			value: "Mountain timezone"
 		},
 		pacific: {
 			name: "PACIFIC_TIME",
-			value: "PACIFIC_TIME"
+			value: "Pacific timezone"
 		},
 		other: {
 			name: "OTHER_TIMEZONE",
-			value: "OTHER_TIMEZONE"
+			value: "other timezone"
 		}
 	},
 	changeName: {
@@ -250,7 +274,7 @@ var buttonValues = exports.buttonValues = {
 	},
 	neverMind: {
 		name: "NEVER_MIND",
-		value: "NEVER_MIND"
+		value: "Never mind!"
 	},
 	startDay: {
 		name: "START_DAY",
@@ -353,7 +377,7 @@ var buttonValues = exports.buttonValues = {
 		name: "CANCEL_SESSION"
 	},
 	doneAddingTasks: {
-		value: "DONE_ADDING_TASKS",
+		value: "Done",
 		name: "DONE_ADDING_TASKS"
 	},
 	endSessionYes: {
@@ -366,7 +390,11 @@ var buttonValues = exports.buttonValues = {
 	},
 	yes: {
 		value: "YES",
-		name: "YES"
+		name: "yes!"
+	},
+	no: {
+		value: "NO",
+		name: "nope!"
 	},
 	remindMe: {
 		value: "REMIND_ME",
@@ -389,40 +417,212 @@ var buttonValues = exports.buttonValues = {
 		name: "UNDO_TASK_DELETE"
 	},
 	planCommands: { // value will be NL single line commands
-		deleteTasks: {
-			name: "PLAN_DELETE_TASKS",
-			value: "delete tasks"
+		deletePriority: {
+			name: "PLAN_DELETE_PRIORITY",
+			value: "delete priority"
 		},
-		completeTasks: {
-			name: "PLAN_COMPLETE_TASKS",
-			value: "complete tasks"
+		completePriority: {
+			name: "PLAN_COMPLETE_PRIORITY",
+			value: "complete priority"
 		},
-		addTasks: {
-			name: "PLAN_ADD_TASKS",
-			value: "add tasks"
+		addPriority: {
+			name: "PLAN_ADD_PRIORITY",
+			value: "add priority"
 		},
-		workOnTasks: {
-			name: "PLAN_WORK_ON_TASKS",
-			value: "work on tasks"
+		workOnPriority: {
+			name: "PLAN_WORK_ON_PRIORITY",
+			value: "work on priority"
+		},
+		revisePriority: {
+			name: "PLAN_REVISE_PRIORITY",
+			value: "revise priority"
+		},
+		endDay: {
+			name: "PLAN_END_DAY",
+			value: "end my day"
+		},
+		actuallyDontWantToAddPriority: {
+			name: "PLAN_DONT_WANT_TO_ADD_PRIORITY",
+			value: "Never mind, I don't want to add another priority"
+		},
+		actuallyLetsRenamePriority: {
+			name: "PLAN_LETS_RENAME_PRIORITY",
+			value: "Actually, let's rename this priority"
 		}
 	},
-	endOfPlanCommands: { // value will be NL single line commands
-		deleteTasks: {
-			name: "END_OF_PLAN_DELETE_TASKS",
-			value: "END_OF_PLAN_DELETE_TASKS"
+	redoTasks: {
+		name: "REDO_TASKS",
+		value: "REDO_TASKS"
+	},
+	workOnDifferentTask: {
+		name: "WORK_ON_DIFFERENT_TASK",
+		value: "Let's choose a different task!"
+	},
+	redoMyPriorities: {
+		name: "REDO_MY_PRIORITIES",
+		value: "Let's redo my priorities!"
+	},
+	wizardNewPlanFlow: {
+		name: "WIZARD_NEW_PLAN_FLOW",
+		value: "Help me figure that out!"
+	},
+	keepTaskOrder: {
+		name: "KEEP_TASK_ORDER",
+		value: "Keep this order!"
+	},
+	workOnTaskFor: {
+		ninetyMinutes: {
+			name: "WORK_ON_TASK_FOR_90_MINUTES",
+			value: "90 minutes"
 		},
-		completeTasks: {
-			name: "END_OF_PLAN_COMPLETE_TASKS",
-			value: "END_OF_PLAN_COMPLETE_TASKS"
+		sixtyMinutes: {
+			name: "WORK_ON_TASK_FOR_60_MINUTES",
+			value: "60 minutes"
 		},
-		addTasks: {
-			name: "END_OF_PLAN_ADD_TASKS",
-			value: "END_OF_PLAN_ADD_TASKS"
+		thirtyMinutes: {
+			name: "WORK_ON_TASK_FOR_30_MINUTES",
+			value: "30 minutes"
 		},
-		workOnTasks: {
-			name: "END_OF_PLAN_WORK_ON_TASKS",
-			value: "END_OF_PLAN_WORK_ON_TASKS"
+		fifteenMinutes: {
+			name: "WORK_ON_TASK_FOR_15_MINUTES",
+			value: "15 minutes"
 		}
+	},
+	startTaskIn: {
+		now: {
+			name: "WORK_ON_TASK_NOW",
+			value: "Let's do this task right now!"
+		},
+		tenMinutes: {
+			name: "WORK_ON_TASK_IN_10_MINUTES",
+			value: "in 10 minutes"
+		}
+	},
+	include: {
+		noOne: {
+			name: "INCLUDE_NO_ONE",
+			value: "No one for now!"
+		}
+	},
+	doneSession: {
+		completedPriorityTonedDown: {
+			name: "DONE_SESSION_TONED_DOWN_COMPLETED_PRIORITY",
+			value: "completed my priority early"
+		},
+		completedPriority: {
+			name: "DONE_SESSION_COMPLETED_PRIORITY",
+			value: "completed my priority!"
+		},
+		takeBreak: {
+			name: "DONE_SESSION_TAKE_BREAK",
+			value: "take a break"
+		},
+		extendSession: {
+			name: "DONE_SESSION_EXTEND_SESSION",
+			value: "extend my session"
+		},
+		newSession: {
+			name: "DONE_SESSION_NEW_SESSION",
+			value: "new session"
+		},
+		viewPlan: {
+			name: "DONE_SESSION_VIEW_PLAN",
+			value: "view my plan"
+		},
+		endDay: {
+			name: "DONE_SESSION_END_DAY",
+			value: "end my day"
+		},
+		notDone: {
+			name: "DONE_SESSION_NOT_DONE_WITH_PRIORITY",
+			value: "not yet done"
+		},
+		didSomethingElse: {
+			name: "DONE_SESSION_DID_SOMETHING_ELSE",
+			value: "I did something else!"
+		},
+		moveOn: {
+			name: "MOVE_ON",
+			value: "Let's move on!"
+		},
+		itWasSomethingElse: {
+			name: "DONE_SESSION_IT_WAS_SOMETHING_ELSE",
+			value: "it was something else!"
+		},
+		keepMyPriority: {
+			name: "DONE_SESSION_KEEP_MY_PRIORITIES",
+			value: "i'll keep my priorities!!"
+		},
+		beBackLater: {
+			name: "DONE_SESSION_BE_BACK_LATER",
+			value: "i'll be back later!"
+		}
+	},
+	doneWithBreak: {
+		name: "DONE_WITH_BREAK",
+		value: "let's do it"
+	},
+	keepPriority: {
+		name: "KEEP_PRIORITY",
+		value: "i'll keep my priorities"
+	},
+	doneEarly: {
+		name: "SESSION_DONE_EARLY",
+		value: "im done!"
+	},
+	addCheckIn: {
+		name: "SESSION_ADD_CHECK_IN",
+		value: "let's add a check in!"
+	},
+	notToday: {
+		name: "NOT_TODAY",
+		value: "not today"
+	},
+	keepWorking: {
+		name: "KEEP_WORKING",
+		value: "i want to keep working"
+	},
+	notShare: {
+		name: "LETS_NOT_SHARE",
+		value: "let's not share today"
+	},
+	newPlan: {
+		redoLastPriority: {
+			name: "REDO_LAST_PRIORITY",
+			value: "redo last priority"
+		},
+		noMorePriorities: {
+			name: "NO_MORE_PRIORITIES",
+			value: "no more priorities"
+		}
+	},
+	noDontAskAgain: {
+		name: "NO_DONT_ASK_AGAIN",
+		value: "no, and don't ask again"
+	},
+	yesDontAskAgain: {
+		name: "YES_DONT_ASK_AGAIN",
+		value: "yes, and don't ask again"
+	},
+	next: {
+		name: "NEXT",
+		value: "next"
+	},
+	now: {
+		name: "NOW",
+		value: "now!"
+	},
+	inTenMinutes: {
+		name: "IN_TEN_MINUTES",
+		value: "in 10 minutes"
+	},
+	goBack: {
+		name: "GO_BACK",
+		value: "go back!"
+	},
+	letsWinTheDay: {
+		name: "LETS_WIN_THE_DAY",
+		value: "lets win the day!"
 	}
 };
 
@@ -445,34 +645,68 @@ var timeZones = exports.timeZones = {
 	}
 };
 
+var approvalWords = exports.approvalWords = ['nice', 'awesome', 'sounds good', 'great', 'fantastic', 'looking good', 'very nice', 'cool', 'boom', 'looks good'];
+
+var quotes = exports.quotes = [{
+	message: "By failing to prepare, you are preparing to fail.",
+	author: "Benjamin Franklin"
+}, {
+	message: "Give me six hours to chop down a tree and I will spend the first four sharpening the axe.",
+	author: "Abraham Lincoln"
+}, {
+	message: "If you don't know where you are going, you'll end up someplace else.",
+	author: "Yogi Berra"
+}, {
+	message: "In preparing for battle I have always found that plans are useless, but planning is indispensable.",
+	author: "Dwight D. Eisenhower"
+}, {
+	message: "Someone's sitting in the shade today because someone planted a tree a long time ago.",
+	author: "Warren Buffett"
+}, {
+	message: "Unless commitment is made, there are only promises and hopes; but no plans.",
+	author: "Peter F. Drucker"
+}, {
+	message: "Unfortunately, there seems to be far more opportunity out there than ability.... We should remember that good fortune often happens when opportunity meets with preparation.",
+	author: "Thomas A. Edison"
+}, {
+	message: "I believe luck is preparation meeting opportunity. If you hadn’t been prepared when the opportunity came along, you wouldn’t have been lucky.",
+	author: "Oprah Winfrey"
+}, {
+	message: "If I had an hour to solve a problem I'd spend 55 minutes thinking about the problem and 5 minutes thinking about solutions.",
+	author: "Albert Einstein"
+}, {
+	message: "If you really look closely, most overnight successes took a long time.",
+	author: "Steve Jobs"
+}];
+
 var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
-	text: "planning which tasks you intend to work on each day",
-	color: colorsHash.blue.hex,
-	mrkdwn_in: ["text"],
-	attachment_type: "default",
-	callback_id: "TOKI_OPTIONS",
-	fallback: "Starting your day"
-}, {
-	text: "launching work sessions to get those tasks done",
-	color: colorsHash.green.hex,
-	mrkdwn_in: ["text"],
-	attachment_type: "default",
-	callback_id: "TOKI_OPTIONS",
-	fallback: "Launching work sessions"
-}, {
-	text: "setting reminders to keep you on top of your tasks and obligations",
-	color: colorsHash.yellow.hex,
-	mrkdwn_in: ["text"],
-	attachment_type: "default",
-	callback_id: "TOKI_OPTIONS",
-	fallback: "Setting reminders"
-}, {
-	text: "adjusting your prioritized tasks on the fly",
+	text: "Instead of treating each day as a never-ending list of todos, I help you *identify the top 3 priorities* that define your day, *_and actually accomplish them_*",
 	color: colorsHash.salmon.hex,
 	mrkdwn_in: ["text"],
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
-	fallback: "Starting your day"
+	fallback: "Identify and do your 3 priorities"
+}, {
+	text: "These are often the priorities that are difficult to make time for and get focused on, but are what *create big outcomes for yourself and your team*",
+	color: colorsHash.blue.hex,
+	mrkdwn_in: ["text"],
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Do the most important things"
+}, {
+	text: "I realize you likely work on more than three tasks each day. I'm here to make sure you *get 3 things done that are critically important to your day, but might get lost or pushed back* if you don't deliberately make time for them",
+	color: colorsHash.yellow.hex,
+	mrkdwn_in: ["text"],
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Accomplish your 3 main priorities to win the day"
+}, {
+	text: "I can also send these top 3 priorities with anyone on your team if you'd like to *share what you're working on*",
+	color: colorsHash.lavendar.hex,
+	mrkdwn_in: ["text"],
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Share with your team"
 }];
 
 var tokiOptionsExtendedAttachment = exports.tokiOptionsExtendedAttachment = [{
@@ -627,14 +861,14 @@ var startSessionOptionsAttachments = exports.startSessionOptionsAttachments = [{
 		value: buttonValues.startSession.pause.value,
 		type: "button"
 	}, {
-		name: buttonValues.startSession.addCheckIn.name,
+		name: buttonValues.addCheckIn.name,
 		text: "Add check-in",
-		value: buttonValues.startSession.addCheckIn.value,
+		value: buttonValues.addCheckIn.value,
 		type: "button"
 	}, {
-		name: buttonValues.startSession.endEarly.name,
+		name: buttonValues.doneEarly.name,
 		text: "End Session Early",
-		value: buttonValues.startSession.endEarly.value,
+		value: buttonValues.doneEarly.value,
 		type: "button"
 	}]
 }];
@@ -650,9 +884,21 @@ var pausedSessionOptionsAttachments = exports.pausedSessionOptionsAttachments = 
 		type: "button",
 		style: "primary"
 	}, {
-		name: buttonValues.startSession.pause.endEarly.name,
+		name: buttonValues.doneEarly.name,
 		text: "End Session",
-		value: buttonValues.startSession.pause.endEarly.value,
+		value: buttonValues.doneEarly.value,
+		type: "button"
+	}]
+}];
+
+var endBreakEarlyAttachments = exports.endBreakEarlyAttachments = [{
+	attachment_type: 'default',
+	callback_id: "END_BREAK_EARLY",
+	fallback: "I'm ready to get started!!",
+	actions: [{
+		name: buttonValues.doneWithBreak.name,
+		text: "I'm back early!",
+		value: buttonValues.doneWithBreak.value,
 		type: "button"
 	}]
 }];

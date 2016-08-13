@@ -15,11 +15,8 @@ exports.default = function (controller) {
 		var botCallback = config.botCallback;
 
 
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
-			bot = _index.bots[botToken];
-		}
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
 
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
@@ -46,6 +43,7 @@ exports.default = function (controller) {
 							// GOOD TO PAUSE NOW
 							var workSessionId = workSession.id;
 							var endTime = (0, _momentTimezone2.default)(workSession.endTime);
+							var startTime = (0, _momentTimezone2.default)(workSession.startTime);
 							var now = (0, _momentTimezone2.default)();
 							var minutesRemaining = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes() * 100) / 100; // 2 decimal places
 
@@ -75,10 +73,27 @@ exports.default = function (controller) {
 
 									/**
           * 		~~ GOOD TO GO TO PAUSE SESSION! ~~
+          * 			add minutes to count when pausing
+          * 		since you are creating new workSession each time
           */
 
+									var workSessionMinutes = Math.round(_momentTimezone2.default.duration(now.diff(startTime)).asMinutes());
+
+									var dailyTask = dailyTasks[0];
+									if (!dailyTask) {
+										// FAILURE FAILURE SHOULD NEVER HAPPEN
+										// (this means no dailyTask attached to workSession)
+										return;
+									}
+									var minutesSpent = dailyTask.minutesSpent;
+									minutesSpent += workSessionMinutes;
+
+									dailyTask.update({
+										minutesSpent: minutesSpent
+									});
+
 									workSession.update({
-										endTime: (0, _momentTimezone2.default)(),
+										endTime: now,
 										live: false
 									});
 
@@ -88,7 +103,8 @@ exports.default = function (controller) {
 									});
 
 									timeString = (0, _messageHelpers.convertMinutesToHoursString)(minutesRemaining);
-									message = 'Your session is paused :double_vertical_bar:. You have *' + timeString + '* remaining for ' + tasksToWorkOnString;
+									var workSessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(workSessionMinutes);
+									message = 'Your session is paused :double_vertical_bar:. You\'ve worked for ' + workSessionTimeString + ' towards `' + tasksToWorkOnString + '` and have *' + timeString + ' remaining* in this session';
 								}
 								// making this just a reminder now so that user can end his own session as he pleases
 								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
@@ -115,15 +131,13 @@ exports.default = function (controller) {
 	});
 
 	controller.on('session_resume_flow', function (bot, config) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
 		var SlackUserId = config.SlackUserId;
 		var botCallback = config.botCallback;
 
-
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
-			bot = _index.bots[botToken];
-		}
 
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
@@ -151,7 +165,7 @@ exports.default = function (controller) {
 
 							workSession.getDailyTasks({
 								include: [_models2.default.Task],
-								where: ['"Task"."done" = ? AND "DailyTask"."type" = ?', false, "live"]
+								where: ['"DailyTask"."type" = ?', "live"]
 							}).then(function (dailyTasks) {
 
 								if (dailyTasks.length > 0) {
@@ -208,7 +222,7 @@ exports.default = function (controller) {
 
 												bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 													convo.say({
-														text: 'Good luck with ' + tasksString + '!\n\nSee you in ' + timeString + ' at *' + endTimeString + '* :timer_clock:',
+														text: 'Resumed :arrow_forward:! Good luck with `' + tasksString + '`!\n\nSee you in ' + timeString + ' at *' + endTimeString + '* :timer_clock:',
 														attachments: _constants.startSessionOptionsAttachments
 													});
 													convo.next();
@@ -261,15 +275,12 @@ exports.default = function (controller) {
 	});
 
 	controller.on('session_add_checkin_flow', function (bot, config) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
 		var SlackUserId = config.SlackUserId;
-		var botCallback = config.botCallback;
 
-
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
-			bot = _index.bots[botToken];
-		}
 
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
@@ -307,22 +318,9 @@ exports.default = function (controller) {
 			});
 		});
 	});
-
-	controller.on('session_end_early_flow', function (bot, config) {
-		var SlackUserId = config.SlackUserId;
-		var botCallback = config.botCallback;
-		var storedWorkSession = config.storedWorkSession;
-
-
-		if (botCallback) {
-			// if botCallback, need to get the correct bot
-			var botToken = bot.config.token;
-			bot = _index.bots[botToken];
-		}
-
-		controller.trigger('done_session_flow', [bot, config]);
-	});
 };
+
+exports.notInSessionWouldYouLikeToStartOne = notInSessionWouldYouLikeToStartOne;
 
 var _os = require('os');
 
@@ -363,8 +361,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 ;
 
 // ALL OF THE TIMEOUT FUNCTIONALITIES
-
-
 function notInSessionWouldYouLikeToStartOne(config) {
 	var bot = config.bot;
 	var SlackUserId = config.SlackUserId;
@@ -372,7 +368,7 @@ function notInSessionWouldYouLikeToStartOne(config) {
 
 	if (bot && SlackUserId && controller) {
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-			convo.ask('You\'re not in a session right now! Would you like to start one :muscle:?', [{
+			convo.ask('Wait, you\'re not in a session right now! Would you like to start one?', [{
 				pattern: _botResponses.utterances.yes,
 				callback: function callback(response, convo) {
 					convo.startSession = true;
@@ -395,7 +391,7 @@ function notInSessionWouldYouLikeToStartOne(config) {
 			convo.next();
 			convo.on('end', function (convo) {
 				if (convo.startSession) {
-					controller.trigger('confirm_new_session', [bot, { SlackUserId: SlackUserId }]);
+					controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
 				}
 				setTimeout(function () {
 					(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });

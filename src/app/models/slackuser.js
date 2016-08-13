@@ -2,7 +2,11 @@
 module.exports = function(sequelize, DataTypes) {
   var SlackUser = sequelize.define('SlackUser', {
     UserId: DataTypes.INTEGER,
-    SlackUserId: DataTypes.STRING,
+    SlackUserId: {
+      type: DataTypes.STRING,
+      primaryKey: true
+    },
+    SlackName: DataTypes.STRING,
     tz: DataTypes.STRING,
     TeamId: DataTypes.STRING,
     scopes: DataTypes.STRING,
@@ -11,6 +15,8 @@ module.exports = function(sequelize, DataTypes) {
     classMethods: {
       associate: function(models) {
         SlackUser.belongsTo(models.User);
+        SlackUser.belongsToMany(SlackUser, { as: 'Included', foreignKey: 'IncluderSlackUserId', through: models.Include });
+        SlackUser.belongsToMany(SlackUser, { as: 'Includers', foreignKey: 'IncludedSlackUserId', through: models.Include })
       }
     }
   });

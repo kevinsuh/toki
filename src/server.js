@@ -10,14 +10,9 @@ import cron from 'cron';
 import cronFunction from './app/cron';
 var CronJob = cron.CronJob;
 
-import { seedUsers, updateUsers } from './app/scripts';
+import { seedAndUpdateUsers, test } from './app/scripts';
 import { consoleLog, prioritizeDailyTasks } from './bot/lib/miscHelpers';
-
-setTimeout(() => {
-	consoleLog("updating and seeding users");
-	// updateUsers(); // to fill in all users who are not in DB yet
-	// seedUsers();
-}, 5000)
+import './app/globalHelpers';
 
 var app = express();
 
@@ -112,7 +107,13 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 		 * 		~~ START UP ZE BOTS ~~
 		 */
 		teamTokens.forEach((token) => {
-			var bot = controller.spawn({ token }).startRTM((err) => {
+			var bot = controller.spawn({ token, retry: 500 }).startRTM((err, bot, payload) => {
+
+				if (payload) {
+					let teamMembers = payload.users; // array of user objects!
+					seedAndUpdateUsers(teamMembers);
+				}
+
 				if (err) {
 					consoleLog(`'Error connecting to slack... :' ${err}`);
 				} else {

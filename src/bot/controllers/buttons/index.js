@@ -4,7 +4,7 @@ import http from 'http';
 import bodyParser from 'body-parser';
 
 import models from '../../../app/models';
-import { buttonValues, TASK_DECISION } from '../../lib/constants';
+import { buttonValues, constants } from '../../lib/constants';
 import moment from 'moment-timezone';
 
 // base controller for "buttons" flow
@@ -14,11 +14,6 @@ export default function(controller) {
 	// check message.actions and message.callback_id to see the action to take
 	controller.on(`interactive_message_callback`, (bot, message) => {
 
-		console.log("\n\n\n ~~ inside interactive_message_callback ~~ \n");
-		console.log("this is message:");
-		console.log(message);
-		console.log("\n\n\n");
-
 		const SlackUserId = message.user;
 		const { actions, callback_id } = message;
 		let payload;
@@ -27,75 +22,6 @@ export default function(controller) {
 		// need to replace buttons so user cannot reclick it
 		if (actions && actions.length > 0) {
 			switch (actions[0].value) {
-				case buttonValues.startNow.value:
-					bot.replyInteractive(message, "Boom! :boom:");
-					break;
-				case buttonValues.checkIn.value:
-					bot.replyInteractive(message, "I'd love to check in with you! Leave a note in the same line if you want me to remember it (`i.e. halfway done by 4pm`)");
-					break;
-				case buttonValues.changeTask.value:
-					bot.replyInteractive(message, "Let's give this another try then :repeat_one:");
-					break;
-				case buttonValues.changeSessionTime.value:
-					// this is when you want to have a custom time
-					bot.replyInteractive(message, "Let's choose how long to work! I understand minutes (`ex. 45 min`) or specific times (`ex. 3:15pm`)");
-					break;
-				case buttonValues.changeCheckinTime.value:
-					bot.replyInteractive(message, "I'm glad we caught this - when would you like me to check in with you?");
-					break;
-				case buttonValues.newTask.value:
-					bot.replyInteractive(message, "Sweet! Let's work on a new task");
-					break;
-				case buttonValues.addCheckinNote.value:
-					bot.replyInteractive(message, "Let's add a note to your checkin!");
-					break;
-				case buttonValues.takeBreak.value:
-					bot.replyInteractive(message, "Let's take a break!");
-					break;
-				case buttonValues.noTasks.value:
-					bot.replyInteractive(message, "No worries! :smile_cat:");
-					break;
-				case buttonValues.noPendingTasks.value:
-					bot.replyInteractive(message, "I like a fresh start each day, too");
-					break;
-				case buttonValues.noAdditionalTasks.value:
-					bot.replyInteractive(message, "Sounds good!");
-					break;
-				case buttonValues.backLater.value:
-					bot.replyInteractive(message, "Okay! I'll be here when you get back :wave:");
-					break;
-				case buttonValues.actuallyWantToAddATask.value:
-					bot.replyInteractive(message, "Let's add more tasks! Enter them here separated by new lines");
-				break;
-				case buttonValues.differentTask.value:
-					bot.replyInteractive(message, "What did you get done instead?");
-					break;
-				case buttonValues.keepName.value:
-					bot.replyInteractive(message, "Cool!")
-					break;
-				case buttonValues.differentName.value:
-					bot.replyInteractive(message, "Let's do another name then!")
-					break;
-				case buttonValues.changeTimeZone.value:
-					bot.replyInteractive(message, "Let's change your timezone!")
-					break;
-				case buttonValues.changeName.value:
-					bot.replyInteractive(message, "Let's change your name!")
-					break;
-				case buttonValues.neverMind.value:
-					bot.replyInteractive(message, "Sounds good")
-					break;
-				case buttonValues.startDay.value:
-					bot.replyInteractive(message, "Let's do it!")
-					break;
-				case buttonValues.startSession.value:
-					bot.replyInteractive(message, ":boom: boom")
-					break;
-				case buttonValues.endDay.value:
-					bot.replyInteractive(message, "It's about that time, isn't it?")
-					break;
-				case buttonValues.resetTimes.value:
-					break;
 				case buttonValues.doneSessionTimeoutYes.value:
 					controller.trigger(`done_session_yes_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
@@ -107,7 +33,6 @@ export default function(controller) {
 						]
 					})
 					.then((user) => {
-						bot.replyInteractive(message, `Keep at it!`);
 						controller.trigger(`done_session_snooze_button_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					});
 					break;
@@ -117,137 +42,16 @@ export default function(controller) {
 				case buttonValues.doneSessionTimeoutNo.value:
 					controller.trigger(`done_session_no_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
-				case buttonValues.doneSessionEarlyNo.value:
-					bot.replyInteractive(message, `Got it`)
-					break;
-				case buttonValues.doneSessionYes.value:
-					bot.replyInteractive(message, "Great work! :raised_hands:")
-					break;
-				case buttonValues.doneSessionSnooze.value:
-					bot.replyInteractive(message, `Keep at it!`);
-					break;
-				case buttonValues.doneSessionDidSomethingElse.value:
-					bot.replyInteractive(message, `:ocean: Woo!`);
-					break;
-				case buttonValues.doneSessionNo.value:
-					bot.replyInteractive(message, `That's okay! You can keep chipping away and you'll get there :pick:`);
-					break;
-				case buttonValues.thatsCorrect.value:
-					bot.replyInteractive(message, `Fantastic!`);
-					break;
-				case buttonValues.thatsIncorrect.value:
-					bot.replyInteractive(message, `Oops, okay! Let's get this right`);
-					break;
-				case buttonValues.addTask.value:
-					bot.replyInteractive(message, `Added! Keep at it :muscle:`);
-					break;
-				case buttonValues.changeTaskContent.value:
-					bot.replyInteractive(message, `Let's change the task then!`);
-					break;
-				case buttonValues.changeTaskTime.value:
-					bot.replyInteractive(message, `Let's change the time then!`);
-					break;
-				case buttonValues.editTaskList.value:
-					bot.replyInteractive(message, `Okay! Let's edit your task list`);
-					break;
-				case buttonValues.addTasks.value:
-					bot.replyInteractive(message, `Boom! Let's add some tasks :muscle:`);
-					break;
-				case buttonValues.markComplete.value:
-					bot.replyInteractive(message, `Woo! Let's check off some tasks :grin:`);
-					break;
-				case buttonValues.deleteTasks.value:
-					bot.replyInteractive(message, `Okay! Let's remove some tasks`);
-					break;
-				case buttonValues.neverMindTasks.value:
-					bot.replyInteractive(message, "Okay! I didn't do anything :smile_cat:")
-					break;
-				case buttonValues.editTaskTimes.value:
-					bot.replyInteractive(message, "Let's do this :hourglass:");
-					break;
-				case buttonValues.newSession.value:
-					bot.replyInteractive(message, "Let's do this :baby:");
-					break;
-				case buttonValues.cancelSession.value:
-					bot.replyInteractive(message, "No worries! We'll get that done soon");
-					break;
-				case buttonValues.endSessionYes.value:
-					bot.replyInteractive(message, "Woo! :horse_racing:");
-					break;
-				case buttonValues.allPendingTasks.value:
-					bot.replyInteractive(message, "I like all those tasks too :open_hands:");
-					break;
 				case buttonValues.startSession.pause.value:
-					bot.replyInteractive(message, "Okay, let's pause!", () => {
-						controller.trigger(`session_pause_flow`, [ bot, { SlackUserId, botCallback: true }]);
-					});
+					controller.trigger(`session_pause_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
-				case buttonValues.startSession.addCheckIn.value:
-					controller.trigger(`session_add_checkin_flow`, [ bot, { SlackUserId, botCallback: true }]);
-					break;
-				case buttonValues.startSession.endEarly.value:
-					bot.replyInteractive(message, "Okay!", () => {
-						controller.trigger(`session_end_early_flow`, [ bot, { SlackUserId, botCallback: true }]);
-					});
-					break;
-				case buttonValues.startSession.pause.endEarly.value:
-					bot.replyInteractive(message, "Okay!", () => {
-						controller.trigger(`session_end_early_flow`, [ bot, { SlackUserId, botCallback: true }]);
-					});
+				case buttonValues.addCheckIn.value:
+					controller.trigger(`session_add_checkin_flow`, [ bot, { SlackUserId }]);
 					break;
 				case buttonValues.startSession.resume.value:
-					bot.replyInteractive(message, "Okay, let's resume :arrow_forward:", () => {
-						controller.trigger(`session_resume_flow`, [ bot, { SlackUserId, botCallback: true }]);
-					});
+					controller.trigger(`session_resume_flow`, [ bot, { SlackUserId, botCallback: true }]);
 					break;
-				case buttonValues.undoTaskComplete.value:
-					console.log("\n\n MESSAGE:");
-					console.log(message);
-					payload = JSON.parse(message.payload);
-					config = { SlackUserId, botCallback: true, payload };
-					controller.trigger(`undo_task_complete`, [ bot, config ]);
-					break;
-				case buttonValues.undoTaskDelete.value:
-					payload = JSON.parse(message.payload);
-					config = { SlackUserId, botCallback: true, payload };
-					controller.trigger(`undo_task_delete`, [ bot, config ]);
-					break;
-				case buttonValues.planCommands.addTasks.value:
-					// bot.replyInteractive(message, "Awesome!");
-					break;
-				case buttonValues.planCommands.completeTasks.value:
-					break;
-				case buttonValues.planCommands.deleteTasks.value:
-					break;
-				case buttonValues.planCommands.workOnTasks.value:
-					break;
-				case buttonValues.endOfPlanCommands.addTasks.value:
-					config = { SlackUserId, message, botCallback: true, taskDecision: TASK_DECISION.add.word };
-					bot.replyInteractive(message, "Okay, let's add some tasks!", () => {
-						controller.trigger(`edit_tasks_flow`, [ bot, config ]);
-					});
-					break;
-				case buttonValues.endOfPlanCommands.completeTasks.value:
-					config = { SlackUserId, message, botCallback: true, taskDecision: TASK_DECISION.complete.word };
-					bot.replyInteractive(message, "Okay, let's complete some tasks!", () => {
-						controller.trigger(`edit_tasks_flow`, [ bot, config ]);
-					});
-					break;
-				case buttonValues.endOfPlanCommands.deleteTasks.value:
-					config = { SlackUserId, message, botCallback: true, taskDecision: TASK_DECISION.delete.word };
-					bot.replyInteractive(message, "Okay, let's delete some tasks!", () => {
-						controller.trigger(`edit_tasks_flow`, [ bot, config ]);
-					});
-					break;
-				case buttonValues.endOfPlanCommands.workOnTasks.value:
-					config = { SlackUserId, message, botCallback: true, taskDecision: TASK_DECISION.work.word };
-					bot.replyInteractive(message, "Okay, let's get to work!", () => {
-						controller.trigger(`edit_tasks_flow`, [ bot, config ]);
-					});
-					break;
-				default:
-					// some default to replace button no matter what
-					bot.replyInteractive(message, "Awesome!");
+				default: break;
 			}
 		}
 

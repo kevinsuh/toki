@@ -3,44 +3,25 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.helloResponse = helloResponse;
-exports.randomInt = randomInt;
-// this contains responses that is randomized to keep things fresh and funky
 
-// respond to hello
-function helloResponse() {
+var _utterances;
 
-	var helloResponses = ["Hey!", "Hello :)", "Hola", "Hello!", "Heyya", "Hey there"];
-	return randomSelection(helloResponses);
-}
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-// randomly returns a response from array
-function randomSelection(responseArray) {
-	var min = 0;
-	var max = responseArray.length;
-
-	var randomIndex = Math.floor(Math.random() * (max - min)) + min;
-
-	return responseArray[randomIndex];
-}
-
-function randomInt(min, max) {
-	var randomIndex = Math.floor(Math.random() * (max - min)) + min;
-	return randomIndex;
-}
-
-var utterances = exports.utterances = {
+var utterances = exports.utterances = (_utterances = {
 	yes: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|(\bd[o ]+[this]{2,})|(\bd[o ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
 	yesOrCorrect: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bc[correct]{4,})/i),
 	no: new RegExp(/((no|not|nah|nope|^n)\b|\bn[oahpe]{1,4}\b)/i),
 	noAndNeverMind: new RegExp(/^n([oahpet]{1,5}|e[ever mind]{4,}|[vm]{1,4})\b/i),
+	onlyNeverMind: new RegExp(/^ne[ever mind]{4,}$/i),
+	containsNoOrNeverMindOrNothing: new RegExp(/\bn(oth[othing]{2,5}|[oahpet]{1,5}|e[ever mind]{4,}|[vm]{1,4})\b/i),
 	startsWithNever: new RegExp(/^ne[never]{3,}\b/i),
 	specificYes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|\by[esahp]{2,}\b|\bs[ure]{2,}\b)/i),
-	endDay: new RegExp(/(\be[end ]{2,}\bd[day]{2,})/i),
+	endDay: new RegExp(/\be[end ]{2,}\b.*\bd[day]{2,}/i),
+	notDone: new RegExp(/\bn[not]{2,}\b.*\bdo[one]{2,}/i),
 	containsNew: new RegExp(/(\bn[new]{2,}\b)/i),
 	containsCheckin: new RegExp(/(\bch[check in]{3,}\b|\br[reminder]{4,}\b|\bn[note]{2,}\b)/i),
 	containsOnlyCheckin: new RegExp(/(\bch[check -in]{4,}\b)/i),
-	containsChangeTask: new RegExp(/(ch[change ]{3,}t[task ]{2,})/i),
 	containsChangeTime: new RegExp(/(ch[change ]{3,}t[time ]{2,})/i),
 	containsAddNote: new RegExp(/(a[add ]{1,}n[note ]{2,})/i),
 	containsBreak: new RegExp(/(\bbr[reak ]{2,}\b)/i),
@@ -52,28 +33,32 @@ var utterances = exports.utterances = {
 	containsNumber: new RegExp(/\d/i),
 	containsAll: new RegExp(/\ba[all]{2,}/i),
 	containsAdd: new RegExp(/\ba[add]{1,}/i),
+	containsNow: new RegExp(/\bn[now]{1,}/i),
+	containsRedo: new RegExp(/\bre[re do]{2,5}\b/i),
 	startsWithAdd: new RegExp(/^a[add]{2,}\b/i),
 	containsTask: new RegExp(/t[task]{2,}/i),
+	containsTaskOrPriority: new RegExp(/\b(t[task]{2,}|pr[riority]{4,})\b/i),
 	containsName: new RegExp(/n[name]{2,}/i),
 	containsTimeZone: new RegExp(/t[timezone ]{4,}/i),
-	containsPlan: new RegExp(/p[plan ]{2,}/i),
+	containsPlan: new RegExp(/\bpl[lan]{2,}\b/i),
 	containsAdditional: new RegExp(/\ba[additional]{4,}/i),
 	containsSnooze: new RegExp(/(\bs[snooze]{4,}|\be[extend]{4,})/i),
 	onlyContainsSnooze: new RegExp(/^s[snooze]{4,}$/i),
 	onlyContainsExtend: new RegExp(/^e[extend]{4,}$/i),
+	containsExtend: new RegExp(/\bext[extend]{3,}\b/i),
 	containsElse: new RegExp(/\be[else]{2,}/i),
 	containsShowCommands: new RegExp(/(\bs[show]{2,}|\bc[commands]{4,})/i),
 	containsStartDay: new RegExp(/(\bs[start]{3,}|\bd[day]{2,})/i),
 	containsSettings: new RegExp(/\bs[settings]{4,}/i),
 	containsEditTaskList: new RegExp(/(\be[edit ]{2,}\b(l[list]{2,}|t[task]{2,}|p[plan]{2,})\b)/i),
-	containsCompleteOrCheckOrCross: new RegExp(/(\bc[complete]{5,}|\bc[check]{3,}|\bc[cross]{3,})/i),
+	containsCompleteOrCheckOrCross: new RegExp(/(\bcom[omplete]{4,}|\bch[heck]{2,}|\bcr[ross]{3,})/i),
 	containsDeleteOrRemove: new RegExp(/(\bd[delete]{4,}|\br[remove]{3,})/i),
 	containsTime: new RegExp(/(\bt[time]{2,})/i),
 	containsCancel: new RegExp(/(\bc[cancel]{4,})/i),
 	containsContinue: new RegExp(/(\bc[continue]{5,})/i),
 	done: new RegExp(/(^d[done]{2,}$)/i),
 	noAdditional: new RegExp(/(\bn[no ]{1,}\ba[additional]{5,}\b|^no\b|^no[one]{2,4}$)/i),
-	containsKeep: new RegExp(/(\bk[keep]{2,}\b)/i),
+	containsKeep: new RegExp(/(\bke[ep]{2,6}\b)/i),
 	containsDifferentOrAnother: new RegExp(/\b(d[different]{5,}|a[another]{4,})\b/i),
 	eastern: new RegExp(/\b(e[eastern]{5,})\b/i),
 	central: new RegExp(/\b(c[central]{5,})\b/i),
@@ -81,6 +66,10 @@ var utterances = exports.utterances = {
 	mountain: new RegExp(/\b(m[mountain]{5,})\b/i),
 	other: new RegExp(/\b(o[other]{3,})\b/i),
 	deleteTasks: new RegExp(/^(d[delete ]{3,}[tasks ]{0,})\b/i),
-	containsResetOrUndo: new RegExp(/\b(r[reset]{3,}|u[undo]{2,})\b/i)
-};
+	containsResetOrUndo: new RegExp(/\b(r[reset]{3,}|u[undo]{2,})\b/i),
+	startsWithHelp: new RegExp(/^(hel[elp]{1,4})\b/i),
+	containsNoOne: new RegExp(/\b(no one)\b/i),
+	somethingElse: new RegExp(/\bsome[omething]{3,}\b.*\bel[lse]{2,}\b/i),
+	containsEnough: new RegExp(/\beno[ough]{3,}\b/i)
+}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "notToday", new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i)), _defineProperty(_utterances, "notShare", new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _defineProperty(_utterances, "noMore", new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i)), _defineProperty(_utterances, "redo", new RegExp(/^re[re do]{2,5}\b/i)), _defineProperty(_utterances, "noDontAskAgain", new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "yesDontAskAgain", new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "changePriority", new RegExp(/^chang[ge]{1,4}\b|\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\b(priori[tiyes]{1,5}|tas[sk]{1,5})\b/i)), _defineProperty(_utterances, "goBack", new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)), _utterances);
 //# sourceMappingURL=botResponses.js.map

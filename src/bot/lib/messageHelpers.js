@@ -2,10 +2,75 @@
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
  */
 
-import { FINISH_WORD, buttonValues, colorsHash, taskListMessageNoButtonsAttachment } from './constants';
+import { constants, buttonValues, colorsHash, taskListMessageNoButtonsAttachment, quotes, approvalWords } from './constants';
 import { utterances } from './botResponses';
 
 import nlp from 'nlp_compromise';
+
+export function getRandomApprovalWord(config = {}) {
+	// gives you awesome, nice, sounds good, great, etc.
+	
+	let approvalWord = approvalWords[Math.floor(Math.random()*approvalWords.length)];
+
+	if (config.upperCase) {
+		approvalWord = capitalizeFirstLetter(approvalWord);
+	}
+	return approvalWord;
+}
+
+export function getRandomQuote(config = {}) {
+
+	let quote = quotes[Math.floor(Math.random()*quotes.length)];
+	return quote;
+
+}
+
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+export function getNewPlanAttachments(prioritizedTasks) {
+
+	let doneTasksButton = "Let's move on";
+	if (prioritizedTasks.length  == 1) {
+		doneTasksButton = "I only have one";
+	} else if (prioritizedTasks.length == 2) {
+		doneTasksButton = "I only have two";
+	}
+	let attachments = [
+		{
+			attachment_type: 'default',
+			callback_id: "TASK_LIST_MESSAGE",
+			fallback: "Let's get your priorities",
+			color: colorsHash.grey.hex,
+			actions: [
+				{
+						name: buttonValues.doneAddingTasks.name,
+						text: doneTasksButton,
+						value: buttonValues.doneAddingTasks.value,
+						type: "button"
+				},
+				{
+						name: buttonValues.redoTasks.name,
+						text: "Start Over",
+						value: buttonValues.redoTasks.value,
+						type: "button"
+				}
+			]
+		}
+	];
+
+	if (prioritizedTasks.length == 0) {
+		attachments = [
+			{
+				attachment_type: 'default',
+				callback_id: "TASK_LIST_MESSAGE",
+				fallback: "Let's get your priorities"
+			}
+		]
+	}
+	return attachments;
+}
 
 /**
  * takes array of tasks and converts to array of task STRINGS
@@ -19,7 +84,7 @@ export function convertResponseObjectsToTaskArray(tasks) {
 	tasks.forEach((task, index) => {
 		// ignore the last one (`done` command)
 		// also ignore if it is an `add a task` NL command
-		if (FINISH_WORD.reg_exp.test(task.text)) {
+		if (constants.FINISH_WORD.reg_exp.test(task.text)) {
 			return;
 		}
 
@@ -74,7 +139,7 @@ export function convertResponseObjectToNewTaskArray(response) {
  */
 export function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 
-	const splitter            = RegExp(/(,|\ba[and]{1,}\b)/);
+	const splitter            = RegExp(/(,|\ba[and]{1,}\b|\bthen\b)/);
 	var taskNumbersSplitArray = taskNumbersString.split(splitter);
 
 	// let's get task array of only remaining tasks
@@ -91,9 +156,7 @@ export function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
 		// if it's a valid number and within the remainingTasks length
 		if (taskNumber) {
 			taskNumber = parseInt(taskNumber[0]);
-			if (taskNumber <= remainingTasks.length) {
-				validTaskNumberArray.push(taskNumber);
-			}
+			validTaskNumberArray.push(taskNumber);
 		}
 
 	});
@@ -168,9 +231,12 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 	var taskListMessage = '';
 	var count = 1;
 	var totalMinutes = 0;
+	options.totalMinutesSpent = 0;
 
 	options.totalMinutes = totalMinutes;
 	options.count        = count;
+
+	const { reviewVersion, calculateMinutes, noTitles } = options;
 	
 	// different format if has 1+ completed tasks (`segmentCompleted`)
 	var hasCompletedTasks = false;
@@ -208,26 +274,36 @@ export function convertArrayToTaskListMessage(taskArray, options = {}) {
 	// add completed tasks to right place
 	var taskListMessageBody = '';
 	if (completedTasks.length > 0) {
-		taskListMessage = (options.noKarets ? `*Completed Tasks:*\n` : `> *Completed Tasks:*\n`);
+		if (!noTitles){
+			taskListMessage = (options.noKarets ? `*Completed Priorities:*\n` : `> *Completed Priorities:*\n`);
+		}
+		
 		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
 		taskListMessage += taskListMessageBody;
+
 	}
 		
 	if (remainingTasks.length > 0) {
+
 		// add remaining tasks to right place
 		if (completedTasks.length > 0) {
 			// only remaining tasks, no completed tasks
-			taskListMessage += (options.noKarets ? `\n*Remaining Tasks:*\n` : `>\n>*Remaining Tasks:*\n`);
+			if (!noTitles) {
+				taskListMessage += (options.noKarets ? `\n*Remaining Priorities:*\n` : `>\n>*Remaining Priorities:*\n`);
+			}
 		}
 		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
 		taskListMessage += taskListMessageBody;
+
 	}
 	
-	if (!options.dontCalculateMinutes && remainingTasks.length > 0) { // taskListMessages default to show calculated minutes
-		var { totalMinutes } = options;
-		var timeString = convertMinutesToHoursString(totalMinutes);
-		var totalMinutesContent = `\n*Total time estimate: ${timeString} :clock730:*`;
-		taskListMessage += totalMinutesContent;
+	if (reviewVersion && calculateMinutes) {
+		let { totalMinutesSpent } = options;
+		if (totalMinutesSpent > 0) {
+			let timeString = convertMinutesToHoursString(totalMinutesSpent);
+			var totalMinutesContent = `\n*Time Well Spent: ${timeString} :clock730:*`;
+			taskListMessage += totalMinutesContent;
+		}
 	}
 
 	return taskListMessage;
@@ -237,14 +313,53 @@ function createTaskListMessageBody(taskArray, options) {
 
 	var taskListMessage = '';
 
+	// if reviewVersion, we are adding the time we SPENT, not what we have remaining
+	let { reviewVersion, calculateMinutes, noTitles, totalMinutesSpent } = options;
+
+	console.log(`totalMinutes spent outside loop: ${totalMinutesSpent}`);
+
 	let count = 0;
 	taskArray.forEach((task, index) => {
 
 		// for when you get task from DB
-		var minutesMessage = '';
+		let minutesMessage = '';
 		if (!options.dontUseDataValues && task.dataValues) {
 			task = task.dataValues;
 		};
+
+		if (!options.dontShowMinutes && task.minutes) {
+
+			let minutesInt = Math.round(task.minutes);
+			let minutesSpent = Math.round(task.minutesSpent);
+			let minutesRemaining = minutesInt - minutesSpent;
+
+			console.log(`totalMinutes spent in loop: ${totalMinutesSpent}`);
+
+			totalMinutesSpent += minutesSpent;
+
+			let timeString = '';
+			if (reviewVersion) {
+				// review version: total minutes spent
+				timeString = convertMinutesToHoursString(minutesSpent);
+				if (minutesSpent > 0)
+					minutesMessage = ` (for ${timeString})`;
+			} else {
+				// live version: total minutes remaining
+				if (minutesRemaining > 0) {
+					timeString = convertMinutesToHoursString(minutesRemaining);
+					minutesMessage = ` (${timeString} remaining)`;
+				} else {
+					if (!task.done)
+						minutesMessage = ` (_no time remaining_)`;
+				}
+			}
+
+		}
+
+		// in review version, only completed tasks for message
+		if (reviewVersion && !task.done) {
+			return;
+		}
 
 		let priority = task.priority;
 		if (!priority && task.dailyTask && task.DailyTask.dataValues) {
@@ -253,25 +368,10 @@ function createTaskListMessageBody(taskArray, options) {
 			priority = '';
 		}
 
-		if (priority > 0) {
+		if (priority > 0 && !options.dontUsePriority) {
 			count = priority;
 		} else {
 			count++;
-		}
-
-		if (!options.dontShowMinutes && task.minutes) {
-
-			var minutesInt = parseInt(task.minutes);
-			if (!isNaN(minutesInt) && !task.done) {
-				options.totalMinutes += minutesInt;
-			}
-			var timeString = convertMinutesToHoursString(minutesInt);
-
-			if (options.emphasizeMinutes) {
-				minutesMessage = ` *_(${timeString})_*`;
-			} else {
-				minutesMessage = ` (${timeString})`;
-			}
 		}
 
 		// completed tasks do not have count
@@ -283,12 +383,14 @@ function createTaskListMessageBody(taskArray, options) {
 		}
 		taskContent = `${taskContent}${task.text}${minutesMessage}`
 
-		taskContent = (task.done ? `~${taskContent}~\n` : `${taskContent}\n`);
+		taskContent = (task.done && !reviewVersion ? `~${taskContent}~\n` : `${taskContent}\n`);
 		taskContent = (options.noKarets ? taskContent : `> ${taskContent}`);
 
 		taskListMessage += taskContent;
 		
 	});
+
+	options.totalMinutesSpent = totalMinutesSpent;
 
 	return taskListMessage;
 }
@@ -298,8 +400,11 @@ function createTaskListMessageBody(taskArray, options) {
  * @param  {int} minutes number of minutes
  * @return {string}         hour + minutes
  */
-export function convertMinutesToHoursString(minutes) {
-	minutes = parseInt(minutes);
+export function convertMinutesToHoursString(minutes, config = {}) {
+
+	const { abbreviation } = config;
+
+	minutes = Math.round(minutes);
 	var hours = 0;
 	while (minutes - 60 >= 0) {
 		hours++;
@@ -309,17 +414,22 @@ export function convertMinutesToHoursString(minutes) {
 	if (hours == 0) {
 		content = ``;
 	} else if (hours == 1) {
-		content = `${hours} hour `;
+		content = abbreviation ? `${hours} hr ` : `${hours} hour `;
 	} else {
-		content = `${hours} hours `;
+		content = abbreviation ? `${hours} hrs ` : `${hours} hours `;
 	}
 
 	if (minutes == 0) {
 		content = content.slice(0, -1);
 	} else if (minutes == 1) {
-		content = `${content}${minutes} minute`;
+		content = abbreviation ? `${content}${minutes} min` : `${content}${minutes} minute`;
 	} else {
-		content = `${content}${minutes} minutes`;
+		content = abbreviation ? `${content}${minutes} min` : `${content}${minutes} minutes`;
+	}
+
+	// for 0 time spent
+	if (minutes == 0 && hours == 0) {
+		content = `less than a minute`;
 	}
 
 	return content;
@@ -506,11 +616,17 @@ export function prioritizeTaskArrayFromUserInput(taskObjectArray, input) {
 }
 
 // returns tasks separated into red blocks
-export function commaSeparateOutTaskArray(a) {
+export function commaSeparateOutTaskArray(a, config = {}) {
 
-	// put into red blocks
+	const { codeBlock, slackNames } = config;
+
 	a = a.map((a) => {
-		return `\`${a}\``;
+		if (codeBlock) {
+			a = `\`${a}\``
+		} else if (slackNames) {
+			a = `@${a}`;
+		}
+		return a;
 	})
 
 	// make into string
@@ -769,5 +885,291 @@ export function convertStringToNumbersArray(userInputString) {
 	} else {
 		return numbersArray;
 	}
+
+}
+
+export function getDoneSessionMessageAttachments(config = {}) {
+
+	const { buttonsValuesArray, defaultBreakTime, defaultSnoozeTime } = config;
+
+	let actions = [];
+	buttonsValuesArray.forEach((buttonValue) => {
+		switch (buttonValue) {
+			case buttonValues.doneSession.completedPriority.value:
+				actions.push({
+					name: buttonValues.doneSession.completedPriority.name,
+					text: "Completed :sports_medal:",
+					value: buttonValues.doneSession.completedPriority.value,
+					type: "button",
+					style: "primary"
+				});
+				break;
+			case buttonValues.doneSession.completedPriorityTonedDown.value:
+				actions.push({
+					name: buttonValues.doneSession.completedPriorityTonedDown.name,
+					text: "Completed :punch:",
+					value: buttonValues.doneSession.completedPriorityTonedDown.value,
+					type: "button"
+				});
+				break;
+			case buttonValues.doneSession.takeBreak.value:
+				let breakText = defaultBreakTime ? `Break for ${defaultBreakTime} min` : `Take a break`;
+				actions.push({
+					name: buttonValues.doneSession.takeBreak.name,
+					text: breakText,
+					value: buttonValues.doneSession.takeBreak.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.extendSession.value:
+				let extendText = defaultSnoozeTime ? `Extend for ${defaultSnoozeTime} min` : `Extend Session`;
+				actions.push({
+					name: buttonValues.doneSession.extendSession.name,
+					text: extendText,
+					value: buttonValues.doneSession.extendSession.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.newSession.value:
+				actions.push({
+					name: buttonValues.doneSession.newSession.name,
+					text: "New Session",
+					value: buttonValues.doneSession.newSession.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.viewPlan.value:
+				actions.push({
+					name: buttonValues.doneSession.viewPlan.name,
+					text: "View Plan",
+					value: buttonValues.doneSession.viewPlan.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.endDay.value:
+				actions.push({
+					name: buttonValues.doneSession.endDay.name,
+					text: "End Day",
+					value: buttonValues.doneSession.endDay.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.notDone.value:
+				actions.push({
+					name: buttonValues.doneSession.notDone.name,
+					text: "Not Done",
+					value: buttonValues.doneSession.notDone.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.didSomethingElse.value:
+				actions.push({
+					name: buttonValues.doneSession.didSomethingElse.name,
+					text: "Did something else",
+					value: buttonValues.doneSession.didSomethingElse.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.moveOn.value:
+				actions.push({
+					name: buttonValues.doneSession.moveOn.name,
+					text: "Let's move On",
+					value: buttonValues.doneSession.moveOn.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.itWasSomethingElse.value:
+				actions.push({
+					name: buttonValues.doneSession.itWasSomethingElse.name,
+					text: "Something else!",
+					value: buttonValues.doneSession.itWasSomethingElse.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.neverMind.value:
+				actions.push({
+					name: buttonValues.neverMind.name,
+					text: "Never mind",
+					value: buttonValues.neverMind.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.keepMyPriority.value:
+				actions.push({
+					name: buttonValues.doneSession.keepMyPriority.name,
+					text: "I'll keep my priorities",
+					value: buttonValues.doneSession.keepMyPriority.value,
+					type: "button"
+				})
+				break;
+			case buttonValues.doneSession.beBackLater.value:
+				actions.push({
+					name: buttonValues.doneSession.beBackLater.name,
+					text: "Be back later",
+					value: buttonValues.doneSession.beBackLater.value,
+					type: "button"
+				})
+				break;
+			default: break;
+		}
+	});
+
+	let attachments = [{
+		attachment_type: 'default',
+		callback_id: "DONE_WITH_SESSION",
+		fallback: "Done with my session!",
+		actions
+	}]
+
+	return attachments;
+	
+}
+
+// get button attachments for your plan list
+export function getPlanCommandCenterAttachments(config = {}) {
+
+
+	const { buttonsValuesArray } = config;
+
+	let actions = [];
+	buttonsValuesArray.forEach((buttonValue) => {
+		switch (buttonValue) {
+			case buttonValues.planCommands.addPriority.value:
+				actions.push({
+					name: buttonValues.planCommands.addPriority.name,
+					text: "Add",
+					value: buttonValues.planCommands.addPriority.value,
+					type: "button"
+				});
+				break;
+			case buttonValues.planCommands.deletePriority.value:
+				actions.push({
+					name: buttonValues.planCommands.deletePriority.name,
+					text: "Remove",
+					value: buttonValues.planCommands.deletePriority.value,
+					type: "button"
+				});
+				break;
+			case buttonValues.planCommands.completePriority.value:
+				actions.push({
+					name: buttonValues.planCommands.completePriority.name,
+					text: "Complete",
+					value: buttonValues.planCommands.completePriority.value,
+					type: "button"
+				});
+				break;
+			case buttonValues.planCommands.workOnPriority.value:
+				actions.push({
+					name: buttonValues.planCommands.workOnPriority.name,
+					text: "Work",
+					value: buttonValues.planCommands.workOnPriority.value,
+					type: "button"
+				});
+				break;
+			case buttonValues.planCommands.revisePriority.value:
+				actions.push({
+					name: buttonValues.planCommands.revisePriority.name,
+					text: "Revise",
+					value: buttonValues.planCommands.revisePriority.value,
+					type: "button"
+				});
+				break;
+			case buttonValues.planCommands.endDay.value:
+				actions.push({
+					name: buttonValues.planCommands.endDay.name,
+					text: "End Day",
+					value: buttonValues.planCommands.endDay.value,
+					type: "button"
+				});
+				break;
+			default: break;
+		}
+	});
+
+	let attachments = [{
+		attachment_type: 'default',
+		callback_id: "PLAN_COMMAND_CENTER",
+		fallback: "What do you want to do with your priorities?",
+		color: colorsHash.toki_purple.hex,
+		actions
+	}]
+
+	return attachments;
+
+}
+
+export function getMinutesSuggestionAttachments(minutesRemaining, config) {
+
+	let minutesSuggestions    = [30, 45, 60, 90];
+	let customIndexSuggestion = 0;
+
+	minutesSuggestions.some((minutesSuggestion, index) => {
+		customIndexSuggestion = index;
+
+		if (minutesRemaining - minutesSuggestion < 0) {
+			return true;
+		} else {
+			const nextIndex = index+1;
+			if (minutesSuggestions[nextIndex]) {
+
+				if (minutesRemaining - minutesSuggestions[nextIndex] < 0) {
+
+					// round up or down?
+					let currentIndexValue = Math.abs(minutesSuggestion - minutesRemaining);
+					let nextIndexValue = Math.abs(minutesSuggestions[nextIndex] - minutesRemaining);
+					if (nextIndexValue < currentIndexValue) {
+						customIndexSuggestion = nextIndex;
+					}
+					return true;
+
+				}
+			}
+		}
+	});
+
+	if (minutesRemaining > 110) {
+		// put a cap on this
+		minutesRemaining = 90;
+	}
+
+	minutesSuggestions[customIndexSuggestion] = minutesRemaining;
+
+	let attachments = [
+		{
+			attachment_type: 'default',
+			callback_id: "START_SESSION",
+			color: colorsHash.turquoise.hex,
+			fallback: "I was unable to process your decision",
+			actions: []
+		}
+	];
+
+	minutesSuggestions.forEach((minutesSuggestion) => {
+		let timeSuggestionString = convertMinutesToHoursString(minutesSuggestion, { abbreviation: true });
+		let action = {
+			name: buttonValues.startNow.name,
+			text: `${timeSuggestionString}`,
+			value: `${minutesSuggestion} minutes`,
+			type: "button"
+		}
+		if (minutesSuggestion == minutesRemaining) {
+			action["style"] = "primary";
+		}
+		attachments[0].actions.push(action);
+	});
+
+	const { noOtherPriorities } = config;
+	if (!noOtherPriorities) {
+		attachments[0].actions.push({
+			name: buttonValues.changeTask.name,
+			text: "Change Priority",
+			value: buttonValues.changeTask.value,
+			type: "button"
+		});
+	}
+
+		
+
+	return attachments;
 
 }
