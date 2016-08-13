@@ -105,196 +105,207 @@ export default function(controller) {
 		.then((user) => {
 
 			const UserId = user.id;
-			const { onboarded, includeOthersDecision, SlackUser: { tz } } = user;
+			const { includeOthersDecision, SlackUser: { tz } } = user;
 
 			let daySplit = getCurrentDaySplit(tz);
 
-			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+			user.getSessionGroups({
+				where: [ `"SessionGroup"."type" = ? AND "SessionGroup"."createdAt" > ?`, "start_work", dateOfNewPlanDayFlow],
+				limit: 1
+			})
+			.then((sessionGroups) => {
 
-				var name   = user.nickName || user.email;
-				convo.name = name;
+				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-				convo.newPlan = {
-					SlackUserId,
-					includeOthersDecision,
-					tz,
-					daySplit,
-					onboardVersion: false,
-					prioritizedTasks: [],
-					startTime: false, // default will be now
-					includeSlackUserIds: [],
-					pingTeamMembers: false // actual decision to ping
-				}
+					var name   = user.nickName || user.email;
+					convo.name = name;
 
-				let day = moment().tz(tz).format('dddd');
-
-				if (!onboarded) {
-					convo.newPlan.onboardVersion = true;
-				}
-
-				if (!convo.newPlan.onboardVersion) {
-					convo.say(`Let's win this ${day}, ${name}! :muscle:`);
-				}
-
-				startNewPlanFlow(convo);
-
-				// on finish conversation
-				convo.on('end', (convo) => {
-
-					const { newPlan } = convo;
-					let { exitEarly, prioritizedTasks, startTime, includeSlackUserIds, startNow, includeOthersDecision, pingTeamMembers } = newPlan;
-
-					closeOldRemindersAndSessions(user);
-
-					if (exitEarly) {
-						return;
+					convo.newPlan = {
+						SlackUserId,
+						includeOthersDecision,
+						tz,
+						daySplit,
+						onboardVersion: false,
+						prioritizedTasks: [],
+						startTime: false, // default will be now
+						includeSlackUserIds: [],
+						pingTeamMembers: false // actual decision to ping
 					}
 
-					// create plan
-					models.SessionGroup.create({
-						type: "start_work",
-						UserId
-					})
-					.then((sessionGroup) => {
+					let day = moment().tz(tz).format('dddd');
 
-						// then, create the 3 priorities for today
-						user.getDailyTasks({
-							where: [`"DailyTask"."type" = ?`, "live"]
+					if (sessionGroups.length == 0) {
+						convo.newPlan.onboardVersion = true;
+					}
+
+					if (!convo.newPlan.onboardVersion) {
+						convo.say(`Let's win this ${day}, ${name}! :muscle:`);
+					}
+
+					startNewPlanFlow(convo);
+
+					// on finish conversation
+					convo.on('end', (convo) => {
+
+						const { newPlan } = convo;
+						let { exitEarly, prioritizedTasks, startTime, includeSlackUserIds, startNow, includeOthersDecision, pingTeamMembers } = newPlan;
+
+						closeOldRemindersAndSessions(user);
+
+						if (exitEarly) {
+							return;
+						}
+
+						// create plan
+						models.SessionGroup.create({
+							type: "start_work",
+							UserId
 						})
-						.then((dailyTasks) => {
-							let dailyTaskIds = dailyTasks.map(dailyTask => dailyTask.id);
-							if (dailyTaskIds.length == 0) {
-								dailyTaskIds = [0]
-							};
-							models.DailyTask.update({
-								type: "archived"
-							}, {
-								where: [ `"DailyTasks"."id" IN (?)`, dailyTaskIds ]
+						.then((sessionGroup) => {
+
+							// then, create the 3 priorities for today
+							user.getDailyTasks({
+								where: [`"DailyTask"."type" = ?`, "live"]
 							})
 							.then((dailyTasks) => {
+								let dailyTaskIds = dailyTasks.map(dailyTask => dailyTask.id);
+								if (dailyTaskIds.length == 0) {
+									dailyTaskIds = [0]
+								};
+								models.DailyTask.update({
+									type: "archived"
+								}, {
+									where: [ `"DailyTasks"."id" IN (?)`, dailyTaskIds ]
+								})
+								.then((dailyTasks) => {
 
-								prioritizedTasks.forEach((task, index) => {
+									prioritizedTasks.forEach((task, index) => {
 
-									const priority = index + 1;
-									const { text, minutes } = task;
-									models.Task.create({
-										text
-									})
-									.then((task) => {
-										task.createDailyTask({
-											minutes,
-											priority,
-											UserId
+										const priority = index + 1;
+										const { text, minutes } = task;
+										models.Task.create({
+											text
 										})
-										.then((dailyTask) => {
+										.then((task) => {
+											task.createDailyTask({
+												minutes,
+												priority,
+												UserId
+											})
+											.then((dailyTask) => {
 
-											// this makes sure that this gets triggered only once!
-											if (priority == prioritizedTasks.length) {
+												// this makes sure that this gets triggered only once!
+												if (priority == prioritizedTasks.length) {
 
-												if (startTime) {
-													// if you asked for a queued reminder
-													models.Reminder.create({
-														UserId,
-														remindTime: startTime,
-														type: "start_work"
-													});
-												} else if (startNow) {
-													// start now!
-													controller.trigger(`begin_session`, [ bot, { SlackUserId } ]);
-												}
-
-												// INCLUDE OTHERS FUNCTIONALITY
-												models.User.update({
-													includeOthersDecision
-												}, {
-													where: [ `"Users"."id" = ?`, UserId ]
-												})
-												.then((user) => {
-
-													if (includeOthersDecision == "YES_FOREVER") {
-														pingTeamMembers = true;
-													} else if (includeOthersDecision == "NO_FOREVER") {
-														pingTeamMembers = false;
+													if (startTime) {
+														// if you asked for a queued reminder
+														models.Reminder.create({
+															UserId,
+															remindTime: startTime,
+															type: "start_work"
+														});
+													} else if (startNow) {
+														// start now!
+														controller.trigger(`begin_session`, [ bot, { SlackUserId } ]);
 													}
 
-													// this is to create for future includes
-													if (includeSlackUserIds && includeSlackUserIds.length > 0) {
+													// INCLUDE OTHERS FUNCTIONALITY
+													models.User.update({
+														includeOthersDecision
+													}, {
+														where: [ `"Users"."id" = ?`, UserId ]
+													})
+													.then((user) => {
 
-														models.SlackUser.find({
-															where: [`"SlackUserId" = ?`, SlackUserId]
-														})
-														.then((slackUser) => {
+														if (includeOthersDecision == "YES_FOREVER") {
+															pingTeamMembers = true;
+														} else if (includeOthersDecision == "NO_FOREVER") {
+															pingTeamMembers = false;
+														}
 
-															slackUser.getIncluded({
-																include: [ models.User ]
+														// this is to create for future includes
+														if (includeSlackUserIds && includeSlackUserIds.length > 0) {
+
+															models.SlackUser.find({
+																where: [`"SlackUserId" = ?`, SlackUserId]
 															})
-															.then((includedSlackUsers) => {
-																
-																// only add in NEW slackUserIds to DB
-																let alreadyIncludedSlackUserIds = includedSlackUsers.map(slackUser => slackUser.SlackUserId);
-																includeSlackUserIds.forEach((IncludedSlackUserId) => {
-																	if (alreadyIncludedSlackUserIds.indexOf(IncludedSlackUserId) == -1) {
-																		models.Include.create({
-																			IncluderSlackUserId: SlackUserId,
-																			IncludedSlackUserId
+															.then((slackUser) => {
+
+																slackUser.getIncluded({
+																	include: [ models.User ]
+																})
+																.then((includedSlackUsers) => {
+																	
+																	// only add in NEW slackUserIds to DB
+																	let alreadyIncludedSlackUserIds = includedSlackUsers.map(slackUser => slackUser.SlackUserId);
+																	includeSlackUserIds.forEach((IncludedSlackUserId) => {
+																		if (alreadyIncludedSlackUserIds.indexOf(IncludedSlackUserId) == -1) {
+																			models.Include.create({
+																				IncluderSlackUserId: SlackUserId,
+																				IncludedSlackUserId
+																			});
+																		}
+																	});
+
+																	// ping if desired
+																	if (pingTeamMembers) {
+																		includeSlackUserIds.forEach((includeSlackUserId) => {
+
+																			const config = {
+																				IncluderSlackUserId: SlackUserId,
+																				IncludedSlackUserId: includeSlackUserId
+																			};
+																			controller.trigger(`notify_team_member`, [ bot, config ]);
+
 																		});
 																	}
+
 																});
-
-																// ping if desired
-																if (pingTeamMembers) {
-																	includeSlackUserIds.forEach((includeSlackUserId) => {
-
-																		const config = {
-																			IncluderSlackUserId: SlackUserId,
-																			IncludedSlackUserId: includeSlackUserId
-																		};
-																		controller.trigger(`notify_team_member`, [ bot, config ]);
-
-																	});
-																}
 
 															});
 
-														});
+														}
 
-													}
+													});
 
-												});
-
-											}
+												}
+											})
 										})
-									})
+
+									});
 
 								});
-
 							});
-						});
 
-					})
+						})
 
-					console.log("here is new plan object:\n");
-					console.log(convo.newPlan);
-					console.log("\n\n\n");
+						console.log("here is new plan object:\n");
+						console.log(convo.newPlan);
+						console.log("\n\n\n");
 
-					setTimeout(() => {
-						resumeQueuedReachouts(bot, { SlackUserId });
-					}, 1250);
-
-					// placeholder for keep going
-					if (newPlan) {
-
-					} else {
-						// default premature end
-						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+						setTimeout(() => {
 							resumeQueuedReachouts(bot, { SlackUserId });
-							convo.say("Okay! Let me know when you want to plan for today");
-							convo.next();
-						});
-					}
+						}, 1250);
+
+						// placeholder for keep going
+						if (newPlan) {
+
+						} else {
+							// default premature end
+							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+								resumeQueuedReachouts(bot, { SlackUserId });
+								convo.say("Okay! Let me know when you want to plan for today");
+								convo.next();
+							});
+						}
+
+					});
 
 				});
-			});
+			})
+
+				
+
 		})
 
 	});

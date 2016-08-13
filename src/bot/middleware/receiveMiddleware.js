@@ -48,24 +48,6 @@ export default (controller) => {
 					next();
 				}
 
-				// user.getSessionGroups({
-				// 	where: [ `"SessionGroup"."type" = ? AND "SessionGroup"."createdAt" > ?`, "start_work", dateOfNewPlanDayFlow],
-				// 	limit: 1
-				// })
-				// .then((sessionGroups) => {
-
-				// 	if (sessionGroups.length == 0) {
-				// 		console.log(`\n\n ~~ user has not onboarded yet ~~ \n\n`);
-				// 		// this middleware will only trigger once
-				// 		bot.onboardedUser[SlackUserId] = true;
-				// 		console.log(bot);
-						
-				// 	} else {
-				// 		next();
-				// 	}
-
-				// });
-
 			});
 		}
 

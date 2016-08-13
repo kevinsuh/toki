@@ -283,6 +283,7 @@ function confirmPingToTeamMembers(convo, includedSlackUsers, question = '') {
 					convo.newPlan.includeOthersDecision = "NO_FOREVER";
 					convo.say(`Sounds good! I won't ping anyone about your priorities and won't ask again`);
 					convo.say(`If this ever changes, just ask me to \`show settings\``);
+
 					addTimeToPriorities(convo);
 					convo.next();
 
@@ -294,6 +295,8 @@ function confirmPingToTeamMembers(convo, includedSlackUsers, question = '') {
 
 					convo.newPlan.pingTeamMembers = true;
 					convo.say(`Sounds good!`);
+
+					addTimeToPriorities(convo);
 					convo.next();
 
 				}
@@ -304,6 +307,8 @@ function confirmPingToTeamMembers(convo, includedSlackUsers, question = '') {
 
 					convo.say(`Okay! I won't ping anyone about your priorities today`);
 					convo.newPlan.pingTeamMembers = false;
+					
+					addTimeToPriorities(convo);
 					convo.next();
 
 				}
