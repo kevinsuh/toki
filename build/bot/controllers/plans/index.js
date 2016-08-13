@@ -84,194 +84,189 @@ exports.default = function (controller) {
 		}).then(function (user) {
 
 			var UserId = user.id;
+			var onboarded = user.onboarded;
 			var includeOthersDecision = user.includeOthersDecision;
 			var tz = user.SlackUser.tz;
 
 
 			var daySplit = (0, _miscHelpers.getCurrentDaySplit)(tz);
 
-			user.getSessionGroups({
-				where: ['"SessionGroup"."type" = ? AND "SessionGroup"."createdAt" > ?', "start_work", _constants.dateOfNewPlanDayFlow],
-				limit: 1
-			}).then(function (sessionGroups) {
+			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+				var name = user.nickName || user.email;
+				convo.name = name;
 
-					var name = user.nickName || user.email;
-					convo.name = name;
+				convo.newPlan = {
+					SlackUserId: SlackUserId,
+					includeOthersDecision: includeOthersDecision,
+					tz: tz,
+					daySplit: daySplit,
+					onboardVersion: false,
+					prioritizedTasks: [],
+					startTime: false, // default will be now
+					includeSlackUserIds: [],
+					pingTeamMembers: false // actual decision to ping
+				};
 
-					convo.newPlan = {
-						SlackUserId: SlackUserId,
-						includeOthersDecision: includeOthersDecision,
-						tz: tz,
-						daySplit: daySplit,
-						onboardVersion: false,
-						prioritizedTasks: [],
-						startTime: false, // default will be now
-						includeSlackUserIds: [],
-						pingTeamMembers: false // actual decision to ping
-					};
+				var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');
 
-					var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');
+				if (!onboarded) {
+					convo.newPlan.onboardVersion = true;
+				}
 
-					if (sessionGroups.length == 0) {
-						convo.newPlan.onboardVersion = true;
+				if (!convo.newPlan.onboardVersion) {
+					convo.say('Let\'s win this ' + day + ', ' + name + '! :muscle:');
+				}
+
+				(0, _plan.startNewPlanFlow)(convo);
+
+				// on finish conversation
+				convo.on('end', function (convo) {
+					var newPlan = convo.newPlan;
+					var exitEarly = newPlan.exitEarly;
+					var prioritizedTasks = newPlan.prioritizedTasks;
+					var startTime = newPlan.startTime;
+					var includeSlackUserIds = newPlan.includeSlackUserIds;
+					var startNow = newPlan.startNow;
+					var includeOthersDecision = newPlan.includeOthersDecision;
+					var pingTeamMembers = newPlan.pingTeamMembers;
+
+
+					(0, _miscHelpers.closeOldRemindersAndSessions)(user);
+
+					if (exitEarly) {
+						return;
 					}
 
-					if (!convo.newPlan.onboardVersion) {
-						convo.say('Let\'s win this ' + day + ', ' + name + '! :muscle:');
-					}
+					// create plan
+					_models2.default.SessionGroup.create({
+						type: "start_work",
+						UserId: UserId
+					}).then(function (sessionGroup) {
 
-					(0, _plan.startNewPlanFlow)(convo);
-
-					// on finish conversation
-					convo.on('end', function (convo) {
-						var newPlan = convo.newPlan;
-						var exitEarly = newPlan.exitEarly;
-						var prioritizedTasks = newPlan.prioritizedTasks;
-						var startTime = newPlan.startTime;
-						var includeSlackUserIds = newPlan.includeSlackUserIds;
-						var startNow = newPlan.startNow;
-						var includeOthersDecision = newPlan.includeOthersDecision;
-						var pingTeamMembers = newPlan.pingTeamMembers;
-
-
-						(0, _miscHelpers.closeOldRemindersAndSessions)(user);
-
-						if (exitEarly) {
-							return;
-						}
-
-						// create plan
-						_models2.default.SessionGroup.create({
-							type: "start_work",
-							UserId: UserId
-						}).then(function (sessionGroup) {
-
-							// then, create the 3 priorities for today
-							user.getDailyTasks({
-								where: ['"DailyTask"."type" = ?', "live"]
+						// then, create the 3 priorities for today
+						user.getDailyTasks({
+							where: ['"DailyTask"."type" = ?', "live"]
+						}).then(function (dailyTasks) {
+							var dailyTaskIds = dailyTasks.map(function (dailyTask) {
+								return dailyTask.id;
+							});
+							if (dailyTaskIds.length == 0) {
+								dailyTaskIds = [0];
+							};
+							_models2.default.DailyTask.update({
+								type: "archived"
+							}, {
+								where: ['"DailyTasks"."id" IN (?)', dailyTaskIds]
 							}).then(function (dailyTasks) {
-								var dailyTaskIds = dailyTasks.map(function (dailyTask) {
-									return dailyTask.id;
-								});
-								if (dailyTaskIds.length == 0) {
-									dailyTaskIds = [0];
-								};
-								_models2.default.DailyTask.update({
-									type: "archived"
-								}, {
-									where: ['"DailyTasks"."id" IN (?)', dailyTaskIds]
-								}).then(function (dailyTasks) {
 
-									prioritizedTasks.forEach(function (task, index) {
+								prioritizedTasks.forEach(function (task, index) {
 
-										var priority = index + 1;
-										var text = task.text;
-										var minutes = task.minutes;
+									var priority = index + 1;
+									var text = task.text;
+									var minutes = task.minutes;
 
-										_models2.default.Task.create({
-											text: text
-										}).then(function (task) {
-											task.createDailyTask({
-												minutes: minutes,
-												priority: priority,
-												UserId: UserId
-											}).then(function (dailyTask) {
+									_models2.default.Task.create({
+										text: text
+									}).then(function (task) {
+										task.createDailyTask({
+											minutes: minutes,
+											priority: priority,
+											UserId: UserId
+										}).then(function (dailyTask) {
 
-												// this makes sure that this gets triggered only once!
-												if (priority == prioritizedTasks.length) {
+											// this makes sure that this gets triggered only once!
+											if (priority == prioritizedTasks.length) {
 
-													if (startTime) {
-														// if you asked for a queued reminder
-														_models2.default.Reminder.create({
-															UserId: UserId,
-															remindTime: startTime,
-															type: "start_work"
-														});
-													} else if (startNow) {
-														// start now!
-														controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+												if (startTime) {
+													// if you asked for a queued reminder
+													_models2.default.Reminder.create({
+														UserId: UserId,
+														remindTime: startTime,
+														type: "start_work"
+													});
+												} else if (startNow) {
+													// start now!
+													controller.trigger('begin_session', [bot, { SlackUserId: SlackUserId }]);
+												}
+
+												// INCLUDE OTHERS FUNCTIONALITY
+												_models2.default.User.update({
+													includeOthersDecision: includeOthersDecision
+												}, {
+													where: ['"Users"."id" = ?', UserId]
+												}).then(function (user) {
+
+													if (includeOthersDecision == "YES_FOREVER") {
+														pingTeamMembers = true;
+													} else if (includeOthersDecision == "NO_FOREVER") {
+														pingTeamMembers = false;
 													}
 
-													// INCLUDE OTHERS FUNCTIONALITY
-													_models2.default.User.update({
-														includeOthersDecision: includeOthersDecision
-													}, {
-														where: ['"Users"."id" = ?', UserId]
-													}).then(function (user) {
+													// this is to create for future includes
+													if (includeSlackUserIds && includeSlackUserIds.length > 0) {
 
-														if (includeOthersDecision == "YES_FOREVER") {
-															pingTeamMembers = true;
-														} else if (includeOthersDecision == "NO_FOREVER") {
-															pingTeamMembers = false;
-														}
+														_models2.default.SlackUser.find({
+															where: ['"SlackUserId" = ?', SlackUserId]
+														}).then(function (slackUser) {
 
-														// this is to create for future includes
-														if (includeSlackUserIds && includeSlackUserIds.length > 0) {
+															slackUser.getIncluded({
+																include: [_models2.default.User]
+															}).then(function (includedSlackUsers) {
 
-															_models2.default.SlackUser.find({
-																where: ['"SlackUserId" = ?', SlackUserId]
-															}).then(function (slackUser) {
-
-																slackUser.getIncluded({
-																	include: [_models2.default.User]
-																}).then(function (includedSlackUsers) {
-
-																	// only add in NEW slackUserIds to DB
-																	var alreadyIncludedSlackUserIds = includedSlackUsers.map(function (slackUser) {
-																		return slackUser.SlackUserId;
-																	});
-																	includeSlackUserIds.forEach(function (IncludedSlackUserId) {
-																		if (alreadyIncludedSlackUserIds.indexOf(IncludedSlackUserId) == -1) {
-																			_models2.default.Include.create({
-																				IncluderSlackUserId: SlackUserId,
-																				IncludedSlackUserId: IncludedSlackUserId
-																			});
-																		}
-																	});
-
-																	// ping if desired
-																	if (pingTeamMembers) {
-																		includeSlackUserIds.forEach(function (includeSlackUserId) {
-
-																			var config = {
-																				IncluderSlackUserId: SlackUserId,
-																				IncludedSlackUserId: includeSlackUserId
-																			};
-																			controller.trigger('notify_team_member', [bot, config]);
+																// only add in NEW slackUserIds to DB
+																var alreadyIncludedSlackUserIds = includedSlackUsers.map(function (slackUser) {
+																	return slackUser.SlackUserId;
+																});
+																includeSlackUserIds.forEach(function (IncludedSlackUserId) {
+																	if (alreadyIncludedSlackUserIds.indexOf(IncludedSlackUserId) == -1) {
+																		_models2.default.Include.create({
+																			IncluderSlackUserId: SlackUserId,
+																			IncludedSlackUserId: IncludedSlackUserId
 																		});
 																	}
 																});
+
+																// ping if desired
+																if (pingTeamMembers) {
+																	includeSlackUserIds.forEach(function (includeSlackUserId) {
+
+																		var config = {
+																			IncluderSlackUserId: SlackUserId,
+																			IncludedSlackUserId: includeSlackUserId
+																		};
+																		controller.trigger('notify_team_member', [bot, config]);
+																	});
+																}
 															});
-														}
-													});
-												}
-											});
+														});
+													}
+												});
+											}
 										});
 									});
 								});
 							});
 						});
-
-						console.log("here is new plan object:\n");
-						console.log(convo.newPlan);
-						console.log("\n\n\n");
-
-						setTimeout(function () {
-							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-						}, 1250);
-
-						// placeholder for keep going
-						if (newPlan) {} else {
-							// default premature end
-							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-								(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
-								convo.say("Okay! Let me know when you want to plan for today");
-								convo.next();
-							});
-						}
 					});
+
+					console.log("here is new plan object:\n");
+					console.log(convo.newPlan);
+					console.log("\n\n\n");
+
+					setTimeout(function () {
+						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+					}, 1250);
+
+					// placeholder for keep going
+					if (newPlan) {} else {
+						// default premature end
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+							(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
+							convo.say("Okay! Let me know when you want to plan for today");
+							convo.next();
+						});
+					}
 				});
 			});
 		});

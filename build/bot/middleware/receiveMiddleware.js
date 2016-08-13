@@ -10,6 +10,8 @@ var _models = require('../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
 
+var _constants = require('../lib/constants');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // add receive middleware to controller
@@ -25,6 +27,58 @@ exports.default = function (controller) {
 	// then add them to bot.queuedReachouts, which will be called
 	// at the end of each conversation to turn back on
 	controller.middleware.receive.use(pauseLiveWorkSessions);
+
+	controller.middleware.receive.use(function (bot, message, next) {
+		var type = message.type;
+		var user = message.user;
+		var bot_id = message.bot_id;
+
+		var SlackUserId = message.user;
+
+		if (!bot.onboardedUser) {
+			bot.onboardedUser = {};
+		}
+
+		if (type && type == 'message' && user && !bot_id && !bot.onboardedUser[SlackUserId]) {
+			console.log(bot.onboardedUser);
+			console.log('\n\n\n reaching out to check if user onboarded. . . . \n\n\n');
+			_models2.default.User.find({
+				where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+				include: [_models2.default.SlackUser]
+			}).then(function (user) {
+				var onboarded = user.onboarded;
+
+				if (!onboarded) {
+					console.log('\n\n ~~ user has not onboarded yet ~~ \n\n');
+					user.update({
+						onboarded: true
+					}).then(function () {
+						controller.trigger('begin_onboard_flow', [bot, { SlackUserId: SlackUserId }]);
+					});
+				} else {
+					next();
+				}
+
+				// user.getSessionGroups({
+				// 	where: [ `"SessionGroup"."type" = ? AND "SessionGroup"."createdAt" > ?`, "start_work", dateOfNewPlanDayFlow],
+				// 	limit: 1
+				// })
+				// .then((sessionGroups) => {
+
+				// 	if (sessionGroups.length == 0) {
+				// 		console.log(`\n\n ~~ user has not onboarded yet ~~ \n\n`);
+				// 		// this middleware will only trigger once
+				// 		bot.onboardedUser[SlackUserId] = true;
+				// 		console.log(bot);
+
+				// 	} else {
+				// 		next();
+				// 	}
+
+				// });
+			});
+		}
+	});
 };
 
 var pauseLiveWorkSessions = function pauseLiveWorkSessions(bot, message, next) {

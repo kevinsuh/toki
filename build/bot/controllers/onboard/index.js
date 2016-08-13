@@ -13,6 +13,8 @@ exports.default = function (controller) {
 	controller.on('begin_onboard_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
 
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
 
 		_models2.default.User.find({
 			where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],

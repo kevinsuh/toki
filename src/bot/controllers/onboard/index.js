@@ -1,5 +1,5 @@
 import os from 'os';
-import { wit } from '../index';
+import { wit, bots } from '../index';
 import http from 'http';
 import bodyParser from 'body-parser';
 import moment from 'moment-timezone';
@@ -22,6 +22,8 @@ export default function(controller) {
 	controller.on('begin_onboard_flow', (bot, config) => {
 
 		const { SlackUserId } = config;
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
 		models.User.find({
 			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],

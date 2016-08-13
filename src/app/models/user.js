@@ -20,6 +20,10 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.BOOLEAN,
       defaultValue: true
     },
+    onboarded: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
   }, {
 
     classMethods: {
