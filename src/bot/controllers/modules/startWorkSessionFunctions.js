@@ -103,11 +103,11 @@ export function finalizeTimeAndTasksToStart(convo) {
 
 			if (minutesSpent == 0) {
 				// new flow!
-				convo.say(`Let’s crank on ${taskText} with a focused session :wrench:`);
+				convo.say(`Let’s get cranking with a focused session :wrench:`);
 				question = `How long would you like to focus on ${taskText} for? You have *${timeRemainingString}* set aside for this today`;
 			} else {
 				// new flow!
-				convo.say(`Let’s keep cranking on ${taskText} with a focused session :wrench:`);
+				convo.say(`Let’s keep cranking with a focused session :wrench:`);
 				question = `How long would you like to focus on ${taskText} for? You still have *${timeRemainingString}* set aside for this today`;
 			}
 
