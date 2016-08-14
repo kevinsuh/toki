@@ -120,7 +120,7 @@ function startOnBoardConversation(err, convo) {
 	var name = convo.name;
 
 
-	convo.say('Hey, ' + name + '! My name is Toki and I\'m your personal sidekick to win each day');
+	convo.say('Hey, ' + name + '! My name is Toki and I\'m here to help you win each day by accomplishing your top 3 priorities');
 	askForUserName(err, convo);
 }
 
@@ -154,7 +154,7 @@ function askForUserName(err, convo) {
 		pattern: _botResponses.utterances.containsKeep,
 		callback: function callback(response, convo) {
 			convo.onBoard.nickName = name;
-			askForTimeZone(response, convo);
+			explainTokiBenefits(convo);
 			convo.next();
 		}
 	}, {
@@ -177,7 +177,7 @@ function askCustomUserName(response, convo) {
 
 	convo.ask("What would you like me to call you?", function (response, convo) {
 		convo.onBoard.nickName = response.text;
-		askForTimeZone(response, convo);
+		explainTokiBenefits(convo);
 		convo.next();
 	});
 }
@@ -188,7 +188,7 @@ function confirmUserName(name, convo) {
 		pattern: _botResponses.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.onBoard.nickName = name;
-			askForTimeZone(response, convo);
+			explainTokiBenefits(convo);
 			convo.next();
 		}
 	}, {
@@ -207,15 +207,65 @@ function confirmUserName(name, convo) {
 	}]);
 }
 
-function askForTimeZone(response, convo) {
+function explainTokiBenefits(convo) {
 	var nickName = convo.onBoard.nickName;
 	var bot = convo.task.bot;
 
 
-	convo.say({
-		text: 'Nice to virtually meet you, ' + nickName + '! Here\'s how I help you win the day :trophy::',
-		attachments: _constants.tokiOptionsAttachment
+	var text = 'Nice to virtually meet you, ' + nickName + '!';
+	convo.say(text);
+	text = ':trophy: Here\'s how I help you win each day :trophy:';
+	var attachments = [{
+		text: 'Instead of treating each day as a never-ending list of todos, I’m here to help you identify the *top 3 priorities* that actually define your day, *_and accomplish them_*',
+		attachment_type: 'default',
+		callback_id: "INCLUDE_TEAM_MEMBER",
+		fallback: "Do you want to include a team member?",
+		"mrkdwn_in": ["text"],
+		color: _constants.colorsHash.salmon.hex,
+		actions: [{
+			name: _constants.buttonValues.next.name,
+			text: "Why three?",
+			value: _constants.buttonValues.next.value,
+			type: "button"
+		}]
+	}];
+
+	convo.ask({
+		text: text,
+		attachments: attachments
+	}, function (response, convo) {
+
+		attachments[0].text = 'I realize you’ll likely be working on more than three tasks each day. My purpose isn’t to help you get a huge list of things done. I’m here to make sure you get *3 higher level priorities done that are critically important to your day, but might get lost or pushed back* if you don’t deliberately make time for them';
+		attachments[0].actions[0].text = 'What else?';
+		attachments[0].color = _constants.colorsHash.blue.hex;
+
+		convo.ask({
+			attachments: attachments
+		}, function (response, convo) {
+
+			attachments[0].text = 'I can also send your priorities to anyone on your team if you’d like to ​*share what you’re working on*';
+			attachments[0].actions[0].text = 'Let\'s do this!';
+			attachments[0].color = _constants.colorsHash.yellow.hex;
+
+			convo.ask({
+				attachments: attachments
+			}, function (response, convo) {
+
+				askForTimeZone(response, convo);
+				convo.next();
+			});
+
+			convo.next();
+		});
+
+		convo.next();
 	});
+}
+
+function askForTimeZone(response, convo) {
+	var nickName = convo.onBoard.nickName;
+	var bot = convo.task.bot;
+
 
 	convo.ask({
 		text: 'Since I help you make time for these outcomes, I need to know which *timezone* you are in!',
@@ -312,25 +362,10 @@ function startNewPlanFlow(response, convo) {
 function askOtherTimeZoneOptions(response, convo) {
 
 	convo.say("As a time-based sidekick, I need to have your timezone to be effective");
-	convo.say("Right now I only support the timezones listed above; I will let you know as soon as I support other ones");
-	convo.say("If you're ever in a timezone I support, just say `settings` to update your timezone!");
+	convo.say("I’m only able to work in these timezones right now. If you want to demo Toki, just pick one of these timezones. I’ll try to get your timezone included as soon as possible!");
 	convo.onBoard.timeZone = _constants.timeZones.eastern;
 	displayTokiOptions(response, convo);
-
-	// convo.ask("What is your timezone?", (response, convo) => {
-
-	// 	var timezone = response.text;
-	// 	if (false) {
-	// 		// functionality to try and get timezone here
-
-	// 	} else {
-	// 		convo.say("I'm so sorry, but I don't support your timezone yet for this beta phase, but I'll reach out when I'm ready to help you work");
-	// 		convo.stop();
-	// 	}
-
-	// 	convo.next();
-
-	// });
+	askForTimeZone(response, convo);
 
 	convo.next();
 }
