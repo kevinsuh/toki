@@ -345,66 +345,62 @@ function sendGyradosMessage(controller) {
 
 				console.log(email);
 
-				const testEmails = [`kevinsuh3444@gmail.com`, `kevinsuh34@gmail.com`, `chip.koziara@gmail.com`, `chipkoziara@gmail.com`, `kjs2146@columbia.edu`, `TEMPEMAILHOLDERCTILecXhPL@gmail.com` ]
-				if (testEmails.indexOf(email) > -1) {
-					// HOLD IN VACUUM FOR NOW
-					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-						if (!err) {
+				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-							convo.say(`Good morning! I've received an update that changes the way I work with you\nNow I help you *define and accomplish the 3 most important outcomes each day*`);
-							convo.say(`This is a big change, but as Benjamin Franklin said:\n> _"Without continual growth and progress, such words as improvement, achievement, and success have no meaning.”_​`);
-							convo.ask({
-								text: `Thank you for being an early user :heart_eyes: I’m excited to help you win your day :muscle:`,
-								attachments: [
-									{
-										attachment_type: 'default',
-										callback_id: "CONFIRM_NEW_TOKI",
-										fallback: "Ready to start our new adventure?",
-										color: colorsHash.green.hex,
-										actions: [
-											{
-													name: "BEGIN_ADVENTURE",
-													text: ":running:Begin adventure:running:",
-													value: "begin adventure",
-													type: "button"
-											}
-										]
-									}
-								]
-							}, [
+					if (!err) {
+
+						convo.say(`Good morning! I've received an update that changes the way I work with you\nNow I help you *define and accomplish the 3 most important outcomes each day*`);
+						convo.say(`This is a big change, but as Benjamin Franklin said:\n> _"Without continual growth and progress, such words as improvement, achievement, and success have no meaning.”_​`);
+						convo.ask({
+							text: `Thank you for being an early user :heart_eyes: I’m excited to help you win your day :muscle:`,
+							attachments: [
 								{
-									pattern: utterances.beginAdventure,
-									callback: (response, convo) => {
-										convo.confirmBeginAdventure = true;
-										convo.say(`*_Here... we... go!!!_* :rocket:`)
-										convo.next();
-									}
-								},
-								{
-									default: true,
-									callback: (response, convo) => {
-										convo.say("Sorry, I didn't catch that!");
-										convo.repeat();
-										convo.next();
-									}
+									attachment_type: 'default',
+									callback_id: "CONFIRM_NEW_TOKI",
+									fallback: "Ready to start our new adventure?",
+									color: colorsHash.green.hex,
+									actions: [
+										{
+												name: "BEGIN_ADVENTURE",
+												text: ":running:Begin adventure:running:",
+												value: "begin adventure",
+												type: "button"
+										}
+									]
 								}
-							]);
-							
-							convo.on('end', (convo) => {
-								const { confirmBeginAdventure } = convo;
-								if (confirmBeginAdventure) {
-									controller.trigger(`begin_onboard_flow`, [ bot, { SlackUserId }]);
+							]
+						}, [
+							{
+								pattern: utterances.beginAdventure,
+								callback: (response, convo) => {
+									convo.confirmBeginAdventure = true;
+									convo.say(`*_Here... we... go!!!_* :rocket:`)
+									convo.next();
 								}
-							})
-						}
+							},
+							{
+								default: true,
+								callback: (response, convo) => {
+									convo.say("Sorry, I didn't catch that!");
+									convo.repeat();
+									convo.next();
+								}
+							}
+						]);
 						
-					});
-				}
+						convo.on('end', (convo) => {
+							const { confirmBeginAdventure } = convo;
+							if (confirmBeginAdventure) {
+								controller.trigger(`begin_onboard_flow`, [ bot, { SlackUserId }]);
+							}
+						});
+
+					}
+					
+				});
 
 			})
-
 		});
-
 	}
 }
 
