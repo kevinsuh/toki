@@ -138,7 +138,7 @@ export default function(controller) {
 
 			const UserId       = user.id;
 			const { email, nickName, SlackUser: { tz } } = user;
-			const adminEmails = [`kevinsuh34@gmail.com`, `chipkoziara@gmail.com`, `kevin_suh34@yahoo.com`, `ch.ipkoziara@gmail.com`];
+			const adminEmails = [`kevinsuh34@gmail.com`, `chipkoziara@gmail.com`, `kevin_suh34@yahoo.com`, `ch.ipkoziara@gmail.com`, `TEMPEMAILHOLDERCTILecXhPL@gmail.com`];
 
 			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
@@ -181,7 +181,7 @@ export default function(controller) {
 
 			const UserId       = user.id;
 			const { email, nickName, SlackUser: { tz } } = user;
-			const adminEmails = [`kevinsuh34@gmail.com`, `chipkoziara@gmail.com`, `kevin_suh34@yahoo.com`, `ch.ipkoziara@gmail.com`];
+			const adminEmails = [`kevinsuh34@gmail.com`, `chipkoziara@gmail.com`, `kevin_suh34@yahoo.com`, `ch.ipkoziara@gmail.com`, `TEMPEMAILHOLDERCTILecXhPL@gmail.com`];
 
 			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
@@ -345,7 +345,7 @@ function sendGyradosMessage(controller) {
 
 				console.log(email);
 
-				const testEmails = [`kevinsuh3444@gmail.com`, `kevinsuh34@gmail.com`, `chip.koziara@gmail.com`, `chipkoziara@gmail.com`, `kjs2146@columbia.edu` ]
+				const testEmails = [`kevinsuh3444@gmail.com`, `kevinsuh34@gmail.com`, `chip.koziara@gmail.com`, `chipkoziara@gmail.com`, `kjs2146@columbia.edu`, `TEMPEMAILHOLDERCTILecXhPL@gmail.com` ]
 				if (testEmails.indexOf(email) > -1) {
 					// HOLD IN VACUUM FOR NOW
 					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
