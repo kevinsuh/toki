@@ -26,10 +26,6 @@ export function doneSessionAskOptions(convo) {
 
 	let finishedTimeToTask = minutesSpent >= minutes ? true: false;
 
-	if (!finishedTimeToTask && doneSessionEarly) {
-		convo.say(`Cool, let's end early!`);
-	}
-
 	// provide customized attachments based on situation
 	if (sessionTimerUp) {
 
