@@ -623,6 +623,10 @@ var buttonValues = exports.buttonValues = {
 	letsWinTheDay: {
 		name: "LETS_WIN_THE_DAY",
 		value: "lets win the day!"
+	},
+	letsDoIt: {
+		name: "LETS_DO_IT",
+		value: "lets do it!"
 	}
 };
 

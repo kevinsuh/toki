@@ -4,6 +4,7 @@ import { constants } from './lib/constants';
 import { startSessionOptionsAttachments } from '../bot/lib/constants';
 import { closeOldRemindersAndSessions } from '../bot/lib/miscHelpers';
 import { convertMinutesToHoursString } from '../bot/lib/messageHelpers';
+import { colorsHash, buttonValues } from '../bot/lib/constants';
 
 // sequelize models
 import models from './models';
@@ -272,6 +273,41 @@ var checkForReminders = () => {
 									controller.trigger(`begin_session`, [ bot, config ]);
 									
 								})
+
+							} else if (reminder.type == "break") {
+
+								let now = moment();
+								let reminderStartTime = moment(reminder.createdAt);
+								let durationBreak  = Math.round(moment.duration(now.diff(reminderStartTime)).asMinutes());
+
+								let text = `Hey, it's been ${durationBreak} minutes. Let me know when you're ready to get focused again!`
+
+								let attachments = [
+									{
+										attachment_type: 'default',
+										callback_id: "LETS_START_A_SESSION",
+										fallback: "Ready to start another session?",
+										color: colorsHash.green.hex,
+										actions: [
+											{
+													name: buttonValues.letsDoIt.name,
+													text: "Let's do it!",
+													value: buttonValues.letsDoIt.value,
+													type: "button"
+											}
+										]
+									}
+								]
+
+								bot.startPrivateConversation({
+									user: SlackUserId
+								}, (err, convo) => {
+									// break is up reminder
+									convo.say({
+										text,
+										attachments
+									});
+								});
 
 							} else {
 

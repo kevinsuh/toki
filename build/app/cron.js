@@ -284,6 +284,38 @@ var checkForReminders = function checkForReminders() {
 
 										_controllers.controller.trigger('begin_session', [bot, config]);
 									});
+								} else if (reminder.type == "break") {
+									(function () {
+
+										var now = (0, _momentTimezone2.default)();
+										var reminderStartTime = (0, _momentTimezone2.default)(reminder.createdAt);
+										var durationBreak = Math.round(_momentTimezone2.default.duration(now.diff(reminderStartTime)).asMinutes());
+
+										var text = 'Hey, it\'s been ' + durationBreak + ' minutes. Let me know when you\'re ready to get focused again!';
+
+										var attachments = [{
+											attachment_type: 'default',
+											callback_id: "LETS_START_A_SESSION",
+											fallback: "Ready to start another session?",
+											color: _constants2.colorsHash.green.hex,
+											actions: [{
+												name: _constants2.buttonValues.letsDoIt.name,
+												text: "Let's do it!",
+												value: _constants2.buttonValues.letsDoIt.value,
+												type: "button"
+											}]
+										}];
+
+										bot.startPrivateConversation({
+											user: SlackUserId
+										}, function (err, convo) {
+											// break is up reminder
+											convo.say({
+												text: text,
+												attachments: attachments
+											});
+										});
+									})();
 								} else {
 
 									bot.startPrivateConversation({
