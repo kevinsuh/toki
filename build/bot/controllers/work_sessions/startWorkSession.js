@@ -121,6 +121,9 @@ exports.default = function (controller) {
 
 					if (dailyTaskToWorkOn) {
 						convo.sessionStart.dailyTask = dailyTaskToWorkOn;
+					} else if (dailyTasks.length > 0) {
+						// otherwise it will be the first daily task
+						convo.sessionStart.dailyTask = dailyTasks[0];
 					}
 
 					// check for openWorkSession, before starting flow
