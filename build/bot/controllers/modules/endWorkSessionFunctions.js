@@ -128,7 +128,7 @@ function completePriorityForSession(convo) {
 
 		convo.say('Let\'s go! You\'re one step closer to winning the day! You have ' + tasksString + ' remaining');
 
-		var buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.newSession.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.beBackLater.value];
+		var buttonsValuesArray = [_constants.buttonValues.doneSession.takeBreak.value, _constants.buttonValues.doneSession.newSession.value, _constants.buttonValues.doneSession.viewPlan.value, _constants.buttonValues.doneSession.beBackLater.value, _constants.buttonValues.doneSession.endDay.value];
 
 		var attachmentsConfig = { defaultBreakTime: defaultBreakTime, buttonsValuesArray: buttonsValuesArray };
 		var attachments = (0, _messageHelpers.getDoneSessionMessageAttachments)(attachmentsConfig);
