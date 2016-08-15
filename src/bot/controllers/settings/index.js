@@ -119,17 +119,17 @@ export default function(controller) {
 							});
 						}
 
-						// if (defaultSnoozeTime) {
-						// 	user.update({
-						// 		defaultSnoozeTime
-						// 	})
-						// }
+						if (defaultSnoozeTime) {
+							user.update({
+								defaultSnoozeTime
+							})
+						}
 
-						// if (defaultBreakTime) {
-						// 	user.update({
-						// 		defaultBreakTime
-						// 	})
-						// }
+						if (defaultBreakTime) {
+							user.update({
+								defaultBreakTime
+							})
+						}
 
 						resumeQueuedReachouts(bot, { SlackUserId });
 

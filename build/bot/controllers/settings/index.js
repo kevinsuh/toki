@@ -121,17 +121,17 @@ exports.default = function (controller) {
 							});
 						}
 
-						// if (defaultSnoozeTime) {
-						// 	user.update({
-						// 		defaultSnoozeTime
-						// 	})
-						// }
+						if (defaultSnoozeTime) {
+							user.update({
+								defaultSnoozeTime: defaultSnoozeTime
+							});
+						}
 
-						// if (defaultBreakTime) {
-						// 	user.update({
-						// 		defaultBreakTime
-						// 	})
-						// }
+						if (defaultBreakTime) {
+							user.update({
+								defaultBreakTime: defaultBreakTime
+							});
+						}
 
 						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 					});

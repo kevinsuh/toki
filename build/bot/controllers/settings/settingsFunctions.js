@@ -111,7 +111,7 @@ function askWhichSettingsToUpdate(convo) {
 	}, { // change extend duration
 		pattern: _botResponses.utterances.containsExtend,
 		callback: function callback(response, convo) {
-			convo.say('CHANGING EXTEND');
+			askToChangeExtendDuration(convo);
 			convo.next();
 		}
 	}, { // change break duration
@@ -277,6 +277,114 @@ function changeTimeZone(convo) {
 			convo.next();
 		}
 	}]);
+}
+
+function askToChangeExtendDuration(convo) {
+	var defaultSnoozeTime = convo.settings.defaultSnoozeTime;
+
+	var attachments = void 0;
+	var text = void 0;
+
+	if (defaultSnoozeTime) {
+
+		convo.say('Your default for extending sessions is ' + defaultSnoozeTime + ' minutes');
+
+		text = 'This is the default that happens when you click `Extend for ' + defaultSnoozeTime + ' min`. You can always specify a custom time by saying `extend for 1 hr` or however long you’d like to work';
+		attachments = [{
+			attachment_type: 'default',
+			callback_id: "SETTINGS_CHANGE_EXTEND_DURATION",
+			fallback: "What do you want your default time to be?",
+			color: _constants.colorsHash.grey.hex,
+			actions: [{
+				name: _constants.buttonValues.changeTime.name,
+				text: 'Change Default Time',
+				value: _constants.buttonValues.changeTime.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.no.name,
+				text: 'Never Mind',
+				value: _constants.buttonValues.no.value,
+				type: "button"
+			}]
+		}];
+	} else {
+
+		// DEFAULT HAS NOT BEEN SET YET
+		text = 'Extend duration is the default amount of time you want to extend a session when the timer is up and you click `Extend for 15 min`. You can always specify a custom time then by saying `extend for 1 hr` or however long you’d like to work';
+		attachments = [{
+			attachment_type: 'default',
+			callback_id: "SETTINGS_CHANGE_EXTEND_DURATION",
+			fallback: "What do you want your default time to be?",
+			color: _constants.colorsHash.grey.hex,
+			actions: [{
+				name: _constants.buttonValues.setTime.name,
+				text: 'Set Default Time',
+				value: _constants.buttonValues.setTime.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.no.name,
+				text: 'Never Mind',
+				value: _constants.buttonValues.no.value,
+				type: "button"
+			}]
+		}];
+	}
+
+	convo.ask({
+		text: text,
+		attachments: attachments
+	}, [{
+		pattern: _botResponses.utterances.containsChange,
+		callback: function callback(response, convo) {
+			changeExtendDurationTime(convo);
+			convo.next();
+		}
+	}, {
+		pattern: _botResponses.utterances.setTime,
+		callback: function callback(response, convo) {
+			changeExtendDurationTime(convo);
+			convo.next();
+		}
+	}, {
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say("Okay!");
+			showSettingsOptions(convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say('Sorry I didn\'t get that');
+			convo.repeat();
+			convo.next();
+		}
+	}]);
+}
+
+function changeExtendDurationTime(convo) {
+	var defaultSnoozeTime = convo.settings.defaultSnoozeTime;
+
+	convo.ask('How long would you like to typically extend sessions by?', function (response, convo) {
+		// must be a number
+		var time = response.text;
+		var minutes = false;
+		var validMinutesTester = new RegExp(/[\dh]/);
+
+		if (validMinutesTester.test(time)) {
+			minutes = (0, _messageHelpers.convertTimeStringToMinutes)(time);
+		}
+
+		if (minutes) {
+			convo.settings.defaultSnoozeTime = minutes;
+			convo.say('Looks great! I’ll extend sessions by ' + minutes + ' minutes as your new default :timer_clock:');
+			settingsHome(convo);
+		} else {
+			convo.say("Sorry, still learning :dog:. Let me know in terms of minutes `i.e. 10 min`");
+			convo.repeat();
+		}
+		convo.next();
+	});
 }
 
 // user wants to change morning ping
@@ -486,7 +594,7 @@ function setNewPingTime(convo) {
 			convo.next();
 		}
 	}, {
-		pattern: _botResponses.utterances.no,
+		pattern: _botResponses.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
 			convo.say('Okay!');
 			settingsHome(convo);

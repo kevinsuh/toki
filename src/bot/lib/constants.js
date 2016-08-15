@@ -625,6 +625,14 @@ export const buttonValues ={
 	keepTime: {
 		name: "KEEP_TIME",
 		value: "keep time!"
+	},
+	disable: {
+		name: "DISABLE",
+		value: "disable!"
+	},
+	setTime: {
+		name: "SET_TIME",
+		value: "set time!"
 	}
 }
 

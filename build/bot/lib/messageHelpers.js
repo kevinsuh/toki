@@ -1217,11 +1217,14 @@ function getSettingsAttachment(settings) {
 	var includedSlackUsers = settings.includedSlackUsers;
 
 
+	var defaultSnoozeTimeString = defaultSnoozeTime + ' min';
+	var defaultBreakTimeString = defaultBreakTime + ' min';
+
 	if (!defaultSnoozeTime) {
-		defaultSnoozeTime = TOKI_DEFAULT_SNOOZE_TIME;
+		defaultSnoozeTimeString = '_Not set_';
 	}
 	if (!defaultBreakTime) {
-		defaultBreakTime = TOKI_DEFAULT_BREAK_TIME;
+		defaultBreakTimeString = '_Not set_';
 	}
 
 	var pingTimeString = '';
@@ -1280,13 +1283,13 @@ function getSettingsAttachment(settings) {
 			title: 'Extend Duration:',
 			short: true
 		}, {
-			value: defaultSnoozeTime + ' min',
+			value: defaultSnoozeTimeString,
 			short: true
 		}, {
 			title: 'Break Duration:',
 			short: true
 		}, {
-			value: defaultBreakTime + ' min',
+			value: defaultBreakTimeString,
 			short: true
 		}, {
 			title: 'Priority Sharing:',
