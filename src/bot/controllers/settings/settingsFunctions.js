@@ -168,7 +168,7 @@ function changeName(convo) {
 // user wants to change timezone
 function changeTimeZone(convo) {
 
-	const { settings: { SlackUserId, timeZone } } = convo;
+	const { settings: { SlackUserId, timeZone, pingTime } } = convo;
 
 	convo.ask({
 		text: `I have you in the *${timeZone.name}* timezone. What timezone are you in now?`,
@@ -245,15 +245,20 @@ function changeTimeZone(convo) {
 				}
 
 				if (newTimeZone) {
+
+					const oldTimeZone       = convo.settings.timeZone;
 					convo.settings.timeZone = newTimeZone;
 
-					// update it here because morningPing might depend on changed timezone
-					const { tz } = newTimeZone;
-					models.SlackUser.update({
-						tz
-					}, {
-						where: [`"SlackUserId" = ?`, SlackUserId]
-					});
+					// update pingTime to accommodate change in timezone!
+					if (pingTime) {
+						let now = moment();
+						let oldTimeZoneOffset = moment.tz.zone(oldTimeZone.tz).offset(now);
+						let newTimeZoneOffset = moment.tz.zone(newTimeZone.tz).offset(now);
+						let hoursOffset = (newTimeZoneOffset - oldTimeZoneOffset) / 60
+						const newMorningPingTime = moment(pingTime).add(hoursOffset, 'hours');
+						convo.settings.pingTime = newMorningPingTime;
+					}
+						
 					settingsHome(convo);
 
 				} else {

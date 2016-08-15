@@ -186,6 +186,7 @@ function changeTimeZone(convo) {
 	var _convo$settings3 = convo.settings;
 	var SlackUserId = _convo$settings3.SlackUserId;
 	var timeZone = _convo$settings3.timeZone;
+	var pingTime = _convo$settings3.pingTime;
 
 
 	convo.ask({
@@ -253,17 +254,20 @@ function changeTimeZone(convo) {
 			}
 
 			if (newTimeZone) {
+
+				var oldTimeZone = convo.settings.timeZone;
 				convo.settings.timeZone = newTimeZone;
 
-				// update it here because morningPing might depend on changed timezone
-				var _newTimeZone = newTimeZone;
-				var tz = _newTimeZone.tz;
+				// update pingTime to accommodate change in timezone!
+				if (pingTime) {
+					var now = (0, _momentTimezone2.default)();
+					var oldTimeZoneOffset = _momentTimezone2.default.tz.zone(oldTimeZone.tz).offset(now);
+					var newTimeZoneOffset = _momentTimezone2.default.tz.zone(newTimeZone.tz).offset(now);
+					var hoursOffset = (newTimeZoneOffset - oldTimeZoneOffset) / 60;
+					var newMorningPingTime = (0, _momentTimezone2.default)(pingTime).add(hoursOffset, 'hours');
+					convo.settings.pingTime = newMorningPingTime;
+				}
 
-				_models2.default.SlackUser.update({
-					tz: tz
-				}, {
-					where: ['"SlackUserId" = ?', SlackUserId]
-				});
 				settingsHome(convo);
 			} else {
 				convo.say("I didn't get that :thinking_face:");
