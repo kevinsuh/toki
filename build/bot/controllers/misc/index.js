@@ -165,4 +165,23 @@ var _messageHelpers = require('../../lib/messageHelpers');
 var _miscHelpers = require('../../lib/miscHelpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function TEMPLATE_FOR_TEST(bot, message) {
+
+	var SlackUserId = message.user;
+
+	_models2.default.User.find({
+		where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+		include: [_models2.default.SlackUser]
+	}).then(function (user) {
+
+		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+			var name = user.nickName || user.email;
+
+			// on finish convo
+			convo.on('end', function (convo) {});
+		});
+	});
+}
 //# sourceMappingURL=index.js.map

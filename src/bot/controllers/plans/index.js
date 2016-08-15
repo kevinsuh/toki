@@ -138,8 +138,19 @@ export default function(controller) {
 						convo.newPlan.onboardVersion = true;
 					}
 
+					// A/B test
+					convo.newPlan.versionA = UserId % 2 == 0 ? true : false;
+
 					if (!convo.newPlan.onboardVersion) {
 						convo.say(`Let's win this ${day}, ${name}! :muscle:`);
+					} else {
+
+						if (convo.newPlan.versionA) {
+							convo.say(`What are your 3 outcomes to achieve today? Put another way, *_if these were the only things you accomplished, you would be satisfied with your day_*`);
+						} else {
+							convo.say(`What are your 3 priorities to work toward today? These are important outcomes that you want to put time toward achieving, not necessarily specific tasks you want to check off your todo list`);
+						}
+
 					}
 
 					startNewPlanFlow(convo);

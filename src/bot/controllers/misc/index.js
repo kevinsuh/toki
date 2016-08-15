@@ -148,3 +148,29 @@ export default function(controller) {
 	});
 
 }
+
+
+function TEMPLATE_FOR_TEST(bot, message) {
+
+	const SlackUserId = message.user;
+
+	models.User.find({
+		where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+		include: [
+			models.SlackUser
+		]
+	}).then((user) => {
+
+		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+			var name = user.nickName || user.email;
+
+			// on finish convo
+			convo.on('end', (convo) => {
+				
+			});
+
+		});
+	});
+}
+

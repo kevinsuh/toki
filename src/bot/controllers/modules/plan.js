@@ -38,7 +38,7 @@ export function startNewPlanFlow(convo) {
 // this dynamically handles 1st, 2nd, 3rd priorities
 function addPriorityToList(convo) {
 
-	let { newPlan: { prioritizedTasks } } = convo;
+	let { newPlan: { prioritizedTasks, onboardVersion, versionA } } = convo;
 
 	let count       = prioritizedTasks.length;
 	let countString = '';
@@ -92,7 +92,13 @@ function addPriorityToList(convo) {
 		color: colorsHash.grey.hex,
 		actions
 	}];
-	let message = `What is the ${countString} priority you want to work towards today?`
+
+	let message = ``;
+	if (onboardVersion && versionA) {
+		message = `What is the ${countString} outcome you want to achieve today?`
+	} else {
+		message = `What is the ${countString} priority you want to work towards today?`
+	}
 
 	convo.ask({
 		text: message,

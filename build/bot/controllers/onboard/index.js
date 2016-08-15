@@ -345,6 +345,14 @@ function askForTimeZone(response, convo) {
 	}]);
 }
 
+function askOtherTimeZoneOptions(response, convo) {
+
+	convo.say("As a time-based sidekick, I need to have your timezone to be effective");
+	convo.say("I’m only able to work in these timezones right now. If you want to demo Toki, just pick one of these timezones. I’ll try to get your timezone included as soon as possible!");
+	askForTimeZone(response, convo);
+	convo.next();
+}
+
 function startNewPlanFlow(response, convo) {
 	var _convo$onBoard$timeZo = convo.onBoard.timeZone;
 	var tz = _convo$onBoard$timeZo.tz;
@@ -354,148 +362,5 @@ function startNewPlanFlow(response, convo) {
 	convo.say('Awesome, I have you in the *' + name + '* timezone! Now let\'s win our first day together :grin:');
 	convo.onBoard.postOnboardDecision = _constants.intentConfig.START_DAY;
 	convo.next();
-}
-
-/**
- * 		Currently these functions are deprecated
- */
-function askOtherTimeZoneOptions(response, convo) {
-
-	convo.say("As a time-based sidekick, I need to have your timezone to be effective");
-	convo.say("I’m only able to work in these timezones right now. If you want to demo Toki, just pick one of these timezones. I’ll try to get your timezone included as soon as possible!");
-	convo.onBoard.timeZone = _constants.timeZones.eastern;
-	displayTokiOptions(response, convo);
-	askForTimeZone(response, convo);
-
-	convo.next();
-}
-
-function confirmTimeZone(response, convo) {
-	var _convo$onBoard$timeZo2 = convo.onBoard.timeZone;
-	var tz = _convo$onBoard$timeZo2.tz;
-	var name = _convo$onBoard$timeZo2.name;
-	var bot = convo.task.bot;
-
-
-	convo.ask({
-		text: 'I have you in the *' + name + '* timezone!',
-		attachments: [{
-			attachment_type: 'default',
-			callback_id: "ONBOARD",
-			fallback: "What's your timezone?",
-			actions: [{
-				name: _constants.buttonValues.thatsCorrect.name,
-				text: 'That\'s correct :+1:',
-				value: _constants.buttonValues.thatsCorrect.value,
-				type: "button",
-				style: "primary"
-			}, {
-				name: _constants.buttonValues.thatsIncorrect.name,
-				text: 'No, that\'s not right!',
-				value: _constants.buttonValues.thatsIncorrect.value,
-				type: "button"
-			}]
-		}]
-	}, [{
-		pattern: _botResponses.utterances.no,
-		callback: function callback(response, convo) {
-			convo.say('Oops, okay!');
-			askForTimeZone(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _botResponses.utterances.yesOrCorrect,
-		callback: function callback(response, convo) {
-			convo.say("Fantastic! Let's get started with your first plan :grin:");
-			convo.onBoard.postOnboardDecision = _constants.intentConfig.START_DAY;
-			convo.next();
-		}
-	}, { // everything else other than that's incorrect or "no" should be treated as yes
-		default: true,
-		callback: function callback(response, convo) {
-			convo.say("Fantastic! Let's get started with your first plan :grin:");
-			convo.onBoard.postOnboardDecision = _constants.intentConfig.START_DAY;
-			convo.next();
-		}
-	}]);
-}
-
-function displayTokiOptions(response, convo) {
-
-	convo.say('You can always change your timezone and name by telling me to `show settings`');
-	convo.say({
-		text: "As your personal sidekick, I can help you with your time by:",
-		attachments: _constants.tokiOptionsAttachment
-	});
-	convo.say("If you want to see how I specifically assist you to make the most of each day, just say `show commands`. Otherwise, let's move on!");
-	askUserToStartDay(response, convo);
-
-	convo.next();
-}
-
-// end of convo, to start day
-function askUserToStartDay(response, convo) {
-	convo.ask("Please tell me to `start the day!` so we can plan our first day together :grin:", [{
-		pattern: _botResponses.utterances.containsSettings,
-		callback: function callback(response, convo) {
-			convo.say("Okay, let's configure these settings again!");
-			askForUserName(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _botResponses.utterances.containsShowCommands,
-		callback: function callback(response, convo) {
-			showCommands(response, convo);
-			convo.next();
-		}
-	}, {
-		pattern: _botResponses.utterances.containsStartDay,
-		callback: function callback(response, convo) {
-			convo.say("Let's do this :grin:");
-			convo.onBoard.postOnboardDecision = _constants.intentConfig.START_DAY;
-			convo.next();
-		}
-	}, {
-		default: true,
-		callback: function callback(response, convo) {
-			convo.say('Well, this is a bit embarrassing. Say `start the day` to keep moving forward so I can show you how I can help you work');
-			convo.repeat();
-			convo.next();
-		}
-	}]);
-}
-
-// show the more complex version of commands
-function showCommands(response, convo) {
-
-	convo.say("I had a feeling you'd do that!");
-	convo.say("First off, you can call me `hey toki!` at any point in the day and I'll be here to help you get in flow :raised_hands:");
-	convo.say({
-		text: "Here are more specific things you can tell me to help you with:",
-		attachments: _constants.tokiOptionsExtendedAttachment
-	});
-	convo.say("I'm getting smart in understanding what you want, so the specific commands above are guidlines. I'm able to understand related commands :smile_cat:");
-	convo.say("I also have two shortline commands that allow you to quickly add tasks `/add send email marketing report for 30 minutes` and quickly set reminders `/note grab a glass of water at 3:30pm`");
-	askUserToStartDay(response, convo);
-	convo.next();
-}
-
-function TEMPLATE_FOR_TEST(bot, message) {
-
-	var SlackUserId = message.user;
-
-	_models2.default.User.find({
-		where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
-		include: [_models2.default.SlackUser]
-	}).then(function (user) {
-
-		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-
-			var name = user.nickName || user.email;
-
-			// on finish convo
-			convo.on('end', function (convo) {});
-		});
-	});
 }
 //# sourceMappingURL=index.js.map

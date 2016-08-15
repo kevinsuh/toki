@@ -66,7 +66,10 @@ function startNewPlanFlow(convo) {
 // function to add a priority to your plan
 // this dynamically handles 1st, 2nd, 3rd priorities
 function addPriorityToList(convo) {
-	var prioritizedTasks = convo.newPlan.prioritizedTasks;
+	var _convo$newPlan2 = convo.newPlan;
+	var prioritizedTasks = _convo$newPlan2.prioritizedTasks;
+	var onboardVersion = _convo$newPlan2.onboardVersion;
+	var versionA = _convo$newPlan2.versionA;
 
 
 	var count = prioritizedTasks.length;
@@ -116,7 +119,13 @@ function addPriorityToList(convo) {
 		color: _constants.colorsHash.grey.hex,
 		actions: actions
 	}];
-	var message = 'What is the ' + countString + ' priority you want to work towards today?';
+
+	var message = '';
+	if (onboardVersion && versionA) {
+		message = 'What is the ' + countString + ' outcome you want to achieve today?';
+	} else {
+		message = 'What is the ' + countString + ' priority you want to work towards today?';
+	}
 
 	convo.ask({
 		text: message,
@@ -174,14 +183,14 @@ function addPriorityToList(convo) {
 
 function includeTeamMembers(convo) {
 	var bot = convo.task.bot;
-	var _convo$newPlan2 = convo.newPlan;
-	var SlackUserId = _convo$newPlan2.SlackUserId;
-	var daySplit = _convo$newPlan2.daySplit;
-	var onboardVersion = _convo$newPlan2.onboardVersion;
-	var includeOthersDecision = _convo$newPlan2.includeOthersDecision;
 	var _convo$newPlan3 = convo.newPlan;
-	var prioritizedTasks = _convo$newPlan3.prioritizedTasks;
-	var includeSlackUserIds = _convo$newPlan3.includeSlackUserIds;
+	var SlackUserId = _convo$newPlan3.SlackUserId;
+	var daySplit = _convo$newPlan3.daySplit;
+	var onboardVersion = _convo$newPlan3.onboardVersion;
+	var includeOthersDecision = _convo$newPlan3.includeOthersDecision;
+	var _convo$newPlan4 = convo.newPlan;
+	var prioritizedTasks = _convo$newPlan4.prioritizedTasks;
+	var includeSlackUserIds = _convo$newPlan4.includeSlackUserIds;
 
 
 	var options = { dontShowMinutes: true, dontCalculateMinutes: true };
@@ -232,11 +241,11 @@ function includeTeamMembers(convo) {
 function confirmPingToTeamMembers(convo, includedSlackUsers) {
 	var question = arguments.length <= 2 || arguments[2] === undefined ? '' : arguments[2];
 	var bot = convo.task.bot;
-	var _convo$newPlan4 = convo.newPlan;
-	var SlackUserId = _convo$newPlan4.SlackUserId;
-	var daySplit = _convo$newPlan4.daySplit;
-	var onboardVersion = _convo$newPlan4.onboardVersion;
-	var includeOthersDecision = _convo$newPlan4.includeOthersDecision;
+	var _convo$newPlan5 = convo.newPlan;
+	var SlackUserId = _convo$newPlan5.SlackUserId;
+	var daySplit = _convo$newPlan5.daySplit;
+	var onboardVersion = _convo$newPlan5.onboardVersion;
+	var includeOthersDecision = _convo$newPlan5.includeOthersDecision;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 	// user has team members to include!!
@@ -341,10 +350,10 @@ function confirmPingToTeamMembers(convo, includedSlackUsers) {
 
 function askToIncludeTeamMembers(convo) {
 	var bot = convo.task.bot;
-	var _convo$newPlan5 = convo.newPlan;
-	var SlackUserId = _convo$newPlan5.SlackUserId;
-	var daySplit = _convo$newPlan5.daySplit;
-	var onboardVersion = _convo$newPlan5.onboardVersion;
+	var _convo$newPlan6 = convo.newPlan;
+	var SlackUserId = _convo$newPlan6.SlackUserId;
+	var daySplit = _convo$newPlan6.daySplit;
+	var onboardVersion = _convo$newPlan6.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -455,11 +464,11 @@ function askToIncludeTeamMembers(convo) {
 // add time to each of your priorities
 function addTimeToPriorities(convo) {
 	var bot = convo.task.bot;
-	var _convo$newPlan6 = convo.newPlan;
-	var tz = _convo$newPlan6.tz;
-	var SlackUserId = _convo$newPlan6.SlackUserId;
-	var daySplit = _convo$newPlan6.daySplit;
-	var onboardVersion = _convo$newPlan6.onboardVersion;
+	var _convo$newPlan7 = convo.newPlan;
+	var tz = _convo$newPlan7.tz;
+	var SlackUserId = _convo$newPlan7.SlackUserId;
+	var daySplit = _convo$newPlan7.daySplit;
+	var onboardVersion = _convo$newPlan7.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -597,10 +606,10 @@ function addTimeToPriorities(convo) {
 // thoroughly explain why we're doing this!
 function explainTimeToPriorities(convo) {
 	var bot = convo.task.bot;
-	var _convo$newPlan7 = convo.newPlan;
-	var SlackUserId = _convo$newPlan7.SlackUserId;
-	var daySplit = _convo$newPlan7.daySplit;
-	var onboardVersion = _convo$newPlan7.onboardVersion;
+	var _convo$newPlan8 = convo.newPlan;
+	var SlackUserId = _convo$newPlan8.SlackUserId;
+	var daySplit = _convo$newPlan8.daySplit;
+	var onboardVersion = _convo$newPlan8.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -672,11 +681,11 @@ function explainTimeToPriorities(convo) {
 // start on the first task, with opportunity to change priority
 function startOnFirstTask(convo) {
 	var bot = convo.task.bot;
-	var _convo$newPlan8 = convo.newPlan;
-	var tz = _convo$newPlan8.tz;
-	var SlackUserId = _convo$newPlan8.SlackUserId;
-	var daySplit = _convo$newPlan8.daySplit;
-	var onboardVersion = _convo$newPlan8.onboardVersion;
+	var _convo$newPlan9 = convo.newPlan;
+	var tz = _convo$newPlan9.tz;
+	var SlackUserId = _convo$newPlan9.SlackUserId;
+	var daySplit = _convo$newPlan9.daySplit;
+	var onboardVersion = _convo$newPlan9.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
@@ -769,9 +778,9 @@ function startOnFirstTask(convo) {
 function chooseFirstTask(convo) {
 	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
 	var bot = convo.task.bot;
-	var _convo$newPlan9 = convo.newPlan;
-	var daySplit = _convo$newPlan9.daySplit;
-	var onboardVersion = _convo$newPlan9.onboardVersion;
+	var _convo$newPlan10 = convo.newPlan;
+	var daySplit = _convo$newPlan10.daySplit;
+	var onboardVersion = _convo$newPlan10.onboardVersion;
 	var prioritizedTasks = convo.newPlan.prioritizedTasks;
 
 
