@@ -131,7 +131,6 @@ function seedAndUpdateUsers(members, bot) {
 									_models2.default.SlackUser.create({
 										SlackUserId: SlackUserId,
 										UserId: user.id,
-										tz: tz,
 										TeamId: team_id,
 										SlackName: name
 									}).then(function (slackUser) {

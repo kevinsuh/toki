@@ -117,7 +117,6 @@ export function seedAndUpdateUsers(members, bot) {
 								models.SlackUser.create({
 									SlackUserId,
 									UserId: user.id,
-									tz,
 									TeamId: team_id,
 									SlackName: name
 								})
