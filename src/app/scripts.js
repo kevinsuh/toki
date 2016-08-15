@@ -106,11 +106,12 @@ export function seedAndUpdateUsers(members, bot) {
 								UserId: user.id
 							})
 						} else {
+
 							console.log(`\n\n CREATING UNIQUE USER (${name}) ... \n\n`);
 							// more common situation
-							models.User.create({
-								nickName: name,
-								email
+							user.update({
+								email,
+								nickName: name
 							})
 							.then((user) => {
 								models.SlackUser.create({

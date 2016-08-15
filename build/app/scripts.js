@@ -121,11 +121,12 @@ function seedAndUpdateUsers(members, bot) {
 									UserId: user.id
 								});
 							} else {
+
 								console.log('\n\n CREATING UNIQUE USER (' + name + ') ... \n\n');
 								// more common situation
-								_models2.default.User.create({
-									nickName: name,
-									email: email
+								user.update({
+									email: email,
+									nickName: name
 								}).then(function (user) {
 									_models2.default.SlackUser.create({
 										SlackUserId: SlackUserId,
