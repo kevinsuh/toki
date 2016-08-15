@@ -211,13 +211,14 @@ function askWhichSettingsToUpdate(convo) {
 	}, [{ // change name
 		pattern: _botResponses.utterances.containsName,
 		callback: function callback(response, convo) {
-			convo.say('CHANGING NAME');
+			convo.say('Sure thing!');
+			changeName(convo);
 			convo.next();
 		}
 	}, { // change timeZone
 		pattern: _botResponses.utterances.containsTimeZone,
 		callback: function callback(response, convo) {
-			convo.say('CHANGING TIMEZONE');
+			changeTimeZone(convo);
 			convo.next();
 		}
 	}, { // change morning ping
@@ -256,6 +257,126 @@ function askWhichSettingsToUpdate(convo) {
 		callback: function callback(response, convo) {
 			var text = "Sorry, I didn't get that. Which specific settings would you like to update? `i.e. morning ping`";
 			askWhichSettingsToUpdate(convo, text);
+			convo.next();
+		}
+	}]);
+}
+
+// user wants to change name
+function changeName(convo) {
+	var nickName = convo.settings.nickName;
+
+
+	convo.ask({
+		text: "What would you like me to call you?",
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "SETTINGS_CHANGE_NAME",
+			fallback: "What would you like me to call you?",
+			actions: [{
+				name: _constants.buttonValues.keepName.name,
+				text: 'Keep my name!',
+				value: _constants.buttonValues.keepName.value,
+				type: "button"
+			}]
+		}]
+	}, [{
+		pattern: _botResponses.utterances.containsKeep,
+		callback: function callback(response, convo) {
+
+			convo.say('Phew :sweat_smile: I really like the name ' + nickName);
+			settingsHome(convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			nickName = response.text;
+			convo.settings.nickName = nickName;
+			convo.say('Ooh I like the name ' + nickName + '! It has a nice ring to it');
+			settingsHome(convo);
+			convo.next();
+		}
+	}]);
+}
+
+// user wants to change timezone
+function changeTimeZone(convo) {
+	var timeZone = convo.settings.timeZone;
+
+
+	convo.ask({
+		text: 'I have you in the *' + timeZone.name + '* timezone. What timezone are you in now?',
+		attachments: [{
+			attachment_type: 'default',
+			callback_id: "ONBOARD",
+			fallback: "What's your timezone?",
+			color: _constants.colorsHash.grey.hex,
+			actions: [{
+				name: _constants.buttonValues.timeZones.eastern.name,
+				text: 'Eastern',
+				value: _constants.buttonValues.timeZones.eastern.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.timeZones.central.name,
+				text: 'Central',
+				value: _constants.buttonValues.timeZones.central.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.timeZones.mountain.name,
+				text: 'Mountain',
+				value: _constants.buttonValues.timeZones.mountain.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.timeZones.pacific.name,
+				text: 'Pacific',
+				value: _constants.buttonValues.timeZones.pacific.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.timeZones.other.name,
+				text: 'Other',
+				value: _constants.buttonValues.timeZones.other.value,
+				type: "button"
+			}]
+		}]
+	}, [{
+		pattern: _botResponses.utterances.other,
+		callback: function callback(response, convo) {
+			convo.say("I’m only able to work in these timezones right now. If you want to demo Toki, just pick one of these timezones. I’ll try to get your timezone included as soon as possible!");
+			convo.repeat();
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			var text = response.text;
+
+			var newTimeZone = false;
+
+			switch (text) {
+				case (text.match(_botResponses.utterances.eastern) || {}).input:
+					newTimeZone = _constants.timeZones.eastern;
+					break;
+				case (text.match(_botResponses.utterances.central) || {}).input:
+					newTimeZone = _constants.timeZones.central;
+					break;
+				case (text.match(_botResponses.utterances.mountain) || {}).input:
+					newTimeZone = _constants.timeZones.mountain;
+					break;
+				case (text.match(_botResponses.utterances.pacific) || {}).input:
+					newTimeZone = _constants.timeZones.pacific;
+				default:
+					break;
+			}
+
+			if (newTimeZone) {
+				convo.settings.timeZone = newTimeZone;
+				settingsHome(convo);
+			} else {
+				convo.say("I didn't get that :thinking_face:");
+				convo.repeat();
+			}
+
 			convo.next();
 		}
 	}]);
