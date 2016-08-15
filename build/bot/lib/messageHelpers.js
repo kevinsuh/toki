@@ -416,7 +416,7 @@ function createTaskListMessageBody(taskArray, options) {
 		var taskContent = '';
 
 		// only not completed tasks should have numbers
-		if (task.done != true) {
+		if (task.done != true || reviewVersion) {
 			taskContent = count + ') ';
 		}
 		taskContent = '' + taskContent + task.text + minutesMessage;

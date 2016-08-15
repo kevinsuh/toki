@@ -241,10 +241,12 @@ function sayTasksForToday(convo) {
 		taskListMessage = options.customTaskListMessage;
 	}
 
-	convo.say({
-		text: taskListMessage,
-		attachments: attachments
-	});
+	if (remainingTasks.length > 0) {
+		convo.say({
+			text: taskListMessage,
+			attachments: attachments
+		});
+	}
 }
 
 function wordSwapMessage(baseMessage, word, wordSwapCount) {
@@ -304,10 +306,10 @@ function singleLineReviseTask(convo, taskNumbersToReviseArray) {
 		var dailyTaskTextsToRevise = dailyTasksToRevise.map(function (dailyTask) {
 			return dailyTask.dataValues.Task.text;
 		});
-		var dailyTasksToReviseString = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTextsToRevise);
+		var dailyTasksToReviseString = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTextsToRevise, { codeBlock: true });
 
 		convo.say({
-			text: 'Got it -- I removed `' + dailyTasksToReviseString + '` from your plan today'
+			text: 'Got it -- I removed ' + dailyTasksToReviseString + ' from your plan today'
 		});
 		addTasksFlow(convo);
 		convo.next();
@@ -458,10 +460,10 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 		var dailyTaskTextsToComplete = dailyTasksToComplete.map(function (dailyTask) {
 			return dailyTask.dataValues.Task.text;
 		});
-		var dailyTasksToCompleteString = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTextsToComplete);
+		var dailyTasksToCompleteString = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTaskTextsToComplete, { codeBlock: true });
 
 		convo.say({
-			text: 'Great work :punch:. I checked off `' + dailyTasksToCompleteString + '`!'
+			text: 'Great work :punch:. I checked off ' + dailyTasksToCompleteString + '!'
 		});
 
 		convo.planEdit.showUpdatedPlan = true;
@@ -612,10 +614,10 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 		var dailyTasksTextsToDelete = dailyTasksToDelete.map(function (dailyTask) {
 			return dailyTask.dataValues.Task.text;
 		});
-		var dailyTasksToDeleteString = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTasksTextsToDelete);
+		var dailyTasksToDeleteString = (0, _messageHelpers.commaSeparateOutTaskArray)(dailyTasksTextsToDelete, { codeBlock: true });
 
 		convo.say({
-			text: 'Sounds good, I removed `' + dailyTasksToDeleteString + '` from your plan today!'
+			text: 'Sounds good, I removed ' + dailyTasksToDeleteString + ' from your plan today!'
 		});
 		convo.planEdit.showUpdatedPlan = true;
 		convo.next();

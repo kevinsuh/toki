@@ -223,10 +223,12 @@ function sayTasksForToday(convo, options = {}) {
 		taskListMessage = options.customTaskListMessage;
 	}
 
-	convo.say({
-		text: taskListMessage,
-		attachments
-	});
+	if (remainingTasks.length > 0) {
+		convo.say({
+			text: taskListMessage,
+			attachments
+		});
+	}
 
 }
 
@@ -281,10 +283,10 @@ function singleLineReviseTask(convo, taskNumbersToReviseArray) {
 		let dailyTaskTextsToRevise = dailyTasksToRevise.map((dailyTask) => {
 			return dailyTask.dataValues.Task.text;
 		});
-		let dailyTasksToReviseString = commaSeparateOutTaskArray(dailyTaskTextsToRevise);
+		let dailyTasksToReviseString = commaSeparateOutTaskArray(dailyTaskTextsToRevise, { codeBlock: true });
 
 		convo.say({
-			text: `Got it -- I removed \`${dailyTasksToReviseString}\` from your plan today`
+			text: `Got it -- I removed ${dailyTasksToReviseString} from your plan today`
 		});
 		addTasksFlow(convo);
 		convo.next();
@@ -439,10 +441,10 @@ function singleLineCompleteTask(convo, taskNumbersToCompleteArray) {
 		let dailyTaskTextsToComplete = dailyTasksToComplete.map((dailyTask) => {
 			return dailyTask.dataValues.Task.text;
 		});
-		let dailyTasksToCompleteString = commaSeparateOutTaskArray(dailyTaskTextsToComplete);
+		let dailyTasksToCompleteString = commaSeparateOutTaskArray(dailyTaskTextsToComplete, { codeBlock: true });
 
 		convo.say({
-			text: `Great work :punch:. I checked off \`${dailyTasksToCompleteString}\`!`
+			text: `Great work :punch:. I checked off ${dailyTasksToCompleteString}!`
 		});
 
 		convo.planEdit.showUpdatedPlan = true;
@@ -598,10 +600,10 @@ function singleLineDeleteTask(convo, taskNumbersToDeleteArray) {
 		let dailyTasksTextsToDelete = dailyTasksToDelete.map((dailyTask) => {
 			return dailyTask.dataValues.Task.text;
 		});
-		let dailyTasksToDeleteString = commaSeparateOutTaskArray(dailyTasksTextsToDelete);
+		let dailyTasksToDeleteString = commaSeparateOutTaskArray(dailyTasksTextsToDelete, {codeBlock: true});
 
 		convo.say({
-			text: `Sounds good, I removed \`${dailyTasksToDeleteString}\` from your plan today!`
+			text: `Sounds good, I removed ${dailyTasksToDeleteString} from your plan today!`
 		});
 		convo.planEdit.showUpdatedPlan = true;
 		convo.next();
