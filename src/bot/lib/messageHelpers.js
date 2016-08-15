@@ -6,6 +6,7 @@ import { constants, buttonValues, colorsHash, taskListMessageNoButtonsAttachment
 import { utterances } from './botResponses';
 
 import nlp from 'nlp_compromise';
+import moment from 'moment-timezone';
 
 export function getRandomApprovalWord(config = {}) {
 	// gives you awesome, nice, sounds good, great, etc.
@@ -1173,3 +1174,88 @@ export function getMinutesSuggestionAttachments(minutesRemaining, config) {
 	return attachments;
 
 }
+
+// returns the settings attachment with user data plugged in!
+export function getSettingsAttachment(settings) {
+
+	let { timeZone, tz, nickName, defaultSnoozeTime, defaultBreakTime, wantsPing, pingTime, includeOthersDecision, includedSlackUsers } = settings;
+
+	let includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(slackUser => slackUser.dataValues.SlackName));
+
+	if (!defaultSnoozeTime) {
+		defaultSnoozeTime = TOKI_DEFAULT_SNOOZE_TIME;
+	}
+	if (!defaultBreakTime) {
+		defaultBreakTime = TOKI_DEFAULT_BREAK_TIME;
+	}
+
+	let pingTimeString = '';
+	if (wantsPing && pingTime) {
+		pingTimeString = moment(pingTime).tz(timeZone.tz).format("h:mm a");
+	}
+	
+
+	var attachment = [
+		{
+			callback_id: "VIEW_SETTINGS",
+			fallback: `Here are your settings`,
+			color: colorsHash.lavendar.hex,
+			attachment_type: 'default',
+			fields: [
+				{
+					title: `Name:`,
+					short: true
+				},
+				{
+					value: nickName,
+					short: true
+				},
+				{
+					title: `Timezone:`,
+					short: true
+				},
+				{
+					value: timeZone.name,
+					short: true
+				},
+				{
+					title: `Morning Ping:`,
+					short: true
+				},
+				{
+					value: pingTimeString,
+					short: true
+				},
+				{
+					title: `Extend Duration:`,
+					short: true
+				},
+				{
+					value: `${defaultSnoozeTime} min`,
+					short: true
+				},
+				{
+					title: `Break Duration:`,
+					short: true
+				},
+				{
+					value: `${defaultBreakTime} min`,
+					short: true
+				},
+				{
+					title: `Priority Sharing:`,
+					short: true
+				},
+				{
+					value: includedSlackUsersNames,
+					short: true
+				}
+			]
+		}
+	];
+
+	return attachment;
+
+}
+
+

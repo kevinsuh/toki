@@ -32,6 +32,7 @@ exports.convertStringToNumbersArray = convertStringToNumbersArray;
 exports.getDoneSessionMessageAttachments = getDoneSessionMessageAttachments;
 exports.getPlanCommandCenterAttachments = getPlanCommandCenterAttachments;
 exports.getMinutesSuggestionAttachments = getMinutesSuggestionAttachments;
+exports.getSettingsAttachment = getSettingsAttachment;
 
 var _constants = require('./constants');
 
@@ -40,6 +41,10 @@ var _botResponses = require('./botResponses');
 var _nlp_compromise = require('nlp_compromise');
 
 var _nlp_compromise2 = _interopRequireDefault(_nlp_compromise);
+
+var _momentTimezone = require('moment-timezone');
+
+var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1197,5 +1202,81 @@ function getMinutesSuggestionAttachments(minutesRemaining, config) {
 	}
 
 	return attachments;
+}
+
+// returns the settings attachment with user data plugged in!
+function getSettingsAttachment(settings) {
+	var timeZone = settings.timeZone;
+	var tz = settings.tz;
+	var nickName = settings.nickName;
+	var defaultSnoozeTime = settings.defaultSnoozeTime;
+	var defaultBreakTime = settings.defaultBreakTime;
+	var wantsPing = settings.wantsPing;
+	var pingTime = settings.pingTime;
+	var includeOthersDecision = settings.includeOthersDecision;
+	var includedSlackUsers = settings.includedSlackUsers;
+
+
+	var includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(function (slackUser) {
+		return slackUser.dataValues.SlackName;
+	}));
+
+	if (!defaultSnoozeTime) {
+		defaultSnoozeTime = TOKI_DEFAULT_SNOOZE_TIME;
+	}
+	if (!defaultBreakTime) {
+		defaultBreakTime = TOKI_DEFAULT_BREAK_TIME;
+	}
+
+	var pingTimeString = '';
+	if (wantsPing && pingTime) {
+		pingTimeString = (0, _momentTimezone2.default)(pingTime).tz(timeZone.tz).format("h:mm a");
+	}
+
+	var attachment = [{
+		callback_id: "VIEW_SETTINGS",
+		fallback: 'Here are your settings',
+		color: _constants.colorsHash.lavendar.hex,
+		attachment_type: 'default',
+		fields: [{
+			title: 'Name:',
+			short: true
+		}, {
+			value: nickName,
+			short: true
+		}, {
+			title: 'Timezone:',
+			short: true
+		}, {
+			value: timeZone.name,
+			short: true
+		}, {
+			title: 'Morning Ping:',
+			short: true
+		}, {
+			value: pingTimeString,
+			short: true
+		}, {
+			title: 'Extend Duration:',
+			short: true
+		}, {
+			value: defaultSnoozeTime + ' min',
+			short: true
+		}, {
+			title: 'Break Duration:',
+			short: true
+		}, {
+			value: defaultBreakTime + ' min',
+			short: true
+		}, {
+			title: 'Priority Sharing:',
+			short: true
+		}, {
+			value: includedSlackUsersNames,
+			short: true
+		}]
+	}];
+
+	return attachment;
 }
 //# sourceMappingURL=messageHelpers.js.map
