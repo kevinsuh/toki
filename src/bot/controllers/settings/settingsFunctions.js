@@ -817,27 +817,177 @@ function changePingTime(convo) {
 function changePrioritySharing(convo) {
 
 	const { settings: { includeOthersDecision, includedSlackUsers } } = convo;
-	let text;
-	let attachments;
 
 	if (includedSlackUsers.length > 0) {
 
-		let includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(slackUser => slackUser.dataValues.SlackName), { slackNames: true });
-
 		if (includeOthersDecision == "NO_FOREVER") {
-
 			// user intentionally DISABLED INCLUDED SLACKUSERS
-			
+			disabledIncludedSlackUsersOptions(convo);
+		} else {
+			// user is currently sharing with them
+			includedSlackUsersOptions(convo);
 		}
 
 	} else {
 
 		// user has nobody included i.e. DISABLED
-		text = `Would you like to share your daily plan with a colleague? Just mention a Slack username like \`@emily\` and I’ll share your priorities with them each time you make a plan`;
+		let text = `Would you like to share your daily plan with a colleague? Just mention a Slack username like \`@emily\` and I’ll share your priorities with them each time you make a plan`;
 		askForIncluded(convo, text);
 		convo.next();
 
 	}
+
+}
+
+function includedSlackUsersOptions(convo) {
+
+	const { settings: { includeOthersDecision, includedSlackUsers } } = convo;
+	let includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(slackUser => slackUser.dataValues.SlackName), { slackNames: true });
+
+	let text = `You're sharing your daily plan with *${includedSlackUsersNames}*`;
+	let attachments = [
+		{
+			attachment_type: 'default',
+			callback_id: "SETTINGS_CHANGE_INCLUDED_MEMBERS",
+			fallback: "Who do you want to include on your plan?",
+			color: colorsHash.grey.hex,
+			actions: [
+				{
+					name: buttonValues.disable.name,
+					text: `Disable`,
+					value: buttonValues.disable.value,
+					type: "button"
+				},
+				{
+					name: buttonValues.shareWithOthers.name,
+					text: `Share with other`,
+					value: buttonValues.shareWithOthers.value,
+					type: "button"
+				},
+				{
+					name: buttonValues.no.name,
+					text: `Never Mind`,
+					value: buttonValues.no.value,
+					type: "button"
+				}
+			]
+		}
+	];
+
+	convo.ask({
+		text,
+		attachments
+	}, [
+			{
+				pattern: utterances.containsDisable,
+				callback: (response, convo) => {
+					convo.say(`Got it! I will not be sharing your plan with anyone :punch: (unless you tell me to, in which case I’ll oblige you)`);
+					convo.settings.includeOthersDecision = "NO_FOREVER";
+					settingsHome(convo);
+					convo.next();
+				}
+			},
+			{
+				pattern: utterances.containsShare,
+				callback: (response, convo) => {
+					askForIncluded(convo);
+					convo.next();
+				}
+			},
+			{
+				pattern: utterances.noAndNeverMind,
+				callback: (response, convo) => {
+					convo.say(`You can always add this later!`);
+					settingsHome(convo);
+					convo.next();
+				}
+			},
+			{
+				default: true,
+				callback: (response, convo) => {
+				convo.say(`Sorry I didn't quite catch that`);
+				convo.repeat();
+				convo.next();
+			}
+
+		}
+	]);
+
+}
+
+function disabledIncludedSlackUsersOptions(convo) {
+
+	const { settings: { includeOthersDecision, includedSlackUsers } } = convo;
+	let includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(slackUser => slackUser.dataValues.SlackName), { slackNames: true });
+
+	let text = `You have *${includedSlackUsersNames}* to be included in your daily plan, but it’s currently *_disabled_* so I'm not sharing with them`;
+	let attachments = [
+		{
+			attachment_type: 'default',
+			callback_id: "SETTINGS_CHANGE_INCLUDED_MEMBERS",
+			fallback: "Who do you want to include on your plan?",
+			color: colorsHash.grey.hex,
+			actions: [
+				{
+					name: buttonValues.keepPerson.name,
+					text: `Enable + Keep Person`,
+					value: buttonValues.keepPerson.value,
+					type: "button"
+				},
+				{
+					name: buttonValues.changePerson.name,
+					text: `Enable + Change Per.`,
+					value: buttonValues.changePerson.value,
+					type: "button"
+				},
+				{
+					name: buttonValues.no.name,
+					text: `Never Mind`,
+					value: buttonValues.no.value,
+					type: "button"
+				}
+			]
+		}
+	];
+
+	convo.ask({
+		text,
+		attachments
+	}, [
+			{
+				pattern: utterances.containsKeep,
+				callback: (response, convo) => {
+					convo.say(`Got it! I’ll share your daily plan with *${includedSlackUsersNames}*`);
+					convo.settings.includeOthersDecision = "default";
+					settingsHome(convo);
+					convo.next();
+				}
+			},
+			{
+				pattern: utterances.containsChange,
+				callback: (response, convo) => {
+					askForIncluded(convo);
+					convo.next();
+				}
+			},
+			{
+				pattern: utterances.noAndNeverMind,
+				callback: (response, convo) => {
+					convo.say(`You can always add this later!`);
+					settingsHome(convo);
+					convo.next();
+				}
+			},
+			{
+				default: true,
+				callback: (response, convo) => {
+				convo.say(`Sorry I didn't quite catch that`);
+				convo.repeat();
+				convo.next();
+			}
+
+		}
+	]);
 
 }
 

@@ -755,35 +755,167 @@ function changePrioritySharing(convo) {
 	var includeOthersDecision = _convo$settings9.includeOthersDecision;
 	var includedSlackUsers = _convo$settings9.includedSlackUsers;
 
-	var text = void 0;
-	var attachments = void 0;
 
 	if (includedSlackUsers.length > 0) {
 
-		var includedSlackUsersNames = (0, _messageHelpers.commaSeparateOutTaskArray)(includedSlackUsers.map(function (slackUser) {
-			return slackUser.dataValues.SlackName;
-		}), { slackNames: true });
-
 		if (includeOthersDecision == "NO_FOREVER") {
-
 			// user intentionally DISABLED INCLUDED SLACKUSERS
-
+			disabledIncludedSlackUsersOptions(convo);
+		} else {
+			// user is currently sharing with them
+			includedSlackUsersOptions(convo);
 		}
 	} else {
 
 		// user has nobody included i.e. DISABLED
-		text = 'Would you like to share your daily plan with a colleague? Just mention a Slack username like `@emily` and I’ll share your priorities with them each time you make a plan';
+		var text = 'Would you like to share your daily plan with a colleague? Just mention a Slack username like `@emily` and I’ll share your priorities with them each time you make a plan';
 		askForIncluded(convo, text);
 		convo.next();
 	}
 }
 
-// ask to include others
-function askForIncluded(convo) {
-	var text = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+function includedSlackUsersOptions(convo) {
 	var _convo$settings10 = convo.settings;
 	var includeOthersDecision = _convo$settings10.includeOthersDecision;
 	var includedSlackUsers = _convo$settings10.includedSlackUsers;
+
+	var includedSlackUsersNames = (0, _messageHelpers.commaSeparateOutTaskArray)(includedSlackUsers.map(function (slackUser) {
+		return slackUser.dataValues.SlackName;
+	}), { slackNames: true });
+
+	var text = 'You\'re sharing your daily plan with *' + includedSlackUsersNames + '*';
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "SETTINGS_CHANGE_INCLUDED_MEMBERS",
+		fallback: "Who do you want to include on your plan?",
+		color: _constants.colorsHash.grey.hex,
+		actions: [{
+			name: _constants.buttonValues.disable.name,
+			text: 'Disable',
+			value: _constants.buttonValues.disable.value,
+			type: "button"
+		}, {
+			name: _constants.buttonValues.shareWithOthers.name,
+			text: 'Share with other',
+			value: _constants.buttonValues.shareWithOthers.value,
+			type: "button"
+		}, {
+			name: _constants.buttonValues.no.name,
+			text: 'Never Mind',
+			value: _constants.buttonValues.no.value,
+			type: "button"
+		}]
+	}];
+
+	convo.ask({
+		text: text,
+		attachments: attachments
+	}, [{
+		pattern: _botResponses.utterances.containsDisable,
+		callback: function callback(response, convo) {
+			convo.say('Got it! I will not be sharing your plan with anyone :punch: (unless you tell me to, in which case I’ll oblige you)');
+			convo.settings.includeOthersDecision = "NO_FOREVER";
+			settingsHome(convo);
+			convo.next();
+		}
+	}, {
+		pattern: _botResponses.utterances.containsShare,
+		callback: function callback(response, convo) {
+			askForIncluded(convo);
+			convo.next();
+		}
+	}, {
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say('You can always add this later!');
+			settingsHome(convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say('Sorry I didn\'t quite catch that');
+			convo.repeat();
+			convo.next();
+		}
+
+	}]);
+}
+
+function disabledIncludedSlackUsersOptions(convo) {
+	var _convo$settings11 = convo.settings;
+	var includeOthersDecision = _convo$settings11.includeOthersDecision;
+	var includedSlackUsers = _convo$settings11.includedSlackUsers;
+
+	var includedSlackUsersNames = (0, _messageHelpers.commaSeparateOutTaskArray)(includedSlackUsers.map(function (slackUser) {
+		return slackUser.dataValues.SlackName;
+	}), { slackNames: true });
+
+	var text = 'You have *' + includedSlackUsersNames + '* to be included in your daily plan, but it’s currently *_disabled_* so I\'m not sharing with them';
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "SETTINGS_CHANGE_INCLUDED_MEMBERS",
+		fallback: "Who do you want to include on your plan?",
+		color: _constants.colorsHash.grey.hex,
+		actions: [{
+			name: _constants.buttonValues.keepPerson.name,
+			text: 'Enable + Keep Person',
+			value: _constants.buttonValues.keepPerson.value,
+			type: "button"
+		}, {
+			name: _constants.buttonValues.changePerson.name,
+			text: 'Enable + Change Per.',
+			value: _constants.buttonValues.changePerson.value,
+			type: "button"
+		}, {
+			name: _constants.buttonValues.no.name,
+			text: 'Never Mind',
+			value: _constants.buttonValues.no.value,
+			type: "button"
+		}]
+	}];
+
+	convo.ask({
+		text: text,
+		attachments: attachments
+	}, [{
+		pattern: _botResponses.utterances.containsKeep,
+		callback: function callback(response, convo) {
+			convo.say('Got it! I’ll share your daily plan with *' + includedSlackUsersNames + '*');
+			convo.settings.includeOthersDecision = "default";
+			settingsHome(convo);
+			convo.next();
+		}
+	}, {
+		pattern: _botResponses.utterances.containsChange,
+		callback: function callback(response, convo) {
+			askForIncluded(convo);
+			convo.next();
+		}
+	}, {
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say('You can always add this later!');
+			settingsHome(convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say('Sorry I didn\'t quite catch that');
+			convo.repeat();
+			convo.next();
+		}
+
+	}]);
+}
+
+// ask to include others
+function askForIncluded(convo) {
+	var text = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+	var _convo$settings12 = convo.settings;
+	var includeOthersDecision = _convo$settings12.includeOthersDecision;
+	var includedSlackUsers = _convo$settings12.includedSlackUsers;
 
 
 	if (!text) {
@@ -856,10 +988,10 @@ function askForIncluded(convo) {
 }
 
 function changeMorningPing(convo) {
-	var _convo$settings11 = convo.settings;
-	var timeZone = _convo$settings11.timeZone;
-	var wantsPing = _convo$settings11.wantsPing;
-	var pingTime = _convo$settings11.pingTime;
+	var _convo$settings13 = convo.settings;
+	var timeZone = _convo$settings13.timeZone;
+	var wantsPing = _convo$settings13.wantsPing;
+	var pingTime = _convo$settings13.pingTime;
 
 
 	if (pingTime) {

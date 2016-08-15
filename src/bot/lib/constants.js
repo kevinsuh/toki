@@ -630,9 +630,21 @@ export const buttonValues ={
 		name: "DISABLE",
 		value: "disable!"
 	},
+	shareWithOthers: {
+		name: "SHARE_WITH_OTHERS",
+		value: "share with others!"
+	},
 	setTime: {
 		name: "SET_TIME",
 		value: "set time!"
+	},
+	keepPerson: {
+		name: "KEEP_PERSON",
+		value: "keep person!"
+	},
+	changePerson: {
+		name: "CHANGE_PERSON",
+		value: "change person!"
 	}
 }
 
