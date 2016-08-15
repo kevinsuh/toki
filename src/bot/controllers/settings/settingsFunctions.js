@@ -61,7 +61,6 @@ function askWhichSettingsToUpdate(convo, text = false) {
 		{ // change name
 			pattern: utterances.containsName,
 			callback: (response, convo) => {
-				convo.say(`Sure thing!`);
 				changeName(convo);
 				convo.next();
 			}
@@ -90,7 +89,7 @@ function askWhichSettingsToUpdate(convo, text = false) {
 		{ // change break duration
 			pattern: utterances.containsBreak,
 			callback: (response, convo) => {
-				convo.say(`CHANGING BREAK`);
+				askToChangeBreakDuration(convo);
 				convo.next();
 			}
 		},
@@ -380,9 +379,9 @@ function changeExtendDurationTime(convo) {
 	let { settings: { defaultSnoozeTime } } = convo;
 	convo.ask(`How long would you like to typically extend sessions by?`, (response, convo) => {
 		// must be a number
-		var time    = response.text;
-		var minutes = false;
-		var validMinutesTester = new RegExp(/[\dh]/);
+		let time    = response.text;
+		let minutes = false;
+		let validMinutesTester = new RegExp(/[\dh]/);
 
 		if (validMinutesTester.test(time)) {
 			minutes = convertTimeStringToMinutes(time);
@@ -390,7 +389,135 @@ function changeExtendDurationTime(convo) {
 
 		if (minutes) {
 			convo.settings.defaultSnoozeTime = minutes;
-			convo.say(`Looks great! I’ll extend sessions by ${minutes} minutes as your new default :timer_clock:`)
+			convo.say(`Looks great! I’ll set ${minutes} minutes as your new default for extending sessions :timer_clock:`);
+			settingsHome(convo);
+		} else {
+			convo.say("Sorry, still learning :dog:. Let me know in terms of minutes `i.e. 10 min`");
+			convo.repeat();
+		}
+		convo.next();
+	});
+
+}
+
+function askToChangeBreakDuration(convo) {
+
+	let { settings: { defaultBreakTime } } = convo;
+	let attachments;
+	let text;
+
+	if (defaultBreakTime) {
+
+		convo.say(`Your default for breaks between sessions is ${defaultBreakTime} minutes`);
+		
+		text = `This is the default that happens when you click \`Break for ${defaultBreakTime} min\`. You can always specify a custom time by saying \`break for 20 minutes\` or however long you’d like to relax :palm_tree:`;
+		attachments = [
+			{
+				attachment_type: 'default',
+				callback_id: "SETTINGS_CHANGE_BREAK_DURATION",
+				fallback: "What do you want your default time to be?",
+				color: colorsHash.grey.hex,
+				actions: [
+					{
+						name: buttonValues.changeTime.name,
+						text: `Change Default Time`,
+						value: buttonValues.changeTime.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.no.name,
+						text: `Never Mind`,
+						value: buttonValues.no.value,
+						type: "button"
+					}
+				]
+			}
+		]
+
+	} else {
+
+		// DEFAULT HAS NOT BEEN SET YET
+		text = `Break duration is the default amount of time you want to take a break for in between sessions and click \`Break for 10 min\`. You can always specify a custom time by saying \`break for 20 minutes\` or however long you’d like to relax :palm_tree:`;
+		attachments = [
+			{
+				attachment_type: 'default',
+				callback_id: "SETTINGS_CHANGE_BREAK_DURATION",
+				fallback: "What do you want your default time to be?",
+				color: colorsHash.grey.hex,
+				actions: [
+					{
+						name: buttonValues.setTime.name,
+						text: `Set Default Time`,
+						value: buttonValues.setTime.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.no.name,
+						text: `Never Mind`,
+						value: buttonValues.no.value,
+						type: "button"
+					}
+				]
+			}
+		]
+
+	}
+
+	convo.ask({
+		text,
+		attachments
+	},[
+		{
+			pattern: utterances.containsChange,
+			callback: (response, convo) => {
+				changeBreakDurationTime(convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.setTime,
+			callback: (response, convo) => {
+				changeBreakDurationTime(convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.noAndNeverMind,
+			callback: (response, convo) => {
+				convo.say("Okay!");
+				showSettingsOptions(convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				convo.say(`Sorry I didn't get that`);
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
+
+
+}
+
+function changeBreakDurationTime(convo) {
+
+	let { settings: { defaultBreakTime } } = convo;
+	convo.ask(`How long would you like to typically break between sessions?`, (response, convo) => {
+		// must be a number
+		let time    = response.text;
+		let minutes = false;
+		let validMinutesTester = new RegExp(/[\dh]/);
+
+		if (validMinutesTester.test(time)) {
+			minutes = convertTimeStringToMinutes(time);
+		}
+
+		if (minutes) {
+			convo.settings.defaultBreakTime = minutes;
+			convo.say(`Looks great! I’ll set ${minutes} minutes as your new default break time :timer_clock:`);
 			settingsHome(convo);
 		} else {
 			convo.say("Sorry, still learning :dog:. Let me know in terms of minutes `i.e. 10 min`");
