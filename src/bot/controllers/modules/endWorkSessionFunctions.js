@@ -128,6 +128,7 @@ function completePriorityForSession(convo) {
 			buttonValues.doneSession.newSession.value,
 			buttonValues.doneSession.viewPlan.value,
 			buttonValues.doneSession.beBackLater.value
+			buttonValues.doneSession.endDay.value
 		];
 
 		let attachmentsConfig = { defaultBreakTime, buttonsValuesArray };

@@ -375,7 +375,7 @@ export default function(controller) {
 																	controller.trigger(`begin_session`, [ bot, config ]);
 																	break;
 																case (intentConfig.END_PLAN):
-																	controller.trigger(`end_plan_flow`, [ bot, config ]);
+																	controller.trigger(`confirm_end_plan`, [ bot, config ]);
 																	break;
 																default: break;
 															}

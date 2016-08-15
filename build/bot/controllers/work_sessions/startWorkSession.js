@@ -244,7 +244,7 @@ exports.default = function (controller) {
 							// this should rarely ever, ever happen. (i.e. NEVER)
 							(0, _miscHelpers.closeOldRemindersAndSessions)(user);
 							setTimeout(function () {
-								controller.trigger('end_plan_flow', [bot, { SlackUserId: SlackUserId }]);
+								controller.trigger('confirm_end_plan', [bot, { SlackUserId: SlackUserId }]);
 							}, 700);
 						} else if (confirmStart) {
 							// start the session!
