@@ -1217,10 +1217,6 @@ function getSettingsAttachment(settings) {
 	var includedSlackUsers = settings.includedSlackUsers;
 
 
-	var includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(function (slackUser) {
-		return slackUser.dataValues.SlackName;
-	}), { slackNames: true });
-
 	if (!defaultSnoozeTime) {
 		defaultSnoozeTime = TOKI_DEFAULT_SNOOZE_TIME;
 	}
@@ -1229,8 +1225,31 @@ function getSettingsAttachment(settings) {
 	}
 
 	var pingTimeString = '';
-	if (wantsPing && pingTime) {
-		pingTimeString = (0, _momentTimezone2.default)(pingTime).tz(timeZone.tz).format("h:mm a");
+	if (pingTime) {
+		if (wantsPing) {
+			pingTimeString = (0, _momentTimezone2.default)(pingTime).tz(timeZone.tz).format("h:mm a");
+		} else {
+			pingTimeString = '_' + (0, _momentTimezone2.default)(pingTime).tz(timeZone.tz).format("h:mm a") + ' (Disabled)_';
+		}
+	} else {
+		pingTimeString = '_Disabled_';
+	}
+
+	var prioritySharingString = '';
+	if (includedSlackUsers.length > 0) {
+
+		var includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(function (slackUser) {
+			return slackUser.dataValues.SlackName;
+		}), { slackNames: true });
+
+		if (includeOthersDecision == 'NO_FOREVER') {
+			prioritySharingString = '_' + includedSlackUsersNames + ' (Disabled)_';
+		} else {
+			prioritySharingString = includedSlackUsersNames;
+		}
+	} else {
+		// nobody is included
+		prioritySharingString = '_Disabled_';
 	}
 
 	var attachment = [{
@@ -1238,6 +1257,7 @@ function getSettingsAttachment(settings) {
 		fallback: 'Here are your settings',
 		color: _constants.colorsHash.lavendar.hex,
 		attachment_type: 'default',
+		mrkdwn_in: ["fields"],
 		fields: [{
 			title: 'Name:',
 			short: true
@@ -1272,7 +1292,7 @@ function getSettingsAttachment(settings) {
 			title: 'Priority Sharing:',
 			short: true
 		}, {
-			value: includedSlackUsersNames,
+			value: prioritySharingString,
 			short: true
 		}]
 	}];

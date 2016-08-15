@@ -1180,8 +1180,6 @@ export function getSettingsAttachment(settings) {
 
 	let { timeZone, tz, nickName, defaultSnoozeTime, defaultBreakTime, wantsPing, pingTime, includeOthersDecision, includedSlackUsers } = settings;
 
-	let includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(slackUser => slackUser.dataValues.SlackName), { slackNames: true });
-
 	if (!defaultSnoozeTime) {
 		defaultSnoozeTime = TOKI_DEFAULT_SNOOZE_TIME;
 	}
@@ -1190,10 +1188,31 @@ export function getSettingsAttachment(settings) {
 	}
 
 	let pingTimeString = '';
-	if (wantsPing && pingTime) {
-		pingTimeString = moment(pingTime).tz(timeZone.tz).format("h:mm a");
+	if (pingTime) {
+		if (wantsPing) {
+			pingTimeString = moment(pingTime).tz(timeZone.tz).format("h:mm a");
+		} else {
+			pingTimeString = `_${moment(pingTime).tz(timeZone.tz).format("h:mm a")} (Disabled)_`;
+		}
+	} else {
+		pingTimeString = `_Disabled_`;
 	}
-	
+
+	let prioritySharingString = '';
+	if (includedSlackUsers.length > 0) {
+
+		let includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(slackUser => slackUser.dataValues.SlackName), { slackNames: true });
+
+		if (includeOthersDecision == `NO_FOREVER`) {
+			prioritySharingString = `_${includedSlackUsersNames} (Disabled)_`
+		} else {
+			prioritySharingString = includedSlackUsersNames;
+		}
+
+	} else {
+		// nobody is included
+		prioritySharingString = `_Disabled_`;
+	}
 
 	var attachment = [
 		{
@@ -1201,6 +1220,7 @@ export function getSettingsAttachment(settings) {
 			fallback: `Here are your settings`,
 			color: colorsHash.lavendar.hex,
 			attachment_type: 'default',
+			mrkdwn_in: [ "fields" ],
 			fields: [
 				{
 					title: `Name:`,
@@ -1247,7 +1267,7 @@ export function getSettingsAttachment(settings) {
 					short: true
 				},
 				{
-					value: includedSlackUsersNames,
+					value: prioritySharingString,
 					short: true
 				}
 			]
