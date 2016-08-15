@@ -131,6 +131,25 @@ export default function(controller) {
 							})
 						}
 
+						if (includeOthersDecision) {
+							user.update({
+								includeOthersDecision
+							});
+						}
+
+						// 1. delete all included
+						// 2. insert the newly included
+						// (if user did not update this, this will just re-insert same user)
+						models.Include.destroy({
+							where: [ `"IncluderSlackUserId" = ?`, SlackUserId]
+						});
+						includedSlackUsers.forEach((slackUser) => {
+							models.Include.create({
+								IncluderSlackUserId: SlackUserId,
+								IncludedSlackUserId: slackUser.dataValues.SlackUserId
+							});
+						});
+
 						resumeQueuedReachouts(bot, { SlackUserId });
 
 					});

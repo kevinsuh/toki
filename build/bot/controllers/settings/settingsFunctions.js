@@ -122,7 +122,7 @@ function askWhichSettingsToUpdate(convo) {
 	}, { // change priority sharing
 		pattern: _botResponses.utterances.containsPriority,
 		callback: function callback(response, convo) {
-			convo.say('CHANGING PRIORITY');
+			changePrioritySharing(convo);
 			convo.next();
 		}
 	}, {
@@ -747,5 +747,132 @@ function changePingTime(convo) {
 		}
 		convo.next();
 	});
+}
+
+// user wants to change priority sharing
+function changePrioritySharing(convo) {
+	var _convo$settings9 = convo.settings;
+	var includeOthersDecision = _convo$settings9.includeOthersDecision;
+	var includedSlackUsers = _convo$settings9.includedSlackUsers;
+
+	var text = void 0;
+	var attachments = void 0;
+
+	if (includedSlackUsers.length > 0) {
+
+		var includedSlackUsersNames = (0, _messageHelpers.commaSeparateOutTaskArray)(includedSlackUsers.map(function (slackUser) {
+			return slackUser.dataValues.SlackName;
+		}), { slackNames: true });
+
+		if (includeOthersDecision == "NO_FOREVER") {
+
+			// user intentionally DISABLED INCLUDED SLACKUSERS
+
+		}
+	} else {
+
+		// user has nobody included i.e. DISABLED
+		text = 'Would you like to share your daily plan with a colleague? Just mention a Slack username like `@emily` and I’ll share your priorities with them each time you make a plan';
+		askForIncluded(convo, text);
+		convo.next();
+	}
+}
+
+// ask to include others
+function askForIncluded(convo) {
+	var text = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+	var _convo$settings10 = convo.settings;
+	var includeOthersDecision = _convo$settings10.includeOthersDecision;
+	var includedSlackUsers = _convo$settings10.includedSlackUsers;
+
+
+	if (!text) {
+		text = 'Who would you like to share your daily plan with? Just mention a Slack username like `@emily` and I’ll share your priorities with them each time you make a plan';
+	}
+
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "SETTINGS_CHANGE_INCLUDED_MEMBERS",
+		fallback: "Who do you want to include on your plan?",
+		color: _constants.colorsHash.grey.hex,
+		actions: [{
+			name: _constants.buttonValues.no.name,
+			text: 'Not right now',
+			value: _constants.buttonValues.no.value,
+			type: "button"
+		}]
+	}];
+
+	convo.ask({
+		text: text,
+		attachments: attachments
+	}, [{
+		pattern: _botResponses.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say('You can always add this later!');
+			settingsHome(convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+
+			// add included teammembers
+			var text = response.text;
+
+
+			var includeSlackUserIds = (0, _miscHelpers.getSlackUsersFromString)(text);
+
+			if (includeSlackUserIds) {
+
+				_models2.default.SlackUser.findAll({
+					where: ['"SlackUser"."SlackUserId" IN (?)', includeSlackUserIds],
+					include: [_models2.default.User]
+				}).then(function (slackUsers) {
+
+					// success!
+					var names = slackUsers.map(function (slackUser) {
+						return slackUser.dataValues.SlackName || slackUser.dataValues.User.nickName;
+					});
+					convo.settings.includedSlackUsers = slackUsers;
+					if (includeOthersDecision == "NO_FOREVER") {
+						convo.settings.includeOthersDecision = "default";
+					}
+					var nameStrings = (0, _messageHelpers.commaSeparateOutTaskArray)(names, { slackNames: true });
+					convo.say('Great! After planning, I’ll let *' + nameStrings + '* know that you’ll be focused on these priorities today. You can add someone to receive your priorities automatically when you make them each morning by saying `show settings`');
+					settingsHome(convo);
+				});
+			} else {
+
+				convo.say('I’m sorry, I couldn\'t find the member you wanted to include. Is there another name this person goes by in Slack? Please enter their Slack username, like `@matt` (it should autocomplete)');
+				text = 'Who are the members you want to include?';
+				askForIncluded(convo, text);
+			}
+
+			convo.next();
+		}
+
+	}]);
+}
+
+function changeMorningPing(convo) {
+	var _convo$settings11 = convo.settings;
+	var timeZone = _convo$settings11.timeZone;
+	var wantsPing = _convo$settings11.wantsPing;
+	var pingTime = _convo$settings11.pingTime;
+
+
+	if (pingTime) {
+		if (wantsPing) {
+			// has ping right now and probably wants to disable
+			editLivePingTime(convo);
+		} else {
+			// has ping time that is disabled, so can enable
+			editDisabledPingTime(convo);
+		}
+	} else {
+		// no existing ping time!
+		setNewPingTime(convo);
+	}
 }
 //# sourceMappingURL=settingsFunctions.js.map

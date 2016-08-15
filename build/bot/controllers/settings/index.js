@@ -133,6 +133,25 @@ exports.default = function (controller) {
 							});
 						}
 
+						if (includeOthersDecision) {
+							user.update({
+								includeOthersDecision: includeOthersDecision
+							});
+						}
+
+						// 1. delete all included
+						// 2. insert the newly included
+						// (if user did not update this, this will just re-insert same user)
+						_models2.default.Include.destroy({
+							where: ['"IncluderSlackUserId" = ?', SlackUserId]
+						});
+						includedSlackUsers.forEach(function (slackUser) {
+							_models2.default.Include.create({
+								IncluderSlackUserId: SlackUserId,
+								IncludedSlackUserId: slackUser.dataValues.SlackUserId
+							});
+						});
+
 						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 					});
 				});

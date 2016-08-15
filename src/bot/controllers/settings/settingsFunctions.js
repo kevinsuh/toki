@@ -9,7 +9,7 @@ import models from '../../../app/models';
 import { utterances } from '../../lib/botResponses';
 import { colorsArray, constants, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, TOKI_DEFAULT_SNOOZE_TIME, TOKI_DEFAULT_BREAK_TIME } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, getSettingsAttachment } from '../../lib/messageHelpers';
-import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog, witTimeResponseToTimeZoneObject } from '../../lib/miscHelpers';
+import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog, witTimeResponseToTimeZoneObject, getSlackUsersFromString } from '../../lib/miscHelpers';
 
 import { resumeQueuedReachouts } from '../index';
 
@@ -96,7 +96,7 @@ function askWhichSettingsToUpdate(convo, text = false) {
 		{ // change priority sharing
 			pattern: utterances.containsPriority,
 			callback: (response, convo) => {
-				convo.say(`CHANGING PRIORITY`);
+				changePrioritySharing(convo);
 				convo.next();
 			}
 		},
@@ -813,5 +813,137 @@ function changePingTime(convo) {
 	});
 }
 
+// user wants to change priority sharing
+function changePrioritySharing(convo) {
+
+	const { settings: { includeOthersDecision, includedSlackUsers } } = convo;
+	let text;
+	let attachments;
+
+	if (includedSlackUsers.length > 0) {
+
+		let includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(slackUser => slackUser.dataValues.SlackName), { slackNames: true });
+
+		if (includeOthersDecision == "NO_FOREVER") {
+
+			// user intentionally DISABLED INCLUDED SLACKUSERS
+			
+		}
+
+	} else {
+
+		// user has nobody included i.e. DISABLED
+		text = `Would you like to share your daily plan with a colleague? Just mention a Slack username like \`@emily\` and I’ll share your priorities with them each time you make a plan`;
+		askForIncluded(convo, text);
+		convo.next();
+
+	}
+
+}
+
+// ask to include others
+function askForIncluded(convo, text = false) {
+
+	const { settings: { includeOthersDecision, includedSlackUsers } } = convo;
+
+	if (!text) {
+		text = `Who would you like to share your daily plan with? Just mention a Slack username like \`@emily\` and I’ll share your priorities with them each time you make a plan`;
+	}
+
+	let attachments = [
+		{
+			attachment_type: 'default',
+			callback_id: "SETTINGS_CHANGE_INCLUDED_MEMBERS",
+			fallback: "Who do you want to include on your plan?",
+			color: colorsHash.grey.hex,
+			actions: [
+				{
+					name: buttonValues.no.name,
+					text: `Not right now`,
+					value: buttonValues.no.value,
+					type: "button"
+				}
+			]
+		}
+	];
+
+	convo.ask({
+		text,
+		attachments
+	}, [
+			{
+				pattern: utterances.noAndNeverMind,
+				callback: (response, convo) => {
+					convo.say(`You can always add this later!`);
+					settingsHome(convo);
+					convo.next();
+				}
+			},
+			{
+				default: true,
+				callback: (response, convo) => {
+
+				// add included teammembers
+				let { text } = response;
+
+				let includeSlackUserIds = getSlackUsersFromString(text);
+
+				if (includeSlackUserIds) {
+
+					models.SlackUser.findAll({
+						where: [ `"SlackUser"."SlackUserId" IN (?)`, includeSlackUserIds],
+						include: [ models.User ]
+					})
+					.then((slackUsers) => {
+
+						// success!
+						let names = slackUsers.map(slackUser => slackUser.dataValues.SlackName || slackUser.dataValues.User.nickName );
+						convo.settings.includedSlackUsers = slackUsers;
+						if (includeOthersDecision == "NO_FOREVER") {
+							convo.settings.includeOthersDecision = "default";
+						}
+						let nameStrings = commaSeparateOutTaskArray(names, { slackNames: true });
+						convo.say(`Great! After planning, I’ll let *${nameStrings}* know that you’ll be focused on these priorities today. You can add someone to receive your priorities automatically when you make them each morning by saying \`show settings\``);
+						settingsHome(convo);
+
+					});
+
+				} else {
+
+					convo.say(`I’m sorry, I couldn't find the member you wanted to include. Is there another name this person goes by in Slack? Please enter their Slack username, like \`@matt\` (it should autocomplete)`);
+					text = `Who are the members you want to include?`;
+					askForIncluded(convo, text);
+
+				}
+
+				convo.next();
+
+			}
+
+		}
+	]);
+
+}
+
+
+function changeMorningPing(convo) {
+
+	const { settings: { timeZone, wantsPing, pingTime } } = convo;
+
+	if (pingTime) {
+		if (wantsPing) {
+			// has ping right now and probably wants to disable
+			editLivePingTime(convo);
+		} else {
+			// has ping time that is disabled, so can enable
+			editDisabledPingTime(convo);
+		}
+	} else {
+		// no existing ping time!
+		setNewPingTime(convo);
+		
+	}
+
+}
 
 
