@@ -49,6 +49,8 @@ export default (controller) => {
 				}
 
 			});
+		} else {
+			next();
 		}
 
 	});
@@ -156,6 +158,8 @@ let pauseLiveWorkSessions = (bot, message, next) => {
 			next();
 		}
 
+	} else {
+		next();
 	}
 }
 

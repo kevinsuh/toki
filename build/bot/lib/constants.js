@@ -627,6 +627,14 @@ var buttonValues = exports.buttonValues = {
 	letsDoIt: {
 		name: "LETS_DO_IT",
 		value: "lets do it!"
+	},
+	changeTime: {
+		name: "CHANGE_TIME",
+		value: "change time!"
+	},
+	keepTime: {
+		name: "KEEP_TIME",
+		value: "keep time!"
 	}
 };
 

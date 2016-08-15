@@ -6,6 +6,7 @@ import { constants, buttonValues, colorsHash, taskListMessageNoButtonsAttachment
 import { utterances } from './botResponses';
 
 import nlp from 'nlp_compromise';
+import moment from 'moment-timezone';
 
 export function getRandomApprovalWord(config = {}) {
 	// gives you awesome, nice, sounds good, great, etc.
@@ -1173,3 +1174,108 @@ export function getMinutesSuggestionAttachments(minutesRemaining, config) {
 	return attachments;
 
 }
+
+// returns the settings attachment with user data plugged in!
+export function getSettingsAttachment(settings) {
+
+	let { timeZone, tz, nickName, defaultSnoozeTime, defaultBreakTime, wantsPing, pingTime, includeOthersDecision, includedSlackUsers } = settings;
+
+	if (!defaultSnoozeTime) {
+		defaultSnoozeTime = TOKI_DEFAULT_SNOOZE_TIME;
+	}
+	if (!defaultBreakTime) {
+		defaultBreakTime = TOKI_DEFAULT_BREAK_TIME;
+	}
+
+	let pingTimeString = '';
+	if (pingTime) {
+		if (wantsPing) {
+			pingTimeString = moment(pingTime).tz(timeZone.tz).format("h:mm a");
+		} else {
+			pingTimeString = `_${moment(pingTime).tz(timeZone.tz).format("h:mm a")} (Disabled)_`;
+		}
+	} else {
+		pingTimeString = `_Disabled_`;
+	}
+
+	let prioritySharingString = '';
+	if (includedSlackUsers.length > 0) {
+
+		let includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(slackUser => slackUser.dataValues.SlackName), { slackNames: true });
+
+		if (includeOthersDecision == `NO_FOREVER`) {
+			prioritySharingString = `_${includedSlackUsersNames} (Disabled)_`
+		} else {
+			prioritySharingString = includedSlackUsersNames;
+		}
+
+	} else {
+		// nobody is included
+		prioritySharingString = `_Disabled_`;
+	}
+
+	var attachment = [
+		{
+			callback_id: "VIEW_SETTINGS",
+			fallback: `Here are your settings`,
+			color: colorsHash.lavendar.hex,
+			attachment_type: 'default',
+			mrkdwn_in: [ "fields" ],
+			fields: [
+				{
+					title: `Name:`,
+					short: true
+				},
+				{
+					value: nickName,
+					short: true
+				},
+				{
+					title: `Timezone:`,
+					short: true
+				},
+				{
+					value: timeZone.name,
+					short: true
+				},
+				{
+					title: `Morning Ping:`,
+					short: true
+				},
+				{
+					value: pingTimeString,
+					short: true
+				},
+				{
+					title: `Extend Duration:`,
+					short: true
+				},
+				{
+					value: `${defaultSnoozeTime} min`,
+					short: true
+				},
+				{
+					title: `Break Duration:`,
+					short: true
+				},
+				{
+					value: `${defaultBreakTime} min`,
+					short: true
+				},
+				{
+					title: `Priority Sharing:`,
+					short: true
+				},
+				{
+					value: prioritySharingString,
+					short: true
+				}
+			]
+		}
+	];
+
+	return attachment;
+
+}
+
+
