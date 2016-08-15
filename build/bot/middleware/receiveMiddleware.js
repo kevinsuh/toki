@@ -59,6 +59,8 @@ exports.default = function (controller) {
 					next();
 				}
 			});
+		} else {
+			next();
 		}
 	});
 };
@@ -166,6 +168,8 @@ var pauseLiveWorkSessions = function pauseLiveWorkSessions(bot, message, next) {
 				next();
 			}
 		})();
+	} else {
+		next();
 	}
 };
 

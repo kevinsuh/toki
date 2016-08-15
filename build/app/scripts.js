@@ -64,7 +64,7 @@ function test(bot) {
 }
 
 // sequelize models
-function seedAndUpdateUsers(members) {
+function seedAndUpdateUsers(members, bot) {
 
 	members.forEach(function (member) {
 		var id = member.id;
@@ -133,6 +133,9 @@ function seedAndUpdateUsers(members) {
 										tz: tz,
 										TeamId: team_id,
 										SlackName: name
+									}).then(function (slackUser) {
+										// if slack user created, should be onboarded
+										_controllers.controller.trigger('begin_onboard_flow', [bot, { SlackUserId: SlackUserId }]);
 									});
 								});
 							}

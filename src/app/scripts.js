@@ -49,7 +49,7 @@ export function test(bot) {
 
 }
 
-export function seedAndUpdateUsers(members) {
+export function seedAndUpdateUsers(members, bot) {
 
 	members.forEach((member) => {
 
@@ -119,7 +119,11 @@ export function seedAndUpdateUsers(members) {
 									tz,
 									TeamId: team_id,
 									SlackName: name
-								});
+								})
+								.then((slackUser) => {
+									// if slack user created, should be onboarded
+									controller.trigger('begin_onboard_flow', [ bot, { SlackUserId } ]);
+								})
 							});
 						}
 

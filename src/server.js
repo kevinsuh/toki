@@ -111,7 +111,7 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 
 				if (payload) {
 					let teamMembers = payload.users; // array of user objects!
-					seedAndUpdateUsers(teamMembers);
+					seedAndUpdateUsers(teamMembers, bot);
 				}
 
 				if (err) {

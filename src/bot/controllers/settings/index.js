@@ -9,9 +9,10 @@ import models from '../../../app/models';
 import { utterances } from '../../lib/botResponses';
 import { colorsArray, constants, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, TOKI_DEFAULT_SNOOZE_TIME, TOKI_DEFAULT_BREAK_TIME } from '../../lib/constants';
 import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, getSettingsAttachment } from '../../lib/messageHelpers';
-import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog } from '../../lib/miscHelpers';
+import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog, witTimeResponseToTimeZoneObject } from '../../lib/miscHelpers';
 
 import { resumeQueuedReachouts } from '../index';
+import { settingsHome } from './settingsFunctions';
 
 // user wants to update settings!
 export default function(controller) {
@@ -69,6 +70,7 @@ export default function(controller) {
 					var name   = user.nickName || user.email;
 					convo.name = name;
 
+					// these are all pulled from the DB, then gets "re-updated" at the end. if nothing changed, then we will just re-update the same existing data
 					convo.settings = {
 						SlackUserId,
 						timeZone: userTimeZone,
@@ -89,20 +91,30 @@ export default function(controller) {
 
 						consoleLog("end of settings for user!!!!", convo.settings);
 
-						const { SlackUserId, nickName, timeZone, defaultBreakTime, defaultSnoozeTime } = convo.settings;
+						const { SlackUserId, nickName, timeZone, defaultBreakTime, defaultSnoozeTime, wantsPing, pingTime, includeOthersDecision, includedSlackUsers } = convo.settings;
 
-						// if (timeZone) {
-						// 	const { tz } = timeZone;
-						// 	user.SlackUser.update({
-						// 		tz
-						// 	});
-						// }
+						if (timeZone) {
+							const { tz } = timeZone;
+							user.SlackUser.update({
+								tz
+							});
+						}
 
-						// if (nickName) {
-						// 	user.update({
-						// 		nickName
-						// 	});
-						// }
+						if (nickName) {
+							user.update({
+								nickName
+							});
+						}
+
+						user.update({
+							wantsPing
+						});
+
+						if (pingTime) {
+							user.update({
+								pingTime
+							});
+						}
 
 						// if (defaultSnoozeTime) {
 						// 	user.update({
@@ -124,250 +136,3 @@ export default function(controller) {
 		});
 	});
 }
-
-// the home view of user's settings
-function settingsHome(convo) {
-
-	const { settings, settings: { timeZone, nickName, defaultSnoozeTime, defaultBreakTime } } = convo;
-	const { task }                = convo;
-	const { bot, source_message } = task;
-
-	let text = `Here are your settings:`;
-	let attachments = getSettingsAttachment(settings);
-	convo.say({
-		text,
-		attachments
-	});
-
-	askWhichSettingsToUpdate(convo);
-
-
-}
-
-function askWhichSettingsToUpdate(convo, text = false) {
-
-	const { settings, settings: { timeZone, nickName, defaultSnoozeTime, defaultBreakTime } } = convo;
-	const { task }                = convo;
-	const { bot, source_message } = task;
-
-	if (!text)
-		text = `Which of these settings would you like me to update?`
-
-	convo.ask({
-		text,
-		attachments: [{
-			callback_id: "UPDATE_SETTINGS",
-			fallback: `Would you like to update a settings?`,
-			color: colorsHash.grey.hex,
-			attachment_type: 'default',
-			actions: [
-				{
-					name: buttonValues.neverMind.name,
-					text: "Good for now!",
-					value: buttonValues.neverMind.value,
-					type: "button"
-				}
-			]
-		}]
-	}, [
-		{ // change name
-			pattern: utterances.containsName,
-			callback: (response, convo) => {
-				convo.say(`Sure thing!`);
-				changeName(convo);
-				convo.next();
-			}
-		},
-		{ // change timeZone
-			pattern: utterances.containsTimeZone,
-			callback: (response, convo) => {
-				changeTimeZone(convo);
-				convo.next();
-			}
-		},
-		{ // change morning ping
-			pattern: utterances.containsPing,
-			callback: (response, convo) => {
-				convo.say(`CHANGING PING`);
-				convo.next();
-			}
-		},
-		{ // change extend duration
-			pattern: utterances.containsExtend,
-			callback: (response, convo) => {
-				convo.say(`CHANGING EXTEND`);
-				convo.next();
-			}
-		},
-		{ // change break duration
-			pattern: utterances.containsBreak,
-			callback: (response, convo) => {
-				convo.say(`CHANGING BREAK`);
-				convo.next();
-			}
-		},
-		{ // change priority sharing
-			pattern: utterances.containsPriority,
-			callback: (response, convo) => {
-				convo.say(`CHANGING PRIORITY`);
-				convo.next();
-			}
-		},
-		{
-			// no or never mind to exit this flow
-			pattern: utterances.containsNoOrNeverMindOrNothing,
-			callback: (response, convo) => {
-				convo.say(`Okay! Let me know whenever you want to \`edit settings\``);
-				convo.next();
-			}
-		},
-		{
-			default: true,
-			callback: (response, convo) => {
-				const text = "Sorry, I didn't get that. Which specific settings would you like to update? `i.e. morning ping`";
-				askWhichSettingsToUpdate(convo, text);
-				convo.next();
-			}
-		}
-	]);
-
-}
-
-// user wants to change name
-function changeName(convo) {
-
-	let { settings: { nickName } } = convo;
-
-	convo.ask({
-		text: "What would you like me to call you?",
-		attachments: [{
-			attachment_type: 'default',
-			callback_id: "SETTINGS_CHANGE_NAME",
-			fallback: "What would you like me to call you?",
-			actions: [
-				{
-					name: buttonValues.keepName.name,
-					text: `Keep my name!`,
-					value: buttonValues.keepName.value,
-					type: "button"
-				}
-			]
-		}]
-	}, [
-		{
-			pattern: utterances.containsKeep,
-			callback: (response, convo) => {
-
-				convo.say(`Phew :sweat_smile: I really like the name ${nickName}`);
-				settingsHome(convo);
-				convo.next();
-
-			}
-		},
-		{
-			default: true,
-			callback: (response, convo) => {
-				nickName = response.text;
-				convo.settings.nickName = nickName;
-				convo.say(`Ooh I like the name ${nickName}! It has a nice ring to it`);
-				settingsHome(convo);
-				convo.next();
-			}
-		}
-	]);
-}
-
-// user wants to change timezone
-function changeTimeZone(convo) {
-
-	const { settings: { timeZone } } = convo;
-
-	convo.ask({
-		text: `I have you in the *${timeZone.name}* timezone. What timezone are you in now?`,
-		attachments: [
-			{
-				attachment_type: 'default',
-				callback_id: "ONBOARD",
-				fallback: "What's your timezone?",
-				color: colorsHash.grey.hex,
-				actions: [
-					{
-						name: buttonValues.timeZones.eastern.name,
-						text: `Eastern`,
-						value: buttonValues.timeZones.eastern.value,
-						type: "button"
-					},
-					{
-						name: buttonValues.timeZones.central.name,
-						text: `Central`,
-						value: buttonValues.timeZones.central.value,
-						type: "button"
-					},
-					{
-						name: buttonValues.timeZones.mountain.name,
-						text: `Mountain`,
-						value: buttonValues.timeZones.mountain.value,
-						type: "button"
-					},
-					{
-						name: buttonValues.timeZones.pacific.name,
-						text: `Pacific`,
-						value: buttonValues.timeZones.pacific.value,
-						type: "button"
-					},
-					{
-						name: buttonValues.timeZones.other.name,
-						text: `Other`,
-						value: buttonValues.timeZones.other.value,
-						type: "button"
-					}
-				]
-			}
-		]
-	}, [
-			{
-				pattern: utterances.other,
-				callback: (response, convo) => {
-					convo.say("I’m only able to work in these timezones right now. If you want to demo Toki, just pick one of these timezones. I’ll try to get your timezone included as soon as possible!");
-					convo.repeat();
-					convo.next();
-				}
-			},
-			{
-				default: true,
-				callback: (response, convo) => {
-
-				const { text }  = response;
-				let newTimeZone = false;
-
-				switch (text) {
-					case (text.match(utterances.eastern) || {}).input:
-						newTimeZone = timeZones.eastern;
-						break;
-					case (text.match(utterances.central) || {}).input:
-						newTimeZone = timeZones.central;
-						break;
-					case (text.match(utterances.mountain) || {}).input:
-						newTimeZone = timeZones.mountain;
-						break;
-					case (text.match(utterances.pacific) || {}).input:
-						newTimeZone = timeZones.pacific;
-					default:
-						break;
-				}
-
-				if (newTimeZone) {
-					convo.settings.timeZone = newTimeZone;
-					settingsHome(convo);
-				} else {
-					convo.say("I didn't get that :thinking_face:");
-					convo.repeat();
-				}
-
-				convo.next();
-			}
-		}
-	]);
-
-}
-
