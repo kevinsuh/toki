@@ -2,7 +2,7 @@
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
  */
 
-import { constants, buttonValues, colorsHash, taskListMessageNoButtonsAttachment, quotes, approvalWords } from './constants';
+import { constants, buttonValues, colorsHash, taskListMessageNoButtonsAttachment, quotes, approvalWords, TOKI_DEFAULT_SNOOZE_TIME, TOKI_DEFAULT_BREAK_TIME } from './constants';
 import { utterances } from './botResponses';
 
 import nlp from 'nlp_compromise';
@@ -1180,11 +1180,14 @@ export function getSettingsAttachment(settings) {
 
 	let { timeZone, tz, nickName, defaultSnoozeTime, defaultBreakTime, wantsPing, pingTime, includeOthersDecision, includedSlackUsers } = settings;
 
+	let defaultSnoozeTimeString = `${defaultSnoozeTime} min`;
+	let defaultBreakTimeString  = `${defaultBreakTime} min`;
+
 	if (!defaultSnoozeTime) {
-		defaultSnoozeTime = TOKI_DEFAULT_SNOOZE_TIME;
+		defaultSnoozeTimeString = `_Not set_`;
 	}
 	if (!defaultBreakTime) {
-		defaultBreakTime = TOKI_DEFAULT_BREAK_TIME;
+		defaultBreakTimeString = `_Not set_`;
 	}
 
 	let pingTimeString = '';
@@ -1251,7 +1254,7 @@ export function getSettingsAttachment(settings) {
 					short: true
 				},
 				{
-					value: `${defaultSnoozeTime} min`,
+					value: defaultSnoozeTimeString,
 					short: true
 				},
 				{
@@ -1259,7 +1262,7 @@ export function getSettingsAttachment(settings) {
 					short: true
 				},
 				{
-					value: `${defaultBreakTime} min`,
+					value: defaultBreakTimeString,
 					short: true
 				},
 				{

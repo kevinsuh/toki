@@ -17,44 +17,6 @@ export default (controller) => {
 	// at the end of each conversation to turn back on
 	controller.middleware.receive.use(pauseLiveWorkSessions);
 
-	controller.middleware.receive.use((bot, message, next) => {
-
-		const { type, user, bot_id } = message;
-		const SlackUserId            = message.user;
-
-		if (!bot.onboardedUser) {
-			bot.onboardedUser = {};
-		}
-
-		if (type && type == 'message' && user && !bot_id && !bot.onboardedUser[SlackUserId]) {
-			console.log(bot.onboardedUser);
-			console.log(`\n\n\n reaching out to check if user onboarded. . . . \n\n\n`);
-			models.User.find({
-				where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-				include: [ models.SlackUser ]
-			})
-			.then((user) => {
-
-				const { onboarded } = user;
-				if (!onboarded) {
-					console.log(`\n\n ~~ user has not onboarded yet ~~ \n\n`);
-					user.update({
-						onboarded: true
-					})
-					.then(() => {
-						controller.trigger(`begin_onboard_flow`, [ bot, { SlackUserId }]);
-					})
-				} else {
-					next();
-				}
-
-			});
-		} else {
-			next();
-		}
-
-	});
-
 }
 
 let pauseLiveWorkSessions = (bot, message, next) => {

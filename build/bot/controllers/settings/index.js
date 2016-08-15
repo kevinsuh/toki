@@ -58,6 +58,9 @@ exports.default = function (controller) {
 
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
+					// have 2-minute exit time limit
+					convo.task.timeLimit = 120000;
+
 					var name = user.nickName || user.email;
 					convo.name = name;
 
@@ -118,17 +121,36 @@ exports.default = function (controller) {
 							});
 						}
 
-						// if (defaultSnoozeTime) {
-						// 	user.update({
-						// 		defaultSnoozeTime
-						// 	})
-						// }
+						if (defaultSnoozeTime) {
+							user.update({
+								defaultSnoozeTime: defaultSnoozeTime
+							});
+						}
 
-						// if (defaultBreakTime) {
-						// 	user.update({
-						// 		defaultBreakTime
-						// 	})
-						// }
+						if (defaultBreakTime) {
+							user.update({
+								defaultBreakTime: defaultBreakTime
+							});
+						}
+
+						if (includeOthersDecision) {
+							user.update({
+								includeOthersDecision: includeOthersDecision
+							});
+						}
+
+						// 1. delete all included
+						// 2. insert the newly included
+						// (if user did not update this, this will just re-insert same user)
+						_models2.default.Include.destroy({
+							where: ['"IncluderSlackUserId" = ?', SlackUserId]
+						});
+						includedSlackUsers.forEach(function (slackUser) {
+							_models2.default.Include.create({
+								IncluderSlackUserId: SlackUserId,
+								IncludedSlackUserId: slackUser.dataValues.SlackUserId
+							});
+						});
 
 						(0, _index.resumeQueuedReachouts)(bot, { SlackUserId: SlackUserId });
 					});
