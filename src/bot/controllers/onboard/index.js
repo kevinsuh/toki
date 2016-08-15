@@ -380,7 +380,7 @@ function startNewPlanFlow(response, convo) {
 
 	const { timeZone: { tz, name } } = convo.onBoard;
 
-	convo.say(`Awesome, I have you in the *${name}* timezone! Now let's win our first day together :grin:`);
+	convo.say(`Awesome, I have you in the *${name}* timezone! Now let's win the day :grin:`);
 	convo.onBoard.postOnboardDecision = intentConfig.START_DAY;
 	convo.next();
 
