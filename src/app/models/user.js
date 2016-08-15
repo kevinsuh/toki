@@ -19,11 +19,7 @@ module.exports = function(sequelize, DataTypes) {
     wantsPing: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
-    },
-    onboarded: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
-    },
+    }
   }, {
 
     classMethods: {
