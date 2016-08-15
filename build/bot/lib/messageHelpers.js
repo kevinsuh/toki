@@ -1219,7 +1219,7 @@ function getSettingsAttachment(settings) {
 
 	var includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(function (slackUser) {
 		return slackUser.dataValues.SlackName;
-	}));
+	}), { slackNames: true });
 
 	if (!defaultSnoozeTime) {
 		defaultSnoozeTime = TOKI_DEFAULT_SNOOZE_TIME;

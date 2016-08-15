@@ -139,8 +139,22 @@ function settingsHome(convo) {
 		attachments
 	});
 
+	askWhichSettingsToUpdate(convo);
+
+
+}
+
+function askWhichSettingsToUpdate(convo, text = false) {
+
+	const { settings, settings: { timeZone, nickName, defaultSnoozeTime, defaultBreakTime } } = convo;
+	const { task }                = convo;
+	const { bot, source_message } = task;
+
+	if (!text)
+		text = `Which of these settings would you like me to update?`
+
 	convo.ask({
-		text: `Which of these settings would you like me to update?`,
+		text,
 		attachments: [{
 			callback_id: "UPDATE_SETTINGS",
 			fallback: `Would you like to update a settings?`,
@@ -209,8 +223,8 @@ function settingsHome(convo) {
 		{
 			default: true,
 			callback: (response, convo) => {
-				convo.say("Sorry, I didn't get that. Which setting would you like to update? `i.e. morning ping`");
-				convo.repeat();
+				const text = "Sorry, I didn't get that. Which specific settings would you like to update? `i.e. morning ping`";
+				askWhichSettingsToUpdate(convo, text);
 				convo.next();
 			}
 		}

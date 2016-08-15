@@ -1180,7 +1180,7 @@ export function getSettingsAttachment(settings) {
 
 	let { timeZone, tz, nickName, defaultSnoozeTime, defaultBreakTime, wantsPing, pingTime, includeOthersDecision, includedSlackUsers } = settings;
 
-	let includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(slackUser => slackUser.dataValues.SlackName));
+	let includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(slackUser => slackUser.dataValues.SlackName), { slackNames: true });
 
 	if (!defaultSnoozeTime) {
 		defaultSnoozeTime = TOKI_DEFAULT_SNOOZE_TIME;

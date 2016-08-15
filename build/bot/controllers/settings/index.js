@@ -173,8 +173,29 @@ function settingsHome(convo) {
 		attachments: attachments
 	});
 
+	askWhichSettingsToUpdate(convo);
+}
+
+// user wants to update settings!
+
+
+function askWhichSettingsToUpdate(convo) {
+	var text = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+	var settings = convo.settings;
+	var _convo$settings3 = convo.settings;
+	var timeZone = _convo$settings3.timeZone;
+	var nickName = _convo$settings3.nickName;
+	var defaultSnoozeTime = _convo$settings3.defaultSnoozeTime;
+	var defaultBreakTime = _convo$settings3.defaultBreakTime;
+	var task = convo.task;
+	var bot = task.bot;
+	var source_message = task.source_message;
+
+
+	if (!text) text = 'Which of these settings would you like me to update?';
+
 	convo.ask({
-		text: 'Which of these settings would you like me to update?',
+		text: text,
 		attachments: [{
 			callback_id: "UPDATE_SETTINGS",
 			fallback: 'Would you like to update a settings?',
@@ -233,12 +254,10 @@ function settingsHome(convo) {
 	}, {
 		default: true,
 		callback: function callback(response, convo) {
-			convo.say("Sorry, I didn't get that. Which setting would you like to update? `i.e. morning ping`");
-			convo.repeat();
+			var text = "Sorry, I didn't get that. Which specific settings would you like to update? `i.e. morning ping`";
+			askWhichSettingsToUpdate(convo, text);
 			convo.next();
 		}
 	}]);
 }
-
-// user wants to update settings!
 //# sourceMappingURL=index.js.map
