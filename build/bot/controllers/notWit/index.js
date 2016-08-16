@@ -36,6 +36,9 @@ exports.default = function (controller) {
 	var beginAdventure = new RegExp(/\bbegin adventure\b/i);
 	controller.hears([beginAdventure], 'direct_message', function (bot, message) {
 
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
 		var SlackUserId = message.user;
 
 		bot.send({

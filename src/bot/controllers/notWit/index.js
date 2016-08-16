@@ -51,6 +51,9 @@ export default function(controller) {
 	const beginAdventure = new RegExp(/\bbegin adventure\b/i);
 	controller.hears([beginAdventure], 'direct_message', (bot, message) => {
 
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
 		const SlackUserId = message.user;
 
 		bot.send({
