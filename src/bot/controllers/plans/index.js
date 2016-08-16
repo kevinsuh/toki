@@ -49,6 +49,8 @@ export default function(controller) {
 				})
 				.then((sessionGroups) => {
 
+					// this may not be necessary
+					// because clicking the button triggers `begin_adventure` flow through notWit.js
 					if (sessionGroups.length == 0) {
 						controller.trigger(`begin_onboard_flow`, [ bot, { SlackUserId }]);
 					} else {
