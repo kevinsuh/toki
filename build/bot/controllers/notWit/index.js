@@ -32,6 +32,19 @@ exports.default = function (controller) {
 			}
 		}, 1000);
 	});
+	var beginAdventure = new RegExp(/\bbegin adventure\b/i);
+	controller.hears([beginAdventure], 'direct_message', function (bot, message) {
+
+		var SlackUserId = message.user;
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(function () {
+			controller.trigger('begin_onboard_flow', [bot, { SlackUserId: SlackUserId }]);
+		}, 750);
+	});
 
 	// intentionally pausing session
 	controller.hears(['pa[ause]{1,}'], 'direct_message', function (bot, message) {
