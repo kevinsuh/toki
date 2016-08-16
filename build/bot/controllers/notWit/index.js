@@ -32,6 +32,7 @@ exports.default = function (controller) {
 			}
 		}, 1000);
 	});
+
 	var beginAdventure = new RegExp(/\bbegin adventure\b/i);
 	controller.hears([beginAdventure], 'direct_message', function (bot, message) {
 

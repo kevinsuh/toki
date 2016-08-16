@@ -34,8 +34,32 @@ export default function(controller) {
 			channel: message.channel
 		});
 		setTimeout(()=>{
-			controller.trigger(`new_plan_flow`, [ bot, { SlackUserId }]);
-		}, 1000);
+
+			models.User.find({
+				where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
+				include: [
+					models.SlackUser
+				]
+			})
+			.then((user) => {
+
+				user.getSessionGroups({
+					where: [ `"SessionGroup"."type" = ? AND "SessionGroup"."createdAt" > ?`, "start_work", dateOfNewPlanDayFlow],
+					limit: 1
+				})
+				.then((sessionGroups) => {
+
+					if (sessionGroups.length == 0) {
+						controller.trigger(`begin_onboard_flow`, [ bot, { SlackUserId }]);
+					} else {
+						controller.trigger(`new_plan_flow`, [ bot, { SlackUserId }]);
+					}
+
+				});
+
+			});
+
+		}, 750);
 
 	});
 

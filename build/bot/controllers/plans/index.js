@@ -19,8 +19,25 @@ exports.default = function (controller) {
 			channel: message.channel
 		});
 		setTimeout(function () {
-			controller.trigger('new_plan_flow', [bot, { SlackUserId: SlackUserId }]);
-		}, 1000);
+
+			_models2.default.User.find({
+				where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
+				include: [_models2.default.SlackUser]
+			}).then(function (user) {
+
+				user.getSessionGroups({
+					where: ['"SessionGroup"."type" = ? AND "SessionGroup"."createdAt" > ?', "start_work", _constants.dateOfNewPlanDayFlow],
+					limit: 1
+				}).then(function (sessionGroups) {
+
+					if (sessionGroups.length == 0) {
+						controller.trigger('begin_onboard_flow', [bot, { SlackUserId: SlackUserId }]);
+					} else {
+						controller.trigger('new_plan_flow', [bot, { SlackUserId: SlackUserId }]);
+					}
+				});
+			});
+		}, 750);
 	});
 
 	// WIT FOR `end_plan_flow`

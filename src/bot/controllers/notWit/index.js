@@ -47,6 +47,7 @@ export default function(controller) {
 		}, 1000);
 
 	});
+
 	const beginAdventure = new RegExp(/\bbegin adventure\b/i);
 	controller.hears([beginAdventure], 'direct_message', (bot, message) => {
 
@@ -59,8 +60,6 @@ export default function(controller) {
 		setTimeout(()=>{
 			controller.trigger(`begin_onboard_flow`, [ bot, { SlackUserId }]);
 		}, 750);
-
-		
 
 	});
 
