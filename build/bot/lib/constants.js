@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
+exports.startSessionExamples = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
 
 var _utterances;
 
@@ -175,6 +175,10 @@ var buttonValues = exports.buttonValues = {
 	letsDoIt: {
 		name: "LETS_DO_IT",
 		value: "lets do it!"
+	},
+	changeTasks: {
+		name: "CHANGE_TASKS",
+		value: "change tasks!"
 	}
 };
 
@@ -198,4 +202,6 @@ var timeZones = exports.timeZones = {
 };
 
 var approvalWords = exports.approvalWords = ['nice', 'awesome', 'sounds good', 'great', 'fantastic', 'looking good', 'very nice', 'cool', 'boom', 'looks good'];
+
+var startSessionExamples = exports.startSessionExamples = ['think through product development roadmap for 75 min', 'send supporter update emails for 1 hour', 'finish version 1 of new website wireframe for 60 min', 'map out inbound marketing strategy until 10am', 'write up city research until 1pm', 'follow up with primary customers until 11:35am', 'sketch out first version of logo for 1 hr 15 min', 'update portfolio and send out to mentors for 1hr 30 min'];
 //# sourceMappingURL=constants.js.map
