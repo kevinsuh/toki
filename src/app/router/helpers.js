@@ -92,11 +92,12 @@ export function saveUserOnLogin(auth, identity) {
 					where: { TeamId }
 				})
 				.then((team) => {
-					const { token } = team;
-					let bot = bots[token];
-					if (bot) {
-						
-						let config = { SlackUserId };
+					if (team) {
+						const { token } = team;
+						let bot = bots[token];
+						if (bot) {
+							let config = { SlackUserId };
+						}
 					}
 				});
 

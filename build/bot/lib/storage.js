@@ -159,7 +159,6 @@ exports.default = function (config) {
        */
 						_models2.default.User.create({
 							SlackUserId: SlackUserId,
-							UserId: UserId,
 							TeamId: TeamId,
 							accessToken: accessToken,
 							scopes: scopes,

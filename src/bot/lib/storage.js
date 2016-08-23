@@ -147,7 +147,6 @@ export default function(config) {
 						 */
 						models.User.create({
 							SlackUserId,
-							UserId,
 							TeamId,
 							accessToken,
 							scopes,

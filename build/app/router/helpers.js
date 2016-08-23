@@ -102,12 +102,13 @@ function saveUserOnLogin(auth, identity) {
 					_models2.default.Team.find({
 						where: { TeamId: TeamId }
 					}).then(function (team) {
-						var token = team.token;
+						if (team) {
+							var token = team.token;
 
-						var bot = _controllers.bots[token];
-						if (bot) {
-
-							var config = { SlackUserId: SlackUserId };
+							var bot = _controllers.bots[token];
+							if (bot) {
+								var config = { SlackUserId: SlackUserId };
+							}
 						}
 					});
 
