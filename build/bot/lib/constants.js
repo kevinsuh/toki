@@ -84,7 +84,7 @@ var utterances = exports.utterances = (_utterances = {
 	containsNoOne: new RegExp(/\b(no one)\b/i),
 	somethingElse: new RegExp(/\bsome[omething]{3,}\b.*\bel[lse]{2,}\b/i),
 	containsEnough: new RegExp(/\beno[ough]{3,}\b/i)
-}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "notToday", new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i)), _defineProperty(_utterances, "notShare", new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _defineProperty(_utterances, "noMore", new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i)), _defineProperty(_utterances, "redo", new RegExp(/^re[re do]{2,5}\b/i)), _defineProperty(_utterances, "noDontAskAgain", new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "yesDontAskAgain", new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "changePriority", new RegExp(/^chang[ge]{1,4}\b|\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\b(priori[tiyes]{1,5}|tas[sk]{1,5})\b/i)), _defineProperty(_utterances, "goBack", new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)), _defineProperty(_utterances, "setTime", new RegExp(/\bset[o]{0,5}\b.*\btim[me]{1,5}\b/i)), _defineProperty(_utterances, "beginAdventure", new RegExp(/\bbegin\b.*\badventure\b/i)), _utterances);
+}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "notToday", new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i)), _defineProperty(_utterances, "notShare", new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _defineProperty(_utterances, "noMore", new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i)), _defineProperty(_utterances, "redo", new RegExp(/^re[re do]{2,5}\b/i)), _defineProperty(_utterances, "noDontAskAgain", new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "yesDontAskAgain", new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "changePriority", new RegExp(/^chang[ge]{1,4}\b|\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\b(priori[tiyes]{1,5}|tas[sk]{1,5})\b/i)), _defineProperty(_utterances, "goBack", new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)), _defineProperty(_utterances, "setTime", new RegExp(/\bset[o]{0,5}\b.*\btim[me]{1,5}\b/i)), _defineProperty(_utterances, "beginAdventure", new RegExp(/\bbegin\b.*\badventure\b/i)), _defineProperty(_utterances, "changeTimeAndTask", new RegExp(/\bchan[nge]{1,5}\b.{1,3}\btim[me]{1,3}\b.{1,7}\btas[sk]{1,3}\b/i)), _utterances);
 
 var constants = exports.constants = {
 	PLAN_DECISION: {
@@ -233,6 +233,18 @@ var buttonValues = exports.buttonValues = {
 	keepWorking: {
 		name: "KEEP_WORKING",
 		value: "Keep working!"
+	},
+	changeTimeAndTask: {
+		name: "CHANGE_TIME_AND_TASK",
+		value: "Change time and task"
+	},
+	yes: {
+		name: "YES",
+		value: "Yes"
+	},
+	no: {
+		name: "NO",
+		value: "no"
 	}
 };
 
@@ -267,6 +279,11 @@ var startSessionOptionsAttachments = exports.startSessionOptionsAttachments = [{
 	callback_id: "LIVE_SESSION_OPTIONS",
 	fallback: "Good luck with your session!",
 	actions: [{
+		name: buttonValues.changeTimeAndTask.name,
+		text: "Change Time + Task",
+		value: buttonValues.changeTimeAndTask.value,
+		type: "button"
+	}, {
 		name: buttonValues.endSession.name,
 		text: "End Session",
 		value: buttonValues.endSession.value,

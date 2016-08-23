@@ -7,6 +7,10 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = function (controller) {
 
 	controller.hears([_constants.constants.THANK_YOU.reg_exp], 'direct_message', function (bot, message) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
 		var SlackUserId = message.user;
 		bot.send({
 			type: "typing",
@@ -17,8 +21,31 @@ exports.default = function (controller) {
 		}, 500);
 	});
 
+	// when user wants to "change time and task" of an existing session,
+	// it will basically create new session flow
+	controller.hears([_constants.utterances.changeTimeAndTask], 'direct_message', function (bot, message) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		var SlackUserId = message.user;
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(function () {
+			var config = { SlackUserId: SlackUserId, changeTimeAndTask: true };
+			controller.trigger('begin_session_flow', [bot, config]);
+		}, 500);
+	});
+
 	// TOKI_T1ME TESTER
 	controller.hears(['TOKI_T1ME'], 'direct_message', function (bot, message) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
 		var text = message.text;
 
 		var SlackUserId = message.user;

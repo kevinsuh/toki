@@ -81,8 +81,8 @@ export const utterances = {
 	changePriority: new RegExp(/^chang[ge]{1,4}\b|\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\b(priori[tiyes]{1,5}|tas[sk]{1,5})\b/i),
 	goBack: new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i),
 	setTime: new RegExp(/\bset[o]{0,5}\b.*\btim[me]{1,5}\b/i),
-	beginAdventure: new RegExp(/\bbegin\b.*\badventure\b/i)
-
+	beginAdventure: new RegExp(/\bbegin\b.*\badventure\b/i),
+	changeTimeAndTask: new RegExp(/\bchan[nge]{1,5}\b.{1,3}\btim[me]{1,3}\b.{1,7}\btas[sk]{1,3}\b/i)
 }
 
 
@@ -234,6 +234,18 @@ export const buttonValues ={
 	keepWorking: {
 		name: "KEEP_WORKING",
 		value: "Keep working!"
+	},
+	changeTimeAndTask: {
+		name: "CHANGE_TIME_AND_TASK",
+		value: "Change time and task"
+	},
+	yes: {
+		name: "YES",
+		value: "Yes"
+	},
+	no: {
+		name: "NO",
+		value: "no"
 	}
 }
 
@@ -279,6 +291,12 @@ export const startSessionOptionsAttachments = [
 		callback_id: "LIVE_SESSION_OPTIONS",
 		fallback: "Good luck with your session!",
 		actions: [
+			{
+				name: buttonValues.changeTimeAndTask.name,
+				text: "Change Time + Task",
+				value: buttonValues.changeTimeAndTask.value,
+				type: "button"
+			},
 			{
 				name: buttonValues.endSession.name,
 				text: "End Session",

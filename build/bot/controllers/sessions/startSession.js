@@ -73,6 +73,7 @@ exports.default = function (controller) {
 		var SlackUserId = config.SlackUserId;
 		var content = config.content;
 		var minutes = config.minutes;
+		var changeTimeAndTask = config.changeTimeAndTask;
 
 
 		_models2.default.User.find({
@@ -115,6 +116,7 @@ exports.default = function (controller) {
 
 					if (sessions.length > 0) {
 						currentSession = sessions[0];
+						convo.sessionStart.changeTimeAndTask = changeTimeAndTask;
 					}
 					convo.sessionStart.currentSession = currentSession;
 

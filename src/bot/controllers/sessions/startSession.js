@@ -73,7 +73,7 @@ export default function(controller) {
 	 */
 	controller.on('begin_session_flow', (bot, config) => {
 
-		const { SlackUserId, content, minutes } = config;
+		const { SlackUserId, content, minutes, changeTimeAndTask } = config;
 
 		models.User.find({
 			where: { SlackUserId }
@@ -115,6 +115,7 @@ export default function(controller) {
 
 					if (sessions.length > 0) {
 						currentSession = sessions[0];
+						convo.sessionStart.changeTimeAndTask = changeTimeAndTask;
 					}
 					convo.sessionStart.currentSession = currentSession;
 

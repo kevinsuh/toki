@@ -11,80 +11,31 @@ import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandom
 // confirm task and time in one place and start if it's good
 export function finalizeSessionTimeAndContent(convo) {
 
-	const { SlackUserId, tz, content, minutes, currentSession }  = convo.sessionStart;
+	const { SlackUserId, tz, content, minutes, currentSession, changeTimeAndTask }  = convo.sessionStart;
 
-	// already in session, can only be in one
 	if (currentSession) {
 
-		let now           = moment().tz(tz);
-		let endTime       = moment(currentSession.dataValues.endTime).tz(tz);
-		let endTimeString = endTime.format("h:mma");
-		let minutesLeft   = Math.round(moment.duration(endTime.diff(now)).asMinutes());
-
-		let text = `Hey! You’re already in a focused session working on \`${currentSession.dataValues.content}\` until *${endTimeString}*`;
-		let attachments = [
-			{
-				attachment_type: 'default',
-				callback_id: "EXISTING_SESSION_OPTIONS",
-				fallback: "Hey, you're already in a session!!",
-				actions: [
-					{
-						name: buttonValues.newSession.name,
-						text: "New Session :new:",
-						value: buttonValues.newSession.value,
-						type: "button"
-					},
-					{
-						name: buttonValues.keepWorking.name,
-						text: "Keep Working!",
-						value: buttonValues.keepWorking.value,
-						type: "button"
-					}
-				]
-			}
-		]
-
-		convo.ask({
-			text,
-			attachments
-		}, [
-			{
-				pattern: utterances.containsNew,
-				callback: (response, convo) => {
-					convo.say(`Okay, sounds good to me!`);
-
-					// restart everything!
-					convo.sessionStart.minutes        = false;
-					convo.sessionStart.content        = false;
-					convo.sessionStart.currentSession = false;
-					
-					finalizeSessionTimeAndContent(convo);
-					convo.next();
-				}
-			},
-			{
-				pattern: utterances.containsKeep,
-				callback: (response, convo) => {
-
-					convo.say(`You got this! Keep focusing on \`${currentSession.dataValues.content}\` and I’ll see you at *${endTimeString}*`);
-					convo.next();
-
-				}
-			},
-			{
-				default: true,
-				callback: (response, convo) => {
-					convo.say("Sorry, I didn't catch that");
-					convo.repeat();
-					convo.next();
-				}
-			}
-		]);
+		/*
+		 * ONLY IF YOU'RE CURRENTLY IN A SESSION...
+		 */
+		
+		if (changeTimeAndTask) {
+			// clicking button `change time + task`
+			changeTimeAndTaskFlow(convo);
+		} else {
+			// wit `new session`
+			askToOverrideCurrentSession(convo);
+		}
 
 	} else {
 
+		/*
+		 * STANDARD FLOW
+		 */
+
 		// we need both time and task in order to start session
 		// if dont have either, will run function before `convo.next`
+		
 		if (!content) {
 			askForSessionContent(convo);
 			return;
@@ -101,18 +52,157 @@ export function finalizeSessionTimeAndContent(convo) {
 
 }
 
+function changeTimeAndTaskFlow(convo) {
+
+	const { SlackUserId, tz, currentSession }  = convo.sessionStart;
+
+	// we are restarting data so user can seamlessly create a new session
+	convo.sessionStart.content        = currentSession.dataValues.content;
+	convo.sessionStart.minutes        = false;
+	convo.sessionStart.currentSession = false;
+
+	let text = `Would you like to work on something other than \`${convo.sessionStart.content}\`?`;
+	let attachments = [
+		{
+			attachment_type: 'default',
+			callback_id: "EXISTING_SESSION_OPTIONS",
+			fallback: "Hey, you're already in a session!!",
+			actions: [
+				{
+					name: buttonValues.yes.name,
+					text: "Yes",
+					value: buttonValues.yes.value,
+					type: "button"
+				},
+				{
+					name: buttonValues.no.name,
+					text: "Nah, keep it!",
+					value: buttonValues.no.value,
+					type: "button"
+				}
+			]
+		}
+	]
+
+	convo.ask({
+		text,
+		attachments
+	}, [
+		{
+			pattern: utterances.yes,
+			callback: (response, convo) => {
+				convo.sessionStart.content = false;
+				let question = `What would you like to focus on?`;
+				askForSessionContent(convo, question);
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.no,
+			callback: (response, convo) => {
+				finalizeSessionTimeAndContent(convo);
+				convo.next();
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				convo.say("Sorry, I didn't catch that");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
+	
+
+}
+
+function askToOverrideCurrentSession(convo) {
+
+	const { SlackUserId, tz, content, minutes, currentSession }  = convo.sessionStart;
+
+	let now           = moment().tz(tz);
+	let endTime       = moment(currentSession.dataValues.endTime).tz(tz);
+	let endTimeString = endTime.format("h:mma");
+	let minutesLeft   = Math.round(moment.duration(endTime.diff(now)).asMinutes());
+
+	let text = `Hey! You’re already in a focused session working on \`${currentSession.dataValues.content}\` until *${endTimeString}*`;
+	let attachments = [
+		{
+			attachment_type: 'default',
+			callback_id: "EXISTING_SESSION_OPTIONS",
+			fallback: "Hey, you're already in a session!!",
+			actions: [
+				{
+					name: buttonValues.newSession.name,
+					text: "New Session :new:",
+					value: buttonValues.newSession.value,
+					type: "button"
+				},
+				{
+					name: buttonValues.keepWorking.name,
+					text: "Keep Working!",
+					value: buttonValues.keepWorking.value,
+					type: "button"
+				}
+			]
+		}
+	]
+
+	convo.ask({
+		text,
+		attachments
+	}, [
+		{
+			pattern: utterances.containsNew,
+			callback: (response, convo) => {
+				convo.say(`Okay, sounds good to me!`);
+
+				// restart everything!
+				convo.sessionStart.minutes        = false;
+				convo.sessionStart.content        = false;
+				convo.sessionStart.currentSession = false;
+
+				finalizeSessionTimeAndContent(convo);
+				convo.next();
+			}
+		},
+		{
+			pattern: utterances.containsKeep,
+			callback: (response, convo) => {
+
+				convo.say(`You got this! Keep focusing on \`${currentSession.dataValues.content}\` and I’ll see you at *${endTimeString}*`);
+				convo.next();
+
+			}
+		},
+		{
+			default: true,
+			callback: (response, convo) => {
+				convo.say("Sorry, I didn't catch that");
+				convo.repeat();
+				convo.next();
+			}
+		}
+	]);
+
+}
+
 /**
  *    CHOOSE SESSION TASK
  */
 // ask which task the user wants to work on
-function askForSessionContent(convo) {
+function askForSessionContent(convo, question = '') {
 
 	const { SlackUserId, tz, content, minutes }  = convo.sessionStart;
 
 	const sessionExample = getRandomExample("session");
-	
+
+	if (question == '')
+		question = `What would you like to focus on right now? (i.e. \`${sessionExample}\`)`;
+
 	convo.ask({
-		text: `What would you like to focus on right now? (i.e. \`${sessionExample}\`)`,
+		text: question,
 	},[
 		{
 			pattern: utterances.noAndNeverMind,

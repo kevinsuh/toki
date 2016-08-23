@@ -31,71 +31,31 @@ function finalizeSessionTimeAndContent(convo) {
 	var content = _convo$sessionStart.content;
 	var minutes = _convo$sessionStart.minutes;
 	var currentSession = _convo$sessionStart.currentSession;
+	var changeTimeAndTask = _convo$sessionStart.changeTimeAndTask;
 
-	// already in session, can only be in one
 
 	if (currentSession) {
-		(function () {
 
-			var now = (0, _momentTimezone2.default)().tz(tz);
-			var endTime = (0, _momentTimezone2.default)(currentSession.dataValues.endTime).tz(tz);
-			var endTimeString = endTime.format("h:mma");
-			var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
+		/*
+   * ONLY IF YOU'RE CURRENTLY IN A SESSION...
+   */
 
-			var text = 'Hey! You’re already in a focused session working on `' + currentSession.dataValues.content + '` until *' + endTimeString + '*';
-			var attachments = [{
-				attachment_type: 'default',
-				callback_id: "EXISTING_SESSION_OPTIONS",
-				fallback: "Hey, you're already in a session!!",
-				actions: [{
-					name: _constants.buttonValues.newSession.name,
-					text: "New Session :new:",
-					value: _constants.buttonValues.newSession.value,
-					type: "button"
-				}, {
-					name: _constants.buttonValues.keepWorking.name,
-					text: "Keep Working!",
-					value: _constants.buttonValues.keepWorking.value,
-					type: "button"
-				}]
-			}];
-
-			convo.ask({
-				text: text,
-				attachments: attachments
-			}, [{
-				pattern: _constants.utterances.containsNew,
-				callback: function callback(response, convo) {
-					convo.say('Okay, sounds good to me!');
-
-					// restart everything!
-					convo.sessionStart.minutes = false;
-					convo.sessionStart.content = false;
-					convo.sessionStart.currentSession = false;
-
-					finalizeSessionTimeAndContent(convo);
-					convo.next();
-				}
-			}, {
-				pattern: _constants.utterances.containsKeep,
-				callback: function callback(response, convo) {
-
-					convo.say('You got this! Keep focusing on `' + currentSession.dataValues.content + '` and I’ll see you at *' + endTimeString + '*');
-					convo.next();
-				}
-			}, {
-				default: true,
-				callback: function callback(response, convo) {
-					convo.say("Sorry, I didn't catch that");
-					convo.repeat();
-					convo.next();
-				}
-			}]);
-		})();
+		if (changeTimeAndTask) {
+			// clicking button `change time + task`
+			changeTimeAndTaskFlow(convo);
+		} else {
+			// wit `new session`
+			askToOverrideCurrentSession(convo);
+		}
 	} else {
+
+		/*
+   * STANDARD FLOW
+   */
 
 		// we need both time and task in order to start session
 		// if dont have either, will run function before `convo.next`
+
 		if (!content) {
 			askForSessionContent(convo);
 			return;
@@ -110,22 +70,147 @@ function finalizeSessionTimeAndContent(convo) {
 	convo.next();
 }
 
+function changeTimeAndTaskFlow(convo) {
+	var _convo$sessionStart2 = convo.sessionStart;
+	var SlackUserId = _convo$sessionStart2.SlackUserId;
+	var tz = _convo$sessionStart2.tz;
+	var currentSession = _convo$sessionStart2.currentSession;
+
+	// we are restarting data so user can seamlessly create a new session
+
+	convo.sessionStart.content = currentSession.dataValues.content;
+	convo.sessionStart.minutes = false;
+	convo.sessionStart.currentSession = false;
+
+	var text = 'Would you like to work on something other than `' + convo.sessionStart.content + '`?';
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "EXISTING_SESSION_OPTIONS",
+		fallback: "Hey, you're already in a session!!",
+		actions: [{
+			name: _constants.buttonValues.yes.name,
+			text: "Yes",
+			value: _constants.buttonValues.yes.value,
+			type: "button"
+		}, {
+			name: _constants.buttonValues.no.name,
+			text: "Nah, keep it!",
+			value: _constants.buttonValues.no.value,
+			type: "button"
+		}]
+	}];
+
+	convo.ask({
+		text: text,
+		attachments: attachments
+	}, [{
+		pattern: _constants.utterances.yes,
+		callback: function callback(response, convo) {
+			convo.sessionStart.content = false;
+			var question = 'What would you like to focus on?';
+			askForSessionContent(convo, question);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.utterances.no,
+		callback: function callback(response, convo) {
+			finalizeSessionTimeAndContent(convo);
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say("Sorry, I didn't catch that");
+			convo.repeat();
+			convo.next();
+		}
+	}]);
+}
+
+function askToOverrideCurrentSession(convo) {
+	var _convo$sessionStart3 = convo.sessionStart;
+	var SlackUserId = _convo$sessionStart3.SlackUserId;
+	var tz = _convo$sessionStart3.tz;
+	var content = _convo$sessionStart3.content;
+	var minutes = _convo$sessionStart3.minutes;
+	var currentSession = _convo$sessionStart3.currentSession;
+
+
+	var now = (0, _momentTimezone2.default)().tz(tz);
+	var endTime = (0, _momentTimezone2.default)(currentSession.dataValues.endTime).tz(tz);
+	var endTimeString = endTime.format("h:mma");
+	var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
+
+	var text = 'Hey! You’re already in a focused session working on `' + currentSession.dataValues.content + '` until *' + endTimeString + '*';
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "EXISTING_SESSION_OPTIONS",
+		fallback: "Hey, you're already in a session!!",
+		actions: [{
+			name: _constants.buttonValues.newSession.name,
+			text: "New Session :new:",
+			value: _constants.buttonValues.newSession.value,
+			type: "button"
+		}, {
+			name: _constants.buttonValues.keepWorking.name,
+			text: "Keep Working!",
+			value: _constants.buttonValues.keepWorking.value,
+			type: "button"
+		}]
+	}];
+
+	convo.ask({
+		text: text,
+		attachments: attachments
+	}, [{
+		pattern: _constants.utterances.containsNew,
+		callback: function callback(response, convo) {
+			convo.say('Okay, sounds good to me!');
+
+			// restart everything!
+			convo.sessionStart.minutes = false;
+			convo.sessionStart.content = false;
+			convo.sessionStart.currentSession = false;
+
+			finalizeSessionTimeAndContent(convo);
+			convo.next();
+		}
+	}, {
+		pattern: _constants.utterances.containsKeep,
+		callback: function callback(response, convo) {
+
+			convo.say('You got this! Keep focusing on `' + currentSession.dataValues.content + '` and I’ll see you at *' + endTimeString + '*');
+			convo.next();
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			convo.say("Sorry, I didn't catch that");
+			convo.repeat();
+			convo.next();
+		}
+	}]);
+}
+
 /**
  *    CHOOSE SESSION TASK
  */
 // ask which task the user wants to work on
 function askForSessionContent(convo) {
-	var _convo$sessionStart2 = convo.sessionStart;
-	var SlackUserId = _convo$sessionStart2.SlackUserId;
-	var tz = _convo$sessionStart2.tz;
-	var content = _convo$sessionStart2.content;
-	var minutes = _convo$sessionStart2.minutes;
+	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
+	var _convo$sessionStart4 = convo.sessionStart;
+	var SlackUserId = _convo$sessionStart4.SlackUserId;
+	var tz = _convo$sessionStart4.tz;
+	var content = _convo$sessionStart4.content;
+	var minutes = _convo$sessionStart4.minutes;
 
 
 	var sessionExample = (0, _messageHelpers.getRandomExample)("session");
 
+	if (question == '') question = 'What would you like to focus on right now? (i.e. `' + sessionExample + '`)';
+
 	convo.ask({
-		text: 'What would you like to focus on right now? (i.e. `' + sessionExample + '`)'
+		text: question
 	}, [{
 		pattern: _constants.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
@@ -165,11 +250,11 @@ function askForSessionTime(convo) {
 	var task = convo.task;
 	var bot = task.bot;
 	var source_message = task.source_message;
-	var _convo$sessionStart3 = convo.sessionStart;
-	var SlackUserId = _convo$sessionStart3.SlackUserId;
-	var tz = _convo$sessionStart3.tz;
-	var content = _convo$sessionStart3.content;
-	var minutes = _convo$sessionStart3.minutes;
+	var _convo$sessionStart5 = convo.sessionStart;
+	var SlackUserId = _convo$sessionStart5.SlackUserId;
+	var tz = _convo$sessionStart5.tz;
+	var content = _convo$sessionStart5.content;
+	var minutes = _convo$sessionStart5.minutes;
 
 	// get time to session
 

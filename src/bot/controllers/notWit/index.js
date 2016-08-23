@@ -16,6 +16,10 @@ import dotenv from 'dotenv';
 export default function(controller) {
 
 	controller.hears([constants.THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
 		const SlackUserId = message.user;
 		bot.send({
 			type: "typing",
@@ -26,8 +30,30 @@ export default function(controller) {
 		}, 500);
 	});
 
+	// when user wants to "change time and task" of an existing session,
+	// it will basically create new session flow
+	controller.hears([utterances.changeTimeAndTask], 'direct_message', (bot, message) => {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
+		const SlackUserId = message.user;
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(() => {
+			const config = { SlackUserId, changeTimeAndTask: true }
+			controller.trigger(`begin_session_flow`, [bot, config]);
+		}, 500);
+	});
+
 	// TOKI_T1ME TESTER
 	controller.hears(['TOKI_T1ME'], 'direct_message', (bot, message) => {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
 		const { text } = message;
 		const SlackUserId = message.user;
