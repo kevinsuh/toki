@@ -33,6 +33,7 @@ export function finalizeSessionTimeAndContent(convo) {
 					convo.say(`Okay, sounds good to me!`);
 					convo.sessionStart.minutes = false;
 					convo.sessionStart.content = false;
+					finalizeSessionTimeAndContent(convo);
 					convo.next();
 				}
 			},

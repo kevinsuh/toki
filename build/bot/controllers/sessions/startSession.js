@@ -122,12 +122,63 @@ exports.default = function (controller) {
 				});
 
 				convo.on('end', function (convo) {
-					var sessionStart = convo.sessionStart;
+					var _convo$sessionStart = convo.sessionStart;
+					var content = _convo$sessionStart.content;
+					var minutes = _convo$sessionStart.minutes;
 
 
 					console.log("\n\n\n end of start session ");
 					console.log(sessionStart);
 					console.log("\n\n\n");
+
+					_models2.default.Session.create({
+						UserId: UserId,
+						startTime: startTime,
+						endTime: endTime,
+						content: content
+					}).then(function (workSession) {
+
+						var dailyTaskIds = [dailyTask.dataValues.id];
+						workSession.setDailyTasks(dailyTaskIds);
+
+						var taskString = dailyTask.dataValues.Task.text;
+						var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
+						var timeString = endTime.format("h:mma");
+
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+							convo.say("Let's do it :boom:!");
+							convo.say('Good luck with `' + taskString + '`! See you in ' + minutesString + ' at *' + timeString + '*');
+							convo.say({
+								text: ':weight_lifter: Your focused work session starts now :weight_lifter:',
+								attachments: startSessionOptionsAttachments
+							});
+						});
+
+						// let's also reprioritize that dailyTask we're currently working on to the top
+						if (dailyTasks) {
+							(function () {
+								var indexOfDailyTask = 0;
+								dailyTasks.some(function (currentDailyTask, index) {
+									if (currentDailyTask.dataValues.id == dailyTask.dataValues.id) {
+										indexOfDailyTask = index;
+										return true;
+									}
+								});
+								dailyTasks.move(indexOfDailyTask, 0);
+								var priority = 0;
+								dailyTasks.forEach(function (dailyTask) {
+									priority++;
+									_models2.default.DailyTask.update({
+										priority: priority
+									}, {
+										where: ['"DailyTasks"."id" = ?', dailyTask.dataValues.id]
+									});
+								});
+							})();
+						}
+					});
+
 					// startSessionWithConvoObject(convo.sessionStart);
 				});
 			});
