@@ -22,7 +22,6 @@ export function seedAndUpdateUsers(members, bot) {
 
 			if (user) {
 
-				console.log("\n\n ~~ found user and updating ~~ \n\n");
 				user.update({
 					TeamId: team_id,
 					SlackName: name
@@ -35,7 +34,7 @@ export function seedAndUpdateUsers(members, bot) {
 						})
 					}
 				}
-				
+
 			} else {
 
 				console.log("\n\n ~~ new user and creating ~~ \n\n");
