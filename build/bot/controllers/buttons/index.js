@@ -20,32 +20,6 @@ exports.default = function (controller) {
 		// need to replace buttons so user cannot reclick it
 		if (actions && actions.length > 0) {
 			switch (actions[0].value) {
-				case _constants.buttonValues.doneSessionTimeoutYes.value:
-					controller.trigger('done_session_yes_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
-					break;
-				case _constants.buttonValues.doneSessionTimeoutSnooze.value:
-					_models2.default.User.find({
-						where: ['"SlackUser"."SlackUserId" = ?', SlackUserId],
-						include: [_models2.default.SlackUser]
-					}).then(function (user) {
-						controller.trigger('done_session_snooze_button_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
-					});
-					break;
-				case _constants.buttonValues.doneSessionTimeoutDidSomethingElse.value:
-					controller.trigger('end_session', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
-					break;
-				case _constants.buttonValues.doneSessionTimeoutNo.value:
-					controller.trigger('done_session_no_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
-					break;
-				case _constants.buttonValues.startSession.pause.value:
-					controller.trigger('session_pause_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
-					break;
-				case _constants.buttonValues.addCheckIn.value:
-					controller.trigger('session_add_checkin_flow', [bot, { SlackUserId: SlackUserId }]);
-					break;
-				case _constants.buttonValues.startSession.resume.value:
-					controller.trigger('session_resume_flow', [bot, { SlackUserId: SlackUserId, botCallback: true }]);
-					break;
 				default:
 					break;
 			}
@@ -70,8 +44,6 @@ var _bodyParser2 = _interopRequireDefault(_bodyParser);
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
-
-var _constants = require('../../lib/constants');
 
 var _momentTimezone = require('moment-timezone');
 

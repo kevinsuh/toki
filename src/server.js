@@ -10,8 +10,6 @@ import cron from 'cron';
 import cronFunction from './app/cron';
 var CronJob = cron.CronJob;
 
-import { seedAndUpdateUsers, test } from './app/scripts';
-import { consoleLog, prioritizeDailyTasks } from './bot/lib/miscHelpers';
 import './app/globalHelpers';
 
 var app = express();

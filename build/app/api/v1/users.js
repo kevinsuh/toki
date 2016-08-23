@@ -32,15 +32,7 @@ var router = _express2.default.Router();
  */
 
 // index
-router.get('/', function (req, res) {
-
-  _models2.default.User.findAll({
-    include: [_models2.default.SlackUser]
-  }).then(function (users) {
-    console.log(users);
-    res.json(users);
-  });
-});
+router.get('/', function (req, res) {});
 
 // create
 router.post('/', function (req, res) {
@@ -48,39 +40,12 @@ router.post('/', function (req, res) {
   var email = _req$body.email;
   var SlackUserId = _req$body.SlackUserId;
 
-
-  _models2.default.User.create({
-    email: email
-  }).then(function (user) {
-    // create slack_user if it exists
-    if (SlackUserId) {
-      _models2.default.SlackUser.create({
-        UserId: user.UserId,
-        SlackUserId: SlackUserId
-      }).then(function (slackUser) {
-        var user = _models2.default.User.find({
-          where: { id: slackUser.UserId },
-          include: [_models2.default.SlackUser]
-        });
-        res.json(user);
-      });
-    } else {
-      res.json(user);
-    }
-  });
+  res.json({ hello: "world" });
 });
 
 // read
 router.get('/:id', function (req, res) {
   var id = req.params.id;
-
-
-  var user = _models2.default.User.find({
-    where: { id: id },
-    include: [_models2.default.SlackUser]
-  }).then(function (user) {
-    res.json(user);
-  });
 });
 
 // update

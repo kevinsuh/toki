@@ -2,21 +2,7 @@ import Botkit from 'botkit';
 import os from 'os';
 import Wit from 'botkit-middleware-witai';
 import moment from 'moment-timezone';
-
-// config modules
-import remindersController from './reminders';
-import setupReceiveMiddleware from '../middleware/receiveMiddleware';
-import miscController from './misc';
-import settingsController from './settings';
-import notWitController from './notWit';
-import onboardController from './onboard';
-import buttonsController from './buttons';
-import plansController from './plans';
-import workSessionsController from './work_sessions';
-
 import models from '../../app/models';
-import { colorsArray, hoursForExpirationTime, startDayExpirationTime } from '../lib/constants';
-import { consoleLog } from '../lib/miscHelpers';
 
 import storageCreator from '../lib/storage';
 
@@ -30,7 +16,7 @@ if (env == 'development') {
 }
 
 // actions
-import { firstInstallInitiateConversation, loginInitiateConversation } from '../actions/initiation';
+import { firstInstallInitiateConversation, loginInitiateConversation } from '../actions';
 
 // Wit Brain
 if (process.env.WIT_TOKEN) {
@@ -65,72 +51,14 @@ export { controller };
  * 		then onboard!
  */
 controller.on('team_join', function (bot, message) {
+
 	console.log("\n\n\n ~~ joined the team ~~ \n\n\n");
 	const SlackUserId = message.user.id;
-
 	console.log(message.user.id);
 
 	bot.api.users.info({ user: SlackUserId }, (err, response) => {
-
-		if (response.ok) {
-
-			const nickName = response.user.name;
-			const email    = response.user.profile.email;
-			const TeamId   = response.user.team_id;
-
-			if (email) {
-
-				// create SlackUser to attach to user
-				models.User.find({
-					where: { email: email },
-					include: [ models.SlackUser ]
-				})
-				.then((user) => {
-					
-					if (user) {
-						user.update({
-							nickName
-						});
-						const UserId = user.id;
-						if (user.SlackUser) {
-							return user.SlackUser.update({
-								UserId,
-								SlackUserId,
-								SlackName: nickName,
-								TeamId
-							});
-						} else {
-							return models.SlackUser.create({
-								UserId,
-								SlackUserId,
-								SlackName: nickName,
-								TeamId
-							});
-						}
-					} else {
-						models.User.create({
-							email,
-							nickName
-						})
-						.then((user) => {
-							const UserId = user.id;
-							return user.SlackUser.create({
-								UserId,
-								SlackUserId,
-								TeamId,
-								SlackName: nickName
-							});
-						})
-					}
-					
-				})
-				.then((slackUser) => {
-					controller.trigger('begin_onboard_flow', [ bot, { SlackUserId } ]);
-				})
-			}
-		}
-
 	});
+
 });
 
 // simple way to keep track of bots
@@ -141,87 +69,11 @@ if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT
 	process.exit(1);
 }
 
-/**
- * 		The master controller to handle all double conversations
- * 		This function is what turns back on the necessary functions
- */
-export function resumeQueuedReachouts(bot, config) {
-
-	// necessary config
-	var now                 = moment();
-	var { SlackUserId }     = config;
-
-	const { token } = bot.config;
-	bot             = bots[token]; // use same bot every time
-
-	var { queuedReachouts } = bot;
-
-	if (queuedReachouts && SlackUserId && queuedReachouts[SlackUserId]) {
-
-		var queuedWorkSessions = queuedReachouts[SlackUserId].workSessions;
-
-		if (queuedWorkSessions && queuedWorkSessions.length > 0) {
-
-			var queuedWorkSessionIds = [];
-			queuedWorkSessions.forEach((workSession) => {
-				var endTime = moment(workSession.endTime);
-				let tenMinuteBuffer = now.subtract(10, 'minutes');
-				if (endTime > tenMinuteBuffer && workSession.dataValues.open == true) {
-					if (workSession.dataValues) {
-						console.log(`resuming this queuedSession: ${workSession.dataValues.id}`);
-					}
-					queuedWorkSessionIds.push(workSession.dataValues.id);
-				}
-			})
-
-			console.log("\n\n ~~ resuming the queued reachouts ~~");
-			console.log(queuedWorkSessionIds);
-			console.log("\n\n");
-
-			if (queuedWorkSessionIds.length > 0) {
-
-				// if storedWorkSessionId IS NULL, means it has not been
-				// intentionally paused intentionally be user!
-				models.WorkSession.findAll({
-					where: [`"WorkSession"."id" IN (?) AND "StoredWorkSession"."id" IS NULL`, queuedWorkSessionIds],
-					include: [ models.StoredWorkSession ]
-				})
-				.then((workSessions) => {
-					workSessions.forEach((workSession) => {
-						workSession.updateAttributes({
-							live: true
-						});
-					})
-				});
-
-			}
-
-		}
-
-		// "popping our queue" for the user
-		bot.queuedReachouts[SlackUserId].workSessions = [];
-		
-	}
-}
-
 // Custom Toki Config
 export function customConfigBot(controller) {
 
 	// beef up the bot
 	setupReceiveMiddleware(controller);
-
-	// give non-wit a chance to answer first
-	notWitController(controller);
-
-	onboardController(controller);
-	remindersController(controller);
-	settingsController(controller);
-	buttonsController(controller);
-	plansController(controller);
-	workSessionsController(controller);
-
-	// last because miscController will hold fallbacks
-	miscController(controller);
 
 }
 

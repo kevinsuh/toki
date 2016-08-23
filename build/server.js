@@ -28,10 +28,6 @@ var _cron3 = require('./app/cron');
 
 var _cron4 = _interopRequireDefault(_cron3);
 
-var _scripts = require('./app/scripts');
-
-var _miscHelpers = require('./bot/lib/miscHelpers');
-
 require('./app/globalHelpers');
 
 var _controllers = require('./bot/controllers');
@@ -73,7 +69,7 @@ app.use(function (err, req, res, next) {
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
-	(0, _miscHelpers.consoleLog)("In development server of Toki");
+	consoleLog("In development server of Toki");
 	process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
 	process.env.SLACK_ID = process.env.DEV_SLACK_ID;
 	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
@@ -105,7 +101,7 @@ _controllers.controller.createOauthEndpoints(app, function (err, req, res) {
 
 // create HTTP service
 _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
-	(0, _miscHelpers.consoleLog)('Listening on port: ' + app.get('port'));
+	consoleLog('Listening on port: ' + app.get('port'));
 
 	/**
  * 						*** CRON JOB ***
@@ -138,11 +134,11 @@ _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
 
 				if (payload) {
 					var teamMembers = payload.users; // array of user objects!
-					(0, _scripts.seedAndUpdateUsers)(teamMembers, bot);
+					seedAndUpdateUsers(teamMembers, bot);
 				}
 
 				if (err) {
-					(0, _miscHelpers.consoleLog)('\'Error connecting to slack... :\' ' + err);
+					consoleLog('\'Error connecting to slack... :\' ' + err);
 				} else {
 					if (token == process.env.BOT_TOKEN && process.env.KEVIN_SLACK_USER_ID) {
 						bot.startPrivateConversation({ user: process.env.KEVIN_SLACK_USER_ID }, function (err, convo) {
