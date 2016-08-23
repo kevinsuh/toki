@@ -80,40 +80,40 @@ exports.default = function (controller) {
 			where: { SlackUserId: SlackUserId }
 		}).then(function (user) {
 
-			// need user's timezone for this flow!
-			var tz = user.tz;
+			// check for an open session before starting flow
+			user.getSessions({
+				where: ['"open" = ?', true]
+			}).then(function (sessions) {
 
-			var UserId = user.id;
+				// need user's timezone for this flow!
+				var tz = user.tz;
 
-			if (!tz) {
+				var UserId = user.id;
+
+				if (!tz) {
+					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+						convo.say("Ah! I need your timezone to continue. Let me know when you're ready to `configure timezone` together");
+					});
+					return;
+				}
+
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-					convo.say("Ah! I need your timezone to continue. Let me know when you're ready to `configure timezone` together");
-				});
-				return;
-			}
 
-			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+					// console.log(controller.tasks[0].convos);
 
-				// console.log(controller.tasks[0].convos);
+					// have 5-minute exit time limit
+					convo.task.timeLimit = 1000 * 60 * 5;
 
-				// have 5-minute exit time limit
-				convo.task.timeLimit = 1000 * 60 * 5;
+					convo.sessionStart = {
+						SlackUserId: SlackUserId,
+						UserId: UserId,
+						tz: tz,
+						content: content,
+						minutes: minutes
+					};
 
-				convo.sessionStart = {
-					SlackUserId: SlackUserId,
-					UserId: UserId,
-					tz: tz,
-					content: content,
-					minutes: minutes
-				};
-
-				// check for an open session before starting flow
-				user.getSessions({
-					where: ['"open" = ?', true]
-				}).then(function (sessions) {
-
+					// check here if user is already in a session or not
 					var currentSession = false;
-
 					if (sessions.length > 0) {
 						currentSession = sessions[0];
 						convo.sessionStart.changeTimeAndTask = changeTimeAndTask;
@@ -122,62 +122,58 @@ exports.default = function (controller) {
 
 					(0, _startSessionFunctions.finalizeSessionTimeAndContent)(convo);
 					convo.next();
-				});
 
-				convo.on('end', function (convo) {
-					var sessionStart = convo.sessionStart;
-					var _convo$sessionStart = convo.sessionStart;
-					var confirmNewSession = _convo$sessionStart.confirmNewSession;
-					var content = _convo$sessionStart.content;
-					var minutes = _convo$sessionStart.minutes;
+					convo.on('end', function (convo) {
+						var sessionStart = convo.sessionStart;
+						var _convo$sessionStart = convo.sessionStart;
+						var confirmNewSession = _convo$sessionStart.confirmNewSession;
+						var content = _convo$sessionStart.content;
+						var minutes = _convo$sessionStart.minutes;
 
 
-					console.log("\n\n\n end of start session ");
-					console.log(sessionStart);
-					console.log("\n\n\n");
+						console.log("\n\n\n end of start session ");
+						console.log(sessionStart);
+						console.log("\n\n\n");
 
-					var startTime = (0, _momentTimezone2.default)();
-					var endTime = (0, _momentTimezone2.default)().tz(tz).add(minutes, 'minutes');
+						var startTime = (0, _momentTimezone2.default)();
+						var endTime = (0, _momentTimezone2.default)().tz(tz).add(minutes, 'minutes');
 
-					if (confirmNewSession) {
+						if (confirmNewSession) {
 
-						// close all old sessions when creating new one
-						_models2.default.Session.update({
-							open: false,
-							live: false
-						}, {
-							where: ['"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)', UserId, true, true]
-						}).then(function () {
+							// close all old sessions when creating new one
+							_models2.default.Session.update({
+								open: false,
+								live: false
+							}, {
+								where: ['"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)', UserId, true, true]
+							}).then(function () {
 
-							_models2.default.Session.create({
-								UserId: UserId,
-								startTime: startTime,
-								endTime: endTime,
-								content: content
-							}).then(function (session) {
+								_models2.default.Session.create({
+									UserId: UserId,
+									startTime: startTime,
+									endTime: endTime,
+									content: content
+								}).then(function (session) {
 
-								var endTimeString = endTime.format("h:mma");
+									var endTimeString = endTime.format("h:mma");
 
-								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+									bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-									var text = ':weight_lifter: You’re now in a focused session on `' + content + '` until *' + endTimeString + '* :weight_lifter:';
-									convo.say({
-										text: text,
-										attachments: _constants.startSessionOptionsAttachments
+										var text = ':weight_lifter: You’re now in a focused session on `' + content + '` until *' + endTimeString + '* :weight_lifter:';
+										convo.say({
+											text: text,
+											attachments: _constants.startSessionOptionsAttachments
+										});
 									});
 								});
 							});
-						});
-					}
+						}
+					});
 				});
 			});
 		});
 	});
 };
-
-var _os = require('os');
-
-var _os2 = _interopRequireDefault(_os);
 
 var _index = require('../index');
 

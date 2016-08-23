@@ -82,7 +82,8 @@ export const utterances = {
 	goBack: new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i),
 	setTime: new RegExp(/\bset[o]{0,5}\b.*\btim[me]{1,5}\b/i),
 	beginAdventure: new RegExp(/\bbegin\b.*\badventure\b/i),
-	changeTimeAndTask: new RegExp(/\bchan[nge]{1,5}\b.{1,3}\btim[me]{1,3}\b.{1,7}\btas[sk]{1,3}\b/i)
+	changeTimeAndTask: new RegExp(/\bchan[nge]{1,5}\b.{1,3}\btim[me]{1,3}\b.{1,7}\btas[sk]{1,3}\b/i),
+	keepWorking: new RegExp(/\bkee[ep]{1,3}\b.{1,3}\bwor[king]{1,6}\b/i),
 }
 
 

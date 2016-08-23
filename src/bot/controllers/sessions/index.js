@@ -1,9 +1,5 @@
-import os from 'os';
-import { wit } from '../index';
-
-import models from '../../../app/models';
 import moment from 'moment-timezone';
-
+import models from '../../../app/models';
 import startSessionController from './startSession';
 import endSessionController from './endSession';
 
@@ -17,4 +13,88 @@ export default function(controller) {
 	startSessionController(controller);
 	endSessionController(controller);
 
+	// get current session status!
+	controller.on('current_session_status', (bot, config) => {
+
+		const { SlackUserId } = config;
+
+		models.User.find({
+			where: { SlackUserId }
+		}).then((user) => {
+
+			user.getSessions({
+				where: [`"open" = ?`, true]
+			})
+			.then((sessions) => {
+				// need user's timezone for this flow!
+				const { tz } = user;
+				const UserId = user.id;
+
+				if (!tz) {
+					bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
+						convo.say("Ah! I need your timezone to continue. Let me know when you're ready to `configure timezone` together");
+					});
+					return;
+				}
+
+				let currentSession = sessions[0];
+
+				if (currentSession) {
+					// give status!
+					
+					let now           = moment().tz(tz);
+					let endTime       = moment(currentSession.dataValues.endTime).tz(tz);
+					let endTimeString = endTime.format("h:mma");
+					
+					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+						convo.say(`You got this! Keep focusing on \`${currentSession.dataValues.content}\` and I’ll see you at *${endTimeString}*`);
+					});
+
+				} else {
+					// ask to start new session!
+					notInSessionWouldYouLikeToStartOne({bot, SlackUserId, controller});
+				}
+			});
+
+		});
+	});
+
 };
+
+export function notInSessionWouldYouLikeToStartOne(config) {
+	const { bot, SlackUserId, controller } = config;
+	if (bot && SlackUserId && controller) {
+		bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
+			convo.ask(`You're not in a session right now! Would you like to start one?`, [
+				{
+					pattern: utterances.yes,
+					callback: (response, convo) => {
+						convo.startSession = true;
+						convo.next();
+					}
+				},
+				{
+					pattern: utterances.no,
+					callback: (response, convo) => {
+						convo.say("Okay! I'll be here when you want to `get focused` :smile_cat:");
+						convo.next();
+					}
+				},
+				{
+					default: true,
+					callback: (response, convo) => {
+						convo.say("Sorry, I didn't catch that");
+						convo.repeat();
+						convo.next();
+					}
+				}
+			]);
+			convo.next();
+			convo.on('end', (convo) => {
+				if (convo.startSession) {
+					controller.trigger(`begin_session_flow`, [bot, config]);
+				}
+			});
+		});
+	}
+}

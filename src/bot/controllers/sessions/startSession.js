@@ -1,4 +1,3 @@
-import os from 'os';
 import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
@@ -79,40 +78,40 @@ export default function(controller) {
 			where: { SlackUserId }
 		}).then((user) => {
 
-			// need user's timezone for this flow!
-			const { tz } = user;
-			const UserId = user.id;
+			// check for an open session before starting flow
+			user.getSessions({
+				where: [`"open" = ?`, true]
+			})
+			.then((sessions) => {
 
-			if (!tz) {
-				bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
-					convo.say("Ah! I need your timezone to continue. Let me know when you're ready to `configure timezone` together");
-				});
-				return;
-			}
+				// need user's timezone for this flow!
+				const { tz } = user;
+				const UserId = user.id;
 
-			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-
-				// console.log(controller.tasks[0].convos);
-
-				// have 5-minute exit time limit
-				convo.task.timeLimit = 1000 * 60 * 5;
-
-				convo.sessionStart = {
-					SlackUserId,
-					UserId,
-					tz,
-					content,
-					minutes
+				if (!tz) {
+					bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
+						convo.say("Ah! I need your timezone to continue. Let me know when you're ready to `configure timezone` together");
+					});
+					return;
 				}
 
-				// check for an open session before starting flow
-				user.getSessions({
-					where: [`"open" = ?`, true]
-				})
-				.then((sessions) => {
+				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
+					// console.log(controller.tasks[0].convos);
+
+					// have 5-minute exit time limit
+					convo.task.timeLimit = 1000 * 60 * 5;
+
+					convo.sessionStart = {
+						SlackUserId,
+						UserId,
+						tz,
+						content,
+						minutes
+					}
+
+					// check here if user is already in a session or not
 					let currentSession = false;
-
 					if (sessions.length > 0) {
 						currentSession = sessions[0];
 						convo.sessionStart.changeTimeAndTask = changeTimeAndTask;
@@ -122,57 +121,56 @@ export default function(controller) {
 					finalizeSessionTimeAndContent(convo);
 					convo.next();
 
-				});
+					convo.on('end', (convo) => {
 
-				convo.on('end', (convo) => {
+						const { sessionStart, sessionStart: { confirmNewSession, content, minutes } } = convo;
 
-					const { sessionStart, sessionStart: { confirmNewSession, content, minutes } } = convo;
+						console.log("\n\n\n end of start session ");
+						console.log(sessionStart);
+						console.log("\n\n\n");
 
-					console.log("\n\n\n end of start session ");
-					console.log(sessionStart);
-					console.log("\n\n\n");
+						let startTime = moment();
+						let endTime   = moment().tz(tz).add(minutes, 'minutes');
 
-					let startTime = moment();
-					let endTime   = moment().tz(tz).add(minutes, 'minutes');
+						if (confirmNewSession) {
 
-					if (confirmNewSession) {
+							// close all old sessions when creating new one
+							models.Session.update({
+								open: false,
+								live: false
+							}, {
+								where: [ `"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)`, UserId, true, true ]
+							})
+							.then(() => {
 
-						// close all old sessions when creating new one
-						models.Session.update({
-							open: false,
-							live: false
-						}, {
-							where: [ `"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)`, UserId, true, true ]
-						})
-						.then(() => {
+								models.Session.create({
+									UserId,
+									startTime,
+									endTime,
+									content
+								}).then((session) => {
 
-							models.Session.create({
-								UserId,
-								startTime,
-								endTime,
-								content
-							}).then((session) => {
+									let endTimeString = endTime.format("h:mma");
 
-								let endTimeString = endTime.format("h:mma");
+									bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+										let text = `:weight_lifter: You’re now in a focused session on \`${content}\` until *${endTimeString}* :weight_lifter:`;
+										convo.say({
+											text,
+											attachments: startSessionOptionsAttachments
+										});
 
-									let text = `:weight_lifter: You’re now in a focused session on \`${content}\` until *${endTimeString}* :weight_lifter:`;
-									convo.say({
-										text,
-										attachments: startSessionOptionsAttachments
 									});
-
 								});
+
 							});
 
-						});
-
-					}
+						}
+					});
+				
 				});
-			
-			});
 
+			});
 		});
 	});
 

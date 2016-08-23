@@ -1,5 +1,4 @@
 import moment from 'moment-timezone';
-
 import models from '../../../app/models';
 import { utterances, colorsArray, buttonValues, colorsHash } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandomExample } from '../../lib/messageHelpers';
