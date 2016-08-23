@@ -2,7 +2,7 @@ import moment from 'moment-timezone';
 
 import models from '../../../app/models';
 import { utterances, colorsArray, buttonValues, colorsHash } from '../../lib/constants';
-import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '../../lib/messageHelpers';
+import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandomExample } from '../../lib/messageHelpers';
 
 /**
  * 		START WORK SESSION CONVERSATION FLOW FUNCTIONS
@@ -22,15 +22,6 @@ export function finalizeSessionTimeAndContent(convo) {
 		return;
 	}
 
-	// will only be a single task now
-	let taskText = dailyTask.dataValues ? `\`${dailyTask.dataValues.Task.text}\`` : 'your task';
-
-	// will only be a single task now
-	let timeString     = convertMinutesToHoursString(minutes);
-	let calculatedTime = calculatedTimeObject.format("h:mma");
-
-	let question = `Ready to work on ${taskText} for ${timeString} until *${calculatedTime}*?`;
-
 	// already in session, can only be in one
 	if (currentSession) {
 
@@ -39,8 +30,9 @@ export function finalizeSessionTimeAndContent(convo) {
 			{
 				pattern: utterances.yes,
 				callback: (response, convo) => {
-					convo.sessionStart.confirmOverRideSession = true;
 					convo.say(`Okay, sounds good to me!`);
+					convo.sessionStart.minutes = false;
+					convo.sessionStart.content = false;
 					convo.next();
 				}
 			},
@@ -66,6 +58,12 @@ export function finalizeSessionTimeAndContent(convo) {
 
 	} else {
 
+		let now                  = moment().tz(tz);
+		let calculatedTimeObject = now.add(minutes, 'minutes');
+		let calculatedTimeString = calculatedTimeObject.format("h:mma");
+
+		convo.say(`:weight_lifter: You’re now in a focused session on \`${content}\` until *${calculatedTimeString}* :weight_lifter:`);
+
 		convo.sessionStart.confirmStart = true;
 		
 	}
@@ -78,7 +76,7 @@ export function finalizeSessionTimeAndContent(convo) {
 // ask which task the user wants to work on
 function askForSessionContent(convo) {
 
-	const { SlackUserId }  = convo.sessionStart;
+	const { SlackUserId, tz, content, minutes }  = convo.sessionStart;
 
 	const sessionExample = getRandomExample("session");
 	
@@ -88,23 +86,14 @@ function askForSessionContent(convo) {
 			{
 				attachment_type: 'default',
 				callback_id: "START_SESSION",
-				fallback: "I was unable to process your decision",
-				color: colorsHash.grey.hex,
-				actions: [
-					{
-							name: buttonValues.neverMind.name,
-							text: "Never mind!",
-							value: buttonValues.neverMind.value,
-							type: "button",
-					}
-				]
+				fallback: "Let's get focused!"
 			}
 		]
 	},[
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
-				convo.say(`Okay! Let me know when you want to \`start a session\``);
+				convo.say(`Okay! Let me know when you want to \`get focused\``);
 				convo.next();
 			}
 		},
@@ -112,22 +101,25 @@ function askForSessionContent(convo) {
 			default: true,
 			callback: (response, convo) => {
 
-				// optionally accept time here
-				const { intentObject: { entities: { reminder, duration, datetime } } } = response;
-				let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
-				if (customTimeObject) {
-					let now = moment().tz(tz);
-					let minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
-					convo.sessionStart.minutes = minutes;
-					convo.next();
-				}
-
+				const { intentObject: { entities: { reminder } } } = response;
+				
 				// reminder is necessary to be session content
 				if (reminder) {
+
+					// optionally accept time here
+					let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+					if (customTimeObject) {
+						let now = moment().tz(tz);
+						let minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
+						convo.sessionStart.minutes = minutes;
+						convo.next();
+					}
+
 					convo.sessionStart.content = reminder[0].value;
 					finalizeSessionTimeAndContent(convo);
+
 				} else {
-					convo.say(`I didn't get that`);
+					convo.say(`I didn't get that :thinking_face:`);
 					convo.repeat();
 				}
 				convo.next();
@@ -166,7 +158,7 @@ function askForSessionTime(convo) {
 		{
 			pattern: utterances.containsChange,
 			callback: (response, convo) => {
-				convo.say(`Okay, let's change tasks`);
+				convo.say(`Okay, let's change tasks!`);
 				convo.sessionStart.content = false;
 				finalizeSessionTimeAndContent(convo);;
 				convo.next();

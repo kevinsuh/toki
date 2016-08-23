@@ -180,6 +180,10 @@ export const buttonValues ={
 	changeTasks: {
 		name: "CHANGE_TASKS",
 		value: "change tasks!"
+	},
+	neverMind: {
+		name: "NEVER_MIND",
+		value: "never mind!"
 	}
 }
 
@@ -207,7 +211,7 @@ export const approvalWords = ['nice', 'awesome', 'sounds good', 'great', 'fantas
 export const startSessionExamples = [
 	'think through product development roadmap for 75 min',
 	'send supporter update emails for 1 hour',
-	'finish version 1 of new website wireframe for 60 min',
+	'finish first version of website wireframe for 60 min',
 	'map out inbound marketing strategy until 10am',
 	'write up city research until 1pm',
 	'follow up with primary customers until 11:35am',

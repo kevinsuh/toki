@@ -179,6 +179,10 @@ var buttonValues = exports.buttonValues = {
 	changeTasks: {
 		name: "CHANGE_TASKS",
 		value: "change tasks!"
+	},
+	neverMind: {
+		name: "NEVER_MIND",
+		value: "never mind!"
 	}
 };
 
@@ -203,5 +207,5 @@ var timeZones = exports.timeZones = {
 
 var approvalWords = exports.approvalWords = ['nice', 'awesome', 'sounds good', 'great', 'fantastic', 'looking good', 'very nice', 'cool', 'boom', 'looks good'];
 
-var startSessionExamples = exports.startSessionExamples = ['think through product development roadmap for 75 min', 'send supporter update emails for 1 hour', 'finish version 1 of new website wireframe for 60 min', 'map out inbound marketing strategy until 10am', 'write up city research until 1pm', 'follow up with primary customers until 11:35am', 'sketch out first version of logo for 1 hr 15 min', 'update portfolio and send out to mentors for 1hr 30 min'];
+var startSessionExamples = exports.startSessionExamples = ['think through product development roadmap for 75 min', 'send supporter update emails for 1 hour', 'finish first version of website wireframe for 60 min', 'map out inbound marketing strategy until 10am', 'write up city research until 1pm', 'follow up with primary customers until 11:35am', 'sketch out first version of logo for 1 hr 15 min', 'update portfolio and send out to mentors for 1hr 30 min'];
 //# sourceMappingURL=constants.js.map
