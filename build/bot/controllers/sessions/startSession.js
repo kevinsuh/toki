@@ -101,6 +101,7 @@ exports.default = function (controller) {
 					UserId: UserId,
 					tz: tz,
 					bot: bot,
+					controller: controller,
 					content: content,
 					minutes: minutes
 				};
@@ -138,21 +139,30 @@ exports.default = function (controller) {
 
 					if (confirmNewSession) {
 
-						_models2.default.Session.create({
-							UserId: UserId,
-							startTime: startTime,
-							endTime: endTime,
-							content: content
-						}).then(function (session) {
+						// close all old sessions when creating new one
+						_models2.default.Session.update({
+							open: false,
+							live: false
+						}, {
+							where: ['"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)', UserId, true, true]
+						}).then(function () {
 
-							var endTimeString = endTime.format("h:mma");
+							_models2.default.Session.create({
+								UserId: UserId,
+								startTime: startTime,
+								endTime: endTime,
+								content: content
+							}).then(function (session) {
 
-							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+								var endTimeString = endTime.format("h:mma");
 
-								var text = ':weight_lifter: You’re now in a focused session on `' + content + '` until *' + endTimeString + '* :weight_lifter:';
-								convo.say({
-									text: text,
-									attachments: _constants.startSessionOptionsAttachments
+								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+									var text = ':weight_lifter: You’re now in a focused session on `' + content + '` until *' + endTimeString + '* :weight_lifter:';
+									convo.say({
+										text: text,
+										attachments: _constants.startSessionOptionsAttachments
+									});
 								});
 							});
 						});

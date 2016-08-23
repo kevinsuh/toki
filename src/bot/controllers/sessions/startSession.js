@@ -100,6 +100,7 @@ export default function(controller) {
 					UserId,
 					tz,
 					bot,
+					controller,
 					content,
 					minutes
 				}
@@ -135,26 +136,37 @@ export default function(controller) {
 
 					if (confirmNewSession) {
 
-						models.Session.create({
-							UserId,
-							startTime,
-							endTime,
-							content
-						}).then((session) => {
+						// close all old sessions when creating new one
+						models.Session.update({
+							open: false,
+							live: false
+						}, {
+							where: [ `"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)`, UserId, true, true ]
+						})
+						.then(() => {
 
-							let endTimeString = endTime.format("h:mma");
+							models.Session.create({
+								UserId,
+								startTime,
+								endTime,
+								content
+							}).then((session) => {
 
-							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+								let endTimeString = endTime.format("h:mma");
 
-								let text = `:weight_lifter: You’re now in a focused session on \`${content}\` until *${endTimeString}* :weight_lifter:`;
-								convo.say({
-									text,
-									attachments: startSessionOptionsAttachments
+								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+									let text = `:weight_lifter: You’re now in a focused session on \`${content}\` until *${endTimeString}* :weight_lifter:`;
+									convo.say({
+										text,
+										attachments: startSessionOptionsAttachments
+									});
+
 								});
-
 							});
+
 						});
-						
+
 					}
 				});
 			
