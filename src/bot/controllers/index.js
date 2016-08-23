@@ -7,6 +7,9 @@ import models from '../../app/models';
 import storageCreator from '../lib/storage';
 import setupReceiveMiddleware from '../middleware/receiveMiddleware';
 
+import notWitController from './notWit';
+import miscController from './misc';
+
 require('dotenv').config();
 
 var env = process.env.NODE_ENV || 'development';
@@ -73,6 +76,9 @@ export function customConfigBot(controller) {
 
 	// beef up the bot
 	setupReceiveMiddleware(controller);
+
+	notWitController(controller);
+	miscController(controller);
 
 }
 

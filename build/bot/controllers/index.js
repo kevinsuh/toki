@@ -37,6 +37,14 @@ var _receiveMiddleware = require('../middleware/receiveMiddleware');
 
 var _receiveMiddleware2 = _interopRequireDefault(_receiveMiddleware);
 
+var _notWit = require('./notWit');
+
+var _notWit2 = _interopRequireDefault(_notWit);
+
+var _misc = require('./misc');
+
+var _misc2 = _interopRequireDefault(_misc);
+
 var _actions = require('../actions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -105,6 +113,9 @@ function customConfigBot(controller) {
 
 	// beef up the bot
 	(0, _receiveMiddleware2.default)(controller);
+
+	(0, _notWit2.default)(controller);
+	(0, _misc2.default)(controller);
 }
 
 // try to avoid repeat RTM's
