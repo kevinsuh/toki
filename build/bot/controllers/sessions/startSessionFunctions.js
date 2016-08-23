@@ -32,55 +32,78 @@ function finalizeSessionTimeAndContent(convo) {
 	var minutes = _convo$sessionStart.minutes;
 	var currentSession = _convo$sessionStart.currentSession;
 
-	// we need both time and task in order to start session
-
-	if (!content) {
-		askForSessionContent(convo);
-		return;
-	} else if (!minutes) {
-		askForSessionTime(convo);
-		return;
-	}
-
 	// already in session, can only be in one
+
 	if (currentSession) {
+		(function () {
 
-		question = 'You\'re currently in a session for `' + currentSession.dataValues.content + '` and *NEED_MINUTES* remaining! Would you like to cancel that and start a new session instead?';
-		convo.ask(question, [{
-			pattern: _constants.utterances.yes,
-			callback: function callback(response, convo) {
-				convo.say('Okay, sounds good to me!');
-				convo.sessionStart.minutes = false;
-				convo.sessionStart.content = false;
-				finalizeSessionTimeAndContent(convo);
-				convo.next();
-			}
-		}, {
-			pattern: _constants.utterances.no,
-			callback: function callback(response, convo) {
+			var now = (0, _momentTimezone2.default)().tz(tz);
+			var endTime = (0, _momentTimezone2.default)(currentSession.dataValues.endTime).tz(tz);
+			var endTimeString = endTime.format("h:mma");
+			var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
 
-				var text = '';
-				convo.say('Okay! Good luck and see you in *NEED_MINUTES*');
-				convo.next();
-			}
-		}, {
-			default: true,
-			callback: function callback(response, convo) {
-				convo.say("Sorry, I didn't catch that");
-				convo.repeat();
-				convo.next();
-			}
-		}]);
+			var text = 'Hey! You’re already in a focused session working on `' + currentSession.dataValues.content + '` until *' + endTimeString + '*';
+			var attachments = [{
+				attachment_type: 'default',
+				callback_id: "EXISTING_SESSION_OPTIONS",
+				fallback: "Hey, you're already in a session!!",
+				actions: [{
+					name: _constants.buttonValues.newSession.name,
+					text: "New Session :new:",
+					value: _constants.buttonValues.newSession.value,
+					type: "button"
+				}, {
+					name: _constants.buttonValues.keepWorking.name,
+					text: "Keep Working!",
+					value: _constants.buttonValues.keepWorking.value,
+					type: "button"
+				}]
+			}];
+
+			convo.ask({
+				text: text,
+				attachments: attachments
+			}, [{
+				pattern: _constants.utterances.containsNew,
+				callback: function callback(response, convo) {
+					convo.say('Okay, sounds good to me!');
+					convo.sessionStart.minutes = false;
+					convo.sessionStart.content = false;
+					finalizeSessionTimeAndContent(convo);
+					convo.next();
+				}
+			}, {
+				pattern: _constants.utterances.containsKeep,
+				callback: function callback(response, convo) {
+
+					convo.say('You got this! Keep focusing on `' + currentSession.dataValues.content + '` and I’ll see you at *' + endTimeString + '*');
+					convo.next();
+				}
+			}, {
+				default: true,
+				callback: function callback(response, convo) {
+					convo.say("Sorry, I didn't catch that");
+					convo.repeat();
+					convo.next();
+				}
+			}]);
+		})();
 	} else {
 
-		var now = (0, _momentTimezone2.default)().tz(tz);
-		var calculatedTimeObject = now.add(minutes, 'minutes');
-		var calculatedTimeString = calculatedTimeObject.format("h:mma");
-
-		convo.say(':weight_lifter: You’re now in a focused session on `' + content + '` until *' + calculatedTimeString + '* :weight_lifter:');
+		// we need both time and task in order to start session
+		// if dont have either, will run function before `convo.next`
+		if (!content) {
+			askForSessionContent(convo);
+			return;
+		} else if (!minutes) {
+			askForSessionTime(convo);
+			return;
+		}
 
 		convo.sessionStart.confirmStart = true;
 	}
+
+	convo.next();
 }
 
 /**
@@ -98,12 +121,7 @@ function askForSessionContent(convo) {
 	var sessionExample = (0, _messageHelpers.getRandomExample)("session");
 
 	convo.ask({
-		text: 'What would you like to focus on right now? (i.e. `' + sessionExample + '`)',
-		attachments: [{
-			attachment_type: 'default',
-			callback_id: "START_SESSION",
-			fallback: "Let's get focused!"
-		}]
+		text: 'What would you like to focus on right now? (i.e. `' + sessionExample + '`)'
 	}, [{
 		pattern: _constants.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
@@ -190,7 +208,7 @@ function askForSessionTime(convo) {
 			} else {
 				// invalid
 				convo.say("I'm sorry, I didn't catch that :dog:");
-				var _question = 'How much more time did you want to add to `' + content + '` today?';
+				var question = 'How much more time did you want to add to `' + content + '` today?';
 				convo.repeat();
 			}
 

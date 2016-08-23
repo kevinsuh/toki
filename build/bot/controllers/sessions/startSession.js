@@ -108,12 +108,12 @@ exports.default = function (controller) {
 				// check for an open session before starting flow
 				user.getSessions({
 					where: ['"open" = ?', true]
-				}).then(function (workSessions) {
+				}).then(function (sessions) {
 
 					var currentSession = false;
 
-					if (workSessions.length > 0) {
-						currentSession = workSessions[0];
+					if (sessions.length > 0) {
+						currentSession = sessions[0];
 					}
 					convo.sessionStart.currentSession = currentSession;
 
@@ -122,6 +122,7 @@ exports.default = function (controller) {
 				});
 
 				convo.on('end', function (convo) {
+					var sessionStart = convo.sessionStart;
 					var _convo$sessionStart = convo.sessionStart;
 					var content = _convo$sessionStart.content;
 					var minutes = _convo$sessionStart.minutes;
@@ -131,55 +132,27 @@ exports.default = function (controller) {
 					console.log(sessionStart);
 					console.log("\n\n\n");
 
+					var startTime = (0, _momentTimezone2.default)();
+					var endTime = (0, _momentTimezone2.default)().tz(tz).add(minutes, 'minutes');
+
 					_models2.default.Session.create({
 						UserId: UserId,
 						startTime: startTime,
 						endTime: endTime,
 						content: content
-					}).then(function (workSession) {
+					}).then(function (session) {
 
-						var dailyTaskIds = [dailyTask.dataValues.id];
-						workSession.setDailyTasks(dailyTaskIds);
-
-						var taskString = dailyTask.dataValues.Task.text;
-						var minutesString = (0, _messageHelpers.convertMinutesToHoursString)(minutes);
-						var timeString = endTime.format("h:mma");
+						var endTimeString = endTime.format("h:mma");
 
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-							convo.say("Let's do it :boom:!");
-							convo.say('Good luck with `' + taskString + '`! See you in ' + minutesString + ' at *' + timeString + '*');
+							var text = ':weight_lifter: You’re now in a focused session on `' + content + '` until *' + endTimeString + '* :weight_lifter:';
 							convo.say({
-								text: ':weight_lifter: Your focused work session starts now :weight_lifter:',
-								attachments: startSessionOptionsAttachments
+								text: text,
+								attachments: _constants.startSessionOptionsAttachments
 							});
 						});
-
-						// let's also reprioritize that dailyTask we're currently working on to the top
-						if (dailyTasks) {
-							(function () {
-								var indexOfDailyTask = 0;
-								dailyTasks.some(function (currentDailyTask, index) {
-									if (currentDailyTask.dataValues.id == dailyTask.dataValues.id) {
-										indexOfDailyTask = index;
-										return true;
-									}
-								});
-								dailyTasks.move(indexOfDailyTask, 0);
-								var priority = 0;
-								dailyTasks.forEach(function (dailyTask) {
-									priority++;
-									_models2.default.DailyTask.update({
-										priority: priority
-									}, {
-										where: ['"DailyTasks"."id" = ?', dailyTask.dataValues.id]
-									});
-								});
-							})();
-						}
 					});
-
-					// startSessionWithConvoObject(convo.sessionStart);
 				});
 			});
 		});

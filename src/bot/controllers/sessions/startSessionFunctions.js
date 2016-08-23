@@ -13,22 +13,43 @@ export function finalizeSessionTimeAndContent(convo) {
 
 	const { SlackUserId, tz, content, minutes, currentSession }  = convo.sessionStart;
 
-	// we need both time and task in order to start session
-	if (!content) {
-		askForSessionContent(convo);
-		return;
-	} else if (!minutes) {
-		askForSessionTime(convo);
-		return;
-	}
-
 	// already in session, can only be in one
 	if (currentSession) {
 
-		question = `You're currently in a session for \`${currentSession.dataValues.content}\` and *NEED_MINUTES* remaining! Would you like to cancel that and start a new session instead?`;
-		convo.ask(question, [
+		let now           = moment().tz(tz);
+		let endTime       = moment(currentSession.dataValues.endTime).tz(tz);
+		let endTimeString = endTime.format("h:mma");
+		let minutesLeft   = Math.round(moment.duration(endTime.diff(now)).asMinutes());
+
+		let text = `Hey! You’re already in a focused session working on \`${currentSession.dataValues.content}\` until *${endTimeString}*`;
+		let attachments = [
 			{
-				pattern: utterances.yes,
+				attachment_type: 'default',
+				callback_id: "EXISTING_SESSION_OPTIONS",
+				fallback: "Hey, you're already in a session!!",
+				actions: [
+					{
+						name: buttonValues.newSession.name,
+						text: "New Session :new:",
+						value: buttonValues.newSession.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.keepWorking.name,
+						text: "Keep Working!",
+						value: buttonValues.keepWorking.value,
+						type: "button"
+					}
+				]
+			}
+		]
+
+		convo.ask({
+			text,
+			attachments
+		}, [
+			{
+				pattern: utterances.containsNew,
 				callback: (response, convo) => {
 					convo.say(`Okay, sounds good to me!`);
 					convo.sessionStart.minutes = false;
@@ -38,11 +59,10 @@ export function finalizeSessionTimeAndContent(convo) {
 				}
 			},
 			{
-				pattern: utterances.no,
+				pattern: utterances.containsKeep,
 				callback: (response, convo) => {
 
-					let text = '';
-					convo.say(`Okay! Good luck and see you in *NEED_MINUTES*`);
+					convo.say(`You got this! Keep focusing on \`${currentSession.dataValues.content}\` and I’ll see you at *${endTimeString}*`);
 					convo.next();
 
 				}
@@ -59,15 +79,21 @@ export function finalizeSessionTimeAndContent(convo) {
 
 	} else {
 
-		let now                  = moment().tz(tz);
-		let calculatedTimeObject = now.add(minutes, 'minutes');
-		let calculatedTimeString = calculatedTimeObject.format("h:mma");
-
-		convo.say(`:weight_lifter: You’re now in a focused session on \`${content}\` until *${calculatedTimeString}* :weight_lifter:`);
+		// we need both time and task in order to start session
+		// if dont have either, will run function before `convo.next`
+		if (!content) {
+			askForSessionContent(convo);
+			return;
+		} else if (!minutes) {
+			askForSessionTime(convo);
+			return;
+		}
 
 		convo.sessionStart.confirmStart = true;
-		
+
 	}
+
+	convo.next();
 
 }
 
@@ -83,13 +109,6 @@ function askForSessionContent(convo) {
 	
 	convo.ask({
 		text: `What would you like to focus on right now? (i.e. \`${sessionExample}\`)`,
-		attachments:[
-			{
-				attachment_type: 'default',
-				callback_id: "START_SESSION",
-				fallback: "Let's get focused!"
-			}
-		]
 	},[
 		{
 			pattern: utterances.noAndNeverMind,

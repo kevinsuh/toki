@@ -3,7 +3,7 @@ import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
 
-import { utterances, colorsArray, buttonValues, colorsHash, constants } from '../../lib/constants';
+import { utterances, colorsArray, buttonValues, colorsHash, constants, startSessionOptionsAttachments } from '../../lib/constants';
 import { finalizeSessionTimeAndContent } from './startSessionFunctions';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '../../lib/messageHelpers';
 
@@ -108,12 +108,12 @@ export default function(controller) {
 				user.getSessions({
 					where: [`"open" = ?`, true]
 				})
-				.then((workSessions) => {
+				.then((sessions) => {
 
 					let currentSession = false;
 
-					if (workSessions.length > 0) {
-						currentSession = workSessions[0];
+					if (sessions.length > 0) {
+						currentSession = sessions[0];
 					}
 					convo.sessionStart.currentSession = currentSession;
 
@@ -124,64 +124,35 @@ export default function(controller) {
 
 				convo.on('end', (convo) => {
 
-					const { sessionStart: { content, minutes } } = convo;
+					const { sessionStart, sessionStart: { content, minutes } } = convo;
 
 					console.log("\n\n\n end of start session ");
 					console.log(sessionStart);
 					console.log("\n\n\n");
+
+					let startTime = moment();
+					let endTime   = moment().tz(tz).add(minutes, 'minutes');
 
 					models.Session.create({
 						UserId,
 						startTime,
 						endTime,
 						content
-					})
-					.then((workSession) => {
+					}).then((session) => {
 
-						let dailyTaskIds = [dailyTask.dataValues.id];
-						workSession.setDailyTasks(dailyTaskIds);
-
-						let taskString    = dailyTask.dataValues.Task.text;
-						let minutesString = convertMinutesToHoursString(minutes);
-						let timeString    = endTime.format("h:mma");
+						let endTimeString = endTime.format("h:mma");
 
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-							convo.say("Let's do it :boom:!");
-							convo.say(`Good luck with \`${taskString}\`! See you in ${minutesString} at *${timeString}*`);
+							let text = `:weight_lifter: You’re now in a focused session on \`${content}\` until *${endTimeString}* :weight_lifter:`;
 							convo.say({
-								text: `:weight_lifter: Your focused work session starts now :weight_lifter:`,
+								text,
 								attachments: startSessionOptionsAttachments
 							});
 
 						});
 
-						// let's also reprioritize that dailyTask we're currently working on to the top
-						if (dailyTasks) {
-							let indexOfDailyTask = 0;
-							dailyTasks.some((currentDailyTask, index) => {
-								if (currentDailyTask.dataValues.id == dailyTask.dataValues.id) {
-									indexOfDailyTask = index;
-									return true;
-								}
-							});
-							dailyTasks.move(indexOfDailyTask, 0);
-							let priority = 0;
-							dailyTasks.forEach((dailyTask) => {
-								priority++;
-								models.DailyTask.update({
-									priority
-								}, {
-									where: [`"DailyTasks"."id" = ?`, dailyTask.dataValues.id]
-								});
-							})
-						}
-
-					})
-
-
-
-					// startSessionWithConvoObject(convo.sessionStart);
+					});
 
 				})
 			

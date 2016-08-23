@@ -4,7 +4,7 @@ module.exports = function(sequelize, DataTypes) {
     UserId: DataTypes.INTEGER,
     startTime: DataTypes.DATE,
     endTime: DataTypes.DATE,
-    title: DataTypes.STRING,
+    content: DataTypes.STRING,
     live: {  type: DataTypes.BOOLEAN,
              defaultValue: true
           },

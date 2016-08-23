@@ -12,7 +12,7 @@ export const utterances = {
 	specificYes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|\by[esahp]{2,}\b|\bs[ure]{2,}\b)/i),
 	endDay: new RegExp(/\be[end ]{2,}\b.*\bd[day]{2,}/i),
 	notDone: new RegExp(/\bn[not]{2,}\b.*\bdo[one]{2,}/i),
-	containsNew: new RegExp(/(\bn[new]{2,}\b)/i),
+	containsNew: new RegExp(/(\bn[new]{2,4}\b)/i),
 	containsCheckin: new RegExp(/(\bch[check in]{3,}\b|\br[reminder]{4,}\b|\bn[note]{2,}\b)/i),
 	containsOnlyCheckin: new RegExp(/(\bch[check -in]{4,}\b)/i),
 	containsChangeTime: new RegExp(/(ch[change ]{3,}t[time ]{2,})/i),
@@ -87,11 +87,41 @@ export const utterances = {
 
 
 export const constants = {
+	PLAN_DECISION: {
+		complete: {
+			word: "TASK_COMPLETE",
+			reg_exp: new RegExp(/(\bcomp[omplete]{3,}\b|\bche[heck]{1,}\b|\bcro[ross]{1,}\b)/i)
+		},
+		add: {
+			word: "TASK_ADD",
+			reg_exp: new RegExp(/\bad[ad]{1,}\b/i)
+		},
+		view: {
+			word: "TASK_VIEW",
+			reg_exp: new RegExp(/\bvi[iew]{1,}\b/i)
+		},
+		delete: {
+			word: "TASK_DELETE",
+			reg_exp: new RegExp(/\b(del[elete]{2,8}|rem[move]{2,6})\b/i)
+		},
+		edit: {
+			word: "TASK_EDIT",
+			reg_exp: new RegExp(/\bed[dit]{1,}\b/i)
+		},
+		work: {
+			word: "TASK_WORK",
+			reg_exp: new RegExp(/\b(do[o]?|wor[ork]{1,})\b/i)
+		},
+		revise: {
+			word: "TASK_REVISE",
+			reg_exp: new RegExp(/\brev[ise]{2,4}\b/i)
+		}
+	},
 	FINISH_WORD: {
 		word: "done",
 		reg_exp: new RegExp(/^d[one]{2,}\b/i)
 	},
-	NONE: {
+	 NONE: {
 		word: "none",
 		reg_exp: new RegExp(/^[none]{3,}e$/i)
 	},
@@ -105,6 +135,14 @@ export const constants = {
 	THANK_YOU: {
 		word: "thank you",
 		reg_exp: new RegExp(/(^t(?=.*n)[thanks you]{4,}\b|^t(?=.*n)[thanksyou]{5,}\b|^t(?=.*x)[thx]{2,4}\b|^ty[y]{0,}\b)/i)
+	},
+	DURATION_INTENT: {
+		word: "duration",
+		reg_exp: new RegExp((/((\b[\d]+( [hoursminutes]+\b|[hoursminutes]+\b))|([forin]{2,}[ ]?[\d]+\b)|(\bh[our]{2,}|\bm[inutes]{2,}))/i))
+	},
+	TIME_INTENT: {
+		word: "time",
+		reg_exp: new RegExp((/(:|[at]{2,}[ ]?[\d]+\b)/i))
 	},
 	MORNING: {
 		word: "morning",
@@ -184,6 +222,18 @@ export const buttonValues ={
 	neverMind: {
 		name: "NEVER_MIND",
 		value: "never mind!"
+	},
+	endSession: {
+		name: "END_SESSION",
+		value: "End Session"
+	},
+	newSession: {
+		name: "NEW_SESSION",
+		value: "New session"
+	},
+	keepWorking: {
+		name: "KEEP_WORKING",
+		value: "Keep working!"
 	}
 }
 
@@ -217,6 +267,26 @@ export const startSessionExamples = [
 	'follow up with primary customers until 11:35am',
 	'sketch out first version of logo for 1 hr 15 min',
 	'update portfolio and send out to mentors for 1hr 30 min'
+]
+
+
+/**
+ * 	ATTACHMENTS
+ */
+export const startSessionOptionsAttachments = [
+	{
+		attachment_type: 'default',
+		callback_id: "LIVE_SESSION_OPTIONS",
+		fallback: "Good luck with your session!",
+		actions: [
+			{
+				name: buttonValues.endSession.name,
+				text: "End Session",
+				value: buttonValues.endSession.value,
+				type: "button"
+			}
+		]
+	}
 ]
 
 
