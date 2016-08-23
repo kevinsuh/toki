@@ -11,6 +11,7 @@ exports.default = function (controller) {
   */
 
 	(0, _startSession2.default)(controller);
+	(0, _endSession2.default)(controller);
 };
 
 var _os = require('os');
@@ -30,6 +31,10 @@ var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 var _startSession = require('./startSession');
 
 var _startSession2 = _interopRequireDefault(_startSession);
+
+var _endSession = require('./endSession');
+
+var _endSession2 = _interopRequireDefault(_endSession);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 

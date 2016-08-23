@@ -55,7 +55,7 @@ exports.default = function (controller) {
 						var minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
 						config.minutes = minutes;
 					}
-					controller.trigger('begin_session', [bot, config]);
+					controller.trigger('begin_session_flow', [bot, config]);
 				}
 			});
 		}, 750);
@@ -69,7 +69,7 @@ exports.default = function (controller) {
   * 			- show and decide tasks to work on
   * 			- decide session duration
   */
-	controller.on('begin_session', function (bot, config) {
+	controller.on('begin_session_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
 		var content = config.content;
 		var minutes = config.minutes;
@@ -93,6 +93,8 @@ exports.default = function (controller) {
 
 			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
+				// console.log(controller.tasks[0].convos);
+
 				// have 5-minute exit time limit
 				convo.task.timeLimit = 1000 * 60 * 5;
 
@@ -100,8 +102,6 @@ exports.default = function (controller) {
 					SlackUserId: SlackUserId,
 					UserId: UserId,
 					tz: tz,
-					bot: bot,
-					controller: controller,
 					content: content,
 					minutes: minutes
 				};

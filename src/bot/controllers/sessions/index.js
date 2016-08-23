@@ -5,6 +5,7 @@ import models from '../../../app/models';
 import moment from 'moment-timezone';
 
 import startSessionController from './startSession';
+import endSessionController from './endSession';
 
 // base controller for work sessions!
 export default function(controller) {
@@ -14,5 +15,6 @@ export default function(controller) {
 	 */
 	
 	startSessionController(controller);
+	endSessionController(controller);
 
 };
