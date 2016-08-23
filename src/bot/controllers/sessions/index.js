@@ -1,5 +1,6 @@
 import moment from 'moment-timezone';
 import models from '../../../app/models';
+import { utterances, colorsArray, buttonValues, colorsHash, constants } from '../../lib/constants';
 import startSessionController from './startSession';
 import endSessionController from './endSession';
 
@@ -47,7 +48,7 @@ export default function(controller) {
 					let endTimeString = endTime.format("h:mma");
 					
 					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-						convo.say(`You got this! Keep focusing on \`${currentSession.dataValues.content}\` and I’ll see you at *${endTimeString}*`);
+						convo.say(`You're in a session right now for \`${currentSession.dataValues.content}\`. Keep focusing and I'll see you at *${endTimeString}* :raised_hands:`);
 					});
 
 				} else {
@@ -76,7 +77,7 @@ export function notInSessionWouldYouLikeToStartOne(config) {
 				{
 					pattern: utterances.no,
 					callback: (response, convo) => {
-						convo.say("Okay! I'll be here when you want to `get focused` :smile_cat:");
+						convo.say("Okay! Let me know when you want to `get focused` :smile_cat:");
 						convo.next();
 					}
 				},

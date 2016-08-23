@@ -24,7 +24,7 @@ exports.default = function (controller) {
 		});
 		setTimeout(function () {
 
-			var replyMessage = "Hey! I have some limited functionality as I learn my specific purpose :dog: If you're still confused, please reach out to my creators Chip or Kevin";
+			var replyMessage = "I'm not sure what you mean by that :thinking_face:";
 
 			var config = { SlackUserId: SlackUserId };
 
@@ -35,6 +35,7 @@ exports.default = function (controller) {
 					break;
 				default:
 					bot.reply(message, replyMessage);
+					controller.trigger('current_session_status', [bot, config]);
 					break;
 			}
 		}, 500);

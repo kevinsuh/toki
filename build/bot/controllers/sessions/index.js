@@ -48,7 +48,7 @@ exports.default = function (controller) {
 						var endTimeString = endTime.format("h:mma");
 
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-							convo.say('You got this! Keep focusing on `' + currentSession.dataValues.content + '` and I’ll see you at *' + endTimeString + '*');
+							convo.say('You\'re in a session right now for `' + currentSession.dataValues.content + '`. Keep focusing and I\'ll see you at *' + endTimeString + '* :raised_hands:');
 						});
 					})();
 				} else {
@@ -69,6 +69,8 @@ var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
+
+var _constants = require('../../lib/constants');
 
 var _startSession = require('./startSession');
 
@@ -91,15 +93,15 @@ function notInSessionWouldYouLikeToStartOne(config) {
 	if (bot && SlackUserId && controller) {
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 			convo.ask('You\'re not in a session right now! Would you like to start one?', [{
-				pattern: utterances.yes,
+				pattern: _constants.utterances.yes,
 				callback: function callback(response, convo) {
 					convo.startSession = true;
 					convo.next();
 				}
 			}, {
-				pattern: utterances.no,
+				pattern: _constants.utterances.no,
 				callback: function callback(response, convo) {
-					convo.say("Okay! I'll be here when you want to `get focused` :smile_cat:");
+					convo.say("Okay! Let me know when you want to `get focused` :smile_cat:");
 					convo.next();
 				}
 			}, {
