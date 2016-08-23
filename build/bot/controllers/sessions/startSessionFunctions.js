@@ -67,8 +67,12 @@ function finalizeSessionTimeAndContent(convo) {
 				pattern: _constants.utterances.containsNew,
 				callback: function callback(response, convo) {
 					convo.say('Okay, sounds good to me!');
+
+					// restart everything!
 					convo.sessionStart.minutes = false;
 					convo.sessionStart.content = false;
+					convo.sessionStart.currentSession = false;
+
 					finalizeSessionTimeAndContent(convo);
 					convo.next();
 				}
@@ -100,7 +104,7 @@ function finalizeSessionTimeAndContent(convo) {
 			return;
 		}
 
-		convo.sessionStart.confirmStart = true;
+		convo.sessionStart.confirmNewSession = true;
 	}
 
 	convo.next();

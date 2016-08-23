@@ -124,7 +124,7 @@ export default function(controller) {
 
 				convo.on('end', (convo) => {
 
-					const { sessionStart, sessionStart: { content, minutes } } = convo;
+					const { sessionStart, sessionStart: { confirmNewSession, content, minutes } } = convo;
 
 					console.log("\n\n\n end of start session ");
 					console.log(sessionStart);
@@ -133,28 +133,30 @@ export default function(controller) {
 					let startTime = moment();
 					let endTime   = moment().tz(tz).add(minutes, 'minutes');
 
-					models.Session.create({
-						UserId,
-						startTime,
-						endTime,
-						content
-					}).then((session) => {
+					if (confirmNewSession) {
 
-						let endTimeString = endTime.format("h:mma");
+						models.Session.create({
+							UserId,
+							startTime,
+							endTime,
+							content
+						}).then((session) => {
 
-						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+							let endTimeString = endTime.format("h:mma");
 
-							let text = `:weight_lifter: You’re now in a focused session on \`${content}\` until *${endTimeString}* :weight_lifter:`;
-							convo.say({
-								text,
-								attachments: startSessionOptionsAttachments
+							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+								let text = `:weight_lifter: You’re now in a focused session on \`${content}\` until *${endTimeString}* :weight_lifter:`;
+								convo.say({
+									text,
+									attachments: startSessionOptionsAttachments
+								});
+
 							});
-
 						});
-
-					});
-
-				})
+						
+					}
+				});
 			
 			});
 

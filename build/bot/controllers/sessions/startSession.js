@@ -124,6 +124,7 @@ exports.default = function (controller) {
 				convo.on('end', function (convo) {
 					var sessionStart = convo.sessionStart;
 					var _convo$sessionStart = convo.sessionStart;
+					var confirmNewSession = _convo$sessionStart.confirmNewSession;
 					var content = _convo$sessionStart.content;
 					var minutes = _convo$sessionStart.minutes;
 
@@ -135,24 +136,27 @@ exports.default = function (controller) {
 					var startTime = (0, _momentTimezone2.default)();
 					var endTime = (0, _momentTimezone2.default)().tz(tz).add(minutes, 'minutes');
 
-					_models2.default.Session.create({
-						UserId: UserId,
-						startTime: startTime,
-						endTime: endTime,
-						content: content
-					}).then(function (session) {
+					if (confirmNewSession) {
 
-						var endTimeString = endTime.format("h:mma");
+						_models2.default.Session.create({
+							UserId: UserId,
+							startTime: startTime,
+							endTime: endTime,
+							content: content
+						}).then(function (session) {
 
-						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+							var endTimeString = endTime.format("h:mma");
 
-							var text = ':weight_lifter: You’re now in a focused session on `' + content + '` until *' + endTimeString + '* :weight_lifter:';
-							convo.say({
-								text: text,
-								attachments: _constants.startSessionOptionsAttachments
+							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+								var text = ':weight_lifter: You’re now in a focused session on `' + content + '` until *' + endTimeString + '* :weight_lifter:';
+								convo.say({
+									text: text,
+									attachments: _constants.startSessionOptionsAttachments
+								});
 							});
 						});
-					});
+					}
 				});
 			});
 		});
