@@ -45,6 +45,10 @@ var _misc = require('./misc');
 
 var _misc2 = _interopRequireDefault(_misc);
 
+var _sessions = require('./sessions');
+
+var _sessions2 = _interopRequireDefault(_sessions);
+
 var _actions = require('../actions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -115,6 +119,8 @@ function customConfigBot(controller) {
 	(0, _receiveMiddleware2.default)(controller);
 
 	(0, _notWit2.default)(controller);
+	(0, _sessions2.default)(controller);
+
 	(0, _misc2.default)(controller);
 }
 

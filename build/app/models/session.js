@@ -5,9 +5,13 @@ module.exports = function (sequelize, DataTypes) {
     UserId: DataTypes.INTEGER,
     startTime: DataTypes.DATE,
     endTime: DataTypes.DATE,
-    title: DataTypes.STRING,
-    live: DataTypes.BOOLEAN,
-    open: DataTypes.BOOLEAN
+    content: DataTypes.STRING,
+    live: { type: DataTypes.BOOLEAN,
+      defaultValue: true
+    },
+    open: { type: DataTypes.BOOLEAN,
+      defaultValue: true
+    }
   }, {
     classMethods: {
       associate: function associate(models) {

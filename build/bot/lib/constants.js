@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
+exports.startSessionOptionsAttachments = exports.startSessionExamples = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
 
 var _utterances;
 
@@ -27,7 +27,7 @@ var utterances = exports.utterances = (_utterances = {
 	specificYes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|\by[esahp]{2,}\b|\bs[ure]{2,}\b)/i),
 	endDay: new RegExp(/\be[end ]{2,}\b.*\bd[day]{2,}/i),
 	notDone: new RegExp(/\bn[not]{2,}\b.*\bdo[one]{2,}/i),
-	containsNew: new RegExp(/(\bn[new]{2,}\b)/i),
+	containsNew: new RegExp(/(\bn[new]{2,4}\b)/i),
 	containsCheckin: new RegExp(/(\bch[check in]{3,}\b|\br[reminder]{4,}\b|\bn[note]{2,}\b)/i),
 	containsOnlyCheckin: new RegExp(/(\bch[check -in]{4,}\b)/i),
 	containsChangeTime: new RegExp(/(ch[change ]{3,}t[time ]{2,})/i),
@@ -84,9 +84,39 @@ var utterances = exports.utterances = (_utterances = {
 	containsNoOne: new RegExp(/\b(no one)\b/i),
 	somethingElse: new RegExp(/\bsome[omething]{3,}\b.*\bel[lse]{2,}\b/i),
 	containsEnough: new RegExp(/\beno[ough]{3,}\b/i)
-}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "notToday", new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i)), _defineProperty(_utterances, "notShare", new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _defineProperty(_utterances, "noMore", new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i)), _defineProperty(_utterances, "redo", new RegExp(/^re[re do]{2,5}\b/i)), _defineProperty(_utterances, "noDontAskAgain", new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "yesDontAskAgain", new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "changePriority", new RegExp(/^chang[ge]{1,4}\b|\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\b(priori[tiyes]{1,5}|tas[sk]{1,5})\b/i)), _defineProperty(_utterances, "goBack", new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)), _defineProperty(_utterances, "setTime", new RegExp(/\bset[o]{0,5}\b.*\btim[me]{1,5}\b/i)), _defineProperty(_utterances, "beginAdventure", new RegExp(/\bbegin\b.*\badventure\b/i)), _utterances);
+}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "notToday", new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i)), _defineProperty(_utterances, "notShare", new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _defineProperty(_utterances, "noMore", new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i)), _defineProperty(_utterances, "redo", new RegExp(/^re[re do]{2,5}\b/i)), _defineProperty(_utterances, "noDontAskAgain", new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "yesDontAskAgain", new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "changePriority", new RegExp(/^chang[ge]{1,4}\b|\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\b(priori[tiyes]{1,5}|tas[sk]{1,5})\b/i)), _defineProperty(_utterances, "goBack", new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)), _defineProperty(_utterances, "setTime", new RegExp(/\bset[o]{0,5}\b.*\btim[me]{1,5}\b/i)), _defineProperty(_utterances, "beginAdventure", new RegExp(/\bbegin\b.*\badventure\b/i)), _defineProperty(_utterances, "changeTimeAndTask", new RegExp(/\bchan[nge]{1,5}\b.{1,3}\btim[me]{1,3}\b.{1,7}\btas[sk]{1,3}\b/i)), _defineProperty(_utterances, "keepWorking", new RegExp(/\bkee[ep]{1,3}\b.{1,3}\bwor[king]{1,6}\b/i)), _utterances);
 
 var constants = exports.constants = {
+	PLAN_DECISION: {
+		complete: {
+			word: "TASK_COMPLETE",
+			reg_exp: new RegExp(/(\bcomp[omplete]{3,}\b|\bche[heck]{1,}\b|\bcro[ross]{1,}\b)/i)
+		},
+		add: {
+			word: "TASK_ADD",
+			reg_exp: new RegExp(/\bad[ad]{1,}\b/i)
+		},
+		view: {
+			word: "TASK_VIEW",
+			reg_exp: new RegExp(/\bvi[iew]{1,}\b/i)
+		},
+		delete: {
+			word: "TASK_DELETE",
+			reg_exp: new RegExp(/\b(del[elete]{2,8}|rem[move]{2,6})\b/i)
+		},
+		edit: {
+			word: "TASK_EDIT",
+			reg_exp: new RegExp(/\bed[dit]{1,}\b/i)
+		},
+		work: {
+			word: "TASK_WORK",
+			reg_exp: new RegExp(/\b(do[o]?|wor[ork]{1,})\b/i)
+		},
+		revise: {
+			word: "TASK_REVISE",
+			reg_exp: new RegExp(/\brev[ise]{2,4}\b/i)
+		}
+	},
 	FINISH_WORD: {
 		word: "done",
 		reg_exp: new RegExp(/^d[one]{2,}\b/i)
@@ -105,6 +135,14 @@ var constants = exports.constants = {
 	THANK_YOU: {
 		word: "thank you",
 		reg_exp: new RegExp(/(^t(?=.*n)[thanks you]{4,}\b|^t(?=.*n)[thanksyou]{5,}\b|^t(?=.*x)[thx]{2,4}\b|^ty[y]{0,}\b)/i)
+	},
+	DURATION_INTENT: {
+		word: "duration",
+		reg_exp: new RegExp(/((\b[\d]+( [hoursminutes]+\b|[hoursminutes]+\b))|([forin]{2,}[ ]?[\d]+\b)|(\bh[our]{2,}|\bm[inutes]{2,}))/i)
+	},
+	TIME_INTENT: {
+		word: "time",
+		reg_exp: new RegExp(/(:|[at]{2,}[ ]?[\d]+\b)/i)
 	},
 	MORNING: {
 		word: "morning",
@@ -175,6 +213,38 @@ var buttonValues = exports.buttonValues = {
 	letsDoIt: {
 		name: "LETS_DO_IT",
 		value: "lets do it!"
+	},
+	changeTasks: {
+		name: "CHANGE_TASKS",
+		value: "change tasks!"
+	},
+	neverMind: {
+		name: "NEVER_MIND",
+		value: "never mind!"
+	},
+	endSession: {
+		name: "END_SESSION",
+		value: "End Session"
+	},
+	newSession: {
+		name: "NEW_SESSION",
+		value: "New session"
+	},
+	keepWorking: {
+		name: "KEEP_WORKING",
+		value: "Keep working!"
+	},
+	changeTimeAndTask: {
+		name: "CHANGE_TIME_AND_TASK",
+		value: "Change time and task"
+	},
+	yes: {
+		name: "YES",
+		value: "Yes"
+	},
+	no: {
+		name: "NO",
+		value: "no"
 	}
 };
 
@@ -198,4 +268,26 @@ var timeZones = exports.timeZones = {
 };
 
 var approvalWords = exports.approvalWords = ['nice', 'awesome', 'sounds good', 'great', 'fantastic', 'looking good', 'very nice', 'cool', 'boom', 'looks good'];
+
+var startSessionExamples = exports.startSessionExamples = ['think through product development roadmap for 75 min', 'send supporter update emails for 1 hour', 'finish first version of website wireframe for 60 min', 'map out inbound marketing strategy until 10am', 'write up city research until 1pm', 'follow up with primary customers until 11:35am', 'sketch out first version of logo for 1 hr 15 min', 'update portfolio and send out to mentors for 1hr 30 min'];
+
+/**
+ * 	ATTACHMENTS
+ */
+var startSessionOptionsAttachments = exports.startSessionOptionsAttachments = [{
+	attachment_type: 'default',
+	callback_id: "LIVE_SESSION_OPTIONS",
+	fallback: "Good luck with your session!",
+	actions: [{
+		name: buttonValues.changeTimeAndTask.name,
+		text: "Change Time + Task",
+		value: buttonValues.changeTimeAndTask.value,
+		type: "button"
+	}, {
+		name: buttonValues.endSession.name,
+		text: "End Session",
+		value: buttonValues.endSession.value,
+		type: "button"
+	}]
+}];
 //# sourceMappingURL=constants.js.map
