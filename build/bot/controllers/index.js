@@ -33,6 +33,10 @@ var _storage = require('../lib/storage');
 
 var _storage2 = _interopRequireDefault(_storage);
 
+var _receiveMiddleware = require('../middleware/receiveMiddleware');
+
+var _receiveMiddleware2 = _interopRequireDefault(_receiveMiddleware);
+
 var _actions = require('../actions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -100,7 +104,7 @@ if (!process.env.SLACK_ID || !process.env.SLACK_SECRET || !process.env.HTTP_PORT
 function customConfigBot(controller) {
 
 	// beef up the bot
-	setupReceiveMiddleware(controller);
+	(0, _receiveMiddleware2.default)(controller);
 }
 
 // try to avoid repeat RTM's

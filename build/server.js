@@ -28,14 +28,18 @@ var _cron3 = require('./app/cron');
 
 var _cron4 = _interopRequireDefault(_cron3);
 
+var _scripts = require('./app/scripts');
+
 require('./app/globalHelpers');
 
 var _controllers = require('./bot/controllers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// modules 
+var CronJob = _cron2.default.CronJob;
+
 // CronJob
-var CronJob = _cron2.default.CronJob; // modules 
 
 
 var app = (0, _express2.default)();
@@ -69,7 +73,7 @@ app.use(function (err, req, res, next) {
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
-	consoleLog("In development server of Toki");
+	console.log("\n\n ~~ In development server of Toki ~~ \n\n");
 	process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
 	process.env.SLACK_ID = process.env.DEV_SLACK_ID;
 	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
@@ -101,7 +105,7 @@ _controllers.controller.createOauthEndpoints(app, function (err, req, res) {
 
 // create HTTP service
 _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
-	consoleLog('Listening on port: ' + app.get('port'));
+	console.log('\n\n ~~Listening on port: ' + app.get('port') + '~~ \n\n');
 
 	/**
  * 						*** CRON JOB ***
@@ -134,11 +138,11 @@ _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
 
 				if (payload) {
 					var teamMembers = payload.users; // array of user objects!
-					seedAndUpdateUsers(teamMembers, bot);
+					(0, _scripts.seedAndUpdateUsers)(teamMembers, bot);
 				}
 
 				if (err) {
-					consoleLog('\'Error connecting to slack... :\' ' + err);
+					console.log('\n\n\'Error connecting to slack... :\' ' + err);
 				} else {
 					if (token == process.env.BOT_TOKEN && process.env.KEVIN_SLACK_USER_ID) {
 						bot.startPrivateConversation({ user: process.env.KEVIN_SLACK_USER_ID }, function (err, convo) {

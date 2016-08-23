@@ -5,6 +5,7 @@ import moment from 'moment-timezone';
 import models from '../../app/models';
 
 import storageCreator from '../lib/storage';
+import setupReceiveMiddleware from '../middleware/receiveMiddleware';
 
 require('dotenv').config();
 

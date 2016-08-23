@@ -8,6 +8,7 @@ import fs from 'fs';
 // CronJob
 import cron from 'cron';
 import cronFunction from './app/cron';
+import { seedAndUpdateUsers } from './app/scripts';
 var CronJob = cron.CronJob;
 
 import './app/globalHelpers';
@@ -43,7 +44,7 @@ app.use(function(err, req, res, next) {
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
-	consoleLog("In development server of Toki");
+	console.log("\n\n ~~ In development server of Toki ~~ \n\n");
   process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
   process.env.SLACK_ID = process.env.DEV_SLACK_ID;
 	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
@@ -76,7 +77,7 @@ controller.createOauthEndpoints(app,function(err,req,res) {
 
 // create HTTP service
 http.createServer(app).listen(process.env.HTTP_PORT, () => {
-	consoleLog(`Listening on port: ${app.get('port')}`);
+	console.log(`\n\n ~~Listening on port: ${app.get('port')}~~ \n\n`);
 
 	 /**
 	 * 						*** CRON JOB ***
@@ -113,7 +114,7 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 				}
 
 				if (err) {
-					consoleLog(`'Error connecting to slack... :' ${err}`);
+					console.log(`\n\n'Error connecting to slack... :' ${err}`);
 				} else {
 					if (token == process.env.BOT_TOKEN && process.env.KEVIN_SLACK_USER_ID) {
 						bot.startPrivateConversation({user: process.env.KEVIN_SLACK_USER_ID}, (err, convo) => {
