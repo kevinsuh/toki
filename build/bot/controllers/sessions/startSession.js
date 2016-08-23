@@ -31,10 +31,6 @@ exports.default = function (controller) {
 			message: message
 		};
 
-		if (reminder) {
-			config.content = reminder[0].value;
-		}
-
 		bot.send({
 			type: "typing",
 			channel: message.channel
@@ -118,7 +114,7 @@ exports.default = function (controller) {
 					}
 					convo.sessionStart.currentSession = currentSession;
 
-					finalizeSessionTimeAndContent(convo);
+					(0, _startSessionFunctions.finalizeSessionTimeAndContent)(convo);
 					convo.next();
 				});
 
@@ -149,10 +145,6 @@ var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
-
-var _intents = require('../../lib/intents');
-
-var _intents2 = _interopRequireDefault(_intents);
 
 var _constants = require('../../lib/constants');
 

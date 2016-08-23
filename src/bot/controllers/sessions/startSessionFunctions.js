@@ -145,7 +145,7 @@ function askForSessionTime(convo) {
 
 	// get time to session
 	convo.ask({
-		text: `How long would you like to work on \`${content}\``,
+		text: `How long would you like to work on \`${content}\`?`,
 		attachments:[
 			{
 				attachment_type: 'default',

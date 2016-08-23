@@ -3,9 +3,8 @@ import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
 
-import intentConfig from '../../lib/intents';
 import { utterances, colorsArray, buttonValues, colorsHash, constants } from '../../lib/constants';
-import { finalizeTimeAndTaskToStart } from './startSessionFunctions';
+import { finalizeSessionTimeAndContent } from './startSessionFunctions';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '../../lib/messageHelpers';
 
 // STARTING A SESSION
@@ -29,10 +28,6 @@ export default function(controller) {
 		let config = {
 			SlackUserId,
 			message
-		}
-
-		if (reminder) {
-			config.content = reminder[0].value;
 		}
 
 		bot.send({
@@ -118,7 +113,7 @@ export default function(controller) {
 						currentSession = workSessions[0];
 					}
 					convo.sessionStart.currentSession = currentSession;
-					
+
 					finalizeSessionTimeAndContent(convo);
 					convo.next();
 
