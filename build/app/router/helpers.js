@@ -14,8 +14,6 @@ var _models = require('../models');
 
 var _models2 = _interopRequireDefault(_models);
 
-var _botResponses = require('../../bot/lib/botResponses');
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function getAuthAddress(authCode, uri_path) {
@@ -90,62 +88,31 @@ function saveUserOnLogin(auth, identity) {
 				console.log('An error occurred while saving a user: ', err);
 				_controllers.controller.trigger('error', [err]);
 			} else {
-				if (isnew) {
-					console.log("New user " + user.id + " saved");
-				} else {
-					console.log("User " + user.id + " updated");
-				}
-
-				// get the right bot, and trigger onboard flow here
-				var SlackUserId = user.id;
-				var TeamId = user.team_id;
-
-				_models2.default.Team.find({
-					where: { TeamId: TeamId }
-				}).then(function (team) {
-					var token = team.token;
-
-					var bot = _controllers.bots[token];
-					if (bot) {
-
-						var config = { SlackUserId: SlackUserId };
-
-						bot.startPrivateConversation({
-							user: SlackUserId
-						}, function (err, convo) {
-
-							convo.startOnBoard = false;
-							convo.ask("Do you want to be onboarded?", [{
-								pattern: _botResponses.utterances.yes,
-								callback: function callback(response, convo) {
-									convo.startOnBoard = true;
-									convo.next();
-								}
-							}, {
-								pattern: _botResponses.utterances.no,
-								callback: function callback(response, convo) {
-									convo.say("Okay! Let me know when you want to get working :wave:");
-									convo.next();
-								}
-							}, {
-								default: true,
-								callback: function callback(response, convo) {
-									convo.say("Sorry, I didn't catch that");
-									convo.repeat();
-									convo.next();
-								}
-							}]);
-
-							convo.on('end', function (convo) {
-								if (convo.startOnBoard) {
-									_controllers.controller.trigger('begin_onboard_flow', [bot, config]);
-								}
-							});
-						});
+				(function () {
+					if (isnew) {
+						console.log("New user " + user.id + " saved");
+					} else {
+						console.log("User " + user.id + " updated");
 					}
-				});
 
-				console.log("================== END TEAM REGISTRATION ==================");
+					// get the right bot, and trigger onboard flow here
+					var SlackUserId = user.id;
+					var TeamId = user.team_id;
+
+					_models2.default.Team.find({
+						where: { TeamId: TeamId }
+					}).then(function (team) {
+						var token = team.token;
+
+						var bot = _controllers.bots[token];
+						if (bot) {
+
+							var config = { SlackUserId: SlackUserId };
+						}
+					});
+
+					console.log("================== END TEAM REGISTRATION ==================");
+				})();
 			}
 		});
 	});

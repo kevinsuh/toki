@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.firstInstallInitiateConversation = firstInstallInitiateConversation;
 exports.loginInitiateConversation = loginInitiateConversation;
 
-var _controllers = require('../../controllers');
+var _controllers = require('../controllers');
 
 var _http = require('http');
 

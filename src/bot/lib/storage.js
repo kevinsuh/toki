@@ -26,9 +26,9 @@ export default function(config) {
     }
   }
 
-  var userObjectToBotkitObject = (slackUser) => {
-    if (slackUser) {
-      const { SlackUserId, tz, TeamId, scopes, accessToken } = slackUser.dataValues;
+  var userObjectToBotkitObject = (user) => {
+    if (user) {
+      const { SlackUserId, tz, TeamId, scopes, accessToken } = user.dataValues;
       return {
         id: SlackUserId,
         team_id: TeamId,
@@ -115,7 +115,7 @@ export default function(config) {
     users: {
       get: (SlackUserId, cb) => {
         console.log("\n\n ~~ calling storage.users.get ~~ \n\n");
-        models.SlackUser.find({
+        models.User.find({
           where: { SlackUserId }
         })
         .then((user) => {
@@ -134,36 +134,29 @@ export default function(config) {
         const TeamId      = userData.team_id;
         const nickName    = userData.user;
 
-        models.SlackUser.find({
+        models.User.find({
           where: { SlackUserId }
         })
-        .then((slackUser) => {
+        .then((user) => {
 
-          if (!slackUser) {
-            console.log("could not find slack user... creating now");
+          if (!user) {
+            console.log("could not find user... creating now");
+
             /**
              *    NEED TO MAKE AN EMAIL IN THE FUTURE.
              */
-
-            var uniqueEmail = makeid();
             models.User.create({
-              email: `TEMPEMAILHOLDER${uniqueEmail}@gmail.com`,
+              SlackUserId,
+              UserId,
+              TeamId,
+              accessToken,
+              scopes,
               nickName
-            })
-            .then((user) => {
-              const UserId = user.id;
-              return models.SlackUser.create({
-                SlackUserId,
-                UserId,
-                TeamId,
-                accessToken,
-                scopes
-              });
             });
 
           } else {
             console.log("found slack user... updating now");
-            return slackUser.update({
+            return user.update({
               TeamId,
               accessToken,
               scopes
@@ -178,7 +171,7 @@ export default function(config) {
       },
       all: (cb) => {
         console.log("\n\n ~~ calling storage.users.all ~~ \n\n");
-        models.SlackUser.findAll({
+        models.User.findAll({
           limit: 250
         })
         .then((users) => {

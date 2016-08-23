@@ -33,14 +33,14 @@ exports.default = function (config) {
     }
   };
 
-  var userObjectToBotkitObject = function userObjectToBotkitObject(slackUser) {
-    if (slackUser) {
-      var _slackUser$dataValues = slackUser.dataValues;
-      var SlackUserId = _slackUser$dataValues.SlackUserId;
-      var tz = _slackUser$dataValues.tz;
-      var TeamId = _slackUser$dataValues.TeamId;
-      var scopes = _slackUser$dataValues.scopes;
-      var accessToken = _slackUser$dataValues.accessToken;
+  var userObjectToBotkitObject = function userObjectToBotkitObject(user) {
+    if (user) {
+      var _user$dataValues = user.dataValues;
+      var SlackUserId = _user$dataValues.SlackUserId;
+      var tz = _user$dataValues.tz;
+      var TeamId = _user$dataValues.TeamId;
+      var scopes = _user$dataValues.scopes;
+      var accessToken = _user$dataValues.accessToken;
 
       return {
         id: SlackUserId,
@@ -129,7 +129,7 @@ exports.default = function (config) {
     users: {
       get: function get(SlackUserId, cb) {
         console.log("\n\n ~~ calling storage.users.get ~~ \n\n");
-        _models2.default.SlackUser.find({
+        _models2.default.User.find({
           where: { SlackUserId: SlackUserId }
         }).then(function (user) {
           var err = null; // errors in future
@@ -147,33 +147,27 @@ exports.default = function (config) {
         var TeamId = userData.team_id;
         var nickName = userData.user;
 
-        _models2.default.SlackUser.find({
+        _models2.default.User.find({
           where: { SlackUserId: SlackUserId }
-        }).then(function (slackUser) {
+        }).then(function (user) {
 
-          if (!slackUser) {
-            console.log("could not find slack user... creating now");
+          if (!user) {
+            console.log("could not find user... creating now");
+
             /**
              *    NEED TO MAKE AN EMAIL IN THE FUTURE.
              */
-
-            var uniqueEmail = makeid();
             _models2.default.User.create({
-              email: 'TEMPEMAILHOLDER' + uniqueEmail + '@gmail.com',
+              SlackUserId: SlackUserId,
+              UserId: UserId,
+              TeamId: TeamId,
+              accessToken: accessToken,
+              scopes: scopes,
               nickName: nickName
-            }).then(function (user) {
-              var UserId = user.id;
-              return _models2.default.SlackUser.create({
-                SlackUserId: SlackUserId,
-                UserId: UserId,
-                TeamId: TeamId,
-                accessToken: accessToken,
-                scopes: scopes
-              });
             });
           } else {
             console.log("found slack user... updating now");
-            return slackUser.update({
+            return user.update({
               TeamId: TeamId,
               accessToken: accessToken,
               scopes: scopes
@@ -186,7 +180,7 @@ exports.default = function (config) {
       },
       all: function all(cb) {
         console.log("\n\n ~~ calling storage.users.all ~~ \n\n");
-        _models2.default.SlackUser.findAll({
+        _models2.default.User.findAll({
           limit: 250
         }).then(function (users) {
           var err = null; // errors in future

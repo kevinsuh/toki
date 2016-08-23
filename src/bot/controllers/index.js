@@ -10,7 +10,6 @@ require('dotenv').config();
 
 var env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
-	consoleLog("In development controller of Toki");
 	process.env.SLACK_ID = process.env.DEV_SLACK_ID;
 	process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 }
@@ -21,7 +20,6 @@ import { firstInstallInitiateConversation, loginInitiateConversation } from '../
 // Wit Brain
 if (process.env.WIT_TOKEN) {
 
-	consoleLog("Integrate Wit");
 	var wit = Wit({
 		token: process.env.WIT_TOKEN,
 		minimum_confidence: 0.55

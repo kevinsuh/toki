@@ -1,4 +1,4 @@
-import { wit } from '../../controllers';
+import { wit } from '../controllers';
 import http from 'http';
 import bodyParser from 'body-parser';
 
