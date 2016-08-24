@@ -65,7 +65,7 @@ exports.default = function (controller) {
 		var text = message.text;
 
 
-		var pingSlackUserIds = (0, _messageHelpers.getSlackUsersFromString)(text);
+		var pingSlackUserIds = (0, _messageHelpers.getUniqueSlackUsersFromString)(text);
 		console.log("\n\n ~~ \n\n\n");
 		console.log(text);
 		console.log(pingSlackUserIds);

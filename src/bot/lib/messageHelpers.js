@@ -1,5 +1,3 @@
-getRandomExample("session")
-
 /**
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
  */
@@ -7,6 +5,7 @@ getRandomExample("session")
 import { constants, buttonValues, colorsHash, quotes, approvalWords, startSessionExamples, utterances } from './constants';
 import nlp from 'nlp_compromise';
 import moment from 'moment-timezone';
+import _ from 'lodash';
 
 export function getRandomExample(type, config = {}) {
 
@@ -311,18 +310,17 @@ export function dateStringToMomentTimeZone(timeString, timeZone) {
 
 }
 
-export function getSlackUsersFromString(string) {
+export function getUniqueSlackUsersFromString(string) {
 	const slackUserIdContainer = new RegExp(/<@(.*?)>/g);
-  const replaceRegEx = new RegExp(/<|>|@/g);
-  
-	let arrayString = string.split(' ');
+	const replaceRegEx = new RegExp(/<|>|@/g);
+	
+	let arrayString = string.match(slackUserIdContainer);
 	let slackUserIds = [];
 	arrayString.forEach((string) => {
-		if (slackUserIdContainer.test(string)) {
-    	// if contained in slackUserIdContainer, then it is SlackUserId
-    	string = string.replace(replaceRegEx, "");
-      slackUserIds.push(string);
-    }
+		const slackUserId = string.replace(replaceRegEx, "");
+		if (!_.includes(slackUserIds, slackUserId)) {
+			slackUserIds.push(slackUserId);
+		}
 	});
 	if (slackUserIds.length == 0) {
 		return false;

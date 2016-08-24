@@ -10,7 +10,7 @@ exports.witDurationToMinutes = witDurationToMinutes;
 exports.convertMinutesToHoursString = convertMinutesToHoursString;
 exports.convertTimeStringToMinutes = convertTimeStringToMinutes;
 exports.dateStringToMomentTimeZone = dateStringToMomentTimeZone;
-exports.getSlackUsersFromString = getSlackUsersFromString;
+exports.getUniqueSlackUsersFromString = getUniqueSlackUsersFromString;
 
 var _constants = require('./constants');
 
@@ -22,9 +22,11 @@ var _momentTimezone = require('moment-timezone');
 
 var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _lodash = require('lodash');
 
-getRandomExample("session");
+var _lodash2 = _interopRequireDefault(_lodash);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
@@ -329,17 +331,16 @@ function dateStringToMomentTimeZone(timeString, timeZone) {
 	return userMomentTimezone;
 }
 
-function getSlackUsersFromString(string) {
+function getUniqueSlackUsersFromString(string) {
 	var slackUserIdContainer = new RegExp(/<@(.*?)>/g);
 	var replaceRegEx = new RegExp(/<|>|@/g);
 
-	var arrayString = string.split(' ');
+	var arrayString = string.match(slackUserIdContainer);
 	var slackUserIds = [];
 	arrayString.forEach(function (string) {
-		if (slackUserIdContainer.test(string)) {
-			// if contained in slackUserIdContainer, then it is SlackUserId
-			string = string.replace(replaceRegEx, "");
-			slackUserIds.push(string);
+		var slackUserId = string.replace(replaceRegEx, "");
+		if (!_lodash2.default.includes(slackUserIds, slackUserId)) {
+			slackUserIds.push(slackUserId);
 		}
 	});
 	if (slackUserIds.length == 0) {

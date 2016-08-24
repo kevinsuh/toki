@@ -3,7 +3,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants, startSessionOptionsAttachments } from '../../lib/constants';
-import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getSlackUsersFromString } from '../../lib/messageHelpers';
+import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString } from '../../lib/messageHelpers';
 
 // STARTING A SESSION
 export default function(controller) {
@@ -59,7 +59,7 @@ export default function(controller) {
 		const SlackUserId = message.user;
 		const { text }    = message;
 
-		const pingSlackUserIds = getSlackUsersFromString(text);
+		const pingSlackUserIds = getUniqueSlackUsersFromString(text);
 		console.log("\n\n ~~ \n\n\n")
 		console.log(text);
 		console.log(pingSlackUserIds);
