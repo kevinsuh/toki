@@ -41,7 +41,8 @@ function handlePingSlackUserIds(convo) {
 
 			if (user) {
 
-				const { SlackName } = user;
+				const { SlackName, id } = user;
+				convo.pingObject.pingUserId = id;
 
 				// we will only handle 1
 				if (pingSlackUserIds.length > 1) {
@@ -85,6 +86,7 @@ function handlePingSlackUserIds(convo) {
 			} else {
 				// could not find user
 				convo.say(`Sorry, we couldn't recognize that user!`);
+				// create slack user on spot here
 				askWhoToPing(convo);
 			}
 
@@ -107,8 +109,6 @@ function askForQueuedPingMessages(convo) {
 		const { user, endTimeObject } = userInSession;
 		const endTimeString = endTimeObject.format("h:mma");
 
-		
-
 		let text = `What would you like me to send <@${user.dataValues.SlackUserId}> at *${endTimeString}*?`;
 		let attachments = [{
 			text: "Enter as many lines as you’d like to include in the message then choose one of the send options when your message is ready to go\n(These few lines will delete after you type your first line and hit Enter :wink:)",
@@ -125,14 +125,23 @@ function askForQueuedPingMessages(convo) {
 			{
 				pattern: utterances.containsSendAt,
 				callback: (response, convo) => {
-					convo.say(`sending at later time!`);
+
+					// if date here, pre-fill it
+					let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
+					if (customTimeObject) {
+						convo.pingObject.pingTimeObject = customTimeObject;
+						convo.pingObject.deliveryType   = "grenade";
+					}
+
+					askForPingTime(convo);
 					convo.next();
+
 				}
 			},
 			{
 				pattern: utterances.sendSooner,
 				callback: (response, convo) => {
-					convo.say(`okay lets send sooner!`);
+					askForPingTime(convo);
 					convo.next();
 				}
 			},
@@ -149,7 +158,7 @@ function askForQueuedPingMessages(convo) {
 							{
 								name: buttonValues.sendAtEndOfSession.name,
 								text: `Send at ${endTimeString}`,
-								value: buttonValues.sendAtEndOfSession.value,
+								value: `Send at ${endTimeString}`,
 								type: `button`
 							},
 							{
@@ -171,11 +180,98 @@ function askForQueuedPingMessages(convo) {
 			}
 		]);
 
-
-
 	} else {
 		startPingFlow(convo);
 	}
 
 }
 
+function askForPingTime(convo) {
+
+	const { SlackUserId, bot, tz, pingTimeObject, pingSlackUserId, userInSession }  = convo.pingObject;
+
+	// if user is in a session and you have not set what time you want to ping yet
+	if (!pingTimeObject && userInSession) {
+
+		const { user, endTimeObject } = userInSession;
+
+		let now            = moment().tz(tz);
+		let minutesLeft    = Math.round((moment.duration(endTimeObject.diff(now)).asMinutes()) / 2);
+		let exampleEndTime = now.add(Math.round(minutesLeft / 2), 'minutes').format("h:mma");
+		let endTimeString  = endTimeObject.format("h:mma");
+
+		const text = `Would you like to send this urgent message now, or at a specific time before ${endTimeString}? If it’s the latter, just tell me the time, like \`${exampleEndTime}\``;
+		const attachments = [{
+			attachment_type: 'default',
+			callback_id: "PING_GRENADE",
+			fallback: "When do you want to ping?",
+			actions: [{
+				name: buttonValues.now.name,
+				text: `:bomb: Now :bomb:`,
+				value: buttonValues.now.value,
+				type: `button`
+			}]
+		}];
+
+		convo.ask({
+			text,
+			attachments
+		}, [
+			{
+				pattern: utterances.containsNow,
+				callback: (response, convo) => {
+
+					// send now
+					convo.pingObject.deliveryType = "bomb";
+					convo.say(`:point_left: Got it! I'll send your message to <@${user.dataValues.SlackUserId}> :runner: :pencil:`);
+					convo.next();
+
+				}
+			},
+			{
+				pattern: utterances.sendSooner,
+				callback: (response, convo) => {
+					askForPingTime(convo);
+					convo.next();
+				}
+			},
+			{
+				default: true,
+				callback: (response, convo) => {
+
+					count++;
+
+					let pingMessageListUpdate = getMostRecentMessageToUpdate(response.channel, bot, "PING_MESSAGE_LIST");
+					if (pingMessageListUpdate) {
+
+						attachments[0].actions = [
+							{
+								name: buttonValues.sendAtEndOfSession.name,
+								text: `Send at ${endTimeString}`,
+								value: `Send at ${endTimeString}`,
+								type: `button`
+							},
+							{
+								name: buttonValues.sendSooner.name,
+								text: `:bomb: Send sooner :bomb:`,
+								value: buttonValues.sendSooner.value,
+								type: `button`
+							}
+						];
+
+						attachments[0].text = count == 1 ? response.text : `${attachments[0].text}\n${response.text}`;
+
+						pingMessageListUpdate.attachments = JSON.stringify(attachments);
+						bot.api.chat.update(pingMessageListUpdate);
+
+					}
+
+				}
+			}
+		]);
+
+	}
+
+	convo.next();
+
+}

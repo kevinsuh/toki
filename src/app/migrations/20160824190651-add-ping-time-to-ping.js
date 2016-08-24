@@ -14,7 +14,7 @@ module.exports = {
 },
 down: function (queryInterface, Sequelize) {
    
-   return queryInterface.removeColumn('Users', 'pingTime');
+   return queryInterface.removeColumn('Pings', 'pingTime');
 
   }
 };

@@ -9,6 +9,7 @@ exports.default = function () {
 	if (_controllers.bots) {
 		// cron job functions go here
 		checkForSessions();
+		checkForPings();
 	}
 };
 
@@ -27,6 +28,95 @@ var _lodash = require('lodash');
 var _lodash2 = _interopRequireDefault(_lodash);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var checkForPings = function checkForPings() {
+
+	// sequelize is in EST by default. include date offset to make it correct UTC wise
+	var now = (0, _momentTimezone2.default)();
+	var nowString = now.format("YYYY-MM-DD HH:mm:ss Z");
+
+	// get the most recent work session! assume this is the one user is working on
+	// turn all work sessions off for that user once you ping that user
+	_models2.default.Ping.findAll({
+		where: ['"Ping"."live" = ? AND "Ping"."deliveryType" != ?', true, "sessionEnd"],
+		order: '"Ping"."createdAt" DESC'
+	}).then(function (pings) {
+
+		pings.forEach(function (ping) {
+			var FromUserId = ping.FromUserId;
+			var ToUserId = ping.ToUserId;
+			var deliveryType = ping.deliveryType;
+			var pingTime = ping.pingTime;
+
+			// if there's a pingTime, respect it!
+
+			if (pingTime) {
+				var pingTimeObject = (0, _momentTimezone2.default)(pingTime);
+				if (pingTimeObject > now) {
+					return;
+				}
+			}
+
+			_models2.default.User.find({
+				where: { id: FromUserId }
+			}).then(function (fromUser) {
+
+				var fromUserTeamId = fromUser.TeamId;
+
+				_models2.default.User.find({
+					where: { id: ToUserId }
+				}).then(function (toUser) {
+
+					var toUserTeamId = toUser.TeamId;
+
+					if (fromUserTeamId != toUserTeamId) {
+						// ERROR ERROR -- this should never happen!
+						return;
+					}
+
+					ping.update({
+						live: false
+					});
+
+					var SlackUserIds = fromUser.dataValues.SlackUserId + ',' + toUser.dataValues.SlackUserId;
+
+					_models2.default.Team.find({
+						where: { TeamId: fromUserTeamId }
+					}).then(function (team) {
+						var token = team.token;
+
+						var bot = _controllers.bots[token];
+						if (bot) {
+
+							bot.api.mpim.open({
+								users: SlackUserIds
+							}, function (err, response) {
+								if (!err) {
+									var id = response.group.id;
+
+									bot.startConversation({ channel: id }, function (err, convo) {
+										switch (deliveryType) {
+											case "bomb":
+												convo.say('Hey <@' + toUser.dataValues.SlackUserId + '>! <@' + fromUser.dataValues.SlackUserId + '> has an urgent message he needs to send you :bomb:');
+												break;
+											case "grenade":
+												break;
+											default:
+												break;
+										}
+									});
+								}
+							});
+						}
+					});
+				});
+			});
+		});
+	});
+};
+
+// the cron file!
+
 
 var checkForSessions = function checkForSessions() {
 
@@ -87,6 +177,4 @@ var checkForSessions = function checkForSessions() {
 		});
 	});
 };
-
-// the cron file!
 //# sourceMappingURL=cron.js.map

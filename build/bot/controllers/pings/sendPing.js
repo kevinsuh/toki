@@ -88,6 +88,7 @@ exports.default = function (controller) {
 		}).then(function (user) {
 			var tz = user.tz;
 
+			var UserId = user.id;
 
 			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
@@ -107,14 +108,22 @@ exports.default = function (controller) {
 					var _convo$pingObject = convo.pingObject;
 					var SlackUserId = _convo$pingObject.SlackUserId;
 					var tz = _convo$pingObject.tz;
+					var pingUserId = _convo$pingObject.pingUserId;
 					var pingSlackUserId = _convo$pingObject.pingSlackUserId;
 					var pingTimeObject = _convo$pingObject.pingTimeObject;
+					var deliveryType = _convo$pingObject.deliveryType;
 
 
 					var SlackUserIds = SlackUserId + ',' + pingSlackUserId;
 
-					if (pingTimeObject) {
-						// if no ping time, send it now!
+					if (deliveryType) {
+						// if no delivery type, send it now!
+						_models2.default.Ping.create({
+							FromUserId: UserId,
+							ToUserId: pingUserId,
+							deliveryType: deliveryType,
+							pingTime: pingTimeObject
+						});
 					} else {
 						bot.api.mpim.open({
 							users: SlackUserIds

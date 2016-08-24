@@ -81,6 +81,7 @@ export default function(controller) {
 		}).then((user) => {
 
 			const { tz } = user;
+			const UserId = user.id;
 
 			bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
 
@@ -98,15 +99,18 @@ export default function(controller) {
 
 				convo.on(`end`, (convo) => {
 					
-					const { SlackUserId, tz, pingSlackUserId, pingTimeObject, deliveryType } = convo.pingObject;
-
-					if (!deliveryType) 
-						deliveryType = "live";
+					const { SlackUserId, tz, pingUserId, pingSlackUserId, pingTimeObject, deliveryType } = convo.pingObject;
 
 					let SlackUserIds = `${SlackUserId},${pingSlackUserId}`;
 					
-					if (pingTimeObject) {
-						// if no ping time, send it now!
+					if (deliveryType) {
+						// if no delivery type, send it now!
+						models.Ping.create({
+							FromUserId: UserId,
+							ToUserId: pingUserId,
+							deliveryType,
+							pingTime: pingTimeObject
+						});
 					} else {
 						bot.api.mpim.open({
 							users: SlackUserIds

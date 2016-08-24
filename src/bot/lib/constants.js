@@ -26,7 +26,7 @@ export const utterances = {
 	containsNumber: new RegExp(/\d/i),
 	containsAll: new RegExp(/\ba[all]{2,}/i),
 	containsAdd: new RegExp(/\ba[add]{1,}/i),
-	containsNow: new RegExp(/\bn[now]{1,}/i),
+	containsNow: new RegExp(/\bnow[ow]{0,3}\b/i),
 	containsRedo: new RegExp(/\bre[re do]{2,5}\b/i),
 	startsWithAdd: new RegExp(/^a[add]{2,}\b/i),
 	containsTask: new RegExp(/t[task]{2,}/i),
@@ -257,6 +257,10 @@ export const buttonValues ={
 	sendSooner: {
 		name: "SEND_SOONER",
 		value: "Send sooner"
+	},
+	now: {
+		name: "NOW",
+		value: "Now"
 	}
 }
 

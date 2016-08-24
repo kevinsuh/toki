@@ -9,7 +9,7 @@ module.exports = {
   },
   down: function down(queryInterface, Sequelize) {
 
-    return queryInterface.removeColumn('Users', 'pingTime');
+    return queryInterface.removeColumn('Pings', 'pingTime');
   }
 };
 //# sourceMappingURL=20160824190651-add-ping-time-to-ping.js.map
