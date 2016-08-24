@@ -71,7 +71,7 @@ function askWhoToPing(convo, text = `Who would you like to ping? You can type th
 
 function handlePingSlackUserIds(convo) {
 
-	const { SlackUserId, tz, pingSlackUserIds }  = convo.pingObject;
+	const { SlackUserId, tz, bot, pingSlackUserIds }  = convo.pingObject;
 
 	if (pingSlackUserIds) {
 
@@ -129,9 +129,24 @@ function handlePingSlackUserIds(convo) {
 				
 			} else {
 				// could not find user
-				convo.say(`Sorry, we couldn't recognize that user!`);
-				// create slack user on spot here
-				askWhoToPing(convo);
+				bot.api.users.info({ user: pingSlackUserId }, (err, response) => {
+					if (!err) {
+						const { user: { id, team_id, name, tz } } = response;
+						models.User.create({
+							TeamId: team_id,
+							tz,
+							SlackUserId: id,
+							SlackName: name
+						})
+						.then(() => {
+							handlePingSlackUserIds(convo);
+						});
+					} else {
+						convo.say(`Sorry, I can't recognize that user!`);
+						askWhoToPing(convo);
+					}
+				});
+				
 			}
 
 			convo.next();

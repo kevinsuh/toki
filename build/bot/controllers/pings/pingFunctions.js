@@ -89,71 +89,92 @@ function handlePingSlackUserIds(convo) {
 	var _convo$pingObject3 = convo.pingObject;
 	var SlackUserId = _convo$pingObject3.SlackUserId;
 	var tz = _convo$pingObject3.tz;
+	var bot = _convo$pingObject3.bot;
 	var pingSlackUserIds = _convo$pingObject3.pingSlackUserIds;
 
 
 	if (pingSlackUserIds) {
+		(function () {
 
-		var pingSlackUserId = pingSlackUserIds[0];
-		convo.pingObject.pingSlackUserId = pingSlackUserId;
+			var pingSlackUserId = pingSlackUserIds[0];
+			convo.pingObject.pingSlackUserId = pingSlackUserId;
 
-		_models2.default.User.find({
-			where: { SlackUserId: pingSlackUserId }
-		}).then(function (user) {
+			_models2.default.User.find({
+				where: { SlackUserId: pingSlackUserId }
+			}).then(function (user) {
 
-			if (user) {
-				var SlackName = user.SlackName;
-				var id = user.id;
+				if (user) {
+					var SlackName = user.SlackName;
+					var id = user.id;
 
-				convo.pingObject.pingUserId = id;
+					convo.pingObject.pingUserId = id;
 
-				// we will only handle 1
-				if (pingSlackUserIds.length > 1) {
-					convo.say('Hey! Right now I only handle one recipient DM, so I\'ll be helping you with <@' + user.dataValues.SlackUserId + '>. Feel free to queue another message right after this!');
+					// we will only handle 1
+					if (pingSlackUserIds.length > 1) {
+						convo.say('Hey! Right now I only handle one recipient DM, so I\'ll be helping you with <@' + user.dataValues.SlackUserId + '>. Feel free to queue another message right after this!');
+					}
+
+					// user found, handle the ping flow!
+					user.getSessions({
+						where: ['"open" = ?', true],
+						order: '"Session"."createdAt" DESC'
+					}).then(function (sessions) {
+
+						var session = sessions[0];
+
+						if (session) {
+							// queue the message
+							var _session$dataValues = session.dataValues;
+							var content = _session$dataValues.content;
+							var endTime = _session$dataValues.endTime;
+
+
+							var now = (0, _momentTimezone2.default)().tz(tz);
+							var endTimeObject = (0, _momentTimezone2.default)(endTime).tz(tz);
+							var endTimeString = endTimeObject.format("h:mma");
+							var minutesLeft = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(now)).asMinutes());
+
+							convo.say('<@' + user.dataValues.SlackUserId + '> is focusing on `' + content + '` until *' + endTimeString + '*');
+							convo.pingObject.userInSession = {
+								user: user,
+								endTimeObject: endTimeObject
+							};
+							askForQueuedPingMessages(convo);
+						} else {
+							// send the message
+							convo.say(':point_left: <@' + user.dataValues.SlackUserId + '> is not a focused work session right now, so I started a conversation for you');
+							convo.say('Thank you for being mindful of <@' + user.dataValues.SlackUserId + '>\'s attention :raised_hands:');
+							convo.next();
+						}
+					});
+				} else {
+					// could not find user
+					bot.api.users.info({ user: pingSlackUserId }, function (err, response) {
+						if (!err) {
+							var _response$user = response.user;
+							var _id = _response$user.id;
+							var team_id = _response$user.team_id;
+							var name = _response$user.name;
+							var _tz = _response$user.tz;
+
+							_models2.default.User.create({
+								TeamId: team_id,
+								tz: _tz,
+								SlackUserId: _id,
+								SlackName: name
+							}).then(function () {
+								handlePingSlackUserIds(convo);
+							});
+						} else {
+							convo.say('Sorry, I can\'t recognize that user!');
+							askWhoToPing(convo);
+						}
+					});
 				}
 
-				// user found, handle the ping flow!
-				user.getSessions({
-					where: ['"open" = ?', true],
-					order: '"Session"."createdAt" DESC'
-				}).then(function (sessions) {
-
-					var session = sessions[0];
-
-					if (session) {
-						// queue the message
-						var _session$dataValues = session.dataValues;
-						var content = _session$dataValues.content;
-						var endTime = _session$dataValues.endTime;
-
-
-						var now = (0, _momentTimezone2.default)().tz(tz);
-						var endTimeObject = (0, _momentTimezone2.default)(endTime).tz(tz);
-						var endTimeString = endTimeObject.format("h:mma");
-						var minutesLeft = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(now)).asMinutes());
-
-						convo.say('<@' + user.dataValues.SlackUserId + '> is focusing on `' + content + '` until *' + endTimeString + '*');
-						convo.pingObject.userInSession = {
-							user: user,
-							endTimeObject: endTimeObject
-						};
-						askForQueuedPingMessages(convo);
-					} else {
-						// send the message
-						convo.say(':point_left: <@' + user.dataValues.SlackUserId + '> is not a focused work session right now, so I started a conversation for you');
-						convo.say('Thank you for being mindful of <@' + user.dataValues.SlackUserId + '>\'s attention :raised_hands:');
-						convo.next();
-					}
-				});
-			} else {
-				// could not find user
-				convo.say('Sorry, we couldn\'t recognize that user!');
-				// create slack user on spot here
-				askWhoToPing(convo);
-			}
-
-			convo.next();
-		});
+				convo.next();
+			});
+		})();
 	} else {
 		startPingFlow(convo);
 	}
