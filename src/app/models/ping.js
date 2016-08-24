@@ -1,6 +1,6 @@
 'use strict';
 module.exports = function(sequelize, DataTypes) {
-  var Request = sequelize.define('Request', {
+  var Ping = sequelize.define('Ping', {
     FromUserId: DataTypes.INTEGER,
     ToUserId: DataTypes.INTEGER,
     content: DataTypes.STRING,
@@ -14,5 +14,5 @@ module.exports = function(sequelize, DataTypes) {
       }
     }
   });
-  return Request;
+  return Ping;
 };
