@@ -38,10 +38,51 @@ function startPingFlow(convo) {
 }
 
 function askWhoToPing(convo) {
+	var text = arguments.length <= 1 || arguments[1] === undefined ? 'Who would you like to ping? You can type their username, like `@emily`' : arguments[1];
 	var _convo$pingObject2 = convo.pingObject;
 	var SlackUserId = _convo$pingObject2.SlackUserId;
 	var tz = _convo$pingObject2.tz;
 	var pingSlackUserIds = _convo$pingObject2.pingSlackUserIds;
+
+
+	var attachments = [{
+		attachment_type: 'default',
+		callback_id: "WHO_TO_PING",
+		fallback: "Who would you like to ping?",
+		actions: [{
+			name: _constants.buttonValues.neverMind.name,
+			text: 'Never Mind!',
+			value: _constants.buttonValues.neverMind.value,
+			type: 'button'
+		}]
+	}];
+
+	convo.ask({
+		text: text,
+		attachments: attachments
+	}, [{
+		pattern: _constants.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say('Ok! Just let me know if you want to ping someone on your team'); // in future check if in session
+		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			var text = response.text;
+
+			var pingSlackUserIds = (0, _messageHelpers.getUniqueSlackUsersFromString)(text);
+
+			if (pingSlackUserIds.length > 0) {
+
+				convo.pingObject.pingSlackUserIds = pingSlackUserIds;
+				handlePingSlackUserIds(convo);
+			} else {
+				askWhoToPing(convo, 'Whoops! Try *typing @ + the first few letters of the intended recipient’s first name*, like `@matt` , then clicking on the correct recipient');
+			}
+
+			convo.next();
+		}
+	}]);
 }
 
 function handlePingSlackUserIds(convo) {
@@ -68,7 +109,7 @@ function handlePingSlackUserIds(convo) {
 
 				// we will only handle 1
 				if (pingSlackUserIds.length > 1) {
-					convo.say('Hey! Right now I only handle one recipient DM, so I\'ll be helping you queue for <@' + user.dataValues.SlackUserId + '>. Feel free to queue another message right after this!');
+					convo.say('Hey! Right now I only handle one recipient DM, so I\'ll be helping you with <@' + user.dataValues.SlackUserId + '>. Feel free to queue another message right after this!');
 				}
 
 				// user found, handle the ping flow!
@@ -133,6 +174,8 @@ function askForQueuedPingMessages(convo) {
 			var endTimeObject = userInSession.endTimeObject;
 
 			var endTimeString = endTimeObject.format("h:mma");
+			var now = (0, _momentTimezone2.default)().tz(tz);
+			var minutesLeft = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(now)).asMinutes());
 
 			var text = 'What would you like me to send <@' + user.dataValues.SlackUserId + '> at *' + endTimeString + '*?';
 			var attachments = [{
@@ -141,7 +184,8 @@ function askForQueuedPingMessages(convo) {
 				callback_id: "PING_MESSAGE_LIST",
 				fallback: "What is the message you want to queue up?"
 			}];
-			var count = 0;
+
+			var requestMessages = [];
 
 			convo.ask({
 				text: text,
@@ -150,19 +194,39 @@ function askForQueuedPingMessages(convo) {
 				pattern: _constants.utterances.containsSendAt,
 				callback: function callback(response, convo) {
 
+					convo.pingObject.requestMessages = requestMessages;
+
+					var text = '';
+
 					// if date here, pre-fill it
 					var customTimeObject = (0, _messageHelpers.witTimeResponseToTimeZoneObject)(response, tz);
 					if (customTimeObject) {
-						convo.pingObject.pingTimeObject = customTimeObject;
-						convo.pingObject.deliveryType = "grenade";
+
+						if (now < customTimeObject && customTimeObject < endTimeObject) {
+
+							convo.pingObject.pingTimeObject = customTimeObject;
+							convo.pingObject.deliveryType = "grenade";
+						} else {
+
+							var minutesBuffer = Math.round(minutesLeft / 4);
+							now = (0, _momentTimezone2.default)().tz(tz);
+							var exampleEndTimeObjectOne = now.add(minutesBuffer, 'minutes');
+							now = (0, _momentTimezone2.default)().tz(tz);
+							var exampleEndTimeObjectTwo = now.add(minutesLeft - minutesBuffer, 'minutes');
+							convo.say('The time has to be between now and ' + endTimeString + '. You can input times like `' + exampleEndTimeObjectOne.format("h:mma") + '` or `' + exampleEndTimeObjectTwo.format("h:mma") + '`');
+							text = "When would you like to send your urgent message?";
+						}
 					}
 
-					askForPingTime(convo);
+					askForPingTime(convo, text);
 					convo.next();
 				}
 			}, {
 				pattern: _constants.utterances.sendSooner,
 				callback: function callback(response, convo) {
+
+					convo.pingObject.requestMessages = requestMessages;
+
 					askForPingTime(convo);
 					convo.next();
 				}
@@ -170,7 +234,7 @@ function askForQueuedPingMessages(convo) {
 				default: true,
 				callback: function callback(response, convo) {
 
-					count++;
+					requestMessages.push(response.text);
 
 					var pingMessageListUpdate = (0, _messageHelpers.getMostRecentMessageToUpdate)(response.channel, bot, "PING_MESSAGE_LIST");
 					if (pingMessageListUpdate) {
@@ -187,7 +251,7 @@ function askForQueuedPingMessages(convo) {
 							type: 'button'
 						}];
 
-						attachments[0].text = count == 1 ? response.text : attachments[0].text + '\n' + response.text;
+						attachments[0].text = requestMessages.length == 1 ? response.text : attachments[0].text + '\n' + response.text;
 
 						pingMessageListUpdate.attachments = JSON.stringify(attachments);
 						bot.api.chat.update(pingMessageListUpdate);
@@ -201,6 +265,7 @@ function askForQueuedPingMessages(convo) {
 }
 
 function askForPingTime(convo) {
+	var text = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
 	var _convo$pingObject5 = convo.pingObject;
 	var SlackUserId = _convo$pingObject5.SlackUserId;
 	var bot = _convo$pingObject5.bot;
@@ -218,11 +283,21 @@ function askForPingTime(convo) {
 
 
 			var now = (0, _momentTimezone2.default)().tz(tz);
-			var minutesLeft = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(now)).asMinutes() / 2);
-			var exampleEndTime = now.add(Math.round(minutesLeft / 2), 'minutes').format("h:mma");
+			var minutesLeft = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(now)).asMinutes());
+			var exampleEndTimeObject = void 0;
+			if (minutesLeft > 10) {
+				exampleEndTimeObject = now.add(minutesLeft - 10, 'minutes');
+			} else {
+				exampleEndTimeObject = now.add(Math.round(minutesLeft / 2), 'minutes');
+			}
+
+			var exampleEndTimeString = exampleEndTimeObject.format("h:mma");
 			var endTimeString = endTimeObject.format("h:mma");
 
-			var text = 'Would you like to send this urgent message now, or at a specific time before ' + endTimeString + '? If it’s the latter, just tell me the time, like `' + exampleEndTime + '`';
+			if (text == '') {
+				text = 'Would you like to send this urgent message now, or at a specific time before ' + endTimeString + '? If it’s the latter, just tell me the time, like `' + exampleEndTimeString + '`';
+			}
+
 			var attachments = [{
 				attachment_type: 'default',
 				callback_id: "PING_GRENADE",
@@ -241,44 +316,40 @@ function askForPingTime(convo) {
 			}, [{
 				pattern: _constants.utterances.containsNow,
 				callback: function callback(response, convo) {
-
 					// send now
 					convo.pingObject.deliveryType = "bomb";
 					convo.say(':point_left: Got it! I\'ll send your message to <@' + user.dataValues.SlackUserId + '> :runner: :pencil:');
 					convo.next();
 				}
 			}, {
-				pattern: _constants.utterances.sendSooner,
-				callback: function callback(response, convo) {
-					askForPingTime(convo);
-					convo.next();
-				}
-			}, {
 				default: true,
 				callback: function callback(response, convo) {
 
-					count++;
+					var customTimeObject = (0, _messageHelpers.witTimeResponseToTimeZoneObject)(response, tz);
+					if (customTimeObject) {
+						now = (0, _momentTimezone2.default)().tz(tz);
+						if (now < customTimeObject && customTimeObject < endTimeObject) {
+							// success!
+							convo.pingObject.pingTimeObject = customTimeObject;
+							convo.pingObject.deliveryType = "grenade";
+							convo.say('Excellent! I’ll be sending your message to <@' + user.dataValues.SlackUserId + '> at *' + customTimeObject.format("h:mma") + '* :mailbox_open:');
+						} else {
+							// has to be less than or equal to end time
+							var minutesBuffer = Math.round(minutesLeft / 4);
+							now = (0, _momentTimezone2.default)().tz(tz);
+							var exampleEndTimeObjectOne = now.add(minutesBuffer, 'minutes');
+							now = (0, _momentTimezone2.default)().tz(tz);
+							var exampleEndTimeObjectTwo = now.add(minutesLeft - minutesBuffer, 'minutes');
+							convo.say('The time has to be between now and ' + endTimeString + '. You can input times like `' + exampleEndTimeObjectOne.format("h:mma") + '` or `' + exampleEndTimeObjectTwo.format("h:mma") + '`');
+							askForPingTime(convo, "When would you like to send your urgent message?");
+						}
+					} else {
 
-					var pingMessageListUpdate = (0, _messageHelpers.getMostRecentMessageToUpdate)(response.channel, bot, "PING_MESSAGE_LIST");
-					if (pingMessageListUpdate) {
-
-						attachments[0].actions = [{
-							name: _constants.buttonValues.sendAtEndOfSession.name,
-							text: 'Send at ' + endTimeString,
-							value: 'Send at ' + endTimeString,
-							type: 'button'
-						}, {
-							name: _constants.buttonValues.sendSooner.name,
-							text: ':bomb: Send sooner :bomb:',
-							value: _constants.buttonValues.sendSooner.value,
-							type: 'button'
-						}];
-
-						attachments[0].text = count == 1 ? response.text : attachments[0].text + '\n' + response.text;
-
-						pingMessageListUpdate.attachments = JSON.stringify(attachments);
-						bot.api.chat.update(pingMessageListUpdate);
+						convo.say('I didn\'t quite get that :thinking_face:');
+						convo.repeat();
 					}
+
+					convo.next();
 				}
 			}]);
 		})();

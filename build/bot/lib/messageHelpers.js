@@ -344,16 +344,21 @@ function getUniqueSlackUsersFromString(string) {
 
 	var arrayString = string.match(slackUserIdContainer);
 	var slackUserIds = [];
-	arrayString.forEach(function (string) {
-		var slackUserId = string.replace(replaceRegEx, "");
-		if (!_lodash2.default.includes(slackUserIds, slackUserId)) {
-			slackUserIds.push(slackUserId);
+
+	if (arrayString) {
+		arrayString.forEach(function (string) {
+			var slackUserId = string.replace(replaceRegEx, "");
+			if (!_lodash2.default.includes(slackUserIds, slackUserId)) {
+				slackUserIds.push(slackUserId);
+			}
+		});
+		if (slackUserIds.length == 0) {
+			return false;
+		} else {
+			return slackUserIds;
 		}
-	});
-	if (slackUserIds.length == 0) {
-		return false;
 	} else {
-		return slackUserIds;
+		return false;
 	}
 }
 

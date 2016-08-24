@@ -321,17 +321,23 @@ export function getUniqueSlackUsersFromString(string) {
 	
 	let arrayString = string.match(slackUserIdContainer);
 	let slackUserIds = [];
-	arrayString.forEach((string) => {
-		const slackUserId = string.replace(replaceRegEx, "");
-		if (!_.includes(slackUserIds, slackUserId)) {
-			slackUserIds.push(slackUserId);
+
+	if (arrayString) {
+		arrayString.forEach((string) => {
+			const slackUserId = string.replace(replaceRegEx, "");
+			if (!_.includes(slackUserIds, slackUserId)) {
+				slackUserIds.push(slackUserId);
+			}
+		});
+		if (slackUserIds.length == 0) {
+			return false;
+		} else {
+			return slackUserIds;
 		}
-	});
-	if (slackUserIds.length == 0) {
-		return false;
 	} else {
-		return slackUserIds;
+		return false;
 	}
+	
 }
 
 // returns array joined together into a string
