@@ -96,6 +96,7 @@ exports.default = function (controller) {
 
 				convo.pingObject = {
 					SlackUserId: SlackUserId,
+					bot: bot,
 					tz: tz,
 					pingSlackUserIds: pingSlackUserIds
 				};

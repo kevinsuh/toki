@@ -1,7 +1,7 @@
 import moment from 'moment-timezone';
 import models from '../../../app/models';
 import { utterances, colorsArray, buttonValues, colorsHash } from '../../lib/constants';
-import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandomExample, commaSeparateOutStringArray } from '../../lib/messageHelpers';
+import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandomExample, commaSeparateOutStringArray, getMostRecentMessageToUpdate } from '../../lib/messageHelpers';
 
 /**
  * 		PING CONVERSATION FLOW FUNCTIONS
@@ -75,7 +75,7 @@ function handlePingSlackUserIds(convo) {
 
 					} else {
 						// send the message
-						convo.say(`<@${user.dataValues.SlackUserId}> is not a focused work session right now, so I started a conversation for you (it’s a DM chat :point_left:)`);
+						convo.say(`:point_left: <@${user.dataValues.SlackUserId}> is not a focused work session right now, so I started a conversation for you`);
 						convo.say(`Thank you for being mindful of <@${user.dataValues.SlackUserId}>'s attention :raised_hands:`);
 						convo.next();
 					}
@@ -100,13 +100,71 @@ function handlePingSlackUserIds(convo) {
 
 function askForQueuedPingMessages(convo) {
 
-	const { SlackUserId, tz, userInSession }  = convo.pingObject;
+	const { SlackUserId, bot, tz, userInSession }  = convo.pingObject;
 
 	if (userInSession) {
 		// we gathered appropriate info about user
 		const { user, endTimeObject } = userInSession;
 		const endTimeString = endTimeObject.format("h:mma");
-		convo.ask(`What would you like to send <@${user.dataValues.SlackUserId}> at *${endTimeString}*`);
+
+		
+
+		let text = `What would you like me to send <@${user.dataValues.SlackUserId}> at *${endTimeString}*?`;
+		let attachments = [{
+			text: "Enter as many lines as you’d like to include in the message then choose one of the send options when your message is ready to go\n(These few lines will delete after you type your first line and hit Enter :wink:)",
+			attachment_type: 'default',
+			callback_id: "PING_MESSAGE_LIST",
+			fallback: "What is the message you want to queue up?"
+		}];
+
+		convo.ask({
+			text,
+			attachments
+		}, [
+			{
+				pattern: utterances.containsSendAt,
+				callback: (response, convo) => {
+					// 
+				}
+			},
+			{
+				pattern: utterances.sendSooner,
+				callback: (response, convo) => {
+
+				}
+			},
+			{
+				default: true,
+				callback: (response, convo) => {
+
+					let pingMessageListUpdate = getMostRecentMessageToUpdate(response.channel, bot, "PING_MESSAGE_LIST");
+					if (pingMessageListUpdate) {
+
+						attachments[0].actions = [
+							{
+								name: buttonValues.sendAtEndOfSession.name,
+								text: `Send at ${endTimeString}`,
+								value: buttonValues.sendAtEndOfSession.value,
+								type: `button`
+							},
+							{
+								name: buttonValues.sendSooner.name,
+								text: `:bomb: Send sooner :bomb:`,
+								value: buttonValues.sendSooner.value,
+								type: `button`
+							}
+						];
+						attachments[0].text = `UPDATED TEXT`;
+
+						pingMessageListUpdate.attachments = JSON.stringify(attachments);
+						console.log(pingMessageListUpdate);
+						bot.api.chat.update(pingMessageListUpdate);
+
+					}
+
+				}
+			}
+		]);
 
 
 

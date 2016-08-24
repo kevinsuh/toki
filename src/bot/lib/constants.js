@@ -84,6 +84,8 @@ export const utterances = {
 	beginAdventure: new RegExp(/\bbegin\b.*\badventure\b/i),
 	changeTimeAndTask: new RegExp(/\bchan[nge]{1,5}\b.{1,3}\btim[me]{1,3}\b.{1,7}\btas[sk]{1,3}\b/i),
 	keepWorking: new RegExp(/\bkee[ep]{1,3}\b.{1,3}\bwor[king]{1,6}\b/i),
+	sendSooner: new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bsoon[ner]{1,4}\b/i),
+	containsSendAt: new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bat[t]{0,3}\b/i)
 }
 
 
@@ -247,6 +249,14 @@ export const buttonValues ={
 	no: {
 		name: "NO",
 		value: "no"
+	},
+	sendAtEndOfSession: {
+		name: "SEND_AT_END_SESSION",
+		value: "Send at end of session"
+	},
+	sendSooner: {
+		name: "SEND_SOONER",
+		value: "Send sooner"
 	}
 }
 

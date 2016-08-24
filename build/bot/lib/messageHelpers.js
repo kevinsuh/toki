@@ -12,6 +12,7 @@ exports.convertTimeStringToMinutes = convertTimeStringToMinutes;
 exports.dateStringToMomentTimeZone = dateStringToMomentTimeZone;
 exports.getUniqueSlackUsersFromString = getUniqueSlackUsersFromString;
 exports.commaSeparateOutStringArray = commaSeparateOutStringArray;
+exports.getMostRecentMessageToUpdate = getMostRecentMessageToUpdate;
 
 var _constants = require('./constants');
 
@@ -375,5 +376,48 @@ function commaSeparateOutStringArray(a) {
 	// make into string
 	var string = [a.slice(0, -1).join(', '), a.slice(-1)[0]].join(a.length < 2 ? '' : ' and ');
 	return string;
+}
+
+// this is for deleting the most recent message!
+// mainly used for convo.ask, when you do natural language instead
+// of clicking the button
+function getMostRecentMessageToUpdate(userChannel, bot) {
+	var callbackId = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+	var sentMessages = bot.sentMessages;
+
+
+	var updateTaskListMessageObject = false;
+	if (sentMessages && sentMessages[userChannel]) {
+
+		var channelSentMessages = sentMessages[userChannel];
+
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (var i = channelSentMessages.length - 1; i >= 0; i--) {
+			var _channelSentMessages$ = channelSentMessages[i];
+			var channel = _channelSentMessages$.channel;
+			var ts = _channelSentMessages$.ts;
+			var attachments = _channelSentMessages$.attachments;
+
+
+			if (channel == userChannel) {
+				if (callbackId && attachments && callbackId == attachments[0].callback_id) {
+					updateTaskListMessageObject = {
+						channel: channel,
+						ts: ts
+					};
+					break;
+				} else {
+					updateTaskListMessageObject = {
+						channel: channel,
+						ts: ts
+					};
+					break;
+				}
+			}
+		}
+	}
+
+	return updateTaskListMessageObject;
 }
 //# sourceMappingURL=messageHelpers.js.map

@@ -351,5 +351,45 @@ export function commaSeparateOutStringArray(a, config = {}) {
 	// make into string
 	let string = [a.slice(0, -1).join(', '), a.slice(-1)[0]].join(a.length < 2 ? '' : ' and ');
 	return string;
+
+}
+
+// this is for deleting the most recent message!
+// mainly used for convo.ask, when you do natural language instead
+// of clicking the button
+export function getMostRecentMessageToUpdate(userChannel, bot, callbackId = false) {
 	
+	let { sentMessages } = bot;
+
+	let updateTaskListMessageObject = false;
+	if (sentMessages && sentMessages[userChannel]) {
+
+		let channelSentMessages = sentMessages[userChannel];
+
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (let i = channelSentMessages.length - 1; i >= 0; i--) {
+
+			const { channel, ts, attachments } = channelSentMessages[i];
+
+			if (channel == userChannel) {
+				if ( callbackId && attachments && callbackId == attachments[0].callback_id) {
+					updateTaskListMessageObject = {
+						channel,
+						ts
+					};
+					break;
+				} else {
+					updateTaskListMessageObject = {
+						channel,
+						ts
+					};
+					break;
+				}
+			}
+		}
+	}
+
+	return updateTaskListMessageObject;
+
 }
