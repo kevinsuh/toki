@@ -11,6 +11,7 @@ exports.convertMinutesToHoursString = convertMinutesToHoursString;
 exports.convertTimeStringToMinutes = convertTimeStringToMinutes;
 exports.dateStringToMomentTimeZone = dateStringToMomentTimeZone;
 exports.getUniqueSlackUsersFromString = getUniqueSlackUsersFromString;
+exports.commaSeparateOutStringArray = commaSeparateOutStringArray;
 
 var _constants = require('./constants');
 
@@ -331,6 +332,11 @@ function dateStringToMomentTimeZone(timeString, timeZone) {
 	return userMomentTimezone;
 }
 
+/**
+ * get array of slackUserIds from string
+ * @param  {string input} string "ping <@UIXUXUXU>" // done automatically
+ * @return {array of SlackUserIds} ['UIXUXUXU'];
+ */
 function getUniqueSlackUsersFromString(string) {
 	var slackUserIdContainer = new RegExp(/<@(.*?)>/g);
 	var replaceRegEx = new RegExp(/<|>|@/g);
@@ -348,5 +354,26 @@ function getUniqueSlackUsersFromString(string) {
 	} else {
 		return slackUserIds;
 	}
+}
+
+// returns array joined together into a string
+function commaSeparateOutStringArray(a) {
+	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var codeBlock = config.codeBlock;
+	var slackNames = config.slackNames;
+
+
+	a = a.map(function (a) {
+		if (codeBlock) {
+			a = '`' + a + '`';
+		} else if (slackNames) {
+			a = '@' + a;
+		}
+		return a;
+	});
+
+	// make into string
+	var string = [a.slice(0, -1).join(', '), a.slice(-1)[0]].join(a.length < 2 ? '' : ' and ');
+	return string;
 }
 //# sourceMappingURL=messageHelpers.js.map

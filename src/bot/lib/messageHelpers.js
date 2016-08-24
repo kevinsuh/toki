@@ -310,6 +310,11 @@ export function dateStringToMomentTimeZone(timeString, timeZone) {
 
 }
 
+/**
+ * get array of slackUserIds from string
+ * @param  {string input} string "ping <@UIXUXUXU>" // done automatically
+ * @return {array of SlackUserIds} ['UIXUXUXU'];
+ */
 export function getUniqueSlackUsersFromString(string) {
 	const slackUserIdContainer = new RegExp(/<@(.*?)>/g);
 	const replaceRegEx = new RegExp(/<|>|@/g);
@@ -327,4 +332,24 @@ export function getUniqueSlackUsersFromString(string) {
 	} else {
 		return slackUserIds;
 	}
+}
+
+// returns array joined together into a string
+export function commaSeparateOutStringArray(a, config = {}) {
+
+	const { codeBlock, slackNames } = config;
+
+	a = a.map((a) => {
+		if (codeBlock) {
+			a = `\`${a}\``
+		} else if (slackNames) {
+			a = `@${a}`;
+		}
+		return a;
+	})
+
+	// make into string
+	let string = [a.slice(0, -1).join(', '), a.slice(-1)[0]].join(a.length < 2 ? '' : ' and ');
+	return string;
+	
 }

@@ -4,6 +4,7 @@ import models from '../../../app/models';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants, startSessionOptionsAttachments } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString } from '../../lib/messageHelpers';
+import { startPingFlow } from './pingFunctions';
 
 // STARTING A SESSION
 export default function(controller) {
@@ -20,12 +21,14 @@ export default function(controller) {
 		let botToken = bot.config.token;
 		bot          = bots[botToken];
 
-		const SlackUserId = message.user;
-		const { text }    = message;
+		const SlackUserId      = message.user;
+		const { text }         = message;
+		const pingSlackUserIds = getUniqueSlackUsersFromString(text);
 
 		let config = {
 			SlackUserId,
-			message
+			message,
+			pingSlackUserIds
 		}
 
 		bot.send({
@@ -33,20 +36,9 @@ export default function(controller) {
 			channel: message.channel
 		});
 		setTimeout(() => {
+			controller.trigger(`ping_flow`, [bot, config]);
+		}, 650);
 
-			models.User.find({
-				where: { SlackUserId }
-			}).then((user) => {
-
-				const { tz } = user;
-
-				bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
-					convo.say("PINGED!");
-				});
-
-			});
-
-		}, 750);
 	});
 
 	controller.hears(['^pin[ng]{1,4}'], 'direct_message', (bot, message) => {
@@ -56,18 +48,14 @@ export default function(controller) {
 		let botToken = bot.config.token;
 		bot          = bots[botToken];
 
-		const SlackUserId = message.user;
-		const { text }    = message;
-
+		const SlackUserId      = message.user;
+		const { text }         = message;
 		const pingSlackUserIds = getUniqueSlackUsersFromString(text);
-		console.log("\n\n ~~ \n\n\n")
-		console.log(text);
-		console.log(pingSlackUserIds);
-		console.log("\n\n ~~ \n\n\n")
 
 		let config = {
 			SlackUserId,
-			message
+			message,
+			pingSlackUserIds
 		}
 
 		bot.send({
@@ -75,20 +63,9 @@ export default function(controller) {
 			channel: message.channel
 		});
 		setTimeout(() => {
+			controller.trigger(`ping_flow`, [bot, config]);
+		}, 650);
 
-			models.User.find({
-				where: { SlackUserId }
-			}).then((user) => {
-
-				const { tz } = user;
-
-				bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
-					convo.say("PINGED!");
-				});
-
-			});
-
-		}, 750);
 	});
 
 	/**
@@ -97,13 +74,53 @@ export default function(controller) {
 	 */
 	controller.on('ping_flow', (bot, config) => {
 
-		const { SlackUserId, content, minutes, changeTimeAndTask } = config;
+		const { SlackUserId, message, pingSlackUserIds } = config;
 
 		models.User.find({
 			where: { SlackUserId }
 		}).then((user) => {
 
+			const { tz } = user;
+
+			bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
+
+				// have 5-minute exit time limit
+				convo.task.timeLimit = 1000 * 60 * 5;
+
+				convo.pingObject = {
+					SlackUserId,
+					tz,
+					pingSlackUserIds
+				}
+
+				startPingFlow(convo);
+
+				convo.on(`end`, (convo) => {
+					
+					const { SlackUserId, tz, pingSlackUserId } = convo.pingObject;
+
+					let SlackUserIds = `${SlackUserId},${pingSlackUserId}`;
+
+					// if no ping time, send it now!
+					bot.api.mpim.open({
+						users: SlackUserIds
+					}, (err, response) => {
+						if (!err) {
+							const { group: { id } } = response;
+							bot.startConversation({ channel: id }, (err, convo) => {
+								convo.say(`Hey <@${pingSlackUserId}>! You're not in a session and <@${SlackUserId}> wanted to reach out :raised_hands:`);
+							})
+						}
+					});
+
+					bot.start
+
+				})
+
+			});
+
 		});
+
 	});
 
 }

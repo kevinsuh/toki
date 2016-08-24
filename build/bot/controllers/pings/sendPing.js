@@ -25,10 +25,12 @@ exports.default = function (controller) {
 		var SlackUserId = message.user;
 		var text = message.text;
 
+		var pingSlackUserIds = (0, _messageHelpers.getUniqueSlackUsersFromString)(text);
 
 		var config = {
 			SlackUserId: SlackUserId,
-			message: message
+			message: message,
+			pingSlackUserIds: pingSlackUserIds
 		};
 
 		bot.send({
@@ -36,18 +38,8 @@ exports.default = function (controller) {
 			channel: message.channel
 		});
 		setTimeout(function () {
-
-			_models2.default.User.find({
-				where: { SlackUserId: SlackUserId }
-			}).then(function (user) {
-				var tz = user.tz;
-
-
-				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-					convo.say("PINGED!");
-				});
-			});
-		}, 750);
+			controller.trigger('ping_flow', [bot, config]);
+		}, 650);
 	});
 
 	controller.hears(['^pin[ng]{1,4}'], 'direct_message', function (bot, message) {
@@ -64,16 +56,12 @@ exports.default = function (controller) {
 		var SlackUserId = message.user;
 		var text = message.text;
 
-
 		var pingSlackUserIds = (0, _messageHelpers.getUniqueSlackUsersFromString)(text);
-		console.log("\n\n ~~ \n\n\n");
-		console.log(text);
-		console.log(pingSlackUserIds);
-		console.log("\n\n ~~ \n\n\n");
 
 		var config = {
 			SlackUserId: SlackUserId,
-			message: message
+			message: message,
+			pingSlackUserIds: pingSlackUserIds
 		};
 
 		bot.send({
@@ -81,18 +69,8 @@ exports.default = function (controller) {
 			channel: message.channel
 		});
 		setTimeout(function () {
-
-			_models2.default.User.find({
-				where: { SlackUserId: SlackUserId }
-			}).then(function (user) {
-				var tz = user.tz;
-
-
-				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-					convo.say("PINGED!");
-				});
-			});
-		}, 750);
+			controller.trigger('ping_flow', [bot, config]);
+		}, 650);
 	});
 
 	/**
@@ -101,14 +79,55 @@ exports.default = function (controller) {
   */
 	controller.on('ping_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
-		var content = config.content;
-		var minutes = config.minutes;
-		var changeTimeAndTask = config.changeTimeAndTask;
+		var message = config.message;
+		var pingSlackUserIds = config.pingSlackUserIds;
 
 
 		_models2.default.User.find({
 			where: { SlackUserId: SlackUserId }
-		}).then(function (user) {});
+		}).then(function (user) {
+			var tz = user.tz;
+
+
+			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+				// have 5-minute exit time limit
+				convo.task.timeLimit = 1000 * 60 * 5;
+
+				convo.pingObject = {
+					SlackUserId: SlackUserId,
+					tz: tz,
+					pingSlackUserIds: pingSlackUserIds
+				};
+
+				(0, _pingFunctions.startPingFlow)(convo);
+
+				convo.on('end', function (convo) {
+					var _convo$pingObject = convo.pingObject;
+					var SlackUserId = _convo$pingObject.SlackUserId;
+					var tz = _convo$pingObject.tz;
+					var pingSlackUserId = _convo$pingObject.pingSlackUserId;
+
+
+					var SlackUserIds = SlackUserId + ',' + pingSlackUserId;
+
+					// if no ping time, send it now!
+					bot.api.mpim.open({
+						users: SlackUserIds
+					}, function (err, response) {
+						if (!err) {
+							var id = response.group.id;
+
+							bot.startConversation({ channel: id }, function (err, convo) {
+								convo.say('Hey <@' + pingSlackUserId + '>! You\'re not in a session and <@' + SlackUserId + '> wanted to reach out :raised_hands:');
+							});
+						}
+					});
+
+					bot.start;
+				});
+			});
+		});
 	});
 };
 
@@ -125,6 +144,8 @@ var _models2 = _interopRequireDefault(_models);
 var _constants = require('../../lib/constants');
 
 var _messageHelpers = require('../../lib/messageHelpers');
+
+var _pingFunctions = require('./pingFunctions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 //# sourceMappingURL=sendPing.js.map
