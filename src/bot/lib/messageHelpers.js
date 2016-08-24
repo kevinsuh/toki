@@ -310,3 +310,23 @@ export function dateStringToMomentTimeZone(timeString, timeZone) {
 	return userMomentTimezone;
 
 }
+
+export function getSlackUsersFromString(string) {
+	const slackUserIdContainer = new RegExp(/<@(.*?)>/g);
+  const replaceRegEx = new RegExp(/<|>|@/g);
+  
+	let arrayString = string.split(' ');
+	let slackUserIds = [];
+	arrayString.forEach((string) => {
+		if (slackUserIdContainer.test(string)) {
+    	// if contained in slackUserIdContainer, then it is SlackUserId
+    	string = string.replace(replaceRegEx, "");
+      slackUserIds.push(string);
+    }
+	});
+	if (slackUserIds.length == 0) {
+		return false;
+	} else {
+		return slackUserIds;
+	}
+}

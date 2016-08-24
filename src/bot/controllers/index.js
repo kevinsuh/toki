@@ -10,6 +10,7 @@ import setupReceiveMiddleware from '../middleware/receiveMiddleware';
 import notWitController from './notWit';
 import miscController from './misc';
 import sessionsController from './sessions';
+import pingsController from './pings';
 
 require('dotenv').config();
 
@@ -80,7 +81,7 @@ export function customConfigBot(controller) {
 
 	notWitController(controller);
 	sessionsController(controller);
-
+	pingsController(controller);
 
 	miscController(controller);
 

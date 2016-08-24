@@ -10,6 +10,7 @@ exports.witDurationToMinutes = witDurationToMinutes;
 exports.convertMinutesToHoursString = convertMinutesToHoursString;
 exports.convertTimeStringToMinutes = convertTimeStringToMinutes;
 exports.dateStringToMomentTimeZone = dateStringToMomentTimeZone;
+exports.getSlackUsersFromString = getSlackUsersFromString;
 
 var _constants = require('./constants');
 
@@ -326,5 +327,25 @@ function dateStringToMomentTimeZone(timeString, timeZone) {
 	var userMomentTimezone = _momentTimezone2.default.tz(dateTimeFormat, timeZone);
 
 	return userMomentTimezone;
+}
+
+function getSlackUsersFromString(string) {
+	var slackUserIdContainer = new RegExp(/<@(.*?)>/g);
+	var replaceRegEx = new RegExp(/<|>|@/g);
+
+	var arrayString = string.split(' ');
+	var slackUserIds = [];
+	arrayString.forEach(function (string) {
+		if (slackUserIdContainer.test(string)) {
+			// if contained in slackUserIdContainer, then it is SlackUserId
+			string = string.replace(replaceRegEx, "");
+			slackUserIds.push(string);
+		}
+	});
+	if (slackUserIds.length == 0) {
+		return false;
+	} else {
+		return slackUserIds;
+	}
 }
 //# sourceMappingURL=messageHelpers.js.map
