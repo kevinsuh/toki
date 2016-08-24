@@ -108,24 +108,26 @@ exports.default = function (controller) {
 					var SlackUserId = _convo$pingObject.SlackUserId;
 					var tz = _convo$pingObject.tz;
 					var pingSlackUserId = _convo$pingObject.pingSlackUserId;
+					var pingTimeObject = _convo$pingObject.pingTimeObject;
 
 
 					var SlackUserIds = SlackUserId + ',' + pingSlackUserId;
 
-					// if no ping time, send it now!
-					bot.api.mpim.open({
-						users: SlackUserIds
-					}, function (err, response) {
-						if (!err) {
-							var id = response.group.id;
+					if (pingTimeObject) {
+						// if no ping time, send it now!
+					} else {
+						bot.api.mpim.open({
+							users: SlackUserIds
+						}, function (err, response) {
+							if (!err) {
+								var id = response.group.id;
 
-							bot.startConversation({ channel: id }, function (err, convo) {
-								convo.say('Hey <@' + pingSlackUserId + '>! You\'re not in a session and <@' + SlackUserId + '> wanted to reach out :raised_hands:');
-							});
-						}
-					});
-
-					bot.start;
+								bot.startConversation({ channel: id }, function (err, convo) {
+									convo.say('Hey <@' + pingSlackUserId + '>! You\'re not in a session and <@' + SlackUserId + '> wanted to reach out :raised_hands:');
+								});
+							}
+						});
+					}
 				});
 			});
 		});

@@ -146,11 +146,15 @@ function askForQueuedPingMessages(convo) {
 			}, [{
 				pattern: _constants.utterances.containsSendAt,
 				callback: function callback(response, convo) {
-					// 
+					convo.say('sending at later time!');
+					convo.next();
 				}
 			}, {
 				pattern: _constants.utterances.sendSooner,
-				callback: function callback(response, convo) {}
+				callback: function callback(response, convo) {
+					convo.say('okay lets send sooner!');
+					convo.next();
+				}
 			}, {
 				default: true,
 				callback: function callback(response, convo) {
@@ -172,16 +176,9 @@ function askForQueuedPingMessages(convo) {
 							type: 'button'
 						}];
 
-						if (count == 1) {
-							// replace msg first time
-							attachments[0].text = response.text;
-						} else {
-							// subsequent times append it
-							attachments[0].text = attachments[0].text + '\n' + response.text;
-						}
+						attachments[0].text = count == 1 ? response.text : attachments[0].text + '\n' + response.text;
 
 						pingMessageListUpdate.attachments = JSON.stringify(attachments);
-						console.log(pingMessageListUpdate);
 						bot.api.chat.update(pingMessageListUpdate);
 					}
 				}

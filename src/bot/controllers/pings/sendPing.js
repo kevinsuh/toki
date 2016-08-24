@@ -98,23 +98,26 @@ export default function(controller) {
 
 				convo.on(`end`, (convo) => {
 					
-					const { SlackUserId, tz, pingSlackUserId } = convo.pingObject;
+					const { SlackUserId, tz, pingSlackUserId, pingTimeObject } = convo.pingObject;
 
 					let SlackUserIds = `${SlackUserId},${pingSlackUserId}`;
 
-					// if no ping time, send it now!
-					bot.api.mpim.open({
-						users: SlackUserIds
-					}, (err, response) => {
-						if (!err) {
-							const { group: { id } } = response;
-							bot.startConversation({ channel: id }, (err, convo) => {
-								convo.say(`Hey <@${pingSlackUserId}>! You're not in a session and <@${SlackUserId}> wanted to reach out :raised_hands:`);
-							})
-						}
-					});
+					
+					if (pingTimeObject) {
+						// if no ping time, send it now!
+					} else {
+						bot.api.mpim.open({
+							users: SlackUserIds
+						}, (err, response) => {
+							if (!err) {
+								const { group: { id } } = response;
+								bot.startConversation({ channel: id }, (err, convo) => {
+									convo.say(`Hey <@${pingSlackUserId}>! You're not in a session and <@${SlackUserId}> wanted to reach out :raised_hands:`);
+								})
+							}
+						});
+					}
 
-					bot.start
 
 				})
 
