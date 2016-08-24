@@ -133,10 +133,7 @@ function handlePingSlackUserIds(convo) {
 				bot.api.users.info({ user: pingSlackUserId }, (err, response) => {
 					if (!err) {
 						const { user: { id, team_id, name, tz } } = response;
-						let email = '';
-						if (user.profile && user.profile.email) {
-							email = user.profile.email
-						};
+						const email = user.profile && user.profile.email ? user.profile.email : '';
 						models.User.create({
 							TeamId: team_id,
 							email
