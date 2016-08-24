@@ -100,12 +100,11 @@ export default function(controller) {
 
 				convo.on(`end`, (convo) => {
 					
-					const { SlackUserId, tz, pingUserId, pingSlackUserId, pingTimeObject, deliveryType, pingMessages } = convo.pingObject;
+					const { SlackUserId, tz, pingUserId, pingSlackUserId, pingTimeObject, userInSession, deliveryType, pingMessages } = convo.pingObject;
 
 					let SlackUserIds = `${SlackUserId},${pingSlackUserId}`;
 					
-					if (deliveryType) {
-						// if no delivery type, send it now!
+					if (userInSession) {
 						models.Ping.create({
 							FromUserId: UserId,
 							ToUserId: pingUserId,

@@ -111,14 +111,14 @@ exports.default = function (controller) {
 					var pingUserId = _convo$pingObject.pingUserId;
 					var pingSlackUserId = _convo$pingObject.pingSlackUserId;
 					var pingTimeObject = _convo$pingObject.pingTimeObject;
+					var userInSession = _convo$pingObject.userInSession;
 					var deliveryType = _convo$pingObject.deliveryType;
 					var pingMessages = _convo$pingObject.pingMessages;
 
 
 					var SlackUserIds = SlackUserId + ',' + pingSlackUserId;
 
-					if (deliveryType) {
-						// if no delivery type, send it now!
+					if (userInSession) {
 						_models2.default.Ping.create({
 							FromUserId: UserId,
 							ToUserId: pingUserId,

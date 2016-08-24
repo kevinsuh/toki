@@ -120,6 +120,7 @@ function handlePingSlackUserIds(convo) {
 
 					} else {
 						// send the message
+						convo.pingObject.deliveryType = "endSession";
 						convo.say(`:point_left: <@${user.dataValues.SlackUserId}> is not a focused work session right now, so I started a conversation for you`);
 						convo.say(`Thank you for being mindful of <@${user.dataValues.SlackUserId}>'s attention :raised_hands:`);
 						convo.next();
@@ -200,28 +201,41 @@ function askForQueuedPingMessages(convo) {
 					let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
 					if (customTimeObject) {
 
-						if (now < customTimeObject && customTimeObject < endTimeObject) {
+						// equal times
+						let customTimeString = customTimeObject.format("h:mma");
 
-							convo.pingObject.pingTimeObject = customTimeObject;
-							convo.pingObject.deliveryType   = "grenade";
-							convo.say(`Excellent! I’ll be sending your message to <@${user.dataValues.SlackUserId}> at *${customTimeObject.format("h:mma")}* :mailbox_with_mail:`);
+						// test to make sure endSession
+						if (customTimeString == endTimeString) {
+
+							convo.say(`Thank you for being mindful of <@${user.dataValues.SlackUserId}>’s attention :raised_hands:`);
+							convo.say(`I’ll send your message at *${customTimeString}*! :mailbox_with_mail:`);
+							convo.next();
 
 						} else {
 
-							let minutesBuffer = Math.round(minutesLeft / 4);
-							now = moment().tz(tz);
-							let exampleEndTimeObjectOne = now.add(minutesBuffer, 'minutes');
-							now = moment().tz(tz);
-							let exampleEndTimeObjectTwo = now.add(minutesLeft - minutesBuffer, 'minutes');
-							convo.say(`The time has to be between now and ${endTimeString}. You can input times like \`${exampleEndTimeObjectOne.format("h:mma")}\` or \`${exampleEndTimeObjectTwo.format("h:mma")}\``);
-							text = "When would you like to send your urgent message?";
+							if (now < customTimeObject && customTimeObject < endTimeObject) {
+
+								convo.pingObject.pingTimeObject = customTimeObject;
+								convo.pingObject.deliveryType   = "grenade";
+								convo.say(`Excellent! I’ll be sending your message to <@${user.dataValues.SlackUserId}> at *${customTimeObject.format("h:mma")}* :mailbox_with_mail:`);
+
+							} else {
+
+								let minutesBuffer = Math.round(minutesLeft / 4);
+								now = moment().tz(tz);
+								let exampleEndTimeObjectOne = now.add(minutesBuffer, 'minutes');
+								now = moment().tz(tz);
+								let exampleEndTimeObjectTwo = now.add(minutesLeft - minutesBuffer, 'minutes');
+								convo.say(`The time has to be between now and ${endTimeString}. You can input times like \`${exampleEndTimeObjectOne.format("h:mma")}\` or \`${exampleEndTimeObjectTwo.format("h:mma")}\``);
+								text = "When would you like to send your urgent message?";
+
+							}
+
+							askForPingTime(convo, text);
+							convo.next();
 
 						}
 					}
-
-					askForPingTime(convo, text);
-					convo.next();
-
 				}
 			},
 			{
