@@ -116,6 +116,7 @@ function askForQueuedPingMessages(convo) {
 			callback_id: "PING_MESSAGE_LIST",
 			fallback: "What is the message you want to queue up?"
 		}];
+		let count = 0;
 
 		convo.ask({
 			text,
@@ -137,6 +138,8 @@ function askForQueuedPingMessages(convo) {
 				default: true,
 				callback: (response, convo) => {
 
+					count++;
+
 					let pingMessageListUpdate = getMostRecentMessageToUpdate(response.channel, bot, "PING_MESSAGE_LIST");
 					if (pingMessageListUpdate) {
 
@@ -154,7 +157,14 @@ function askForQueuedPingMessages(convo) {
 								type: `button`
 							}
 						];
-						attachments[0].text = `UPDATED TEXT`;
+
+						if (count == 1) {
+							// replace msg first time
+							attachments[0].text = response.text;
+						} else {
+							// subsequent times append it
+							attachments[0].text = `${attachments[0].text}\n${response.text}`;
+						}
 
 						pingMessageListUpdate.attachments = JSON.stringify(attachments);
 						console.log(pingMessageListUpdate);
