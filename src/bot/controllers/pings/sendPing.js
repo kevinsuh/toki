@@ -98,10 +98,12 @@ export default function(controller) {
 
 				convo.on(`end`, (convo) => {
 					
-					const { SlackUserId, tz, pingSlackUserId, pingTimeObject } = convo.pingObject;
+					const { SlackUserId, tz, pingSlackUserId, pingTimeObject, deliveryType } = convo.pingObject;
+
+					if (!deliveryType) 
+						deliveryType = "live";
 
 					let SlackUserIds = `${SlackUserId},${pingSlackUserId}`;
-
 					
 					if (pingTimeObject) {
 						// if no ping time, send it now!
