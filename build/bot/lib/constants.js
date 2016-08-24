@@ -41,7 +41,7 @@ var utterances = exports.utterances = (_utterances = {
 	containsNumber: new RegExp(/\d/i),
 	containsAll: new RegExp(/\ba[all]{2,}/i),
 	containsAdd: new RegExp(/\ba[add]{1,}/i),
-	containsNow: new RegExp(/\bn[now]{1,}/i),
+	containsNow: new RegExp(/\bnow[ow]{0,3}\b/i),
 	containsRedo: new RegExp(/\bre[re do]{2,5}\b/i),
 	startsWithAdd: new RegExp(/^a[add]{2,}\b/i),
 	containsTask: new RegExp(/t[task]{2,}/i),
@@ -84,7 +84,7 @@ var utterances = exports.utterances = (_utterances = {
 	containsNoOne: new RegExp(/\b(no one)\b/i),
 	somethingElse: new RegExp(/\bsome[omething]{3,}\b.*\bel[lse]{2,}\b/i),
 	containsEnough: new RegExp(/\beno[ough]{3,}\b/i)
-}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "notToday", new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i)), _defineProperty(_utterances, "notShare", new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _defineProperty(_utterances, "noMore", new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i)), _defineProperty(_utterances, "redo", new RegExp(/^re[re do]{2,5}\b/i)), _defineProperty(_utterances, "noDontAskAgain", new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "yesDontAskAgain", new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "changePriority", new RegExp(/^chang[ge]{1,4}\b|\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\b(priori[tiyes]{1,5}|tas[sk]{1,5})\b/i)), _defineProperty(_utterances, "goBack", new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)), _defineProperty(_utterances, "setTime", new RegExp(/\bset[o]{0,5}\b.*\btim[me]{1,5}\b/i)), _defineProperty(_utterances, "beginAdventure", new RegExp(/\bbegin\b.*\badventure\b/i)), _defineProperty(_utterances, "changeTimeAndTask", new RegExp(/\bchan[nge]{1,5}\b.{1,3}\btim[me]{1,3}\b.{1,7}\btas[sk]{1,3}\b/i)), _defineProperty(_utterances, "keepWorking", new RegExp(/\bkee[ep]{1,3}\b.{1,3}\bwor[king]{1,6}\b/i)), _utterances);
+}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "notToday", new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i)), _defineProperty(_utterances, "notShare", new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _defineProperty(_utterances, "noMore", new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i)), _defineProperty(_utterances, "redo", new RegExp(/^re[re do]{2,5}\b/i)), _defineProperty(_utterances, "noDontAskAgain", new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "yesDontAskAgain", new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "changePriority", new RegExp(/^chang[ge]{1,4}\b|\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\b(priori[tiyes]{1,5}|tas[sk]{1,5})\b/i)), _defineProperty(_utterances, "goBack", new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)), _defineProperty(_utterances, "setTime", new RegExp(/\bset[o]{0,5}\b.*\btim[me]{1,5}\b/i)), _defineProperty(_utterances, "beginAdventure", new RegExp(/\bbegin\b.*\badventure\b/i)), _defineProperty(_utterances, "changeTimeAndTask", new RegExp(/\bchan[nge]{1,5}\b.{1,3}\btim[me]{1,3}\b.{1,7}\btas[sk]{1,3}\b/i)), _defineProperty(_utterances, "keepWorking", new RegExp(/\bkee[ep]{1,3}\b.{1,3}\bwor[king]{1,6}\b/i)), _defineProperty(_utterances, "sendSooner", new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bsoon[ner]{1,4}\b/i)), _defineProperty(_utterances, "containsSendAt", new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bat[t]{0,3}\b/i)), _utterances);
 
 var constants = exports.constants = {
 	PLAN_DECISION: {
@@ -245,6 +245,18 @@ var buttonValues = exports.buttonValues = {
 	no: {
 		name: "NO",
 		value: "no"
+	},
+	sendAtEndOfSession: {
+		name: "SEND_AT_END_SESSION",
+		value: "Send at end of session"
+	},
+	sendSooner: {
+		name: "SEND_SOONER",
+		value: "Send sooner"
+	},
+	now: {
+		name: "NOW",
+		value: "Now"
 	}
 };
 

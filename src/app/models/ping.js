@@ -1,0 +1,23 @@
+'use strict';
+module.exports = function(sequelize, DataTypes) {
+  var Ping = sequelize.define('Ping', {
+    FromUserId: DataTypes.INTEGER,
+    ToUserId: DataTypes.INTEGER,
+    deliveryType: {  type: DataTypes.STRING,
+             defaultValue: "sessionEnd"
+          },
+    pingTime: DataTypes.DATE,
+    live: {  type: DataTypes.BOOLEAN,
+             defaultValue: true
+          }
+  }, {
+    classMethods: {
+      associate: function(models) {
+        Ping.belongsTo(models.User, { foreignKey: 'FromUserId' });
+        Ping.belongsTo(models.User, { foreignKey: 'ToUserId' });
+        Ping.hasMany(models.PingMessage);
+      }
+    }
+  });
+  return Ping;
+};

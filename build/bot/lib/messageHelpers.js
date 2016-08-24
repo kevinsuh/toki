@@ -10,6 +10,9 @@ exports.witDurationToMinutes = witDurationToMinutes;
 exports.convertMinutesToHoursString = convertMinutesToHoursString;
 exports.convertTimeStringToMinutes = convertTimeStringToMinutes;
 exports.dateStringToMomentTimeZone = dateStringToMomentTimeZone;
+exports.getUniqueSlackUsersFromString = getUniqueSlackUsersFromString;
+exports.commaSeparateOutStringArray = commaSeparateOutStringArray;
+exports.getMostRecentMessageToUpdate = getMostRecentMessageToUpdate;
 
 var _constants = require('./constants');
 
@@ -21,9 +24,11 @@ var _momentTimezone = require('moment-timezone');
 
 var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _lodash = require('lodash');
 
-getRandomExample("session");
+var _lodash2 = _interopRequireDefault(_lodash);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
@@ -326,5 +331,98 @@ function dateStringToMomentTimeZone(timeString, timeZone) {
 	var userMomentTimezone = _momentTimezone2.default.tz(dateTimeFormat, timeZone);
 
 	return userMomentTimezone;
+}
+
+/**
+ * get array of slackUserIds from string
+ * @param  {string input} string "ping <@UIXUXUXU>" // done automatically
+ * @return {array of SlackUserIds} ['UIXUXUXU'];
+ */
+function getUniqueSlackUsersFromString(string) {
+	var slackUserIdContainer = new RegExp(/<@(.*?)>/g);
+	var replaceRegEx = new RegExp(/<|>|@/g);
+
+	var arrayString = string.match(slackUserIdContainer);
+	var slackUserIds = [];
+
+	if (arrayString) {
+		arrayString.forEach(function (string) {
+			var slackUserId = string.replace(replaceRegEx, "");
+			if (!_lodash2.default.includes(slackUserIds, slackUserId)) {
+				slackUserIds.push(slackUserId);
+			}
+		});
+		if (slackUserIds.length == 0) {
+			return false;
+		} else {
+			return slackUserIds;
+		}
+	} else {
+		return false;
+	}
+}
+
+// returns array joined together into a string
+function commaSeparateOutStringArray(a) {
+	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var codeBlock = config.codeBlock;
+	var slackNames = config.slackNames;
+
+
+	a = a.map(function (a) {
+		if (codeBlock) {
+			a = '`' + a + '`';
+		} else if (slackNames) {
+			a = '@' + a;
+		}
+		return a;
+	});
+
+	// make into string
+	var string = [a.slice(0, -1).join(', '), a.slice(-1)[0]].join(a.length < 2 ? '' : ' and ');
+	return string;
+}
+
+// this is for deleting the most recent message!
+// mainly used for convo.ask, when you do natural language instead
+// of clicking the button
+function getMostRecentMessageToUpdate(userChannel, bot) {
+	var callbackId = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+	var sentMessages = bot.sentMessages;
+
+
+	var updateTaskListMessageObject = false;
+	if (sentMessages && sentMessages[userChannel]) {
+
+		var channelSentMessages = sentMessages[userChannel];
+
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (var i = channelSentMessages.length - 1; i >= 0; i--) {
+			var _channelSentMessages$ = channelSentMessages[i];
+			var channel = _channelSentMessages$.channel;
+			var ts = _channelSentMessages$.ts;
+			var attachments = _channelSentMessages$.attachments;
+
+
+			if (channel == userChannel) {
+				if (callbackId && attachments && callbackId == attachments[0].callback_id) {
+					updateTaskListMessageObject = {
+						channel: channel,
+						ts: ts
+					};
+					break;
+				} else {
+					updateTaskListMessageObject = {
+						channel: channel,
+						ts: ts
+					};
+					break;
+				}
+			}
+		}
+	}
+
+	return updateTaskListMessageObject;
 }
 //# sourceMappingURL=messageHelpers.js.map

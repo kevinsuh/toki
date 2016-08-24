@@ -1,5 +1,3 @@
-getRandomExample("session")
-
 /**
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
  */
@@ -7,6 +5,7 @@ getRandomExample("session")
 import { constants, buttonValues, colorsHash, quotes, approvalWords, startSessionExamples, utterances } from './constants';
 import nlp from 'nlp_compromise';
 import moment from 'moment-timezone';
+import _ from 'lodash';
 
 export function getRandomExample(type, config = {}) {
 
@@ -308,5 +307,95 @@ export function dateStringToMomentTimeZone(timeString, timeZone) {
 	var userMomentTimezone = moment.tz(dateTimeFormat, timeZone);
 
 	return userMomentTimezone;
+
+}
+
+/**
+ * get array of slackUserIds from string
+ * @param  {string input} string "ping <@UIXUXUXU>" // done automatically
+ * @return {array of SlackUserIds} ['UIXUXUXU'];
+ */
+export function getUniqueSlackUsersFromString(string) {
+	const slackUserIdContainer = new RegExp(/<@(.*?)>/g);
+	const replaceRegEx = new RegExp(/<|>|@/g);
+	
+	let arrayString = string.match(slackUserIdContainer);
+	let slackUserIds = [];
+
+	if (arrayString) {
+		arrayString.forEach((string) => {
+			const slackUserId = string.replace(replaceRegEx, "");
+			if (!_.includes(slackUserIds, slackUserId)) {
+				slackUserIds.push(slackUserId);
+			}
+		});
+		if (slackUserIds.length == 0) {
+			return false;
+		} else {
+			return slackUserIds;
+		}
+	} else {
+		return false;
+	}
+	
+}
+
+// returns array joined together into a string
+export function commaSeparateOutStringArray(a, config = {}) {
+
+	const { codeBlock, slackNames } = config;
+
+	a = a.map((a) => {
+		if (codeBlock) {
+			a = `\`${a}\``
+		} else if (slackNames) {
+			a = `@${a}`;
+		}
+		return a;
+	})
+
+	// make into string
+	let string = [a.slice(0, -1).join(', '), a.slice(-1)[0]].join(a.length < 2 ? '' : ' and ');
+	return string;
+
+}
+
+// this is for deleting the most recent message!
+// mainly used for convo.ask, when you do natural language instead
+// of clicking the button
+export function getMostRecentMessageToUpdate(userChannel, bot, callbackId = false) {
+	
+	let { sentMessages } = bot;
+
+	let updateTaskListMessageObject = false;
+	if (sentMessages && sentMessages[userChannel]) {
+
+		let channelSentMessages = sentMessages[userChannel];
+
+		// loop backwards to find the most recent message that matches
+		// this convo ChannelId w/ the bot's sentMessage ChannelId
+		for (let i = channelSentMessages.length - 1; i >= 0; i--) {
+
+			const { channel, ts, attachments } = channelSentMessages[i];
+
+			if (channel == userChannel) {
+				if ( callbackId && attachments && callbackId == attachments[0].callback_id) {
+					updateTaskListMessageObject = {
+						channel,
+						ts
+					};
+					break;
+				} else {
+					updateTaskListMessageObject = {
+						channel,
+						ts
+					};
+					break;
+				}
+			}
+		}
+	}
+
+	return updateTaskListMessageObject;
 
 }
