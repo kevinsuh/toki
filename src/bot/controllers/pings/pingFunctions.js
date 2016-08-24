@@ -136,7 +136,7 @@ function handlePingSlackUserIds(convo) {
 						const email = user.profile && user.profile.email ? user.profile.email : '';
 						models.User.create({
 							TeamId: team_id,
-							email
+							email,
 							tz,
 							SlackUserId: id,
 							SlackName: name
@@ -178,10 +178,11 @@ function askForQueuedPingMessages(convo) {
 			text: "Enter as many lines as you’d like to include in the message then choose one of the send options when your message is ready to go\n(These few lines will delete after you type your first line and hit Enter :wink:)",
 			attachment_type: 'default',
 			callback_id: "PING_MESSAGE_LIST",
+			mrkdwn_in: ["text"],
 			fallback: "What is the message you want to queue up?"
 		}];
 
-		let requestMessages = [];
+		let pingMessages = [];
 
 		convo.ask({
 			text,
@@ -191,7 +192,7 @@ function askForQueuedPingMessages(convo) {
 				pattern: utterances.containsSendAt,
 				callback: (response, convo) => {
 
-					convo.pingObject.requestMessages = requestMessages;
+					convo.pingObject.pingMessages = pingMessages;
 
 					let text = '';
 
@@ -203,6 +204,7 @@ function askForQueuedPingMessages(convo) {
 
 							convo.pingObject.pingTimeObject = customTimeObject;
 							convo.pingObject.deliveryType   = "grenade";
+							convo.say(`Excellent! I’ll be sending your message to <@${user.dataValues.SlackUserId}> at *${customTimeObject.format("h:mma")}* :mailbox_with_mail:`);
 
 						} else {
 
@@ -226,7 +228,7 @@ function askForQueuedPingMessages(convo) {
 				pattern: utterances.sendSooner,
 				callback: (response, convo) => {
 
-					convo.pingObject.requestMessages = requestMessages;
+					convo.pingObject.pingMessages = pingMessages;
 
 					askForPingTime(convo);
 					convo.next();
@@ -236,7 +238,7 @@ function askForQueuedPingMessages(convo) {
 				default: true,
 				callback: (response, convo) => {
 
-					requestMessages.push(response.text);
+					pingMessages.push(response.text);
 
 					let pingMessageListUpdate = getMostRecentMessageToUpdate(response.channel, bot, "PING_MESSAGE_LIST");
 					if (pingMessageListUpdate) {
@@ -256,7 +258,8 @@ function askForQueuedPingMessages(convo) {
 							}
 						];
 
-						attachments[0].text = requestMessages.length == 1 ? response.text : `${attachments[0].text}\n${response.text}`;
+						attachments[0].text = pingMessages.length == 1 ? response.text : `${attachments[0].text}\n${response.text}`;
+						attachments[0].color = colorsHash.toki_purple.hex;
 
 						pingMessageListUpdate.attachments = JSON.stringify(attachments);
 						bot.api.chat.update(pingMessageListUpdate);
@@ -334,7 +337,7 @@ function askForPingTime(convo, text = '') {
 							// success!
 							convo.pingObject.pingTimeObject = customTimeObject;
 							convo.pingObject.deliveryType   = "grenade";
-							convo.say(`Excellent! I’ll be sending your message to <@${user.dataValues.SlackUserId}> at *${customTimeObject.format("h:mma")}* :mailbox_open:`);
+							convo.say(`Excellent! I’ll be sending your message to <@${user.dataValues.SlackUserId}> at *${customTimeObject.format("h:mma")}* :mailbox_with_mail:`);
 						} else {
 							// has to be less than or equal to end time
 							let minutesBuffer = Math.round(minutesLeft / 4);

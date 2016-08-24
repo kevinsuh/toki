@@ -100,7 +100,7 @@ export default function(controller) {
 
 				convo.on(`end`, (convo) => {
 					
-					const { SlackUserId, tz, pingUserId, pingSlackUserId, pingTimeObject, deliveryType } = convo.pingObject;
+					const { SlackUserId, tz, pingUserId, pingSlackUserId, pingTimeObject, deliveryType, pingMessages } = convo.pingObject;
 
 					let SlackUserIds = `${SlackUserId},${pingSlackUserId}`;
 					
@@ -111,7 +111,17 @@ export default function(controller) {
 							ToUserId: pingUserId,
 							deliveryType,
 							pingTime: pingTimeObject
-						});
+						})
+						.then((ping) => {
+							if (pingMessages) {
+								pingMessages.forEach((pingMessage) => {
+									models.PingMessage.create({
+										PingId: ping.id,
+										content: pingMessage
+									})
+								})
+							}
+						})
 					} else {
 						bot.api.mpim.open({
 							users: SlackUserIds

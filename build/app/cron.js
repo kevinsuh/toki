@@ -27,6 +27,8 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
+var _constants = require('../bot/lib/constants');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var checkForPings = function checkForPings() {
@@ -48,7 +50,7 @@ var checkForPings = function checkForPings() {
 			var deliveryType = ping.deliveryType;
 			var pingTime = ping.pingTime;
 
-			// if there's a pingTime, respect it!
+			// if there's a pingTime, respect it and dont send yet!
 
 			if (pingTime) {
 				var pingTimeObject = (0, _momentTimezone2.default)(pingTime);
@@ -57,57 +59,80 @@ var checkForPings = function checkForPings() {
 				}
 			}
 
-			_models2.default.User.find({
-				where: { id: FromUserId }
-			}).then(function (fromUser) {
-
-				var fromUserTeamId = fromUser.TeamId;
-
+			ping.getPingMessages({}).then(function (pingMessages) {
 				_models2.default.User.find({
-					where: { id: ToUserId }
-				}).then(function (toUser) {
+					where: { id: FromUserId }
+				}).then(function (fromUser) {
 
-					var toUserTeamId = toUser.TeamId;
+					var fromUserTeamId = fromUser.TeamId;
 
-					if (fromUserTeamId != toUserTeamId) {
-						// ERROR ERROR -- this should never happen!
-						return;
-					}
+					_models2.default.User.find({
+						where: { id: ToUserId }
+					}).then(function (toUser) {
 
-					ping.update({
-						live: false
-					});
+						var toUserTeamId = toUser.TeamId;
 
-					var SlackUserIds = fromUser.dataValues.SlackUserId + ',' + toUser.dataValues.SlackUserId;
-
-					_models2.default.Team.find({
-						where: { TeamId: fromUserTeamId }
-					}).then(function (team) {
-						var token = team.token;
-
-						var bot = _controllers.bots[token];
-						if (bot) {
-
-							bot.api.mpim.open({
-								users: SlackUserIds
-							}, function (err, response) {
-								if (!err) {
-									var id = response.group.id;
-
-									bot.startConversation({ channel: id }, function (err, convo) {
-										switch (deliveryType) {
-											case "bomb":
-												convo.say('Hey <@' + toUser.dataValues.SlackUserId + '>! <@' + fromUser.dataValues.SlackUserId + '> has an urgent message he needs to send you :bomb:');
-												break;
-											case "grenade":
-												break;
-											default:
-												break;
-										}
-									});
-								}
-							});
+						if (fromUserTeamId != toUserTeamId) {
+							// ERROR ERROR -- this should never happen!
+							return;
 						}
+
+						ping.update({
+							live: false
+						});
+
+						var SlackUserIds = fromUser.dataValues.SlackUserId + ',' + toUser.dataValues.SlackUserId;
+
+						_models2.default.Team.find({
+							where: { TeamId: fromUserTeamId }
+						}).then(function (team) {
+							var token = team.token;
+
+							var bot = _controllers.bots[token];
+							if (bot) {
+
+								bot.api.mpim.open({
+									users: SlackUserIds
+								}, function (err, response) {
+									if (!err) {
+										var id = response.group.id;
+
+										bot.startConversation({ channel: id }, function (err, convo) {
+											var initialMessage = 'Hey <@' + toUser.dataValues.SlackUserId + '>! <@' + fromUser.dataValues.SlackUserId + '> wanted to reach out';
+											switch (deliveryType) {
+												case "bomb":
+													initialMessage = 'Hey <@' + toUser.dataValues.SlackUserId + '>! <@' + fromUser.dataValues.SlackUserId + '> has an urgent message for you:';
+													break;
+												case "grenade":
+													initialMessage = 'Hey <@' + toUser.dataValues.SlackUserId + '>! <@' + fromUser.dataValues.SlackUserId + '> has an urgent message for you:';
+													break;
+												default:
+													break;
+											}
+
+											initialMessage = '*' + initialMessage + '*';
+											var attachments = [];
+
+											pingMessages.forEach(function (pingMessage) {
+												attachments.push({
+													text: pingMessage.content,
+													mrkdwn_in: ["text"],
+													attachment_type: 'default',
+													callback_id: "PING_MESSAGE",
+													fallback: pingMessage.content,
+													color: _constants.colorsHash.toki_purple.hex
+												});
+											});
+
+											convo.say({
+												text: initialMessage,
+												attachments: attachments
+											});
+										});
+									}
+								});
+							}
+						});
 					});
 				});
 			});

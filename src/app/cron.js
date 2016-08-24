@@ -2,6 +2,7 @@ import { bots, controller } from '../bot/controllers';
 import models from './models';
 import moment from 'moment-timezone';
 import _ from 'lodash';
+import { colorsHash } from '../bot/lib/constants';
 
 // the cron file!
 export default function() {
@@ -31,7 +32,7 @@ let checkForPings = () => {
 
 			const { FromUserId, ToUserId, deliveryType, pingTime } = ping;
 
-			// if there's a pingTime, respect it!
+			// if there's a pingTime, respect it and dont send yet!
 			if (pingTime) {
 				let pingTimeObject = moment(pingTime);
 				if (pingTimeObject > now) {
@@ -39,62 +40,88 @@ let checkForPings = () => {
 				}
 			}
 
-			models.User.find({
-				where: { id: FromUserId }
-			})
-			.then((fromUser) => {
-
-				const fromUserTeamId = fromUser.TeamId;
-
+			ping.getPingMessages({})
+			.then((pingMessages) => {
 				models.User.find({
-					where: { id: ToUserId }
+					where: { id: FromUserId }
 				})
-				.then((toUser) => {
+				.then((fromUser) => {
 
-					const toUserTeamId = toUser.TeamId;
+					const fromUserTeamId = fromUser.TeamId;
 
-					if (fromUserTeamId != toUserTeamId) {
-						// ERROR ERROR -- this should never happen!
-						return;
-					}
-
-					ping.update({
-						live: false
-					});
-
-					let SlackUserIds = `${fromUser.dataValues.SlackUserId},${toUser.dataValues.SlackUserId}`;
-
-					models.Team.find({
-						where: { TeamId: fromUserTeamId }
+					models.User.find({
+						where: { id: ToUserId }
 					})
-					.then((team) => {
-						const { token } = team;
-						let bot = bots[token];
-						if (bot) {
+					.then((toUser) => {
 
-							bot.api.mpim.open({
-								users: SlackUserIds
-							}, (err, response) => {
-								if (!err) {
-									const { group: { id } } = response;
-									bot.startConversation({ channel: id }, (err, convo) => {
-										switch (deliveryType) {
-											case "bomb":
-												convo.say(`Hey <@${toUser.dataValues.SlackUserId}>! <@${fromUser.dataValues.SlackUserId}> has an urgent message he needs to send you :bomb:`);
-												break;
-											case "grenade":
-												break;
-											default: break;
-										}
-									})
-								}
-							});
+						const toUserTeamId = toUser.TeamId;
 
+						if (fromUserTeamId != toUserTeamId) {
+							// ERROR ERROR -- this should never happen!
+							return;
 						}
-					});
 
-				})
-			});
+						ping.update({
+							live: false
+						});
+
+						let SlackUserIds = `${fromUser.dataValues.SlackUserId},${toUser.dataValues.SlackUserId}`;
+
+						models.Team.find({
+							where: { TeamId: fromUserTeamId }
+						})
+						.then((team) => {
+							const { token } = team;
+							let bot = bots[token];
+							if (bot) {
+
+								bot.api.mpim.open({
+									users: SlackUserIds
+								}, (err, response) => {
+									if (!err) {
+
+										const { group: { id } } = response;
+										bot.startConversation({ channel: id }, (err, convo) => {
+											let initialMessage = `Hey <@${toUser.dataValues.SlackUserId}>! <@${fromUser.dataValues.SlackUserId}> wanted to reach out`;
+											switch (deliveryType) {
+												case "bomb":
+													initialMessage = `Hey <@${toUser.dataValues.SlackUserId}>! <@${fromUser.dataValues.SlackUserId}> has an urgent message for you:`;
+													break;
+												case "grenade":
+													initialMessage = `Hey <@${toUser.dataValues.SlackUserId}>! <@${fromUser.dataValues.SlackUserId}> has an urgent message for you:`;
+													break;
+												default: break;
+											}
+
+											initialMessage = `*${initialMessage}*`;
+											let attachments = [];
+
+											pingMessages.forEach((pingMessage) => {
+												attachments.push({
+													text: pingMessage.content,
+													mrkdwn_in: ["text"],
+													attachment_type: 'default',
+													callback_id: "PING_MESSAGE",
+													fallback: pingMessage.content,
+													color: colorsHash.toki_purple.hex
+												});
+											});
+
+											convo.say({
+												text: initialMessage,
+												attachments
+											});
+
+										})
+									}
+								});
+
+							}
+						});
+
+					})
+				});
+			})
 
 		});
 	});

@@ -112,6 +112,7 @@ exports.default = function (controller) {
 					var pingSlackUserId = _convo$pingObject.pingSlackUserId;
 					var pingTimeObject = _convo$pingObject.pingTimeObject;
 					var deliveryType = _convo$pingObject.deliveryType;
+					var pingMessages = _convo$pingObject.pingMessages;
 
 
 					var SlackUserIds = SlackUserId + ',' + pingSlackUserId;
@@ -123,6 +124,15 @@ exports.default = function (controller) {
 							ToUserId: pingUserId,
 							deliveryType: deliveryType,
 							pingTime: pingTimeObject
+						}).then(function (ping) {
+							if (pingMessages) {
+								pingMessages.forEach(function (pingMessage) {
+									_models2.default.PingMessage.create({
+										PingId: ping.id,
+										content: pingMessage
+									});
+								});
+							}
 						});
 					} else {
 						bot.api.mpim.open({
