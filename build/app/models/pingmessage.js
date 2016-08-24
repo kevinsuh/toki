@@ -7,7 +7,7 @@ module.exports = function (sequelize, DataTypes) {
   }, {
     classMethods: {
       associate: function associate(models) {
-        // associations can be defined here
+        PingMessage.belongsTo(models.Ping);
       }
     }
   });
