@@ -105,7 +105,38 @@ controller.on('team_join', function (bot, message) {
 	var SlackUserId = message.user.id;
 	console.log(message.user.id);
 
-	bot.api.users.info({ user: SlackUserId }, function (err, response) {});
+	bot.api.users.info({ user: SlackUserId }, function (err, response) {
+		if (!err) {
+			(function () {
+				var user = response.user;
+				var _response$user = response.user;
+				var id = _response$user.id;
+				var team_id = _response$user.team_id;
+				var name = _response$user.name;
+				var tz = _response$user.tz;
+
+				var email = user.profile && user.profile.email ? user.profile.email : '';
+				_models2.default.User.find({
+					where: { SlackUserId: SlackUserId }
+				}).then(function (user) {
+					if (!user) {
+						_models2.default.User.create({
+							TeamId: team_id,
+							email: email,
+							tz: tz,
+							SlackUserId: SlackUserId,
+							SlackName: name
+						});
+					} else {
+						user.update({
+							TeamId: team_id,
+							SlackName: name
+						});
+					}
+				});
+			})();
+		}
+	});
 });
 
 // simple way to keep track of bots

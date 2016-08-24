@@ -149,6 +149,7 @@ function handlePingSlackUserIds(convo) {
 					});
 				} else {
 					// could not find user
+
 					bot.api.users.info({ user: pingSlackUserId }, function (err, response) {
 						if (!err) {
 							var _response$user = response.user;

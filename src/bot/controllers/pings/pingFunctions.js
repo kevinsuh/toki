@@ -129,11 +129,17 @@ function handlePingSlackUserIds(convo) {
 				
 			} else {
 				// could not find user
+				
 				bot.api.users.info({ user: pingSlackUserId }, (err, response) => {
 					if (!err) {
 						const { user: { id, team_id, name, tz } } = response;
+						let email = '';
+						if (user.profile && user.profile.email) {
+							email = user.profile.email
+						};
 						models.User.create({
 							TeamId: team_id,
+							email
 							tz,
 							SlackUserId: id,
 							SlackName: name
@@ -146,7 +152,7 @@ function handlePingSlackUserIds(convo) {
 						askWhoToPing(convo);
 					}
 				});
-				
+
 			}
 
 			convo.next();
