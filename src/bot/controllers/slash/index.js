@@ -14,16 +14,21 @@ export default function(controller) {
 	 */
 	controller.on('slash_command', (bot, message) => {
 
-		console.log(message);
-
 		const { team_id, user_id } = message;
-		let text = message.text.trim();
+		const { intentObject: { entities: { reminder, duration, datetime } } } = message;
 
+		let text          = message.text.trim();
 		const SlackUserId = message.user;
 		let env           = process.env.NODE_ENV || 'development';
 
 		if (env == "development") {
 			message.command = message.command.replace("_dev","");
+		}
+
+		// make sure verification token matches!
+		if (message.token !== process.env.VERIFICATION_TOKEN) {
+			console.log(`\n ~~ verification token could not be verified ~~ \n`)
+			return;
 		}
 
 		models.User.find({
@@ -34,21 +39,11 @@ export default function(controller) {
 			const { SlackName, tz } = user;
 			const UserId = user.id;
 
-			// make sure verification token matches!
-			if (message.token !== process.env.VERIFICATION_TOKEN) {
-				console.log(`\n ~~ verification token could not be verified ~~ \n`)
-				return;
-			}
+			let now              = moment().tz(tz);
+			const responseObject = { response_type: "ephemeral" }
+			let slackNames       = getUniqueSlackUsersFromString(text, { normalSlackNames: true });
 
-			const { intentObject: { entities: { reminder, duration, datetime } } } = message;
-
-			let now = moment().tz(tz);
-			let responseObject = {
-				response_type: "ephemeral"
-			}
-			let slackNames = getUniqueSlackUsersFromString(text, { normalSlackNames: true });
 			let customTimeObject;
-
 			let toSlackName = slackNames.length > 0 ? slackNames[0] : false;
 
 			switch (message.command) {
@@ -56,40 +51,20 @@ export default function(controller) {
 
 					customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
 
+					const config     = { SlackUserId };
+					config.content   = reminder ? reminder[0].value : null;
+
 					if (customTimeObject) {
 
-						// quick adding a reminder requires both text + time!
-						models.Reminder.create({
-							remindTime: customTimeObject,
-							UserId,
-							customNote
-						})
-						.then((reminder) => {
-							let customTimeString = customTimeObject.format('h:mm a');
-							let responseText = `Okay, I'll remind you at ${customTimeString}`;
-							if (customNote) {
-								responseText = `${responseText} about \`${customNote}\``;
-							}
-							responseText = `${responseText}! :alarm_clock:`;
-							responseObject.text = responseText;
-							bot.replyPublic(message, responseObject);
-						});
+						let now = moment().tz(tz);
+						let minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
+						config.minutes = minutes;
 
-					} else {
-						let responseText = '';
-						if (customNote) {
-							responseText = `Hey, I need to know what time you want me to remind you about \`${text}\` (please say \`${text} in 30 min\` or \`${text} at 7pm\`)!`;
-						} else {
-							responseText = `Hey, I need to know when you want me to remind you \`i.e. pick up clothes at 7pm\`!`;
-						}
-						responseObject.text = responseText;
-						bot.replyPublic(message, responseObject);
 					}
 
-					let responseText = 'HELLO WORLD';
-					responseObject.text = responseText;
+					controller.trigger(`begin_session_flow`, [ bot, config ]);
+					responseObject.text = `Boom! Let's get this done :muscle:`;
 					bot.replyPrivate(message, responseObject);
-
 					break;
 
 				case "/ping":
@@ -119,14 +94,13 @@ export default function(controller) {
 								const toUserConfig   = { UserId: toUser.dataValues.UserId, SlackUserId: toUser.dataValues.SlackUserId }
 								sendPing(bot, fromUserConfig, toUserConfig, config);
 
-								responseObject.text = `Got it! I'll handle that ping :raised_hands:`;
+								responseObject.text = `Got it! I'll deliver that ping :mailbox_with_mail:`;
 								bot.replyPrivate(message, responseObject);
 								
 							} else {
 
-								// user might have changed names
+								// user might have changed names ... this is very rare!
 								bot.api.users.list({}, (err, response) => {
-									console.log(`\n\n\n\n FOUND USERS \n\n\n\n`);
 									if (!err) {
 										const { members } = response;
 										let foundSlackUserId = false;
@@ -152,7 +126,7 @@ export default function(controller) {
 											.then((toUser) => {
 												const toUserConfig   = { UserId: toUser.dataValues.UserId, SlackUserId: toUser.dataValues.SlackUserId };
 												sendPing(bot, fromUserConfig, toUserConfig, config);
-												responseObject.text = `Got it! I'll handle that ping :raised_hands:`;
+												responseObject.text = `Got it! I'll deliver that ping :mailbox_with_mail:`;
 												bot.replyPrivate(message, responseObject);
 											})
 										}

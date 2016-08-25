@@ -76,6 +76,9 @@ exports.default = function (controller) {
 		var changeTimeAndTask = config.changeTimeAndTask;
 
 
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
 		_models2.default.User.find({
 			where: { SlackUserId: SlackUserId }
 		}).then(function (user) {
@@ -102,7 +105,9 @@ exports.default = function (controller) {
 					// console.log(controller.tasks[0].convos);
 
 					// have 5-minute exit time limit
-					convo.task.timeLimit = 1000 * 60 * 5;
+					if (convo) {
+						convo.task.timeLimit = 1000 * 60 * 5;
+					}
 
 					convo.sessionStart = {
 						SlackUserId: SlackUserId,
