@@ -66,7 +66,7 @@ controller.on('team_join', function (bot, message) {
 			const { user, user: { id, team_id, name, tz } } = response;
 			const email = user.profile && user.profile.email ? user.profile.email : '';
 			models.User.find({
-				where: { SlackUserId: SlackUserId },
+				where: { SlackUserId },
 			})
 			.then((user) => {
 				if (!user) {
@@ -86,6 +86,43 @@ controller.on('team_join', function (bot, message) {
 			});
 		}
 	});
+
+});
+
+/**
+ * 		User has updated data ==> update our DB!
+ */
+controller.on('user_change', function (bot, message) {
+
+	console.log("\n\n\n ~~ user updated profile ~~ \n\n\n");
+
+	if (message && message.user) {
+
+		const { user, user: { name, id, team_id, tz } } = message;
+
+		const SlackUserId = id;
+		const email       = user.profile && user.profile.email ? user.profile.email : '';
+
+		models.User.find({
+			where: { SlackUserId },
+		})
+		.then((user) => {
+			if (!user) {
+				models.User.create({
+					TeamId: team_id,
+					email,
+					tz,
+					SlackUserId,
+					SlackName: name
+				});
+			} else {
+				user.update({
+					TeamId: team_id,
+					SlackName: name
+				})
+			}
+		});
+	}
 
 });
 
