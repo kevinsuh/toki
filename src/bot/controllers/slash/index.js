@@ -4,7 +4,7 @@ import models from '../../../app/models';
 import dotenv from 'dotenv';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants } from '../../lib/constants';
-import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString } from '../../lib/messageHelpers';
+import { witTimeResponseToTimeZoneObject, witDurationToMinutes, convertMinutesToHoursString, getUniqueSlackUsersFromString } from '../../lib/messageHelpers';
 import { sendPing } from '../pings/pingFunctions';
 
 export default function(controller) {
@@ -55,11 +55,12 @@ export default function(controller) {
 					config.content   = reminder ? reminder[0].value : null;
 
 					if (customTimeObject) {
-
 						let now = moment().tz(tz);
 						let minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
 						config.minutes = minutes;
-
+					} else if (duration) {
+						// if user puts in min and not picked up by customTimeObject
+						config.minutes = witDurationToMinutes(duration);
 					}
 
 					controller.trigger(`begin_session_flow`, [ bot, config ]);

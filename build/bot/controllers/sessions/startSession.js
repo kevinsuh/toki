@@ -124,6 +124,7 @@ exports.default = function (controller) {
 						var confirmNewSession = _convo$sessionStart.confirmNewSession;
 						var content = _convo$sessionStart.content;
 						var minutes = _convo$sessionStart.minutes;
+						var tz = _convo$sessionStart.tz;
 
 
 						console.log("\n\n\n end of start session ");

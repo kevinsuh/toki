@@ -119,7 +119,7 @@ export default function(controller) {
 
 					convo.on('end', (convo) => {
 
-						const { sessionStart, sessionStart: { confirmNewSession, content, minutes } } = convo;
+						const { sessionStart, sessionStart: { confirmNewSession, content, minutes, tz } } = convo;
 
 						console.log("\n\n\n end of start session ");
 						console.log(sessionStart);

@@ -32,7 +32,11 @@ function confirmTimeZoneExistsThenStartSessionFlow(convo) {
 	var tz = _convo$sessionStart.tz;
 
 
-	if (!tz) {
+	if (tz) {
+		// user has tz config'd
+		finalizeSessionTimeAndContent(convo); // entry point
+		convo.next();
+	} else {
 		// user needs tz config'd!
 		convo.ask({
 			text: text,
@@ -71,26 +75,25 @@ function confirmTimeZoneExistsThenStartSessionFlow(convo) {
 				confirmTimeZoneExistsThenStartSessionFlow(convo, 'Which timezone do you want to go with for now?');
 				convo.next();
 			} else {
-				// success!!
+				(function () {
+					// success!!
 
-				var _timeZoneObject = timeZoneObject;
-				var _tz = _timeZoneObject.tz;
+					var _timeZoneObject = timeZoneObject;
+					var tz = _timeZoneObject.tz;
 
-				_models2.default.User.update({
-					tz: _tz
-				}, {
-					where: { id: UserId }
-				}).then(function () {
-					convo.say('Great! If this ever changes, you can always `update settings`');
-					finalizeSessionTimeAndContent(convo); // entry point
-					convo.next();
-				});
+					_models2.default.User.update({
+						tz: tz
+					}, {
+						where: { id: UserId }
+					}).then(function (user) {
+						convo.say('Great! If this ever changes, you can always `update settings`');
+						convo.sessionStart.tz = tz;
+						finalizeSessionTimeAndContent(convo); // entry point
+						convo.next();
+					});
+				})();
 			}
 		});
-	} else {
-		// user already has tz config'd!
-		finalizeSessionTimeAndContent(convo); // entry point
-		convo.next();
 	}
 }
 
@@ -135,6 +138,7 @@ function finalizeSessionTimeAndContent(convo) {
 			return;
 		}
 
+		convo.say(" ");
 		convo.sessionStart.confirmNewSession = true;
 	}
 

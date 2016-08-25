@@ -56,10 +56,12 @@ exports.default = function (controller) {
 					config.content = reminder ? reminder[0].value : null;
 
 					if (customTimeObject) {
-
 						var _now = (0, _momentTimezone2.default)().tz(tz);
 						var minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(_now)).asMinutes());
 						config.minutes = minutes;
+					} else if (duration) {
+						// if user puts in min and not picked up by customTimeObject
+						config.minutes = (0, _messageHelpers.witDurationToMinutes)(duration);
 					}
 
 					controller.trigger('begin_session_flow', [bot, config]);

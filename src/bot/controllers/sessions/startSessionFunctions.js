@@ -12,7 +12,10 @@ export function confirmTimeZoneExistsThenStartSessionFlow(convo, text = `Ah! Sin
 
 	const { SlackUserId, UserId, tz }  = convo.sessionStart;
 
-	if (!tz) { // user needs tz config'd!
+	if (tz) { // user has tz config'd
+		finalizeSessionTimeAndContent(convo); // entry point
+		convo.next();
+	} else { // user needs tz config'd!
 		convo.ask({
 			text,
 			attachments: timeZoneAttachments
@@ -56,8 +59,9 @@ export function confirmTimeZoneExistsThenStartSessionFlow(convo, text = `Ah! Sin
 				}, {
 					where: { id: UserId }
 				})
-				.then(() => {
+				.then((user) => {
 					convo.say(`Great! If this ever changes, you can always \`update settings\``);
+					convo.sessionStart.tz = tz;
 					finalizeSessionTimeAndContent(convo); // entry point
 					convo.next();
 				});
@@ -66,9 +70,6 @@ export function confirmTimeZoneExistsThenStartSessionFlow(convo, text = `Ah! Sin
 
 		});
 
-	} else { // user already has tz config'd!
-		finalizeSessionTimeAndContent(convo); // entry point
-		convo.next();
 	}
 
 }
@@ -109,6 +110,7 @@ function finalizeSessionTimeAndContent(convo) {
 			return;
 		}
 
+		convo.say(" ");
 		convo.sessionStart.confirmNewSession = true;
 
 	}
