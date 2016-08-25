@@ -113,8 +113,51 @@ exports.default = function (controller) {
 									pingMessages: [pingMessage]
 								};
 								var fromUserConfig = { UserId: UserId, SlackUserId: SlackUserId };
-								var toUserConfig = { UserId: toUser.dataValues.UserId, SlackUserId: toUser.dataValues.SlackUserId };
-								(0, _pingFunctions.sendPing)(bot, fromUserConfig, toUserConfig, config);
+
+								if (toUser) {
+
+									// sucess! (this should happen 99% of the time)
+									var toUserConfig = { UserId: toUser.dataValues.UserId, SlackUserId: toUser.dataValues.SlackUserId };
+									(0, _pingFunctions.sendPing)(bot, fromUserConfig, toUserConfig, config);
+
+									responseObject.text = 'Got it! I\'ll handle that ping :raised_hands:';
+									bot.replyPrivate(message, responseObject);
+								} else {
+
+									// user might have changed names
+									bot.api.users.list({}, function (err, response) {
+										console.log('\n\n\n\n FOUND USERS \n\n\n\n');
+										if (!err) {
+											var members = response.members;
+
+											var foundSlackUserId = false;
+											var _toUserConfig = {};
+											members.some(function (member) {
+												if (toSlackName == member.name) {
+													var _SlackUserId = member.id;
+													_models2.default.User.update({
+														SlackName: name
+													}, {
+														where: { SlackUserId: _SlackUserId }
+													});
+													foundSlackUserId = _SlackUserId;
+													return true;
+												}
+											});
+
+											if (foundSlackUserId) {
+												_models2.default.User.find({
+													where: { SlackUserId: foundSlackUserId }
+												}).then(function (toUser) {
+													var toUserConfig = { UserId: toUser.dataValues.UserId, SlackUserId: toUser.dataValues.SlackUserId };
+													(0, _pingFunctions.sendPing)(bot, fromUserConfig, toUserConfig, config);
+													responseObject.text = 'Got it! I\'ll handle that ping :raised_hands:';
+													bot.replyPrivate(message, responseObject);
+												});
+											}
+										}
+									});
+								}
 							});
 						})();
 					} else {

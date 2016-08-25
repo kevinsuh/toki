@@ -112,8 +112,54 @@ export default function(controller) {
 								pingMessages: [ pingMessage ]
 							}
 							const fromUserConfig = { UserId, SlackUserId }
-							const toUserConfig   = { UserId: toUser.dataValues.UserId, SlackUserId: toUser.dataValues.SlackUserId }
-							sendPing(bot, fromUserConfig, toUserConfig, config);
+
+							if (toUser) {
+
+								// sucess! (this should happen 99% of the time)
+								const toUserConfig   = { UserId: toUser.dataValues.UserId, SlackUserId: toUser.dataValues.SlackUserId }
+								sendPing(bot, fromUserConfig, toUserConfig, config);
+
+								responseObject.text = `Got it! I'll handle that ping :raised_hands:`;
+								bot.replyPrivate(message, responseObject);
+								
+							} else {
+
+								// user might have changed names
+								bot.api.users.list({}, (err, response) => {
+									console.log(`\n\n\n\n FOUND USERS \n\n\n\n`);
+									if (!err) {
+										const { members } = response;
+										let foundSlackUserId = false;
+										let toUserConfig = {}
+										members.some((member) => {
+											if (toSlackName == member.name) {
+												const SlackUserId = member.id;
+												models.User.update({
+													SlackName: name
+												},
+												{
+													where: { SlackUserId }
+												});
+												foundSlackUserId = SlackUserId;
+												return true;
+											}
+										});
+
+										if (foundSlackUserId) {
+											models.User.find({
+												where: { SlackUserId: foundSlackUserId }
+											})
+											.then((toUser) => {
+												const toUserConfig   = { UserId: toUser.dataValues.UserId, SlackUserId: toUser.dataValues.SlackUserId };
+												sendPing(bot, fromUserConfig, toUserConfig, config);
+												responseObject.text = `Got it! I'll handle that ping :raised_hands:`;
+												bot.replyPrivate(message, responseObject);
+											})
+										}
+									}
+								})
+
+							}
 
 						})
 
