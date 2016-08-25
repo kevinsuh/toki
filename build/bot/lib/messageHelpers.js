@@ -339,7 +339,11 @@ function dateStringToMomentTimeZone(timeString, timeZone) {
  * @return {array of SlackUserIds} ['UIXUXUXU'];
  */
 function getUniqueSlackUsersFromString(string) {
-	var slackUserIdContainer = new RegExp(/<@(.*?)>/g);
+	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var normalSlackNames = config.normalSlackNames;
+	// by default will get translated into SlackUserId
+
+	var slackUserIdContainer = normalSlackNames ? new RegExp(/@(\S*)/g) : new RegExp(/<@(.*?)>/g);
 	var replaceRegEx = new RegExp(/<|>|@/g);
 
 	var arrayString = string.match(slackUserIdContainer);

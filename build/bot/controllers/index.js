@@ -53,6 +53,10 @@ var _pings = require('./pings');
 
 var _pings2 = _interopRequireDefault(_pings);
 
+var _slash = require('./slash');
+
+var _slash2 = _interopRequireDefault(_slash);
+
 var _actions = require('../actions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -156,6 +160,7 @@ function customConfigBot(controller) {
 	(0, _notWit2.default)(controller);
 	(0, _sessions2.default)(controller);
 	(0, _pings2.default)(controller);
+	(0, _slash2.default)(controller);
 
 	(0, _misc2.default)(controller);
 }

@@ -120,8 +120,7 @@ function handlePingSlackUserIds(convo) {
 
 					} else {
 						// send the message
-						convo.pingObject.deliveryType = "endSession";
-						convo.say(`:point_left: <@${user.dataValues.SlackUserId}> is not a focused work session right now, so I started a conversation for you`);
+						convo.say(`:point_left: <@${user.dataValues.SlackUserId}> is not in a focused work session right now, so I started a conversation for you`);
 						convo.say(`Thank you for being mindful of <@${user.dataValues.SlackUserId}>'s attention :raised_hands:`);
 						convo.next();
 					}
@@ -204,9 +203,9 @@ function askForQueuedPingMessages(convo) {
 						// equal times
 						let customTimeString = customTimeObject.format("h:mma");
 
-						// test to make sure endSession
 						if (customTimeString == endTimeString) {
-
+							// endSession ping
+							convo.pingObject.deliveryType = "endSession";
 							convo.say(`Thank you for being mindful of <@${user.dataValues.SlackUserId}>’s attention :raised_hands:`);
 							convo.say(`I’ll send your message at *${customTimeString}*! :mailbox_with_mail:`);
 							convo.next();
@@ -214,13 +213,13 @@ function askForQueuedPingMessages(convo) {
 						} else {
 
 							if (now < customTimeObject && customTimeObject < endTimeObject) {
-
+								// grenade ping
 								convo.pingObject.pingTimeObject = customTimeObject;
 								convo.pingObject.deliveryType   = "grenade";
 								convo.say(`Excellent! I’ll be sending your message to <@${user.dataValues.SlackUserId}> at *${customTimeObject.format("h:mma")}* :mailbox_with_mail:`);
 
 							} else {
-
+								// invalid time for grenade ping
 								let minutesBuffer = Math.round(minutesLeft / 4);
 								now = moment().tz(tz);
 								let exampleEndTimeObjectOne = now.add(minutesBuffer, 'minutes');
@@ -381,3 +380,112 @@ function askForPingTime(convo, text = '') {
 	convo.next();
 
 }
+
+/**
+ * 
+ * This handles logic of sending ping depending on session info
+ * 
+ * @param  {bot} bot      requires bot of TeamId
+ * @param  {UserId, SlackUserId} fromUser
+ * @param  {UserId, SlackUserId} toUser   
+ * @param  {deliveryType, pingTimeObject, pingMessages } config   [description]
+ */
+export function sendPing(bot, fromUser, toUser, config) {
+
+	const { pingTimeObject, pingMessages } = config;
+	let { deliveryType } = config;
+	
+	if (!deliveryType) deliveryType = "endSession"; // default to endSession ping
+
+	let SlackUserIds = `${fromUser.SlackUserId},${toUser.SlackUserId}`;
+
+	models.User.find({
+		where: { SlackUserId: toUser.SlackUserId },
+	})
+	.then((toUser) => {
+
+		if (toUser) {
+
+			// user found, handle the ping flow!
+			toUser.getSessions({
+				where: [ `"open" = ?`, true ],
+				order: `"Session"."createdAt" DESC`
+			})
+			.then((sessions) => {
+
+				let session = sessions[0];
+
+				if (session) {
+
+					models.Ping.create({
+						FromUserId: fromUser.UserId,
+						ToUserId: toUser.UserId,
+						deliveryType,
+						pingTime: pingTimeObject
+					})
+					.then((ping) => {
+						if (pingMessages) {
+							pingMessages.forEach((pingMessage) => {
+								models.PingMessage.create({
+									PingId: ping.id,
+									content: pingMessage
+								})
+							})
+						}
+					})
+
+				} else {
+
+					bot.api.mpim.open({
+						users: `SlackUserIds`
+					}, (err, response) => {
+						if (!err) {
+							const { group: { id } } = response;
+							bot.startConversation({ channel: id }, (err, convo) => {
+								convo.say(`Hey <@${toUser.SlackUserId}>! You're not in a session and <@${fromUser.SlackUserId}> wanted to reach out :raised_hands:`);
+							})
+						}
+					});
+
+				}
+
+			});
+			
+		} else {
+
+			bot.startPrivateConversation({ user: fromUser.SlackUserId }, (err,convo) => {
+
+				// could not find user, let's create
+				bot.api.users.info({ user: toUser.SlackUserId }, (err, response) => {
+
+					if (!err) {
+						const { user: { id, team_id, name, tz } } = response;
+						const email = user.profile && user.profile.email ? user.profile.email : '';
+						models.User.create({
+							TeamId: team_id,
+							email,
+							tz,
+							SlackUserId: id,
+							SlackName: name
+						})
+						.then(() => {
+							convo.say(`For some reason, i didn't have <@${id}> in my database, but now I do! Thank you. Try sending this ping again :pray:`);
+						});
+					} else {
+						convo.say(`Sorry, I can't recognize <@${id}>!`);
+					}
+
+				});
+
+			});
+
+			
+
+		}
+
+		convo.next();
+
+	});
+
+}
+

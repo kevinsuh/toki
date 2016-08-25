@@ -11,6 +11,7 @@ import notWitController from './notWit';
 import miscController from './misc';
 import sessionsController from './sessions';
 import pingsController from './pings';
+import slashController from './slash';
 
 require('dotenv').config();
 
@@ -105,6 +106,7 @@ export function customConfigBot(controller) {
 	notWitController(controller);
 	sessionsController(controller);
 	pingsController(controller);
+	slashController(controller);
 
 	miscController(controller);
 

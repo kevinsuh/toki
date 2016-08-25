@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 exports.startPingFlow = startPingFlow;
+exports.sendPing = sendPing;
 
 var _momentTimezone = require('moment-timezone');
 
@@ -105,9 +106,9 @@ function handlePingSlackUserIds(convo) {
 
 				if (user) {
 					var SlackName = user.SlackName;
-					var id = user.id;
+					var _id = user.id;
 
-					convo.pingObject.pingUserId = id;
+					convo.pingObject.pingUserId = _id;
 
 					// we will only handle 1
 					if (pingSlackUserIds.length > 1) {
@@ -142,8 +143,7 @@ function handlePingSlackUserIds(convo) {
 							askForQueuedPingMessages(convo);
 						} else {
 							// send the message
-							convo.pingObject.deliveryType = "endSession";
-							convo.say(':point_left: <@' + user.dataValues.SlackUserId + '> is not a focused work session right now, so I started a conversation for you');
+							convo.say(':point_left: <@' + user.dataValues.SlackUserId + '> is not in a focused work session right now, so I started a conversation for you');
 							convo.say('Thank you for being mindful of <@' + user.dataValues.SlackUserId + '>\'s attention :raised_hands:');
 							convo.next();
 						}
@@ -154,7 +154,7 @@ function handlePingSlackUserIds(convo) {
 					bot.api.users.info({ user: pingSlackUserId }, function (err, response) {
 						if (!err) {
 							var _response$user = response.user;
-							var _id = _response$user.id;
+							var _id2 = _response$user.id;
 							var team_id = _response$user.team_id;
 							var name = _response$user.name;
 							var _tz = _response$user.tz;
@@ -164,7 +164,7 @@ function handlePingSlackUserIds(convo) {
 								TeamId: team_id,
 								email: email,
 								tz: _tz,
-								SlackUserId: _id,
+								SlackUserId: _id2,
 								SlackName: name
 							}).then(function () {
 								handlePingSlackUserIds(convo);
@@ -231,21 +231,21 @@ function askForQueuedPingMessages(convo) {
 						// equal times
 						var customTimeString = customTimeObject.format("h:mma");
 
-						// test to make sure endSession
 						if (customTimeString == endTimeString) {
-
+							// endSession ping
+							convo.pingObject.deliveryType = "endSession";
 							convo.say('Thank you for being mindful of <@' + user.dataValues.SlackUserId + '>’s attention :raised_hands:');
 							convo.say('I’ll send your message at *' + customTimeString + '*! :mailbox_with_mail:');
 							convo.next();
 						} else {
 
 							if (now < customTimeObject && customTimeObject < endTimeObject) {
-
+								// grenade ping
 								convo.pingObject.pingTimeObject = customTimeObject;
 								convo.pingObject.deliveryType = "grenade";
 								convo.say('Excellent! I’ll be sending your message to <@' + user.dataValues.SlackUserId + '> at *' + customTimeObject.format("h:mma") + '* :mailbox_with_mail:');
 							} else {
-
+								// invalid time for grenade ping
 								var minutesBuffer = Math.round(minutesLeft / 4);
 								now = (0, _momentTimezone2.default)().tz(tz);
 								var exampleEndTimeObjectOne = now.add(minutesBuffer, 'minutes');
@@ -396,5 +396,107 @@ function askForPingTime(convo) {
 	}
 
 	convo.next();
+}
+
+/**
+ * 
+ * This handles logic of sending ping depending on session info
+ * 
+ * @param  {bot} bot      requires bot of TeamId
+ * @param  {UserId, SlackUserId} fromUser
+ * @param  {UserId, SlackUserId} toUser   
+ * @param  {deliveryType, pingTimeObject, pingMessages } config   [description]
+ */
+function sendPing(bot, fromUser, toUser, config) {
+	var pingTimeObject = config.pingTimeObject;
+	var pingMessages = config.pingMessages;
+	var deliveryType = config.deliveryType;
+
+
+	if (!deliveryType) deliveryType = "endSession"; // default to endSession ping
+
+	var SlackUserIds = fromUser.SlackUserId + ',' + toUser.SlackUserId;
+
+	_models2.default.User.find({
+		where: { SlackUserId: toUser.SlackUserId }
+	}).then(function (toUser) {
+
+		if (toUser) {
+
+			// user found, handle the ping flow!
+			toUser.getSessions({
+				where: ['"open" = ?', true],
+				order: '"Session"."createdAt" DESC'
+			}).then(function (sessions) {
+
+				var session = sessions[0];
+
+				if (session) {
+
+					_models2.default.Ping.create({
+						FromUserId: fromUser.UserId,
+						ToUserId: toUser.UserId,
+						deliveryType: deliveryType,
+						pingTime: pingTimeObject
+					}).then(function (ping) {
+						if (pingMessages) {
+							pingMessages.forEach(function (pingMessage) {
+								_models2.default.PingMessage.create({
+									PingId: ping.id,
+									content: pingMessage
+								});
+							});
+						}
+					});
+				} else {
+
+					bot.api.mpim.open({
+						users: 'SlackUserIds'
+					}, function (err, response) {
+						if (!err) {
+							var _id3 = response.group.id;
+
+							bot.startConversation({ channel: _id3 }, function (err, convo) {
+								convo.say('Hey <@' + toUser.SlackUserId + '>! You\'re not in a session and <@' + fromUser.SlackUserId + '> wanted to reach out :raised_hands:');
+							});
+						}
+					});
+				}
+			});
+		} else {
+
+			bot.startPrivateConversation({ user: fromUser.SlackUserId }, function (err, convo) {
+
+				// could not find user, let's create
+				bot.api.users.info({ user: toUser.SlackUserId }, function (err, response) {
+
+					if (!err) {
+						(function () {
+							var _response$user2 = response.user;
+							var id = _response$user2.id;
+							var team_id = _response$user2.team_id;
+							var name = _response$user2.name;
+							var tz = _response$user2.tz;
+
+							var email = user.profile && user.profile.email ? user.profile.email : '';
+							_models2.default.User.create({
+								TeamId: team_id,
+								email: email,
+								tz: tz,
+								SlackUserId: id,
+								SlackName: name
+							}).then(function () {
+								convo.say('For some reason, i didn\'t have <@' + id + '> in my database, but now I do! Thank you. Try sending this ping again :pray:');
+							});
+						})();
+					} else {
+						convo.say('Sorry, I can\'t recognize <@' + id + '>!');
+					}
+				});
+			});
+		}
+
+		convo.next();
+	});
 }
 //# sourceMappingURL=pingFunctions.js.map

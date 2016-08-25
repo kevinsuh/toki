@@ -315,8 +315,11 @@ export function dateStringToMomentTimeZone(timeString, timeZone) {
  * @param  {string input} string "ping <@UIXUXUXU>" // done automatically
  * @return {array of SlackUserIds} ['UIXUXUXU'];
  */
-export function getUniqueSlackUsersFromString(string) {
-	const slackUserIdContainer = new RegExp(/<@(.*?)>/g);
+export function getUniqueSlackUsersFromString(string, config = {}) {
+
+	const { normalSlackNames } = config;
+	// by default will get translated into SlackUserId
+	const slackUserIdContainer = normalSlackNames ? new RegExp(/@(\S*)/g) : new RegExp(/<@(.*?)>/g);
 	const replaceRegEx = new RegExp(/<|>|@/g);
 	
 	let arrayString = string.match(slackUserIdContainer);
