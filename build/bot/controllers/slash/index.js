@@ -49,7 +49,7 @@ exports.default = function (controller) {
 			var responseObject = {
 				response_type: "ephemeral"
 			};
-			var slackNames = (0, _messageHelpers.getUniqueSlackUsersFromString)(text, { normalSlackNames: normalSlackNames });
+			var slackNames = (0, _messageHelpers.getUniqueSlackUsersFromString)(text, { normalSlackNames: true });
 			var customTimeObject = void 0;
 
 			var toSlackName = slackNames.length > 0 ? slackNames[0] : false;
@@ -97,21 +97,26 @@ exports.default = function (controller) {
 
 					// ping requires a receiving end
 					if (toSlackName) {
-						// if msg starts with @pinger, remove it from message
-						var pingMessage = text[0] == "@" ? text.replace(/@(\S*)/, "").trim() : text;
-						// for now this automatically queues to end of focus session
-						_models2.default.User.find({
-							where: {
-								SlackName: toSlackName
-							}
-						});
+						(function () {
+							// if msg starts with @pinger, remove it from message
+							var pingMessage = text[0] == "@" ? text.replace(/@(\S*)/, "").trim() : text;
+							// for now this automatically queues to end of focus session
+							_models2.default.User.find({
+								where: {
+									SlackName: toSlackName,
+									TeamId: team_id
+								}
+							}).then(function (toUser) {
 
-						var _config = config;
-						var deliveryType = _config.deliveryType;
-						var pingTimeObject = _config.pingTimeObject;
-						var pingMessages = _config.pingMessages;
-
-						(0, _pingFunctions.sendPing)(bot, fromUser, toUser, config);
+								var config = {
+									deliveryType: "sessionEnd",
+									pingMessages: [pingMessage]
+								};
+								var fromUserConfig = { UserId: UserId, SlackUserId: SlackUserId };
+								var toUserConfig = { UserId: toUser.dataValues.UserId, SlackUserId: toUser.dataValues.SlackUserId };
+								(0, _pingFunctions.sendPing)(bot, fromUserConfig, toUserConfig, config);
+							});
+						})();
 					} else {
 						responseObject.text = 'Let me know who you want to send this ping to! (i.e. `@emily`)';
 						bot.replyPrivate(message, responseObject);

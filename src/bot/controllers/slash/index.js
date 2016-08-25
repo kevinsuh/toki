@@ -46,7 +46,7 @@ export default function(controller) {
 			let responseObject = {
 				response_type: "ephemeral"
 			}
-			let slackNames = getUniqueSlackUsersFromString(text, { normalSlackNames });
+			let slackNames = getUniqueSlackUsersFromString(text, { normalSlackNames: true });
 			let customTimeObject;
 
 			let toSlackName = slackNames.length > 0 ? slackNames[0] : false;
@@ -101,14 +101,22 @@ export default function(controller) {
 						// for now this automatically queues to end of focus session
 						models.User.find({
 							where: {
-								SlackName: toSlackName
+								SlackName: toSlackName,
+								TeamId: team_id
 							}
 						})
+						.then((toUser) => {
 
+							const config = {
+								deliveryType: "sessionEnd",
+								pingMessages: [ pingMessage ]
+							}
+							const fromUserConfig = { UserId, SlackUserId }
+							const toUserConfig   = { UserId: toUser.dataValues.UserId, SlackUserId: toUser.dataValues.SlackUserId }
+							sendPing(bot, fromUserConfig, toUserConfig, config);
 
-						const { deliveryType, pingTimeObject, pingMessages } = config;
-						sendPing(bot, fromUser, toUser, config);
-						
+						})
+
 					} else {
 						responseObject.text = `Let me know who you want to send this ping to! (i.e. \`@emily\`)`;
 						bot.replyPrivate(message, responseObject);

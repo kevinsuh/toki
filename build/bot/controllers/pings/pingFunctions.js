@@ -232,8 +232,8 @@ function askForQueuedPingMessages(convo) {
 						var customTimeString = customTimeObject.format("h:mma");
 
 						if (customTimeString == endTimeString) {
-							// endSession ping
-							convo.pingObject.deliveryType = "endSession";
+							// sessionEnd ping
+							convo.pingObject.deliveryType = "sessionEnd";
 							convo.say('Thank you for being mindful of <@' + user.dataValues.SlackUserId + '>’s attention :raised_hands:');
 							convo.say('I’ll send your message at *' + customTimeString + '*! :mailbox_with_mail:');
 							convo.next();
@@ -451,14 +451,36 @@ function sendPing(bot, fromUser, toUser, config) {
 				} else {
 
 					bot.api.mpim.open({
-						users: 'SlackUserIds'
+						users: SlackUserIds
 					}, function (err, response) {
 						if (!err) {
-							var _id3 = response.group.id;
+							(function () {
+								var id = response.group.id;
 
-							bot.startConversation({ channel: _id3 }, function (err, convo) {
-								convo.say('Hey <@' + toUser.SlackUserId + '>! You\'re not in a session and <@' + fromUser.SlackUserId + '> wanted to reach out :raised_hands:');
-							});
+								var text = 'Hey <@' + toUser.SlackUserId + '>! You\'re not in a session and <@' + fromUser.SlackUserId + '> wanted to reach out :raised_hands:';
+								var attachments = [];
+
+								bot.startConversation({ channel: id }, function (err, convo) {
+
+									if (pingMessages) {
+										pingMessages.forEach(function (pingMessage) {
+											attachments.push({
+												text: pingMessage,
+												mrkdwn_in: ["text"],
+												attachment_type: 'default',
+												callback_id: "PING_MESSAGE",
+												fallback: pingMessage,
+												color: _constants.colorsHash.toki_purple.hex
+											});
+										});
+									}
+									convo.say({
+										text: text,
+										attachments: attachments
+									});
+									convo.next();
+								});
+							})();
 						}
 					});
 				}
@@ -493,10 +515,10 @@ function sendPing(bot, fromUser, toUser, config) {
 						convo.say('Sorry, I can\'t recognize <@' + id + '>!');
 					}
 				});
+
+				convo.next();
 			});
 		}
-
-		convo.next();
 	});
 }
 //# sourceMappingURL=pingFunctions.js.map

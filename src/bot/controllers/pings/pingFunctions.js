@@ -204,8 +204,8 @@ function askForQueuedPingMessages(convo) {
 						let customTimeString = customTimeObject.format("h:mma");
 
 						if (customTimeString == endTimeString) {
-							// endSession ping
-							convo.pingObject.deliveryType = "endSession";
+							// sessionEnd ping
+							convo.pingObject.deliveryType = "sessionEnd";
 							convo.say(`Thank you for being mindful of <@${user.dataValues.SlackUserId}>’s attention :raised_hands:`);
 							convo.say(`I’ll send your message at *${customTimeString}*! :mailbox_with_mail:`);
 							convo.next();
@@ -394,7 +394,7 @@ export function sendPing(bot, fromUser, toUser, config) {
 
 	const { pingTimeObject, pingMessages } = config;
 	let { deliveryType } = config;
-	
+
 	if (!deliveryType) deliveryType = "endSession"; // default to endSession ping
 
 	let SlackUserIds = `${fromUser.SlackUserId},${toUser.SlackUserId}`;
@@ -437,12 +437,33 @@ export function sendPing(bot, fromUser, toUser, config) {
 				} else {
 
 					bot.api.mpim.open({
-						users: `SlackUserIds`
+						users: SlackUserIds
 					}, (err, response) => {
 						if (!err) {
 							const { group: { id } } = response;
+							let text = `Hey <@${toUser.SlackUserId}>! You're not in a session and <@${fromUser.SlackUserId}> wanted to reach out :raised_hands:`;
+							let attachments = [];
+
 							bot.startConversation({ channel: id }, (err, convo) => {
-								convo.say(`Hey <@${toUser.SlackUserId}>! You're not in a session and <@${fromUser.SlackUserId}> wanted to reach out :raised_hands:`);
+
+								if (pingMessages) {
+									pingMessages.forEach((pingMessage) => {
+										attachments.push({
+											text: pingMessage,
+											mrkdwn_in: ["text"],
+											attachment_type: 'default',
+											callback_id: "PING_MESSAGE",
+											fallback: pingMessage,
+											color: colorsHash.toki_purple.hex
+										});
+									});
+								}
+								convo.say({
+									text,
+									attachments
+								});
+								convo.next();
+
 							})
 						}
 					});
@@ -477,13 +498,11 @@ export function sendPing(bot, fromUser, toUser, config) {
 
 				});
 
+				convo.next();
+
 			});
 
-			
-
 		}
-
-		convo.next();
 
 	});
 
