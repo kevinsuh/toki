@@ -30,18 +30,11 @@ exports.default = function (controller) {
 
 				var UserId = user.id;
 
-				if (!tz) {
-					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-						convo.say("Ah! I need your timezone to continue. Let me know when you're ready to `configure timezone` together");
-					});
-					return;
-				}
-
 				var currentSession = sessions[0];
 
-				if (currentSession) {
+				if (currentSession && tz) {
 					(function () {
-						// give status!
+						// if in session, means you have your tz config'd
 
 						var now = (0, _momentTimezone2.default)().tz(tz);
 						var endTime = (0, _momentTimezone2.default)(currentSession.dataValues.endTime).tz(tz);

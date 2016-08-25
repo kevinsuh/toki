@@ -43,20 +43,15 @@ exports.default = function (controller) {
 				var tz = user.tz;
 
 
-				if (!tz) {
-					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-						convo.say("Ah! I need your timezone to continue. Let me know when you're ready to `configure timezone` together");
-					});
-					return;
-				} else {
+				if (tz) {
 					var customTimeObject = (0, _messageHelpers.witTimeResponseToTimeZoneObject)(message, tz);
 					if (customTimeObject) {
 						var now = (0, _momentTimezone2.default)().tz(tz);
 						var minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
 						config.minutes = minutes;
 					}
-					controller.trigger('begin_session_flow', [bot, config]);
 				}
+				controller.trigger('begin_session_flow', [bot, config]);
 			});
 		}, 750);
 	});
@@ -83,22 +78,15 @@ exports.default = function (controller) {
 			where: { SlackUserId: SlackUserId }
 		}).then(function (user) {
 
+			// need user's timezone for this flow!
+			var tz = user.tz;
+
+			var UserId = user.id;
+
 			// check for an open session before starting flow
 			user.getSessions({
 				where: ['"open" = ?', true]
 			}).then(function (sessions) {
-
-				// need user's timezone for this flow!
-				var tz = user.tz;
-
-				var UserId = user.id;
-
-				if (!tz) {
-					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-						convo.say("Ah! I need your timezone to continue. Let me know when you're ready to `configure timezone` together");
-					});
-					return;
-				}
 
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
@@ -123,9 +111,11 @@ exports.default = function (controller) {
 						currentSession = sessions[0];
 						convo.sessionStart.changeTimeAndTask = changeTimeAndTask;
 					}
+
 					convo.sessionStart.currentSession = currentSession;
 
-					(0, _startSessionFunctions.finalizeSessionTimeAndContent)(convo);
+					// entry point!
+					(0, _startSessionFunctions.confirmTimeZoneExistsThenStartSessionFlow)(convo);
 					convo.next();
 
 					convo.on('end', function (convo) {

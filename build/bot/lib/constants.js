@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.startSessionOptionsAttachments = exports.startSessionExamples = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
+exports.timeZoneAttachments = exports.startSessionOptionsAttachments = exports.startSessionExamples = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
 
 var _utterances;
 
@@ -257,6 +257,28 @@ var buttonValues = exports.buttonValues = {
 	now: {
 		name: "NOW",
 		value: "Now"
+	},
+	timeZones: {
+		eastern: {
+			name: "EASTERN",
+			value: "Eastern"
+		},
+		central: {
+			name: "CENTRAL",
+			value: "Central"
+		},
+		mountain: {
+			name: "MOUNTAIN",
+			value: "mountain"
+		},
+		pacific: {
+			name: "PACIFIC",
+			value: "Pacific"
+		},
+		other: {
+			name: "OTHER",
+			value: "Other"
+		}
 	}
 };
 
@@ -276,6 +298,10 @@ var timeZones = exports.timeZones = {
 	pacific: {
 		tz: "America/Los_Angeles",
 		name: "Pacific"
+	},
+	other: {
+		tz: "OTHER",
+		name: "Other"
 	}
 };
 
@@ -299,6 +325,39 @@ var startSessionOptionsAttachments = exports.startSessionOptionsAttachments = [{
 		name: buttonValues.endSession.name,
 		text: "End Session",
 		value: buttonValues.endSession.value,
+		type: "button"
+	}]
+}];
+
+var timeZoneAttachments = exports.timeZoneAttachments = [{
+	attachment_type: 'default',
+	callback_id: "ONBOARD",
+	fallback: "What's your timezone?",
+	color: colorsHash.grey.hex,
+	actions: [{
+		name: buttonValues.timeZones.eastern.name,
+		text: "Eastern",
+		value: buttonValues.timeZones.eastern.value,
+		type: "button"
+	}, {
+		name: buttonValues.timeZones.central.name,
+		text: "Central",
+		value: buttonValues.timeZones.central.value,
+		type: "button"
+	}, {
+		name: buttonValues.timeZones.mountain.name,
+		text: "Mountain",
+		value: buttonValues.timeZones.mountain.value,
+		type: "button"
+	}, {
+		name: buttonValues.timeZones.pacific.name,
+		text: "Pacific",
+		value: buttonValues.timeZones.pacific.value,
+		type: "button"
+	}, {
+		name: buttonValues.timeZones.other.name,
+		text: "Other",
+		value: buttonValues.timeZones.other.value,
 		type: "button"
 	}]
 }];

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.finalizeSessionTimeAndContent = finalizeSessionTimeAndContent;
+exports.confirmTimeZoneExistsThenStartSessionFlow = confirmTimeZoneExistsThenStartSessionFlow;
 
 var _momentTimezone = require('moment-timezone');
 
@@ -23,15 +23,86 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * 		START WORK SESSION CONVERSATION FLOW FUNCTIONS
  */
 
-// confirm task and time in one place and start if it's good
-function finalizeSessionTimeAndContent(convo) {
+// confirm that user has tz configured before continuing
+function confirmTimeZoneExistsThenStartSessionFlow(convo) {
+	var text = arguments.length <= 1 || arguments[1] === undefined ? 'Ah! Since I help you make time for your priorities, I need to know your *timezone* before we continue' : arguments[1];
 	var _convo$sessionStart = convo.sessionStart;
 	var SlackUserId = _convo$sessionStart.SlackUserId;
+	var UserId = _convo$sessionStart.UserId;
 	var tz = _convo$sessionStart.tz;
-	var content = _convo$sessionStart.content;
-	var minutes = _convo$sessionStart.minutes;
-	var currentSession = _convo$sessionStart.currentSession;
-	var changeTimeAndTask = _convo$sessionStart.changeTimeAndTask;
+
+
+	if (!tz) {
+		// user needs tz config'd!
+		convo.ask({
+			text: text,
+			attachments: _constants.timeZoneAttachments
+		}, function (response, convo) {
+			var text = response.text;
+
+			var timeZoneObject = false;
+			switch (text) {
+				case (text.match(_constants.utterances.eastern) || {}).input:
+					timeZoneObject = _constants.timeZones.eastern;
+					break;
+				case (text.match(_constants.utterances.central) || {}).input:
+					timeZoneObject = _constants.timeZones.central;
+					break;
+				case (text.match(_constants.utterances.mountain) || {}).input:
+					timeZoneObject = _constants.timeZones.mountain;
+					break;
+				case (text.match(_constants.utterances.pacific) || {}).input:
+					timeZoneObject = _constants.timeZones.pacific;
+					break;
+				case (text.match(_constants.utterances.other) || {}).input:
+					timeZoneObject = _constants.timeZones.other;
+					break;
+				default:
+					break;
+			}
+
+			if (!timeZoneObject) {
+				convo.say("I didn't get that :thinking_face:");
+				confirmTimeZoneExistsThenStartSessionFlow(convo, 'Which timezone are you in?');
+				convo.next();
+			} else if (timeZoneObject == _constants.timeZones.other) {
+				convo.say('Sorry!');
+				convo.say("Right now I’m only able to work in these timezones. If you want to demo Toki, just pick one of these timezones for now. I’ll try to get your timezone included as soon as possible!");
+				confirmTimeZoneExistsThenStartSessionFlow(convo, 'Which timezone do you want to go with for now?');
+				convo.next();
+			} else {
+				// success!!
+
+				var _timeZoneObject = timeZoneObject;
+				var _tz = _timeZoneObject.tz;
+
+				_models2.default.User.update({
+					tz: _tz
+				}, {
+					where: { id: UserId }
+				}).then(function () {
+					convo.say('Great! If this ever changes, you can always `update settings`');
+					finalizeSessionTimeAndContent(convo); // entry point
+					convo.next();
+				});
+			}
+		});
+	} else {
+		// user already has tz config'd!
+		finalizeSessionTimeAndContent(convo); // entry point
+		convo.next();
+	}
+}
+
+// confirm task and time in one place and start if it's good
+function finalizeSessionTimeAndContent(convo) {
+	var _convo$sessionStart2 = convo.sessionStart;
+	var SlackUserId = _convo$sessionStart2.SlackUserId;
+	var tz = _convo$sessionStart2.tz;
+	var content = _convo$sessionStart2.content;
+	var minutes = _convo$sessionStart2.minutes;
+	var currentSession = _convo$sessionStart2.currentSession;
+	var changeTimeAndTask = _convo$sessionStart2.changeTimeAndTask;
 
 
 	if (currentSession) {
@@ -71,10 +142,10 @@ function finalizeSessionTimeAndContent(convo) {
 }
 
 function changeTimeAndTaskFlow(convo) {
-	var _convo$sessionStart2 = convo.sessionStart;
-	var SlackUserId = _convo$sessionStart2.SlackUserId;
-	var tz = _convo$sessionStart2.tz;
-	var currentSession = _convo$sessionStart2.currentSession;
+	var _convo$sessionStart3 = convo.sessionStart;
+	var SlackUserId = _convo$sessionStart3.SlackUserId;
+	var tz = _convo$sessionStart3.tz;
+	var currentSession = _convo$sessionStart3.currentSession;
 
 	// we are restarting data so user can seamlessly create a new session
 
@@ -128,12 +199,12 @@ function changeTimeAndTaskFlow(convo) {
 }
 
 function askToOverrideCurrentSession(convo) {
-	var _convo$sessionStart3 = convo.sessionStart;
-	var SlackUserId = _convo$sessionStart3.SlackUserId;
-	var tz = _convo$sessionStart3.tz;
-	var content = _convo$sessionStart3.content;
-	var minutes = _convo$sessionStart3.minutes;
-	var currentSession = _convo$sessionStart3.currentSession;
+	var _convo$sessionStart4 = convo.sessionStart;
+	var SlackUserId = _convo$sessionStart4.SlackUserId;
+	var tz = _convo$sessionStart4.tz;
+	var content = _convo$sessionStart4.content;
+	var minutes = _convo$sessionStart4.minutes;
+	var currentSession = _convo$sessionStart4.currentSession;
 
 
 	var now = (0, _momentTimezone2.default)().tz(tz);
@@ -198,11 +269,11 @@ function askToOverrideCurrentSession(convo) {
 // ask which task the user wants to work on
 function askForSessionContent(convo) {
 	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
-	var _convo$sessionStart4 = convo.sessionStart;
-	var SlackUserId = _convo$sessionStart4.SlackUserId;
-	var tz = _convo$sessionStart4.tz;
-	var content = _convo$sessionStart4.content;
-	var minutes = _convo$sessionStart4.minutes;
+	var _convo$sessionStart5 = convo.sessionStart;
+	var SlackUserId = _convo$sessionStart5.SlackUserId;
+	var tz = _convo$sessionStart5.tz;
+	var content = _convo$sessionStart5.content;
+	var minutes = _convo$sessionStart5.minutes;
 
 
 	var sessionExample = (0, _messageHelpers.getRandomExample)("session");
@@ -250,11 +321,11 @@ function askForSessionTime(convo) {
 	var task = convo.task;
 	var bot = task.bot;
 	var source_message = task.source_message;
-	var _convo$sessionStart5 = convo.sessionStart;
-	var SlackUserId = _convo$sessionStart5.SlackUserId;
-	var tz = _convo$sessionStart5.tz;
-	var content = _convo$sessionStart5.content;
-	var minutes = _convo$sessionStart5.minutes;
+	var _convo$sessionStart6 = convo.sessionStart;
+	var SlackUserId = _convo$sessionStart6.SlackUserId;
+	var tz = _convo$sessionStart6.tz;
+	var content = _convo$sessionStart6.content;
+	var minutes = _convo$sessionStart6.minutes;
 
 	// get time to session
 
