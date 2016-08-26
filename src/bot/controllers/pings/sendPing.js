@@ -102,10 +102,10 @@ export default function(controller) {
 					
 					const { SlackUserId, tz, pingUserId, pingSlackUserId, pingTimeObject, userInSession, deliveryType, pingMessages } = convo.pingObject;
 
-					const fromUser = { UserId, SlackUserId };
-					const toUser   = { UserId: pingUserId, SlackUserId: pingSlackUserId };
+					const fromUserConfig = { UserId, SlackUserId };
+					const toUserConfig   = { UserId: pingUserId, SlackUserId: pingSlackUserId };
 					const config   = { userInSession, deliveryType, pingTimeObject, pingMessages }
-					sendPing(bot, fromUser, toUser, config);
+					sendPing(bot, fromUserConfig, toUserConfig, config);
 
 				})
 

@@ -116,10 +116,10 @@ exports.default = function (controller) {
 					var pingMessages = _convo$pingObject.pingMessages;
 
 
-					var fromUser = { UserId: UserId, SlackUserId: SlackUserId };
-					var toUser = { UserId: pingUserId, SlackUserId: pingSlackUserId };
+					var fromUserConfig = { UserId: UserId, SlackUserId: SlackUserId };
+					var toUserConfig = { UserId: pingUserId, SlackUserId: pingSlackUserId };
 					var config = { userInSession: userInSession, deliveryType: deliveryType, pingTimeObject: pingTimeObject, pingMessages: pingMessages };
-					(0, _pingFunctions.sendPing)(bot, fromUser, toUser, config);
+					(0, _pingFunctions.sendPing)(bot, fromUserConfig, toUserConfig, config);
 				});
 			});
 		});

@@ -285,7 +285,7 @@ function askForQueuedPingMessages(convo) {
 							type: 'button'
 						}, {
 							name: _constants.buttonValues.sendSooner.name,
-							text: ':bomb: Send sooner :bomb:',
+							text: 'Send sooner :bomb:',
 							value: _constants.buttonValues.sendSooner.value,
 							type: 'button'
 						}];
@@ -344,7 +344,7 @@ function askForPingTime(convo) {
 				fallback: "When do you want to ping?",
 				actions: [{
 					name: _constants.buttonValues.now.name,
-					text: ':bomb: Now :bomb:',
+					text: 'Now :bomb:',
 					value: _constants.buttonValues.now.value,
 					type: 'button'
 				}]
@@ -403,11 +403,11 @@ function askForPingTime(convo) {
  * This handles logic of sending ping depending on session info
  * 
  * @param  {bot} bot      requires bot of TeamId
- * @param  {UserId, SlackUserId} fromUser
- * @param  {UserId, SlackUserId} toUser   
+ * @param  {UserId, SlackUserId} fromUserConfig
+ * @param  {UserId, SlackUserId} toUserConfig
  * @param  {deliveryType, pingTimeObject, pingMessages } config   [description]
  */
-function sendPing(bot, fromUser, toUser, config) {
+function sendPing(bot, fromUserConfig, toUserConfig, config) {
 	var pingTimeObject = config.pingTimeObject;
 	var pingMessages = config.pingMessages;
 	var deliveryType = config.deliveryType;
@@ -415,10 +415,10 @@ function sendPing(bot, fromUser, toUser, config) {
 
 	if (!deliveryType) deliveryType = "endSession"; // default to endSession ping
 
-	var SlackUserIds = fromUser.SlackUserId + ',' + toUser.SlackUserId;
+	var SlackUserIds = fromUserConfig.SlackUserId + ',' + toUserConfig.SlackUserId;
 
 	_models2.default.User.find({
-		where: { SlackUserId: toUser.SlackUserId }
+		where: { SlackUserId: toUserConfig.SlackUserId }
 	}).then(function (toUser) {
 
 		if (toUser) {
@@ -434,8 +434,8 @@ function sendPing(bot, fromUser, toUser, config) {
 				if (session) {
 
 					_models2.default.Ping.create({
-						FromUserId: fromUser.UserId,
-						ToUserId: toUser.UserId,
+						FromUserId: fromUserConfig.UserId,
+						ToUserId: toUserConfig.UserId,
 						deliveryType: deliveryType,
 						pingTime: pingTimeObject
 					}).then(function (ping) {
@@ -457,7 +457,7 @@ function sendPing(bot, fromUser, toUser, config) {
 							(function () {
 								var id = response.group.id;
 
-								var text = 'Hey <@' + toUser.SlackUserId + '>! You\'re not in a session and <@' + fromUser.SlackUserId + '> wanted to reach out :raised_hands:';
+								var text = 'Hey <@' + toUserConfig.SlackUserId + '>! You\'re not in a session and <@' + fromUserConfig.SlackUserId + '> wanted to reach out :raised_hands:';
 								var attachments = [];
 
 								bot.startConversation({ channel: id }, function (err, convo) {
@@ -487,10 +487,10 @@ function sendPing(bot, fromUser, toUser, config) {
 			});
 		} else {
 
-			bot.startPrivateConversation({ user: fromUser.SlackUserId }, function (err, convo) {
+			bot.startPrivateConversation({ user: fromUserConfig.SlackUserId }, function (err, convo) {
 
 				// could not find user, let's create
-				bot.api.users.info({ user: toUser.SlackUserId }, function (err, response) {
+				bot.api.users.info({ user: toUserConfig.SlackUserId }, function (err, response) {
 
 					if (!err) {
 						(function () {
