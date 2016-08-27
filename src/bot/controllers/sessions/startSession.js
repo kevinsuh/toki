@@ -3,7 +3,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants, startSessionOptionsAttachments } from '../../lib/constants';
-import { finalizeSessionTimeAndContent } from './startSessionFunctions';
+import { confirmTimeZoneExistsThenStartSessionFlow } from './startSessionFunctions';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '../../lib/messageHelpers';
 
 // STARTING A SESSION
@@ -41,20 +41,15 @@ export default function(controller) {
 
 				const { tz } = user;
 
-				if (!tz) {
-					bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
-						convo.say("Ah! I need your timezone to continue. Let me know when you're ready to `configure timezone` together");
-					});
-					return;
-				} else {
+				if (tz) {
 					let customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
 					if (customTimeObject) {
 						let now = moment().tz(tz);
 						let minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
 						config.minutes = minutes;
 					}
-					controller.trigger(`begin_session_flow`, [ bot, config ]);
 				}
+				controller.trigger(`begin_session_flow`, [ bot, config ]);
 
 			});
 
@@ -74,9 +69,16 @@ export default function(controller) {
 
 		const { SlackUserId, content, minutes, changeTimeAndTask } = config;
 
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
 		models.User.find({
 			where: { SlackUserId }
 		}).then((user) => {
+
+			// need user's timezone for this flow!
+			const { tz } = user;
+			const UserId = user.id;
 
 			// check for an open session before starting flow
 			user.getSessions({
@@ -84,23 +86,14 @@ export default function(controller) {
 			})
 			.then((sessions) => {
 
-				// need user's timezone for this flow!
-				const { tz } = user;
-				const UserId = user.id;
-
-				if (!tz) {
-					bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
-						convo.say("Ah! I need your timezone to continue. Let me know when you're ready to `configure timezone` together");
-					});
-					return;
-				}
-
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
 					// console.log(controller.tasks[0].convos);
 
 					// have 5-minute exit time limit
-					convo.task.timeLimit = 1000 * 60 * 5;
+					if (convo) {
+						convo.task.timeLimit = 1000 * 60 * 5;
+					}
 
 					convo.sessionStart = {
 						SlackUserId,
@@ -116,14 +109,17 @@ export default function(controller) {
 						currentSession = sessions[0];
 						convo.sessionStart.changeTimeAndTask = changeTimeAndTask;
 					}
+
 					convo.sessionStart.currentSession = currentSession;
 
-					finalizeSessionTimeAndContent(convo);
+					// entry point!
+					confirmTimeZoneExistsThenStartSessionFlow(convo);
 					convo.next();
+					
 
 					convo.on('end', (convo) => {
 
-						const { sessionStart, sessionStart: { confirmNewSession, content, minutes } } = convo;
+						const { sessionStart, sessionStart: { confirmNewSession, content, minutes, tz } } = convo;
 
 						console.log("\n\n\n end of start session ");
 						console.log(sessionStart);

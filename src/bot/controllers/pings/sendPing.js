@@ -4,7 +4,7 @@ import models from '../../../app/models';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants, startSessionOptionsAttachments } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString } from '../../lib/messageHelpers';
-import { startPingFlow } from './pingFunctions';
+import { startPingFlow, sendPing } from './pingFunctions';
 
 // STARTING A SESSION
 export default function(controller) {
@@ -102,38 +102,10 @@ export default function(controller) {
 					
 					const { SlackUserId, tz, pingUserId, pingSlackUserId, pingTimeObject, userInSession, deliveryType, pingMessages } = convo.pingObject;
 
-					let SlackUserIds = `${SlackUserId},${pingSlackUserId}`;
-					
-					if (userInSession) {
-						models.Ping.create({
-							FromUserId: UserId,
-							ToUserId: pingUserId,
-							deliveryType,
-							pingTime: pingTimeObject
-						})
-						.then((ping) => {
-							if (pingMessages) {
-								pingMessages.forEach((pingMessage) => {
-									models.PingMessage.create({
-										PingId: ping.id,
-										content: pingMessage
-									})
-								})
-							}
-						})
-					} else {
-						bot.api.mpim.open({
-							users: SlackUserIds
-						}, (err, response) => {
-							if (!err) {
-								const { group: { id } } = response;
-								bot.startConversation({ channel: id }, (err, convo) => {
-									convo.say(`Hey <@${pingSlackUserId}>! You're not in a session and <@${SlackUserId}> wanted to reach out :raised_hands:`);
-								})
-							}
-						});
-					}
-
+					const fromUserConfig = { UserId, SlackUserId };
+					const toUserConfig   = { UserId: pingUserId, SlackUserId: pingSlackUserId };
+					const config   = { userInSession, deliveryType, pingTimeObject, pingMessages }
+					sendPing(bot, fromUserConfig, toUserConfig, config);
 
 				})
 
@@ -144,4 +116,3 @@ export default function(controller) {
 	});
 
 }
-

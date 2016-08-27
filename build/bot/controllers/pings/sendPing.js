@@ -116,37 +116,10 @@ exports.default = function (controller) {
 					var pingMessages = _convo$pingObject.pingMessages;
 
 
-					var SlackUserIds = SlackUserId + ',' + pingSlackUserId;
-
-					if (userInSession) {
-						_models2.default.Ping.create({
-							FromUserId: UserId,
-							ToUserId: pingUserId,
-							deliveryType: deliveryType,
-							pingTime: pingTimeObject
-						}).then(function (ping) {
-							if (pingMessages) {
-								pingMessages.forEach(function (pingMessage) {
-									_models2.default.PingMessage.create({
-										PingId: ping.id,
-										content: pingMessage
-									});
-								});
-							}
-						});
-					} else {
-						bot.api.mpim.open({
-							users: SlackUserIds
-						}, function (err, response) {
-							if (!err) {
-								var id = response.group.id;
-
-								bot.startConversation({ channel: id }, function (err, convo) {
-									convo.say('Hey <@' + pingSlackUserId + '>! You\'re not in a session and <@' + SlackUserId + '> wanted to reach out :raised_hands:');
-								});
-							}
-						});
-					}
+					var fromUserConfig = { UserId: UserId, SlackUserId: SlackUserId };
+					var toUserConfig = { UserId: pingUserId, SlackUserId: pingSlackUserId };
+					var config = { userInSession: userInSession, deliveryType: deliveryType, pingTimeObject: pingTimeObject, pingMessages: pingMessages };
+					(0, _pingFunctions.sendPing)(bot, fromUserConfig, toUserConfig, config);
 				});
 			});
 		});

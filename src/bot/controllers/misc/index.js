@@ -2,7 +2,7 @@ import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
 
-import { utterances, colorsArray, constants, buttonValues, colorsHash, timeZones } from '../../lib/constants';
+import { utterances, colorsArray, constants, buttonValues, colorsHash, timeZones, tokiExplainAttachments } from '../../lib/constants';
 
 export default function(controller) {
 
@@ -39,6 +39,44 @@ export default function(controller) {
 			}
 
 		}, 500);
+	});
+
+	controller.on('explain_toki_flow', (bot, config) => {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
+		const { fromUserConfig, toUserConfig } = config;
+
+		models.User.find({
+			where: { SlackUserId: toUserConfig.SlackUserId }
+		}).then((toUser) => {
+
+			const { SlackUserId } = toUser;
+
+			bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
+
+				// have 5-minute exit time limit
+				if (convo)
+					convo.task.timeLimit = 1000 * 60 * 5;
+
+				convo.say(`Hey! <@${fromUserConfig.SlackUserId}> wanted me to explain how I can also help you get your most meaningful things done each day`);
+				convo.say(`Think of me as an office manager for each of your teammate's attention. *I make sure you only get interrupted with messages that are actually urgent*, so that you can maintain focus on your priorities`);
+				convo.say(`On the flip side, *I also make it easy for you to ping teammates when they're actually ready to switch contexts.* This lets you get requests out of your head when you think of them, while making sure it doesn't unnecessarily interrupt anyone's focus`);
+				convo.say({
+					text: `Here's how I do all this:`,
+					attachments: tokiExplainAttachments
+				});
+				convo.say(`I'm here whenever you're ready to go! Just let me know when you want to \`ping\` someone, or enter a \`focus\` session yourself :raised_hands:`);
+
+				convo.on(`end`, (convo) => {
+
+				});
+
+			});
+
+		});
+
 	});
 
 }

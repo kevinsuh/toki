@@ -261,6 +261,28 @@ export const buttonValues ={
 	now: {
 		name: "NOW",
 		value: "Now"
+	},
+	timeZones: {
+		eastern: {
+			name: "EASTERN",
+			value: "Eastern"
+		},
+		central: {
+			name: "CENTRAL",
+			value: "Central"
+		},
+		mountain: {
+			name: "MOUNTAIN",
+			value: "mountain"
+		},
+		pacific: {
+			name: "PACIFIC",
+			value: "Pacific"
+		},
+		other: {
+			name: "OTHER",
+			value: "Other"
+		}
 	}
 }
 
@@ -280,6 +302,10 @@ export const timeZones = {
 	pacific: {
 		tz: "America/Los_Angeles",
 		name: "Pacific"
+	},
+	other: {
+		tz: "OTHER",
+		name: "Other"
 	}
 }
 
@@ -319,6 +345,68 @@ export const startSessionOptionsAttachments = [
 				type: "button"
 			}
 		]
+	}
+]
+
+export const timeZoneAttachments = [
+	{
+		attachment_type: 'default',
+		callback_id: "ONBOARD",
+		fallback: "What's your timezone?",
+		color: colorsHash.grey.hex,
+		actions: [
+			{
+				name: buttonValues.timeZones.eastern.name,
+				text: `Eastern`,
+				value: buttonValues.timeZones.eastern.value,
+				type: "button"
+			},
+			{
+				name: buttonValues.timeZones.central.name,
+				text: `Central`,
+				value: buttonValues.timeZones.central.value,
+				type: "button"
+			},
+			{
+				name: buttonValues.timeZones.mountain.name,
+				text: `Mountain`,
+				value: buttonValues.timeZones.mountain.value,
+				type: "button"
+			},
+			{
+				name: buttonValues.timeZones.pacific.name,
+				text: `Pacific`,
+				value: buttonValues.timeZones.pacific.value,
+				type: "button"
+			},
+			{
+				name: buttonValues.timeZones.other.name,
+				text: `Other`,
+				value: buttonValues.timeZones.other.value,
+				type: "button"
+			}
+		]
+	}
+]
+
+export const tokiExplainAttachments = [
+	{
+		title: "Focus Sessions",
+		text: "Say `lets focus` to knock out a task and protect yourself from non-urgent messages while you work",
+		mrkdwn_in: [ "text" ],
+		color: colorsHash.blue.hex,
+		attachment_type: "default",
+		callback_id: "TOKI_OPTIONS",
+		fallback: "Focus Sessions"
+	},
+	{
+		title: "Ping Members",
+		text: "Say `ping @user` whenever you would otherwise send a DM or mention. I'll handle the message based on whether the @user is focused or not, and let you send it sooner if it's urgent",
+		mrkdwn_in: [ "text" ],
+		color: colorsHash.green.hex,
+		attachment_type: "default",
+		callback_id: "TOKI_OPTIONS",
+		fallback: "Ping members"
 	}
 ]
 

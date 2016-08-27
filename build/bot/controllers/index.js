@@ -53,6 +53,10 @@ var _pings = require('./pings');
 
 var _pings2 = _interopRequireDefault(_pings);
 
+var _slash = require('./slash');
+
+var _slash2 = _interopRequireDefault(_slash);
+
 var _actions = require('../actions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -139,6 +143,48 @@ controller.on('team_join', function (bot, message) {
 	});
 });
 
+/**
+ * 		User has updated data ==> update our DB!
+ */
+controller.on('user_change', function (bot, message) {
+
+	console.log("\n\n\n ~~ user updated profile ~~ \n\n\n");
+
+	if (message && message.user) {
+		(function () {
+			var user = message.user;
+			var _message$user = message.user;
+			var name = _message$user.name;
+			var id = _message$user.id;
+			var team_id = _message$user.team_id;
+			var tz = _message$user.tz;
+
+
+			var SlackUserId = id;
+			var email = user.profile && user.profile.email ? user.profile.email : '';
+
+			_models2.default.User.find({
+				where: { SlackUserId: SlackUserId }
+			}).then(function (user) {
+				if (!user) {
+					_models2.default.User.create({
+						TeamId: team_id,
+						email: email,
+						tz: tz,
+						SlackUserId: SlackUserId,
+						SlackName: name
+					});
+				} else {
+					user.update({
+						TeamId: team_id,
+						SlackName: name
+					});
+				}
+			});
+		})();
+	}
+});
+
 // simple way to keep track of bots
 var bots = exports.bots = {};
 
@@ -156,6 +202,7 @@ function customConfigBot(controller) {
 	(0, _notWit2.default)(controller);
 	(0, _sessions2.default)(controller);
 	(0, _pings2.default)(controller);
+	(0, _slash2.default)(controller);
 
 	(0, _misc2.default)(controller);
 }
