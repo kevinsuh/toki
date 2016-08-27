@@ -1,3 +1,4 @@
+import { bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
 import { utterances, colorsArray, buttonValues, colorsHash } from '../../lib/constants';
@@ -383,14 +384,15 @@ function askForPingTime(convo, text = '') {
 
 /**
  * 
- * This handles logic of sending ping depending on session info
+ * This handles logic of queueing ping depending on session info
+ * if no session, then this will not store ping in DB and will just immediately send over
  * 
  * @param  {bot} bot      requires bot of TeamId
  * @param  {UserId, SlackUserId} fromUserConfig
  * @param  {UserId, SlackUserId} toUserConfig
  * @param  {deliveryType, pingTimeObject, pingMessages } config   [description]
  */
-export function sendPing(bot, fromUserConfig, toUserConfig, config) {
+export function queuePing(bot, fromUserConfig, toUserConfig, config) {
 
 	const { pingTimeObject, pingMessages } = config;
 	let { deliveryType } = config;
@@ -506,5 +508,72 @@ export function sendPing(bot, fromUserConfig, toUserConfig, config) {
 
 	});
 
+}
+
+/**
+ * 
+ * This handles logic the actual sending of ping messages
+ * 
+ * @param  {bot} bot      requires bot of TeamId
+ * @param  {UserId, SlackUserId, TeamId} fromUserConfig
+ * @param  {UserId, SlackUserId, TeamId} toUserConfig
+ * @param  {deliveryType, pingMessages } config   [description]
+ */
+export function sendPing(fromUserConfig, toUserConfig, config) {
+
+	const { deliveryType, pingMessages } = config;
+
+	let SlackUserIds = `${fromUserConfig.SlackUserId},${toUserConfig.SlackUserId}`;
+
+	models.Team.find({
+		where: { TeamId: fromUserConfig.TeamId }
+	})
+	.then((team) => {
+		const { token } = team;
+		let bot = bots[token];
+		if (bot) {
+			bot.api.mpim.open({
+				users: SlackUserIds
+			}, (err, response) => {
+
+				if (!err) {
+					const { group: { id } } = response;
+					bot.startConversation({ channel: id }, (err, convo) => {
+						let initialMessage = `Hey <@${toUserConfig.SlackUserId}>! <@${fromUserConfig.SlackUserId}> wanted to reach out`;
+						switch (deliveryType) {
+							case "bomb":
+								initialMessage = `Hey <@${toUserConfig.SlackUserId}>! <@${fromUserConfig.SlackUserId}> has an urgent message for you:`;
+								break;
+							case "grenade":
+								initialMessage = `Hey <@${toUserConfig.SlackUserId}>! <@${fromUserConfig.SlackUserId}> has an urgent message for you:`;
+								break;
+							default: break;
+						}
+
+						initialMessage = `*${initialMessage}*`;
+						let attachments = [];
+
+						pingMessages.forEach((pingMessage) => {
+							attachments.push({
+								text: pingMessage.content,
+								mrkdwn_in: ["text"],
+								attachment_type: 'default',
+								callback_id: "PING_MESSAGE",
+								fallback: pingMessage.content,
+								color: colorsHash.toki_purple.hex
+							});
+						});
+
+						convo.say({
+							text: initialMessage,
+							attachments
+						});
+
+					})
+				}
+			});
+
+		}
+	});
 }
 

@@ -105,7 +105,7 @@ export default function(controller) {
 					const fromUserConfig = { UserId, SlackUserId };
 					const toUserConfig   = { UserId: pingUserId, SlackUserId: pingSlackUserId };
 					const config   = { userInSession, deliveryType, pingTimeObject, pingMessages }
-					sendPing(bot, fromUserConfig, toUserConfig, config);
+					queuePing(bot, fromUserConfig, toUserConfig, config);
 
 				})
 

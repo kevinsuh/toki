@@ -94,7 +94,7 @@ export default function(controller) {
 								// sucess! (this should happen 99% of the time)
 								const toUserConfig   = { UserId: toUser.dataValues.id, SlackUserId: toUser.dataValues.SlackUserId }
 
-								sendPing(bot, fromUserConfig, toUserConfig, config);
+								queuePing(bot, fromUserConfig, toUserConfig, config);
 
 								responseObject.text = `Got it! I'll deliver that ping :mailbox_with_mail:`;
 								bot.replyPrivate(message, responseObject);
@@ -127,7 +127,7 @@ export default function(controller) {
 											})
 											.then((toUser) => {
 												const toUserConfig   = { UserId: toUser.dataValues.id, SlackUserId: toUser.dataValues.SlackUserId };
-												sendPing(bot, fromUserConfig, toUserConfig, config);
+												queuePing(bot, fromUserConfig, toUserConfig, config);
 												responseObject.text = `Got it! I'll deliver that ping :mailbox_with_mail:`;
 												bot.replyPrivate(message, responseObject);
 											})

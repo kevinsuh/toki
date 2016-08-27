@@ -119,7 +119,7 @@ exports.default = function (controller) {
 					var fromUserConfig = { UserId: UserId, SlackUserId: SlackUserId };
 					var toUserConfig = { UserId: pingUserId, SlackUserId: pingSlackUserId };
 					var config = { userInSession: userInSession, deliveryType: deliveryType, pingTimeObject: pingTimeObject, pingMessages: pingMessages };
-					(0, _pingFunctions.sendPing)(bot, fromUserConfig, toUserConfig, config);
+					queuePing(bot, fromUserConfig, toUserConfig, config);
 				});
 			});
 		});

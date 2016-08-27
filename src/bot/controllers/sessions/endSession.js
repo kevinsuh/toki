@@ -4,6 +4,7 @@ import models from '../../../app/models';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '../../lib/messageHelpers';
+import { startEndSessionFlow } from './endSessionFunctions';
 
 
 // END OF A WORK SESSION
@@ -68,7 +69,7 @@ export default function(controller) {
 					if ( now < endTime )
 						endTime = now;
 
-					workSession.update({
+					session.update({
 						open: false,
 						live: false,
 						endTime

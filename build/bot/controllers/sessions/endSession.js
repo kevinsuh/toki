@@ -62,7 +62,7 @@ exports.default = function (controller) {
 					var endTime = (0, _momentTimezone2.default)(session.dataValues.endTime);
 					if (now < endTime) endTime = now;
 
-					workSession.update({
+					session.update({
 						open: false,
 						live: false,
 						endTime: endTime
@@ -91,7 +91,7 @@ exports.default = function (controller) {
 								convo.say('Your session is up!');
 							}
 
-							startEndSessionFlow(convo);
+							(0, _endSessionFunctions.startEndSessionFlow)(convo);
 
 							convo.on('end', function (convo) {});
 						});
@@ -115,6 +115,8 @@ var _models2 = _interopRequireDefault(_models);
 var _constants = require('../../lib/constants');
 
 var _messageHelpers = require('../../lib/messageHelpers');
+
+var _endSessionFunctions = require('./endSessionFunctions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 //# sourceMappingURL=endSession.js.map
