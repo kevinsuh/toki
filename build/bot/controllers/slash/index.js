@@ -143,8 +143,41 @@ exports.default = function (controller) {
 					break;
 
 				case "/explain":
-					responseObject.text = 'Okay I just explained how this works!';
-					bot.replyPrivate(message, responseObject);
+					if (toSlackName) {
+
+						// if msg starts with @pinger, remove it from message
+						var _pingMessage = text[0] == "@" ? text.replace(/@(\S*)/, "").trim() : text;
+						// for now this automatically queues to end of focus session
+						_models2.default.User.find({
+							where: {
+								SlackName: toSlackName,
+								TeamId: team_id
+							}
+						}).then(function (toUser) {
+
+							if (toUser) {
+
+								var _config = {
+									fromUserConfig: {
+										UserId: user.dataValues.UserId,
+										SlackUserId: user.dataValues.SlackUserId
+									},
+									toUserConfig: {
+										UserId: toUser.dataValues.UserId,
+										SlackUserId: toUser.dataValues.SlackUserId
+									}
+								};
+
+								controller.trigger('explain_toki_flow', [bot, _config]);
+
+								responseObject.text = 'Okay I just explained how I work to *@' + toSlackName + '!*';
+								bot.replyPrivate(message, responseObject);
+							}
+						});
+					} else {
+						responseObject.text = 'Let me know who you want to explain myself to! (i.e. `@emily`)';
+						bot.replyPrivate(message, responseObject);
+					}
 					break;
 				default:
 					responseObject.text = 'I\'m sorry, still learning how to `' + message.command + '`! :dog:';

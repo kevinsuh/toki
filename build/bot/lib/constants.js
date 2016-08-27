@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.timeZoneAttachments = exports.startSessionOptionsAttachments = exports.startSessionExamples = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
+exports.tokiExplainAttachments = exports.timeZoneAttachments = exports.startSessionOptionsAttachments = exports.startSessionExamples = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
 
 var _utterances;
 
@@ -360,5 +360,23 @@ var timeZoneAttachments = exports.timeZoneAttachments = [{
 		value: buttonValues.timeZones.other.value,
 		type: "button"
 	}]
+}];
+
+var tokiExplainAttachments = exports.tokiExplainAttachments = [{
+	title: "Focus Sessions",
+	text: "Say `lets focus` to knock out a task and protect yourself from non-urgent messages while you work",
+	mrkdwn_in: ["text"],
+	color: colorsHash.blue.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Focus Sessions"
+}, {
+	title: "Ping Members",
+	text: "Say `ping @user` whenever you would otherwise send a DM to that user. I let you queue your messages, and send it sooner if there is urgency involved",
+	mrkdwn_in: ["text"],
+	color: colorsHash.green.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Ping members"
 }];
 //# sourceMappingURL=constants.js.map

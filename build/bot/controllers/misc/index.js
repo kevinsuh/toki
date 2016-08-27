@@ -40,6 +40,40 @@ exports.default = function (controller) {
 			}
 		}, 500);
 	});
+
+	controller.on('explain_toki_flow', function (bot, config) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		var fromUserConfig = config.fromUserConfig;
+		var toUserConfig = config.toUserConfig;
+
+
+		_models2.default.User.find({
+			where: { SlackUserId: toUserConfig.SlackUserId }
+		}).then(function (toUser) {
+			var SlackUserId = toUser.SlackUserId;
+
+
+			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+				// have 5-minute exit time limit
+				if (convo) convo.task.timeLimit = 1000 * 60 * 5;
+
+				convo.say('Hey! <@' + fromUserConfig.SlackUserId + '> wanted me to explain how I work so I can help you focus on your most meaningful things each day');
+				convo.say('Think of me as an office manager for each of your teammate\'s attentions. I help you easily enter focus sessions, and communicate that to others when they want to ping you, so that you only get interrupted with messages that are actually urgent');
+				convo.say('On the flip side, I make it easy for you to send messages and requests to your teammates, while respecting what they\'re currently up to. I\'ll handle your message and only send it when they are ready to switch contexts');
+				convo.say({
+					text: 'Here\'s how I specifically help you with all that:',
+					attachments: _constants.tokiExplainAttachments
+				});
+				convo.say('I\'m here whenever you\'re ready to go! Just let me know when you want to `ping` someone, or enter a `focus` session yourself :raised_hands:');
+
+				convo.on('end', function (convo) {});
+			});
+		});
+	});
 };
 
 var _index = require('../index');
