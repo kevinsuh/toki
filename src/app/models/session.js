@@ -10,6 +10,9 @@ module.exports = function(sequelize, DataTypes) {
           },
     open: {  type: DataTypes.BOOLEAN,
              defaultValue: true
+          },
+    superFocus: {  type: DataTypes.BOOLEAN,
+             defaultValue: false
           }
   }, {
     classMethods: {
