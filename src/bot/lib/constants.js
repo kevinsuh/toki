@@ -401,7 +401,7 @@ export const tokiExplainAttachments = [
 	},
 	{
 		title: "Ping Members",
-		text: "Say `ping @user` whenever you would otherwise send a DM to that user. I let you queue your messages, and send it sooner if there is urgency involved",
+		text: "Say `ping @user` whenever you would otherwise send a DM or mention. I'll handle the message based on whether the @user is focused or not, and let you send it sooner if it's urgent",
 		mrkdwn_in: [ "text" ],
 		color: colorsHash.green.hex,
 		attachment_type: "default",

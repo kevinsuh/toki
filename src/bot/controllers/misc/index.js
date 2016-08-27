@@ -60,11 +60,11 @@ export default function(controller) {
 				if (convo)
 					convo.task.timeLimit = 1000 * 60 * 5;
 
-				convo.say(`Hey! <@${fromUserConfig.SlackUserId}> wanted me to explain how I work so I can help you focus on your most meaningful things each day`);
-				convo.say(`Think of me as an office manager for each of your teammate's attentions. I help you easily enter focus sessions, and communicate that to others when they want to ping you, so that you only get interrupted with messages that are actually urgent`);
-				convo.say(`On the flip side, I make it easy for you to send messages and requests to your teammates, while respecting what they're currently up to. I'll handle your message and only send it when they are ready to switch contexts`);
+				convo.say(`Hey! <@${fromUserConfig.SlackUserId}> wanted me to explain how I can also help you execute on your most meaningful things each day`);
+				convo.say(`Think of me as an office manager for each of your teammate's attention. I help you easily enter work sessions, and protect your focus from others, *so that you only get interrupted with messages that are actually urgent*`);
+				convo.say(`On the flip side, *I make it easy for you to ping teammates when they're actually ready to switch contexts.* This lets you get your requests out of your head when you think of them, and make sure it gets to the recipient without interrupting their current focus`);
 				convo.say({
-					text: `Here's how I specifically help you with all that:`,
+					text: `Here's how I specifically help you do this:`,
 					attachments: tokiExplainAttachments
 				});
 				convo.say(`I'm here whenever you're ready to go! Just let me know when you want to \`ping\` someone, or enter a \`focus\` session yourself :raised_hands:`);
