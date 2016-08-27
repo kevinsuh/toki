@@ -392,21 +392,30 @@ export const timeZoneAttachments = [
 export const tokiExplainAttachments = [
 	{
 		title: "Focus Sessions",
-		text: "Say `lets focus` to knock out a task and protect yourself from non-urgent messages while you work",
+		text: "Direct message me `focus` to knock out a task and protect yourself from non-urgent messages while you work",
 		mrkdwn_in: [ "text" ],
-		color: colorsHash.blue.hex,
+		color: colorsHash.toki_purple.hex,
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
 		fallback: "Focus Sessions"
 	},
 	{
 		title: "Ping Members",
-		text: "Say `ping @user` whenever you would otherwise send a DM or mention. I'll handle the message based on whether the @user is focused or not, and let you send it sooner if it's urgent",
+		text: "Direct message me `ping @user` whenever you would otherwise send a DM or mention to @user. I'll handle the message based on whether @user is focused or not, and let you send it sooner if it's urgent",
 		mrkdwn_in: [ "text" ],
-		color: colorsHash.green.hex,
+		color: colorsHash.toki_purple.hex,
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
 		fallback: "Ping members"
+	},
+	{
+		title: "Slash Commands to Focus or Ping",
+		text: "Enter focus sessions and ping teammates with the `/focus` and `/ping` single-line commands",
+		mrkdwn_in: [ "text" ],
+		color: colorsHash.toki_purple.hex,
+		attachment_type: "default",
+		callback_id: "TOKI_OPTIONS",
+		fallback: "Slash Commands"
 	}
 ]
 
