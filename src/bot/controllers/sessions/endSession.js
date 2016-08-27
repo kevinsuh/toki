@@ -2,7 +2,8 @@ import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
 
-import { buttonValues, colorsHash } from '../../lib/constants';
+import { utterances, colorsArray, buttonValues, colorsHash, constants } from '../../lib/constants';
+import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '../../lib/messageHelpers';
 
 
 // END OF A WORK SESSION
@@ -39,9 +40,9 @@ export default function(controller) {
 	 * 		This will immediately close the session, then move to
 	 * 		specified "post session" options
 	 */
-	controller.on(`done_session_flow`, (bot, config) => {
+	controller.on(`end_session_flow`, (bot, config) => {
 
-		const { SlackUserId, sessionTimerUp } = config;
+		const { SlackUserId, sessionTimerUp, endSessionEarly } = config;
 
 		models.User.find({
 			where: { SlackUserId }
@@ -61,25 +62,51 @@ export default function(controller) {
 
 				if (session) {
 
-					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+					// only update endTime if it is less than current endTime
+					let now     = moment();
+					let endTime = moment(session.dataValues.endTime);
+					if ( now < endTime )
+						endTime = now;
 
-						// have 5-minute exit time limit
-						convo.task.timeLimit = 1000 * 60 * 5;
+					workSession.update({
+						open: false,
+						live: false,
+						endTime
+					})
+					.then((session) => {
 
-						convo.sessionEnd = {
-							SlackUserId,
-							UserId,
-							tz
-						}
+						let startTimeObject   = moment(session.dataValues.startTime).tz(tz);
+						let endTimeObject     = moment(session.dataValues.endTime).tz(tz);
+						let endTimeString     = endTimeObject.format("h:mm a");
+						let sessionMinutes    = Math.round(moment.duration(endTimeObject.diff(startTimeObject)).asMinutes());
+						let sessionTimeString = convertMinutesToHoursString(sessionMinutes);
 
-						if (sessionTimerUp) {
-							convo.say(`Your session is up!`);
-						}
+						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-						convo.on('end', (convo) => {
+							// have 5-minute exit time limit
+							convo.task.timeLimit = 1000 * 60 * 5;
 
+							convo.sessionEnd = {
+								UserId,
+								SlackUserId,
+								tz,
+								endSessionEarly,
+								sessionTimerUp
+							}
+
+							if (sessionTimerUp) {
+								convo.say(`Your session is up!`);
+							}
+
+							startEndSessionFlow(convo);
+
+							convo.on('end', (convo) => {
+
+							});
+						
 						});
-					
+
+
 					});
 				}
 

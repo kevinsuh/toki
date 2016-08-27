@@ -35,9 +35,10 @@ exports.default = function (controller) {
   * 		This will immediately close the session, then move to
   * 		specified "post session" options
   */
-	controller.on('done_session_flow', function (bot, config) {
+	controller.on('end_session_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
 		var sessionTimerUp = config.sessionTimerUp;
+		var endSessionEarly = config.endSessionEarly;
 
 
 		_models2.default.User.find({
@@ -56,22 +57,44 @@ exports.default = function (controller) {
 
 				if (session) {
 
-					bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+					// only update endTime if it is less than current endTime
+					var now = (0, _momentTimezone2.default)();
+					var endTime = (0, _momentTimezone2.default)(session.dataValues.endTime);
+					if (now < endTime) endTime = now;
 
-						// have 5-minute exit time limit
-						convo.task.timeLimit = 1000 * 60 * 5;
+					workSession.update({
+						open: false,
+						live: false,
+						endTime: endTime
+					}).then(function (session) {
 
-						convo.sessionEnd = {
-							SlackUserId: SlackUserId,
-							UserId: UserId,
-							tz: tz
-						};
+						var startTimeObject = (0, _momentTimezone2.default)(session.dataValues.startTime).tz(tz);
+						var endTimeObject = (0, _momentTimezone2.default)(session.dataValues.endTime).tz(tz);
+						var endTimeString = endTimeObject.format("h:mm a");
+						var sessionMinutes = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(startTimeObject)).asMinutes());
+						var sessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
 
-						if (sessionTimerUp) {
-							convo.say('Your session is up!');
-						}
+						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-						convo.on('end', function (convo) {});
+							// have 5-minute exit time limit
+							convo.task.timeLimit = 1000 * 60 * 5;
+
+							convo.sessionEnd = {
+								UserId: UserId,
+								SlackUserId: SlackUserId,
+								tz: tz,
+								endSessionEarly: endSessionEarly,
+								sessionTimerUp: sessionTimerUp
+							};
+
+							if (sessionTimerUp) {
+								convo.say('Your session is up!');
+							}
+
+							startEndSessionFlow(convo);
+
+							convo.on('end', function (convo) {});
+						});
 					});
 				}
 			});
@@ -90,6 +113,8 @@ var _models = require('../../../app/models');
 var _models2 = _interopRequireDefault(_models);
 
 var _constants = require('../../lib/constants');
+
+var _messageHelpers = require('../../lib/messageHelpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 //# sourceMappingURL=endSession.js.map

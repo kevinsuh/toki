@@ -193,7 +193,7 @@ var checkForSessions = function checkForSessions() {
 								// alarm is up for session
 								var sessionTimerUp = true;
 								config.sessionTimerUp = sessionTimerUp;
-								_controllers.controller.trigger('done_session_flow', [bot, { SlackUserId: SlackUserId, sessionTimerUp: sessionTimerUp }]);
+								_controllers.controller.trigger('end_session_flow', [bot, { SlackUserId: SlackUserId, sessionTimerUp: sessionTimerUp }]);
 							}
 						});
 					});
