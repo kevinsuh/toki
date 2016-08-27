@@ -93,7 +93,8 @@ exports.default = function (controller) {
 								if (toUser) {
 
 									// sucess! (this should happen 99% of the time)
-									var toUserConfig = { UserId: toUser.dataValues.UserId, SlackUserId: toUser.dataValues.SlackUserId };
+									var toUserConfig = { UserId: toUser.dataValues.id, SlackUserId: toUser.dataValues.SlackUserId };
+
 									(0, _pingFunctions.sendPing)(bot, fromUserConfig, toUserConfig, config);
 
 									responseObject.text = 'Got it! I\'ll deliver that ping :mailbox_with_mail:';
@@ -124,7 +125,7 @@ exports.default = function (controller) {
 												_models2.default.User.find({
 													where: { SlackUserId: foundSlackUserId }
 												}).then(function (toUser) {
-													var toUserConfig = { UserId: toUser.dataValues.UserId, SlackUserId: toUser.dataValues.SlackUserId };
+													var toUserConfig = { UserId: toUser.dataValues.id, SlackUserId: toUser.dataValues.SlackUserId };
 													(0, _pingFunctions.sendPing)(bot, fromUserConfig, toUserConfig, config);
 													responseObject.text = 'Got it! I\'ll deliver that ping :mailbox_with_mail:';
 													bot.replyPrivate(message, responseObject);
@@ -159,11 +160,11 @@ exports.default = function (controller) {
 
 								var _config = {
 									fromUserConfig: {
-										UserId: user.dataValues.UserId,
+										UserId: user.dataValues.id,
 										SlackUserId: user.dataValues.SlackUserId
 									},
 									toUserConfig: {
-										UserId: toUser.dataValues.UserId,
+										UserId: toUser.dataValues.id,
 										SlackUserId: toUser.dataValues.SlackUserId
 									}
 								};
