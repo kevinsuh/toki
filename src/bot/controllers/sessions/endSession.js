@@ -76,19 +76,22 @@ export default function(controller) {
 					})
 					.then((session) => {
 
-						// get all `endSession` pings
-						// for each one, check if the `fromUserId` is in a session of `superFocus`! If so, do not include ping here
+						/*
+						 * 	1. get all the `endSession` pings for ToUserId 
+						 * 	2. get all the live sessions for FromUserId (pingers)
+						 * 	3. match up sessions with pings into `pingObject` (`pingObject.ping` && `pingObject.session`)
+						 * 	4. run logic based on whether ping has session
+						 */
+
 						models.Ping.findAll({
 							where: [ `"Ping"."ToUserId" = ? AND "Ping"."live" = ? AND "Ping"."deliveryType" = ?`, UserId, true, "sessionEnd" ],
 							order: `"Ping"."createdAt" DESC`
 						}).then((pings) => {
 
-							// this must be treated synchronously...
-							let pingObjects           = [];
+							let pingObjects = []; // final container of pingObjects
+
 							let pingerSessionPromises = [];
-
 							pings.forEach((ping) => {
-
 								const { FromUserId } = ping;
 								pingerSessionPromises.push(models.Session.find({
 									where: {
@@ -97,50 +100,26 @@ export default function(controller) {
 										open: true
 									}
 								}));
-
 							});
 
 							Promise.all(pingerSessionPromises)
 							.then((pingerSessions) => {
 
-								// active sessions of pingers FromUserId
+								// create the pingObject by matching up `ping` with live `session`
+								// if no live session, `session` will be false
 								pings.forEach((ping) => {
-
 									let pingObject = {};
 									let session    = false;
-
 									pingerSessions.forEach((pingerSession) => {
-
-										// include live session from pinger if exists
 										if (pingerSession && pingerSession.dataValues.UserId == ping.dataValues.FromUserId) {
 											session = pingerSession;
 											return;
 										}
 									});
-
 									pingObject.ping    = ping;
 									pingObject.session = session;
-
 									pingObjects.push(pingObject);
-
 								});
-
-								// CONSOLE LOG PROOF THAT IT WORKS!
-								pingObjects.forEach((pingObject) => {
-									console.log(`\n\nPing id: ${pingObject.ping.dataValues.id}`);
-									if (pingObject.session) {
-										console.log(`Session id: ${pingObject.session.dataValues.id}`);
-									} else {
-										console.log(`NO SESSION`);
-									}
-									console.log("\n\n\n")
-								})
-
-								let startTimeObject   = moment(session.dataValues.startTime).tz(tz);
-								let endTimeObject     = moment(session.dataValues.endTime).tz(tz);
-								let endTimeString     = endTimeObject.format("h:mm a");
-								let sessionMinutes    = Math.round(moment.duration(endTimeObject.diff(startTimeObject)).asMinutes());
-								let sessionTimeString = convertMinutesToHoursString(sessionMinutes);
 
 								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
@@ -151,12 +130,10 @@ export default function(controller) {
 										UserId,
 										SlackUserId,
 										tz,
+										session, // session that just ended
+										pingObjects, // all `endSession` pings to handle
 										endSessionEarly,
-										sessionTimerUp
-									}
-
-									if (sessionTimerUp) {
-										convo.say(`Your session is up!`);
+										sessionTimerUp,
 									}
 
 									startEndSessionFlow(convo);

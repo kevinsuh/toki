@@ -10,9 +10,14 @@ import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '..
 // confirm that user has tz configured before continuing
 export function startEndSessionFlow(convo) {
 
-	const { SlackUserId, UserId, tz }  = convo.sessionEnd;
+	const { SlackUserId, UserId, session, pingObjects, tz }  = convo.sessionEnd;
 
-	
+	// session info
+	const startTimeObject   = moment(session.dataValues.startTime).tz(tz);
+	const endTimeObject     = moment(session.dataValues.endTime).tz(tz);
+	const endTimeString     = endTimeObject.format("h:mm a");
+	const sessionMinutes    = Math.round(moment.duration(endTimeObject.diff(startTimeObject)).asMinutes());
+	const sessionTimeString = convertMinutesToHoursString(sessionMinutes);
 
 }
 
