@@ -98,7 +98,8 @@ export default function(controller) {
 										UserId: FromUserId,
 										live: true,
 										open: true
-									}
+									},
+									include: [ models.User ]
 								}));
 							});
 

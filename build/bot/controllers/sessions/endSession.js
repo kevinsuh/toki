@@ -91,7 +91,8 @@ exports.default = function (controller) {
 										UserId: FromUserId,
 										live: true,
 										open: true
-									}
+									},
+									include: [_models2.default.User]
 								}));
 							});
 
