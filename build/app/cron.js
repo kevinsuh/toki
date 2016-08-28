@@ -131,8 +131,7 @@ var checkForSessions = function checkForSessions() {
 
 
 			session.update({
-				live: false,
-				open: false
+				live: false
 			}).then(function (session) {
 
 				// only trigger session if not accounted for yet

@@ -76,41 +76,103 @@ export default function(controller) {
 					})
 					.then((session) => {
 
-						let startTimeObject   = moment(session.dataValues.startTime).tz(tz);
-						let endTimeObject     = moment(session.dataValues.endTime).tz(tz);
-						let endTimeString     = endTimeObject.format("h:mm a");
-						let sessionMinutes    = Math.round(moment.duration(endTimeObject.diff(startTimeObject)).asMinutes());
-						let sessionTimeString = convertMinutesToHoursString(sessionMinutes);
+						// get all `endSession` pings
+						// for each one, check if the `fromUserId` is in a session of `superFocus`! If so, do not include ping here
+						models.Ping.findAll({
+							where: [ `"Ping"."ToUserId" = ? AND "Ping"."live" = ? AND "Ping"."deliveryType" = ?`, UserId, true, "sessionEnd" ],
+							order: `"Ping"."createdAt" DESC`
+						}).then((pings) => {
 
-						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+							// this must be treated synchronously...
+							let pingObjects           = [];
+							let pingerSessionPromises = [];
 
-							// have 5-minute exit time limit
-							convo.task.timeLimit = 1000 * 60 * 5;
+							pings.forEach((ping) => {
 
-							convo.sessionEnd = {
-								UserId,
-								SlackUserId,
-								tz,
-								endSessionEarly,
-								sessionTimerUp
-							}
-
-							if (sessionTimerUp) {
-								convo.say(`Your session is up!`);
-							}
-
-							startEndSessionFlow(convo);
-
-							convo.on('end', (convo) => {
+								const { FromUserId } = ping;
+								pingerSessionPromises.push(models.Session.find({
+									where: {
+										UserId: FromUserId,
+										live: true,
+										open: true
+									}
+								}));
 
 							});
-						
-						});
 
+							Promise.all(pingerSessionPromises)
+							.then((pingerSessions) => {
+
+								// active sessions of pingers FromUserId
+								pings.forEach((ping) => {
+
+									let pingObject = {};
+									let session    = false;
+
+									pingerSessions.forEach((pingerSession) => {
+
+										// include live session from pinger if exists
+										if (pingerSession && pingerSession.dataValues.UserId == ping.dataValues.FromUserId) {
+											session = pingerSession;
+											return;
+										}
+									});
+
+									pingObject.ping    = ping;
+									pingObject.session = session;
+
+									pingObjects.push(pingObject);
+
+								});
+
+								// CONSOLE LOG PROOF THAT IT WORKS!
+								pingObjects.forEach((pingObject) => {
+									console.log(`\n\nPing id: ${pingObject.ping.dataValues.id}`);
+									if (pingObject.session) {
+										console.log(`Session id: ${pingObject.session.dataValues.id}`);
+									} else {
+										console.log(`NO SESSION`);
+									}
+									console.log("\n\n\n")
+								})
+
+								let startTimeObject   = moment(session.dataValues.startTime).tz(tz);
+								let endTimeObject     = moment(session.dataValues.endTime).tz(tz);
+								let endTimeString     = endTimeObject.format("h:mm a");
+								let sessionMinutes    = Math.round(moment.duration(endTimeObject.diff(startTimeObject)).asMinutes());
+								let sessionTimeString = convertMinutesToHoursString(sessionMinutes);
+
+								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+									// have 5-minute exit time limit
+									convo.task.timeLimit = 1000 * 60 * 5;
+
+									convo.sessionEnd = {
+										UserId,
+										SlackUserId,
+										tz,
+										endSessionEarly,
+										sessionTimerUp
+									}
+
+									if (sessionTimerUp) {
+										convo.say(`Your session is up!`);
+									}
+
+									startEndSessionFlow(convo);
+
+									convo.on('end', (convo) => {
+
+									});
+								
+								});
+
+							});
+
+						});
 
 					});
 				}
-
 			});
 
 		});

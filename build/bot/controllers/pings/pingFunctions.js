@@ -536,6 +536,8 @@ function queuePing(bot, fromUserConfig, toUserConfig, config) {
  * @param  {deliveryType, pingMessages } config   [description]
  */
 function sendPing(fromUserConfig, toUserConfig, config) {
+
+	// ping messages are necessary to know what messages to actually send!
 	var deliveryType = config.deliveryType;
 	var pingMessages = config.pingMessages;
 

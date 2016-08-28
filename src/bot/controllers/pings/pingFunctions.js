@@ -521,6 +521,7 @@ export function queuePing(bot, fromUserConfig, toUserConfig, config) {
  */
 export function sendPing(fromUserConfig, toUserConfig, config) {
 
+	// ping messages are necessary to know what messages to actually send!
 	const { deliveryType, pingMessages } = config;
 
 	let SlackUserIds = `${fromUserConfig.SlackUserId},${toUserConfig.SlackUserId}`;

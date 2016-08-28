@@ -68,32 +68,91 @@ exports.default = function (controller) {
 						endTime: endTime
 					}).then(function (session) {
 
-						var startTimeObject = (0, _momentTimezone2.default)(session.dataValues.startTime).tz(tz);
-						var endTimeObject = (0, _momentTimezone2.default)(session.dataValues.endTime).tz(tz);
-						var endTimeString = endTimeObject.format("h:mm a");
-						var sessionMinutes = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(startTimeObject)).asMinutes());
-						var sessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
+						// get all `endSession` pings
+						// for each one, check if the `fromUserId` is in a session of `superFocus`! If so, do not include ping here
+						_models2.default.Ping.findAll({
+							where: ['"Ping"."ToUserId" = ? AND "Ping"."live" = ? AND "Ping"."deliveryType" = ?', UserId, true, "sessionEnd"],
+							order: '"Ping"."createdAt" DESC'
+						}).then(function (pings) {
 
-						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+							// this must be treated synchronously...
+							var pingObjects = [];
+							var pingerSessionPromises = [];
 
-							// have 5-minute exit time limit
-							convo.task.timeLimit = 1000 * 60 * 5;
+							pings.forEach(function (ping) {
+								var FromUserId = ping.FromUserId;
 
-							convo.sessionEnd = {
-								UserId: UserId,
-								SlackUserId: SlackUserId,
-								tz: tz,
-								endSessionEarly: endSessionEarly,
-								sessionTimerUp: sessionTimerUp
-							};
+								pingerSessionPromises.push(_models2.default.Session.find({
+									where: {
+										UserId: FromUserId,
+										live: true,
+										open: true
+									}
+								}));
+							});
 
-							if (sessionTimerUp) {
-								convo.say('Your session is up!');
-							}
+							Promise.all(pingerSessionPromises).then(function (pingerSessions) {
 
-							(0, _endSessionFunctions.startEndSessionFlow)(convo);
+								// active sessions of pingers FromUserId
+								pings.forEach(function (ping) {
 
-							convo.on('end', function (convo) {});
+									var pingObject = {};
+									var session = false;
+
+									pingerSessions.forEach(function (pingerSession) {
+
+										// include live session from pinger if exists
+										if (pingerSession && pingerSession.dataValues.UserId == ping.dataValues.FromUserId) {
+											session = pingerSession;
+											return;
+										}
+									});
+
+									pingObject.ping = ping;
+									pingObject.session = session;
+
+									pingObjects.push(pingObject);
+								});
+
+								// CONSOLE LOG PROOF THAT IT WORKS!
+								pingObjects.forEach(function (pingObject) {
+									console.log('\n\nPing id: ' + pingObject.ping.dataValues.id);
+									if (pingObject.session) {
+										console.log('Session id: ' + pingObject.session.dataValues.id);
+									} else {
+										console.log('NO SESSION');
+									}
+									console.log("\n\n\n");
+								});
+
+								var startTimeObject = (0, _momentTimezone2.default)(session.dataValues.startTime).tz(tz);
+								var endTimeObject = (0, _momentTimezone2.default)(session.dataValues.endTime).tz(tz);
+								var endTimeString = endTimeObject.format("h:mm a");
+								var sessionMinutes = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(startTimeObject)).asMinutes());
+								var sessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
+
+								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+									// have 5-minute exit time limit
+									convo.task.timeLimit = 1000 * 60 * 5;
+
+									convo.sessionEnd = {
+										UserId: UserId,
+										SlackUserId: SlackUserId,
+										tz: tz,
+										endSessionEarly: endSessionEarly,
+										sessionTimerUp: sessionTimerUp
+									};
+
+									if (sessionTimerUp) {
+										convo.say('Your session is up!');
+									}
+
+									(0, _endSessionFunctions.startEndSessionFlow)(convo);
+
+									convo.on('end', function (convo) {});
+								});
+							});
 						});
 					});
 				}

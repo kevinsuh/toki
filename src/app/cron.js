@@ -113,8 +113,7 @@ let checkForSessions = () => {
 			const { UserId, open, live } = session;
 
 			session.update({
-				live: false,
-				open: false
+				live: false
 			})
 			.then((session) => {
 
