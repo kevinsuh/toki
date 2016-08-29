@@ -74,6 +74,7 @@ function startEndSessionFlow(convo) {
 		if (pingInfo.endSessionType == _constants.constants.endSessionTypes.endSessionEarly) {
 			message = message + ' early';
 		}
+		message = message + '\n:point_left: I just kicked off a conversation between you two';
 
 		if (pingInfo.session) {
 			letsFocusMessage = 'I ended your focused session on `' + session.dataValues.content + '`. ' + letsFocusMessage;
@@ -119,24 +120,18 @@ function handleToUserPings(convo) {
 
 	var slackNamesString = (0, _messageHelpers.commaSeparateOutStringArray)(slackUserIds, { SlackUserIds: true });
 
-	if (endSessionType == _constants.constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId && slackUserIds.length > 0) {
-
-		message = 'While you were heads down, ' + slackNamesString + ' wanted to reach out to talk with you. I started conversations with each of them on your left, too!';
-	} else {
-
-		if (slackUserIds.length == 1) {
-			message = 'While you were heads down, ' + slackNamesString + ' asked me to send you a message after your session :relieved:';
-		} else if (slackUserIds.length > 0) {
-			message = 'While you were heads down, you received messages from ' + slackNamesString;
-		}
+	if (slackUserIds.length == 1) {
+		message = 'While you were heads down, ' + slackNamesString + ' asked me to send you a message after your session :relieved:';
+	} else if (slackUserIds.length > 1) {
+		message = 'While you were heads down, you received messages from ' + slackNamesString;
 	}
 
 	convo.say(message);
 
 	message = ' ';
-	if (pingObjects.toUser.length == 1) {
+	if (slackUserIds.length == 1) {
 		message = ':point_left: I just kicked off a conversation between you both';
-	} else if (pingObjects.toUser.length > 1) {
+	} else if (slackUserIds.length > 1) {
 		message = ':point_left: I just kicked off separate conversations between you and each of them';
 	}
 

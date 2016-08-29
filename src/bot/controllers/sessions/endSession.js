@@ -145,6 +145,11 @@ export default function(controller) {
 
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
+							if (err) {
+								console.log(`\n\n\n error! ${err} \n\n\n`);
+								return;
+							}
+
 							// have 5-minute exit time limit
 							convo.task.timeLimit = 1000 * 60 * 5;
 
