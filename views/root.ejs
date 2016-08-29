@@ -17,7 +17,7 @@
 		<script src="/js/jquery.min.js"></script>
 		<script src="/assets/js/splash.js"></script>
 
-		<title>Toki - Win each day</title>
+		<title>Toki - Protect your team's attention</title>
 		
 		<!-- facebook open graph tags -->
 		<meta property="og:type" content="website" />
@@ -44,204 +44,69 @@
 	</head>
 
 	<body>
-		<div class="splash container-fluid" id="splash-main-display">
+		<div class="site-wrapper">
 
-			<!-- main splash view -->
-			<div class="color-gradient main-landing row">	
+			<div class="site-wrapper-inner">
 
-				<a href="/" style="position: absolute; top: 20px; left: 20px;"><img src="/assets/images/toki_logo.png" id="logo"></a>
+				<div class="cover-container">
 
-				<div class="col-md-8 col-md-offset-2 col-xs-12">
+					<div class="masthead clearfix">
+						<div class="inner">
+							<!-- <h3 class="masthead-brand">Toki</h3> -->
+								<ul class="nav masthead-nav">
+									<li class="active"><a href="#">Get Toki</a></li>
+									<li><a href="mailto:hey@tokibot.com">Contact</a></li>
+								</ul>
+							</nav>
+						</div>
+					</div>
 
 					<% if (locals.invite && locals.msg) { %>
-					<div class="alert alert-<%= locals.success ? 'success' : 'warning' %>">
-						<%= locals.msg %>
-					</div>
+						<div class="alert alert-<%= locals.success ? 'success' : 'warning' %>">
+							<%= locals.msg %>
+						</div>
 					<% } %>
 
-					<h1 class="main-title">The personal sidekick for<br />your time and attention at work</h1>
-					<h2 style="font-style: italic;">Coming soon.</h2>
+					<div class="inner cover">
+						<h1 class="cover-heading">Protect your team's attention</h1>
+						<p class="lead">Toki makes it easy to go heads down on work without missing urgent team communications in Slack</p>
 
-<% if (false) { %>
+						<form id="invite" method="post" action="/invite" class="invite form-inline">
 
-					<div class="main-body">
-						<p class="subtitle">
-							<strong>Toki</strong> is a bot that helps you be the best version of yourself each day
-						</p>
-						<img src="/assets/gifs/start_day.gif" class="img-responsive gif" alt="Start Day" />
+							<div class="input-group">
+								<input class="form-control" type="email" name="email" placeholder="joeguy@example.com" required />
+								<span class="input-group-btn">
+									<input type="submit" class="btn btn-secondary" value="Get Early Access" />
+								</span>
+							</div>
 
-						<div class="form-group">
-							<form id="invite" method="post" action="/invite" class="invite form-inline">
-								<label class="description">
-									<strong>Toki</strong> works with you in <a href="https://slack.com" target="_blank" class="link-emphasize">Slack.</a> Get the Toki beta now by signing up below:
-								</label>
-								<div class="input-container">
-									<div class="col-xs-12 col-sm-7" style="padding-left: 0; margin-top: 5px;">
-										<input class="email-input " type="email" name="email" placeholder="joeguy@example.com" required />
-									</div>
-									<div class="col-xs-12 col-sm-5" style="padding-left: 0; margin-top: 5px;">
-										<input type="submit" class="submit-btn" value="Join in Slack" />
-									</div>
-								</div>
-								<p class="col-xs-12 col-sm-5 col-sm-offset-7 beta" style="padding-left: 0;">
-									Free during Beta
-								</p>
-							</form>
-						</div>
+						</form>
 
 					</div>
+
+					<div class="mastfoot">
+						<div class="inner">
+							<p>© 2016 Toki Inc., All Rights Reserved</p>
+					</div>
+					</div>
+
 				</div>
 
 			</div>
-
-			<!-- section 1 -->
-			<div class="row body-container">
-				<div class="col-md-10 col-md-offset-1 col-xs-12">
-					<p class="body-title">
-						How can <strong>Toki</strong> help me make the most of my time?
-					</p>
-
-					<div class="col-md-6 col-xs-12">
-						<div class="benefit-box">
-							<p class="title">Clear objectives, every day</p>
-							<div class="circle">
-								Show me
-							</div>
-							<p class="description">
-								Have a complete picture of your time as you plan your tasks for the day
-							</p>
-						</div>
-					</div>
-					
-					<div class="col-md-6 col-xs-12">
-						<div class="benefit-box">
-							<p class="title">Empower your self-awareness</p>
-							<div class="circle">
-								Show me
-							</div>
-							<p class="description">
-								Have a complete picture of your time as you plan your tasks for the day
-							</p>
-						</div>
-					</div>
-
-					<div class="col-md-6 col-xs-12">
-						<div class="benefit-box">
-							<p class="title">Know what’s next</p>
-							<div class="circle">
-								Show me
-							</div>
-							<p class="description">
-								See what’s most important to focus on now, given the context of your time
-							</p>
-						</div>
-					</div>
-
-					<div class="col-md-6 col-xs-12">
-						<div class="benefit-box">
-							<p class="title">Free up your attention</p>
-							<div class="circle">
-								Show me
-							</div>
-							<p class="description">
-								Easily add new tasks and set reminders so your brain can focus on doing, not remembering
-							</p>
-						</div>
-					</div>
-
-				</div>
-			</div>
-
-			<!-- final signup section -->
-			<div class="color-gradient bottom-landing row">
-
-				<div class="main col-xs-12">
-					<p class="title">Getting started with Toki</p>
-					<ol class="signup-steps col-xs-12 col-md-8 col-md-offset-2" style="list-style: none;">
-						<li>
-							1. &nbsp; Sign up on tokibot.com
-						</li>
-						<li>
-							2. &nbsp; Receive an email to join Toki's Slack channel
-						</li>
-						<li>
-							3. &nbsp; Click on "Join Toki" in the email
-						</li>
-						<li>
-							4. &nbsp; Create an account and sign in!
-						</li>
-					</ol>
-
-					<div class="video-container col-md-8 col-md-offset-2 col-xs-12">
-						<p class="subtitle">Don't just take our word for it -- here's a walkthrough:</p>
-						<div class="embed-responsive embed-responsive-16by9">
-					    <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/EKm6bG0Qomo"></iframe>
-					</div>
-					</div>
-				</div>
-
-				<div class="form-group col-md-8 col-md-offset-2 col-xs-12">
-					<form id="invite" method="post" action="/invite" class="invite form-inline">
-						<div class="input-container">
-							<div class="col-xs-12 col-sm-7" style="padding-left: 0; margin-top: 5px;">
-								<input class="email-input " type="email" name="email" placeholder="joeguy@example.com" required />
-							</div>
-							<div class="col-xs-12 col-sm-5" style="padding-left: 0; margin-top: 5px;">
-								<input type="submit" class="submit-btn" style="color: black;" value="Join in Slack" />
-							</div>
-						</div>
-					</form>
-				</div>
-
-			</div>
-
 		</div>
-
-		<!-- DEMO DISPLAY FOR HOVER OVER SITUATIONS -->
-		<div id="demo-display">
-			<div class="body-wrapper">
-				<div class="demo-header row">
-					<div class="logo-container">
-						<img src="/assets/images/toki_logo.png" id="logo">
-					</div>
-					<div class="circle">
-						CLOSE
-					</div>
-				</div>
-
-				<div class="demo-body row">
-
-					<div class="header">
-						<div class="col-xs-1 glyphicon glyphicon-arrow-left button left" data-index="0"></div>
-						<div class="col-xs-10">
-							<h2 class="title">Demo</h2>
-							<p class="counter"><span class="index-counter">1</span> of 4</p>
-						</div>
-						<div class="col-xs-1 glyphicon glyphicon-arrow-right button right" data-index="1"></div>
-					</div>
-
-				</div>
-			</div>
-			<section>
-				<div class="main col-xs-12">
-					<img src="/assets/gifs/clearobjectives.gif" class="img-responsive gif" alt="Clear Objectives" />
-				</div>
-			</section>
-		</div>
-<% } %>
-
-		<a href=<%= "https://"+org+".slack.com" %> target="_top">
-			Sign In
-		</a>
-		<center>
-			<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot,commands'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
-		</center>
-		
-		<center style="margin-top: 25px;">
-			<a href="https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>login&scope=identity.basic"><img alt="Add to Slack" height="40" width="172" src="/assets/images/sign_in_with_slack_2.png" /></a>
-		</center>
-		</div>
-
 
 	</body>
 </html>
+
+
+<% if (false) { %>
+	
+<center>
+	<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot,commands'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
+</center>
+
+<center style="margin-top: 25px;">
+	<a href="https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>login&scope=identity.basic"><img alt="Add to Slack" height="40" width="172" src="/assets/images/sign_in_with_slack_2.png" /></a>
+</center>
+
+<% } %>
