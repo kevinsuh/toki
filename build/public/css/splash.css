@@ -29,6 +29,9 @@ a:hover {
   .input-group .input-group-btn {
     width: 30% !important; }
 
+.alert {
+  text-shadow: none !important; }
+
 /*
  * Base structure
  */
@@ -107,7 +110,9 @@ body {
  * Cover
  */
 .cover {
-  padding: 0 20px; }
+  padding: 0 20px;
+  width: 90%;
+  margin: auto; }
 
 .cover .btn-lg {
   padding: 10px 20px;

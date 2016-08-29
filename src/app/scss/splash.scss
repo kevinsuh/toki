@@ -37,6 +37,10 @@ a:hover {
 	}
 }
 
+.alert {
+  text-shadow: none !important;
+}
+
 
 /*
  * Base structure
@@ -128,6 +132,8 @@ body {
 
 .cover {
   padding: 0 20px;
+  width: 90%;
+  margin: auto;
 }
 .cover .btn-lg {
   padding: 10px 20px;
