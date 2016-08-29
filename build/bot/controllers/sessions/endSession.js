@@ -68,6 +68,15 @@ exports.default = function (controller) {
 						endTime: endTime
 					}).then(function (session) {
 
+						// turn off all sessions for user here
+						// just in case other pending open sessions (should only have one open a time per user!)
+						_models2.default.Session.update({
+							open: false,
+							live: false
+						}, {
+							where: ['"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)', UserId, true, true]
+						});
+
 						/*
        * 	1. get all the `endSession` pings for ToUserId 
        * 	2. get all the live sessions for FromUserId (pingers)
