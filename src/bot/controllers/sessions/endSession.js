@@ -104,10 +104,13 @@ export default function(controller) {
 							order: `"Ping"."createdAt" DESC`
 						}).then((pings) => {
 
+							// this object holds pings in relation to the UserId of the session that just ended!
+							// fromUser are pings that the user sent out
+							// toUser are pings that got sent to the user
 							let pingObjects = {
 								fromUser: [],
 								toUser: []
-							}; // final container of pingObjects, both the ones coming to me and ones i'm sending out
+							};
 
 							// get all the sessions associated with pings that come FromUser
 							let pingerSessionPromises = [];
@@ -139,13 +142,17 @@ export default function(controller) {
 									});
 									pingObject.ping    = ping;
 									pingObject.session = session;
-									console.log(ping);
 									if (ping.dataValues.FromUserId == UserId) {
 										pingObjects.fromUser.push(pingObject);
 									} else if (ping.dataValues.ToUserId == UserId) {
 										pingObjects.toUser.push(pingObject);
 									}
 								});
+
+								// attach only the relevant pingObjects (ones where FromUserId is not in live session or `superFocus` session)
+								pingObjects.toUser = pingObjects.toUser.filter(pingObject => !pingObject.session || !pingObject.session.dataValues.superFocus );
+
+								pingObjects.fromUser = pingObjects.fromUser.filter(pingObject => !pingObject.session || !pingObject.session.dataValues.superFocus );
 
 								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
@@ -161,6 +168,7 @@ export default function(controller) {
 										endSessionType
 									}
 
+									// start the flow
 									startEndSessionFlow(convo);
 
 									convo.on('end', (convo) => {

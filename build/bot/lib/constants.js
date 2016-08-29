@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.tokiExplainAttachments = exports.timeZoneAttachments = exports.startSessionOptionsAttachments = exports.startSessionExamples = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
+exports.tokiExplainAttachments = exports.timeZoneAttachments = exports.letsFocusAttachments = exports.startSessionOptionsAttachments = exports.startSessionExamples = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
 
 var _utterances;
 
@@ -279,6 +279,10 @@ var buttonValues = exports.buttonValues = {
 			name: "OTHER",
 			value: "Other"
 		}
+	},
+	focus: {
+		name: "FOCUS",
+		value: "focus"
 	}
 };
 
@@ -325,6 +329,18 @@ var startSessionOptionsAttachments = exports.startSessionOptionsAttachments = [{
 		name: buttonValues.endSession.name,
 		text: "End Session",
 		value: buttonValues.endSession.value,
+		type: "button"
+	}]
+}];
+
+var letsFocusAttachments = exports.letsFocusAttachments = [{
+	attachment_type: 'default',
+	callback_id: "LETS_FOCUS_AGAIN",
+	fallback: "Let's focus again!",
+	actions: [{
+		name: buttonValues.focus.name,
+		text: "Focus :thinking_face:",
+		value: buttonValues.focus.value,
 		type: "button"
 	}]
 }];

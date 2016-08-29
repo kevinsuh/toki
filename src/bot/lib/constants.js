@@ -283,6 +283,10 @@ export const buttonValues ={
 			name: "OTHER",
 			value: "Other"
 		}
+	},
+	focus: {
+		name: "FOCUS",
+		value: "focus"
 	}
 }
 
@@ -342,6 +346,22 @@ export const startSessionOptionsAttachments = [
 				name: buttonValues.endSession.name,
 				text: "End Session",
 				value: buttonValues.endSession.value,
+				type: "button"
+			}
+		]
+	}
+]
+
+export const letsFocusAttachments = [
+	{
+		attachment_type: 'default',
+		callback_id: "LETS_FOCUS_AGAIN",
+		fallback: "Let's focus again!",
+		actions: [
+			{
+				name: buttonValues.focus.name,
+				text: "Focus :thinking_face:",
+				value: buttonValues.focus.value,
 				type: "button"
 			}
 		]

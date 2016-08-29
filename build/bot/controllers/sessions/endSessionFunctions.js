@@ -46,26 +46,36 @@ function startEndSessionFlow(convo) {
 	var sessionMinutes = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(startTimeObject)).asMinutes());
 	var sessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
 
-	// either no live session, or not in `superFocus`
-	var pingObjectsToUser = pingObjects.toUser.filter(function (pingObject) {
-		return !pingObject.session || !pingObject.session.dataValues.superFocus;
-	});
-	convo.sessionEnd.pingObjects.toUser = pingObjectsToUser;
-
-	var pingObjectsFromUser = pingObjects.fromUser.filter(function (pingObject) {
-		return !pingObject.session || !pingObject.session.dataValues.superFocus;
-	});
-	convo.sessionEnd.pingObjects.fromUser = pingObjectsFromUser;
-
+	// this handles only the 
 	var message = 'Great work on `' + content + '`! You were focused for *' + sessionTimeString + '*';
 	if (pingObjects.toUser.length == 1) {
 		message = message + '. While you were heads down, <@' + pingObjects.toUser[0].session.dataValues.User.dataValues.SlackUserId + '> asked me to send you a message after your session :relieved:';
 	} else {
-		var SlackNames = [];
-		pingObjects.toUser.forEach();
+		(function () {
+			var slackUserIds = [];
+			pingObjects.toUser.forEach(function (pingObject) {
+				var ping = pingObject.ping;
+				var session = pingObject.session;
+
+				slackUserIds.push(ping.dataValues.FromUser.dataValues.SlackUserId);
+			});
+			var slackNamesString = (0, _messageHelpers.commaSeparateOutStringArray)(slackUserIds, { SlackUserIds: true });
+			message = message + '. While you were heads down, you received messages from ' + slackNamesString;
+		})();
 	}
 
-	convo.say();
+	convo.say(message);
+
+	if (pingObjects.toUser.length == 1) {
+		convo.say(':point_left: I just kicked off a conversation between you both now');
+	} else if (pingObjects.toUser.length > 1) {
+		convo.say(':point_left: I just kicked off separate conversations between you and each of them now');
+	}
+
+	convo.say({
+		text: 'When you’re ready, let me know when you’d like to focus again',
+		attachments: _constants.letsFocusAttachments
+	});
 }
 
 /**

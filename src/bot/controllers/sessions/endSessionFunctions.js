@@ -1,7 +1,7 @@
 import moment from 'moment-timezone';
 import models from '../../../app/models';
-import { utterances, colorsArray, buttonValues, colorsHash, timeZones, timeZoneAttachments } from '../../lib/constants';
-import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '../../lib/messageHelpers';
+import { utterances, colorsArray, buttonValues, colorsHash, timeZones, timeZoneAttachments, letsFocusAttachments } from '../../lib/constants';
+import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, commaSeparateOutStringArray } from '../../lib/messageHelpers';
 
 /**
  * 		END SESSION CONVERSATION FLOW FUNCTIONS
@@ -22,24 +22,32 @@ export function startEndSessionFlow(convo) {
 	const sessionMinutes    = Math.round(moment.duration(endTimeObject.diff(startTimeObject)).asMinutes());
 	const sessionTimeString = convertMinutesToHoursString(sessionMinutes);
 
-	// either no live session, or not in `superFocus`
-	let pingObjectsToUser = pingObjects.toUser.filter(pingObject => !pingObject.session || !pingObject.session.dataValues.superFocus );
-	convo.sessionEnd.pingObjects.toUser = pingObjectsToUser;
-
-	let pingObjectsFromUser = pingObjects.fromUser.filter(pingObject => !pingObject.session || !pingObject.session.dataValues.superFocus );
-	convo.sessionEnd.pingObjects.fromUser = pingObjectsFromUser;
-
+	// this handles only the 
 	let message = `Great work on \`${content}\`! You were focused for *${sessionTimeString}*`;
 	if (pingObjects.toUser.length == 1) {
 		message = `${message}. While you were heads down, <@${pingObjects.toUser[0].session.dataValues.User.dataValues.SlackUserId}> asked me to send you a message after your session :relieved:`
 	} else {
-		let slackNames = [];
+		let slackUserIds = [];
 		pingObjects.toUser.forEach((pingObject) => {
-			slackNames.push(pingObject.)
+			const { ping, session } = pingObject;
+			slackUserIds.push(ping.dataValues.FromUser.dataValues.SlackUserId);
 		});
+		let slackNamesString = commaSeparateOutStringArray(slackUserIds, { SlackUserIds: true });
+		message = `${message}. While you were heads down, you received messages from ${slackNamesString}`;
 	}
 
-	convo.say();
+	convo.say(message);
+
+	if (pingObjects.toUser.length == 1) {
+		convo.say(`:point_left: I just kicked off a conversation between you both now`);
+	} else if (pingObjects.toUser.length > 1) {
+		convo.say(`:point_left: I just kicked off separate conversations between you and each of them now`);
+	}
+
+	convo.say({
+		text: `When you’re ready, let me know when you’d like to focus again`,
+		attachments: letsFocusAttachments
+	});
 
 }
 

@@ -346,13 +346,15 @@ export function getUniqueSlackUsersFromString(string, config = {}) {
 // returns array joined together into a string
 export function commaSeparateOutStringArray(a, config = {}) {
 
-	const { codeBlock, slackNames } = config;
+	const { codeBlock, slackNames, SlackUserIds } = config;
 
 	a = a.map((a) => {
 		if (codeBlock) {
 			a = `\`${a}\``
 		} else if (slackNames) {
 			a = `@${a}`;
+		} else if (SlackUserIds) {
+			a = `<@${a}>`;
 		}
 		return a;
 	})
