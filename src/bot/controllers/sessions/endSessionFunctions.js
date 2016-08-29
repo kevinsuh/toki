@@ -15,6 +15,9 @@ export function startEndSessionFlow(convo) {
 
 	const { dataValues: { content, startTime, endTime } } = session;
 
+	console.log(`\n\n\n ping objects:`);
+	console.log(pingObjects);
+
 	// session info
 	const startTimeObject   = moment(startTime).tz(tz);
 	const endTimeObject     = moment(endTime).tz(tz);

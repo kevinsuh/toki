@@ -85,11 +85,14 @@ exports.default = function (controller) {
        */
 
 						_models2.default.Ping.findAll({
-							where: ['"Ping"."ToUserId" = ? AND "Ping"."live" = ? AND "Ping"."deliveryType" = ?', UserId, true, "sessionEnd"],
+							where: ['("Ping"."ToUserId" = ? OR "Ping"."FromUserId" = ?) AND "Ping"."live" = ? AND "Ping"."deliveryType" = ?', UserId, UserId, true, "sessionEnd"],
 							order: '"Ping"."createdAt" DESC'
 						}).then(function (pings) {
 
-							var pingObjects = []; // final container of pingObjects
+							var pingObjects = {
+								fromUser: [],
+								toUser: []
+							}; // final container of pingObjects, both the ones coming to me and ones i'm sending out
 
 							var pingerSessionPromises = [];
 							pings.forEach(function (ping) {
@@ -120,7 +123,12 @@ exports.default = function (controller) {
 									});
 									pingObject.ping = ping;
 									pingObject.session = session;
-									pingObjects.push(pingObject);
+									console.log(ping);
+									if (ping.dataValues.FromUserId == UserId) {
+										pingObjects.fromUser.push(pingObject);
+									} else if (ping.dataValues.ToUserId == UserId) {
+										pingObjects.toUser.push(pingObject);
+									}
 								});
 
 								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
