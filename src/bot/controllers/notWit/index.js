@@ -3,6 +3,7 @@ import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 
 import models from '../../../app/models';
+import { isJsonObject } from '../../middleware/hearsMiddleware';
 import { utterances, colorsArray, constants, buttonValues, colorsHash, timeZones } from '../../lib/constants';
 
 import dotenv from 'dotenv';
@@ -14,6 +15,56 @@ import dotenv from 'dotenv';
  */
 
 export default function(controller) {
+
+	controller.hears(['^{'], 'direct_message',isJsonObject, function(bot, message) {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
+		const SlackUserId = message.user;
+		const { text }    = message;
+
+		console.log(`\n\n text: `);
+		console.log(text);
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(() => {
+			
+			try {
+				let jsonObject = JSON.parse(text);
+				const { sendBomb, pingId } = jsonObject;
+				if (sendBomb) {
+					bot.reply(message, `You tryna send a bomb to ping id: ${pingId}`);
+				}
+			}
+			catch (error) {
+				// this should never happen!
+				bot.reply(message, "Hmm, something went wrong");
+				return false;
+			}
+
+		}, 500);
+
+	});
+
+
+	controller.hears([constants.THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
+		const SlackUserId = message.user;
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(() => {
+			bot.reply(message, "You're welcome!! :smile:");
+		}, 500);
+	});
 
 	controller.hears([constants.THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
 

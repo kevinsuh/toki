@@ -287,6 +287,10 @@ export const buttonValues ={
 	focus: {
 		name: "FOCUS",
 		value: "focus"
+	},
+	sendNow: {
+		name: "SEND_NOW",
+		value: "send now"
 	}
 }
 

@@ -168,7 +168,6 @@ export default function(controller) {
 
 								// attach only the relevant pingObjects (ones where FromUserId is not in live session or `superFocus` session)
 								pingObjects.toUser = pingObjects.toUser.filter(pingObject => !pingObject.session || !pingObject.session.dataValues.superFocus );
-								pingObjects.fromUser = pingObjects.fromUser.filter(pingObject => !pingObject.session || !pingObject.session.dataValues.superFocus );
 
 								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 

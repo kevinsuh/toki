@@ -157,9 +157,6 @@ exports.default = function (controller) {
 								pingObjects.toUser = pingObjects.toUser.filter(function (pingObject) {
 									return !pingObject.session || !pingObject.session.dataValues.superFocus;
 								});
-								pingObjects.fromUser = pingObjects.fromUser.filter(function (pingObject) {
-									return !pingObject.session || !pingObject.session.dataValues.superFocus;
-								});
 
 								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 

@@ -53,13 +53,46 @@ export function startEndSessionFlow(convo) {
 	/**
 	 * 	THIS HANDLES WHEN USER IS FROMUSER PING
 	 */
-	
+	// when ping is fromUser and the toUser is in a session, then you need to give them the responsibility to break thru flow and send that message
+	pingObjects.fromUser.forEach((pingObject) => {
+		const { ping, ping: { dataValues: { ToUser } }, session } = pingObject;
+
+		if (session) {
+			// if in session, give option to break focus
+			const { dataValues: { content, endTime } } = session;
+			const endTimeString = moment(endTime).tz(ToUser.dataValues.tz).format("h:mma");
+			convo.say({
+				text: `<@${ToUser.dataValues.SlackUserId}> is focusing on \`${content}\` until *${endTimeString}*. I’ll plan on sending this to them at ${endTimeString}, unless you tell me this is urgent and want to send it now`,
+				attachments: [
+					{
+						attachment_type: 'default',
+						callback_id: "SEND_BOMB",
+						fallback: "Let's send this now!",
+						actions: [
+							{
+								name: buttonValues.sendNow.name,
+								text: "Send now :bomb:",
+								value: `{"sendBomb": true, "pingId": "${ping.dataValues.id}"}`,
+								type: "button"
+							}
+						]
+					}
+				]
+			});
+		} else {
+			// if not in session, trigger convo immediately
+			convo.say(`<@${ToUser.dataValues.SlackUserId}> is not in a focused session, so I started a conversation between you and them now :simple_smile:`);
+		}
+		
+	})
 
 	convo.say({
 		text: `When you’re ready, let me know when you’d like to focus again`,
 		attachments: letsFocusAttachments
 	});
 
+	convo.next();
+	
 }
 
 /**
