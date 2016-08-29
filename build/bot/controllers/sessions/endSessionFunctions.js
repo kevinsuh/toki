@@ -30,6 +30,7 @@ function startEndSessionFlow(convo) {
 	var UserId = _convo$sessionEnd.UserId;
 	var session = _convo$sessionEnd.session;
 	var tz = _convo$sessionEnd.tz;
+	var endSessionType = _convo$sessionEnd.endSessionType;
 	var pingObjects = convo.sessionEnd.pingObjects; // this will get trimmed ton only final pingObjects
 
 	var _session$dataValues = session.dataValues;
@@ -37,11 +38,8 @@ function startEndSessionFlow(convo) {
 	var startTime = _session$dataValues.startTime;
 	var endTime = _session$dataValues.endTime;
 
-
-	console.log('\n\n\n ping objects:');
-	console.log(pingObjects);
-
 	// session info
+
 	var startTimeObject = (0, _momentTimezone2.default)(startTime).tz(tz);
 	var endTimeObject = (0, _momentTimezone2.default)(endTime).tz(tz);
 	var endTimeString = endTimeObject.format("h:mm a");
@@ -49,17 +47,22 @@ function startEndSessionFlow(convo) {
 	var sessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
 
 	// either no live session, or not in `superFocus`
-	pingObjects = pingObjects.filter(function (pingObject) {
+	var pingObjectsToUser = pingObjects.toUser.filter(function (pingObject) {
 		return !pingObject.session || !pingObject.session.dataValues.superFocus;
 	});
-	convo.sessionEnd.pingObjects = pingObjects;
+	convo.sessionEnd.pingObjects.toUser = pingObjectsToUser;
+
+	var pingObjectsFromUser = pingObjects.fromUser.filter(function (pingObject) {
+		return !pingObject.session || !pingObject.session.dataValues.superFocus;
+	});
+	convo.sessionEnd.pingObjects.fromUser = pingObjectsFromUser;
 
 	var message = 'Great work on `' + content + '`! You were focused for *' + sessionTimeString + '*';
-	if (pingObjects.length == 1) {
-		message = message + '. While you were heads down, <@' + pingObjects[0].session.dataValues.User.dataValues.SlackUserId + '> asked me to send you a message after your session :relieved:';
+	if (pingObjects.toUser.length == 1) {
+		message = message + '. While you were heads down, <@' + pingObjects.toUser[0].session.dataValues.User.dataValues.SlackUserId + '> asked me to send you a message after your session :relieved:';
 	} else {
 		var SlackNames = [];
-		pingObjects.forEach();
+		pingObjects.toUser.forEach();
 	}
 
 	convo.say();

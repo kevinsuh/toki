@@ -10,13 +10,10 @@ import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '..
 // confirm that user has tz configured before continuing
 export function startEndSessionFlow(convo) {
 
-	const { SlackUserId, UserId, session, tz }  = convo.sessionEnd;
+	const { SlackUserId, UserId, session, tz, endSessionType }  = convo.sessionEnd;
 	let { pingObjects } = convo.sessionEnd; // this will get trimmed ton only final pingObjects
 
 	const { dataValues: { content, startTime, endTime } } = session;
-
-	console.log(`\n\n\n ping objects:`);
-	console.log(pingObjects);
 
 	// session info
 	const startTimeObject   = moment(startTime).tz(tz);
@@ -26,15 +23,20 @@ export function startEndSessionFlow(convo) {
 	const sessionTimeString = convertMinutesToHoursString(sessionMinutes);
 
 	// either no live session, or not in `superFocus`
-	pingObjects = pingObjects.filter(pingObject => !pingObject.session || !pingObject.session.dataValues.superFocus );
-	convo.sessionEnd.pingObjects = pingObjects;
+	let pingObjectsToUser = pingObjects.toUser.filter(pingObject => !pingObject.session || !pingObject.session.dataValues.superFocus );
+	convo.sessionEnd.pingObjects.toUser = pingObjectsToUser;
+
+	let pingObjectsFromUser = pingObjects.fromUser.filter(pingObject => !pingObject.session || !pingObject.session.dataValues.superFocus );
+	convo.sessionEnd.pingObjects.fromUser = pingObjectsFromUser;
 
 	let message = `Great work on \`${content}\`! You were focused for *${sessionTimeString}*`;
-	if (pingObjects.length == 1) {
-		message = `${message}. While you were heads down, <@${pingObjects[0].session.dataValues.User.dataValues.SlackUserId}> asked me to send you a message after your session :relieved:`
+	if (pingObjects.toUser.length == 1) {
+		message = `${message}. While you were heads down, <@${pingObjects.toUser[0].session.dataValues.User.dataValues.SlackUserId}> asked me to send you a message after your session :relieved:`
 	} else {
-		let SlackNames = [];
-		pingObjects.forEach()
+		let slackNames = [];
+		pingObjects.toUser.forEach((pingObject) => {
+			slackNames.push(pingObject.)
+		});
 	}
 
 	convo.say();

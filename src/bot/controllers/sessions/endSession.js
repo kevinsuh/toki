@@ -23,7 +23,9 @@ export default function(controller) {
 		 */
 		
 		const SlackUserId      = message.user;
-		const doneSessionEarly = true;
+		const endSessionType   = `endEarly`;
+
+		const config = { SlackUserId, endSessionType };
 
 		// no open sessions
 		bot.send({
@@ -32,6 +34,7 @@ export default function(controller) {
 		});
 
 		setTimeout(() => {
+			controller.trigger(`end_session_flow`, [bot, config]);
 		}, 800);
 
 	});
@@ -43,7 +46,7 @@ export default function(controller) {
 	 */
 	controller.on(`end_session_flow`, (bot, config) => {
 
-		const { SlackUserId, sessionTimerUp, endSessionEarly } = config;
+		const { SlackUserId, endSessionType } = config;
 
 		models.User.find({
 			where: { SlackUserId }
@@ -94,6 +97,10 @@ export default function(controller) {
 
 						models.Ping.findAll({
 							where: [ `("Ping"."ToUserId" = ? OR "Ping"."FromUserId" = ?) AND "Ping"."live" = ? AND "Ping"."deliveryType" = ?`, UserId, UserId, true, "sessionEnd" ],
+							include: [
+								{ model: models.User, as: `FromUser` },
+								{ model: models.User, as: `ToUser` },
+							],
 							order: `"Ping"."createdAt" DESC`
 						}).then((pings) => {
 
@@ -102,6 +109,7 @@ export default function(controller) {
 								toUser: []
 							}; // final container of pingObjects, both the ones coming to me and ones i'm sending out
 
+							// get all the sessions associated with pings that come FromUser
 							let pingerSessionPromises = [];
 							pings.forEach((ping) => {
 								const { FromUserId } = ping;
@@ -150,8 +158,7 @@ export default function(controller) {
 										tz,
 										session, // session that just ended
 										pingObjects, // all `endSession` pings to handle
-										endSessionEarly,
-										sessionTimerUp,
+										endSessionType
 									}
 
 									startEndSessionFlow(convo);

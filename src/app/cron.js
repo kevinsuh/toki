@@ -139,9 +139,9 @@ let checkForSessions = () => {
 							let bot = bots[token];
 							if (bot) {
 								// alarm is up for session
-								const sessionTimerUp  = true;
-								config.sessionTimerUp = sessionTimerUp
-								controller.trigger(`end_session_flow`, [bot, { SlackUserId, sessionTimerUp }]);
+								const endSessionType  = `sessionTimerUp`;
+								config.endSessionType = endSessionType;
+								controller.trigger(`end_session_flow`, [bot, { SlackUserId, endSessionType }]);
 							}
 						});
 					})

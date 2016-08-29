@@ -19,7 +19,9 @@ exports.default = function (controller) {
    */
 
 		var SlackUserId = message.user;
-		var doneSessionEarly = true;
+		var endSessionType = 'endEarly';
+
+		var config = { SlackUserId: SlackUserId, endSessionType: endSessionType };
 
 		// no open sessions
 		bot.send({
@@ -27,7 +29,9 @@ exports.default = function (controller) {
 			channel: message.channel
 		});
 
-		setTimeout(function () {}, 800);
+		setTimeout(function () {
+			controller.trigger('end_session_flow', [bot, config]);
+		}, 800);
 	});
 
 	/**
@@ -37,8 +41,7 @@ exports.default = function (controller) {
   */
 	controller.on('end_session_flow', function (bot, config) {
 		var SlackUserId = config.SlackUserId;
-		var sessionTimerUp = config.sessionTimerUp;
-		var endSessionEarly = config.endSessionEarly;
+		var endSessionType = config.endSessionType;
 
 
 		_models2.default.User.find({
@@ -86,6 +89,7 @@ exports.default = function (controller) {
 
 						_models2.default.Ping.findAll({
 							where: ['("Ping"."ToUserId" = ? OR "Ping"."FromUserId" = ?) AND "Ping"."live" = ? AND "Ping"."deliveryType" = ?', UserId, UserId, true, "sessionEnd"],
+							include: [{ model: _models2.default.User, as: 'FromUser' }, { model: _models2.default.User, as: 'ToUser' }],
 							order: '"Ping"."createdAt" DESC'
 						}).then(function (pings) {
 
@@ -94,6 +98,7 @@ exports.default = function (controller) {
 								toUser: []
 							}; // final container of pingObjects, both the ones coming to me and ones i'm sending out
 
+							// get all the sessions associated with pings that come FromUser
 							var pingerSessionPromises = [];
 							pings.forEach(function (ping) {
 								var FromUserId = ping.FromUserId;
@@ -142,8 +147,7 @@ exports.default = function (controller) {
 										tz: tz,
 										session: session, // session that just ended
 										pingObjects: pingObjects, // all `endSession` pings to handle
-										endSessionEarly: endSessionEarly,
-										sessionTimerUp: sessionTimerUp
+										endSessionType: endSessionType
 									};
 
 									(0, _endSessionFunctions.startEndSessionFlow)(convo);
