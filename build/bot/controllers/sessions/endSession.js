@@ -201,9 +201,6 @@ exports.default = function (controller) {
 									var ToUser = _pingObject$ping$data.ToUser;
 									var session = pingObject.session;
 
-									// for this, all sessions that have not been filtered out yet should be started. if a session exists, then put that user thru end_session flow after turning off ping
-									// config should be passed that provides them info
-									// { endSessionType: `endByPingToUserId`, extraInfo.. }
 
 									ping.getPingMessages({}).then(function (pingMessages) {
 
@@ -227,6 +224,7 @@ exports.default = function (controller) {
 												pingMessages: pingMessages
 											};
 
+											// send pings that are for ToUser!
 											(0, _pingFunctions.sendPing)(fromUserConfig, toUserConfig, pingConfig);
 
 											// put FromUser of these pings thru endSession flow!
@@ -249,10 +247,35 @@ exports.default = function (controller) {
 								// pings queued by user who just ended this session
 								pingObjects.fromUser.forEach(function (pingObject) {
 									var ping = pingObject.ping;
+									var _pingObject$ping$data2 = pingObject.ping.dataValues;
+									var FromUser = _pingObject$ping$data2.FromUser;
+									var ToUser = _pingObject$ping$data2.ToUser;
 									var session = pingObject.session;
 
-									// for this, the pings where the ToUser is in a session will not be triggered (user is provided with a "send now" bomb option)
-									// however, all pings where ToUser is not in a session (session == false), automatically trigger a conversation
+									// only send the messages here when ToUser is not in a session
+
+									ping.getPingMessages({}).then(function (pingMessages) {
+										if (!session) {
+											// no live session, kick off the convo
+											var fromUserConfig = {
+												UserId: FromUser.dataValues.id,
+												SlackUserId: FromUser.dataValues.SlackUserId,
+												TeamId: FromUser.dataValues.TeamId
+											};
+											var toUserConfig = {
+												UserId: ToUser.dataValues.id,
+												SlackUserId: ToUser.dataValues.SlackUserId,
+												TeamId: ToUser.dataValues.TeamId
+											};
+											var pingConfig = {
+												deliveryType: 'sessionEnd',
+												pingMessages: pingMessages
+											};
+
+											// send pings that are for ToUser!
+											(0, _pingFunctions.sendPing)(fromUserConfig, toUserConfig, pingConfig);
+										}
+									});
 								});
 							});
 						});
