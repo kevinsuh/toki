@@ -4,7 +4,7 @@ import models from '../../../app/models';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants, startSessionOptionsAttachments } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString } from '../../lib/messageHelpers';
-import { startPingFlow, sendPing } from './pingFunctions';
+import { confirmTimeZoneExistsThenStartPingFlow, sendPing, queuePing } from './pingFunctions';
 
 // STARTING A SESSION
 export default function(controller) {
@@ -91,12 +91,13 @@ export default function(controller) {
 
 				convo.pingObject = {
 					SlackUserId,
+					UserId,
 					bot,
 					tz,
 					pingSlackUserIds
 				}
 
-				startPingFlow(convo);
+				confirmTimeZoneExistsThenStartPingFlow(convo);
 
 				convo.on(`end`, (convo) => {
 					

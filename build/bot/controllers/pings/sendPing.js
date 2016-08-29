@@ -97,12 +97,13 @@ exports.default = function (controller) {
 
 				convo.pingObject = {
 					SlackUserId: SlackUserId,
+					UserId: UserId,
 					bot: bot,
 					tz: tz,
 					pingSlackUserIds: pingSlackUserIds
 				};
 
-				(0, _pingFunctions.startPingFlow)(convo);
+				(0, _pingFunctions.confirmTimeZoneExistsThenStartPingFlow)(convo);
 
 				convo.on('end', function (convo) {
 					var _convo$pingObject = convo.pingObject;
@@ -119,7 +120,7 @@ exports.default = function (controller) {
 					var fromUserConfig = { UserId: UserId, SlackUserId: SlackUserId };
 					var toUserConfig = { UserId: pingUserId, SlackUserId: pingSlackUserId };
 					var config = { userInSession: userInSession, deliveryType: deliveryType, pingTimeObject: pingTimeObject, pingMessages: pingMessages };
-					queuePing(bot, fromUserConfig, toUserConfig, config);
+					(0, _pingFunctions.queuePing)(bot, fromUserConfig, toUserConfig, config);
 				});
 			});
 		});
