@@ -54,7 +54,7 @@ var checkForPings = function checkForPings() {
 
 			// if there's a pingTime, respect it and dont send yet!
 
-			if (pingTime) {
+			if (pingTime && deliveryType != 'bomb') {
 				var pingTimeObject = (0, _momentTimezone2.default)(pingTime);
 				if (pingTimeObject > now) {
 					return;

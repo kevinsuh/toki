@@ -236,7 +236,7 @@ export default function(controller) {
 											const endSessionConfig = {
 												endSessionType: constants.endSessionTypes.endByPingToUserId,
 												pingInfo: {
-													pingId: ping.dataValues.id,
+													PingId: ping.dataValues.id,
 													FromUser,
 													ToUser,
 													session, // did this come while in session?

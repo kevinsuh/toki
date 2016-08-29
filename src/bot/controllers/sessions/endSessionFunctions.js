@@ -35,7 +35,7 @@ export function startEndSessionFlow(convo) {
 	if (endSessionType == constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
 		// ended by someone else. user may or may not be in session
 		
-		const { pingId, FromUser, ToUser } = pingInfo;
+		const { PingId, FromUser, ToUser } = pingInfo;
 
 		message = `Hey! <@${ToUser.dataValues.SlackName}> just finished their session`;
 		if (pingInfo.endSessionType == constants.endSessionTypes.endSessionEarly) {
@@ -124,7 +124,7 @@ function handleFromUserPings(convo) {
 							{
 								name: buttonValues.sendNow.name,
 								text: "Send now :bomb:",
-								value: `{"sendBomb": true, "pingId": "${ping.dataValues.id}"}`,
+								value: `{"sendBomb": true, "PingId": "${ping.dataValues.id}"}`,
 								type: "button"
 							}
 						]

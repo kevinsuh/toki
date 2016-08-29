@@ -15,9 +15,6 @@ exports.default = function (controller) {
 		var text = message.text;
 
 
-		console.log('\n\n text: ');
-		console.log(text);
-
 		bot.send({
 			type: "typing",
 			channel: message.channel
@@ -27,31 +24,17 @@ exports.default = function (controller) {
 			try {
 				var jsonObject = JSON.parse(text);
 				var sendBomb = jsonObject.sendBomb;
-				var pingId = jsonObject.pingId;
+				var PingId = jsonObject.PingId;
 
 				if (sendBomb) {
-					bot.reply(message, 'You tryna send a bomb to ping id: ' + pingId);
+					var config = { PingId: PingId };
+					controller.trigger('bomb_ping_message', [bot, config]);
 				}
 			} catch (error) {
 				// this should never happen!
 				bot.reply(message, "Hmm, something went wrong");
 				return false;
 			}
-		}, 500);
-	});
-
-	controller.hears([_constants.constants.THANK_YOU.reg_exp], 'direct_message', function (bot, message) {
-
-		var botToken = bot.config.token;
-		bot = _index.bots[botToken];
-
-		var SlackUserId = message.user;
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(function () {
-			bot.reply(message, "You're welcome!! :smile:");
 		}, 500);
 	});
 

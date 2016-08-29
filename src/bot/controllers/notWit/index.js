@@ -24,9 +24,6 @@ export default function(controller) {
 		const SlackUserId = message.user;
 		const { text }    = message;
 
-		console.log(`\n\n text: `);
-		console.log(text);
-
 		bot.send({
 			type: "typing",
 			channel: message.channel
@@ -35,9 +32,10 @@ export default function(controller) {
 			
 			try {
 				let jsonObject = JSON.parse(text);
-				const { sendBomb, pingId } = jsonObject;
+				const { sendBomb, PingId } = jsonObject;
 				if (sendBomb) {
-					bot.reply(message, `You tryna send a bomb to ping id: ${pingId}`);
+					const config = { PingId };
+					controller.trigger(`bomb_ping_message`, [bot, config]);
 				}
 			}
 			catch (error) {
@@ -50,21 +48,6 @@ export default function(controller) {
 
 	});
 
-
-	controller.hears([constants.THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
-
-		let botToken = bot.config.token;
-		bot          = bots[botToken];
-
-		const SlackUserId = message.user;
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(() => {
-			bot.reply(message, "You're welcome!! :smile:");
-		}, 500);
-	});
 
 	controller.hears([constants.THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
 

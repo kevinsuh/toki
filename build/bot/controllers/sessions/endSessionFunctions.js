@@ -65,7 +65,7 @@ function startEndSessionFlow(convo) {
 	if (endSessionType == _constants.constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
 		// ended by someone else. user may or may not be in session
 
-		var pingId = pingInfo.pingId;
+		var PingId = pingInfo.PingId;
 		var FromUser = pingInfo.FromUser;
 		var ToUser = pingInfo.ToUser;
 
@@ -174,7 +174,7 @@ function handleFromUserPings(convo) {
 					actions: [{
 						name: _constants.buttonValues.sendNow.name,
 						text: "Send now :bomb:",
-						value: '{"sendBomb": true, "pingId": "' + ping.dataValues.id + '"}',
+						value: '{"sendBomb": true, "PingId": "' + ping.dataValues.id + '"}',
 						type: "button"
 					}]
 				}]

@@ -34,7 +34,7 @@ let checkForPings = () => {
 			const { FromUserId, ToUserId, deliveryType, pingTime } = ping;
 
 			// if there's a pingTime, respect it and dont send yet!
-			if (pingTime) {
+			if (pingTime && deliveryType != `bomb`) {
 				let pingTimeObject = moment(pingTime);
 				if (pingTimeObject > now) {
 					return;

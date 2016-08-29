@@ -125,6 +125,42 @@ exports.default = function (controller) {
 			});
 		});
 	});
+
+	/**
+  * 		BOMB THE PING MESSAGE
+  */
+	controller.on('bomb_ping_message', function (bot, config) {
+		var PingId = config.PingId;
+
+
+		_models2.default.Ping.find({
+			where: { id: PingId },
+			include: [{ model: _models2.default.User, as: 'FromUser' }, { model: _models2.default.User, as: 'ToUser' }]
+		}).then(function (ping) {
+
+			// this is a `bomb` to ToUser
+			var _ping$dataValues = ping.dataValues;
+			var FromUser = _ping$dataValues.FromUser;
+			var ToUser = _ping$dataValues.ToUser;
+			var tz = FromUser.dataValues.tz;
+
+
+			bot.startPrivateConversation({ user: FromUser.dataValues.SlackUserId }, function (err, convo) {
+
+				convo.say(':point_left: Got it! I just kicked off a conversation between you and <@' + ToUser.dataValues.SlackUserId + '>');
+
+				convo.on('end', function (convo) {
+
+					_models2.default.Ping.update({
+						live: true,
+						deliveryType: "bomb"
+					}, {
+						where: { id: PingId }
+					});
+				});
+			});
+		});
+	});
 };
 
 var _index = require('../index');

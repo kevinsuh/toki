@@ -231,7 +231,7 @@ exports.default = function (controller) {
 											var endSessionConfig = {
 												endSessionType: _constants.constants.endSessionTypes.endByPingToUserId,
 												pingInfo: {
-													pingId: ping.dataValues.id,
+													PingId: ping.dataValues.id,
 													FromUser: FromUser,
 													ToUser: ToUser,
 													session: session, // did this come while in session?

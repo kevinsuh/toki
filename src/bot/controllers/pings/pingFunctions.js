@@ -357,7 +357,7 @@ function askForQueuedPingMessages(convo) {
 
 }
 
-function askForPingTime(convo, text = '') {
+export function askForPingTime(convo, text = '') {
 
 	const { SlackUserId, bot, tz, pingTimeObject, pingSlackUserId, userInSession }  = convo.pingObject;
 

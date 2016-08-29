@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 exports.confirmTimeZoneExistsThenStartPingFlow = confirmTimeZoneExistsThenStartPingFlow;
+exports.askForPingTime = askForPingTime;
 exports.queuePing = queuePing;
 exports.sendPing = sendPing;
 
