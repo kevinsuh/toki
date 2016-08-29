@@ -139,23 +139,3 @@ function handleFromUserPings(convo) {
 
 }
 
-/**
- * if FromUserId is not in session, immediately trigger convo
- * 		- let user know "hey! kevin just finished their session [early if end early]. i kicked off a convo"
- * 		
- * if FromUserId is in a session that is not superFocus, trigger end_session_flow for FromUserId. this needs config to handle "Hey! {username} just finished their session early. You asked me to let you know when {username} finished working so you could talk" instead of standard "`Great work on \`${content}\`! You were focused for *${sessionTimeString}*`"
- * 		ex. config.PingToUserIdSession = { endSessionTypes (endEarly or sessionTimerUp or endByPingToUserId // ended by the person you queued a ping to!)}
- * 		- this ends session. "Hey! kevin just finished their session early. You asked me to let you know when to talk. I ended your focus session..."
- * 		- if has pinged messages from other teammates, run same flow in `end_session_flow` (while you were heads down, chip wanted to talk to you!)
- *
- * if FromUserId is in a superFocus session, do not notify ToUserId at all
- * 		- check if endSession pings exist where FromUserId match this ended session's UserId
- * 		- If any exist, check if ToUserId is in session
- * 				- if ToUserId is not in session, start conversation right away
- * 		  	- If ToUserId is in a session, let the FromUserId know that "kevin is focusing on X until Y. ill plan on sending this to them at Y, unless you want to send now" (with bomb, send now option)
- *
- *
- * LOGIC NEEDED FOR...
- * 		- session end via session_timer_up, or via end_session_early
- */
-
