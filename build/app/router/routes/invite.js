@@ -38,29 +38,11 @@ router.post('/', function (req, res) {
 	var email = req.body.email;
 
 
-	var env = process.env.NODE_ENV || 'development';
-	if (env == 'development') {
-		var org = "heynavi";
-		var token = process.env.DEV_TOKI_TOKEN;
-	} else {
-		var org = "tokibot1";
-		var token = process.env.TOKI_TOKEN_1;
-	}
-
-	(0, _slackInvite2.default)({ token: token, org: org, email: email }, function (err) {
-		if (err) {
-			if (err.message === 'Sending you to Slack...') {
-				res.redirect('https://' + org + '.slack.com');
-			} else {
-				res.redirect('/?invite=true&success=false&msg=' + err.message);
-			}
-			return;
-		} else {
-			_models2.default.User.create({
-				email: email
-			});
-			res.redirect('/?invite=true&success=true&msg=Yay! We sent an invite email to ' + email);
-		}
+	_models2.default.BetaList.create({
+		email: email
+	}).then(function (betaList) {
+		var success = betaList ? true : false;
+		res.redirect('/?success=' + success + '&email=' + email);
 	});
 });
 

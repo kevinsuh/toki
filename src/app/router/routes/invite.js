@@ -16,30 +16,14 @@ router.post('/', (req, res) => {
 
 	const { email } = req.body;
 
-	var env = process.env.NODE_ENV || 'development';
-	if (env == 'development') {
-		var org   = "heynavi";
-		var token = process.env.DEV_TOKI_TOKEN;
-	} else {
-		var org   = "tokibot1";
-		var token = process.env.TOKI_TOKEN_1;
-	}
+	models.BetaList.create({
+		email
+	})
+	.then((betaList) => {
+		let success = betaList ? true : false;
+		res.redirect(`/?success=${success}&email=${email}`);
+	})
 
-	invite({ token, org, email }, err => {
-		if (err) {
-			if (err.message === `Sending you to Slack...`) {
-				res.redirect(`https://${org}.slack.com`);
-			} else {
-				res.redirect(`/?invite=true&success=false&msg=${err.message}`);
-			}
-			return;
-		} else {
-			models.User.create({
-				email
-			});
-			res.redirect(`/?invite=true&success=true&msg=Yay! We sent an invite email to ${email}`);
-		}
-	});
 });
 
 export default router;
