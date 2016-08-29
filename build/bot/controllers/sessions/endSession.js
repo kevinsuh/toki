@@ -179,6 +179,26 @@ exports.default = function (controller) {
 
 										// all the ping objects here are relevant!
 										var pingObjects = convo.sessionEnd.pingObjects;
+
+										// pings queued for user who just ended this session
+
+										pingObjects.toUser.forEach(function (pingObject) {
+											var ping = pingObject.ping;
+											var session = pingObject.session;
+
+											// for this, all sessions that have not been filtered out yet should be started. if a session exists, then put that user thru end_session flow after turning off ping
+											// config should be passed that provides them info
+											// { endSessionType: `endByPingToUserId`, extraInfo.. }
+										});
+
+										// pings queued by user who just ended this session
+										pingObjects.fromUser.forEach(function (pingObject) {
+											var ping = pingObject.ping;
+											var session = pingObject.session;
+
+											// for this, the pings where the ToUser is in a session will not be triggered (user is provided with a "send now" bomb option)
+											// however, all pings where ToUser is not in a session (session == false), automatically trigger a conversation
+										});
 									});
 								});
 							});

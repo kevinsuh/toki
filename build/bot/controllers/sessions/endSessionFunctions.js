@@ -46,9 +46,6 @@ function startEndSessionFlow(convo) {
 	var sessionMinutes = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(startTimeObject)).asMinutes());
 	var sessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
 
-	console.log('\n\n\n PINGS:');
-	console.log(pingObjects);
-
 	var message = 'Great work on `' + content + '`! You were focused for *' + sessionTimeString + '*';
 
 	/**
@@ -73,15 +70,14 @@ function startEndSessionFlow(convo) {
 	convo.say(message);
 
 	if (pingObjects.toUser.length == 1) {
-		convo.say(':point_left: I just kicked off a conversation between you both now');
+		convo.say(':point_left: I just kicked off a conversation between you both');
 	} else if (pingObjects.toUser.length > 1) {
-		convo.say(':point_left: I just kicked off separate conversations between you and each of them now');
+		convo.say(':point_left: I just kicked off separate conversations between you and each of them');
 	}
 
 	/**
   * 	THIS HANDLES WHEN USER IS FROMUSER PING
   */
-	// when ping is fromUser and the toUser is in a session, then you need to give them the responsibility to break thru flow and send that message
 	pingObjects.fromUser.forEach(function (pingObject) {
 		var ping = pingObject.ping;
 		var ToUser = pingObject.ping.dataValues.ToUser;
@@ -96,7 +92,7 @@ function startEndSessionFlow(convo) {
 
 			var _endTimeString = (0, _momentTimezone2.default)(_endTime).tz(ToUser.dataValues.tz).format("h:mma");
 			convo.say({
-				text: '<@' + ToUser.dataValues.SlackUserId + '> is focusing on `' + _content + '` until *' + _endTimeString + '*. I’ll plan on sending this to them at ' + _endTimeString + ', unless you tell me this is urgent and want to send it now',
+				text: '<@' + ToUser.dataValues.SlackUserId + '> is focusing on `' + _content + '` until *' + _endTimeString + '*. I\'ll send your message then, unless you tell me this is urgent and want to send it now',
 				attachments: [{
 					attachment_type: 'default',
 					callback_id: "SEND_BOMB",
@@ -111,7 +107,7 @@ function startEndSessionFlow(convo) {
 			});
 		} else {
 			// if not in session, trigger convo immediately
-			convo.say('<@' + ToUser.dataValues.SlackUserId + '> is not in a focused session, so I started a conversation between you and them now :simple_smile:');
+			convo.say('<@' + ToUser.dataValues.SlackUserId + '> is not in a focused session, so I just started a conversation between you two :simple_smile:');
 		}
 	});
 
