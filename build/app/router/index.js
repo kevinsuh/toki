@@ -46,23 +46,10 @@ exports.default = function (app) {
 
 	var org = "tokibot1";
 	var interval = 5000;
-	var token = process.env.TOKI_TOKEN_1;
-
-	// fetch data
-	var slack = new _slack2.default({ token: token, interval: interval, org: org });
-	slack.setMaxListeners(Infinity);
-
-	app.use(function (req, res, next) {
-		if (slack.ready) return next();
-		slack.once('ready', next);
-	});
 
 	// root
 	app.get('/', function (req, res) {
-		var org = "tokibot1";
-		var variables = _extends({}, req.query, {
-			org: org
-		});
+		var variables = _extends({}, req.query);
 		res.render('root', variables);
 	});
 

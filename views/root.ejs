@@ -61,10 +61,20 @@
 						</div>
 					</div>
 
-					<% if (locals.invite && locals.msg) { %>
-						<div class="alert alert-<%= locals.success ? 'success' : 'warning' %>">
-							<%= locals.msg %>
-						</div>
+					<% if (locals.email) { %>
+
+						<% if (locals.success == 'true') { %>
+
+							<div class="alert alert-success" style="text-shadow: none;">
+								Awesome! We'll contact you at <%= locals.email %> as soon as we can
+							</div>
+
+						<% } else { %>
+							<div class="alert alert-warning" style="text-shadow: none;">
+									Something went wrong. Try again? 
+								</div>
+						<% } %>
+
 					<% } %>
 
 					<div class="inner cover">
