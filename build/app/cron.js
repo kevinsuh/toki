@@ -145,8 +145,7 @@ var checkForSessions = function checkForSessions() {
 
 
 						var config = {
-							SlackUserId: SlackUserId,
-							session: session
+							SlackUserId: SlackUserId
 						};
 
 						_models2.default.Team.find({
@@ -157,9 +156,8 @@ var checkForSessions = function checkForSessions() {
 							var bot = _controllers.bots[token];
 							if (bot) {
 								// alarm is up for session
-								var endSessionType = 'sessionTimerUp';
-								config.endSessionType = endSessionType;
-								_controllers.controller.trigger('end_session_flow', [bot, { SlackUserId: SlackUserId, endSessionType: endSessionType }]);
+								config.endSessionType = _constants.constants.endSessionTypes.sessionTimerUp;
+								_controllers.controller.trigger('end_session_flow', [bot, config]);
 							}
 						});
 					});

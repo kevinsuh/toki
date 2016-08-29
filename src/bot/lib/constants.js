@@ -90,6 +90,11 @@ export const utterances = {
 
 
 export const constants = {
+	endSessionTypes: {
+		endByPingToUserId: `END_BY_PING_TO_USER_ID`,
+		sessionTimerUp: `SESSION_TIMER_UP`,
+		endSessionEarly: `END_SESSION_EARLY`
+	},
 	PLAN_DECISION: {
 		complete: {
 			word: "TASK_COMPLETE",

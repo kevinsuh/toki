@@ -2,7 +2,7 @@ import { bots, controller } from '../bot/controllers';
 import models from './models';
 import moment from 'moment-timezone';
 import _ from 'lodash';
-import { colorsHash } from '../bot/lib/constants';
+import { colorsHash, constants } from '../bot/lib/constants';
 import { sendPing } from '../bot/controllers/pings/pingFunctions';
 
 // the cron file!
@@ -64,8 +64,8 @@ let checkForPings = () => {
 
 						ping.update({
 							live: false
-						}).
-						then(() => {
+						})
+						.then(() => {
 
 							const fromUserConfig = {
 								UserId: fromUser.dataValues.id,
@@ -127,8 +127,7 @@ let checkForSessions = () => {
 						const { SlackUserId, TeamId } = user;
 
 						let config = {
-							SlackUserId,
-							session
+							SlackUserId
 						}
 
 						models.Team.find({
@@ -139,9 +138,8 @@ let checkForSessions = () => {
 							let bot = bots[token];
 							if (bot) {
 								// alarm is up for session
-								const endSessionType  = `sessionTimerUp`;
-								config.endSessionType = endSessionType;
-								controller.trigger(`end_session_flow`, [bot, { SlackUserId, endSessionType }]);
+								config.endSessionType = constants.endSessionTypes.sessionTimerUp;
+								controller.trigger(`end_session_flow`, [bot, config ]);
 							}
 						});
 					})
