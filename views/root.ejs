@@ -65,12 +65,12 @@
 
 						<% if (locals.success == 'true') { %>
 
-							<div class="alert alert-success" style="text-shadow: none;">
+							<div class="alert alert-success" style="text-shadow: none !important;">
 								Awesome! We'll contact you at <%= locals.email %> as soon as we can
 							</div>
 
 						<% } else { %>
-							<div class="alert alert-warning" style="text-shadow: none;">
+							<div class="alert alert-warning" style="text-shadow: none !important;">
 									Something went wrong. Try again? 
 								</div>
 						<% } %>
