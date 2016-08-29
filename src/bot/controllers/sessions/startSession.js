@@ -150,7 +150,7 @@ export default function(controller) {
 
 									bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-										let text = `:weight_lifter: You’re now in a focused session on \`${content}\` until *${endTimeString}* :weight_lifter:`;
+										let text = `:palm_tree: You’re now in a focused session on \`${content}\` until *${endTimeString}* :palm_tree:`;
 										convo.say({
 											text,
 											attachments: startSessionOptionsAttachments

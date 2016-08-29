@@ -3,8 +3,12 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.startPingFlow = startPingFlow;
+exports.confirmTimeZoneExistsThenStartPingFlow = confirmTimeZoneExistsThenStartPingFlow;
+exports.askForPingTime = askForPingTime;
+exports.queuePing = queuePing;
 exports.sendPing = sendPing;
+
+var _index = require('../index');
 
 var _momentTimezone = require('moment-timezone');
 
@@ -24,11 +28,85 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * 		PING CONVERSATION FLOW FUNCTIONS
  */
 
-function startPingFlow(convo) {
+function confirmTimeZoneExistsThenStartPingFlow(convo) {
+	var text = arguments.length <= 1 || arguments[1] === undefined ? 'Ah! Since I help you make time for your priorities, I need to know your *timezone* before we continue' : arguments[1];
 	var _convo$pingObject = convo.pingObject;
 	var SlackUserId = _convo$pingObject.SlackUserId;
+	var UserId = _convo$pingObject.UserId;
 	var tz = _convo$pingObject.tz;
-	var pingSlackUserIds = _convo$pingObject.pingSlackUserIds;
+
+
+	if (tz) {
+		// user has tz config'd
+		startPingFlow(convo); // entry point
+		convo.next();
+	} else {
+		// user needs tz config'd!
+		convo.ask({
+			text: text,
+			attachments: _constants.timeZoneAttachments
+		}, function (response, convo) {
+			var text = response.text;
+
+			var timeZoneObject = false;
+			switch (text) {
+				case (text.match(_constants.utterances.eastern) || {}).input:
+					timeZoneObject = _constants.timeZones.eastern;
+					break;
+				case (text.match(_constants.utterances.central) || {}).input:
+					timeZoneObject = _constants.timeZones.central;
+					break;
+				case (text.match(_constants.utterances.mountain) || {}).input:
+					timeZoneObject = _constants.timeZones.mountain;
+					break;
+				case (text.match(_constants.utterances.pacific) || {}).input:
+					timeZoneObject = _constants.timeZones.pacific;
+					break;
+				case (text.match(_constants.utterances.other) || {}).input:
+					timeZoneObject = _constants.timeZones.other;
+					break;
+				default:
+					break;
+			}
+
+			if (!timeZoneObject) {
+				convo.say("I didn't get that :thinking_face:");
+				confirmTimeZoneExistsThenStartPingFlow(convo, 'Which timezone are you in?');
+				convo.next();
+			} else if (timeZoneObject == _constants.timeZones.other) {
+				convo.say('Sorry!');
+				convo.say("Right now I’m only able to work in these timezones. If you want to demo Toki, just pick one of these timezones for now. I’ll try to get your timezone included as soon as possible!");
+				confirmTimeZoneExistsThenStartPingFlow(convo, 'Which timezone do you want to go with for now?');
+				convo.next();
+			} else {
+				(function () {
+					// success!!
+
+					var _timeZoneObject = timeZoneObject;
+					var tz = _timeZoneObject.tz;
+
+					console.log(timeZoneObject);
+					_models2.default.User.update({
+						tz: tz
+					}, {
+						where: { id: UserId }
+					}).then(function (user) {
+						convo.say('Great! If this ever changes, you can always `update settings`');
+						convo.pingObject.tz = tz;
+						startPingFlow(convo); // entry point
+						convo.next();
+					});
+				})();
+			}
+		});
+	}
+}
+
+function startPingFlow(convo) {
+	var _convo$pingObject2 = convo.pingObject;
+	var SlackUserId = _convo$pingObject2.SlackUserId;
+	var tz = _convo$pingObject2.tz;
+	var pingSlackUserIds = _convo$pingObject2.pingSlackUserIds;
 
 
 	if (pingSlackUserIds) {
@@ -40,10 +118,10 @@ function startPingFlow(convo) {
 
 function askWhoToPing(convo) {
 	var text = arguments.length <= 1 || arguments[1] === undefined ? 'Who would you like to ping? You can type their username, like `@emily`' : arguments[1];
-	var _convo$pingObject2 = convo.pingObject;
-	var SlackUserId = _convo$pingObject2.SlackUserId;
-	var tz = _convo$pingObject2.tz;
-	var pingSlackUserIds = _convo$pingObject2.pingSlackUserIds;
+	var _convo$pingObject3 = convo.pingObject;
+	var SlackUserId = _convo$pingObject3.SlackUserId;
+	var tz = _convo$pingObject3.tz;
+	var pingSlackUserIds = _convo$pingObject3.pingSlackUserIds;
 
 
 	var attachments = [{
@@ -87,11 +165,11 @@ function askWhoToPing(convo) {
 }
 
 function handlePingSlackUserIds(convo) {
-	var _convo$pingObject3 = convo.pingObject;
-	var SlackUserId = _convo$pingObject3.SlackUserId;
-	var tz = _convo$pingObject3.tz;
-	var bot = _convo$pingObject3.bot;
-	var pingSlackUserIds = _convo$pingObject3.pingSlackUserIds;
+	var _convo$pingObject4 = convo.pingObject;
+	var SlackUserId = _convo$pingObject4.SlackUserId;
+	var tz = _convo$pingObject4.tz;
+	var bot = _convo$pingObject4.bot;
+	var pingSlackUserIds = _convo$pingObject4.pingSlackUserIds;
 
 
 	if (pingSlackUserIds) {
@@ -185,11 +263,11 @@ function handlePingSlackUserIds(convo) {
 }
 
 function askForQueuedPingMessages(convo) {
-	var _convo$pingObject4 = convo.pingObject;
-	var SlackUserId = _convo$pingObject4.SlackUserId;
-	var bot = _convo$pingObject4.bot;
-	var tz = _convo$pingObject4.tz;
-	var userInSession = _convo$pingObject4.userInSession;
+	var _convo$pingObject5 = convo.pingObject;
+	var SlackUserId = _convo$pingObject5.SlackUserId;
+	var bot = _convo$pingObject5.bot;
+	var tz = _convo$pingObject5.tz;
+	var userInSession = _convo$pingObject5.userInSession;
 
 
 	if (userInSession) {
@@ -306,13 +384,13 @@ function askForQueuedPingMessages(convo) {
 
 function askForPingTime(convo) {
 	var text = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
-	var _convo$pingObject5 = convo.pingObject;
-	var SlackUserId = _convo$pingObject5.SlackUserId;
-	var bot = _convo$pingObject5.bot;
-	var tz = _convo$pingObject5.tz;
-	var pingTimeObject = _convo$pingObject5.pingTimeObject;
-	var pingSlackUserId = _convo$pingObject5.pingSlackUserId;
-	var userInSession = _convo$pingObject5.userInSession;
+	var _convo$pingObject6 = convo.pingObject;
+	var SlackUserId = _convo$pingObject6.SlackUserId;
+	var bot = _convo$pingObject6.bot;
+	var tz = _convo$pingObject6.tz;
+	var pingTimeObject = _convo$pingObject6.pingTimeObject;
+	var pingSlackUserId = _convo$pingObject6.pingSlackUserId;
+	var userInSession = _convo$pingObject6.userInSession;
 
 	// if user is in a session and you have not set what time you want to ping yet
 
@@ -400,14 +478,15 @@ function askForPingTime(convo) {
 
 /**
  * 
- * This handles logic of sending ping depending on session info
+ * This handles logic of queueing ping depending on session info
+ * if no session, then this will not store ping in DB and will just immediately send over
  * 
  * @param  {bot} bot      requires bot of TeamId
  * @param  {UserId, SlackUserId} fromUserConfig
  * @param  {UserId, SlackUserId} toUserConfig
  * @param  {deliveryType, pingTimeObject, pingMessages } config   [description]
  */
-function sendPing(bot, fromUserConfig, toUserConfig, config) {
+function queuePing(bot, fromUserConfig, toUserConfig, config) {
 	var pingTimeObject = config.pingTimeObject;
 	var pingMessages = config.pingMessages;
 	var deliveryType = config.deliveryType;
@@ -517,6 +596,76 @@ function sendPing(bot, fromUserConfig, toUserConfig, config) {
 				});
 
 				convo.next();
+			});
+		}
+	});
+}
+
+/**
+ * 
+ * This handles logic the actual sending of ping messages
+ * 
+ * @param  {bot} bot      requires bot of TeamId
+ * @param  {UserId, SlackUserId, TeamId} fromUserConfig
+ * @param  {UserId, SlackUserId, TeamId} toUserConfig
+ * @param  {deliveryType, pingMessages } config   [description]
+ */
+function sendPing(fromUserConfig, toUserConfig, config) {
+
+	// ping messages are necessary to know what messages to actually send!
+	var deliveryType = config.deliveryType;
+	var pingMessages = config.pingMessages;
+
+
+	var SlackUserIds = fromUserConfig.SlackUserId + ',' + toUserConfig.SlackUserId;
+
+	_models2.default.Team.find({
+		where: { TeamId: fromUserConfig.TeamId }
+	}).then(function (team) {
+		var token = team.token;
+
+		var bot = _index.bots[token];
+		if (bot) {
+			bot.api.mpim.open({
+				users: SlackUserIds
+			}, function (err, response) {
+
+				if (!err) {
+					var _id3 = response.group.id;
+
+					bot.startConversation({ channel: _id3 }, function (err, convo) {
+						var initialMessage = 'Hey <@' + toUserConfig.SlackUserId + '>! <@' + fromUserConfig.SlackUserId + '> wanted to reach out';
+						switch (deliveryType) {
+							case "bomb":
+								initialMessage = 'Hey <@' + toUserConfig.SlackUserId + '>! <@' + fromUserConfig.SlackUserId + '> has an urgent message for you:';
+								break;
+							case "grenade":
+								initialMessage = 'Hey <@' + toUserConfig.SlackUserId + '>! <@' + fromUserConfig.SlackUserId + '> has an urgent message for you:';
+								break;
+							default:
+								break;
+						}
+
+						initialMessage = '*' + initialMessage + '*';
+						var attachments = [];
+
+						pingMessages.forEach(function (pingMessage) {
+							attachments.push({
+								text: pingMessage.content,
+								mrkdwn_in: ["text"],
+								attachment_type: 'default',
+								callback_id: "PING_MESSAGE",
+								fallback: pingMessage.content,
+								color: _constants.colorsHash.toki_purple.hex
+							});
+						});
+
+						convo.say({
+							text: initialMessage,
+							attachments: attachments
+						});
+					});
+				}
 			});
 		}
 	});

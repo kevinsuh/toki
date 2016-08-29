@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.tokiExplainAttachments = exports.timeZoneAttachments = exports.startSessionOptionsAttachments = exports.startSessionExamples = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
+exports.tokiExplainAttachments = exports.timeZoneAttachments = exports.letsFocusAttachments = exports.startSessionOptionsAttachments = exports.startSessionExamples = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
 
 var _utterances;
 
@@ -87,6 +87,11 @@ var utterances = exports.utterances = (_utterances = {
 }, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "notToday", new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i)), _defineProperty(_utterances, "notShare", new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _defineProperty(_utterances, "noMore", new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i)), _defineProperty(_utterances, "redo", new RegExp(/^re[re do]{2,5}\b/i)), _defineProperty(_utterances, "noDontAskAgain", new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "yesDontAskAgain", new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "changePriority", new RegExp(/^chang[ge]{1,4}\b|\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\b(priori[tiyes]{1,5}|tas[sk]{1,5})\b/i)), _defineProperty(_utterances, "goBack", new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)), _defineProperty(_utterances, "setTime", new RegExp(/\bset[o]{0,5}\b.*\btim[me]{1,5}\b/i)), _defineProperty(_utterances, "beginAdventure", new RegExp(/\bbegin\b.*\badventure\b/i)), _defineProperty(_utterances, "changeTimeAndTask", new RegExp(/\bchan[nge]{1,5}\b.{1,3}\btim[me]{1,3}\b.{1,7}\btas[sk]{1,3}\b/i)), _defineProperty(_utterances, "keepWorking", new RegExp(/\bkee[ep]{1,3}\b.{1,3}\bwor[king]{1,6}\b/i)), _defineProperty(_utterances, "sendSooner", new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bsoon[ner]{1,4}\b/i)), _defineProperty(_utterances, "containsSendAt", new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bat[t]{0,3}\b/i)), _utterances);
 
 var constants = exports.constants = {
+	endSessionTypes: {
+		endByPingToUserId: "END_BY_PING_TO_USER_ID",
+		sessionTimerUp: "SESSION_TIMER_UP",
+		endSessionEarly: "END_SESSION_EARLY"
+	},
 	PLAN_DECISION: {
 		complete: {
 			word: "TASK_COMPLETE",
@@ -279,6 +284,14 @@ var buttonValues = exports.buttonValues = {
 			name: "OTHER",
 			value: "Other"
 		}
+	},
+	focus: {
+		name: "FOCUS",
+		value: "focus"
+	},
+	sendNow: {
+		name: "SEND_NOW",
+		value: "send now"
 	}
 };
 
@@ -329,6 +342,18 @@ var startSessionOptionsAttachments = exports.startSessionOptionsAttachments = [{
 	}]
 }];
 
+var letsFocusAttachments = exports.letsFocusAttachments = [{
+	attachment_type: 'default',
+	callback_id: "LETS_FOCUS_AGAIN",
+	fallback: "Let's focus again!",
+	actions: [{
+		name: buttonValues.focus.name,
+		text: "Focus :thinking_face:",
+		value: buttonValues.focus.value,
+		type: "button"
+	}]
+}];
+
 var timeZoneAttachments = exports.timeZoneAttachments = [{
 	attachment_type: 'default',
 	callback_id: "ONBOARD",
@@ -364,19 +389,27 @@ var timeZoneAttachments = exports.timeZoneAttachments = [{
 
 var tokiExplainAttachments = exports.tokiExplainAttachments = [{
 	title: "Focus Sessions",
-	text: "Say `lets focus` to knock out a task and protect yourself from non-urgent messages while you work",
+	text: "Direct message me `focus` to knock out a task and protect yourself from non-urgent messages while you work",
 	mrkdwn_in: ["text"],
-	color: colorsHash.blue.hex,
+	color: colorsHash.toki_purple.hex,
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
 	fallback: "Focus Sessions"
 }, {
 	title: "Ping Members",
-	text: "Say `ping @user` whenever you would otherwise send a DM or mention. I'll handle the message based on whether the @user is focused or not, and let you send it sooner if it's urgent",
+	text: "Direct message me `ping @user` whenever you would otherwise send a DM or mention to @user. I'll handle the message based on whether @user is focused or not, and let you send it sooner if it's urgent",
 	mrkdwn_in: ["text"],
-	color: colorsHash.green.hex,
+	color: colorsHash.toki_purple.hex,
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
 	fallback: "Ping members"
+}, {
+	title: "Slash Commands to Focus or Ping",
+	text: "Enter focus sessions and ping teammates with the `/focus` and `/ping` single-line commands",
+	mrkdwn_in: ["text"],
+	color: colorsHash.toki_purple.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Slash Commands"
 }];
 //# sourceMappingURL=constants.js.map

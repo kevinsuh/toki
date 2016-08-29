@@ -4,7 +4,7 @@ import models from '../../../app/models';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants, startSessionOptionsAttachments } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString } from '../../lib/messageHelpers';
-import { startPingFlow, sendPing } from './pingFunctions';
+import { confirmTimeZoneExistsThenStartPingFlow, sendPing, queuePing, askForPingTime } from './pingFunctions';
 
 // STARTING A SESSION
 export default function(controller) {
@@ -91,12 +91,13 @@ export default function(controller) {
 
 				convo.pingObject = {
 					SlackUserId,
+					UserId,
 					bot,
 					tz,
 					pingSlackUserIds
 				}
 
-				startPingFlow(convo);
+				confirmTimeZoneExistsThenStartPingFlow(convo);
 
 				convo.on(`end`, (convo) => {
 					
@@ -105,13 +106,55 @@ export default function(controller) {
 					const fromUserConfig = { UserId, SlackUserId };
 					const toUserConfig   = { UserId: pingUserId, SlackUserId: pingSlackUserId };
 					const config   = { userInSession, deliveryType, pingTimeObject, pingMessages }
-					sendPing(bot, fromUserConfig, toUserConfig, config);
+					queuePing(bot, fromUserConfig, toUserConfig, config);
 
 				})
 
 			});
 
 		});
+
+	});
+
+	/**
+	 * 		BOMB THE PING MESSAGE
+	 */
+	controller.on(`bomb_ping_message`, (bot, config) => {
+
+		const { PingId } = config;
+
+		models.Ping.find({
+			where: { id: PingId },
+			include: [
+				{ model: models.User, as: `FromUser` },
+				{ model: models.User, as: `ToUser` },
+			]
+		})
+		.then((ping) => {
+
+			// this is a `bomb` to ToUser
+			const { dataValues: { FromUser, ToUser } } = ping;
+
+			const { tz } = FromUser.dataValues;
+
+			bot.startPrivateConversation({ user: FromUser.dataValues.SlackUserId }, (err,convo) => {
+
+				convo.say(`:point_left: Got it! I just kicked off a conversation between you and <@${ToUser.dataValues.SlackUserId}>`);
+
+				convo.on(`end`, (convo) => {
+
+					models.Ping.update({
+						live: true,
+						deliveryType: "bomb"
+					}, {
+						where: { id: PingId }
+					});
+
+				});
+
+			});
+
+		})
 
 	});
 

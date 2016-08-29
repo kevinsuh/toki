@@ -6,6 +6,38 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
+	controller.hears(['^{'], 'direct_message', _hearsMiddleware.isJsonObject, function (bot, message) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		var SlackUserId = message.user;
+		var text = message.text;
+
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(function () {
+
+			try {
+				var jsonObject = JSON.parse(text);
+				var sendBomb = jsonObject.sendBomb;
+				var PingId = jsonObject.PingId;
+
+				if (sendBomb) {
+					var config = { PingId: PingId };
+					controller.trigger('bomb_ping_message', [bot, config]);
+				}
+			} catch (error) {
+				// this should never happen!
+				bot.reply(message, "Hmm, something went wrong");
+				return false;
+			}
+		}, 500);
+	});
+
 	controller.hears([_constants.constants.THANK_YOU.reg_exp], 'direct_message', function (bot, message) {
 
 		var botToken = bot.config.token;
@@ -94,6 +126,8 @@ var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
+
+var _hearsMiddleware = require('../../middleware/hearsMiddleware');
 
 var _constants = require('../../lib/constants');
 

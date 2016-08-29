@@ -2,7 +2,8 @@ import { bots, controller } from '../bot/controllers';
 import models from './models';
 import moment from 'moment-timezone';
 import _ from 'lodash';
-import { colorsHash } from '../bot/lib/constants';
+import { colorsHash, constants } from '../bot/lib/constants';
+import { sendPing } from '../bot/controllers/pings/pingFunctions';
 
 // the cron file!
 export default function() {
@@ -33,7 +34,7 @@ let checkForPings = () => {
 			const { FromUserId, ToUserId, deliveryType, pingTime } = ping;
 
 			// if there's a pingTime, respect it and dont send yet!
-			if (pingTime) {
+			if (pingTime && deliveryType != `bomb`) {
 				let pingTimeObject = moment(pingTime);
 				if (pingTimeObject > now) {
 					return;
@@ -63,61 +64,26 @@ let checkForPings = () => {
 
 						ping.update({
 							live: false
-						});
-
-						let SlackUserIds = `${fromUser.dataValues.SlackUserId},${toUser.dataValues.SlackUserId}`;
-
-						models.Team.find({
-							where: { TeamId: fromUserTeamId }
 						})
-						.then((team) => {
-							const { token } = team;
-							let bot = bots[token];
-							if (bot) {
+						.then(() => {
 
-								bot.api.mpim.open({
-									users: SlackUserIds
-								}, (err, response) => {
-									if (!err) {
-
-										const { group: { id } } = response;
-										bot.startConversation({ channel: id }, (err, convo) => {
-											let initialMessage = `Hey <@${toUser.dataValues.SlackUserId}>! <@${fromUser.dataValues.SlackUserId}> wanted to reach out`;
-											switch (deliveryType) {
-												case "bomb":
-													initialMessage = `Hey <@${toUser.dataValues.SlackUserId}>! <@${fromUser.dataValues.SlackUserId}> has an urgent message for you:`;
-													break;
-												case "grenade":
-													initialMessage = `Hey <@${toUser.dataValues.SlackUserId}>! <@${fromUser.dataValues.SlackUserId}> has an urgent message for you:`;
-													break;
-												default: break;
-											}
-
-											initialMessage = `*${initialMessage}*`;
-											let attachments = [];
-
-											pingMessages.forEach((pingMessage) => {
-												attachments.push({
-													text: pingMessage.content,
-													mrkdwn_in: ["text"],
-													attachment_type: 'default',
-													callback_id: "PING_MESSAGE",
-													fallback: pingMessage.content,
-													color: colorsHash.toki_purple.hex
-												});
-											});
-
-											convo.say({
-												text: initialMessage,
-												attachments
-											});
-
-										})
-									}
-								});
-
+							const fromUserConfig = {
+								UserId: fromUser.dataValues.id,
+								SlackUserId: fromUser.dataValues.SlackUserId,
+								TeamId: fromUser.dataValues.TeamId
+							};
+							const toUserConfig = {
+								UserId: toUser.dataValues.id,
+								SlackUserId: toUser.dataValues.SlackUserId,
+								TeamId: toUser.dataValues.TeamId
 							}
-						});
+							const config = {
+								deliveryType,
+								pingMessages
+							};
+
+							sendPing(fromUserConfig, toUserConfig, config);
+						})
 
 					})
 				});
@@ -147,8 +113,7 @@ let checkForSessions = () => {
 			const { UserId, open, live } = session;
 
 			session.update({
-				live: false,
-				open: false
+				live: false
 			})
 			.then((session) => {
 
@@ -162,8 +127,7 @@ let checkForSessions = () => {
 						const { SlackUserId, TeamId } = user;
 
 						let config = {
-							SlackUserId,
-							session
+							SlackUserId
 						}
 
 						models.Team.find({
@@ -174,9 +138,8 @@ let checkForSessions = () => {
 							let bot = bots[token];
 							if (bot) {
 								// alarm is up for session
-								const sessionTimerUp  = true;
-								config.sessionTimerUp = sessionTimerUp
-								controller.trigger(`done_session_flow`, [bot, { SlackUserId, sessionTimerUp }]);
+								config.endSessionType = constants.endSessionTypes.sessionTimerUp;
+								controller.trigger(`end_session_flow`, [bot, config ]);
 							}
 						});
 					})

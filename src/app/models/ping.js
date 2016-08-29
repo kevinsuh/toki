@@ -13,8 +13,8 @@ module.exports = function(sequelize, DataTypes) {
   }, {
     classMethods: {
       associate: function(models) {
-        Ping.belongsTo(models.User, { foreignKey: 'FromUserId' });
-        Ping.belongsTo(models.User, { foreignKey: 'ToUserId' });
+        Ping.belongsTo(models.User, { as: `FromUser`, foreignKey: 'FromUserId' });
+        Ping.belongsTo(models.User, { as: `ToUser`, foreignKey: 'ToUserId' });
         Ping.hasMany(models.PingMessage);
       }
     }

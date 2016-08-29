@@ -63,9 +63,9 @@ exports.default = function (controller) {
 
 				convo.say('Hey! <@' + fromUserConfig.SlackUserId + '> wanted me to explain how I can also help you get your most meaningful things done each day');
 				convo.say('Think of me as an office manager for each of your teammate\'s attention. *I make sure you only get interrupted with messages that are actually urgent*, so that you can maintain focus on your priorities');
-				convo.say('On the flip side, *I also make it easy for you to ping teammates when they\'re actually ready to switch contexts.* This lets you get requests out of your head when you think of them, while making sure it doesn\'t unnecessarily interrupt anyone\'s focus');
+				convo.say('On the flip side, *I also make it easy for you to ping teammates when they\'re actually ready to switch contexts.* This lets you get requests out of your head when you think of them, while making sure it doesn\'t unnecessarily interrupt anyone\'s flow');
 				convo.say({
-					text: 'Here\'s how I do all this:',
+					text: 'Here\'s how I do this:',
 					attachments: _constants.tokiExplainAttachments
 				});
 				convo.say('I\'m here whenever you\'re ready to go! Just let me know when you want to `ping` someone, or enter a `focus` session yourself :raised_hands:');

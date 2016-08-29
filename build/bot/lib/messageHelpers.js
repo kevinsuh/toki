@@ -371,6 +371,7 @@ function commaSeparateOutStringArray(a) {
 	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 	var codeBlock = config.codeBlock;
 	var slackNames = config.slackNames;
+	var SlackUserIds = config.SlackUserIds;
 
 
 	a = a.map(function (a) {
@@ -378,6 +379,8 @@ function commaSeparateOutStringArray(a) {
 			a = '`' + a + '`';
 		} else if (slackNames) {
 			a = '@' + a;
+		} else if (SlackUserIds) {
+			a = '<@' + a + '>';
 		}
 		return a;
 	});
