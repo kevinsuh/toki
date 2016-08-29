@@ -46,8 +46,14 @@ function startEndSessionFlow(convo) {
 	var sessionMinutes = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(startTimeObject)).asMinutes());
 	var sessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
 
-	// this handles only the 
+	console.log('\n\n\n PINGS:');
+	console.log(pingObjects);
+
 	var message = 'Great work on `' + content + '`! You were focused for *' + sessionTimeString + '*';
+
+	/**
+  * 	THIS HANDLES WHEN USER IS TOUSER PING
+  */
 	if (pingObjects.toUser.length == 1) {
 		message = message + '. While you were heads down, <@' + pingObjects.toUser[0].session.dataValues.User.dataValues.SlackUserId + '> asked me to send you a message after your session :relieved:';
 	} else {
@@ -71,6 +77,10 @@ function startEndSessionFlow(convo) {
 	} else if (pingObjects.toUser.length > 1) {
 		convo.say(':point_left: I just kicked off separate conversations between you and each of them now');
 	}
+
+	/**
+  * 	THIS HANDLES WHEN USER IS FROMUSER PING
+  */
 
 	convo.say({
 		text: 'When you’re ready, let me know when you’d like to focus again',

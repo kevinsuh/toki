@@ -105,10 +105,11 @@ exports.default = function (controller) {
 							var pingerSessionPromises = [];
 							pings.forEach(function (ping) {
 								var FromUserId = ping.FromUserId;
+								var ToUserId = ping.ToUserId;
 
 								pingerSessionPromises.push(_models2.default.Session.find({
 									where: {
-										UserId: FromUserId,
+										UserId: [FromUserId, ToUserId],
 										live: true,
 										open: true
 									},
@@ -121,19 +122,33 @@ exports.default = function (controller) {
 								// create the pingObject by matching up `ping` with live `session`
 								// if no live session, `session` will be false
 								pings.forEach(function (ping) {
+
 									var pingObject = {};
 									var session = false;
-									pingerSessions.forEach(function (pingerSession) {
-										if (pingerSession && pingerSession.dataValues.UserId == ping.dataValues.FromUserId) {
-											session = pingerSession;
-											return;
-										}
-									});
 									pingObject.ping = ping;
-									pingObject.session = session;
+
 									if (ping.dataValues.FromUserId == UserId) {
+										// pings where user who just ended session has queued up
+										pingerSessions.forEach(function (pingerSession) {
+											if (pingerSession && ping.dataValues.ToUserId == pingerSession.dataValues.UserId) {
+												// recipient of ping is in session
+												session = pingerSession;
+												return;
+											}
+										});
+
+										pingObject.session = session;
 										pingObjects.fromUser.push(pingObject);
 									} else if (ping.dataValues.ToUserId == UserId) {
+										// pings where it is queued up for user who just ended session
+										pingerSessions.forEach(function (pingerSession) {
+											if (pingerSession && ping.dataValues.FromUserId == pingerSession.dataValues.UserId) {
+												session = pingerSession;
+												return;
+											}
+										});
+
+										pingObject.session = session;
 										pingObjects.toUser.push(pingObject);
 									}
 								});
@@ -142,7 +157,6 @@ exports.default = function (controller) {
 								pingObjects.toUser = pingObjects.toUser.filter(function (pingObject) {
 									return !pingObject.session || !pingObject.session.dataValues.superFocus;
 								});
-
 								pingObjects.fromUser = pingObjects.fromUser.filter(function (pingObject) {
 									return !pingObject.session || !pingObject.session.dataValues.superFocus;
 								});
@@ -164,7 +178,11 @@ exports.default = function (controller) {
 									// start the flow
 									(0, _endSessionFunctions.startEndSessionFlow)(convo);
 
-									convo.on('end', function (convo) {});
+									convo.on('end', function (convo) {
+
+										// all the ping objects here are relevant!
+										var pingObjects = convo.sessionEnd.pingObjects;
+									});
 								});
 							});
 						});

@@ -115,10 +115,10 @@ export default function(controller) {
 							// get all the sessions associated with pings that come FromUser
 							let pingerSessionPromises = [];
 							pings.forEach((ping) => {
-								const { FromUserId } = ping;
+								const { FromUserId, ToUserId } = ping;
 								pingerSessionPromises.push(models.Session.find({
 									where: {
-										UserId: FromUserId,
+										UserId: [ FromUserId, ToUserId ],
 										live: true,
 										open: true
 									},
@@ -132,26 +132,42 @@ export default function(controller) {
 								// create the pingObject by matching up `ping` with live `session`
 								// if no live session, `session` will be false
 								pings.forEach((ping) => {
-									let pingObject = {};
-									let session    = false;
-									pingerSessions.forEach((pingerSession) => {
-										if (pingerSession && pingerSession.dataValues.UserId == ping.dataValues.FromUserId) {
-											session = pingerSession;
-											return;
-										}
-									});
-									pingObject.ping    = ping;
-									pingObject.session = session;
+
+									let pingObject  = {};
+									let session     = false;
+									pingObject.ping = ping;
+
 									if (ping.dataValues.FromUserId == UserId) {
+										// pings where user who just ended session has queued up
+										pingerSessions.forEach((pingerSession) => {
+											if (pingerSession && ping.dataValues.ToUserId == pingerSession.dataValues.UserId) {
+												// recipient of ping is in session
+												session = pingerSession;
+												return;
+											}
+										});
+
+										pingObject.session = session;
 										pingObjects.fromUser.push(pingObject);
+
 									} else if (ping.dataValues.ToUserId == UserId) {
+										// pings where it is queued up for user who just ended session
+										pingerSessions.forEach((pingerSession) => {
+											if (pingerSession && ping.dataValues.FromUserId == pingerSession.dataValues.UserId) {
+												session = pingerSession;
+												return;
+											}
+										});
+
+										pingObject.session = session;
 										pingObjects.toUser.push(pingObject);
+
 									}
+
 								});
 
 								// attach only the relevant pingObjects (ones where FromUserId is not in live session or `superFocus` session)
 								pingObjects.toUser = pingObjects.toUser.filter(pingObject => !pingObject.session || !pingObject.session.dataValues.superFocus );
-
 								pingObjects.fromUser = pingObjects.fromUser.filter(pingObject => !pingObject.session || !pingObject.session.dataValues.superFocus );
 
 								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
@@ -172,6 +188,11 @@ export default function(controller) {
 									startEndSessionFlow(convo);
 
 									convo.on('end', (convo) => {
+
+										// all the ping objects here are relevant!
+										const { pingObjects } = convo.sessionEnd;
+
+
 
 									});
 								
