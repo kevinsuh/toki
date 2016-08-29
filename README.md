@@ -2,7 +2,7 @@
 
 **Toki is a slackbot that helps you accomplish the things that you intend to each day.** Its goal is to help manage your time and attention throughout the day, so you can do the things that are most important to you.
 
-We have personally noticed a growing problem: **_our attention is being arbitraged by internet companies._** As technology grows, our attention doesn't scale accordingly. This leads to an unceasing competition for a limited resource that is most important to each of us: our time and attention. We want to build technology that's on our side of this battle, that cares about our values and intentions holistically.
+We have personally noticed a growing problem: As technology grows, our attention doesn't scale accordingly. This leads to an unceasing ask for a limited resource that is most important to each of us: our daily attention. We want to build technology that's on our side of this battle.
 
 Toki is written in Javascript and uses the excellent [botkit](https://github.com/howdyai/botkit) and [wit](https://wit.ai) libraries.
 

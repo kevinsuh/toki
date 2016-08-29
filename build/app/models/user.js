@@ -11,28 +11,21 @@ module.exports = function (sequelize, DataTypes) {
     admin: { type: DataTypes.BOOLEAN,
       defaultValue: false
     },
-    nickName: DataTypes.STRING,
-    defaultSnoozeTime: DataTypes.INTEGER,
-    defaultBreakTime: DataTypes.INTEGER,
-    includeOthersDecision: { type: DataTypes.STRING,
-      defaultValue: "default"
+    SlackUserId: {
+      type: DataTypes.STRING
     },
-    pingTime: { type: DataTypes.DATE
-    },
-    wantsPing: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true
-    }
+    SlackName: DataTypes.STRING,
+    tz: DataTypes.STRING,
+    TeamId: DataTypes.STRING,
+    scopes: DataTypes.STRING,
+    accessToken: DataTypes.STRING
   }, {
 
     classMethods: {
       associate: function associate(models) {
-        // associations can be defined here
-        User.hasMany(models.DailyTask);
-        User.hasOne(models.SlackUser, { foreignKey: 'UserId' });
-        User.hasMany(models.Reminder);
-        User.hasMany(models.WorkSession);
-        User.hasMany(models.SessionGroup);
+        User.hasMany(models.Session);
+        User.hasMany(models.Ping, { foreignKey: 'FromUserId', as: 'FromUser' });
+        User.hasMany(models.Ping, { foreignKey: 'ToUserId', as: 'ToUser' });
       }
     },
 

@@ -1,314 +1,182 @@
 @import "modules/all";
-@import "modules/constants";
 
-// relevant variables
-$circle-button-diameter: 100px;
-$hover-time: 0.3s;
-
-#logo {
-	height: 75px;
-}
-
-.splash {
-
-	$subtitle-font-size: 25px;
-
-	.color-gradient {
-		background: 
-			radial-gradient(circle at 100% 50%, transparent 20%, rgba(255,255,255,.3) 21%, rgba(255,255,255,.3) 34%, transparent 35%, transparent),
-			radial-gradient(circle at 0% 50%, transparent 20%, rgba(255,255,255,.3) 21%, rgba(255,255,255,.3) 34%, transparent 35%, transparent) 0 -99px;
-		background-color: $electric-violet;
-		background-size: 150px 199px;
-	}
-
-	/**
-	 * 		~~ LANDING PAGE OF CSS ~~
-	 */
-	.bottom-landing, .main-landing {
-		display: block;
-		padding: 60px 0 30px 0;
-
-		.main-title {
-			color: white;
-			font-size: 50px;
-			font-weight: 600;
-
-			padding-bottom: 25px;
-			border-bottom: 2.5pt solid $orange;
-		}
-		.main-body {
-			padding: 0 15px;
-			.subtitle {
-				font-size: $subtitle-font-size;
-				margin: 25px 0;
-				line-height: 30px;
-				color: white;
-			}
-			.gif {
-				margin: 10px auto;
-			}
-		}
-
-		border-bottom: 1px solid #e5e5e5;
-		
-		vertical-align: middle;
-		text-align: center;
-		
-		form.invite {
-			$form-height: 40px;
-			padding: 0 10%;
-			.input-container {
-				text-align: left;
-				.email-input {
-					height: $form-height;
-					padding-left: 6px;
-					width: 100%;
-				}
-				.submit-btn {
-					display: inline-block;
-					background-color: white;
-					border: 1pt solid lightgrey;
-					text-align: center;
-					height: $form-height;
-					line-height: $form-height;
-					padding: 0 10px;
-					vertical-align: middle;
-					border-radius: 6px;
-
-					background-image: url('../images/slack_logo.png');
-					background-repeat: no-repeat;
-					background-position: center right 10px;
-					background-size: 22px;
-					padding-right: 41px;
-					padding-left: 13px;
-
-					font-weight: 600;
-					width: 100%;
-				}
-			}
-			.description {
-				font-weight: inherit;
-				color: white;
-				font-size: 18px;
-				text-align: left;
-				margin: 25px 0 10px 0;
-				.link-emphasize {
-					color: white;
-					font-style: italic;
-				}
-			}
-			.beta {
-				color: white;
-				font-style: italic;
-				padding-top: 5px;
-				font-size: 15px;
-			}
-		}
-
-	}
-
-	.bottom-landing {
-		color: white;
-		.title {
-			margin-bottom: 20px;
-			font-size: 45px;
-		}
-		.subtitle {
-			font-size: $subtitle-font-size;
-		}
-		.video-container {
-
-			margin-top: 35px;
-			margin-bottom: 35px;
-
-			.subtitle {
-				font-size: 22px;
-			}
-		}
-		.signup-steps {
-			text-align: center;
-			padding-left: 40px;
-			li {
-				margin: 10px 0;
-				font-size: 22px;
-			}
-		}
-	}
-
-	.header-container {
-		.title {
-			margin: 0;
-			padding: 0 0 15px 20px;
-		}
-	}
-
-	/**
-	 * 		~~ MAIN BODY OF CSS ~~
-	 */
-	.body-container {
-
-		padding-bottom: 50px;
-
-		.body-title {
-			text-align: center;
-			font-size: $subtitle-font-size;
-			margin: 50px 0;
-		}
-
-		.benefit-box {
-
-			margin: 0 auto;
-			padding: 20px;
-			padding-right: $circle-button-diameter + 50;
-			margin-bottom: 25px;
-			border: 4pt solid $blue;
-			height: 250px;
-			cursor: pointer;
-
-			-o-transition: $hover-time;
-			-ms-transition: $hover-time;
-			-moz-transition: $hover-time;
-			-webkit-transition: $hover-time;
-			transition: $hover-time;
-
-			&:hover {
-				border: 4pt solid $orange;
-				.circle {
-					border: 1.5pt solid blue;
-				}
-			}
-			.title {
-				font-weight: 700;
-				font-size: 22px;
-			}
-			.description {
-				font-size: 18px;
-			}
-			.benefit-circle {
-				-o-transition: $hover-time;
-				-ms-transition: $hover-time;
-				-moz-transition: $hover-time;
-				-webkit-transition: $hover-time;
-				transition: $hover-time;
-			}
-
-			@media (max-width: 400px) {
-				padding: 10px;
-				.circle {
-					display: none;
-				}
-			}
-		}
-
-	}
-}
-
-/**
- * 		~~ HOVER OVER DEMO ~~ 
+/*
+ * Globals
  */
-#demo-display {
-	display: none;
-	position: fixed;
+
+/* Links */
+a,
+a:focus,
+a:hover {
+  color: #fff;
+}
+
+/* Custom default button */
+.btn-default,
+.btn-default:hover,
+.btn-default:focus {
+  color: #333;
+  text-shadow: none; /* Prevent inheritance from `body` */
+  background-color: #fff;
+  border: 1px solid #fff;
+}
+
+/* Custom Text Input */
+.btn-secondary {
+  color: white;
+  background-color: coral;
+}
+
+.input-group {
 	width: 100%;
-	height: 100%;
-	background-color: white;
-	z-index: 999;
-	top: 0;
-	left: 0;
-
-	.body-wrapper {
-		position: relative;
-		overflow: hidden;
-		background-color: white;
-	}
-
-	section {
-		z-index: -1;
+	input {
 		width: 100%;
-		position: absolute;
-		height: auto;
-		left: 50%;
-		transform: translateX(-50%);
-		max-height: 600px;
-		overflow: hidden;
-		bottom: 0;
-
-		.gif {
-			margin: 0 auto;
-		}
-
 	}
-
-	@media (max-width: 700px) {
-		section {
-			width: 100%;
-			bottom: 20%;
-		}
-	}
-
-	.logo-container {
-		padding-top: 20px;
-		padding-left: 10px;
-	}
-
-	.circle {
-		cursor: pointer;
-		border: 1.5pt solid black;
-	}
-
-	@media (max-width: 400px) {
-		.circle {
-			display: none;
-		}
-	}
-
-	// body of the demo
-	.demo-body {
-
-		padding: 30px;
-		padding-bottom: 0;
-		margin-top: 25px;
-
-		$title-size: 3.5vw;
-
-		.glyphicon {
-			font-size: $title-size;
-			&.button {
-				cursor: pointer;
-			}
-		}
-		.title {
-			font-size: $title-size;
-			text-align: center;
-			margin: 0;
-		}
-		.counter {
-			text-align: center;
-		}
-		.main {
-			margin-top: 40px;
-		}
-
+	.input-group-btn {
+		width: 30% !important;
 	}
 }
 
 
-/**
- * 		~~ UTILITY CLASSES FOR SPLASH ~~
+/*
+ * Base structure
  */
 
-.circle {
-	width: $circle-button-diameter;
-	height: $circle-button-diameter;
-	border-radius: 50%;
-	border: 1.5pt solid $grey;
-	background: $orange;
-	text-align: center;
-	line-height: $circle-button-diameter;
-	position: absolute;
-	top: 20px;
-	right: 45px;
-	font-size: 17px;
-	font-weight: 800;
-
+html,
+body {
+  height: 100%;
+  background-color: rebeccapurple !important;
 }
+body {
+  color: #fff !important;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0,0,0,.5);
+  font-family: 'Lato', sans-serif;
+}
+
+/* Extra markup and styles for table-esque vertical and horizontal centering */
+.site-wrapper {
+  display: table;
+  width: 100%;
+  height: 100%; /* For at least Firefox */
+  min-height: 100%;
+  -webkit-box-shadow: inset 0 0 100px rgba(0,0,0,.5);
+          box-shadow: inset 0 0 100px rgba(0,0,0,.5);
+}
+.site-wrapper-inner {
+  display: table-cell;
+  vertical-align: top;
+}
+.cover-container {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+/* Padding for spacing */
+.inner {
+  padding: 30px;
+}
+
+
+/*
+ * Header
+ */
+.masthead-brand {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.masthead-nav > li {
+  display: inline-block !important;
+}
+
+.masthead-nav > li > a {
+  padding-right: 0;
+  padding-left: 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff; /* IE8 proofing */
+  color: rgba(255,255,255,.75);
+  border-bottom: 2px solid transparent;
+}
+.masthead-nav > li > a:hover,
+.masthead-nav > li > a:focus {
+  background-color: transparent;
+  border-bottom-color: #a9a9a9;
+  border-bottom-color: rgba(255,255,255,.25);
+}
+.masthead-nav > .active > a,
+.masthead-nav > .active > a:hover,
+.masthead-nav > .active > a:focus {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
+@media (min-width: 768px) {
+  .masthead-brand {
+    float: left;
+  }
+  .masthead-nav {
+    float: right;
+  }
+}
+
+
+/*
+ * Cover
+ */
+
+.cover {
+  padding: 0 20px;
+}
+.cover .btn-lg {
+  padding: 10px 20px;
+  font-weight: bold;
+}
+
+
+/*
+ * Footer
+ */
+
+.mastfoot {
+  color: #999; /* IE8 proofing */
+  color: rgba(255,255,255,.5);
+}
+
+
+/*
+ * Affix and center
+ */
+
+
+@media (min-width: 768px) {
+  /* Pull out the header and footer */
+  .masthead {
+    position: fixed;
+    top: 0;
+  }
+  .mastfoot {
+    position: fixed;
+    bottom: 0;
+  }
+  /* Start the vertical centering */
+  .site-wrapper-inner {
+    vertical-align: middle;
+  }
+  /* Handle the widths */
+  .masthead,
+  .mastfoot,
+  .cover-container {
+    width: 100%; /* Must be percentage or pixels for horizontal alignment */
+  }
+}
+
+@media (min-width: 992px) {
+  .masthead,
+  .mastfoot,
+  .cover-container {
+    width: 700px;
+  }
+}
+

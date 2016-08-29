@@ -2,398 +2,130 @@
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
  */
 
-import { constants, buttonValues, colorsHash, taskListMessageNoButtonsAttachment, quotes, approvalWords, TOKI_DEFAULT_SNOOZE_TIME, TOKI_DEFAULT_BREAK_TIME } from './constants';
-import { utterances } from './botResponses';
-
+import { constants, buttonValues, colorsHash, quotes, approvalWords, startSessionExamples, utterances } from './constants';
 import nlp from 'nlp_compromise';
 import moment from 'moment-timezone';
+import _ from 'lodash';
 
-export function getRandomApprovalWord(config = {}) {
-	// gives you awesome, nice, sounds good, great, etc.
-	
-	let approvalWord = approvalWords[Math.floor(Math.random()*approvalWords.length)];
+export function getRandomExample(type, config = {}) {
+
+	let example = false;
+	switch (type) {
+		case "session":
+			example = startSessionExamples[Math.floor(Math.random()*startSessionExamples.length)]
+			break;
+		case "approvalWord":
+			example = approvalWords[Math.floor(Math.random()*approvalWords.length)];
+			break;
+		default: break;
+	}
 
 	if (config.upperCase) {
-		approvalWord = capitalizeFirstLetter(approvalWord);
+		example = capitalizeFirstLetter(example);
 	}
-	return approvalWord;
-}
 
-export function getRandomQuote(config = {}) {
-
-	let quote = quotes[Math.floor(Math.random()*quotes.length)];
-	return quote;
+	return example;
 
 }
 
 function capitalizeFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-export function getNewPlanAttachments(prioritizedTasks) {
-
-	let doneTasksButton = "Let's move on";
-	if (prioritizedTasks.length  == 1) {
-		doneTasksButton = "I only have one";
-	} else if (prioritizedTasks.length == 2) {
-		doneTasksButton = "I only have two";
-	}
-	let attachments = [
-		{
-			attachment_type: 'default',
-			callback_id: "TASK_LIST_MESSAGE",
-			fallback: "Let's get your priorities",
-			color: colorsHash.grey.hex,
-			actions: [
-				{
-						name: buttonValues.doneAddingTasks.name,
-						text: doneTasksButton,
-						value: buttonValues.doneAddingTasks.value,
-						type: "button"
-				},
-				{
-						name: buttonValues.redoTasks.name,
-						text: "Start Over",
-						value: buttonValues.redoTasks.value,
-						type: "button"
-				}
-			]
-		}
-	];
-
-	if (prioritizedTasks.length == 0) {
-		attachments = [
-			{
-				attachment_type: 'default',
-				callback_id: "TASK_LIST_MESSAGE",
-				fallback: "Let's get your priorities"
-			}
-		]
-	}
-	return attachments;
+		return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 /**
- * takes array of tasks and converts to array of task STRINGS
- * these "response objects" are botkit MESSAGE response
- * @param  {[object]} tasks task OBJECTS
- * @return {[string]}       task STRINGS
+ * take in time response object and convert it to remindTimeStamp moment obj
+ * @param  {obj} response response object
+ * @return {moment-tz object}
  */
-export function convertResponseObjectsToTaskArray(tasks) {
+export function witTimeResponseToTimeZoneObject(response, tz) {
 
-	var taskString = '';
-	tasks.forEach((task, index) => {
-		// ignore the last one (`done` command)
-		// also ignore if it is an `add a task` NL command
-		if (constants.FINISH_WORD.reg_exp.test(task.text)) {
-			return;
-		}
+	console.log("\n\n response obj in witTimeResponseToTimeZoneObject \n\n")
 
-		taskString += task.text;
-		taskString += '\n';
+	var { text, intentObject: { entities } } = response;
+	const { duration, datetime } = entities;
 
-	});
+	var now = moment();
+	var remindTimeStamp;
 
-	const newLine = /[\n]+/;
-	var taskStringArray = taskString.split(newLine);
-	taskStringArray.pop(); // last one will be \n with this reg ex split
-
-	// this is the final task array we are returning
-	var taskArray = [];
-	taskStringArray.forEach((taskString) => {
-		taskString = taskString.trim();
-		taskArray.push({
-			text: taskString
-		})
-	});
-
-	return taskArray;
-}
-
-// converts a response to new task array
-// to handle the new lines
-export function convertResponseObjectToNewTaskArray(response) {
-
-	var text = response.text;
-
-	const newLine = /[\n]+/;
-	var taskStringArray = text.split(newLine);
-
-	var taskArray = [];
-	taskStringArray.forEach((taskString) => {
-		taskString = taskString.trim();
-		taskArray.push({
-			text: taskString,
-			newTask: true
-		})
-	});
-
-	return taskArray;
-
-}
-
-/**
- * takes in user input for tasks done `4, 1, 3` and converts it to an array of tasks done. makes sure the task numbers are valid
- * @param  {string} taskCompletedString `4, 1, 3`
- * @param  {[taskObject]} taskArray           the tasks passed in
- * @return {[integer]}                     [4, 1, 3] * if valid *
- */
-export function convertTaskNumberStringToArray(taskNumbersString, taskArray) {
-
-	const splitter            = RegExp(/(,|\ba[and]{1,}\b|\bthen\b)/);
-	var taskNumbersSplitArray = taskNumbersString.split(splitter);
-
-	// let's get task array of only remaining tasks
-	var remainingTasks = getRemainingTasksFromTaskArray(taskArray);
-
-	// if we capture 0 valid tasks from string, then we start over
-	var numberRegEx          = new RegExp(/[\d]+/);
-	var validTaskNumberArray = [];
-	
-	taskNumbersSplitArray.forEach((taskString) => {
-		console.log(`task string: ${taskString}`);
-		var taskNumber = taskString.match(numberRegEx);
-
-		// if it's a valid number and within the remainingTasks length
-		if (taskNumber) {
-			taskNumber = parseInt(taskNumber[0]);
-			validTaskNumberArray.push(taskNumber);
-		}
-
-	});
-
-	if (validTaskNumberArray.length == 0) {
-		return false;
+	if ((!datetime && !duration) || !tz) {
+		remindTimeStamp = false; // not valid
 	} else {
-		return validTaskNumberArray;
-	}
 
-}
-
-function getRemainingTasksFromTaskArray(taskArray, options = {}) {
-	
-	var remainingTasks = [];
-	var { newTasks } = options;
-
-	taskArray.forEach((task) => {
-		if (!task.done) {
-			remainingTasks.push(task);
-		}
-	});
-
-	if (newTasks) {
-		newTasks.forEach((newTask) => {
-			remainingTasks.push(newTask);
-		})
-	}
-
-	return remainingTasks;
-
-}
-
-function getCompletedTasksFromTaskArray(taskArray, options = {}) {
-
-	var completedTasks = [];
-
-	taskArray.forEach((task) => {
-		// only live tasks when dealing with existing tasks! (so deleted tasks get ignored)
-		if (task.done) {
-			completedTasks.push(task);
-		}
-	});
-
-	return completedTasks;
-}
-
-function cleanTaskArray(taskArray) {
-	var cleanTaskArray = [];
-	taskArray.forEach((task) => {
-
-		if (task.dataValues) {
-			task = task.dataValues;
-		}
-
-		if (!task.type) {
-			// this is a newly created task
-			cleanTaskArray.push(task);
-		} else {
-			// existing task
-			// right now, do not show deleted and archived tasks
-			if (task.type != "deleted" && task.type != "archived") {
-				cleanTaskArray.push(task);
+		if (duration) {
+			var durationSeconds = 0;
+			for (var i = 0; i < duration.length; i++) {
+				durationSeconds += duration[i].normalized.value;
 			}
+			var durationMinutes = Math.floor(durationSeconds / 60);
+			remindTimeStamp = now.tz(tz).add(durationSeconds, 'seconds');
 		}
-	});
-	return cleanTaskArray;
-}
 
-// this should be called after you `convertToSingleTaskObjectArray`
-export function convertArrayToTaskListMessage(taskArray, options = {}) {
-	var taskListMessage = '';
-	var count = 1;
-	var totalMinutes = 0;
-	options.totalMinutesSpent = 0;
+		if (datetime) {
 
-	options.totalMinutes = totalMinutes;
-	options.count        = count;
+			var dateTime = datetime[0]; // 2016-06-24T16:24:00.000-04:00
 
-	const { reviewVersion, calculateMinutes, noTitles } = options;
-	
-	// different format if has 1+ completed tasks (`segmentCompleted`)
-	var hasCompletedTasks = false;
-	taskArray.some((task) => {
-		if (task.dataValues) {
-			task = task.dataValues;
-		}
-		if (task.done) {
-			hasCompletedTasks = true;
-			return true;
-		}
-	});
-
-	var { segmentCompleted, newTasks } = options;
-
-	// cant segment if no completed tasks
-	if (!hasCompletedTasks) {
-		segmentCompleted = false;
-	}
-
-	// dont get deleted tasks
-	taskArray = cleanTaskArray(taskArray);
-
-	var remainingTasks = getRemainingTasksFromTaskArray(taskArray, options);
-	var completedTasks = getCompletedTasksFromTaskArray(taskArray, options);
-	if (options.onlyRemainingTasks)
-		completedTasks = [];
-
-	if (taskArray.length  == 0 || (options.onlyRemainingTasks && remainingTasks.length == 0)) {
-		console.log("array passed in is empty at convertArrayToTaskListMessage");
-		taskListMessage = '> :spiral_note_pad:';
-		return taskListMessage;
-	}
-
-	// add completed tasks to right place
-	var taskListMessageBody = '';
-	if (completedTasks.length > 0) {
-		if (!noTitles){
-			taskListMessage = (options.noKarets ? `*Completed Priorities:*\n` : `> *Completed Priorities:*\n`);
-		}
-		
-		taskListMessageBody = createTaskListMessageBody(completedTasks, options);
-		taskListMessage += taskListMessageBody;
-
-	}
-		
-	if (remainingTasks.length > 0) {
-
-		// add remaining tasks to right place
-		if (completedTasks.length > 0) {
-			// only remaining tasks, no completed tasks
-			if (!noTitles) {
-				taskListMessage += (options.noKarets ? `\n*Remaining Priorities:*\n` : `>\n>*Remaining Priorities:*\n`);
-			}
-		}
-		taskListMessageBody = createTaskListMessageBody(remainingTasks, options);
-		taskListMessage += taskListMessageBody;
-
-	}
-	
-	if (reviewVersion && calculateMinutes) {
-		let { totalMinutesSpent } = options;
-		if (totalMinutesSpent > 0) {
-			let timeString = convertMinutesToHoursString(totalMinutesSpent);
-			var totalMinutesContent = `\n*Time Well Spent: ${timeString} :clock730:*`;
-			taskListMessage += totalMinutesContent;
-		}
-	}
-
-	return taskListMessage;
-}
-
-function createTaskListMessageBody(taskArray, options) {
-
-	var taskListMessage = '';
-
-	// if reviewVersion, we are adding the time we SPENT, not what we have remaining
-	let { reviewVersion, calculateMinutes, noTitles, totalMinutesSpent } = options;
-
-	console.log(`totalMinutes spent outside loop: ${totalMinutesSpent}`);
-
-	let count = 0;
-	taskArray.forEach((task, index) => {
-
-		// for when you get task from DB
-		let minutesMessage = '';
-		if (!options.dontUseDataValues && task.dataValues) {
-			task = task.dataValues;
-		};
-
-		if (!options.dontShowMinutes && task.minutes) {
-
-			let minutesInt = Math.round(task.minutes);
-			let minutesSpent = Math.round(task.minutesSpent);
-			let minutesRemaining = minutesInt - minutesSpent;
-
-			console.log(`totalMinutes spent in loop: ${totalMinutesSpent}`);
-
-			totalMinutesSpent += minutesSpent;
-
-			let timeString = '';
-			if (reviewVersion) {
-				// review version: total minutes spent
-				timeString = convertMinutesToHoursString(minutesSpent);
-				if (minutesSpent > 0)
-					minutesMessage = ` (for ${timeString})`;
+			// make it the same timestamp
+			if (dateTime.type == "interval") {
+				remindTimeStamp = dateTime.to.value;
 			} else {
-				// live version: total minutes remaining
-				if (minutesRemaining > 0) {
-					timeString = convertMinutesToHoursString(minutesRemaining);
-					minutesMessage = ` (${timeString} remaining)`;
-				} else {
-					if (!task.done)
-						minutesMessage = ` (_no time remaining_)`;
-				}
+				remindTimeStamp = dateTime.value;
+			}
+			
+			// handle if it is a duration configured intent
+			if (constants.DURATION_INTENT.reg_exp.test(response.text) && !constants.TIME_INTENT.reg_exp.test(response.text)) {
+
+				console.log("\n\n ~~ interpreted datetime as duration ~~ \n");
+				console.log(response.text);
+				console.log(remindTimeStamp);
+				console.log("\n\n");
+
+				remindTimeStamp = moment(remindTimeStamp).tz(tz);
+			} else {
+				remindTimeStamp = dateStringToMomentTimeZone(remindTimeStamp, tz);
 			}
 
 		}
+	}
 
-		// in review version, only completed tasks for message
-		if (reviewVersion && !task.done) {
-			return;
+	return remindTimeStamp;
+
+}
+
+export function witDurationToTimeZoneObject(duration, tz) {
+	
+	var now = moment();
+	var remindTimeStamp;
+
+	if (duration) {
+		var durationSeconds = 0;
+		for (var i = 0; i < duration.length; i++) {
+			durationSeconds += duration[i].normalized.value;
 		}
+		var durationMinutes = Math.floor(durationSeconds / 60);
+		remindTimeStamp = now.tz(tz).add(durationSeconds, 'seconds');
+		return remindTimeStamp;
+	} else {
+		return false;
+	}
+}
 
-		let priority = task.priority;
-		if (!priority && task.dailyTask && task.DailyTask.dataValues) {
-			priority = task.DailyTask.dataValues.priority;
-		} else if (!priority) {
-			priority = '';
+// convert wit duration to total minutes
+export function witDurationToMinutes(duration) {
+
+	var now = moment();
+	var remindTimeStamp;
+
+	if (duration) {
+		var durationSeconds = 0;
+		for (var i = 0; i < duration.length; i++) {
+			durationSeconds += duration[i].normalized.value;
 		}
+		var durationMinutes = Math.floor(durationSeconds / 60);
+		return durationMinutes;
+	} else {
+		return false;
+	}
 
-		if (priority > 0 && !options.dontUsePriority) {
-			count = priority;
-		} else {
-			count++;
-		}
-
-		// completed tasks do not have count
-		var taskContent = ``;
-
-		// only not completed tasks should have numbers
-		if (task.done != true || reviewVersion) {
-			taskContent = `${count}) `;
-		}
-		taskContent = `${taskContent}${task.text}${minutesMessage}`
-
-		taskContent = (task.done && !reviewVersion ? `~${taskContent}~\n` : `${taskContent}\n`);
-		taskContent = (options.noKarets ? taskContent : `> ${taskContent}`);
-
-		taskListMessage += taskContent;
-		
-	});
-
-	options.totalMinutesSpent = totalMinutesSpent;
-
-	return taskListMessage;
 }
 
 /**
@@ -533,125 +265,114 @@ export function convertTimeStringToMinutes(timeString) {
 	return totalMinutes;
 }
 
-// for simplicity, this converts database calls with all the associations
-// into a single JS object for us to decipher as a single task
-// 
 /**
- * converts this into a single task object for consistency sake
- * @param  {[taskObject]} can be DailyTaskArray or TaskArray or WeeklyTaskArray...
- * @param  string type `daily`, `weekly`, etc...
- * @return {[taskObject]} taskObjectArray will always be BASE task with nested dailyTask, weeklyTask, etc.                
+ * takes wit timestring and returns a moment timezone
+ * ~ we are always assuming user means the SOONEST FUTURE time from now ~
+ * 
+ * @param  {string} timeString full Wit timestamp string, ex. `2016-06-24T16:24:00.000-04:00`
+ * @param  {string} timeZone   timezone in DB, ex. `America/Los_Angeles`
+ * @return {moment}            moment object with appropriate timezone
  */
-export function convertToSingleTaskObjectArray(taskObjectArray, type) {
+export function dateStringToMomentTimeZone(timeString, timeZone) {
 
-	switch (type) {
-		case "daily":
-			// if daily task, we need to add content and minutes to userId
-			return taskObjectArray.map((taskObject) => {
-				const { Task: { text, done, UserId } } = taskObject;
-				return {
-					...taskObject,
-					dataValues: {
-						...taskObject.dataValues,
-						text,
-						done
-					}
-				}
-			});
-			break;
-		default:
-			break;
-	}
-}
-
-/**
- * return array of tasks mapped to the task numbers that user inputed
- * @param  {array[taskObject]} taskObjectArray 
- * @param  {string} input           i.e. `1, 4, 3, 2`
- * @return {array[TaskObject]}                 
- */
-export function prioritizeTaskArrayFromUserInput(taskObjectArray, input) {
-
-	// get user priority order (`1,4,3,2`), convert it to an array of ints, and use that to prioritize your array
-	var initialPriorityOrder = input;
-	
-	// either a non-number, or number > length of tasks
-	var isInvalid = false;
-	var nonNumberTest = new RegExp(/\D/);
-	initialPriorityOrder = initialPriorityOrder.split(",").map((order) => {
-		order = order.trim();
-		var orderNumber = parseInt(order);
-		if (nonNumberTest.test(order) || orderNumber > taskObjectArray.length)
-			isInvalid = true;
-		return orderNumber;
-	});
-
-	if (isInvalid) {
-		console.log("\n\n\n ~~ User input is invalid ~~ \n\n\n");
+	// turns `2016-06-24T16:24:00.000-04:00` into `["2016", "06", "24", "16:24:00.000", "04:00"]`
+	var splitter = new RegExp(/[T-]+/);
+	var dateArray = timeString.split(splitter);
+	if (dateArray.length != 5) {
+		console.log("\n\n\n ~~ THIS IS NOT A CORRECTLY FORMATTED WIT STRING: SHOULD BE FORMAT LIKE `2016-06-24T16:24:00.000-04:00`! ~~ \n\n");
+		return false;
+	} else if (!timeZone) {
+		console.log("\n\n\n ~~ INVALID TIME ZONE. WE NEED A TIME ZONE ~~ \n\n");
 		return false;
 	}
 
-	var priorityOrder = [];
-	var countedNumbers = [];
-	initialPriorityOrder.forEach(function(order) {
-		if ( order > 0) {
-			order--; // make user-entered numbers 0-index based
+	var time = dateArray[3]; // ex. "16:24:00.000"
+	console.log(`\n\n ~~ working with time: ${time} in timezone: ${timeZone} ~~ \n\n`);
+	
+	// we must interpret based on user's timezone
+	var now     = moment.tz(timeZone);
+	var nowTime = now.format("HH:mm:ss");
 
-			// let's avoid double-counting
-			// only if the order is not already in array (if user says `2,2,2,3` for example)
-			if (countedNumbers.indexOf(order) < 0) {
-				countedNumbers.push(order);
-				priorityOrder.push(order);
-			}
+	var date;
+	if (time > nowTime) {
+		// user time is greater than now, so we can keep the date
+		date = now.format("YYYY-MM-DD");
+	} else {
+		// user time is less than now, so we assume the NEXT day
+		var nextDay = now.add(1, 'days');
+		date        = nextDay.format("YYYY-MM-DD");
+	}
 
-		}
-	});
+	var dateTimeFormat = `${date} ${time}`; // string to create our moment obj.
+	var userMomentTimezone = moment.tz(dateTimeFormat, timeZone);
 
-	var prioritizedTaskArray = []; 
-	priorityOrder.forEach((order) => {
-		prioritizedTaskArray.push(taskObjectArray[order]);
-	});
-
-	return prioritizedTaskArray;
+	return userMomentTimezone;
 
 }
 
-// returns tasks separated into red blocks
-export function commaSeparateOutTaskArray(a, config = {}) {
+/**
+ * get array of slackUserIds from string
+ * @param  {string input} string "ping <@UIXUXUXU>" // done automatically
+ * @return {array of SlackUserIds} ['UIXUXUXU'];
+ */
+export function getUniqueSlackUsersFromString(string, config = {}) {
 
-	const { codeBlock, slackNames } = config;
+	const { normalSlackNames } = config;
+	// by default will get translated into SlackUserId
+	const slackUserIdContainer = normalSlackNames ? new RegExp(/@(\S*)/g) : new RegExp(/<@(.*?)>/g);
+	const replaceRegEx = new RegExp(/<|>|@/g);
+	
+	let arrayString = string.match(slackUserIdContainer);
+	let slackUserIds = [];
+
+	if (arrayString) {
+		arrayString.forEach((string) => {
+			const slackUserId = string.replace(replaceRegEx, "");
+			if (!_.includes(slackUserIds, slackUserId)) {
+				slackUserIds.push(slackUserId);
+			}
+		});
+		if (slackUserIds.length == 0) {
+			return false;
+		} else {
+			return slackUserIds;
+		}
+	} else {
+		return false;
+	}
+	
+}
+
+// returns array joined together into a string
+export function commaSeparateOutStringArray(a, config = {}) {
+
+	const { codeBlock, slackNames, SlackUserIds } = config;
 
 	a = a.map((a) => {
 		if (codeBlock) {
 			a = `\`${a}\``
 		} else if (slackNames) {
 			a = `@${a}`;
+		} else if (SlackUserIds) {
+			a = `<@${a}>`;
 		}
 		return a;
 	})
 
 	// make into string
-	var string = [a.slice(0, -1).join(', '), a.slice(-1)[0]].join(a.length < 2 ? '' : ' and ');
+	let string = [a.slice(0, -1).join(', '), a.slice(-1)[0]].join(a.length < 2 ? '' : ' and ');
 	return string;
+
 }
 
-// new function to ensure you are getting a task list message to update
-export function getMostRecentTaskListMessageToUpdate(userChannel, bot, options = {}) {
+// this is for deleting the most recent message!
+// mainly used for convo.ask, when you do natural language instead
+// of clicking the button
+export function getMostRecentMessageToUpdate(userChannel, bot, callbackId = false) {
 	
 	let { sentMessages } = bot;
 
 	let updateTaskListMessageObject = false;
-
-	let callbackId = "TASK_LIST_MESSAGE";
-	const { type } = options;
-	if (type) {
-		if (type == "plan") {
-			callbackId = "PLAN_OPTIONS";
-		}
-	}
-
-	console.log(sentMessages);
-
 	if (sentMessages && sentMessages[userChannel]) {
 
 		let channelSentMessages = sentMessages[userChannel];
@@ -660,11 +381,16 @@ export function getMostRecentTaskListMessageToUpdate(userChannel, bot, options =
 		// this convo ChannelId w/ the bot's sentMessage ChannelId
 		for (let i = channelSentMessages.length - 1; i >= 0; i--) {
 
-			let message = channelSentMessages[i];
+			const { channel, ts, attachments } = channelSentMessages[i];
 
-			const { channel, ts, attachments } = message;
 			if (channel == userChannel) {
-				if (attachments && attachments[0].callback_id == callbackId) {
+				if ( callbackId && attachments && callbackId == attachments[0].callback_id) {
+					updateTaskListMessageObject = {
+						channel,
+						ts
+					};
+					break;
+				} else {
 					updateTaskListMessageObject = {
 						channel,
 						ts
@@ -678,607 +404,3 @@ export function getMostRecentTaskListMessageToUpdate(userChannel, bot, options =
 	return updateTaskListMessageObject;
 
 }
-
-// this is for deleting the most recent message!
-// mainly used for convo.ask, when you do natural language instead
-// of clicking the button
-export function getMostRecentMessageToUpdate(userChannel, bot) {
-	
-	let { sentMessages } = bot;
-
-	let updateTaskListMessageObject = false;
-	if (sentMessages && sentMessages[userChannel]) {
-
-		let channelSentMessages = sentMessages[userChannel];
-
-		// loop backwards to find the most recent message that matches
-		// this convo ChannelId w/ the bot's sentMessage ChannelId
-		for (let i = channelSentMessages.length - 1; i >= 0; i--) {
-
-			var message = channelSentMessages[i];
-
-			const { channel, ts, attachments } = message;
-			if (channel == userChannel) {
-				updateTaskListMessageObject = {
-					channel,
-					ts
-				};
-				break;
-			}
-		}
-	}
-
-	return updateTaskListMessageObject;
-
-}
-
-// this is for deleting the most recent doneSession message!
-// the one that is "hey, did you finish `tasks`"
-export function getMostRecentDoneSessionMessage(userChannel, bot) {
-	
-	let { sentMessages } = bot;
-
-	let messageObject = false;
-	if (sentMessages && sentMessages[userChannel]) {
-
-		let channelSentMessages = sentMessages[userChannel];
-
-		// loop backwards to find the most recent message that matches
-		// this convo ChannelId w/ the bot's sentMessage ChannelId
-		for (let i = channelSentMessages.length - 1; i >= 0; i--) {
-
-			var message = channelSentMessages[i];
-			
-			const { channel, ts, attachments } = message;
-			if (channel == userChannel) {
-
-				if (attachments && attachments[0].callback_id == "DONE_SESSION") {
-					messageObject = {
-						channel,
-						ts
-					};
-					break;
-				}
-			}
-		}
-	}
-
-	return messageObject;
-
-}
-
-// another level of abstraction for this
-export function deleteConvoAskMessage(userChannel, bot) {
-	// used mostly to delete the button options when answered with NL
-	var convoAskMessage = getMostRecentMessageToUpdate(userChannel, bot);
-	if (convoAskMessage) {
-		bot.api.chat.delete(convoAskMessage);
-	}
-	
-}
-
-export function deleteMostRecentTaskListMessage(userChannel, bot) {
-	let taskListMessage = getMostRecentTaskListMessageToUpdate(userChannel, bot);
-	if (taskListMessage) {
-		bot.api.chat.delete(taskListMessage);
-	}
-}
-
-export function deleteMostRecentPlanMessage(userChannel, bot) {
-	let planMessage = getMostRecentTaskListMessageToUpdate(userChannel, bot, { type: "plan" });
-	if (planMessage) {
-		bot.api.chat.delete(planMessage);
-	}
-}
-
-export function deleteMostRecentDoneSessionMessage(userChannel, bot) {
-	var doneSessionMessage = getMostRecentDoneSessionMessage(userChannel, bot);
-	if (doneSessionMessage) {
-		bot.api.chat.delete(doneSessionMessage);
-	}
-}
-
-/**
- * get task list message with updated texts
- * @param  {[string]} taskTextArray
- * @param  {int} index  which specific taskText
- * @param  {string} taskListMessage 
- * @return {array}                 attachments message
- */
-export function getTimeToTaskTextAttachmentWithTaskListMessage(taskTextArray, index, taskListMessage) {
-
-	var message = '';
-	var taskText = taskTextArray[index];
-	if (taskText) {
-		message = `How much *time* would you like to allocate to \`${taskText}\`?`;
-	}
-
-	var colors = [
-		"blue",
-		"green",
-		"orange",
-		"yellow",
-		"lavendar"
-	];
-
-	var colorChoice = colors[index % colors.length];
-	console.log(`\n\n\ncolor choice: ${index} / ${colorChoice}`);
-	var color = colorsHash[colorChoice] ? colorsHash[colorChoice].hex : colorsHash.blue.hex;
-
-	var attachments = [
-		{
-			color: colorsHash.grey.hex,
-			attachment_type: "default",
-			callback_id: "TASK_LIST_MESSAGE",
-			fallback: "Here's your task list",
-			mrkdwn_in: ["fields"],
-			fields: [
-				{
-					value: taskListMessage
-				}
-			]
-		}
-	];
-
-	var buttonActions = [];
-	if (taskText) {
-		var addTaskButtonAction = {
-			name: buttonValues.actuallyWantToAddATask.name,
-			text: "Add more tasks!",
-			value: buttonValues.actuallyWantToAddATask.value,
-			type: "button"
-		};
-		buttonActions.push(addTaskButtonAction)
-	}
-	if (index > 0 && index < taskTextArray.length) {
-		var resetTimesButtonAction = {
-			name: buttonValues.resetTimes.name,
-			text: "Undo Time",
-			value: buttonValues.resetTimes.name,
-			type: "button",
-			style: "danger"
-		};
-		buttonActions.push(resetTimesButtonAction);
-	}
-	
-	if (attachments[0])
-		attachments[0].actions = buttonActions;
-
-	// the specific question to ask
-	attachments.push({
-		text: message,
-		color,
-		mrkdwn_in: [ "text" ],
-		attachment_type: "default",
-		callback_id: "TASK_LIST_MESSAGE",
-		fallback: "How long do you want to work on this task?"
-	});
-
-	return attachments;
-}
-
-/**
- * takes in user input string `i.e. complete tasks 4, 1, 3` and converts it to an array of numbers
- */
-export function convertStringToNumbersArray(userInputString) {
-
-	const splitter     = RegExp(/(,|\ba[and]{1,}\b)/);
-	var userInputArray = userInputString.split(splitter);
-
-	// if we capture 0 valid tasks from string, then we start over
-	var numberRegEx  = new RegExp(/[\d]+/);
-	var numbersArray = [];
-	
-	userInputArray.forEach((string) => {
-
-		var number = string.match(numberRegEx);
-
-		// if it's a valid number and within the remainingTasks length
-		if (number) {
-			number = parseInt(number[0]);
-			numbersArray.push(number);
-		}
-
-	});
-
-	if (numbersArray.length == 0) {
-		return false;
-	} else {
-		return numbersArray;
-	}
-
-}
-
-export function getDoneSessionMessageAttachments(config = {}) {
-
-	const { buttonsValuesArray, defaultBreakTime, defaultSnoozeTime } = config;
-
-	let actions = [];
-	buttonsValuesArray.forEach((buttonValue) => {
-		switch (buttonValue) {
-			case buttonValues.doneSession.completedPriority.value:
-				actions.push({
-					name: buttonValues.doneSession.completedPriority.name,
-					text: "Completed :sports_medal:",
-					value: buttonValues.doneSession.completedPriority.value,
-					type: "button",
-					style: "primary"
-				});
-				break;
-			case buttonValues.doneSession.completedPriorityTonedDown.value:
-				actions.push({
-					name: buttonValues.doneSession.completedPriorityTonedDown.name,
-					text: "Completed :punch:",
-					value: buttonValues.doneSession.completedPriorityTonedDown.value,
-					type: "button"
-				});
-				break;
-			case buttonValues.doneSession.takeBreak.value:
-				let breakText = defaultBreakTime ? `Break for ${defaultBreakTime} min` : `Take a break`;
-				actions.push({
-					name: buttonValues.doneSession.takeBreak.name,
-					text: breakText,
-					value: buttonValues.doneSession.takeBreak.value,
-					type: "button"
-				})
-				break;
-			case buttonValues.doneSession.extendSession.value:
-				let extendText = defaultSnoozeTime ? `Extend for ${defaultSnoozeTime} min` : `Extend Session`;
-				actions.push({
-					name: buttonValues.doneSession.extendSession.name,
-					text: extendText,
-					value: buttonValues.doneSession.extendSession.value,
-					type: "button"
-				})
-				break;
-			case buttonValues.doneSession.newSession.value:
-				actions.push({
-					name: buttonValues.doneSession.newSession.name,
-					text: "New Session",
-					value: buttonValues.doneSession.newSession.value,
-					type: "button"
-				})
-				break;
-			case buttonValues.doneSession.viewPlan.value:
-				actions.push({
-					name: buttonValues.doneSession.viewPlan.name,
-					text: "View Plan",
-					value: buttonValues.doneSession.viewPlan.value,
-					type: "button"
-				})
-				break;
-			case buttonValues.doneSession.endDay.value:
-				actions.push({
-					name: buttonValues.doneSession.endDay.name,
-					text: "End Day",
-					value: buttonValues.doneSession.endDay.value,
-					type: "button"
-				})
-				break;
-			case buttonValues.doneSession.notDone.value:
-				actions.push({
-					name: buttonValues.doneSession.notDone.name,
-					text: "Not Done",
-					value: buttonValues.doneSession.notDone.value,
-					type: "button"
-				})
-				break;
-			case buttonValues.doneSession.didSomethingElse.value:
-				actions.push({
-					name: buttonValues.doneSession.didSomethingElse.name,
-					text: "Did something else",
-					value: buttonValues.doneSession.didSomethingElse.value,
-					type: "button"
-				})
-				break;
-			case buttonValues.doneSession.moveOn.value:
-				actions.push({
-					name: buttonValues.doneSession.moveOn.name,
-					text: "Let's move On",
-					value: buttonValues.doneSession.moveOn.value,
-					type: "button"
-				})
-				break;
-			case buttonValues.doneSession.itWasSomethingElse.value:
-				actions.push({
-					name: buttonValues.doneSession.itWasSomethingElse.name,
-					text: "Something else!",
-					value: buttonValues.doneSession.itWasSomethingElse.value,
-					type: "button"
-				})
-				break;
-			case buttonValues.neverMind.value:
-				actions.push({
-					name: buttonValues.neverMind.name,
-					text: "Never mind",
-					value: buttonValues.neverMind.value,
-					type: "button"
-				})
-				break;
-			case buttonValues.doneSession.keepMyPriority.value:
-				actions.push({
-					name: buttonValues.doneSession.keepMyPriority.name,
-					text: "I'll keep my priorities",
-					value: buttonValues.doneSession.keepMyPriority.value,
-					type: "button"
-				})
-				break;
-			case buttonValues.doneSession.beBackLater.value:
-				actions.push({
-					name: buttonValues.doneSession.beBackLater.name,
-					text: "Be back later",
-					value: buttonValues.doneSession.beBackLater.value,
-					type: "button"
-				})
-				break;
-			default: break;
-		}
-	});
-
-	let attachments = [{
-		attachment_type: 'default',
-		callback_id: "DONE_WITH_SESSION",
-		fallback: "Done with my session!",
-		actions
-	}]
-
-	return attachments;
-	
-}
-
-// get button attachments for your plan list
-export function getPlanCommandCenterAttachments(config = {}) {
-
-
-	const { buttonsValuesArray } = config;
-
-	let actions = [];
-	buttonsValuesArray.forEach((buttonValue) => {
-		switch (buttonValue) {
-			case buttonValues.planCommands.addPriority.value:
-				actions.push({
-					name: buttonValues.planCommands.addPriority.name,
-					text: "Add",
-					value: buttonValues.planCommands.addPriority.value,
-					type: "button"
-				});
-				break;
-			case buttonValues.planCommands.deletePriority.value:
-				actions.push({
-					name: buttonValues.planCommands.deletePriority.name,
-					text: "Remove",
-					value: buttonValues.planCommands.deletePriority.value,
-					type: "button"
-				});
-				break;
-			case buttonValues.planCommands.completePriority.value:
-				actions.push({
-					name: buttonValues.planCommands.completePriority.name,
-					text: "Complete",
-					value: buttonValues.planCommands.completePriority.value,
-					type: "button"
-				});
-				break;
-			case buttonValues.planCommands.workOnPriority.value:
-				actions.push({
-					name: buttonValues.planCommands.workOnPriority.name,
-					text: "Work",
-					value: buttonValues.planCommands.workOnPriority.value,
-					type: "button"
-				});
-				break;
-			case buttonValues.planCommands.revisePriority.value:
-				actions.push({
-					name: buttonValues.planCommands.revisePriority.name,
-					text: "Revise",
-					value: buttonValues.planCommands.revisePriority.value,
-					type: "button"
-				});
-				break;
-			case buttonValues.planCommands.endDay.value:
-				actions.push({
-					name: buttonValues.planCommands.endDay.name,
-					text: "End Day",
-					value: buttonValues.planCommands.endDay.value,
-					type: "button"
-				});
-				break;
-			default: break;
-		}
-	});
-
-	let attachments = [{
-		attachment_type: 'default',
-		callback_id: "PLAN_COMMAND_CENTER",
-		fallback: "What do you want to do with your priorities?",
-		color: colorsHash.toki_purple.hex,
-		actions
-	}]
-
-	return attachments;
-
-}
-
-export function getMinutesSuggestionAttachments(minutesRemaining, config) {
-
-	let minutesSuggestions    = [30, 45, 60, 90];
-	let customIndexSuggestion = 0;
-
-	minutesSuggestions.some((minutesSuggestion, index) => {
-		customIndexSuggestion = index;
-
-		if (minutesRemaining - minutesSuggestion < 0) {
-			return true;
-		} else {
-			const nextIndex = index+1;
-			if (minutesSuggestions[nextIndex]) {
-
-				if (minutesRemaining - minutesSuggestions[nextIndex] < 0) {
-
-					// round up or down?
-					let currentIndexValue = Math.abs(minutesSuggestion - minutesRemaining);
-					let nextIndexValue = Math.abs(minutesSuggestions[nextIndex] - minutesRemaining);
-					if (nextIndexValue < currentIndexValue) {
-						customIndexSuggestion = nextIndex;
-					}
-					return true;
-
-				}
-			}
-		}
-	});
-
-	if (minutesRemaining > 110) {
-		// put a cap on this
-		minutesRemaining = 90;
-	}
-
-	minutesSuggestions[customIndexSuggestion] = minutesRemaining;
-
-	let attachments = [
-		{
-			attachment_type: 'default',
-			callback_id: "START_SESSION",
-			color: colorsHash.turquoise.hex,
-			fallback: "I was unable to process your decision",
-			actions: []
-		}
-	];
-
-	minutesSuggestions.forEach((minutesSuggestion) => {
-		let timeSuggestionString = convertMinutesToHoursString(minutesSuggestion, { abbreviation: true });
-		let action = {
-			name: buttonValues.startNow.name,
-			text: `${timeSuggestionString}`,
-			value: `${minutesSuggestion} minutes`,
-			type: "button"
-		}
-		if (minutesSuggestion == minutesRemaining) {
-			action["style"] = "primary";
-		}
-		attachments[0].actions.push(action);
-	});
-
-	const { noOtherPriorities } = config;
-	if (!noOtherPriorities) {
-		attachments[0].actions.push({
-			name: buttonValues.changeTask.name,
-			text: "Change Priority",
-			value: buttonValues.changeTask.value,
-			type: "button"
-		});
-	}
-
-		
-
-	return attachments;
-
-}
-
-// returns the settings attachment with user data plugged in!
-export function getSettingsAttachment(settings) {
-
-	let { timeZone, tz, nickName, defaultSnoozeTime, defaultBreakTime, wantsPing, pingTime, includeOthersDecision, includedSlackUsers } = settings;
-
-	let defaultSnoozeTimeString = `${defaultSnoozeTime} min`;
-	let defaultBreakTimeString  = `${defaultBreakTime} min`;
-
-	if (!defaultSnoozeTime) {
-		defaultSnoozeTimeString = `_Not set_`;
-	}
-	if (!defaultBreakTime) {
-		defaultBreakTimeString = `_Not set_`;
-	}
-
-	let pingTimeString = '';
-	if (pingTime) {
-		if (wantsPing) {
-			pingTimeString = moment(pingTime).tz(timeZone.tz).format("h:mm a");
-		} else {
-			pingTimeString = `_${moment(pingTime).tz(timeZone.tz).format("h:mm a")} (Disabled)_`;
-		}
-	} else {
-		pingTimeString = `_Disabled_`;
-	}
-
-	let prioritySharingString = '';
-	if (includedSlackUsers.length > 0) {
-
-		let includedSlackUsersNames = commaSeparateOutTaskArray(includedSlackUsers.map(slackUser => slackUser.dataValues.SlackName), { slackNames: true });
-
-		if (includeOthersDecision == `NO_FOREVER`) {
-			prioritySharingString = `_${includedSlackUsersNames} (Disabled)_`
-		} else {
-			prioritySharingString = includedSlackUsersNames;
-		}
-
-	} else {
-		// nobody is included
-		prioritySharingString = `_Disabled_`;
-	}
-
-	var attachment = [
-		{
-			callback_id: "VIEW_SETTINGS",
-			fallback: `Here are your settings`,
-			color: colorsHash.lavendar.hex,
-			attachment_type: 'default',
-			mrkdwn_in: [ "fields" ],
-			fields: [
-				{
-					title: `Name:`,
-					short: true
-				},
-				{
-					value: nickName,
-					short: true
-				},
-				{
-					title: `Timezone:`,
-					short: true
-				},
-				{
-					value: timeZone.name,
-					short: true
-				},
-				{
-					title: `Morning Ping:`,
-					short: true
-				},
-				{
-					value: pingTimeString,
-					short: true
-				},
-				{
-					title: `Extend Duration:`,
-					short: true
-				},
-				{
-					value: defaultSnoozeTimeString,
-					short: true
-				},
-				{
-					title: `Break Duration:`,
-					short: true
-				},
-				{
-					value: defaultBreakTimeString,
-					short: true
-				},
-				{
-					title: `Priority Sharing:`,
-					short: true
-				},
-				{
-					value: prioritySharingString,
-					short: true
-				}
-			]
-		}
-	];
-
-	return attachment;
-
-}
-
-

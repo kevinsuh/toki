@@ -1,176 +1,84 @@
-import os from 'os';
-import { wit } from '../index';
-import http from 'http';
-import bodyParser from 'body-parser';
+import { wit, bots } from '../index';
 import moment from 'moment-timezone';
-
 import models from '../../../app/models';
 
-import { utterances } from '../../lib/botResponses';
-import { colorsArray, constants, buttonValues, colorsHash, timeZones, tokiOptionsAttachment, tokiOptionsExtendedAttachment } from '../../lib/constants';
-import { convertToSingleTaskObjectArray, convertArrayToTaskListMessage, commaSeparateOutTaskArray, convertTimeStringToMinutes, getRandomQuote } from '../../lib/messageHelpers';
-import { createMomentObjectWithSpecificTimeZone, dateStringToMomentTimeZone, consoleLog, getCurrentDaySplit } from '../../lib/miscHelpers';
-
-import { resumeQueuedReachouts } from '../index';
+import { utterances, colorsArray, constants, buttonValues, colorsHash, timeZones, tokiExplainAttachments } from '../../lib/constants';
 
 export default function(controller) {
-
-	// we'll stick our notifications flow here for now
-	controller.on('notify_team_member', (bot, config) => {
-
-		const { IncluderSlackUserId, IncludedSlackUserId } = config;
-
-		// IncluderSlackUserId is the one who's actually using Toki
-		models.User.find({
-			where: [`"SlackUser"."SlackUserId" = ?`, IncluderSlackUserId ],
-			include: [ models.SlackUser ]
-		}).then((user) => {
-
-			const UserId       = user.id;
-			const { nickName, SlackUser: { SlackName } } = user;
-			const name = SlackName ? `@${SlackName}` : nickName;
-
-			user.getDailyTasks({
-				where: [`"DailyTask"."type" = ?`, "live"],
-				include: [ models.Task ],
-				order: `"Task"."done", "DailyTask"."priority" ASC`
-			})
-			.then((dailyTasks) => {
-
-				dailyTasks = convertToSingleTaskObjectArray(dailyTasks, "daily");
-
-				let options         = { dontShowMinutes: true, dontCalculateMinutes: true };
-				let taskListMessage = convertArrayToTaskListMessage(dailyTasks, options);
-
-				if (IncludedSlackUserId) {
-					bot.startPrivateConversation({ user: IncludedSlackUserId }, (err, convo) => {
-
-						convo.notifyTeamMember = {
-							dailyTasks
-						};
-
-						convo.say(`Hey! ${name} wanted me to share their top priorities with you today:\n${taskListMessage}`);
-						convo.say(`If you have any questions about what ${name} is working on, please send them a Slack message :mailbox:`);
-
-					});
-				}
-
-			});
-		});
-	});
-
-	controller.on('user_morning_ping', (bot, config) => {
-
-		const { SlackUserId } = config;
-
-		// IncluderSlackUserId is the one who's actually using Toki
-		models.User.find({
-			where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-			include: [ models.SlackUser ]
-		}).then((user) => {
-
-			const UserId       = user.id;
-			const { nickName, SlackUser: { tz } } = user;
-
-			const day      = moment().tz(tz).format('dddd');
-			const daySplit = getCurrentDaySplit(tz);
-
-			bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-
-				let goodMorningMessage = `Good ${daySplit}, ${nickName}!`;
-				const quote = getRandomQuote();
-
-				convo.say({
-					text: `${goodMorningMessage}\n*_"${quote.message}"_*\n-${quote.author}`,
-					attachments:[
-						{
-							attachment_type: 'default',
-							callback_id: "MORNING_PING_START_DAY",
-							fallback: "Let's start the day?",
-							color: colorsHash.grey.hex,
-							actions: [
-								{
-										name: buttonValues.letsWinTheDay.name,
-										text: ":pencil:Let’s win the day:trophy:",
-										value: buttonValues.letsWinTheDay.value,
-										type: "button",
-										style: "primary"
-								}
-							]
-						}
-					]
-				});
-
-			});
-		});
-	});
-
-	controller.hears([constants.THANK_YOU.reg_exp], 'direct_message', (bot, message) => {
-		const SlackUserId = message.user;
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(() => {
-			bot.reply(message, "You're welcome!! :smile:");
-			resumeQueuedReachouts(bot, { SlackUserId });
-		}, 500);
-	});
 
 	/**
 	 * DEFAULT FALLBACK
 	 */
 	controller.hears([constants.ANY_CHARACTER.reg_exp], 'direct_message', (bot, message) => {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
+		const { text } = message;
+
 		const SlackUserId = message.user;
 		bot.send({
 			type: "typing",
 			channel: message.channel
 		});
 		setTimeout(() => {
-			bot.reply(message, "Hey! I have some limited functionality as I learn my specific purpose :dog: If you're still confused, please reach out to my creators Chip or Kevin");
-			resumeQueuedReachouts(bot, { SlackUserId });
+
+			let replyMessage = "I'm not sure what you mean by that :thinking_face:";
+
+			const config = { SlackUserId };
+
+			// some fallbacks for button clicks
+			switch (text) {
+				case (text.match(utterances.keepWorking) || {}).input:
+					controller.trigger(`current_session_status`, [bot, config])
+					break;
+				default:
+					bot.reply(message, replyMessage);
+					controller.trigger(`current_session_status`, [bot, config])
+					break;
+			}
+
 		}, 500);
 	});
 
-	// this will send message if no other intent gets picked up
-	controller.hears([''], 'direct_message', wit.hears, (bot, message) => {
+	controller.on('explain_toki_flow', (bot, config) => {
 
-		// user said something outside of wit's scope
-		if (!message.selectedIntent) {
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
-			bot.send({
-				type: "typing",
-				channel: message.channel
-			});
+		const { fromUserConfig, toUserConfig } = config;
 
-		}
+		models.User.find({
+			where: { SlackUserId: toUserConfig.SlackUserId }
+		}).then((toUser) => {
 
-	});
+			const { SlackUserId } = toUser;
 
-}
+			bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
 
+				// have 5-minute exit time limit
+				if (convo)
+					convo.task.timeLimit = 1000 * 60 * 5;
 
-function TEMPLATE_FOR_TEST(bot, message) {
+				convo.say(`Hey! <@${fromUserConfig.SlackUserId}> wanted me to explain how I can also help you get your most meaningful things done each day`);
+				convo.say(`Think of me as an office manager for each of your teammate's attention. *I make sure you only get interrupted with messages that are actually urgent*, so that you can maintain focus on your priorities`);
+				convo.say(`On the flip side, *I also make it easy for you to ping teammates when they're actually ready to switch contexts.* This lets you get requests out of your head when you think of them, while making sure it doesn't unnecessarily interrupt anyone's flow`);
+				convo.say({
+					text: `Here's how I do this:`,
+					attachments: tokiExplainAttachments
+				});
+				convo.say(`I'm here whenever you're ready to go! Just let me know when you want to \`ping\` someone, or enter a \`focus\` session yourself :raised_hands:`);
 
-	const SlackUserId = message.user;
+				convo.on(`end`, (convo) => {
 
-	models.User.find({
-		where: [`"SlackUser"."SlackUserId" = ?`, SlackUserId ],
-		include: [
-			models.SlackUser
-		]
-	}).then((user) => {
+				});
 
-		bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-
-			var name = user.nickName || user.email;
-
-			// on finish convo
-			convo.on('end', (convo) => {
-				
 			});
 
 		});
+
 	});
+
 }
+
 

@@ -1,36 +1,97 @@
-'use strict';
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.endBreakEarlyAttachments = exports.pausedSessionOptionsAttachments = exports.startSessionOptionsAttachments = exports.taskListMessageResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageNoButtonsAttachment = exports.taskListMessageYesButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneButtonAttachment = exports.sessionTimerDecisions = exports.tokiOptionsExtendedAttachment = exports.tokiOptionsAttachment = exports.quotes = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.intentConfig = exports.startDayExpirationTime = exports.dateOfNewPlanDayFlow = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.hoursForExpirationTime = exports.TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = undefined;
+exports.tokiExplainAttachments = exports.timeZoneAttachments = exports.letsFocusAttachments = exports.startSessionOptionsAttachments = exports.startSessionExamples = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
 
-var _moment = require('moment');
+var _utterances;
 
-var _moment2 = _interopRequireDefault(_moment);
+var _momentTimezone = require("moment-timezone");
+
+var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var TOKI_DEFAULT_SNOOZE_TIME = exports.TOKI_DEFAULT_SNOOZE_TIME = 15;
-var TOKI_DEFAULT_BREAK_TIME = exports.TOKI_DEFAULT_BREAK_TIME = 10;
-var hoursForExpirationTime = exports.hoursForExpirationTime = 6;
-var MINUTES_FOR_DONE_SESSION_TIMEOUT = exports.MINUTES_FOR_DONE_SESSION_TIMEOUT = 30;
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-var dateOfNewPlanDayFlow = exports.dateOfNewPlanDayFlow = "2016-08-13";
+var utterances = exports.utterances = (_utterances = {
 
-var startDayExpirationTime = exports.startDayExpirationTime = (0, _moment2.default)().subtract(hoursForExpirationTime, 'hours').format("YYYY-MM-DD HH:mm:ss Z");
-
-var intentConfig = exports.intentConfig = {
-	START_DAY: 'start_day',
-	END_DAY: 'end_day',
-	START_SESSION: 'start_session',
-	END_SESSION: 'end_session',
-	VIEW_PLAN: 'view_plan',
-	END_PLAN: 'end_plan',
-	KEEP_WORKING: 'keep_working'
-};
+	yes: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|(\bd[o ]+[this]{2,})|(\bd[o ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
+	yesOrCorrect: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bc[correct]{4,})/i),
+	no: new RegExp(/((no|not|nah|nope|^n)\b|\bn[oahpe]{1,4}\b)/i),
+	noAndNeverMind: new RegExp(/^n([oahpet]{1,5}|e[ever mind]{4,}|[vm]{1,4})\b|\bgoo[od ]{1,5}\bfo[or ]{1,5}\bnow\b/i),
+	onlyNeverMind: new RegExp(/^ne[ever mind]{4,}$/i),
+	containsNoOrNeverMindOrNothing: new RegExp(/\bn(oth[othing]{2,5}|[oahpet]{1,5}|e[ever mind]{4,}|[vm]{1,4})\b|\bgoo[od ]{1,5}\bfo[or ]{1,5}\bnow\b/i),
+	startsWithNever: new RegExp(/^ne[never]{3,}\b/i),
+	specificYes: new RegExp(/((yes|yea|yup|yep|ya|sure|ok|yeah|yah|ye)|\by[esahp]{2,}\b|\bs[ure]{2,}\b)/i),
+	endDay: new RegExp(/\be[end ]{2,}\b.*\bd[day]{2,}/i),
+	notDone: new RegExp(/\bn[not]{2,}\b.*\bdo[one]{2,}/i),
+	containsNew: new RegExp(/(\bn[new]{2,4}\b)/i),
+	containsCheckin: new RegExp(/(\bch[check in]{3,}\b|\br[reminder]{4,}\b|\bn[note]{2,}\b)/i),
+	containsOnlyCheckin: new RegExp(/(\bch[check -in]{4,}\b)/i),
+	containsChangeTime: new RegExp(/(ch[change ]{3,}t[time ]{2,})/i),
+	containsAddNote: new RegExp(/(a[add ]{1,}n[note ]{2,})/i),
+	containsBreak: new RegExp(/(\bbr[reak ]{2,}\b)/i),
+	containsBackLater: new RegExp(/(b[back ]{2,}l[later ]{2,})/i),
+	startSession: new RegExp(/((s[start ]{2,}|n[new ]{2,}|w[work ]{2,})|s[session]{2,})/i),
+	containsEnd: new RegExp(/(e[end]{2,})/i),
+	containsNone: new RegExp(/((no|none|didnt|didn't)|\bn[otahpe]+\b)/i),
+	containsDifferent: new RegExp(/((\bdi[different]{4,}\b)|(\b[else ]{3,}\b))/i),
+	containsNumber: new RegExp(/\d/i),
+	containsAll: new RegExp(/\ba[all]{2,}/i),
+	containsAdd: new RegExp(/\ba[add]{1,}/i),
+	containsNow: new RegExp(/\bnow[ow]{0,3}\b/i),
+	containsRedo: new RegExp(/\bre[re do]{2,5}\b/i),
+	startsWithAdd: new RegExp(/^a[add]{2,}\b/i),
+	containsTask: new RegExp(/t[task]{2,}/i),
+	containsTaskOrPriority: new RegExp(/\b(t[task]{2,}|pr[riority]{4,})\b/i),
+	containsName: new RegExp(/\bna[name]{2,5}\b/i),
+	containsTimeZone: new RegExp(/\btime[timezone ]{3,6}\b/i),
+	containsPlan: new RegExp(/\bpl[lan]{2,}\b/i),
+	containsPriority: new RegExp(/\bprior[ity]{2,6}\b/i),
+	containsPing: new RegExp(/\bpin[ng]{1,4}\b/i),
+	containsAdditional: new RegExp(/\ba[additional]{4,}/i),
+	containsSnooze: new RegExp(/(\bs[snooze]{4,}|\be[extend]{4,})/i),
+	onlyContainsSnooze: new RegExp(/^s[snooze]{4,}$/i),
+	onlyContainsExtend: new RegExp(/^e[extend]{4,}$/i),
+	containsExtend: new RegExp(/\bext[extend]{3,}\b/i),
+	containsElse: new RegExp(/\be[else]{2,}/i),
+	containsShowCommands: new RegExp(/(\bs[show]{2,}|\bc[commands]{4,})/i),
+	containsStartDay: new RegExp(/(\bs[start]{3,}|\bd[day]{2,})/i),
+	containsSettings: new RegExp(/\bs[settings]{4,}/i),
+	containsEditTaskList: new RegExp(/(\be[edit ]{2,}\b(l[list]{2,}|t[task]{2,}|p[plan]{2,})\b)/i),
+	containsCompleteOrCheckOrCross: new RegExp(/(\bcom[omplete]{4,}|\bch[heck]{2,}|\bcr[ross]{3,})/i),
+	containsDeleteOrRemove: new RegExp(/(\bd[delete]{4,}|\br[remove]{3,})/i),
+	containsTime: new RegExp(/(\bt[time]{2,})/i),
+	containsCancel: new RegExp(/(\bc[cancel]{4,})/i),
+	containsContinue: new RegExp(/(\bc[continue]{5,})/i),
+	done: new RegExp(/(^d[done]{2,}$)/i),
+	noAdditional: new RegExp(/(\bn[no ]{1,}\ba[additional]{5,}\b|^no\b|^no[one]{2,4}$)/i),
+	containsKeep: new RegExp(/(\bke[ep]{2,6}\b)/i),
+	containsChange: new RegExp(/(\bchan[nge]{1,4}\b)/i),
+	containsDisable: new RegExp(/(\bdisab[ble]{1,4}\b)/i),
+	containsShare: new RegExp(/\bshar[re]{1,4}\b/i),
+	containsDifferentOrAnother: new RegExp(/\b(d[different]{5,}|a[another]{4,})\b/i),
+	eastern: new RegExp(/\b(e[eastern]{5,})\b/i),
+	central: new RegExp(/\b(c[central]{5,})\b/i),
+	pacific: new RegExp(/\b(p[pacific]{5,})\b/i),
+	mountain: new RegExp(/\b(m[mountain]{5,})\b/i),
+	other: new RegExp(/\b(o[other]{3,})\b/i),
+	deleteTasks: new RegExp(/^(d[delete ]{3,}[tasks ]{0,})\b/i),
+	containsResetOrUndo: new RegExp(/\b(r[reset]{3,}|u[undo]{2,})\b/i),
+	startsWithHelp: new RegExp(/^(hel[elp]{1,4})\b/i),
+	containsNoOne: new RegExp(/\b(no one)\b/i),
+	somethingElse: new RegExp(/\bsome[omething]{3,}\b.*\bel[lse]{2,}\b/i),
+	containsEnough: new RegExp(/\beno[ough]{3,}\b/i)
+}, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "notToday", new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i)), _defineProperty(_utterances, "notShare", new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _defineProperty(_utterances, "noMore", new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i)), _defineProperty(_utterances, "redo", new RegExp(/^re[re do]{2,5}\b/i)), _defineProperty(_utterances, "noDontAskAgain", new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "yesDontAskAgain", new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "changePriority", new RegExp(/^chang[ge]{1,4}\b|\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\b(priori[tiyes]{1,5}|tas[sk]{1,5})\b/i)), _defineProperty(_utterances, "goBack", new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)), _defineProperty(_utterances, "setTime", new RegExp(/\bset[o]{0,5}\b.*\btim[me]{1,5}\b/i)), _defineProperty(_utterances, "beginAdventure", new RegExp(/\bbegin\b.*\badventure\b/i)), _defineProperty(_utterances, "changeTimeAndTask", new RegExp(/\bchan[nge]{1,5}\b.{1,3}\btim[me]{1,3}\b.{1,7}\btas[sk]{1,3}\b/i)), _defineProperty(_utterances, "keepWorking", new RegExp(/\bkee[ep]{1,3}\b.{1,3}\bwor[king]{1,6}\b/i)), _defineProperty(_utterances, "sendSooner", new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bsoon[ner]{1,4}\b/i)), _defineProperty(_utterances, "containsSendAt", new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bat[t]{0,3}\b/i)), _utterances);
 
 var constants = exports.constants = {
+	endSessionTypes: {
+		endByPingToUserId: "END_BY_PING_TO_USER_ID",
+		sessionTimerUp: "SESSION_TIMER_UP",
+		endSessionEarly: "END_SESSION_EARLY"
+	},
 	PLAN_DECISION: {
 		complete: {
 			word: "TASK_COMPLETE",
@@ -150,511 +211,91 @@ for (var key in colorsHash) {
 }
 exports.colorsArray = colorsArray;
 var buttonValues = exports.buttonValues = {
-	startNow: {
-		name: "START_NOW",
-		value: "Yes, let's start!"
-	},
-	checkIn: {
-		name: "CHECK_IN",
-		value: "CHECK_IN"
-	},
-	changeTask: {
-		name: "CHANGE_TASK",
-		value: "Let's change tasks"
-	},
-	changePriority: {
-		name: "CHANGE_PRIORITY",
-		value: "Let's change priorities"
-	},
-	changeSessionTime: {
-		name: "CHANGE_SESSION_TIME",
-		value: "Let's change times"
-	},
-	changeCheckinTime: {
-		name: "CHANGE_CHECKIN_TIME",
-		value: "CHANGE_CHECKIN_TIME"
-	},
-	addCheckinNote: {
-		name: "ADD_CHECKIN_NOTE",
-		value: "ADD_CHECKIN_NOTE"
-	},
-	startSession: {
-		name: "START_SESSION",
-		value: "START_SESSION",
-		pause: {
-			name: "START_SESSION_PAUSE",
-			value: "START_SESSION_PAUSE",
-			endEarly: {
-				name: "START_SESSION_PAUSE_END_EARLY",
-				value: "START_SESSION_PAUSE_END_EARLY"
-			}
-		},
-		endEarly: {
-			name: "START_SESSION_END_EARLY",
-			value: "START_SESSION_END_EARLY"
-		},
-		resume: {
-			name: "START_SESSION_RESUME",
-			value: "START_SESSION_RESUME"
-		}
-	},
-	newTask: {
-		name: "NEW_TASK",
-		value: "NEW_TASK"
-	},
-	takeBreak: {
-		name: "TAKE_BREAK",
-		value: "TAKE_BREAK"
-	},
-	endDay: {
-		name: "END_DAY",
-		value: "end my day"
-	},
-	backLater: {
-		name: "BACK_LATER",
-		value: "BACK_LATER"
-	},
-	noTasks: {
-		name: "NO_TASKS",
-		value: "NO_TASKS"
-	},
-	noPendingTasks: {
-		name: "NO_PENDING_TASKS",
-		value: "NO_PENDING_TASKS"
-	},
-	noAdditionalTasks: {
-		name: "NO_ADDITIONAL_TASKS",
-		value: "NO_ADDITIONAL_TASKS"
-	},
-	actuallyWantToAddATask: {
-		name: "ACTUALLY_WANT_TO_ADD_TASK",
-		value: "ACTUALLY_WANT_TO_ADD_TASK"
-	},
-	differentTask: {
-		name: "DIFFERENT_TASK",
-		value: "DIFFERENT_TASK"
-	},
-	keepName: {
-		name: "KEEP_NAME",
-		value: "I'll keep my name"
-	},
-	differentName: {
-		name: "DIFFERENT_NAME",
-		value: "I'll choose a different name"
-	},
-	timeZones: {
-		eastern: {
-			name: "EASTERN_TIME",
-			value: "Eastern timezone"
-		},
-		central: {
-			name: "CENTRAL_TIME",
-			value: "Central timezone"
-		},
-		mountain: {
-			name: "MOUNTAIN_TIME",
-			value: "Mountain timezone"
-		},
-		pacific: {
-			name: "PACIFIC_TIME",
-			value: "Pacific timezone"
-		},
-		other: {
-			name: "OTHER_TIMEZONE",
-			value: "other timezone"
-		}
-	},
-	changeName: {
-		name: "CHANGE_NAME",
-		value: "CHANGE_NAME"
-	},
-	changeTimeZone: {
-		name: "CHANGE_TIME_ZONE",
-		value: "CHANGE_TIME_ZONE"
-	},
-	neverMind: {
-		name: "NEVER_MIND",
-		value: "Never mind!"
-	},
-	startDay: {
-		name: "START_DAY",
-		value: "START_DAY"
-	},
-	createReminder: {
-		name: "CREATE_REMINDER",
-		value: "CREATE_REMINDER"
-	},
-	resetTimes: {
-		name: "RESET_TIMES",
-		value: "RESET_TIMES"
-	},
-	doneSessionTimeoutSnooze: {
-		name: "DONE_SESSION_TIMEOUT_SNOOZE",
-		value: "DONE_SESSION_TIMEOUT_SNOOZE"
-	},
-	doneSessionTimeoutYes: {
-		name: "DONE_SESSION_TIMEOUT_YES",
-		value: "DONE_SESSION_TIMEOUT_YES"
-	},
-	doneSessionTimeoutNo: {
-		name: "DONE_SESSION_TIMEOUT_NO",
-		value: "DONE_SESSION_TIMEOUT_NO"
-	},
-	doneSessionEarlyNo: {
-		name: "DONE_SESSION_EARLY_NO",
-		value: "DONE_SESSION_EARLY_NO"
-	},
-	doneSessionTimeoutDidSomethingElse: {
-		name: "DONE_SESSION_TIMEOUT_DID_SOMETHING_ELSE",
-		value: "DONE_SESSION_TIMEOUT_DID_SOMETHING_ELSE"
-	},
-	doneSessionSnooze: {
-		name: "DONE_SESSION_SNOOZE",
-		value: "DONE_SESSION_SNOOZE"
-	},
-	doneSessionYes: {
-		name: "DONE_SESSION_YES",
-		value: "DONE_SESSION_YES"
-	},
-	doneSessionNo: {
-		name: "DONE_SESSION_NO",
-		value: "DONE_SESSION_NO"
-	},
-	doneSessionDidSomethingElse: {
-		name: "DONE_SESSION_DID_SOMETHING_ELSE",
-		value: "DONE_SESSION_DID_SOMETHING_ELSE"
-	},
-	thatsCorrect: {
-		value: "THATS_CORRECT",
-		name: "THATS_CORRECT"
-	},
-	thatsIncorrect: {
-		value: "THATS_INCORRECT",
-		name: "THATS_INCORRECT"
-	},
-	addTask: {
-		value: "ADD_TASK",
-		name: "ADD_TASK"
-	},
-	changeTaskContent: {
-		value: "CHANGE_TASK_CONTENT",
-		name: "CHANGE_TASK_CONTENT"
-	},
-	changeTaskTime: {
-		value: "CHANGE_TASK_TIME",
-		name: "CHANGE_TASK_TIME"
-	},
-	editTaskList: {
-		value: "EDIT_TASK_LIST",
-		name: "EDIT_TASK_LIST"
-	},
-	addTasks: {
-		value: "ADD_TASKS",
-		name: "ADD_TASKS"
-	},
-	markComplete: {
-		value: "MARK_TASK_COMPLETE",
-		name: "MARK_TASK_COMPLETE"
-	},
-	deleteTasks: {
-		value: "DELETE_TASKS",
-		name: "DELETE_TASKS"
-	},
-	editTaskTimes: {
-		value: "EDIT_TASK_TIMES",
-		name: "EDIT_TASK_TIMES"
-	},
-	neverMindTasks: {
-		value: "NEVER_MIND_TASKS",
-		name: "NEVER_MIND_TASKS"
-	},
-	newSession: {
-		value: "NEW_SESSION",
-		name: "NEW_SESSION"
-	},
-	cancelSession: {
-		value: "CANCEL_SESSION",
-		name: "CANCEL_SESSION"
-	},
-	doneAddingTasks: {
-		value: "Done",
-		name: "DONE_ADDING_TASKS"
-	},
-	endSessionYes: {
-		value: "END_SESSION_YES",
-		name: "END_SESSION_YES"
-	},
-	allPendingTasks: {
-		value: "ALL_PENDING_TASKS",
-		name: "ALL_PENDING_TASKS"
-	},
-	yes: {
-		value: "YES",
-		name: "yes!"
-	},
-	no: {
-		value: "NO",
-		name: "nope!"
-	},
-	remindMe: {
-		value: "REMIND_ME",
-		name: "REMIND_ME"
-	},
-	changeDefaultSnoozeTime: {
-		value: "CHANGE_DEFAULT_SNOOZE_TIME",
-		name: "CHANGE_DEFAULT_SNOOZE_TIME"
-	},
-	changeDefaultBreakTime: {
-		value: "CHANGE_DEFAULT_BREAK_TIME",
-		name: "CHANGE_DEFAULT_BREAK_TIME"
-	},
-	undoTaskComplete: {
-		value: "UNDO_TASK_COMPLETE",
-		name: "UNDO_TASK_COMPLETE"
-	},
-	undoTaskDelete: {
-		value: "UNDO_TASK_DELETE",
-		name: "UNDO_TASK_DELETE"
-	},
-	planCommands: { // value will be NL single line commands
-		deletePriority: {
-			name: "PLAN_DELETE_PRIORITY",
-			value: "delete priority"
-		},
-		completePriority: {
-			name: "PLAN_COMPLETE_PRIORITY",
-			value: "complete priority"
-		},
-		addPriority: {
-			name: "PLAN_ADD_PRIORITY",
-			value: "add priority"
-		},
-		workOnPriority: {
-			name: "PLAN_WORK_ON_PRIORITY",
-			value: "work on priority"
-		},
-		revisePriority: {
-			name: "PLAN_REVISE_PRIORITY",
-			value: "revise priority"
-		},
-		endDay: {
-			name: "PLAN_END_DAY",
-			value: "end my day"
-		},
-		actuallyDontWantToAddPriority: {
-			name: "PLAN_DONT_WANT_TO_ADD_PRIORITY",
-			value: "Never mind, I don't want to add another priority"
-		},
-		actuallyLetsRenamePriority: {
-			name: "PLAN_LETS_RENAME_PRIORITY",
-			value: "Actually, let's rename this priority"
-		}
-	},
-	redoTasks: {
-		name: "REDO_TASKS",
-		value: "REDO_TASKS"
-	},
-	workOnDifferentTask: {
-		name: "WORK_ON_DIFFERENT_TASK",
-		value: "Let's choose a different task!"
-	},
-	redoMyPriorities: {
-		name: "REDO_MY_PRIORITIES",
-		value: "Let's redo my priorities!"
-	},
-	wizardNewPlanFlow: {
-		name: "WIZARD_NEW_PLAN_FLOW",
-		value: "Help me figure that out!"
-	},
-	keepTaskOrder: {
-		name: "KEEP_TASK_ORDER",
-		value: "Keep this order!"
-	},
-	workOnTaskFor: {
-		ninetyMinutes: {
-			name: "WORK_ON_TASK_FOR_90_MINUTES",
-			value: "90 minutes"
-		},
-		sixtyMinutes: {
-			name: "WORK_ON_TASK_FOR_60_MINUTES",
-			value: "60 minutes"
-		},
-		thirtyMinutes: {
-			name: "WORK_ON_TASK_FOR_30_MINUTES",
-			value: "30 minutes"
-		},
-		fifteenMinutes: {
-			name: "WORK_ON_TASK_FOR_15_MINUTES",
-			value: "15 minutes"
-		}
-	},
-	startTaskIn: {
-		now: {
-			name: "WORK_ON_TASK_NOW",
-			value: "Let's do this task right now!"
-		},
-		tenMinutes: {
-			name: "WORK_ON_TASK_IN_10_MINUTES",
-			value: "in 10 minutes"
-		}
-	},
-	include: {
-		noOne: {
-			name: "INCLUDE_NO_ONE",
-			value: "No one for now!"
-		}
-	},
-	doneSession: {
-		completedPriorityTonedDown: {
-			name: "DONE_SESSION_TONED_DOWN_COMPLETED_PRIORITY",
-			value: "completed my priority early"
-		},
-		completedPriority: {
-			name: "DONE_SESSION_COMPLETED_PRIORITY",
-			value: "completed my priority!"
-		},
-		takeBreak: {
-			name: "DONE_SESSION_TAKE_BREAK",
-			value: "take a break"
-		},
-		extendSession: {
-			name: "DONE_SESSION_EXTEND_SESSION",
-			value: "extend my session"
-		},
-		newSession: {
-			name: "DONE_SESSION_NEW_SESSION",
-			value: "new session"
-		},
-		viewPlan: {
-			name: "DONE_SESSION_VIEW_PLAN",
-			value: "view my plan"
-		},
-		endDay: {
-			name: "DONE_SESSION_END_DAY",
-			value: "end my day"
-		},
-		notDone: {
-			name: "DONE_SESSION_NOT_DONE_WITH_PRIORITY",
-			value: "not yet done"
-		},
-		didSomethingElse: {
-			name: "DONE_SESSION_DID_SOMETHING_ELSE",
-			value: "I did something else!"
-		},
-		moveOn: {
-			name: "MOVE_ON",
-			value: "Let's move on!"
-		},
-		itWasSomethingElse: {
-			name: "DONE_SESSION_IT_WAS_SOMETHING_ELSE",
-			value: "it was something else!"
-		},
-		keepMyPriority: {
-			name: "DONE_SESSION_KEEP_MY_PRIORITIES",
-			value: "i'll keep my priorities!!"
-		},
-		beBackLater: {
-			name: "DONE_SESSION_BE_BACK_LATER",
-			value: "i'll be back later!"
-		}
-	},
-	doneWithBreak: {
-		name: "DONE_WITH_BREAK",
-		value: "let's do it"
-	},
-	keepPriority: {
-		name: "KEEP_PRIORITY",
-		value: "i'll keep my priorities"
-	},
-	doneEarly: {
-		name: "SESSION_DONE_EARLY",
-		value: "im done!"
-	},
-	addCheckIn: {
-		name: "SESSION_ADD_CHECK_IN",
-		value: "let's add a check in!"
-	},
-	notToday: {
-		name: "NOT_TODAY",
-		value: "not today"
-	},
-	keepWorking: {
-		name: "KEEP_WORKING",
-		value: "i want to keep working"
-	},
-	notShare: {
-		name: "LETS_NOT_SHARE",
-		value: "let's not share today"
-	},
-	newPlan: {
-		redoLastPriority: {
-			name: "REDO_LAST_PRIORITY",
-			value: "redo last priority"
-		},
-		noMorePriorities: {
-			name: "NO_MORE_PRIORITIES",
-			value: "no more priorities"
-		}
-	},
-	noDontAskAgain: {
-		name: "NO_DONT_ASK_AGAIN",
-		value: "no, and don't ask again"
-	},
-	yesDontAskAgain: {
-		name: "YES_DONT_ASK_AGAIN",
-		value: "yes, and don't ask again"
-	},
-	next: {
-		name: "NEXT",
-		value: "next"
-	},
-	now: {
-		name: "NOW",
-		value: "now!"
-	},
-	inTenMinutes: {
-		name: "IN_TEN_MINUTES",
-		value: "in 10 minutes"
-	},
 	goBack: {
 		name: "GO_BACK",
 		value: "go back!"
-	},
-	letsWinTheDay: {
-		name: "LETS_WIN_THE_DAY",
-		value: "lets win the day!"
 	},
 	letsDoIt: {
 		name: "LETS_DO_IT",
 		value: "lets do it!"
 	},
-	changeTime: {
-		name: "CHANGE_TIME",
-		value: "change time!"
+	changeTasks: {
+		name: "CHANGE_TASKS",
+		value: "change tasks!"
 	},
-	keepTime: {
-		name: "KEEP_TIME",
-		value: "keep time!"
+	neverMind: {
+		name: "NEVER_MIND",
+		value: "never mind!"
 	},
-	disable: {
-		name: "DISABLE",
-		value: "disable!"
+	endSession: {
+		name: "END_SESSION",
+		value: "End Session"
 	},
-	shareWithOthers: {
-		name: "SHARE_WITH_OTHERS",
-		value: "share with others!"
+	newSession: {
+		name: "NEW_SESSION",
+		value: "New session"
 	},
-	setTime: {
-		name: "SET_TIME",
-		value: "set time!"
+	keepWorking: {
+		name: "KEEP_WORKING",
+		value: "Keep working!"
 	},
-	keepPerson: {
-		name: "KEEP_PERSON",
-		value: "keep person!"
+	changeTimeAndTask: {
+		name: "CHANGE_TIME_AND_TASK",
+		value: "Change time and task"
 	},
-	changePerson: {
-		name: "CHANGE_PERSON",
-		value: "change person!"
+	yes: {
+		name: "YES",
+		value: "Yes"
+	},
+	no: {
+		name: "NO",
+		value: "no"
+	},
+	sendAtEndOfSession: {
+		name: "SEND_AT_END_SESSION",
+		value: "Send at end of session"
+	},
+	sendSooner: {
+		name: "SEND_SOONER",
+		value: "Send sooner"
+	},
+	now: {
+		name: "NOW",
+		value: "Now"
+	},
+	timeZones: {
+		eastern: {
+			name: "EASTERN",
+			value: "Eastern"
+		},
+		central: {
+			name: "CENTRAL",
+			value: "Central"
+		},
+		mountain: {
+			name: "MOUNTAIN",
+			value: "mountain"
+		},
+		pacific: {
+			name: "PACIFIC",
+			value: "Pacific"
+		},
+		other: {
+			name: "OTHER",
+			value: "Other"
+		}
+	},
+	focus: {
+		name: "FOCUS",
+		value: "focus"
+	},
+	sendNow: {
+		name: "SEND_NOW",
+		value: "send now"
+	},
+	cancelPing: {
+		name: "CANCEL_PING",
+		value: "cancel ping"
 	}
 };
 
@@ -674,264 +315,105 @@ var timeZones = exports.timeZones = {
 	pacific: {
 		tz: "America/Los_Angeles",
 		name: "Pacific"
+	},
+	other: {
+		tz: "OTHER",
+		name: "Other"
 	}
 };
 
 var approvalWords = exports.approvalWords = ['nice', 'awesome', 'sounds good', 'great', 'fantastic', 'looking good', 'very nice', 'cool', 'boom', 'looks good'];
 
-var quotes = exports.quotes = [{
-	message: "By failing to prepare, you are preparing to fail.",
-	author: "Benjamin Franklin"
-}, {
-	message: "Give me six hours to chop down a tree and I will spend the first four sharpening the axe.",
-	author: "Abraham Lincoln"
-}, {
-	message: "If you don't know where you are going, you'll end up someplace else.",
-	author: "Yogi Berra"
-}, {
-	message: "In preparing for battle I have always found that plans are useless, but planning is indispensable.",
-	author: "Dwight D. Eisenhower"
-}, {
-	message: "Someone's sitting in the shade today because someone planted a tree a long time ago.",
-	author: "Warren Buffett"
-}, {
-	message: "Unless commitment is made, there are only promises and hopes; but no plans.",
-	author: "Peter F. Drucker"
-}, {
-	message: "Unfortunately, there seems to be far more opportunity out there than ability.... We should remember that good fortune often happens when opportunity meets with preparation.",
-	author: "Thomas A. Edison"
-}, {
-	message: "I believe luck is preparation meeting opportunity. If you hadn’t been prepared when the opportunity came along, you wouldn’t have been lucky.",
-	author: "Oprah Winfrey"
-}, {
-	message: "If I had an hour to solve a problem I'd spend 55 minutes thinking about the problem and 5 minutes thinking about solutions.",
-	author: "Albert Einstein"
-}, {
-	message: "If you really look closely, most overnight successes took a long time.",
-	author: "Steve Jobs"
-}];
+var startSessionExamples = exports.startSessionExamples = ['think through product development roadmap for 75 min', 'send supporter update emails for 1 hour', 'finish first version of website wireframe for 60 min', 'map out inbound marketing strategy until 10am', 'write up city research until 1pm', 'follow up with primary customers until 11:35am', 'sketch out first version of logo for 1 hr 15 min', 'update portfolio and send out to mentors for 1hr 30 min'];
 
-var tokiOptionsAttachment = exports.tokiOptionsAttachment = [{
-	text: "Instead of treating each day as a never-ending list of todos, I help you *identify the top 3 priorities* that define your day, *_and actually accomplish them_*",
-	color: colorsHash.salmon.hex,
-	mrkdwn_in: ["text"],
-	attachment_type: "default",
-	callback_id: "TOKI_OPTIONS",
-	fallback: "Identify and do your 3 priorities"
-}, {
-	text: "These are often the priorities that are difficult to make time for and get focused on, but are what *create big outcomes for yourself and your team*",
-	color: colorsHash.blue.hex,
-	mrkdwn_in: ["text"],
-	attachment_type: "default",
-	callback_id: "TOKI_OPTIONS",
-	fallback: "Do the most important things"
-}, {
-	text: "I realize you likely work on more than three tasks each day. I'm here to make sure you *get 3 things done that are critically important to your day, but might get lost or pushed back* if you don't deliberately make time for them",
-	color: colorsHash.yellow.hex,
-	mrkdwn_in: ["text"],
-	attachment_type: "default",
-	callback_id: "TOKI_OPTIONS",
-	fallback: "Accomplish your 3 main priorities to win the day"
-}, {
-	text: "I can also send these top 3 priorities with anyone on your team if you'd like to *share what you're working on*",
-	color: colorsHash.lavendar.hex,
-	mrkdwn_in: ["text"],
-	attachment_type: "default",
-	callback_id: "TOKI_OPTIONS",
-	fallback: "Share with your team"
-}];
-
-var tokiOptionsExtendedAttachment = exports.tokiOptionsExtendedAttachment = [{
-	title: "Planning the day",
-	text: "Say `lets plan` to set the tasks you intend to accomplish each day and estimate how long each will take you",
-	mrkdwn_in: ["text"],
-	color: colorsHash.blue.hex,
-	attachment_type: "default",
-	callback_id: "TOKI_OPTIONS",
-	fallback: "Planning your day"
-}, {
-	title: "Launching work sessions",
-	text: "Say `start a session` to kick off a focused work session to accomplish specific tasks",
-	mrkdwn_in: ["text"],
-	color: colorsHash.green.hex,
-	attachment_type: "default",
-	callback_id: "TOKI_OPTIONS",
-	fallback: "Launching work sessions"
-}, {
-	title: "Setting reminders",
-	text: "Say `I'd like a reminder` or use the shorthand `/note` if you want me to remind you about whatever you'd like at any time or duration",
-	mrkdwn_in: ["text"],
-	color: colorsHash.yellow.hex,
-	attachment_type: "default",
-	callback_id: "TOKI_OPTIONS",
-	fallback: "Setting reminders"
-}, {
-	title: "Viewing and editing priorities on the fly",
-	text: "Say `edit tasks` to update your tasks and time estimates throughout the day, and use the shorthand `/add` to quickly write things down",
-	mrkdwn_in: ["text"],
-	color: colorsHash.salmon.hex,
-	attachment_type: "default",
-	callback_id: "TOKI_OPTIONS",
-	fallback: "Starting your day"
-}];
-
-var sessionTimerDecisions = exports.sessionTimerDecisions = {
-	didTask: "DID_TASK",
-	snooze: "SNOOZE",
-	didSomethingElse: "DID_SOMETHING_ELSE",
-	noTasks: "NO_TASKS",
-	newSession: "NEW_SESSION",
-	cancelSession: "CANCEL_SESSION"
-};
-
-var taskListMessageDoneButtonAttachment = exports.taskListMessageDoneButtonAttachment = [{
-	attachment_type: 'default',
-	callback_id: "TASK_LIST_MESSAGE",
-	fallback: "Which additional tasks do you want to work on?",
-	color: colorsHash.grey.hex,
-	actions: [{
-		name: buttonValues.doneAddingTasks.name,
-		text: "Done",
-		value: buttonValues.doneAddingTasks.value,
-		type: "button",
-		style: "primary"
-	}]
-}];
-
-var taskListMessageDoneAndDeleteButtonAttachment = exports.taskListMessageDoneAndDeleteButtonAttachment = [{
-	attachment_type: 'default',
-	callback_id: "TASK_LIST_MESSAGE",
-	fallback: "Which additional tasks do you want to work on?",
-	color: colorsHash.grey.hex,
-	actions: [{
-		name: buttonValues.doneAddingTasks.name,
-		text: "Done",
-		value: buttonValues.doneAddingTasks.value,
-		type: "button",
-		style: "primary"
-	}, {
-		name: buttonValues.deleteTasks.name,
-		text: "Delete tasks",
-		value: buttonValues.deleteTasks.value,
-		type: "button"
-	}]
-}];
-
-var taskListMessageAddMoreTasksButtonAttachment = exports.taskListMessageAddMoreTasksButtonAttachment = [{
-	attachment_type: 'default',
-	callback_id: "TASK_LIST_MESSAGE",
-	fallback: "How much time would you like to allocate to your tasks?",
-	color: colorsHash.grey.hex,
-	actions: [{
-		name: buttonValues.actuallyWantToAddATask.name,
-		text: "Add more tasks!",
-		value: buttonValues.actuallyWantToAddATask.value,
-		type: "button"
-	}]
-}];
-
-var taskListMessageYesButtonAttachment = exports.taskListMessageYesButtonAttachment = [{
-	attachment_type: 'default',
-	callback_id: "TASK_LIST_MESSAGE",
-	fallback: "Here is your task list",
-	color: colorsHash.grey.hex,
-	actions: [{
-		name: buttonValues.yes.name,
-		text: "Yes!",
-		value: buttonValues.yes.value,
-		type: "button",
-		style: "primary"
-	}]
-}];
-
-var taskListMessageNoButtonsAttachment = exports.taskListMessageNoButtonsAttachment = [{
-	attachment_type: 'default',
-	callback_id: "TASK_LIST_MESSAGE",
-	fallback: "Here is your task list",
-	color: colorsHash.grey.hex
-}];
-
-var taskListMessageAddMoreTasksAndResetTimesButtonAttachment = exports.taskListMessageAddMoreTasksAndResetTimesButtonAttachment = [{
-	attachment_type: 'default',
-	callback_id: "TASK_LIST_MESSAGE",
-	fallback: "How much time would you like to allocate to your tasks?",
-	color: colorsHash.grey.hex,
-	actions: [{
-		name: buttonValues.actuallyWantToAddATask.name,
-		text: "Add more tasks!",
-		value: buttonValues.actuallyWantToAddATask.value,
-		type: "button"
-	}, {
-		name: buttonValues.resetTimes.name,
-		text: "Reset times",
-		value: buttonValues.resetTimes.value,
-		type: "button",
-		style: "danger"
-	}]
-}];
-
-var taskListMessageResetTimesButtonAttachment = exports.taskListMessageResetTimesButtonAttachment = [{
-	attachment_type: 'default',
-	callback_id: "TASK_LIST_MESSAGE",
-	fallback: "How much time would you like to allocate to your tasks?",
-	color: colorsHash.grey.hex,
-	actions: [{
-		name: buttonValues.actuallyWantToAddATask.name,
-		text: "Add more tasks!",
-		value: buttonValues.actuallyWantToAddATask.value,
-		type: "button"
-	}]
-}];
-
+/**
+ * 	ATTACHMENTS
+ */
 var startSessionOptionsAttachments = exports.startSessionOptionsAttachments = [{
 	attachment_type: 'default',
 	callback_id: "LIVE_SESSION_OPTIONS",
 	fallback: "Good luck with your session!",
 	actions: [{
-		name: buttonValues.startSession.pause.name,
-		text: "Pause",
-		value: buttonValues.startSession.pause.value,
+		name: buttonValues.changeTimeAndTask.name,
+		text: "Change Time + Task",
+		value: buttonValues.changeTimeAndTask.value,
 		type: "button"
 	}, {
-		name: buttonValues.addCheckIn.name,
-		text: "Add check-in",
-		value: buttonValues.addCheckIn.value,
-		type: "button"
-	}, {
-		name: buttonValues.doneEarly.name,
-		text: "End Session Early",
-		value: buttonValues.doneEarly.value,
-		type: "button"
-	}]
-}];
-
-var pausedSessionOptionsAttachments = exports.pausedSessionOptionsAttachments = [{
-	attachment_type: 'default',
-	callback_id: "PAUSED_SESSION_OPTIONS",
-	fallback: "Your session is paused!",
-	actions: [{
-		name: buttonValues.startSession.resume.name,
-		text: "Resume",
-		value: buttonValues.startSession.resume.value,
-		type: "button",
-		style: "primary"
-	}, {
-		name: buttonValues.doneEarly.name,
+		name: buttonValues.endSession.name,
 		text: "End Session",
-		value: buttonValues.doneEarly.value,
+		value: buttonValues.endSession.value,
 		type: "button"
 	}]
 }];
 
-var endBreakEarlyAttachments = exports.endBreakEarlyAttachments = [{
+var letsFocusAttachments = exports.letsFocusAttachments = [{
 	attachment_type: 'default',
-	callback_id: "END_BREAK_EARLY",
-	fallback: "I'm ready to get started!!",
+	callback_id: "LETS_FOCUS_AGAIN",
+	fallback: "Let's focus again!",
 	actions: [{
-		name: buttonValues.doneWithBreak.name,
-		text: "I'm back early!",
-		value: buttonValues.doneWithBreak.value,
+		name: buttonValues.focus.name,
+		text: "Focus :thinking_face:",
+		value: buttonValues.focus.value,
 		type: "button"
 	}]
+}];
+
+var timeZoneAttachments = exports.timeZoneAttachments = [{
+	attachment_type: 'default',
+	callback_id: "ONBOARD",
+	fallback: "What's your timezone?",
+	color: colorsHash.grey.hex,
+	actions: [{
+		name: buttonValues.timeZones.eastern.name,
+		text: "Eastern",
+		value: buttonValues.timeZones.eastern.value,
+		type: "button"
+	}, {
+		name: buttonValues.timeZones.central.name,
+		text: "Central",
+		value: buttonValues.timeZones.central.value,
+		type: "button"
+	}, {
+		name: buttonValues.timeZones.mountain.name,
+		text: "Mountain",
+		value: buttonValues.timeZones.mountain.value,
+		type: "button"
+	}, {
+		name: buttonValues.timeZones.pacific.name,
+		text: "Pacific",
+		value: buttonValues.timeZones.pacific.value,
+		type: "button"
+	}, {
+		name: buttonValues.timeZones.other.name,
+		text: "Other",
+		value: buttonValues.timeZones.other.value,
+		type: "button"
+	}]
+}];
+
+var tokiExplainAttachments = exports.tokiExplainAttachments = [{
+	title: "Focus Sessions",
+	text: "Direct message me `focus` to knock out a task and protect yourself from non-urgent messages while you work",
+	mrkdwn_in: ["text"],
+	color: colorsHash.toki_purple.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Focus Sessions"
+}, {
+	title: "Ping Members",
+	text: "Direct message me `ping @user` whenever you would otherwise send a DM or mention to @user. I'll handle the message based on whether @user is focused or not, and let you send it sooner if it's urgent",
+	mrkdwn_in: ["text"],
+	color: colorsHash.toki_purple.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Ping members"
+}, {
+	title: "Slash Commands to Focus or Ping",
+	text: "Enter focus sessions and ping teammates with the `/focus` and `/ping` single-line commands",
+	mrkdwn_in: ["text"],
+	color: colorsHash.toki_purple.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Slash Commands"
 }];
 //# sourceMappingURL=constants.js.map

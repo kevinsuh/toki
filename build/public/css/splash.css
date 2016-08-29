@@ -1,209 +1,149 @@
-#logo {
-  height: 75px; }
-
-.splash {
-  /**
-	 * 		~~ LANDING PAGE OF CSS ~~
-	 */
-  /**
-	 * 		~~ MAIN BODY OF CSS ~~
-	 */ }
-  .splash .color-gradient {
-    background-color: rgba(108, 237, 237, 0.1);
-    background-size: 150px 199px; }
-  .splash .bottom-landing, .splash .main-landing {
-    display: block;
-    padding: 60px 0 30px 0;
-    border-bottom: 1px solid #e5e5e5;
-    vertical-align: middle;
-    text-align: center; }
-    .splash .bottom-landing .main-title, .splash .main-landing .main-title {
-      color: black;
-      font-size: 50px;
-      font-weight: 600;
-      padding-bottom: 25px;
-      border-bottom: 2.5pt solid rgba(150, 34, 234,1); }
-    .splash .bottom-landing .main-body, .splash .main-landing .main-body {
-      padding: 0 15px; }
-      .splash .bottom-landing .main-body .subtitle, .splash .main-landing .main-body .subtitle {
-        font-size: 25px;
-        margin: 25px 0;
-        line-height: 30px;
-        color: black; }
-      .splash .bottom-landing .main-body .gif, .splash .main-landing .main-body .gif {
-        margin: 10px auto; }
-    .splash .bottom-landing form.invite, .splash .main-landing form.invite {
-      padding: 0 10%; }
-      .splash .bottom-landing form.invite .input-container, .splash .main-landing form.invite .input-container {
-        text-align: left; }
-        .splash .bottom-landing form.invite .input-container .email-input, .splash .main-landing form.invite .input-container .email-input {
-          height: 40px;
-          padding-left: 6px;
-          width: 100%; }
-        .splash .bottom-landing form.invite .input-container .submit-btn, .splash .main-landing form.invite .input-container .submit-btn {
-          display: inline-block;
-          background-color: white;
-          border: 1pt solid lightgrey;
-          text-align: center;
-          height: 40px;
-          line-height: 40px;
-          padding: 0 10px;
-          vertical-align: middle;
-          border-radius: 6px;
-          background-image: url("../images/slack_logo.png");
-          background-repeat: no-repeat;
-          background-position: center right 10px;
-          background-size: 22px;
-          padding-right: 41px;
-          padding-left: 13px;
-          font-weight: 600;
-          width: 100%; }
-      .splash .bottom-landing form.invite .description, .splash .main-landing form.invite .description {
-        font-weight: inherit;
-        color: black;
-        font-size: 18px;
-        text-align: left;
-        margin: 25px 0 10px 0; }
-        .splash .bottom-landing form.invite .description .link-emphasize, .splash .main-landing form.invite .description .link-emphasize {
-          color: black;
-          font-style: italic; }
-      .splash .bottom-landing form.invite .beta, .splash .main-landing form.invite .beta {
-        color: black;
-        font-style: italic;
-        padding-top: 5px;
-        font-size: 15px; }
-  .splash .bottom-landing {
-    color: black; }
-    .splash .bottom-landing .title {
-      margin-bottom: 20px;
-      font-size: 45px; }
-    .splash .bottom-landing .subtitle {
-      font-size: 25px; }
-    .splash .bottom-landing .video-container {
-      margin-top: 35px;
-      margin-bottom: 35px; }
-      .splash .bottom-landing .video-container .subtitle {
-        font-size: 22px; }
-    .splash .bottom-landing .signup-steps {
-      text-align: center;
-      padding-left: 40px; }
-      .splash .bottom-landing .signup-steps li {
-        margin: 10px 0;
-        font-size: 22px; }
-  .splash .header-container .title {
-    margin: 0;
-    padding: 0 0 15px 20px; }
-  .splash .body-container {
-    padding-bottom: 50px; }
-    .splash .body-container .body-title {
-      text-align: center;
-      font-size: 25px;
-      margin: 50px 0; }
-    .splash .body-container .benefit-box {
-      margin: 0 auto;
-      padding: 20px;
-      padding-right: 150px;
-      margin-bottom: 25px;
-      border: 4pt solid rgba(150, 34, 234,1);
-      height: 250px;
-      cursor: pointer;
-      -o-transition: 0.3s;
-      -ms-transition: 0.3s;
-      -moz-transition: 0.3s;
-      -webkit-transition: 0.3s;
-      transition: 0.3s; }
-      .splash .body-container .benefit-box:hover {
-        border: 4pt solid #FFA819; }
-        .splash .body-container .benefit-box:hover .circle {
-          border: 1.5pt solid blue; }
-      .splash .body-container .benefit-box .title {
-        font-weight: 700;
-        font-size: 22px; }
-      .splash .body-container .benefit-box .description {
-        font-size: 18px; }
-      .splash .body-container .benefit-box .benefit-circle {
-        -o-transition: 0.3s;
-        -ms-transition: 0.3s;
-        -moz-transition: 0.3s;
-        -webkit-transition: 0.3s;
-        transition: 0.3s; }
-      @media (max-width: 400px) {
-        .splash .body-container .benefit-box {
-          padding: 10px; }
-          .splash .body-container .benefit-box .circle {
-            display: none; } }
-
-/**
- * 		~~ HOVER OVER DEMO ~~ 
+/*
+ * Globals
  */
-#demo-display {
-  display: none;
-  position: fixed;
+/* Links */
+a,
+a:focus,
+a:hover {
+  color: #fff; }
+
+/* Custom default button */
+.btn-default,
+.btn-default:hover,
+.btn-default:focus {
+  color: #333;
+  text-shadow: none;
+  /* Prevent inheritance from `body` */
+  background-color: #fff;
+  border: 1px solid #fff; }
+
+/* Custom Text Input */
+.btn-secondary {
+  color: white;
+  background-color: coral; }
+
+.input-group {
+  width: 100%; }
+  .input-group input {
+    width: 100%; }
+  .input-group .input-group-btn {
+    width: 30% !important; }
+
+/*
+ * Base structure
+ */
+html,
+body {
+  height: 100%;
+  background-color: rebeccapurple !important; }
+
+body {
+  color: #fff !important;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  font-family: 'Lato', sans-serif; }
+
+/* Extra markup and styles for table-esque vertical and horizontal centering */
+.site-wrapper {
+  display: table;
   width: 100%;
   height: 100%;
-  background-color: white;
-  z-index: 999;
-  top: 0;
-  left: 0; }
-  #demo-display .body-wrapper {
-    position: relative;
-    overflow: hidden;
-    background-color: white; }
-  #demo-display section {
-    z-index: -1;
-    width: 100%;
-    position: absolute;
-    height: auto;
-    left: 50%;
-    transform: translateX(-50%);
-    max-height: 600px;
-    overflow: hidden;
-    bottom: 0; }
-    #demo-display section .gif {
-      margin: 0 auto; }
-  @media (max-width: 700px) {
-    #demo-display section {
-      width: 100%;
-      bottom: 20%; } }
-  #demo-display .logo-container {
-    padding-top: 20px;
-    padding-left: 10px; }
-  #demo-display .circle {
-    cursor: pointer;
-    border: 1.5pt solid black; }
-  @media (max-width: 400px) {
-    #demo-display .circle {
-      display: none; } }
-  #demo-display .demo-body {
-    padding: 30px;
-    padding-bottom: 0;
-    margin-top: 25px; }
-    #demo-display .demo-body .glyphicon {
-      font-size: 3.5vw; }
-      #demo-display .demo-body .glyphicon.button {
-        cursor: pointer; }
-    #demo-display .demo-body .title {
-      font-size: 3.5vw;
-      text-align: center;
-      margin: 0; }
-    #demo-display .demo-body .counter {
-      text-align: center; }
-    #demo-display .demo-body .main {
-      margin-top: 40px; }
+  /* For at least Firefox */
+  min-height: 100%;
+  -webkit-box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.5); }
 
-/**
- * 		~~ UTILITY CLASSES FOR SPLASH ~~
+.site-wrapper-inner {
+  display: table-cell;
+  vertical-align: top; }
+
+.cover-container {
+  margin-right: auto;
+  margin-left: auto; }
+
+/* Padding for spacing */
+.inner {
+  padding: 30px; }
+
+/*
+ * Header
  */
-.circle {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  border: 1.5pt solid #A3A3A1;
-  background: #FFA819;
-  text-align: center;
-  line-height: 100px;
-  position: absolute;
-  top: 20px;
-  right: 45px;
-  font-size: 17px;
-  font-weight: 800; }
+.masthead-brand {
+  margin-top: 10px;
+  margin-bottom: 10px; }
+
+.masthead-nav > li {
+  display: inline-block !important; }
+
+.masthead-nav > li > a {
+  padding-right: 0;
+  padding-left: 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  /* IE8 proofing */
+  color: rgba(255, 255, 255, 0.75);
+  border-bottom: 2px solid transparent; }
+
+.masthead-nav > li > a:hover,
+.masthead-nav > li > a:focus {
+  background-color: transparent;
+  border-bottom-color: #a9a9a9;
+  border-bottom-color: rgba(255, 255, 255, 0.25); }
+
+.masthead-nav > .active > a,
+.masthead-nav > .active > a:hover,
+.masthead-nav > .active > a:focus {
+  color: #fff;
+  border-bottom-color: #fff; }
+
+@media (min-width: 768px) {
+  .masthead-brand {
+    float: left; }
+  .masthead-nav {
+    float: right; } }
+
+/*
+ * Cover
+ */
+.cover {
+  padding: 0 20px; }
+
+.cover .btn-lg {
+  padding: 10px 20px;
+  font-weight: bold; }
+
+/*
+ * Footer
+ */
+.mastfoot {
+  color: #999;
+  /* IE8 proofing */
+  color: rgba(255, 255, 255, 0.5); }
+
+/*
+ * Affix and center
+ */
+@media (min-width: 768px) {
+  /* Pull out the header and footer */
+  .masthead {
+    position: fixed;
+    top: 0; }
+  .mastfoot {
+    position: fixed;
+    bottom: 0; }
+  /* Start the vertical centering */
+  .site-wrapper-inner {
+    vertical-align: middle; }
+  /* Handle the widths */
+  .masthead,
+  .mastfoot,
+  .cover-container {
+    width: 100%;
+    /* Must be percentage or pixels for horizontal alignment */ } }
+
+@media (min-width: 992px) {
+  .masthead,
+  .mastfoot,
+  .cover-container {
+    width: 700px; } }
