@@ -129,8 +129,10 @@ exports.default = function (controller) {
 	/**
   * 		BOMB THE PING MESSAGE
   */
-	controller.on('bomb_ping_message', function (bot, config) {
+	controller.on('update_ping_message', function (bot, config) {
 		var PingId = config.PingId;
+		var sendBomb = config.sendBomb;
+		var cancelPing = config.cancelPing;
 
 
 		_models2.default.Ping.find({
@@ -147,16 +149,28 @@ exports.default = function (controller) {
 
 			bot.startPrivateConversation({ user: FromUser.dataValues.SlackUserId }, function (err, convo) {
 
-				convo.say(':point_left: Got it! I just kicked off a conversation between you and <@' + ToUser.dataValues.SlackUserId + '>');
+				if (sendBomb) {
+					convo.say(':point_left: Got it! I just kicked off a conversation between you and <@' + ToUser.dataValues.SlackUserId + '>');
+				} else if (cancelPing) {
+					convo.say('The ping to <@' + ToUser.dataValues.SlackUserId + '> has been canceled!');
+				}
 
 				convo.on('end', function (convo) {
 
-					_models2.default.Ping.update({
-						live: true,
-						deliveryType: "bomb"
-					}, {
-						where: { id: PingId }
-					});
+					if (sendBomb) {
+						_models2.default.Ping.update({
+							live: true,
+							deliveryType: "bomb"
+						}, {
+							where: { id: PingId }
+						});
+					} else if (cancelPing) {
+						_models2.default.Ping.update({
+							live: false
+						}, {
+							where: { id: PingId }
+						});
+					}
 				});
 			});
 		});

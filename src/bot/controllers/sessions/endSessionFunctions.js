@@ -124,7 +124,13 @@ function handleFromUserPings(convo) {
 							{
 								name: buttonValues.sendNow.name,
 								text: "Send now :bomb:",
-								value: `{"sendBomb": true, "PingId": "${ping.dataValues.id}"}`,
+								value: `{"updatePing": true, "sendBomb": true, "PingId": "${ping.dataValues.id}"}`,
+								type: "button"
+							},
+							{
+								name: buttonValues.cancelPing.name,
+								text: "Cancel ping :negative_squared_cross_mark:",
+								value: `{"updatePing": true, "cancelPing": true, "PingId": "${ping.dataValues.id}"}`,
 								type: "button"
 							}
 						]

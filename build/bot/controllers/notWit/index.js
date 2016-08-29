@@ -23,12 +23,14 @@ exports.default = function (controller) {
 
 			try {
 				var jsonObject = JSON.parse(text);
+				var updatePing = jsonObject.updatePing;
+				var cancelPing = jsonObject.cancelPing;
 				var sendBomb = jsonObject.sendBomb;
 				var PingId = jsonObject.PingId;
 
-				if (sendBomb) {
-					var config = { PingId: PingId };
-					controller.trigger('bomb_ping_message', [bot, config]);
+				if (updatePing) {
+					var config = { PingId: PingId, sendBomb: sendBomb, cancelPing: cancelPing };
+					controller.trigger('update_ping_message', [bot, config]);
 				}
 			} catch (error) {
 				// this should never happen!

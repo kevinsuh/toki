@@ -32,10 +32,10 @@ export default function(controller) {
 			
 			try {
 				let jsonObject = JSON.parse(text);
-				const { sendBomb, PingId } = jsonObject;
-				if (sendBomb) {
-					const config = { PingId };
-					controller.trigger(`bomb_ping_message`, [bot, config]);
+				const { updatePing, cancelPing, sendBomb, PingId } = jsonObject;
+				if (updatePing) {
+					const config = { PingId, sendBomb, cancelPing };
+					controller.trigger(`update_ping_message`, [bot, config]);
 				}
 			}
 			catch (error) {

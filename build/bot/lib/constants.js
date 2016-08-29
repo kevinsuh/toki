@@ -292,6 +292,10 @@ var buttonValues = exports.buttonValues = {
 	sendNow: {
 		name: "SEND_NOW",
 		value: "send now"
+	},
+	cancelPing: {
+		name: "CANCEL_PING",
+		value: "cancel ping"
 	}
 };
 
