@@ -2,7 +2,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 import _ from 'lodash';
 import { utterances, colorsArray, buttonValues, colorsHash, timeZones, timeZoneAttachments, letsFocusAttachments, constants } from '../../lib/constants';
-import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, commaSeparateOutStringArray } from '../../lib/messageHelpers';
+import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, commaSeparateOutStringArray, stringifyNumber } from '../../lib/messageHelpers';
 
 /**
  * 		END SESSION CONVERSATION FLOW FUNCTIONS
@@ -55,7 +55,7 @@ export function startEndSessionFlow(convo) {
 	}
 
 	convo.say(message); // this message is relevant to how session got ended (ex. sessionTimerUp vs endByPingToUserId)
-	handleToUserPings(convo);
+	// handleToUserPings(convo);
 	handleFromUserPings(convo);
 
 	convo.say({
@@ -117,9 +117,10 @@ function handleFromUserPings(convo) {
 			continue;
 		}
 
-		// if not in superFocus session and they also have msg pinged for you,
-		// then their session will end automatically so only one side needs to
-		// handle it!
+		// if ToUser is not in a superFocus session
+		// and they also have msg pinged for you,
+		// then their session will end automatically
+		// so no need to handle it here
 		if (pingContainers.fromUser.toUser[toUserId].session && !pingContainers.fromUser.toUser[toUserId].session.dataValues.superFocus && pingContainers.toUser.fromUser[UserId]) {
 			continue;
 		}
@@ -133,71 +134,83 @@ function handleFromUserPings(convo) {
 			const { dataValues: { content, endTime } } = session;
 			const endTimeString = moment(endTime).tz(ToUser.dataValues.tz).format("h:mma");
 
-			convo.say(`<@${ToUser.dataValues.SlackUserId}> is focusing on \`${content}\` until *${endTimeString}*. I'll send your messages at that time, unless this is urgent and you want to send it now`);
+			let sessionMessage = `<@${ToUser.dataValues.SlackUserId}> is focusing on \`${content}\` until *${endTimeString}*.`;
 
-			// send ping one at a time, but with context now
-			pings.forEach((ping, index) => {
-
+			// separation when only queued 1 ping vs many pings
+			if (pings.length == 1) {
+				sessionMessage = `${sessionMessage}  I'll send your ping then, unless this is urgent and you want to send it now`;
 				let actions = [
 					{
 						name: buttonValues.sendNow.name,
 						text: "Send now :bomb:",
-						value: `{"updatePing": true, "sendBomb": true, "PingId": "${ping.dataValues.id}"}`,
+						value: `{"updatePing": true, "sendBomb": true, "PingId": "${pings[0].dataValues.id}"}`,
 						type: "button"
 					},
 					{
 						name: buttonValues.cancelPing.name,
 						text: "Cancel ping :negative_squared_cross_mark:",
-						value: `{"updatePing": true, "cancelPing": true, "PingId": "${ping.dataValues.id}"}`,
+						value: `{"updatePing": true, "cancelPing": true, "PingId": "${pings[0].dataValues.id}"}`,
 						type: "button"
 					}
 				];
+				convo.say({
+					text: sessionMessage,
+					actions
+				})
+			} else {
+				// if > 1 pings queued, only 1 session message and then send content out for each ping
+				sessionMessage = `${sessionMessage}  I'll send your pings then, unless you think it's urgent and you want to send it now`;
+				convo.say(sessionMessage);
 
-				if (pings.length == 1) {
+				pings.forEach((ping, index) => {
+
+					let numberString = stringifyNumber(index + 1);
+					let attachments = [];
+
+					ping.dataValues.PingMessages.forEach((pingMessage) => {
+
+						const pingMessageContent = pingMessage.dataValues.content;
+						attachments.push({
+							fallback: pingMessageContent,
+							color: colorsHash.toki_purple.hex,
+							text: pingMessageContent
+						});
+
+					});
+
+					let actions = [
+						{
+							name: buttonValues.sendNow.name,
+							text: "Send now :bomb:",
+							value: `{"updatePing": true, "sendBomb": true, "PingId": "${ping.dataValues.id}"}`,
+							type: "button"
+						},
+						{
+							name: buttonValues.cancelPing.name,
+							text: "Cancel ping :negative_squared_cross_mark:",
+							value: `{"updatePing": true, "cancelPing": true, "PingId": "${ping.dataValues.id}"}`,
+							type: "button"
+						}
+					];
+
+					attachments.push({
+						fallback: `What do you want to do with this ping?`,
+						actions
+					});
+
 					convo.say({
-						text: "Here is your ping:",
-						attachments: [
-							{
-								attachment_type: 'default',
-								callback_id: "SEND_BOMB",
-								fallback: "Let's send this now!",
-								actions
-							}
-						]
+						text: `*Here's your ${numberString} ping:*`,
+						attachments
 					})
-				} else {
+				});
 
-				}
-			})
+			}
 
-		}
-
-
-	}
-
-	pingContainers.fromUser.forEach((pingContainer) => {
-		const { ping, ping: { dataValues: { ToUser } }, session } = pingContainer;
-
-		// if the toUser is about to have their session ended (which only happens when they have a session queued for you and not in superFocus), then we can skip this.
-
-		if (session) {
-			// if in session, give option to break focus
-			const { dataValues: { content, endTime } } = session;
-			const endTimeString = moment(endTime).tz(ToUser.dataValues.tz).format("h:mma");
-
-			// this is right, but there needs to be context here!! (what is the message);
-			// i.e. I'll send your message below at that time, unless it's urgent and you want to send it now:
-			// >>> Here is the message that will get queued!
-			
-			convo.say({
-				text: ,
-				
-			});
 		} else {
-			// if not in session, trigger convo immediately
 			convo.say(`<@${ToUser.dataValues.SlackUserId}> is not in a focused session, so I just started a conversation between you two :simple_smile:`);
 		}
-	});
+
+	}
 
 }
 

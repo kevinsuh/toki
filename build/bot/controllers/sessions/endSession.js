@@ -110,41 +110,44 @@ exports.default = function (controller) {
 
 							// these are pings from user who just ended ession
 							if (pingFromUserId == UserId) {
+								(function () {
 
-								var pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
+									var pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
 
-								pingerSessions.forEach(function (pingerSession) {
-									var pingerSessionUserId = pingerSession.dataValues.UserId;
-									if (pingerSession && pingToUserId == pingerSessionUserId) {
-										// recipient of ping is in session
-										session = pingerSession;
-										return;
-									}
-								});
+									pingerSessions.forEach(function (pingerSession) {
+										console.log(pingerSession);
+										var pingerSessionUserId = pingerSession.dataValues.UserId;
+										console.log(pingerSessionUserId);
+										console.log(pingerSession);
+										if (pingerSession && pingToUserId == pingerSessionUserId) {
+											// recipient of ping is in session
+											pingContainer.session = pingerSession;
+											return;
+										}
+									});
 
-								pingContainer.session = session;
-								pingContainer.user = ping.dataValues.ToUser;
-
-								pingContainer.pings.push(ping);
-								pingContainers.fromUser.toUser[pingToUserId] = pingContainer;
+									pingContainer.user = ping.dataValues.ToUser;
+									pingContainer.pings.push(ping);
+									pingContainers.fromUser.toUser[pingToUserId] = pingContainer;
+								})();
 							} else if (pingToUserId == UserId) {
-								// these are pings to user who just ended session
+								(function () {
+									// these are pings to user who just ended session
 
-								var _pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
+									var pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
 
-								pingerSessions.forEach(function (pingerSession) {
-									var pingerSessionUserId = pingerSession.dataValues.UserId;
-									if (pingerSession && pingFromUserId == pingerSessionUserId) {
-										session = pingerSession;
-										return;
-									}
-								});
+									pingerSessions.forEach(function (pingerSession) {
+										var pingerSessionUserId = pingerSession.dataValues.UserId;
+										if (pingerSession && pingFromUserId == pingerSessionUserId) {
+											pingContainer.session = pingerSession;
+											return;
+										}
+									});
 
-								_pingContainer.session = session;
-								_pingContainer.user = ping.dataValues.FromUser;
-
-								_pingContainer.pings.push(ping);
-								pingContainers.toUser.fromUser[pingFromUserId] = _pingContainer;
+									pingContainer.user = ping.dataValues.FromUser;
+									pingContainer.pings.push(ping);
+									pingContainers.toUser.fromUser[pingFromUserId] = pingContainer;
+								})();
 							}
 						});
 
@@ -161,17 +164,9 @@ exports.default = function (controller) {
 							}
 						}
 
-						console.log('ping with messages example: \n\n\n');
-						console.log(pingContainers.fromUser.toUser[689].pings[1].dataValues.PingMessages);
-
 						// this needs to now be split up into 2:
 						// 1) batch up ping messages together
 						// 2) send batchedPings through this `forEach` method
-
-						console.log('batched pings:');
-						console.log(pingContainers);
-
-						return;
 
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 

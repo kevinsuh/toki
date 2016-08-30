@@ -13,6 +13,7 @@ exports.dateStringToMomentTimeZone = dateStringToMomentTimeZone;
 exports.getUniqueSlackUsersFromString = getUniqueSlackUsersFromString;
 exports.commaSeparateOutStringArray = commaSeparateOutStringArray;
 exports.getMostRecentMessageToUpdate = getMostRecentMessageToUpdate;
+exports.stringifyNumber = stringifyNumber;
 
 var _constants = require('./constants');
 
@@ -431,5 +432,11 @@ function getMostRecentMessageToUpdate(userChannel, bot) {
 	}
 
 	return updateTaskListMessageObject;
+}
+
+function stringifyNumber(n) {
+	if (n < 20) return _constants.specialNumbers[n];
+	if (n % 10 === 0) return _constants.decaNumbers[Math.floor(n / 10) - 2] + 'ieth';
+	return deca[Math.floor(n / 10) - 2] + 'y-' + _constants.specialNumbers[n % 10];
 }
 //# sourceMappingURL=messageHelpers.js.map

@@ -122,17 +122,18 @@ export default function(controller) {
 								let pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
 
 								pingerSessions.forEach((pingerSession) => {
+									console.log(pingerSession);
 									const pingerSessionUserId = pingerSession.dataValues.UserId;
+									console.log(pingerSessionUserId);
+									console.log(pingerSession);
 									if (pingerSession && pingToUserId == pingerSessionUserId) {
 										// recipient of ping is in session
-										session = pingerSession;
+										pingContainer.session = pingerSession;
 										return;
 									}
 								});
 
-								pingContainer.session = session;
-								pingContainer.user    = ping.dataValues.ToUser;
-
+								pingContainer.user = ping.dataValues.ToUser;
 								pingContainer.pings.push(ping);
 								pingContainers.fromUser.toUser[pingToUserId] = pingContainer;
 
@@ -144,14 +145,12 @@ export default function(controller) {
 								pingerSessions.forEach((pingerSession) => {
 									const pingerSessionUserId = pingerSession.dataValues.UserId;
 									if (pingerSession && pingFromUserId == pingerSessionUserId) {
-										session = pingerSession;
+										pingContainer.session = pingerSession;
 										return;
 									}
 								});
 
-								pingContainer.session = session;
-								pingContainer.user    = ping.dataValues.FromUser;
-
+								pingContainer.user = ping.dataValues.FromUser;
 								pingContainer.pings.push(ping);
 								pingContainers.toUser.fromUser[pingFromUserId] = pingContainer;
 
@@ -173,17 +172,9 @@ export default function(controller) {
 							
 						}
 
-						console.log(`ping with messages example: \n\n\n`);
-						console.log(pingContainers.fromUser.toUser[689].pings[1].dataValues.PingMessages);
-
 						// this needs to now be split up into 2:
 						// 1) batch up ping messages together
 						// 2) send batchedPings through this `forEach` method
-						
-						console.log(`batched pings:`);
-						console.log(pingContainers);
-
-						return;
 
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 

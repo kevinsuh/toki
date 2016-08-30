@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.tokiExplainAttachments = exports.timeZoneAttachments = exports.letsFocusAttachments = exports.startSessionOptionsAttachments = exports.startSessionExamples = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
+exports.decaNumbers = exports.specialNumbers = exports.tokiExplainAttachments = exports.timeZoneAttachments = exports.letsFocusAttachments = exports.startSessionOptionsAttachments = exports.startSessionExamples = exports.approvalWords = exports.timeZones = exports.buttonValues = exports.colorsArray = exports.colorsHash = exports.constants = exports.utterances = undefined;
 
 var _utterances;
 
@@ -421,4 +421,7 @@ var tokiExplainAttachments = exports.tokiExplainAttachments = [{
 	callback_id: "TOKI_OPTIONS",
 	fallback: "Slash Commands"
 }];
+
+var specialNumbers = exports.specialNumbers = ['zeroth', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelvth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'];
+var decaNumbers = exports.decaNumbers = ['twent', 'thirt', 'fourt', 'fift', 'sixt', 'sevent', 'eight', 'ninet'];
 //# sourceMappingURL=constants.js.map

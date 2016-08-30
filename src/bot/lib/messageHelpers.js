@@ -2,7 +2,7 @@
  * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
  */
 
-import { constants, buttonValues, colorsHash, quotes, approvalWords, startSessionExamples, utterances } from './constants';
+import { constants, buttonValues, colorsHash, quotes, approvalWords, startSessionExamples, utterances, specialNumbers, decaNumbers } from './constants';
 import nlp from 'nlp_compromise';
 import moment from 'moment-timezone';
 import _ from 'lodash';
@@ -403,4 +403,10 @@ export function getMostRecentMessageToUpdate(userChannel, bot, callbackId = fals
 
 	return updateTaskListMessageObject;
 
+}
+
+export function stringifyNumber(n) {
+	if (n < 20) return specialNumbers[n];
+	if (n%10 === 0) return decaNumbers[Math.floor(n/10)-2] + 'ieth';
+	return deca[Math.floor(n/10)-2] + 'y-' + specialNumbers[n%10];
 }
