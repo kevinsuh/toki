@@ -66,11 +66,10 @@ export default function(controller) {
 
 				let session = sessions[0] || false;
 
-
 				/*
 				* 	1. get all the `endSession` pings for ToUserId 
 				* 	2. get all the live sessions for FromUserId (pingers)
-				* 	3. match up sessions with pings into `pingObject` (`pingObject.ping` && `pingObject.session`)
+				* 	3. match up sessions with pings into `pingContainer` (`pingContainer.ping` && `pingContainer.session`)
 				* 	4. run logic based on whether ping has session
 				*/
 				models.Ping.findAll({
@@ -79,15 +78,16 @@ export default function(controller) {
 						{ model: models.User, as: `FromUser` },
 						{ model: models.User, as: `ToUser` },
 					],
-					order: `"Ping"."createdAt" DESC`
+					order: `"Ping"."createdAt" ASC`
 				}).then((pings) => {
 
 					// this object holds pings in relation to the UserId of the session that just ended!
 					// fromUser are pings that the user sent out
 					// toUser are pings that got sent to the user
-					let pingObjects = {
-						fromUser: [],
-						toUser: []
+					// need to batch by unique fromUser <=> toUser combinations
+					let pingContainers = {
+						fromUser: { toUser: {} },
+						toUser: { fromUser: {} }
 					};
 
 					// get all the sessions associated with pings that come FromUser
@@ -107,41 +107,65 @@ export default function(controller) {
 					Promise.all(pingerSessionPromises)
 					.then((pingerSessions) => {
 
-						// create the pingObject by matching up `ping` with live `session`
+						// create the pingContainer by matching up `ping` with live `session`. then group it in the appropriate place in pingContainers
 						// if no live session, `session` will be false
 						pings.forEach((ping) => {
 
-							let pingObject  = {};
-							let session     = false;
-							pingObject.ping = ping;
+							const pingFromUserId      = ping.dataValues.FromUserId;
+							const pingToUserId        = ping.dataValues.ToUserId;
 
-							if (ping.dataValues.FromUserId == UserId) {
-								// pings where user who just ended session has queued up
+							// these are pings from user who just ended ession
+							if (pingFromUserId == UserId) {
+
+								let pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
+
 								pingerSessions.forEach((pingerSession) => {
-									if (pingerSession && ping.dataValues.ToUserId == pingerSession.dataValues.UserId) {
+									const pingerSessionUserId = pingerSession.dataValues.UserId;
+									if (pingerSession && pingToUserId == pingerSessionUserId) {
 										// recipient of ping is in session
 										session = pingerSession;
 										return;
 									}
 								});
-								pingObject.session = session;
-								pingObjects.fromUser.push(pingObject);
-							} else if (ping.dataValues.ToUserId == UserId) {
-								// pings where it is queued up for user who just ended session
+
+								pingContainer.session = session;
+								pingContainer.pings.push(ping);
+								pingContainers.fromUser.toUser[pingToUserId] = pingContainer;
+
+							} else if (pingToUserId == UserId) {
+								// these are pings to user who just ended session
+								
+								let pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
+
 								pingerSessions.forEach((pingerSession) => {
-									if (pingerSession && ping.dataValues.FromUserId == pingerSession.dataValues.UserId) {
+									const pingerSessionUserId = pingerSession.dataValues.UserId;
+									if (pingerSession && pingFromUserId == pingerSessionUserId) {
 										session = pingerSession;
 										return;
 									}
 								});
-								pingObject.session = session;
-								pingObjects.toUser.push(pingObject);
+
+								pingContainer.session = session;
+								pingContainer.pings.push(ping);
+								pingContainers.toUser.fromUser[pingFromUserId] = pingContainer;
+
 							}
 
 						});
 
-						// attach only the relevant pingObjects (ones where FromUserId is not in live session or `superFocus` session)
-						pingObjects.toUser = pingObjects.toUser.filter(pingObject => !pingObject.session || !pingObject.session.dataValues.superFocus );
+						// attach only the relevant pingContainers (ones where FromUserId is not in live session or `superFocus` session)
+						for (let fromUserId in pingContainers.toUser.fromUser) {
+							if (pingContainers.toUser.fromUser.hasOwnProperty(fromUserId)) {
+								// delete if in superFocus session
+								if (pingContainers.toUser.fromUser[fromUserId].session && pingContainers.toUser.fromUser[fromUserId].superFocus) {
+									delete pingContainers.toUser.fromUser[fromUserId];
+								}
+							}
+						}
+
+						// this needs to now be split up into 2:
+						// 1) batch up ping messages together
+						// 2) send batchedPings through this `forEach` method
 
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
@@ -157,7 +181,7 @@ export default function(controller) {
 								UserId,
 								SlackUserId,
 								tz,
-								pingObjects, // all `endSession` pings to handle
+								pingContainers, // all `endSession` pings to handle
 								endSessionType,
 								pingInfo
 							}
@@ -170,6 +194,7 @@ export default function(controller) {
 								if ( now < endTime )
 									endTime = now;
 
+								// END THE SESSION HERE
 								session.update({
 									open: false,
 									live: false,
@@ -198,12 +223,17 @@ export default function(controller) {
 							convo.on('end', (convo) => {
 
 								// all the ping objects here are relevant!
-								const { pingObjects, endSessionType } = convo.sessionEnd;
+								const { pingContainers, endSessionType } = convo.sessionEnd;
+
+								// this needs to now be split up into 2:
+								// 1) batch up ping messages together
+								// 2) send batchedPings through this `forEach` method
+
 
 								// pings queued for user who just ended this session
-								pingObjects.toUser.forEach((pingObject) => {
+								pingContainers.toUser.forEach((pingContainer) => {
 
-									const { ping, ping: { dataValues: { FromUser, ToUser } }, session } = pingObject;
+									const { ping, ping: { dataValues: { FromUser, ToUser } }, session } = pingContainer;
 
 									ping.getPingMessages({})
 									.then((pingMessages) => {
@@ -252,9 +282,9 @@ export default function(controller) {
 								});
 
 								// pings queued by user who just ended this session
-								pingObjects.fromUser.forEach((pingObject) => {
+								pingContainers.fromUser.forEach((pingContainer) => {
 
-									const { ping, ping: { dataValues: { FromUser, ToUser } }, session } = pingObject;
+									const { ping, ping: { dataValues: { FromUser, ToUser } }, session } = pingContainer;
 
 									// only send the messages here when ToUser is not in a session
 									ping.getPingMessages({})

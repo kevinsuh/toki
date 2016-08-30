@@ -165,6 +165,11 @@ function handleFromUserPings(convo) {
 			var endTime = _session$dataValues2.endTime;
 
 			var endTimeString = (0, _momentTimezone2.default)(endTime).tz(ToUser.dataValues.tz).format("h:mma");
+
+			// this is right, but there needs to be context here!! (what is the message);
+			// i.e. I'll send your message below at that time, unless it's urgent and you want to send it now:
+			// >>> Here is the message that will get queued!
+
 			convo.say({
 				text: '<@' + ToUser.dataValues.SlackUserId + '> is focusing on `' + content + '` until *' + endTimeString + '*. I\'ll send your message at that time, unless this is urgent and you want to send it now',
 				attachments: [{

@@ -11,7 +11,7 @@ import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, commaSepa
 // confirm that user has tz configured before continuing
 export function startEndSessionFlow(convo) {
 
-	const { SlackUserId, UserId, session, tz, endSessionType, pingObjects, pingInfo }  = convo.sessionEnd;
+	const { SlackUserId, UserId, session, tz, endSessionType, pingContainers, pingInfo }  = convo.sessionEnd;
 
 	let startTimeObject;
 	let endTimeObject;
@@ -32,7 +32,10 @@ export function startEndSessionFlow(convo) {
 	}
 
 	// if this flow is triggered by ended by ping ToUser, and the userId of this session matches with FromUser.UserId of ping
-	if (endSessionType == constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
+	if (endSessionType == constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId &&) {
+
+		// send this only if there are LIVE pings remaining from this user => ToUser ping!
+
 		// ended by someone else. user may or may not be in session
 		
 		const { PingId, FromUser, ToUser } = pingInfo;
@@ -67,12 +70,12 @@ export function startEndSessionFlow(convo) {
 // this handles messaging for all pings to user of ending session
 function handleToUserPings(convo) {
 
-	const { SlackUserId, UserId, session, tz, endSessionType, pingInfo, pingObjects }  = convo.sessionEnd;
+	const { SlackUserId, UserId, session, tz, endSessionType, pingInfo, pingContainers }  = convo.sessionEnd;
 	let message = ' ';
 
 	let slackUserIds = [];
-	pingObjects.toUser.forEach((pingObject) => {
-		const { ping: { dataValues: { FromUser } } } = pingObject;
+	pingContainers.toUser.forEach((pingContainer) => {
+		const { ping: { dataValues: { FromUser } } } = pingContainer;
 		if (!_.includes(slackUserIds, FromUser.dataValues.SlackUserId)) {
 			slackUserIds.push(FromUser.dataValues.SlackUserId);
 		}
@@ -103,16 +106,21 @@ function handleToUserPings(convo) {
 // this handles messaging for all pings by the user of ending session
 function handleFromUserPings(convo) {
 
-	const { SlackUserId, UserId, session, tz, endSessionType, pingInfo, pingObjects }  = convo.sessionEnd;
+	const { SlackUserId, UserId, session, tz, endSessionType, pingInfo, pingContainers }  = convo.sessionEnd;
 	let message;
 
-	pingObjects.fromUser.forEach((pingObject) => {
-		const { ping, ping: { dataValues: { ToUser } }, session } = pingObject;
+	pingContainers.fromUser.forEach((pingContainer) => {
+		const { ping, ping: { dataValues: { ToUser } }, session } = pingContainer;
 
 		if (session) {
 			// if in session, give option to break focus
 			const { dataValues: { content, endTime } } = session;
 			const endTimeString = moment(endTime).tz(ToUser.dataValues.tz).format("h:mma");
+
+			// this is right, but there needs to be context here!! (what is the message);
+			// i.e. I'll send your message below at that time, unless it's urgent and you want to send it now:
+			// >>> Here is the message that will get queued!
+			
 			convo.say({
 				text: `<@${ToUser.dataValues.SlackUserId}> is focusing on \`${content}\` until *${endTimeString}*. I'll send your message at that time, unless this is urgent and you want to send it now`,
 				attachments: [

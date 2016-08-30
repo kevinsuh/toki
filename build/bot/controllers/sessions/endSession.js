@@ -64,21 +64,22 @@ exports.default = function (controller) {
 				/*
     * 	1. get all the `endSession` pings for ToUserId 
     * 	2. get all the live sessions for FromUserId (pingers)
-    * 	3. match up sessions with pings into `pingObject` (`pingObject.ping` && `pingObject.session`)
+    * 	3. match up sessions with pings into `pingContainer` (`pingContainer.ping` && `pingContainer.session`)
     * 	4. run logic based on whether ping has session
     */
 				_models2.default.Ping.findAll({
 					where: ['("Ping"."ToUserId" = ? OR "Ping"."FromUserId" = ?) AND "Ping"."live" = ? AND "Ping"."deliveryType" = ?', UserId, UserId, true, _constants.constants.pingDeliveryTypes.sessionEnd],
 					include: [{ model: _models2.default.User, as: 'FromUser' }, { model: _models2.default.User, as: 'ToUser' }],
-					order: '"Ping"."createdAt" DESC'
+					order: '"Ping"."createdAt" ASC'
 				}).then(function (pings) {
 
 					// this object holds pings in relation to the UserId of the session that just ended!
 					// fromUser are pings that the user sent out
 					// toUser are pings that got sent to the user
-					var pingObjects = {
-						fromUser: [],
-						toUser: []
+					// need to batch by unique fromUser <=> toUser combinations
+					var pingContainers = {
+						fromUser: { toUser: {} },
+						toUser: { fromUser: {} }
 					};
 
 					// get all the sessions associated with pings that come FromUser
@@ -99,42 +100,62 @@ exports.default = function (controller) {
 
 					Promise.all(pingerSessionPromises).then(function (pingerSessions) {
 
-						// create the pingObject by matching up `ping` with live `session`
+						// create the pingContainer by matching up `ping` with live `session`. then group it in the appropriate place in pingContainers
 						// if no live session, `session` will be false
 						pings.forEach(function (ping) {
 
-							var pingObject = {};
-							var session = false;
-							pingObject.ping = ping;
+							var pingFromUserId = ping.dataValues.FromUserId;
+							var pingToUserId = ping.dataValues.ToUserId;
 
-							if (ping.dataValues.FromUserId == UserId) {
-								// pings where user who just ended session has queued up
+							// these are pings from user who just ended ession
+							if (pingFromUserId == UserId) {
+
+								var pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
+
 								pingerSessions.forEach(function (pingerSession) {
-									if (pingerSession && ping.dataValues.ToUserId == pingerSession.dataValues.UserId) {
+									var pingerSessionUserId = pingerSession.dataValues.UserId;
+									if (pingerSession && pingToUserId == pingerSessionUserId) {
 										// recipient of ping is in session
 										session = pingerSession;
 										return;
 									}
 								});
-								pingObject.session = session;
-								pingObjects.fromUser.push(pingObject);
-							} else if (ping.dataValues.ToUserId == UserId) {
-								// pings where it is queued up for user who just ended session
+
+								pingContainer.session = session;
+								pingContainer.pings.push(ping);
+								pingContainers.fromUser.toUser[pingToUserId] = pingContainer;
+							} else if (pingToUserId == UserId) {
+								// these are pings to user who just ended session
+
+								var _pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
+
 								pingerSessions.forEach(function (pingerSession) {
-									if (pingerSession && ping.dataValues.FromUserId == pingerSession.dataValues.UserId) {
+									var pingerSessionUserId = pingerSession.dataValues.UserId;
+									if (pingerSession && pingFromUserId == pingerSessionUserId) {
 										session = pingerSession;
 										return;
 									}
 								});
-								pingObject.session = session;
-								pingObjects.toUser.push(pingObject);
+
+								_pingContainer.session = session;
+								_pingContainer.pings.push(ping);
+								pingContainers.toUser.fromUser[pingFromUserId] = _pingContainer;
 							}
 						});
 
-						// attach only the relevant pingObjects (ones where FromUserId is not in live session or `superFocus` session)
-						pingObjects.toUser = pingObjects.toUser.filter(function (pingObject) {
-							return !pingObject.session || !pingObject.session.dataValues.superFocus;
-						});
+						// attach only the relevant pingContainers (ones where FromUserId is not in live session or `superFocus` session)
+						for (var fromUserId in pingContainers.toUser.fromUser) {
+							if (pingContainers.toUser.fromUser.hasOwnProperty(fromUserId)) {
+								// delete if in superFocus session
+								if (pingContainers.toUser.fromUser[fromUserId].session && pingContainers.toUser.fromUser[fromUserId].superFocus) {
+									delete pingContainers.toUser.fromUser[fromUserId];
+								}
+							}
+						}
+
+						// this needs to now be split up into 2:
+						// 1) batch up ping messages together
+						// 2) send batchedPings through this `forEach` method
 
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
@@ -150,7 +171,7 @@ exports.default = function (controller) {
 								UserId: UserId,
 								SlackUserId: SlackUserId,
 								tz: tz,
-								pingObjects: pingObjects, // all `endSession` pings to handle
+								pingContainers: pingContainers, // all `endSession` pings to handle
 								endSessionType: endSessionType,
 								pingInfo: pingInfo
 							};
@@ -162,6 +183,7 @@ exports.default = function (controller) {
 								var endTime = (0, _momentTimezone2.default)(session.dataValues.endTime);
 								if (now < endTime) endTime = now;
 
+								// END THE SESSION HERE
 								session.update({
 									open: false,
 									live: false,
@@ -189,17 +211,22 @@ exports.default = function (controller) {
 
 								// all the ping objects here are relevant!
 								var _convo$sessionEnd = convo.sessionEnd;
-								var pingObjects = _convo$sessionEnd.pingObjects;
+								var pingContainers = _convo$sessionEnd.pingContainers;
 								var endSessionType = _convo$sessionEnd.endSessionType;
+
+								// this needs to now be split up into 2:
+								// 1) batch up ping messages together
+								// 2) send batchedPings through this `forEach` method
+
 
 								// pings queued for user who just ended this session
 
-								pingObjects.toUser.forEach(function (pingObject) {
-									var ping = pingObject.ping;
-									var _pingObject$ping$data = pingObject.ping.dataValues;
-									var FromUser = _pingObject$ping$data.FromUser;
-									var ToUser = _pingObject$ping$data.ToUser;
-									var session = pingObject.session;
+								pingContainers.toUser.forEach(function (pingContainer) {
+									var ping = pingContainer.ping;
+									var _pingContainer$ping$d = pingContainer.ping.dataValues;
+									var FromUser = _pingContainer$ping$d.FromUser;
+									var ToUser = _pingContainer$ping$d.ToUser;
+									var session = pingContainer.session;
 
 
 									ping.getPingMessages({}).then(function (pingMessages) {
@@ -245,12 +272,12 @@ exports.default = function (controller) {
 								});
 
 								// pings queued by user who just ended this session
-								pingObjects.fromUser.forEach(function (pingObject) {
-									var ping = pingObject.ping;
-									var _pingObject$ping$data2 = pingObject.ping.dataValues;
-									var FromUser = _pingObject$ping$data2.FromUser;
-									var ToUser = _pingObject$ping$data2.ToUser;
-									var session = pingObject.session;
+								pingContainers.fromUser.forEach(function (pingContainer) {
+									var ping = pingContainer.ping;
+									var _pingContainer$ping$d2 = pingContainer.ping.dataValues;
+									var FromUser = _pingContainer$ping$d2.FromUser;
+									var ToUser = _pingContainer$ping$d2.ToUser;
+									var session = pingContainer.session;
 
 									// only send the messages here when ToUser is not in a session
 

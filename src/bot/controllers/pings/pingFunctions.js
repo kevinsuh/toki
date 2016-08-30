@@ -611,6 +611,9 @@ export function queuePing(bot, fromUserConfig, toUserConfig, config) {
  * @param  {UserId, SlackUserId, TeamId} fromUserConfig
  * @param  {UserId, SlackUserId, TeamId} toUserConfig
  * @param  {deliveryType, pingMessages } config   [description]
+ *
+ *
+ * SHOULD ONLY BE `ping` not pingMessages. This should do logic of then organizing ping messages depending on # of pings!
  */
 export function sendPing(fromUserConfig, toUserConfig, config) {
 

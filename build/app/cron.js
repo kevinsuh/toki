@@ -33,6 +33,7 @@ var _pingFunctions = require('../bot/controllers/pings/pingFunctions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// these are all pings that are not sessionEnd
 var checkForPings = function checkForPings() {
 
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
@@ -43,7 +44,7 @@ var checkForPings = function checkForPings() {
 	// turn all work sessions off for that user once you ping that user
 	_models2.default.Ping.findAll({
 		where: ['"Ping"."live" = ? AND "Ping"."deliveryType" != ?', true, _constants.constants.pingDeliveryTypes.sessionEnd],
-		order: '"Ping"."createdAt" DESC'
+		order: '"Ping"."createdAt" ASC'
 	}).then(function (pings) {
 
 		pings.forEach(function (ping) {

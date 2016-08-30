@@ -16,6 +16,7 @@ export default function() {
 
 }
 
+// these are all pings that are not sessionEnd
 let checkForPings = () => {
 
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
@@ -26,9 +27,9 @@ let checkForPings = () => {
 	// turn all work sessions off for that user once you ping that user
 	models.Ping.findAll({
 		where: [ `"Ping"."live" = ? AND "Ping"."deliveryType" != ?`, true, constants.pingDeliveryTypes.sessionEnd ],
-		order: `"Ping"."createdAt" DESC`
+		order: `"Ping"."createdAt" ASC`
 	}).then((pings) => {
-
+		
 		pings.forEach((ping) => {
 
 			const { FromUserId, ToUserId, deliveryType, pingTime } = ping;
@@ -83,6 +84,7 @@ let checkForPings = () => {
 							};
 
 							sendPing(fromUserConfig, toUserConfig, config);
+
 						})
 
 					})
