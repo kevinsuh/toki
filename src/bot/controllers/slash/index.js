@@ -74,6 +74,9 @@ export default function(controller) {
 					if (toSlackName) {
 						// if msg starts with @pinger, remove it from message
 						let pingMessage = text[0] == "@" ? text.replace(/@(\S*)/,"").trim() : text;
+						let pingMessages = [];
+						if (pingMessage) pingMessages.push(pingMessage);
+
 						// for now this automatically queues to end of focus session
 						models.User.find({
 							where: {
@@ -83,20 +86,17 @@ export default function(controller) {
 						})
 						.then((toUser) => {
 
-							const config = {
-								deliveryType: "sessionEnd",
-								pingMessages: [ pingMessage ]
-							}
-							const fromUserConfig = { UserId, SlackUserId }
-
 							if (toUser) {
 
-								// sucess! (this should happen 99% of the time)
-								const toUserConfig   = { UserId: toUser.dataValues.id, SlackUserId: toUser.dataValues.SlackUserId }
+								let pingFlowConfig = {
+									SlackUserId, // fromUser SlackUserId
+									message,
+									pingSlackUserIds: [ toUser.dataValues.SlackUserId ],
+									pingMessages
+								}
 
-								queuePing(bot, fromUserConfig, toUserConfig, config);
-
-								responseObject.text = `Got it! I'll deliver that ping :mailbox_with_mail:`;
+								controller.trigger(`ping_flow`, [bot, pingFlowConfig]);
+								responseObject.text = `Got it! Let's deliver that ping :mailbox_with_mail:`;
 								bot.replyPrivate(message, responseObject);
 								
 							} else {
@@ -126,9 +126,16 @@ export default function(controller) {
 												where: { SlackUserId: foundSlackUserId }
 											})
 											.then((toUser) => {
-												const toUserConfig   = { UserId: toUser.dataValues.id, SlackUserId: toUser.dataValues.SlackUserId };
-												queuePing(bot, fromUserConfig, toUserConfig, config);
-												responseObject.text = `Got it! I'll deliver that ping :mailbox_with_mail:`;
+
+												let pingFlowConfig = {
+													SlackUserId, // fromUser SlackUserId
+													message,
+													pingSlackUserIds: [ toUser.dataValues.SlackUserId ],
+													pingMessages
+												}
+												
+												controller.trigger(`ping_flow`, [bot, pingFlowConfig]);
+												responseObject.text = `Got it! Let's deliver that ping :mailbox_with_mail:`;
 												bot.replyPrivate(message, responseObject);
 											})
 										}

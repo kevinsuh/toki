@@ -76,6 +76,9 @@ exports.default = function (controller) {
 						(function () {
 							// if msg starts with @pinger, remove it from message
 							var pingMessage = text[0] == "@" ? text.replace(/@(\S*)/, "").trim() : text;
+							var pingMessages = [];
+							if (pingMessage) pingMessages.push(pingMessage);
+
 							// for now this automatically queues to end of focus session
 							_models2.default.User.find({
 								where: {
@@ -84,20 +87,17 @@ exports.default = function (controller) {
 								}
 							}).then(function (toUser) {
 
-								var config = {
-									deliveryType: "sessionEnd",
-									pingMessages: [pingMessage]
-								};
-								var fromUserConfig = { UserId: UserId, SlackUserId: SlackUserId };
-
 								if (toUser) {
 
-									// sucess! (this should happen 99% of the time)
-									var toUserConfig = { UserId: toUser.dataValues.id, SlackUserId: toUser.dataValues.SlackUserId };
+									var pingFlowConfig = {
+										SlackUserId: SlackUserId, // fromUser SlackUserId
+										message: message,
+										pingSlackUserIds: [toUser.dataValues.SlackUserId],
+										pingMessages: pingMessages
+									};
 
-									(0, _pingFunctions.queuePing)(bot, fromUserConfig, toUserConfig, config);
-
-									responseObject.text = 'Got it! I\'ll deliver that ping :mailbox_with_mail:';
+									controller.trigger('ping_flow', [bot, pingFlowConfig]);
+									responseObject.text = 'Got it! Let\'s deliver that ping :mailbox_with_mail:';
 									bot.replyPrivate(message, responseObject);
 								} else {
 
@@ -107,7 +107,7 @@ exports.default = function (controller) {
 											var members = response.members;
 
 											var foundSlackUserId = false;
-											var _toUserConfig = {};
+											var toUserConfig = {};
 											members.some(function (member) {
 												if (toSlackName == member.name) {
 													var _SlackUserId = member.id;
@@ -125,9 +125,16 @@ exports.default = function (controller) {
 												_models2.default.User.find({
 													where: { SlackUserId: foundSlackUserId }
 												}).then(function (toUser) {
-													var toUserConfig = { UserId: toUser.dataValues.id, SlackUserId: toUser.dataValues.SlackUserId };
-													(0, _pingFunctions.queuePing)(bot, fromUserConfig, toUserConfig, config);
-													responseObject.text = 'Got it! I\'ll deliver that ping :mailbox_with_mail:';
+
+													var pingFlowConfig = {
+														SlackUserId: SlackUserId, // fromUser SlackUserId
+														message: message,
+														pingSlackUserIds: [toUser.dataValues.SlackUserId],
+														pingMessages: pingMessages
+													};
+
+													controller.trigger('ping_flow', [bot, pingFlowConfig]);
+													responseObject.text = 'Got it! Let\'s deliver that ping :mailbox_with_mail:';
 													bot.replyPrivate(message, responseObject);
 												});
 											}

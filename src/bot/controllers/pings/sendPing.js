@@ -18,9 +18,6 @@ export default function(controller) {
 	controller.hears(['^pin[ng]{1,4}'], 'direct_message', (bot, message) => {
 
 		const { intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
-
-		console.log(message);
-		console.log(reminder);
 		
 		let botToken = bot.config.token;
 		bot          = bots[botToken];
@@ -63,6 +60,9 @@ export default function(controller) {
 
 		const { SlackUserId, message, pingSlackUserIds } = config;
 		let { pingMessages } = config;
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
 		// allow user to pass in pingMessages from other places
 		if (!pingMessages) {
@@ -114,7 +114,7 @@ export default function(controller) {
 	});
 
 	/**
-	 * 		BOMB THE PING MESSAGE
+	 * 		BOMB THE PING MESSAGE FUNCTIONALITY (via button)
 	 */
 	controller.on(`update_ping_message`, (bot, config) => {
 

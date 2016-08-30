@@ -20,9 +20,6 @@ exports.default = function (controller) {
 		var datetime = _message$intentObject.datetime;
 
 
-		console.log(message);
-		console.log(reminder);
-
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
 
@@ -66,8 +63,11 @@ exports.default = function (controller) {
 		var pingSlackUserIds = config.pingSlackUserIds;
 		var pingMessages = config.pingMessages;
 
-		// allow user to pass in pingMessages from other places
 
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		// allow user to pass in pingMessages from other places
 		if (!pingMessages) {
 			pingMessages = [];
 		}
@@ -120,7 +120,7 @@ exports.default = function (controller) {
 	});
 
 	/**
-  * 		BOMB THE PING MESSAGE
+  * 		BOMB THE PING MESSAGE FUNCTIONALITY (via button)
   */
 	controller.on('update_ping_message', function (bot, config) {
 		var PingId = config.PingId;
