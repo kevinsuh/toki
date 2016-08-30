@@ -74,7 +74,7 @@ export default function(controller) {
 				* 	4. run logic based on whether ping has session
 				*/
 				models.Ping.findAll({
-					where: [ `("Ping"."ToUserId" = ? OR "Ping"."FromUserId" = ?) AND "Ping"."live" = ? AND "Ping"."deliveryType" = ?`, UserId, UserId, true, "sessionEnd" ],
+					where: [ `("Ping"."ToUserId" = ? OR "Ping"."FromUserId" = ?) AND "Ping"."live" = ? AND "Ping"."deliveryType" = ?`, UserId, UserId, true, constants.pingDeliveryTypes.sessionEnd ],
 					include: [
 						{ model: models.User, as: `FromUser` },
 						{ model: models.User, as: `ToUser` },
@@ -225,7 +225,7 @@ export default function(controller) {
 												TeamId: ToUser.dataValues.TeamId
 											}
 											const pingConfig = {
-												deliveryType: `sessionEnd`,
+												deliveryType: constants.pingDeliveryTypes.sessionEnd,
 												pingMessages
 											};
 
@@ -272,7 +272,7 @@ export default function(controller) {
 												TeamId: ToUser.dataValues.TeamId
 											}
 											const pingConfig = {
-												deliveryType: `sessionEnd`,
+												deliveryType: constants.pingDeliveryTypes.sessionEnd,
 												pingMessages
 											};
 

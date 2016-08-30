@@ -103,7 +103,7 @@ export default function(controller) {
 					const fromUserConfig = { UserId, SlackUserId };
 					const toUserConfig   = { UserId: pingUserId, SlackUserId: pingSlackUserId };
 					const config   = { userInSession, deliveryType, pingTimeObject, pingMessages };
-					
+
 					queuePing(bot, fromUserConfig, toUserConfig, config);
 
 				})
@@ -148,7 +148,7 @@ export default function(controller) {
 					if (sendBomb) {
 						models.Ping.update({
 							live: true,
-							deliveryType: "bomb"
+							deliveryType: constants.pingDeliveryTypes.bomb
 						}, {
 							where: { id: PingId }
 						});

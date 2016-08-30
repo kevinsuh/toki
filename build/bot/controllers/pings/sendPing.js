@@ -155,7 +155,7 @@ exports.default = function (controller) {
 					if (sendBomb) {
 						_models2.default.Ping.update({
 							live: true,
-							deliveryType: "bomb"
+							deliveryType: _constants.constants.pingDeliveryTypes.bomb
 						}, {
 							where: { id: PingId }
 						});

@@ -20,7 +20,7 @@ var utterances = exports.utterances = (_utterances = {
 	yes: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|(\bd[o ]+[this]{2,})|(\bd[o ]+[it]+)|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bs[tart]{2,}\b)/i),
 	yesOrCorrect: new RegExp(/((^y|yes|yea|yup|yep|ya|sure|ok|okay|yeah|yah|ye)\b|\by[esahp]{2,}\b|\bs[ure]{2,}\b|\bc[correct]{4,})/i),
 	no: new RegExp(/((no|not|nah|nope|^n)\b|\bn[oahpe]{1,4}\b)/i),
-	noAndNeverMind: new RegExp(/^n([oahpet]{1,5}|e[ever mind]{4,}|[vm]{1,4})$|^goo[od ]{1,5}\bfo[or ]{1,5}\bnow$/i),
+	noAndNeverMind: new RegExp(/^n([oahpet]{1,5}|e[ever mind]{4,}|[vm]{1,4})[.?!~]*$|^goo[od ]{1,5}\bfo[or ]{1,5}\bnow[.?!~]*$/i),
 	onlyNeverMind: new RegExp(/^ne[ever mind]{4,}$/i),
 	containsNoOrNeverMindOrNothing: new RegExp(/\bn(oth[othing]{2,5}|[oahpet]{1,5}|e[ever mind]{4,}|[vm]{1,4})\b|\bgoo[od ]{1,5}\bfo[or ]{1,5}\bnow\b/i),
 	startsWithNever: new RegExp(/^ne[never]{3,}\b/i),
@@ -91,6 +91,11 @@ var constants = exports.constants = {
 		endByPingToUserId: "END_BY_PING_TO_USER_ID",
 		sessionTimerUp: "SESSION_TIMER_UP",
 		endSessionEarly: "END_SESSION_EARLY"
+	},
+	pingDeliveryTypes: {
+		sessionEnd: "sessionEnd",
+		bomb: "bomb",
+		grenade: "grenade"
 	},
 	PLAN_DECISION: {
 		complete: {

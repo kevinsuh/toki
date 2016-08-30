@@ -42,7 +42,7 @@ var checkForPings = function checkForPings() {
 	// get the most recent work session! assume this is the one user is working on
 	// turn all work sessions off for that user once you ping that user
 	_models2.default.Ping.findAll({
-		where: ['"Ping"."live" = ? AND "Ping"."deliveryType" != ?', true, "sessionEnd"],
+		where: ['"Ping"."live" = ? AND "Ping"."deliveryType" != ?', true, _constants.constants.pingDeliveryTypes.sessionEnd],
 		order: '"Ping"."createdAt" DESC'
 	}).then(function (pings) {
 
@@ -54,7 +54,7 @@ var checkForPings = function checkForPings() {
 
 			// if there's a pingTime, respect it and dont send yet!
 
-			if (pingTime && deliveryType != 'bomb') {
+			if (pingTime && deliveryType != _constants.constants.pingDeliveryTypes.bomb) {
 				var pingTimeObject = (0, _momentTimezone2.default)(pingTime);
 				if (pingTimeObject > now) {
 					return;

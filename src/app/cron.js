@@ -25,7 +25,7 @@ let checkForPings = () => {
 	// get the most recent work session! assume this is the one user is working on
 	// turn all work sessions off for that user once you ping that user
 	models.Ping.findAll({
-		where: [ `"Ping"."live" = ? AND "Ping"."deliveryType" != ?`, true, "sessionEnd" ],
+		where: [ `"Ping"."live" = ? AND "Ping"."deliveryType" != ?`, true, constants.pingDeliveryTypes.sessionEnd ],
 		order: `"Ping"."createdAt" DESC`
 	}).then((pings) => {
 
@@ -34,7 +34,7 @@ let checkForPings = () => {
 			const { FromUserId, ToUserId, deliveryType, pingTime } = ping;
 
 			// if there's a pingTime, respect it and dont send yet!
-			if (pingTime && deliveryType != `bomb`) {
+			if (pingTime && deliveryType != constants.pingDeliveryTypes.bomb) {
 				let pingTimeObject = moment(pingTime);
 				if (pingTimeObject > now) {
 					return;

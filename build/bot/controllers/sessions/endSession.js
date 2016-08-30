@@ -68,7 +68,7 @@ exports.default = function (controller) {
     * 	4. run logic based on whether ping has session
     */
 				_models2.default.Ping.findAll({
-					where: ['("Ping"."ToUserId" = ? OR "Ping"."FromUserId" = ?) AND "Ping"."live" = ? AND "Ping"."deliveryType" = ?', UserId, UserId, true, "sessionEnd"],
+					where: ['("Ping"."ToUserId" = ? OR "Ping"."FromUserId" = ?) AND "Ping"."live" = ? AND "Ping"."deliveryType" = ?', UserId, UserId, true, _constants.constants.pingDeliveryTypes.sessionEnd],
 					include: [{ model: _models2.default.User, as: 'FromUser' }, { model: _models2.default.User, as: 'ToUser' }],
 					order: '"Ping"."createdAt" DESC'
 				}).then(function (pings) {
@@ -220,7 +220,7 @@ exports.default = function (controller) {
 												TeamId: ToUser.dataValues.TeamId
 											};
 											var pingConfig = {
-												deliveryType: 'sessionEnd',
+												deliveryType: _constants.constants.pingDeliveryTypes.sessionEnd,
 												pingMessages: pingMessages
 											};
 
@@ -268,7 +268,7 @@ exports.default = function (controller) {
 												TeamId: ToUser.dataValues.TeamId
 											};
 											var pingConfig = {
-												deliveryType: 'sessionEnd',
+												deliveryType: _constants.constants.pingDeliveryTypes.sessionEnd,
 												pingMessages: pingMessages
 											};
 

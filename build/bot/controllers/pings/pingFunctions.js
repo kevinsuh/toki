@@ -348,7 +348,7 @@ function askForQueuedPingMessages(convo) {
 
 						if (customTimeString == endTimeString) {
 							// sessionEnd ping
-							convo.pingObject.deliveryType = "sessionEnd";
+							convo.pingObject.deliveryType = _constants.constants.pingDeliveryTypes.sessionEnd;
 							convo.say('Thank you for being mindful of <@' + user.dataValues.SlackUserId + '>’s attention :raised_hands:');
 							convo.say('I’ll send your message at *' + customTimeString + '*! :mailbox_with_mail:');
 							convo.next();
@@ -357,7 +357,7 @@ function askForQueuedPingMessages(convo) {
 							if (now < customTimeObject && customTimeObject < endTimeObject) {
 								// grenade ping
 								convo.pingObject.pingTimeObject = customTimeObject;
-								convo.pingObject.deliveryType = "grenade";
+								convo.pingObject.deliveryType = _constants.constants.pingDeliveryTypes.grenade;
 								convo.say('Excellent! I’ll be sending your message to <@' + user.dataValues.SlackUserId + '> at *' + customTimeObject.format("h:mma") + '* :mailbox_with_mail:');
 							} else {
 								// invalid time for grenade ping
@@ -461,7 +461,7 @@ function askForPingTime(convo) {
 				pattern: _constants.utterances.containsNow,
 				callback: function callback(response, convo) {
 					// send now
-					convo.pingObject.deliveryType = "bomb";
+					convo.pingObject.deliveryType = _constants.constants.pingDeliveryTypes.bomb;
 					convo.say(':point_left: Got it! I\'ll send your message to <@' + user.dataValues.SlackUserId + '> :runner: :pencil:');
 					convo.next();
 				}
@@ -475,7 +475,7 @@ function askForPingTime(convo) {
 						if (now < customTimeObject && customTimeObject < endTimeObject) {
 							// success!
 							convo.pingObject.pingTimeObject = customTimeObject;
-							convo.pingObject.deliveryType = "grenade";
+							convo.pingObject.deliveryType = _constants.constants.pingDeliveryTypes.grenade;
 							convo.say('Excellent! I’ll be sending your message to <@' + user.dataValues.SlackUserId + '> at *' + customTimeObject.format("h:mma") + '* :mailbox_with_mail:');
 						} else {
 							// has to be less than or equal to end time
@@ -518,7 +518,7 @@ function queuePing(bot, fromUserConfig, toUserConfig, config) {
 	var deliveryType = config.deliveryType;
 
 
-	if (!deliveryType) deliveryType = "endSession"; // default to endSession ping
+	if (!deliveryType) deliveryType = _constants.constants.pingDeliveryTypes.sessionEnd; // default to sessionEnd ping
 
 	var SlackUserIds = fromUserConfig.SlackUserId + ',' + toUserConfig.SlackUserId;
 
@@ -662,10 +662,10 @@ function sendPing(fromUserConfig, toUserConfig, config) {
 					bot.startConversation({ channel: _id3 }, function (err, convo) {
 						var initialMessage = 'Hey <@' + toUserConfig.SlackUserId + '>! <@' + fromUserConfig.SlackUserId + '> wanted to reach out';
 						switch (deliveryType) {
-							case "bomb":
+							case _constants.constants.pingDeliveryTypes.bomb:
 								initialMessage = 'Hey <@' + toUserConfig.SlackUserId + '>! <@' + fromUserConfig.SlackUserId + '> has an urgent message for you:';
 								break;
-							case "grenade":
+							case _constants.constants.pingDeliveryTypes.grenade:
 								initialMessage = 'Hey <@' + toUserConfig.SlackUserId + '>! <@' + fromUserConfig.SlackUserId + '> has an urgent message for you:';
 								break;
 							default:
