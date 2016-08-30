@@ -14,36 +14,13 @@ export default function(controller) {
 	 * 		User directly asks to ping
 	 * 							~* via Wit *~
 	 */
-	controller.hears(['ping'], 'direct_message', wit.hears, (bot, message) => {
-
-		const { intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
-		
-		let botToken = bot.config.token;
-		bot          = bots[botToken];
-
-		const SlackUserId      = message.user;
-		const { text }         = message;
-		const pingSlackUserIds = getUniqueSlackUsersFromString(text);
-
-		let config = {
-			SlackUserId,
-			message,
-			pingSlackUserIds
-		}
-
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(() => {
-			controller.trigger(`ping_flow`, [bot, config]);
-		}, 650);
-
-	});
 
 	controller.hears(['^pin[ng]{1,4}'], 'direct_message', (bot, message) => {
 
 		const { intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
+
+		console.log(message);
+		console.log(reminder);
 		
 		let botToken = bot.config.token;
 		bot          = bots[botToken];
@@ -52,10 +29,20 @@ export default function(controller) {
 		const { text }         = message;
 		const pingSlackUserIds = getUniqueSlackUsersFromString(text);
 
+		let pingMessages = [];
+		if (pingSlackUserIds) {
+			// this replaces up to "ping <@UIFSMIOM>"
+			let pingMessage = text.replace(/^pi[ng]{1,4}([^>]*>)?/,"").trim()
+			if (pingMessage) {
+				pingMessages.push(pingMessage);
+			}
+		}
+
 		let config = {
 			SlackUserId,
 			message,
-			pingSlackUserIds
+			pingSlackUserIds,
+			pingMessages
 		}
 
 		bot.send({
@@ -75,6 +62,12 @@ export default function(controller) {
 	controller.on('ping_flow', (bot, config) => {
 
 		const { SlackUserId, message, pingSlackUserIds } = config;
+		let { pingMessages } = config;
+
+		// allow user to pass in pingMessages from other places
+		if (!pingMessages) {
+			pingMessages = [];
+		}
 
 		models.User.find({
 			where: { SlackUserId }
@@ -94,7 +87,8 @@ export default function(controller) {
 					UserId,
 					bot,
 					tz,
-					pingSlackUserIds
+					pingSlackUserIds,
+					pingMessages
 				}
 
 				confirmTimeZoneExistsThenStartPingFlow(convo);
@@ -105,7 +99,10 @@ export default function(controller) {
 
 					const fromUserConfig = { UserId, SlackUserId };
 					const toUserConfig   = { UserId: pingUserId, SlackUserId: pingSlackUserId };
-					const config   = { userInSession, deliveryType, pingTimeObject, pingMessages }
+					const config   = { userInSession, deliveryType, pingTimeObject, pingMessages };
+
+					console.log(`\n\n ping object:`);
+					console.log(convo.pingObject);
 					queuePing(bot, fromUserConfig, toUserConfig, config);
 
 				})
@@ -171,3 +168,32 @@ export default function(controller) {
 	});
 
 }
+
+
+// FOR NOW PING WILL ONLY BE HANDLED VIA REG_EXP
+// controller.hears(['ping'], 'direct_message', wit.hears, (bot, message) => {
+
+// 	const { intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
+	
+// 	let botToken = bot.config.token;
+// 	bot          = bots[botToken];
+
+// 	const SlackUserId      = message.user;
+// 	const { text }         = message;
+// 	const pingSlackUserIds = getUniqueSlackUsersFromString(text);
+
+// 	let config = {
+// 		SlackUserId,
+// 		message,
+// 		pingSlackUserIds
+// 	}
+
+// 	bot.send({
+// 		type: "typing",
+// 		channel: message.channel
+// 	});
+// 	setTimeout(() => {
+// 		controller.trigger(`ping_flow`, [bot, config]);
+// 	}, 650);
+
+// });

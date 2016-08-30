@@ -11,7 +11,8 @@ exports.default = function (controller) {
   * 		User directly asks to ping
   * 							~* via Wit *~
   */
-	controller.hears(['ping'], 'direct_message', _index.wit.hears, function (bot, message) {
+
+	controller.hears(['^pin[ng]{1,4}'], 'direct_message', function (bot, message) {
 		var _message$intentObject = message.intentObject.entities;
 		var intent = _message$intentObject.intent;
 		var reminder = _message$intentObject.reminder;
@@ -19,36 +20,8 @@ exports.default = function (controller) {
 		var datetime = _message$intentObject.datetime;
 
 
-		var botToken = bot.config.token;
-		bot = _index.bots[botToken];
-
-		var SlackUserId = message.user;
-		var text = message.text;
-
-		var pingSlackUserIds = (0, _messageHelpers.getUniqueSlackUsersFromString)(text);
-
-		var config = {
-			SlackUserId: SlackUserId,
-			message: message,
-			pingSlackUserIds: pingSlackUserIds
-		};
-
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(function () {
-			controller.trigger('ping_flow', [bot, config]);
-		}, 650);
-	});
-
-	controller.hears(['^pin[ng]{1,4}'], 'direct_message', function (bot, message) {
-		var _message$intentObject2 = message.intentObject.entities;
-		var intent = _message$intentObject2.intent;
-		var reminder = _message$intentObject2.reminder;
-		var duration = _message$intentObject2.duration;
-		var datetime = _message$intentObject2.datetime;
-
+		console.log(message);
+		console.log(reminder);
 
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
@@ -58,10 +31,20 @@ exports.default = function (controller) {
 
 		var pingSlackUserIds = (0, _messageHelpers.getUniqueSlackUsersFromString)(text);
 
+		var pingMessages = [];
+		if (pingSlackUserIds) {
+			// this replaces up to "ping <@UIFSMIOM>"
+			var pingMessage = text.replace(/^pi[ng]{1,4}([^>]*>)?/, "").trim();
+			if (pingMessage) {
+				pingMessages.push(pingMessage);
+			}
+		}
+
 		var config = {
 			SlackUserId: SlackUserId,
 			message: message,
-			pingSlackUserIds: pingSlackUserIds
+			pingSlackUserIds: pingSlackUserIds,
+			pingMessages: pingMessages
 		};
 
 		bot.send({
@@ -81,7 +64,13 @@ exports.default = function (controller) {
 		var SlackUserId = config.SlackUserId;
 		var message = config.message;
 		var pingSlackUserIds = config.pingSlackUserIds;
+		var pingMessages = config.pingMessages;
 
+		// allow user to pass in pingMessages from other places
+
+		if (!pingMessages) {
+			pingMessages = [];
+		}
 
 		_models2.default.User.find({
 			where: { SlackUserId: SlackUserId }
@@ -100,7 +89,8 @@ exports.default = function (controller) {
 					UserId: UserId,
 					bot: bot,
 					tz: tz,
-					pingSlackUserIds: pingSlackUserIds
+					pingSlackUserIds: pingSlackUserIds,
+					pingMessages: pingMessages
 				};
 
 				(0, _pingFunctions.confirmTimeZoneExistsThenStartPingFlow)(convo);
@@ -120,6 +110,9 @@ exports.default = function (controller) {
 					var fromUserConfig = { UserId: UserId, SlackUserId: SlackUserId };
 					var toUserConfig = { UserId: pingUserId, SlackUserId: pingSlackUserId };
 					var config = { userInSession: userInSession, deliveryType: deliveryType, pingTimeObject: pingTimeObject, pingMessages: pingMessages };
+
+					console.log('\n\n ping object:');
+					console.log(convo.pingObject);
 					(0, _pingFunctions.queuePing)(bot, fromUserConfig, toUserConfig, config);
 				});
 			});

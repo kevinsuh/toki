@@ -287,11 +287,11 @@ var buttonValues = exports.buttonValues = {
 	},
 	focus: {
 		name: "FOCUS",
-		value: "focus"
+		value: "Focus"
 	},
 	sendNow: {
 		name: "SEND_NOW",
-		value: "send now"
+		value: "Send now"
 	},
 	cancelPing: {
 		name: "CANCEL_PING",

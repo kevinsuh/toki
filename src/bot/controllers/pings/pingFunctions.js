@@ -232,7 +232,7 @@ function handlePingSlackUserIds(convo) {
 
 function askForQueuedPingMessages(convo) {
 
-	const { SlackUserId, bot, tz, userInSession }  = convo.pingObject;
+	const { SlackUserId, bot, tz, userInSession, pingMessages }  = convo.pingObject;
 
 	if (userInSession) {
 		// we gathered appropriate info about user
@@ -241,7 +241,8 @@ function askForQueuedPingMessages(convo) {
 		let now            = moment().tz(tz);
 		let minutesLeft    = Math.round(moment.duration(endTimeObject.diff(now)).asMinutes());
 
-		let text = `What would you like me to send <@${user.dataValues.SlackUserId}> at *${endTimeString}*?`;
+		let askMessage = `What would you like me to send <@${user.dataValues.SlackUserId}> at *${endTimeString}*?`;
+		
 		let attachments = [{
 			text: "Enter as many lines as you’d like to include in the message then choose one of the send options when your message is ready to go\n(These few lines will delete after you type your first line and hit Enter :wink:)",
 			attachment_type: 'default',
@@ -249,11 +250,31 @@ function askForQueuedPingMessages(convo) {
 			mrkdwn_in: ["text"],
 			fallback: "What is the message you want to queue up?"
 		}];
+		let attachmentActions = [{
+			name: buttonValues.sendAtEndOfSession.name,
+			text: `Send at ${endTimeString}`,
+			value: `Send at ${endTimeString}`,
+			type: `button`
+		},
+		{
+			name: buttonValues.sendSooner.name,
+			text: `Send sooner :bomb:`,
+			value: buttonValues.sendSooner.value,
+			type: `button`
+		}]
 
-		let pingMessages = [];
+		console.log(`\n\n ping messages:`);
+		console.log(pingMessages);
+		console.log(`\n\n`);
+		if (pingMessages && pingMessages.length > 0) {
+			attachments[0].text    = pingMessages[0];
+			attachments[0].color   = colorsHash.toki_purple.hex;
+			askMessage             = `What else would you like me to send <@${user.dataValues.SlackUserId}> at *${endTimeString}*?`;
+			attachments[0].actions = attachmentActions;
+		}
 
 		convo.ask({
-			text,
+			text: askMessage,
 			attachments
 		}, [
 			{
@@ -324,23 +345,9 @@ function askForQueuedPingMessages(convo) {
 					let pingMessageListUpdate = getMostRecentMessageToUpdate(response.channel, bot, "PING_MESSAGE_LIST");
 					if (pingMessageListUpdate) {
 
-						attachments[0].actions = [
-							{
-								name: buttonValues.sendAtEndOfSession.name,
-								text: `Send at ${endTimeString}`,
-								value: `Send at ${endTimeString}`,
-								type: `button`
-							},
-							{
-								name: buttonValues.sendSooner.name,
-								text: `Send sooner :bomb:`,
-								value: buttonValues.sendSooner.value,
-								type: `button`
-							}
-						];
-
-						attachments[0].text = pingMessages.length == 1 ? response.text : `${attachments[0].text}\n${response.text}`;
-						attachments[0].color = colorsHash.toki_purple.hex;
+						attachments[0].text    = pingMessages.length == 1 ? response.text : `${attachments[0].text}\n${response.text}`;
+						attachments[0].color   = colorsHash.toki_purple.hex;
+						attachments[0].actions = attachmentActions;
 
 						pingMessageListUpdate.attachments = JSON.stringify(attachments);
 						bot.api.chat.update(pingMessageListUpdate);
