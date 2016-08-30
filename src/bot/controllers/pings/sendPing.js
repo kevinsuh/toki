@@ -95,14 +95,15 @@ export default function(controller) {
 
 				convo.on(`end`, (convo) => {
 					
-					const { SlackUserId, tz, pingUserId, pingSlackUserId, pingTimeObject, userInSession, deliveryType, pingMessages } = convo.pingObject;
+					const { SlackUserId, tz, pingUserId, pingSlackUserId, pingTimeObject, userInSession, deliveryType, pingMessages, neverMind } = convo.pingObject;
+
+					if (neverMind) // do not send if this is the cas!
+						return;
 
 					const fromUserConfig = { UserId, SlackUserId };
 					const toUserConfig   = { UserId: pingUserId, SlackUserId: pingSlackUserId };
 					const config   = { userInSession, deliveryType, pingTimeObject, pingMessages };
-
-					console.log(`\n\n ping object:`);
-					console.log(convo.pingObject);
+					
 					queuePing(bot, fromUserConfig, toUserConfig, config);
 
 				})

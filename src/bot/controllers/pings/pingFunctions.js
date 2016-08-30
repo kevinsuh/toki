@@ -250,7 +250,8 @@ function askForQueuedPingMessages(convo) {
 			mrkdwn_in: ["text"],
 			fallback: "What is the message you want to queue up?"
 		}];
-		let attachmentActions = [{
+		let fullAttachmentActions = [
+		{
 			name: buttonValues.sendAtEndOfSession.name,
 			text: `Send at ${endTimeString}`,
 			value: `Send at ${endTimeString}`,
@@ -261,22 +262,40 @@ function askForQueuedPingMessages(convo) {
 			text: `Send sooner :bomb:`,
 			value: buttonValues.sendSooner.value,
 			type: `button`
-		}]
+		},
+		{
+			name: buttonValues.neverMind.name,
+			text: `Never mind!`,
+			value: buttonValues.neverMind.value,
+			type: `button`
+		}];
 
-		console.log(`\n\n ping messages:`);
-		console.log(pingMessages);
-		console.log(`\n\n`);
 		if (pingMessages && pingMessages.length > 0) {
 			attachments[0].text    = pingMessages[0];
 			attachments[0].color   = colorsHash.toki_purple.hex;
 			askMessage             = `What else would you like me to send <@${user.dataValues.SlackUserId}> at *${endTimeString}*?`;
-			attachments[0].actions = attachmentActions;
+			attachments[0].actions = fullAttachmentActions;
+		} else {
+			attachments[0].actions = [{
+				name: buttonValues.neverMind.name,
+				text: `Never mind!`,
+				value: buttonValues.neverMind.value,
+				type: `button`
+			}];
 		}
 
 		convo.ask({
 			text: askMessage,
 			attachments
 		}, [
+			{
+				pattern: utterances.noAndNeverMind,
+				callback: (response, convo) => {
+					convo.pingObject.neverMind = true;
+					convo.say(`Okay! I didn't deliver that message`);
+					convo.next();
+				}
+			},
 			{
 				pattern: utterances.containsSendAt,
 				callback: (response, convo) => {
@@ -347,7 +366,7 @@ function askForQueuedPingMessages(convo) {
 
 						attachments[0].text    = pingMessages.length == 1 ? response.text : `${attachments[0].text}\n${response.text}`;
 						attachments[0].color   = colorsHash.toki_purple.hex;
-						attachments[0].actions = attachmentActions;
+						attachments[0].actions = fullAttachmentActions;
 
 						pingMessageListUpdate.attachments = JSON.stringify(attachments);
 						bot.api.chat.update(pingMessageListUpdate);

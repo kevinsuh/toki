@@ -105,14 +105,16 @@ exports.default = function (controller) {
 					var userInSession = _convo$pingObject.userInSession;
 					var deliveryType = _convo$pingObject.deliveryType;
 					var pingMessages = _convo$pingObject.pingMessages;
+					var neverMind = _convo$pingObject.neverMind;
 
+
+					if (neverMind) // do not send if this is the cas!
+						return;
 
 					var fromUserConfig = { UserId: UserId, SlackUserId: SlackUserId };
 					var toUserConfig = { UserId: pingUserId, SlackUserId: pingSlackUserId };
 					var config = { userInSession: userInSession, deliveryType: deliveryType, pingTimeObject: pingTimeObject, pingMessages: pingMessages };
 
-					console.log('\n\n ping object:');
-					console.log(convo.pingObject);
 					(0, _pingFunctions.queuePing)(bot, fromUserConfig, toUserConfig, config);
 				});
 			});

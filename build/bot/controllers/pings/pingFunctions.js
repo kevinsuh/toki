@@ -290,7 +290,7 @@ function askForQueuedPingMessages(convo) {
 				mrkdwn_in: ["text"],
 				fallback: "What is the message you want to queue up?"
 			}];
-			var attachmentActions = [{
+			var fullAttachmentActions = [{
 				name: _constants.buttonValues.sendAtEndOfSession.name,
 				text: 'Send at ' + endTimeString,
 				value: 'Send at ' + endTimeString,
@@ -300,22 +300,38 @@ function askForQueuedPingMessages(convo) {
 				text: 'Send sooner :bomb:',
 				value: _constants.buttonValues.sendSooner.value,
 				type: 'button'
+			}, {
+				name: _constants.buttonValues.neverMind.name,
+				text: 'Never mind!',
+				value: _constants.buttonValues.neverMind.value,
+				type: 'button'
 			}];
 
-			console.log('\n\n ping messages:');
-			console.log(pingMessages);
-			console.log('\n\n');
 			if (pingMessages && pingMessages.length > 0) {
 				attachments[0].text = pingMessages[0];
 				attachments[0].color = _constants.colorsHash.toki_purple.hex;
 				askMessage = 'What else would you like me to send <@' + user.dataValues.SlackUserId + '> at *' + endTimeString + '*?';
-				attachments[0].actions = attachmentActions;
+				attachments[0].actions = fullAttachmentActions;
+			} else {
+				attachments[0].actions = [{
+					name: _constants.buttonValues.neverMind.name,
+					text: 'Never mind!',
+					value: _constants.buttonValues.neverMind.value,
+					type: 'button'
+				}];
 			}
 
 			convo.ask({
 				text: askMessage,
 				attachments: attachments
 			}, [{
+				pattern: _constants.utterances.noAndNeverMind,
+				callback: function callback(response, convo) {
+					convo.pingObject.neverMind = true;
+					convo.say('Okay! I didn\'t deliver that message');
+					convo.next();
+				}
+			}, {
 				pattern: _constants.utterances.containsSendAt,
 				callback: function callback(response, convo) {
 
@@ -379,7 +395,7 @@ function askForQueuedPingMessages(convo) {
 
 						attachments[0].text = pingMessages.length == 1 ? response.text : attachments[0].text + '\n' + response.text;
 						attachments[0].color = _constants.colorsHash.toki_purple.hex;
-						attachments[0].actions = attachmentActions;
+						attachments[0].actions = fullAttachmentActions;
 
 						pingMessageListUpdate.attachments = JSON.stringify(attachments);
 						bot.api.chat.update(pingMessageListUpdate);
