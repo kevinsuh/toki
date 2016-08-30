@@ -77,6 +77,7 @@ export default function(controller) {
 					include: [
 						{ model: models.User, as: `FromUser` },
 						{ model: models.User, as: `ToUser` },
+						models.PingMessage
 					],
 					order: `"Ping"."createdAt" ASC`
 				}).then((pings) => {
@@ -92,6 +93,7 @@ export default function(controller) {
 
 					// get all the sessions associated with pings that come FromUser
 					let pingerSessionPromises = [];
+
 					pings.forEach((ping) => {
 						const { FromUserId, ToUserId } = ping;
 						pingerSessionPromises.push(models.Session.find({
@@ -129,6 +131,8 @@ export default function(controller) {
 								});
 
 								pingContainer.session = session;
+								pingContainer.user    = ping.dataValues.ToUser;
+
 								pingContainer.pings.push(ping);
 								pingContainers.fromUser.toUser[pingToUserId] = pingContainer;
 
@@ -146,6 +150,8 @@ export default function(controller) {
 								});
 
 								pingContainer.session = session;
+								pingContainer.user    = ping.dataValues.FromUser;
+
 								pingContainer.pings.push(ping);
 								pingContainers.toUser.fromUser[pingFromUserId] = pingContainer;
 
@@ -155,17 +161,29 @@ export default function(controller) {
 
 						// attach only the relevant pingContainers (ones where FromUserId is not in live session or `superFocus` session)
 						for (let fromUserId in pingContainers.toUser.fromUser) {
-							if (pingContainers.toUser.fromUser.hasOwnProperty(fromUserId)) {
-								// delete if in superFocus session
-								if (pingContainers.toUser.fromUser[fromUserId].session && pingContainers.toUser.fromUser[fromUserId].superFocus) {
-									delete pingContainers.toUser.fromUser[fromUserId];
-								}
+
+							if (!pingContainers.toUser.fromUser.hasOwnProperty(fromUserId)) {
+								continue;
 							}
+
+							// delete if in superFocus session
+							if (pingContainers.toUser.fromUser[fromUserId].session && pingContainers.toUser.fromUser[fromUserId].session.dataValues.superFocus) {
+								delete pingContainers.toUser.fromUser[fromUserId];
+							}
+							
 						}
+
+						console.log(`ping with messages example: \n\n\n`);
+						console.log(pingContainers.fromUser.toUser[689].pings[1].dataValues.PingMessages);
 
 						// this needs to now be split up into 2:
 						// 1) batch up ping messages together
 						// 2) send batchedPings through this `forEach` method
+						
+						console.log(`batched pings:`);
+						console.log(pingContainers);
+
+						return;
 
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
@@ -224,11 +242,6 @@ export default function(controller) {
 
 								// all the ping objects here are relevant!
 								const { pingContainers, endSessionType } = convo.sessionEnd;
-
-								// this needs to now be split up into 2:
-								// 1) batch up ping messages together
-								// 2) send batchedPings through this `forEach` method
-
 
 								// pings queued for user who just ended this session
 								pingContainers.toUser.forEach((pingContainer) => {

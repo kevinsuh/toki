@@ -32,7 +32,7 @@ export function startEndSessionFlow(convo) {
 	}
 
 	// if this flow is triggered by ended by ping ToUser, and the userId of this session matches with FromUser.UserId of ping
-	if (endSessionType == constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId &&) {
+	if (endSessionType == constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
 
 		// send this only if there are LIVE pings remaining from this user => ToUser ping!
 
@@ -109,8 +109,76 @@ function handleFromUserPings(convo) {
 	const { SlackUserId, UserId, session, tz, endSessionType, pingInfo, pingContainers }  = convo.sessionEnd;
 	let message;
 
+	// UserId is fromUserId because it is this user who is ending session
+
+	for (let toUserId in pingContainers.fromUser.toUser) {
+		
+		if (!pingContainers.fromUser.toUser.hasOwnProperty(toUserId)) {
+			continue;
+		}
+
+		// if not in superFocus session and they also have msg pinged for you,
+		// then their session will end automatically so only one side needs to
+		// handle it!
+		if (pingContainers.fromUser.toUser[toUserId].session && !pingContainers.fromUser.toUser[toUserId].session.dataValues.superFocus && pingContainers.toUser.fromUser[UserId]) {
+			continue;
+		}
+
+		const pingContainer      = pingContainers.fromUser.toUser[toUserId];
+		const { session, pings } = pingContainer;
+		const ToUser             = pingContainer.user;
+
+		if (session) {
+
+			const { dataValues: { content, endTime } } = session;
+			const endTimeString = moment(endTime).tz(ToUser.dataValues.tz).format("h:mma");
+
+			convo.say(`<@${ToUser.dataValues.SlackUserId}> is focusing on \`${content}\` until *${endTimeString}*. I'll send your messages at that time, unless this is urgent and you want to send it now`);
+
+			// send ping one at a time, but with context now
+			pings.forEach((ping, index) => {
+
+				let actions = [
+					{
+						name: buttonValues.sendNow.name,
+						text: "Send now :bomb:",
+						value: `{"updatePing": true, "sendBomb": true, "PingId": "${ping.dataValues.id}"}`,
+						type: "button"
+					},
+					{
+						name: buttonValues.cancelPing.name,
+						text: "Cancel ping :negative_squared_cross_mark:",
+						value: `{"updatePing": true, "cancelPing": true, "PingId": "${ping.dataValues.id}"}`,
+						type: "button"
+					}
+				];
+
+				if (pings.length == 1) {
+					convo.say({
+						text: "Here is your ping:",
+						attachments: [
+							{
+								attachment_type: 'default',
+								callback_id: "SEND_BOMB",
+								fallback: "Let's send this now!",
+								actions
+							}
+						]
+					})
+				} else {
+
+				}
+			})
+
+		}
+
+
+	}
+
 	pingContainers.fromUser.forEach((pingContainer) => {
 		const { ping, ping: { dataValues: { ToUser } }, session } = pingContainer;
+
+		// if the toUser is about to have their session ended (which only happens when they have a session queued for you and not in superFocus), then we can skip this.
 
 		if (session) {
 			// if in session, give option to break focus
@@ -122,28 +190,8 @@ function handleFromUserPings(convo) {
 			// >>> Here is the message that will get queued!
 			
 			convo.say({
-				text: `<@${ToUser.dataValues.SlackUserId}> is focusing on \`${content}\` until *${endTimeString}*. I'll send your message at that time, unless this is urgent and you want to send it now`,
-				attachments: [
-					{
-						attachment_type: 'default',
-						callback_id: "SEND_BOMB",
-						fallback: "Let's send this now!",
-						actions: [
-							{
-								name: buttonValues.sendNow.name,
-								text: "Send now :bomb:",
-								value: `{"updatePing": true, "sendBomb": true, "PingId": "${ping.dataValues.id}"}`,
-								type: "button"
-							},
-							{
-								name: buttonValues.cancelPing.name,
-								text: "Cancel ping :negative_squared_cross_mark:",
-								value: `{"updatePing": true, "cancelPing": true, "PingId": "${ping.dataValues.id}"}`,
-								type: "button"
-							}
-						]
-					}
-				]
+				text: ,
+				
 			});
 		} else {
 			// if not in session, trigger convo immediately

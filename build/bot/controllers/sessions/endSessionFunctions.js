@@ -35,7 +35,7 @@ function startEndSessionFlow(convo) {
 	var session = _convo$sessionEnd.session;
 	var tz = _convo$sessionEnd.tz;
 	var endSessionType = _convo$sessionEnd.endSessionType;
-	var pingObjects = _convo$sessionEnd.pingObjects;
+	var pingContainers = _convo$sessionEnd.pingContainers;
 	var pingInfo = _convo$sessionEnd.pingInfo;
 
 
@@ -63,6 +63,9 @@ function startEndSessionFlow(convo) {
 
 	// if this flow is triggered by ended by ping ToUser, and the userId of this session matches with FromUser.UserId of ping
 	if (endSessionType == _constants.constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
+
+		// send this only if there are LIVE pings remaining from this user => ToUser ping!
+
 		// ended by someone else. user may or may not be in session
 
 		var PingId = pingInfo.PingId;
@@ -105,13 +108,13 @@ function handleToUserPings(convo) {
 	var tz = _convo$sessionEnd2.tz;
 	var endSessionType = _convo$sessionEnd2.endSessionType;
 	var pingInfo = _convo$sessionEnd2.pingInfo;
-	var pingObjects = _convo$sessionEnd2.pingObjects;
+	var pingContainers = _convo$sessionEnd2.pingContainers;
 
 	var message = ' ';
 
 	var slackUserIds = [];
-	pingObjects.toUser.forEach(function (pingObject) {
-		var FromUser = pingObject.ping.dataValues.FromUser;
+	pingContainers.toUser.forEach(function (pingContainer) {
+		var FromUser = pingContainer.ping.dataValues.FromUser;
 
 		if (!_lodash2.default.includes(slackUserIds, FromUser.dataValues.SlackUserId)) {
 			slackUserIds.push(FromUser.dataValues.SlackUserId);
@@ -148,15 +151,34 @@ function handleFromUserPings(convo) {
 	var tz = _convo$sessionEnd3.tz;
 	var endSessionType = _convo$sessionEnd3.endSessionType;
 	var pingInfo = _convo$sessionEnd3.pingInfo;
-	var pingObjects = _convo$sessionEnd3.pingObjects;
+	var pingContainers = _convo$sessionEnd3.pingContainers;
 
 	var message = void 0;
 
-	pingObjects.fromUser.forEach(function (pingObject) {
-		var ping = pingObject.ping;
-		var ToUser = pingObject.ping.dataValues.ToUser;
-		var session = pingObject.session;
+	// UserId is fromUserId because it is this user who is ending session
 
+	for (var toUserId in pingContainers.fromUser.toUser) {
+
+		if (!pingContainers.fromUser.toUser.hasOwnProperty(toUserId)) {
+			continue;
+		}
+
+		// if not in superFocus session and they also have msg pinged for you,
+		// then their session will end automatically so only one side needs to
+		// handle it!
+		if (pingContainers.fromUser.toUser[toUserId].session && !pingContainers.fromUser.toUser[toUserId].session.dataValues.superFocus && pingContainers.toUser.fromUser[UserId]) {
+			continue;
+		}
+
+		var pingContainer = pingContainers.fromUser.toUser[toUserId];
+	}
+
+	pingContainers.fromUser.forEach(function (pingContainer) {
+		var ping = pingContainer.ping;
+		var ToUser = pingContainer.ping.dataValues.ToUser;
+		var session = pingContainer.session;
+
+		// if the toUser is about to have their session ended (which only happens when they have a session queued for you and not in superFocus), then we can skip this.
 
 		if (session) {
 			// if in session, give option to break focus
