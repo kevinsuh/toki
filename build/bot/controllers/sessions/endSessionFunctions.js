@@ -88,7 +88,7 @@ function startEndSessionFlow(convo) {
 	}
 
 	convo.say(message); // this message is relevant to how session got ended (ex. sessionTimerUp vs endByPingToUserId)
-	// handleToUserPings(convo);
+	//handleToUserPings(convo);
 	handleFromUserPings(convo);
 
 	convo.say({
@@ -212,16 +212,12 @@ function handleFromUserPings(convo) {
 				pings.forEach(function (ping, index) {
 
 					var numberString = (0, _messageHelpers.stringifyNumber)(index + 1);
-					var attachments = [];
 
+					var pingMessagesContent = '';
 					ping.dataValues.PingMessages.forEach(function (pingMessage) {
 
 						var pingMessageContent = pingMessage.dataValues.content;
-						attachments.push({
-							fallback: pingMessageContent,
-							color: _constants.colorsHash.toki_purple.hex,
-							text: pingMessageContent
-						});
+						pingMessagesContent = pingMessagesContent + '\n' + pingMessageContent;
 					});
 
 					var actions = [{
@@ -236,10 +232,14 @@ function handleFromUserPings(convo) {
 						type: "button"
 					}];
 
-					attachments.push({
+					var attachments = [{
+						fallback: 'This message will send at the end of their session',
+						color: _constants.colorsHash.toki_purple.hex,
+						text: pingMessagesContent
+					}, {
 						fallback: 'What do you want to do with this ping?',
 						actions: actions
-					});
+					}];
 
 					convo.say({
 						text: '*Here\'s your ' + numberString + ' ping:*',
