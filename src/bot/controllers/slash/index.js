@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, witDurationToMinutes, convertMinutesToHoursString, getUniqueSlackUsersFromString } from '../../lib/messageHelpers';
-import { sendPing } from '../pings/pingFunctions';
+import { sendPing, queuePing } from '../pings/pingFunctions';
 
 export default function(controller) {
 
