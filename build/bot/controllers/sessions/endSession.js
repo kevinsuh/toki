@@ -227,7 +227,9 @@ exports.default = function (controller) {
 
 								// pings queued for user who just ended this session
 
-								pingContainers.toUser.forEach(function (pingContainer) {
+								pingContainers.toUser.fromUser.foreach;
+
+								forEach(function (pingContainer) {
 									var ping = pingContainer.ping;
 									var _pingContainer$ping$d = pingContainer.ping.dataValues;
 									var FromUser = _pingContainer$ping$d.FromUser;
@@ -272,13 +274,18 @@ exports.default = function (controller) {
 												},
 												SlackUserId: FromUser.dataValues.SlackUserId
 											};
+											if (thisPingEndedUsersSessionsTogether) {
+												endSessionConfig.pingInfo.thisPingEndedUsersSessionsTogether = thisPingEndedUsersSessionsTogether;
+											}
 											controller.trigger('end_session_flow', [bot, endSessionConfig]);
 										});
 									});
 								});
 
 								// pings queued by user who just ended this session
-								pingContainers.fromUser.forEach(function (pingContainer) {
+								pingContainers.fromUser.toUser;
+
+								forEach(function (pingContainer) {
 									var ping = pingContainer.ping;
 									var _pingContainer$ping$d2 = pingContainer.ping.dataValues;
 									var FromUser = _pingContainer$ping$d2.FromUser;

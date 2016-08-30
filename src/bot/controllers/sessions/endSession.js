@@ -234,10 +234,21 @@ export default function(controller) {
 								// all the ping objects here are relevant!
 								const { pingContainers, endSessionType } = convo.sessionEnd;
 
+
+
 								// pings queued for user who just ended this session
-								pingContainers.toUser.forEach((pingContainer) => {
+								pingContainers.toUser.fromUser.foreach
+
+
+								forEach((pingContainer) => {
 
 									const { ping, ping: { dataValues: { FromUser, ToUser } }, session } = pingContainer;
+
+									// if this ping is what ended session together,
+									// no need to put user back through endSessionFlow
+									// because FromUser's session has gotten ended
+									if (thisPingEndedUsersSessionsTogether && pingInfo.SlackUserId == FromUser.dataValues.SlackUserId)
+										continue;
 
 									ping.getPingMessages({})
 									.then((pingMessages) => {
@@ -277,6 +288,10 @@ export default function(controller) {
 													endSessionType // whether OG user ended early or sessionTimerUp
 												},
 												SlackUserId: FromUser.dataValues.SlackUserId
+											};
+
+											if (thisPingEndedUsersSessionsTogether) {
+												endSessionConfig.pingInfo.thisPingEndedUsersSessionsTogether = thisPingEndedUsersSessionsTogether;
 											}
 											controller.trigger(`end_session_flow`, [bot, endSessionConfig]);
 
@@ -286,7 +301,9 @@ export default function(controller) {
 								});
 
 								// pings queued by user who just ended this session
-								pingContainers.fromUser.forEach((pingContainer) => {
+								pingContainers.fromUser.toUser
+
+								forEach((pingContainer) => {
 
 									const { ping, ping: { dataValues: { FromUser, ToUser } }, session } = pingContainer;
 

@@ -88,7 +88,7 @@ function startEndSessionFlow(convo) {
 	}
 
 	convo.say(message); // this message is relevant to how session got ended (ex. sessionTimerUp vs endByPingToUserId)
-	//handleToUserPings(convo);
+	handleToUserPings(convo);
 	handleFromUserPings(convo);
 
 	convo.say({
@@ -112,14 +112,25 @@ function handleToUserPings(convo) {
 
 	var message = ' ';
 
+	// this if previous ping FromUser caused end session together!
+	if (pingInfo.thisPingEndsUsersSessionsTogether) {
+		return;
+	}
+
 	var slackUserIds = [];
-	pingContainers.toUser.forEach(function (pingContainer) {
-		var FromUser = pingContainer.ping.dataValues.FromUser;
+	for (var fromUserId in pingContainers.toUser.fromUser) {
+
+		if (!pingContainers.toUser.fromUser.hasOwnProperty(fromUserId)) {
+			continue;
+		}
+
+		var pingContainer = pingContainers.toUser.fromUser[fromUserId];
+		var FromUser = pingContainer.user;
 
 		if (!_lodash2.default.includes(slackUserIds, FromUser.dataValues.SlackUserId)) {
 			slackUserIds.push(FromUser.dataValues.SlackUserId);
 		}
-	});
+	}
 
 	var slackNamesString = (0, _messageHelpers.commaSeparateOutStringArray)(slackUserIds, { SlackUserIds: true });
 
@@ -163,15 +174,18 @@ function handleFromUserPings(convo) {
 			continue;
 		}
 
-		// if ToUser is not in a superFocus session
+		var pingContainer = pingContainers.fromUser.toUser[toUserId];
+
+		// if ToUser from this user is not in a superFocus session
 		// and they also have msg pinged for you,
 		// then their session will end automatically
 		// so no need to handle it here
-		if (pingContainers.fromUser.toUser[toUserId].session && !pingContainers.fromUser.toUser[toUserId].session.dataValues.superFocus && pingContainers.toUser.fromUser[UserId]) {
+		if (pingContainer.session && !pingContainer.session.dataValues.superFocus && pingContainers.toUser.fromUser[UserId]) {
+			pingContainer.thisPingEndsUsersSessionsTogether = true;
+			pingContainers.fromUser.toUser[toUserId] = pingContainer;
 			continue;
 		}
 
-		var pingContainer = pingContainers.fromUser.toUser[toUserId];
 		var _session = pingContainer.session;
 		var pings = pingContainer.pings;
 

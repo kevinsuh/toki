@@ -55,7 +55,7 @@ export function startEndSessionFlow(convo) {
 	}
 
 	convo.say(message); // this message is relevant to how session got ended (ex. sessionTimerUp vs endByPingToUserId)
-	//handleToUserPings(convo);
+	handleToUserPings(convo);
 	handleFromUserPings(convo);
 
 	convo.say({
@@ -71,34 +71,48 @@ export function startEndSessionFlow(convo) {
 function handleToUserPings(convo) {
 
 	const { SlackUserId, UserId, session, tz, endSessionType, pingInfo, pingContainers }  = convo.sessionEnd;
-	let message = ' ';
-
+	
 	let slackUserIds = [];
-	pingContainers.toUser.forEach((pingContainer) => {
-		const { ping: { dataValues: { FromUser } } } = pingContainer;
-		if (!_.includes(slackUserIds, FromUser.dataValues.SlackUserId)) {
+	for (let fromUserId in pingContainers.toUser.fromUser) {
+		
+		if (!pingContainers.toUser.fromUser.hasOwnProperty(fromUserId)) {
+			continue;
+		}
+
+		const pingContainer = pingContainers.toUser.fromUser[fromUserId];
+		const PingId        = pingContainer.
+		const FromUser      = pingContainer.user;
+
+		let includeThisPing = true;
+		pingContainer.pings.forEach((ping) => {
+			// this if previous ping FromUser caused end session together!
+			if (pingInfo.thisPingEndedUsersSessionsTogether && ping.dataValues.id == pingInfo.PingId) {
+				includeThisPing = false;
+				return;
+			}
+		});
+
+		if (includeThisPing && !_.includes(slackUserIds, FromUser.dataValues.SlackUserId)) {
 			slackUserIds.push(FromUser.dataValues.SlackUserId);
 		}
-	});
-
-	let slackNamesString = commaSeparateOutStringArray(slackUserIds, { SlackUserIds: true });
-
-	if (slackUserIds.length == 1) {
-		message = `While you were heads down, ${slackNamesString} asked me to send you a message after your session :relieved:`
-	} else if (slackUserIds.length > 1) {
-		message = `While you were heads down, you received messages from ${slackNamesString}`;
 	}
 
-	convo.say(message);
+	if (slackUserIds.length > 0) {
 
-	message = ' ';
-	if (slackUserIds.length == 1) {
-		message = `:point_left: I just kicked off a conversation between you both`;
-	} else if (slackUserIds.length > 1) {
-		message = `:point_left: I just kicked off separate conversations between you and each of them`;
+		let message;
+
+		let slackNamesString = commaSeparateOutStringArray(slackUserIds, { SlackUserIds: true });
+
+		if (slackUserIds.length == 1) {
+			message = `While you were heads down, ${slackNamesString} asked me to send you a message after your session :relieved:\n:point_left: I just kicked off a conversation between you both`
+		} else { // > 1
+			message = `While you were heads down, you received messages from ${slackNamesString}\n:point_left: I just kicked off separate conversations between you and each of them`;
+		}
+
+		convo.say(message);
+		
 	}
 
-	convo.say(message);
 	convo.next();
 
 }
@@ -117,15 +131,18 @@ function handleFromUserPings(convo) {
 			continue;
 		}
 
-		// if ToUser is not in a superFocus session
+		const pingContainer = pingContainers.fromUser.toUser[toUserId];
+
+		// if ToUser from this user is not in a superFocus session
 		// and they also have msg pinged for you,
 		// then their session will end automatically
 		// so no need to handle it here
-		if (pingContainers.fromUser.toUser[toUserId].session && !pingContainers.fromUser.toUser[toUserId].session.dataValues.superFocus && pingContainers.toUser.fromUser[UserId]) {
+		if (pingContainer.session && !pingContainer.session.dataValues.superFocus && pingContainers.toUser.fromUser[UserId]) {
+			pingContainer.thisPingEndedUsersSessionsTogether = true;
+			pingContainers.fromUser.toUser[toUserId]         = pingContainer;
 			continue;
 		}
 
-		const pingContainer      = pingContainers.fromUser.toUser[toUserId];
 		const { session, pings } = pingContainer;
 		const ToUser             = pingContainer.user;
 
