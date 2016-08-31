@@ -7,6 +7,7 @@ exports.confirmTimeZoneExistsThenStartPingFlow = confirmTimeZoneExistsThenStartP
 exports.askForPingTime = askForPingTime;
 exports.queuePing = queuePing;
 exports.sendPing = sendPing;
+exports.sendPings = sendPings;
 
 var _index = require('../index');
 
@@ -638,7 +639,9 @@ function queuePing(bot, fromUserConfig, toUserConfig, config) {
  *
  *
  * SHOULD ONLY BE `ping` not pingMessages. This should do logic of then organizing ping messages depending on # of pings!
+ * GROUP THIS VIA USERIDS
  */
+
 function sendPing(fromUserConfig, toUserConfig, config) {
 
 	// ping messages are necessary to know what messages to actually send!
@@ -699,4 +702,7 @@ function sendPing(fromUserConfig, toUserConfig, config) {
 		}
 	});
 }
+
+// handle batch of pings with FromUser ToUser combination
+function sendPings(pings, deliveryType) {}
 //# sourceMappingURL=pingFunctions.js.map

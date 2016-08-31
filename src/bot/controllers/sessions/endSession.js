@@ -82,15 +82,6 @@ export default function(controller) {
 					order: `"Ping"."createdAt" ASC`
 				}).then((pings) => {
 
-					// this object holds pings in relation to the UserId of the session that just ended!
-					// fromUser are pings that the user sent out
-					// toUser are pings that got sent to the user
-					// need to batch by unique fromUser <=> toUser combinations
-					let pingContainers = {
-						fromUser: { toUser: {} },
-						toUser: { fromUser: {} }
-					};
-
 					// get all the sessions associated with pings that come FromUser
 					let pingerSessionPromises = [];
 
@@ -109,6 +100,15 @@ export default function(controller) {
 					Promise.all(pingerSessionPromises)
 					.then((pingerSessions) => {
 
+						// this object holds pings in relation to the UserId of the session that just ended!
+						// fromUser are pings that the user sent out
+						// toUser are pings that got sent to the user
+						// need to batch by unique fromUser <=> toUser combinations
+						let pingContainers = {
+							fromUser: { toUser: {} },
+							toUser: { fromUser: {} }
+						};
+
 						// create the pingContainer by matching up `ping` with live `session`. then group it in the appropriate place in pingContainers
 						// if no live session, `session` will be false
 						pings.forEach((ping) => {
@@ -119,13 +119,11 @@ export default function(controller) {
 							// these are pings from user who just ended ession
 							if (pingFromUserId == UserId) {
 
+								// create new container if it doesn't exist
 								let pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
 
 								pingerSessions.forEach((pingerSession) => {
-									console.log(pingerSession);
 									const pingerSessionUserId = pingerSession.dataValues.UserId;
-									console.log(pingerSessionUserId);
-									console.log(pingerSession);
 									if (pingerSession && pingToUserId == pingerSessionUserId) {
 										// recipient of ping is in session
 										pingContainer.session = pingerSession;
@@ -140,7 +138,8 @@ export default function(controller) {
 							} else if (pingToUserId == UserId) {
 								// these are pings to user who just ended session
 								
-								let pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
+								// create new if doesn't exist
+								let pingContainer = pingContainers.toUser.fromUser[pingFromUserId] || { session: false, pings: [] };
 
 								pingerSessions.forEach((pingerSession) => {
 									const pingerSessionUserId = pingerSession.dataValues.UserId;
@@ -158,7 +157,7 @@ export default function(controller) {
 
 						});
 
-						// attach only the relevant pingContainers (ones where FromUserId is not in live session or `superFocus` session)
+						// strip out the irrelevant pingContainers (ones where FromUserId is in live, `superFocus` session)
 						for (let fromUserId in pingContainers.toUser.fromUser) {
 
 							if (!pingContainers.toUser.fromUser.hasOwnProperty(fromUserId)) {
@@ -172,9 +171,6 @@ export default function(controller) {
 							
 						}
 
-						// this needs to now be split up into 2:
-						// 1) batch up ping messages together
-						// 2) send batchedPings through this `forEach` method
 
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
@@ -190,7 +186,7 @@ export default function(controller) {
 								UserId,
 								SlackUserId,
 								tz,
-								pingContainers, // all `endSession` pings to handle
+								pingContainers,
 								endSessionType,
 								pingInfo
 							}
@@ -232,107 +228,70 @@ export default function(controller) {
 							convo.on('end', (convo) => {
 
 								// all the ping objects here are relevant!
-								const { pingContainers, endSessionType } = convo.sessionEnd;
+								const { pingContainers, endSessionType, pingInfo } = convo.sessionEnd;
 
+								// pings queued to this user who just ended this session
+								for (let fromUserId in pingContainers.toUser.fromUser) {
 
-
-								// pings queued for user who just ended this session
-								pingContainers.toUser.fromUser.foreach
-
-
-								forEach((pingContainer) => {
-
-									const { ping, ping: { dataValues: { FromUser, ToUser } }, session } = pingContainer;
-
-									// if this ping is what ended session together,
-									// no need to put user back through endSessionFlow
-									// because FromUser's session has gotten ended
-									if (thisPingEndedUsersSessionsTogether && pingInfo.SlackUserId == FromUser.dataValues.SlackUserId)
+									if (!pingContainers.toUser.fromUser.hasOwnProperty(fromUserId)) {
 										continue;
+									}
 
-									ping.getPingMessages({})
-									.then((pingMessages) => {
+									const pingContainer      = pingContainers.toUser.fromUser[fromUserId];
+									const FromUser           = pingContainer.user;
+									const { session, pings } = pingContainer;
+									const deliveryType       = constants.pingDeliveryTypes.sessionEnd
 
-										ping.update({
-											live: false
-										})
-										.then(() => {
+									// pings is all of the pings stored to this user from user
+									sendPings(pings, deliveryType);
 
-											// no live session, kick off the convo
-											const fromUserConfig = {
-												UserId: FromUser.dataValues.id,
-												SlackUserId: FromUser.dataValues.SlackUserId,
-												TeamId: FromUser.dataValues.TeamId
-											};
-											const toUserConfig = {
-												UserId: ToUser.dataValues.id,
-												SlackUserId: ToUser.dataValues.SlackUserId,
-												TeamId: ToUser.dataValues.TeamId
-											}
-											const pingConfig = {
-												deliveryType: constants.pingDeliveryTypes.sessionEnd,
-												pingMessages
-											};
+									// if previous ping is what ended session together,
+									// no need to put FromUser back through endSessionFlow
+									// because FromUser's session has just gotten ended
+									if (pingInfo && pingInfo.thisPingEndedUsersSessionsTogether && pingInfo.SlackUserId == FromUser.dataValues.SlackUserId) {
+										continue;
+									}
 
-											// send pings that are for ToUser!
-											sendPing(fromUserConfig, toUserConfig, pingConfig);
+									// else, put FromUser of these pings thru endSession flow!
+									const endSessionConfig = {
+										endSessionType: constants.endSessionTypes.endByPingToUserId,
+										pingInfo: {
+											PingId: ping.dataValues.id,
+											FromUser,
+											ToUser,
+											session, // did this come while in session?
+											endSessionType // whether OG user ended early or sessionTimerUp
+										},
+										SlackUserId: FromUser.dataValues.SlackUserId
+									};
 
-											// put FromUser of these pings thru endSession flow!
-											const endSessionConfig = {
-												endSessionType: constants.endSessionTypes.endByPingToUserId,
-												pingInfo: {
-													PingId: ping.dataValues.id,
-													FromUser,
-													ToUser,
-													session, // did this come while in session?
-													endSessionType // whether OG user ended early or sessionTimerUp
-												},
-												SlackUserId: FromUser.dataValues.SlackUserId
-											};
+									if (pingContainer.thisPingEndedUsersSessionsTogether) {
+										endSessionConfig.pingInfo.thisPingEndedUsersSessionsTogether = thisPingEndedUsersSessionsTogether;
+									}
+									controller.trigger(`end_session_flow`, [bot, endSessionConfig]);
 
-											if (thisPingEndedUsersSessionsTogether) {
-												endSessionConfig.pingInfo.thisPingEndedUsersSessionsTogether = thisPingEndedUsersSessionsTogether;
-											}
-											controller.trigger(`end_session_flow`, [bot, endSessionConfig]);
+								}
 
-										});
-									});
-									
-								});
+								// pings from this end_session user to other users
+								for (let toUserId in pingContainers.fromUser.toUser) {
+		
+									if (!pingContainers.fromUser.toUser.hasOwnProperty(toUserId)) {
+										continue;
+									}
 
-								// pings queued by user who just ended this session
-								pingContainers.fromUser.toUser
+									const pingContainer      = pingContainers.fromUser.toUser[toUserId];
+									const ToUser             = pingContainer.user;
+									const { session, pings } = pingContainer;
+									const deliveryType       = constants.pingDeliveryTypes.sessionEnd
 
-								forEach((pingContainer) => {
+									// if ToUser is not in session,
+									// send pings that are from this user!
+									if (!session) {
+										sendPings(pings, deliveryType);
+									}
 
-									const { ping, ping: { dataValues: { FromUser, ToUser } }, session } = pingContainer;
+								}
 
-									// only send the messages here when ToUser is not in a session
-									ping.getPingMessages({})
-									.then((pingMessages) => {
-										if (!session) {
-											// no live session, kick off the convo
-											const fromUserConfig = {
-												UserId: FromUser.dataValues.id,
-												SlackUserId: FromUser.dataValues.SlackUserId,
-												TeamId: FromUser.dataValues.TeamId
-											};
-											const toUserConfig = {
-												UserId: ToUser.dataValues.id,
-												SlackUserId: ToUser.dataValues.SlackUserId,
-												TeamId: ToUser.dataValues.TeamId
-											}
-											const pingConfig = {
-												deliveryType: constants.pingDeliveryTypes.sessionEnd,
-												pingMessages
-											};
-
-											// send pings that are for ToUser!
-											sendPing(fromUserConfig, toUserConfig, pingConfig);
-										}
-									})
-
-								})
 							});
 						});
 

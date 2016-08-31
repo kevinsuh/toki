@@ -21,7 +21,9 @@ export function startEndSessionFlow(convo) {
 	let message = ' ';
 	let letsFocusMessage = `When you’re ready, let me know when you’d like to focus again`;
 
-	// add session info if existing
+	// add session info (the one that just got ended) if existing
+	// this is not the case when you have queued ping
+	// and other user is done w/ session
 	if (session) {
 		const { dataValues: { content, startTime, endTime } } = session;
 		startTimeObject   = moment(startTime).tz(tz);
@@ -31,16 +33,12 @@ export function startEndSessionFlow(convo) {
 		sessionTimeString = convertMinutesToHoursString(sessionMinutes);
 	}
 
-	// if this flow is triggered by ended by ping ToUser, and the userId of this session matches with FromUser.UserId of ping
+	// if this flow is triggered by `endByPingToUserId`, and the userId of this session matches with FromUser.UserId of ping
 	if (endSessionType == constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
-
-		// send this only if there are LIVE pings remaining from this user => ToUser ping!
-
-		// ended by someone else. user may or may not be in session
 		
 		const { PingId, FromUser, ToUser } = pingInfo;
 
-		message = `Hey! <@${ToUser.dataValues.SlackName}> just finished their session`;
+		message = `Hey! <@${ToUser.dataValues.SlackName}> finished their session`;
 		if (pingInfo.endSessionType == constants.endSessionTypes.endSessionEarly) {
 			message = `${message} early`;
 		}
@@ -54,7 +52,7 @@ export function startEndSessionFlow(convo) {
 		message = `Great work on \`${session.dataValues.content}\`! You were focused for *${sessionTimeString}*`;
 	}
 
-	convo.say(message); // this message is relevant to how session got ended (ex. sessionTimerUp vs endByPingToUserId)
+	convo.say(message);
 	handleToUserPings(convo);
 	handleFromUserPings(convo);
 
@@ -80,17 +78,12 @@ function handleToUserPings(convo) {
 		}
 
 		const pingContainer = pingContainers.toUser.fromUser[fromUserId];
-		const PingId        = pingContainer.
 		const FromUser      = pingContainer.user;
 
-		let includeThisPing = true;
-		pingContainer.pings.forEach((ping) => {
-			// this if previous ping FromUser caused end session together!
-			if (pingInfo.thisPingEndedUsersSessionsTogether && ping.dataValues.id == pingInfo.PingId) {
-				includeThisPing = false;
-				return;
-			}
-		});
+		// do not include the user who ended session together
+		if (pingInfo && pingInfo.thisPingEndedUsersSessionsTogether && pingInfo.SlackUserId == FromUser.dataValues.SlackUserId) {
+			continue;
+		}
 
 		if (includeThisPing && !_.includes(slackUserIds, FromUser.dataValues.SlackUserId)) {
 			slackUserIds.push(FromUser.dataValues.SlackUserId);
@@ -110,7 +103,7 @@ function handleToUserPings(convo) {
 		}
 
 		convo.say(message);
-		
+
 	}
 
 	convo.next();
@@ -123,8 +116,7 @@ function handleFromUserPings(convo) {
 	const { SlackUserId, UserId, session, tz, endSessionType, pingInfo, pingContainers }  = convo.sessionEnd;
 	let message;
 
-	// UserId is fromUserId because it is this user who is ending session
-
+	// `UserId` == `fromUserId` because it is this user who is ending session
 	for (let toUserId in pingContainers.fromUser.toUser) {
 		
 		if (!pingContainers.fromUser.toUser.hasOwnProperty(toUserId)) {
@@ -133,10 +125,8 @@ function handleFromUserPings(convo) {
 
 		const pingContainer = pingContainers.fromUser.toUser[toUserId];
 
-		// if ToUser from this user is not in a superFocus session
-		// and they also have msg pinged for you,
-		// then their session will end automatically
-		// so no need to handle it here
+		// if ToUser from this user is not in a superFocus session and they also have msg pinged for you,
+		// then their session will end automatically (so no need to handle it here)
 		if (pingContainer.session && !pingContainer.session.dataValues.superFocus && pingContainers.toUser.fromUser[UserId]) {
 			pingContainer.thisPingEndedUsersSessionsTogether = true;
 			pingContainers.fromUser.toUser[toUserId]         = pingContainer;
@@ -181,7 +171,7 @@ function handleFromUserPings(convo) {
 
 				pings.forEach((ping, index) => {
 
-					let numberString = stringifyNumber(index + 1);
+					const numberString = stringifyNumber(index + 1);
 
 					let pingMessagesContent = ``;
 					ping.dataValues.PingMessages.forEach((pingMessage) => {
