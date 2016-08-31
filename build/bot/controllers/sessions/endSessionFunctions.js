@@ -193,7 +193,7 @@ function handleFromUserPings(convo) {
 			// separation when only queued 1 ping vs many pings
 			if (pings.length == 1) {
 
-				sessionMessage = sessionMessage + '  I\'ll send your ping then, unless this is urgent and you want to send it now';
+				sessionMessage = sessionMessage + '  I\'ll send this ping then, unless you think it\'s urgent and want to send now:';
 
 				var ping = pings[0];
 				var attachments = (0, _messageHelpers.getPingMessageContentAsAttachment)(ping);
@@ -212,7 +212,7 @@ function handleFromUserPings(convo) {
 				});
 			} else {
 				// if > 1 pings queued, only 1 session message and then send content out for each ping
-				sessionMessage = sessionMessage + '  I\'ll send your pings then, unless you think it\'s urgent and you want to send it now';
+				sessionMessage = sessionMessage + '  I\'ll send your pings then, unless you think it\'s urgent and want to send now:';
 				convo.say(sessionMessage);
 
 				pings.forEach(function (ping, index) {

@@ -189,6 +189,7 @@ function handlePingSlackUserIds(convo) {
 
 					} else {
 						// send the message
+						convo.pingObject.deliveryType = constants.pingDeliveryTypes.sessionNotIn;
 						convo.say(`:point_left: <@${user.dataValues.SlackUserId}> is not in a focused work session right now, so I started a conversation for you`);
 						convo.say(`Thank you for being mindful of <@${user.dataValues.SlackUserId}>'s attention :raised_hands:`);
 						convo.next();
@@ -271,19 +272,28 @@ function askForQueuedPingMessages(convo) {
 			type: `button`
 		}];
 
+		let actions;
 		if (pingMessages && pingMessages.length > 0) {
 			attachments[0].text    = pingMessages[0];
 			attachments[0].color   = colorsHash.toki_purple.hex;
 			askMessage             = `Would you like me to send anything else to <@${user.dataValues.SlackUserId}> at *${endTimeString}*?`;
-			attachments[0].actions = fullAttachmentActions;
+			actions = fullAttachmentActions;
 		} else {
-			attachments[0].actions = [{
+			actions = [{
 				name: buttonValues.neverMind.name,
 				text: `Never mind!`,
 				value: buttonValues.neverMind.value,
 				type: `button`
 			}];
 		}
+
+		let actionsAttachment = {
+			attachment_type: 'default',
+			callback_id: "SEND_PING_TO_USER",
+			fallback: `When do you want to send this ping?`,
+			actions
+		};
+		attachments.push(actionsAttachment);
 
 		convo.ask({
 			text: askMessage,
@@ -367,7 +377,7 @@ function askForQueuedPingMessages(convo) {
 
 						attachments[0].text    = pingMessages.length == 1 ? response.text : `${attachments[0].text}\n${response.text}`;
 						attachments[0].color   = colorsHash.toki_purple.hex;
-						attachments[0].actions = fullAttachmentActions;
+						attachments[attachments.length-1].actions = fullAttachmentActions;
 
 						pingMessageListUpdate.attachments = JSON.stringify(attachments);
 						bot.api.chat.update(pingMessageListUpdate);
@@ -532,24 +542,21 @@ export function queuePing(bot, fromUserConfig, toUserConfig, config) {
 
 				} else {
 
-					bot.api.mpim.open({
-						users: SlackUserIds
-					}, (err, response) => {
-						if (!err) {
-							const { group: { id } } = response;
-							let text = `Hey <@${toUserConfig.SlackUserId}>! You're not in a session and <@${fromUserConfig.SlackUserId}> wanted to reach out :raised_hands:`;
-
-							bot.startConversation({ channel: id }, (err, convo) => {
-
-								const pingMessagesContentAttachment = getPingMessageContentAsAttachment(ping);
-
-								convo.say({
-									text,
-									attachments: pingMessagesContentAttachment
-								});
-
-								convo.next();
-
+					// user is not in a session!
+					deliveryType = constants.pingDeliveryTypes.sessionNotIn;
+					models.Ping.create({
+						FromUserId: fromUserConfig.UserId,
+						ToUserId: toUserConfig.UserId,
+						deliveryType,
+						pingTime: pingTimeObject
+					})
+					.then((ping) => {
+						if (pingMessages) {
+							pingMessages.forEach((pingMessage) => {
+								models.PingMessage.create({
+									PingId: ping.id,
+									content: pingMessage
+								})
 							})
 						}
 					});
@@ -650,6 +657,8 @@ export function sendGroupPings(pings, deliveryType) {
 								case constants.pingDeliveryTypes.grenade:
 									initialMessage = `Hey <@${toUserConfig.SlackUserId}>! <@${fromUserConfig.SlackUserId}> has an urgent message for you:`;
 									break;
+								case constants.pingDeliveryTypes.sessionNotIn:
+									initialMessage = `Hey <@${toUserConfig.SlackUserId}>! You're not in a session and <@${fromUserConfig.SlackUserId}> wanted to reach out :raised_hands:`;
 								default: break;
 							}
 
@@ -657,6 +666,9 @@ export function sendGroupPings(pings, deliveryType) {
 							if (pings.length == 1) {
 
 								const ping = pings[0];
+
+								console.log(`\n\n here?`);
+								console.log(ping);
 
 								initialMessage = `*${initialMessage}*`;
 								const pingMessagesContentAttachment = getPingMessageContentAsAttachment(ping);

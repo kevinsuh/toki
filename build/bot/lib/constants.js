@@ -95,7 +95,8 @@ var constants = exports.constants = {
 	pingDeliveryTypes: {
 		sessionEnd: "sessionEnd",
 		bomb: "bomb",
-		grenade: "grenade"
+		grenade: "grenade",
+		sessionNotIn: "sessionNotIn"
 	},
 	PLAN_DECISION: {
 		complete: {

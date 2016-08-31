@@ -91,7 +91,7 @@ exports.default = function (controller) {
 
 		_models2.default.Ping.find({
 			where: { id: PingId },
-			include: [{ model: _models2.default.User, as: 'FromUser' }, { model: _models2.default.User, as: 'ToUser' }]
+			include: [{ model: _models2.default.User, as: 'FromUser' }, { model: _models2.default.User, as: 'ToUser' }, _models2.default.PingMessage]
 		}).then(function (ping) {
 
 			// this is a `bomb` to ToUser

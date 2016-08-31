@@ -89,6 +89,7 @@ export default function(controller) {
 			include: [
 				{ model: models.User, as: `FromUser` },
 				{ model: models.User, as: `ToUser` },
+				models.PingMessage
 			]
 		})
 		.then((ping) => {

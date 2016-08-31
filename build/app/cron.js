@@ -44,7 +44,8 @@ var checkForPings = function checkForPings() {
 	// turn all work sessions off for that user once you ping that user
 	_models2.default.Ping.findAll({
 		where: ['"Ping"."live" = ? AND "Ping"."deliveryType" != ?', true, _constants.constants.pingDeliveryTypes.sessionEnd],
-		order: '"Ping"."createdAt" ASC'
+		order: '"Ping"."createdAt" ASC',
+		include: [{ model: _models2.default.User, as: 'FromUser' }, { model: _models2.default.User, as: 'ToUser' }, _models2.default.PingMessage]
 	}).then(function (pings) {
 
 		var groupPings = { fromUser: {} };
@@ -95,8 +96,12 @@ var checkForPings = function checkForPings() {
 					}));
 				});
 
-				if ((0, _pingFunctions.sendGroupPings)(pings, _constants.constants.pingDeliveryTypes.sessionEnd)) {
-					Promise.all(pingPromises);
+				if (pings.length > 0) {
+					// right now just proxy to first delivery type (they should all be the same)
+					var deliveryType = pings[0].dataValues.deliveryType;
+					if ((0, _pingFunctions.sendGroupPings)(pings, deliveryType)) {
+						Promise.all(pingPromises);
+					}
 				}
 			};
 
