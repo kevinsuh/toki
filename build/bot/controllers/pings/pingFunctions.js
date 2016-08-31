@@ -317,7 +317,7 @@ function askForQueuedPingMessages(convo) {
 			if (pingMessages && pingMessages.length > 0) {
 				attachments[0].text = pingMessages[0];
 				attachments[0].color = _constants.colorsHash.toki_purple.hex;
-				askMessage = 'What else would you like me to send <@' + user.dataValues.SlackUserId + '> at *' + endTimeString + '*?';
+				askMessage = 'Would you like me to send anything else to <@' + user.dataValues.SlackUserId + '> at *' + endTimeString + '*?';
 				attachments[0].actions = fullAttachmentActions;
 			} else {
 				attachments[0].actions = [{

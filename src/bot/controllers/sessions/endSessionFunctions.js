@@ -145,25 +145,25 @@ function handleFromUserPings(convo) {
 
 			// separation when only queued 1 ping vs many pings
 			if (pings.length == 1) {
+
 				sessionMessage = `${sessionMessage}  I'll send your ping then, unless this is urgent and you want to send it now`;
-				let actions = [
-					{
-						name: buttonValues.sendNow.name,
-						text: "Send now :bomb:",
-						value: `{"updatePing": true, "sendBomb": true, "PingId": "${pings[0].dataValues.id}"}`,
-						type: "button"
-					},
-					{
-						name: buttonValues.cancelPing.name,
-						text: "Cancel ping :negative_squared_cross_mark:",
-						value: `{"updatePing": true, "cancelPing": true, "PingId": "${pings[0].dataValues.id}"}`,
-						type: "button"
-					}
-				];
+
+				const ping      = pings[0];
+				let attachments = getPingMessageContentAsAttachment(ping);
+				let actions     = getHandleQueuedPingActions(ping);
+
+				attachments.push({
+					attachment_type: 'default',
+					callback_id: "HANDLE_QUEUED_PING_TO_USER",
+					fallback: `What do you want to do with this ping?`,
+					actions
+				});
+
 				convo.say({
 					text: sessionMessage,
-					actions
+					attachments
 				})
+
 			} else {
 				// if > 1 pings queued, only 1 session message and then send content out for each ping
 				sessionMessage = `${sessionMessage}  I'll send your pings then, unless you think it's urgent and you want to send it now`;
