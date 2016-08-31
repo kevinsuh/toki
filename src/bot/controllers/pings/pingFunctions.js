@@ -667,9 +667,6 @@ export function sendGroupPings(pings, deliveryType) {
 
 								const ping = pings[0];
 
-								console.log(`\n\n here?`);
-								console.log(ping);
-
 								initialMessage = `*${initialMessage}*`;
 								const pingMessagesContentAttachment = getPingMessageContentAsAttachment(ping);
 
