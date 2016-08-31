@@ -11,46 +11,9 @@ export default function(controller) {
 
 	/**
 	 *
-	 * 		User directly asks to ping
-	 * 							~* via Wit *~
+	 * 		Right now we are not handling initialize via Wit
+	 * 		it is done via RegExp (in `./notWit`)
 	 */
-
-	controller.hears(['^pin[ng]{1,4}'], 'direct_message', (bot, message) => {
-
-		const { intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
-		
-		let botToken = bot.config.token;
-		bot          = bots[botToken];
-
-		const SlackUserId      = message.user;
-		const { text }         = message;
-		const pingSlackUserIds = getUniqueSlackUsersFromString(text);
-
-		let pingMessages = [];
-		if (pingSlackUserIds) {
-			// this replaces up to "ping <@UIFSMIOM>"
-			let pingMessage = text.replace(/^pi[ng]{1,4}([^>]*>)?/,"").trim()
-			if (pingMessage) {
-				pingMessages.push(pingMessage);
-			}
-		}
-
-		let config = {
-			SlackUserId,
-			message,
-			pingSlackUserIds,
-			pingMessages
-		}
-
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(() => {
-			controller.trigger(`ping_flow`, [bot, config]);
-		}, 650);
-
-	});
 
 	/**
 	 * 		ACTUAL PING FLOW

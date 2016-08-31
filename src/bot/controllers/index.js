@@ -141,8 +141,8 @@ export function customConfigBot(controller) {
 	setupReceiveMiddleware(controller);
 
 	notWitController(controller);
-	sessionsController(controller);
 	pingsController(controller);
+	sessionsController(controller);
 	slashController(controller);
 
 	miscController(controller);

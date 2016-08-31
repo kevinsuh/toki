@@ -6,6 +6,47 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
+	controller.hears(['^pin[ng]{1,4}'], 'direct_message', function (bot, message) {
+		var _message$intentObject = message.intentObject.entities;
+		var intent = _message$intentObject.intent;
+		var reminder = _message$intentObject.reminder;
+		var duration = _message$intentObject.duration;
+		var datetime = _message$intentObject.datetime;
+
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		var SlackUserId = message.user;
+		var text = message.text;
+
+		var pingSlackUserIds = (0, _messageHelpers.getUniqueSlackUsersFromString)(text);
+
+		var pingMessages = [];
+		if (pingSlackUserIds) {
+			// this replaces up to "ping <@UIFSMIOM>"
+			var pingMessage = text.replace(/^pi[ng]{1,4}([^>]*>)?/, "").trim();
+			if (pingMessage) {
+				pingMessages.push(pingMessage);
+			}
+		}
+
+		var config = {
+			SlackUserId: SlackUserId,
+			message: message,
+			pingSlackUserIds: pingSlackUserIds,
+			pingMessages: pingMessages
+		};
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(function () {
+			controller.trigger('ping_flow', [bot, config]);
+		}, 650);
+	});
+
 	controller.hears(['^{'], 'direct_message', _hearsMiddleware.isJsonObject, function (bot, message) {
 
 		var botToken = bot.config.token;
@@ -132,6 +173,8 @@ var _models2 = _interopRequireDefault(_models);
 var _hearsMiddleware = require('../../middleware/hearsMiddleware');
 
 var _constants = require('../../lib/constants');
+
+var _messageHelpers = require('../../lib/messageHelpers');
 
 var _dotenv = require('dotenv');
 

@@ -200,8 +200,8 @@ function customConfigBot(controller) {
 	(0, _receiveMiddleware2.default)(controller);
 
 	(0, _notWit2.default)(controller);
-	(0, _sessions2.default)(controller);
 	(0, _pings2.default)(controller);
+	(0, _sessions2.default)(controller);
 	(0, _slash2.default)(controller);
 
 	(0, _misc2.default)(controller);

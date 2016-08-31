@@ -5,6 +5,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 import { isJsonObject } from '../../middleware/hearsMiddleware';
 import { utterances, colorsArray, constants, buttonValues, colorsHash, timeZones } from '../../lib/constants';
+import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString } from '../../lib/messageHelpers';
 
 import dotenv from 'dotenv';
 
@@ -15,6 +16,43 @@ import dotenv from 'dotenv';
  */
 
 export default function(controller) {
+
+	controller.hears(['^pin[ng]{1,4}'], 'direct_message', (bot, message) => {
+
+		const { intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
+		
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
+		const SlackUserId      = message.user;
+		const { text }         = message;
+		const pingSlackUserIds = getUniqueSlackUsersFromString(text);
+
+		let pingMessages = [];
+		if (pingSlackUserIds) {
+			// this replaces up to "ping <@UIFSMIOM>"
+			let pingMessage = text.replace(/^pi[ng]{1,4}([^>]*>)?/,"").trim()
+			if (pingMessage) {
+				pingMessages.push(pingMessage);
+			}
+		}
+
+		let config = {
+			SlackUserId,
+			message,
+			pingSlackUserIds,
+			pingMessages
+		}
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(() => {
+			controller.trigger(`ping_flow`, [bot, config]);
+		}, 650);
+
+	});
 
 	controller.hears(['^{'], 'direct_message',isJsonObject, function(bot, message) {
 
