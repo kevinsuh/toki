@@ -2,7 +2,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 import _ from 'lodash';
 import { utterances, colorsArray, buttonValues, colorsHash, timeZones, timeZoneAttachments, letsFocusAttachments, constants } from '../../lib/constants';
-import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, commaSeparateOutStringArray, stringifyNumber } from '../../lib/messageHelpers';
+import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, commaSeparateOutStringArray, stringifyNumber, getPingMessageContentAsAttachment, getHandleQueuedPingActions } from '../../lib/messageHelpers';
 
 /**
  * 		END SESSION CONVERSATION FLOW FUNCTIONS
@@ -36,7 +36,7 @@ export function startEndSessionFlow(convo) {
 	// if this flow is triggered by `endByPingToUserId`, and the userId of this session matches with FromUser.UserId of ping
 	if (endSessionType == constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
 		
-		const { PingId, FromUser, ToUser } = pingInfo;
+		const { FromUser, ToUser } = pingInfo;
 
 		message = `Hey! <@${ToUser.dataValues.SlackName}> finished their session`;
 		if (pingInfo.endSessionType == constants.endSessionTypes.endSessionEarly) {
@@ -85,7 +85,7 @@ function handleToUserPings(convo) {
 			continue;
 		}
 
-		if (includeThisPing && !_.includes(slackUserIds, FromUser.dataValues.SlackUserId)) {
+		if (!_.includes(slackUserIds, FromUser.dataValues.SlackUserId)) {
 			slackUserIds.push(FromUser.dataValues.SlackUserId);
 		}
 	}
@@ -127,7 +127,7 @@ function handleFromUserPings(convo) {
 
 		// if ToUser from this user is not in a superFocus session and they also have msg pinged for you,
 		// then their session will end automatically (so no need to handle it here)
-		if (pingContainer.session && !pingContainer.session.dataValues.superFocus && pingContainers.toUser.fromUser[UserId]) {
+		if ((!pingContainer.session || pingContainer.session && !pingContainer.session.dataValues.superFocus) && pingContainers.toUser.fromUser[toUserId]) {
 			pingContainer.thisPingEndedUsersSessionsTogether = true;
 			pingContainers.fromUser.toUser[toUserId]         = pingContainer;
 			continue;
@@ -173,40 +173,14 @@ function handleFromUserPings(convo) {
 
 					const numberString = stringifyNumber(index + 1);
 
-					let pingMessagesContent = ``;
-					ping.dataValues.PingMessages.forEach((pingMessage) => {
-
-						const pingMessageContent = pingMessage.dataValues.content;
-						pingMessagesContent      = `${pingMessagesContent}\n${pingMessageContent}`
-
+					let attachments = getPingMessageContentAsAttachment(ping);
+					let actions     = getHandleQueuedPingActions(ping);
+					attachments.push({
+						attachment_type: 'default',
+						callback_id: "HANDLE_QUEUED_PING_TO_USER",
+						fallback: `What do you want to do with this ping?`,
+						actions
 					});
-
-					let actions = [
-						{
-							name: buttonValues.sendNow.name,
-							text: "Send now :bomb:",
-							value: `{"updatePing": true, "sendBomb": true, "PingId": "${ping.dataValues.id}"}`,
-							type: "button"
-						},
-						{
-							name: buttonValues.cancelPing.name,
-							text: "Cancel ping :negative_squared_cross_mark:",
-							value: `{"updatePing": true, "cancelPing": true, "PingId": "${ping.dataValues.id}"}`,
-							type: "button"
-						}
-					];
-
-					let attachments = [
-						{
-							fallback: `This message will send at the end of their session`,
-							color: colorsHash.toki_purple.hex,
-							text: pingMessagesContent
-						},
-						{
-							fallback: `What do you want to do with this ping?`,
-							actions
-						}
-					];
 
 					convo.say({
 						text: `*Here's your ${numberString} ping:*`,

@@ -410,3 +410,50 @@ export function stringifyNumber(n) {
 	if (n%10 === 0) return decaNumbers[Math.floor(n/10)-2] + 'ieth';
 	return deca[Math.floor(n/10)-2] + 'y-' + specialNumbers[n%10];
 }
+
+export function getPingMessageContentAsAttachment(ping) {
+
+	let pingMessagesContent = ``;
+
+	ping.dataValues.PingMessages.forEach((pingMessage) => {
+		const pingMessageContent = pingMessage.dataValues.content;
+		pingMessagesContent      = `${pingMessagesContent}\n${pingMessageContent}`
+	});
+
+	let attachments = [
+		{
+			attachment_type: 'default',
+			fallback: `Let's start this conversation!`,
+			mrkdwn_in: ["text"],
+			callback_id: "PING_MESSAGE",
+			color: colorsHash.toki_purple.hex,
+			text: pingMessagesContent
+		}
+	];
+	return attachments;
+
+}
+
+export function getHandleQueuedPingActions(ping) {
+
+	let actions = [];
+
+	if (ping && ping.dataValues) {
+		actions = [
+			{
+				name: buttonValues.sendNow.name,
+				text: "Send now :bomb:",
+				value: `{"updatePing": true, "sendBomb": true, "PingId": "${ping.dataValues.id}"}`,
+				type: "button"
+			},
+			{
+				name: buttonValues.cancelPing.name,
+				text: "Cancel ping :negative_squared_cross_mark:",
+				value: `{"updatePing": true, "cancelPing": true, "PingId": "${ping.dataValues.id}"}`,
+				type: "button"
+			}
+		];
+	}
+		
+	return actions;
+}

@@ -104,9 +104,9 @@ exports.default = function (controller) {
 			bot.startPrivateConversation({ user: FromUser.dataValues.SlackUserId }, function (err, convo) {
 
 				if (sendBomb) {
-					convo.say(':point_left: Got it! I just kicked off a conversation between you and <@' + ToUser.dataValues.SlackUserId + '>');
+					convo.say(':point_left: Got it! I just kicked off a conversation between you and <@' + ToUser.dataValues.SlackUserId + '> for that ping');
 				} else if (cancelPing) {
-					convo.say('The ping to <@' + ToUser.dataValues.SlackUserId + '> has been canceled!');
+					convo.say('That ping to <@' + ToUser.dataValues.SlackUserId + '> has been canceled!');
 				}
 
 				convo.on('end', function (convo) {

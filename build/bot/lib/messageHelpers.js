@@ -14,6 +14,8 @@ exports.getUniqueSlackUsersFromString = getUniqueSlackUsersFromString;
 exports.commaSeparateOutStringArray = commaSeparateOutStringArray;
 exports.getMostRecentMessageToUpdate = getMostRecentMessageToUpdate;
 exports.stringifyNumber = stringifyNumber;
+exports.getPingMessageContentAsAttachment = getPingMessageContentAsAttachment;
+exports.getHandleQueuedPingActions = getHandleQueuedPingActions;
 
 var _constants = require('./constants');
 
@@ -438,5 +440,46 @@ function stringifyNumber(n) {
 	if (n < 20) return _constants.specialNumbers[n];
 	if (n % 10 === 0) return _constants.decaNumbers[Math.floor(n / 10) - 2] + 'ieth';
 	return deca[Math.floor(n / 10) - 2] + 'y-' + _constants.specialNumbers[n % 10];
+}
+
+function getPingMessageContentAsAttachment(ping) {
+
+	var pingMessagesContent = '';
+
+	ping.dataValues.PingMessages.forEach(function (pingMessage) {
+		var pingMessageContent = pingMessage.dataValues.content;
+		pingMessagesContent = pingMessagesContent + '\n' + pingMessageContent;
+	});
+
+	var attachments = [{
+		attachment_type: 'default',
+		fallback: 'Let\'s start this conversation!',
+		mrkdwn_in: ["text"],
+		callback_id: "PING_MESSAGE",
+		color: _constants.colorsHash.toki_purple.hex,
+		text: pingMessagesContent
+	}];
+	return attachments;
+}
+
+function getHandleQueuedPingActions(ping) {
+
+	var actions = [];
+
+	if (ping && ping.dataValues) {
+		actions = [{
+			name: _constants.buttonValues.sendNow.name,
+			text: "Send now :bomb:",
+			value: '{"updatePing": true, "sendBomb": true, "PingId": "' + ping.dataValues.id + '"}',
+			type: "button"
+		}, {
+			name: _constants.buttonValues.cancelPing.name,
+			text: "Cancel ping :negative_squared_cross_mark:",
+			value: '{"updatePing": true, "cancelPing": true, "PingId": "' + ping.dataValues.id + '"}',
+			type: "button"
+		}];
+	}
+
+	return actions;
 }
 //# sourceMappingURL=messageHelpers.js.map

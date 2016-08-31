@@ -2,7 +2,7 @@ import { bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
 import { utterances, colorsArray, buttonValues, colorsHash, timeZones, timeZoneAttachments, constants } from '../../lib/constants';
-import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandomExample, commaSeparateOutStringArray, getMostRecentMessageToUpdate, getUniqueSlackUsersFromString, stringifyNumber } from '../../lib/messageHelpers';
+import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandomExample, commaSeparateOutStringArray, getMostRecentMessageToUpdate, getUniqueSlackUsersFromString, stringifyNumber, getPingMessageContentAsAttachment } from '../../lib/messageHelpers';
 
 /**
  * 		PING CONVERSATION FLOW FUNCTIONS
@@ -537,26 +537,16 @@ export function queuePing(bot, fromUserConfig, toUserConfig, config) {
 						if (!err) {
 							const { group: { id } } = response;
 							let text = `Hey <@${toUserConfig.SlackUserId}>! You're not in a session and <@${fromUserConfig.SlackUserId}> wanted to reach out :raised_hands:`;
-							let attachments = [];
 
 							bot.startConversation({ channel: id }, (err, convo) => {
 
-								if (pingMessages) {
-									pingMessages.forEach((pingMessage) => {
-										attachments.push({
-											text: pingMessage,
-											mrkdwn_in: ["text"],
-											attachment_type: 'default',
-											callback_id: "PING_MESSAGE",
-											fallback: pingMessage,
-											color: colorsHash.toki_purple.hex
-										});
-									});
-								}
+								const pingMessagesContentAttachment = getPingMessageContentAsAttachment(ping);
+
 								convo.say({
 									text,
-									attachments
+									attachments: pingMessagesContentAttachment
 								});
+
 								convo.next();
 
 							})
@@ -603,123 +593,105 @@ export function queuePing(bot, fromUserConfig, toUserConfig, config) {
 
 }
 
-// handle batch of pings with FromUser ToUser combination
-export function sendPings(pings, deliveryType) {
+// handle batch of pings with specific FromUser ToUser combination
+export function sendGroupPings(pings, deliveryType) {
 
 	// first fill up both configs and make sure it is valid
-	const config         = fillPingUserConfig(pings);
+	const config  = fillPingUserConfig(pings);
+	let handleNow = false;
+	let now       = moment();
+
+	pings.some((ping) => {
+		const { dataValues: { FromUserId, ToUserId, deliveryType, pingTime } } = ping;
+		if (pingTime) {
+			let pingTimeObject = moment(pingTime);
+			if (pingTimeObject < now) {
+				handleNow = true;
+				return handleNow;
+			}
+		} else {
+			handleNow = true;
+		}
+	})
 
 	// this means pings are valid
-	if (config) {
+	if (handleNow && config) {
+		
+		const fromUserConfig = config.fromUser;
+		const toUserConfig   = config.toUser;
+		
+		let SlackUserIds     = `${fromUserConfig.SlackUserId},${toUserConfig.SlackUserId}`;
 
-		let pingPromises = [];
-		pings.forEach((ping) => {
-			pingPromises.push(ping.update({ live: false }));
+		models.Team.find({
+			where: { TeamId: fromUserConfig.TeamId }
 		})
+		.then((team) => {
 
-		Promise.all(pingPromises)
-		.then(() => {
+			const { token } = team;
+			let bot         = bots[token];
 
-			const fromUserConfig = config.fromUser;
-			const toUserConfig   = config.toUser;
-			
-			let SlackUserIds     = `${fromUserConfig.SlackUserId},${toUserConfig.SlackUserId}`;
+			if (bot) {
+				bot.api.mpim.open({
+					users: SlackUserIds
+				}, (err, response) => {
 
-			models.Team.find({
-				where: { TeamId: fromUserConfig.TeamId }
-			})
-			.then((team) => {
-				
-				const { token } = team;
-				let bot         = bots[token];
+					if (!err) {
 
-				if (bot) {
-					bot.api.mpim.open({
-						users: SlackUserIds
-					}, (err, response) => {
+						const { group: { id } } = response;
 
-						if (!err) {
+						bot.startConversation({ channel: id }, (err, convo) => {
 
-							const { group: { id } } = response;
+							let initialMessage = `Hey <@${toUserConfig.SlackUserId}>! <@${fromUserConfig.SlackUserId}> wanted to reach out`;
+							switch (deliveryType) {
+								case constants.pingDeliveryTypes.bomb:
+									initialMessage = `Hey <@${toUserConfig.SlackUserId}>! <@${fromUserConfig.SlackUserId}> has an urgent message for you:`;
+									break;
+								case constants.pingDeliveryTypes.grenade:
+									initialMessage = `Hey <@${toUserConfig.SlackUserId}>! <@${fromUserConfig.SlackUserId}> has an urgent message for you:`;
+									break;
+								default: break;
+							}
 
-							bot.startConversation({ channel: id }, (err, convo) => {
+							// IM channel successfully opened with these 2 users
+							if (pings.length == 1) {
 
-								let initialMessage = `Hey <@${toUserConfig.SlackUserId}>! <@${fromUserConfig.SlackUserId}> wanted to reach out`;
-								switch (deliveryType) {
-									case constants.pingDeliveryTypes.bomb:
-										initialMessage = `Hey <@${toUserConfig.SlackUserId}>! <@${fromUserConfig.SlackUserId}> has an urgent message for you:`;
-										break;
-									case constants.pingDeliveryTypes.grenade:
-										initialMessage = `Hey <@${toUserConfig.SlackUserId}>! <@${fromUserConfig.SlackUserId}> has an urgent message for you:`;
-										break;
-									default: break;
-								}
+								const ping = pings[0];
 
-								// IM channel successfully opened with these 2 users
-								if (pings.length == 1) {
+								initialMessage = `*${initialMessage}*`;
+								const pingMessagesContentAttachment = getPingMessageContentAsAttachment(ping);
 
-									const ping = pings[0];
+								convo.say({
+									text: initialMessage,
+									attachments: pingMessagesContentAttachment
+								});
 
-									initialMessage = `*${initialMessage}*`;
-									let attachments = [];
+							} else {
 
-									ping.dataValues.PingMessages.forEach((pingMessage) => {
-										attachments.push({
-											text: pingMessage.content,
-											mrkdwn_in: ["text"],
-											attachment_type: 'default',
-											callback_id: "PING_MESSAGE",
-											fallback: pingMessage.content,
-											color: colorsHash.toki_purple.hex
-										});
-									});
+								convo.say(initialMessage);
+
+								pings.forEach((ping, index) => {
+
+									const numberString = stringifyNumber(index + 1);
+									const pingMessagesContentAttachment = getPingMessageContentAsAttachment(ping);
 
 									convo.say({
-										text: initialMessage,
-										attachments
-									});
-
-								} else {
-
-									pings.forEach((ping, index) => {
-
-										const numberString = stringifyNumber(index + 1);
-
-										let pingMessagesContent = ``;
-										ping.dataValues.PingMessages.forEach((pingMessage) => {
-
-											const pingMessageContent = pingMessage.dataValues.content;
-											pingMessagesContent      = `${pingMessagesContent}\n${pingMessageContent}`
-
-										});
-
-										let attachments = [
-											{
-												fallback: `Let's start this conversation!`,
-												color: colorsHash.toki_purple.hex,
-												text: pingMessagesContent
-											}
-										];
-
-										convo.say({
-											text: `*Here's the first ${numberString} ping:*`,
-											attachments
-										})
-
+										text: `*Here's the ${numberString} ping:*`,
+										attachments: pingMessagesContentAttachment
 									})
 
-								}
+								})
 
-							});
+							}
+						});
+					}
+				});
 
-							
-						}
-					});
-
-				}
-			});
-
+			}
 		});
+
+		return true;
+	} else {
+		return false;
 	}
 
 }
@@ -734,7 +706,7 @@ function fillPingUserConfig(pings) {
 	let valid = true;
 	pings.forEach((ping) => {
 		
-		const { dataValues: { FromUser, ToUser } = ping;
+		const { dataValues: { FromUser, ToUser } } = ping;
 
 		const FromUserId          = FromUser.dataValues.id;
 		const FromUserSlackUserId = FromUser.dataValues.SlackUserId;
@@ -742,7 +714,7 @@ function fillPingUserConfig(pings) {
 
 		const ToUserId            = ToUser.dataValues.id;
 		const ToUserSlackUserId   = ToUser.dataValues.SlackUserId;
-		const ToUserTeamId        = ToUser.dataValues.SlackUserId;
+		const ToUserTeamId        = ToUser.dataValues.TeamId;
 
 		/*
 		 *  Fill UserIds
@@ -770,7 +742,7 @@ function fillPingUserConfig(pings) {
 
 		if (!config.toUser.SlackUserId) {
 			config.toUser.SlackUserId = ToUserSlackUserId;
-		} else if (config.toUser.UserId != ToUserSlackUserId) {
+		} else if (config.toUser.SlackUserId != ToUserSlackUserId) {
 			valid = false;
 		}
 		

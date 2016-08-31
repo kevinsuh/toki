@@ -65,7 +65,6 @@ function startEndSessionFlow(convo) {
 
 	// if this flow is triggered by `endByPingToUserId`, and the userId of this session matches with FromUser.UserId of ping
 	if (endSessionType == _constants.constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
-		var PingId = pingInfo.PingId;
 		var FromUser = pingInfo.FromUser;
 		var ToUser = pingInfo.ToUser;
 
@@ -123,7 +122,7 @@ function handleToUserPings(convo) {
 			continue;
 		}
 
-		if (includeThisPing && !_lodash2.default.includes(slackUserIds, FromUser.dataValues.SlackUserId)) {
+		if (!_lodash2.default.includes(slackUserIds, FromUser.dataValues.SlackUserId)) {
 			slackUserIds.push(FromUser.dataValues.SlackUserId);
 		}
 	}
@@ -171,7 +170,7 @@ function handleFromUserPings(convo) {
 
 		// if ToUser from this user is not in a superFocus session and they also have msg pinged for you,
 		// then their session will end automatically (so no need to handle it here)
-		if (pingContainer.session && !pingContainer.session.dataValues.superFocus && pingContainers.toUser.fromUser[UserId]) {
+		if ((!pingContainer.session || pingContainer.session && !pingContainer.session.dataValues.superFocus) && pingContainers.toUser.fromUser[toUserId]) {
 			pingContainer.thisPingEndedUsersSessionsTogether = true;
 			pingContainers.fromUser.toUser[toUserId] = pingContainer;
 			continue;
@@ -218,33 +217,14 @@ function handleFromUserPings(convo) {
 
 					var numberString = (0, _messageHelpers.stringifyNumber)(index + 1);
 
-					var pingMessagesContent = '';
-					ping.dataValues.PingMessages.forEach(function (pingMessage) {
-
-						var pingMessageContent = pingMessage.dataValues.content;
-						pingMessagesContent = pingMessagesContent + '\n' + pingMessageContent;
-					});
-
-					var actions = [{
-						name: _constants.buttonValues.sendNow.name,
-						text: "Send now :bomb:",
-						value: '{"updatePing": true, "sendBomb": true, "PingId": "' + ping.dataValues.id + '"}',
-						type: "button"
-					}, {
-						name: _constants.buttonValues.cancelPing.name,
-						text: "Cancel ping :negative_squared_cross_mark:",
-						value: '{"updatePing": true, "cancelPing": true, "PingId": "' + ping.dataValues.id + '"}',
-						type: "button"
-					}];
-
-					var attachments = [{
-						fallback: 'This message will send at the end of their session',
-						color: _constants.colorsHash.toki_purple.hex,
-						text: pingMessagesContent
-					}, {
+					var attachments = (0, _messageHelpers.getPingMessageContentAsAttachment)(ping);
+					var actions = (0, _messageHelpers.getHandleQueuedPingActions)(ping);
+					attachments.push({
+						attachment_type: 'default',
+						callback_id: "HANDLE_QUEUED_PING_TO_USER",
 						fallback: 'What do you want to do with this ping?',
 						actions: actions
-					}];
+					});
 
 					convo.say({
 						text: '*Here\'s your ' + numberString + ' ping:*',

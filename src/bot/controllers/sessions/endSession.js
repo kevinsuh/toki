@@ -5,7 +5,7 @@ import models from '../../../app/models';
 import { utterances, colorsArray, buttonValues, colorsHash, constants } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '../../lib/messageHelpers';
 import { startEndSessionFlow } from './endSessionFunctions';
-import { sendPing } from '../pings/pingFunctions';
+import { sendGroupPings } from '../pings/pingFunctions';
 
 
 // END OF A WORK SESSION
@@ -123,8 +123,7 @@ export default function(controller) {
 								let pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
 
 								pingerSessions.forEach((pingerSession) => {
-									const pingerSessionUserId = pingerSession.dataValues.UserId;
-									if (pingerSession && pingToUserId == pingerSessionUserId) {
+									if (pingerSession && pingToUserId == pingerSession.dataValues.UserId) {
 										// recipient of ping is in session
 										pingContainer.session = pingerSession;
 										return;
@@ -142,8 +141,7 @@ export default function(controller) {
 								let pingContainer = pingContainers.toUser.fromUser[pingFromUserId] || { session: false, pings: [] };
 
 								pingerSessions.forEach((pingerSession) => {
-									const pingerSessionUserId = pingerSession.dataValues.UserId;
-									if (pingerSession && pingFromUserId == pingerSessionUserId) {
+									if (pingerSession && pingFromUserId == pingerSession.dataValues.UserId) {
 										pingContainer.session = pingerSession;
 										return;
 									}
@@ -186,6 +184,7 @@ export default function(controller) {
 								UserId,
 								SlackUserId,
 								tz,
+								user,
 								pingContainers,
 								endSessionType,
 								pingInfo
@@ -228,7 +227,7 @@ export default function(controller) {
 							convo.on('end', (convo) => {
 
 								// all the ping objects here are relevant!
-								const { pingContainers, endSessionType, pingInfo } = convo.sessionEnd;
+								const { pingContainers, endSessionType, pingInfo, user } = convo.sessionEnd;
 
 								// pings queued to this user who just ended this session
 								for (let fromUserId in pingContainers.toUser.fromUser) {
@@ -242,33 +241,52 @@ export default function(controller) {
 									const { session, pings } = pingContainer;
 									const deliveryType       = constants.pingDeliveryTypes.sessionEnd
 
-									// pings is all of the pings stored to this user from user
-									sendPings(pings, deliveryType);
+									// update then send
+									let pingPromises = [];
+									pings.forEach((ping) => {
+										pingPromises.push(models.Ping.update({
+											live: false
+										},{
+											where: { id: ping.dataValues.id }
+										}));
+									});
 
-									// if previous ping is what ended session together,
-									// no need to put FromUser back through endSessionFlow
-									// because FromUser's session has just gotten ended
-									if (pingInfo && pingInfo.thisPingEndedUsersSessionsTogether && pingInfo.SlackUserId == FromUser.dataValues.SlackUserId) {
-										continue;
+									// if sent, turn ping off and continue
+									if (sendGroupPings(pings, deliveryType)) {
+
+										Promise.all(pingPromises)
+										.then((value) => {
+
+											// if previous ping is what ended session together,
+											// no need to put FromUser back through endSessionFlow
+											// because FromUser's session has just gotten ended
+											if (pingInfo && pingInfo.thisPingEndedUsersSessionsTogether && pingInfo.SlackUserId == FromUser.dataValues.SlackUserId) {
+												return;
+											} else {
+
+												// else, put FromUser of these pings thru endSession flow!
+												const endSessionConfig = {
+													endSessionType: constants.endSessionTypes.endByPingToUserId,
+													pingInfo: {
+														FromUser,
+														ToUser: user,
+														session, // did this come while in session?
+														endSessionType // whether OG user ended early or sessionTimerUp
+													},
+													SlackUserId: FromUser.dataValues.SlackUserId
+												};
+
+												if (pingContainer.thisPingEndedUsersSessionsTogether) {
+													endSessionConfig.pingInfo.thisPingEndedUsersSessionsTogether = thisPingEndedUsersSessionsTogether;
+												}
+
+												controller.trigger(`end_session_flow`, [bot, endSessionConfig]);
+
+											}
+
+										});
+
 									}
-
-									// else, put FromUser of these pings thru endSession flow!
-									const endSessionConfig = {
-										endSessionType: constants.endSessionTypes.endByPingToUserId,
-										pingInfo: {
-											PingId: ping.dataValues.id,
-											FromUser,
-											ToUser,
-											session, // did this come while in session?
-											endSessionType // whether OG user ended early or sessionTimerUp
-										},
-										SlackUserId: FromUser.dataValues.SlackUserId
-									};
-
-									if (pingContainer.thisPingEndedUsersSessionsTogether) {
-										endSessionConfig.pingInfo.thisPingEndedUsersSessionsTogether = thisPingEndedUsersSessionsTogether;
-									}
-									controller.trigger(`end_session_flow`, [bot, endSessionConfig]);
 
 								}
 
@@ -287,7 +305,20 @@ export default function(controller) {
 									// if ToUser is not in session,
 									// send pings that are from this user!
 									if (!session) {
-										sendPings(pings, deliveryType);
+
+										let pingPromises = [];
+										pings.forEach((ping) => {
+											pingPromises.push(models.Ping.update({
+												live: false
+											},{
+												where: { id: ping.dataValues.id }
+											}));
+										});
+
+										if (sendGroupPings(pings, deliveryType)) {
+											Promise.all(pingPromises);
+										}
+
 									}
 
 								}

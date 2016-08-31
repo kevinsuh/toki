@@ -47,64 +47,65 @@ var checkForPings = function checkForPings() {
 		order: '"Ping"."createdAt" ASC'
 	}).then(function (pings) {
 
+		var groupPings = { fromUser: {} };
+
+		// group pings together by unique FromUser => ToUser combo
 		pings.forEach(function (ping) {
-			var FromUserId = ping.FromUserId;
-			var ToUserId = ping.ToUserId;
-			var deliveryType = ping.deliveryType;
-			var pingTime = ping.pingTime;
+			var _ping$dataValues = ping.dataValues;
+			var FromUserId = _ping$dataValues.FromUserId;
+			var ToUserId = _ping$dataValues.ToUserId;
+			var deliveryType = _ping$dataValues.deliveryType;
+			var pingTime = _ping$dataValues.pingTime;
 
-			// if there's a pingTime, respect it and dont send yet!
 
-			if (pingTime && deliveryType != _constants.constants.pingDeliveryTypes.bomb) {
-				var pingTimeObject = (0, _momentTimezone2.default)(pingTime);
-				if (pingTimeObject > now) {
-					return;
+			if (groupPings.fromUser[FromUserId]) {
+
+				if (groupPings[FromUserId].toUser[ToUserId]) {
+					groupPings[FromUserId].toUser[ToUserId].push(ping);
+				} else {
+					groupPings[FromUserId].toUser[ToUserId] = [ping];
 				}
+			} else {
+
+				groupPings.fromUser[FromUserId] = { toUser: {} };
+				groupPings.fromUser[FromUserId].toUser[ToUserId] = [ping];
+			}
+		});
+
+		// send all unique group pings!
+		for (var fromUserId in groupPings.fromUser) {
+
+			if (!groupPings.fromUser.hasOwnProperty(fromUserId)) {
+				continue;
 			}
 
-			ping.getPingMessages({}).then(function (pingMessages) {
-				_models2.default.User.find({
-					where: { id: FromUserId }
-				}).then(function (fromUser) {
+			var _loop = function _loop(toUserId) {
 
-					var fromUserTeamId = fromUser.TeamId;
+				if (!groupPings.fromUser[fromUserId].toUser.hasOwnProperty(toUserId)) {
+					return 'continue';
+				}
 
-					_models2.default.User.find({
-						where: { id: ToUserId }
-					}).then(function (toUser) {
-
-						var toUserTeamId = toUser.TeamId;
-
-						if (fromUserTeamId != toUserTeamId) {
-							// ERROR ERROR -- this should never happen!
-							return;
-						}
-
-						ping.update({
-							live: false
-						}).then(function () {
-
-							var fromUserConfig = {
-								UserId: fromUser.dataValues.id,
-								SlackUserId: fromUser.dataValues.SlackUserId,
-								TeamId: fromUser.dataValues.TeamId
-							};
-							var toUserConfig = {
-								UserId: toUser.dataValues.id,
-								SlackUserId: toUser.dataValues.SlackUserId,
-								TeamId: toUser.dataValues.TeamId
-							};
-							var config = {
-								deliveryType: deliveryType,
-								pingMessages: pingMessages
-							};
-
-							(0, _pingFunctions.sendPing)(fromUserConfig, toUserConfig, config);
-						});
-					});
+				var pings = groupPings.fromUser[fromUserId].toUser[toUserId];
+				var pingPromises = [];
+				pings.forEach(function (ping) {
+					pingPromises.push(_models2.default.Ping.update({
+						live: false
+					}, {
+						where: { id: ping.dataValues.id }
+					}));
 				});
-			});
-		});
+
+				if ((0, _pingFunctions.sendGroupPings)(pings, _constants.constants.pingDeliveryTypes.sessionEnd)) {
+					Promise.all(pingPromises);
+				}
+			};
+
+			for (var toUserId in groupPings.fromUser[fromUserId].toUser) {
+				var _ret = _loop(toUserId);
+
+				if (_ret === 'continue') continue;
+			}
+		}
 	});
 };
 

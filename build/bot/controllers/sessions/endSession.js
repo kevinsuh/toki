@@ -116,8 +116,7 @@ exports.default = function (controller) {
 									var pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
 
 									pingerSessions.forEach(function (pingerSession) {
-										var pingerSessionUserId = pingerSession.dataValues.UserId;
-										if (pingerSession && pingToUserId == pingerSessionUserId) {
+										if (pingerSession && pingToUserId == pingerSession.dataValues.UserId) {
 											// recipient of ping is in session
 											pingContainer.session = pingerSession;
 											return;
@@ -136,8 +135,7 @@ exports.default = function (controller) {
 									var pingContainer = pingContainers.toUser.fromUser[pingFromUserId] || { session: false, pings: [] };
 
 									pingerSessions.forEach(function (pingerSession) {
-										var pingerSessionUserId = pingerSession.dataValues.UserId;
-										if (pingerSession && pingFromUserId == pingerSessionUserId) {
+										if (pingerSession && pingFromUserId == pingerSession.dataValues.UserId) {
 											pingContainer.session = pingerSession;
 											return;
 										}
@@ -177,6 +175,7 @@ exports.default = function (controller) {
 								UserId: UserId,
 								SlackUserId: SlackUserId,
 								tz: tz,
+								user: user,
 								pingContainers: pingContainers,
 								endSessionType: endSessionType,
 								pingInfo: pingInfo
@@ -220,49 +219,71 @@ exports.default = function (controller) {
 								var pingContainers = _convo$sessionEnd.pingContainers;
 								var endSessionType = _convo$sessionEnd.endSessionType;
 								var pingInfo = _convo$sessionEnd.pingInfo;
+								var user = _convo$sessionEnd.user;
 
 								// pings queued to this user who just ended this session
 
-								for (var _fromUserId in pingContainers.toUser.fromUser) {
+								var _loop = function _loop(_fromUserId) {
 
 									if (!pingContainers.toUser.fromUser.hasOwnProperty(_fromUserId)) {
-										continue;
+										return 'continue';
 									}
 
 									var pingContainer = pingContainers.toUser.fromUser[_fromUserId];
 									var FromUser = pingContainer.user;
-									var _session = pingContainer.session;
-									var _pings = pingContainer.pings;
+									var session = pingContainer.session;
+									var pings = pingContainer.pings;
 
 									var deliveryType = _constants.constants.pingDeliveryTypes.sessionEnd;
 
-									// pings is all of the pings stored to this user from user
-									sendPings(_pings, deliveryType);
+									// update then send
+									var pingPromises = [];
+									pings.forEach(function (ping) {
+										pingPromises.push(_models2.default.Ping.update({
+											live: false
+										}, {
+											where: { id: ping.dataValues.id }
+										}));
+									});
 
-									// if previous ping is what ended session together,
-									// no need to put FromUser back through endSessionFlow
-									// because FromUser's session has just gotten ended
-									if (pingInfo && pingInfo.thisPingEndedUsersSessionsTogether && pingInfo.SlackUserId == FromUser.dataValues.SlackUserId) {
-										continue;
+									// if sent, turn ping off and continue
+									if ((0, _pingFunctions.sendGroupPings)(pings, deliveryType)) {
+
+										Promise.all(pingPromises).then(function (value) {
+
+											// if previous ping is what ended session together,
+											// no need to put FromUser back through endSessionFlow
+											// because FromUser's session has just gotten ended
+											if (pingInfo && pingInfo.thisPingEndedUsersSessionsTogether && pingInfo.SlackUserId == FromUser.dataValues.SlackUserId) {
+												return;
+											} else {
+
+												// else, put FromUser of these pings thru endSession flow!
+												var endSessionConfig = {
+													endSessionType: _constants.constants.endSessionTypes.endByPingToUserId,
+													pingInfo: {
+														FromUser: FromUser,
+														ToUser: user,
+														session: session, // did this come while in session?
+														endSessionType: endSessionType // whether OG user ended early or sessionTimerUp
+													},
+													SlackUserId: FromUser.dataValues.SlackUserId
+												};
+
+												if (pingContainer.thisPingEndedUsersSessionsTogether) {
+													endSessionConfig.pingInfo.thisPingEndedUsersSessionsTogether = thisPingEndedUsersSessionsTogether;
+												}
+
+												controller.trigger('end_session_flow', [bot, endSessionConfig]);
+											}
+										});
 									}
+								};
 
-									// else, put FromUser of these pings thru endSession flow!
-									var endSessionConfig = {
-										endSessionType: _constants.constants.endSessionTypes.endByPingToUserId,
-										pingInfo: {
-											PingId: ping.dataValues.id,
-											FromUser: FromUser,
-											ToUser: ToUser,
-											session: _session, // did this come while in session?
-											endSessionType: endSessionType // whether OG user ended early or sessionTimerUp
-										},
-										SlackUserId: FromUser.dataValues.SlackUserId
-									};
+								for (var _fromUserId in pingContainers.toUser.fromUser) {
+									var _ret3 = _loop(_fromUserId);
 
-									if (pingContainer.thisPingEndedUsersSessionsTogether) {
-										endSessionConfig.pingInfo.thisPingEndedUsersSessionsTogether = thisPingEndedUsersSessionsTogether;
-									}
-									controller.trigger('end_session_flow', [bot, endSessionConfig]);
+									if (_ret3 === 'continue') continue;
 								}
 
 								// pings from this end_session user to other users
@@ -273,16 +294,30 @@ exports.default = function (controller) {
 									}
 
 									var _pingContainer = pingContainers.fromUser.toUser[toUserId];
-									var _ToUser = _pingContainer.user;
-									var _session2 = _pingContainer.session;
-									var _pings2 = _pingContainer.pings;
+									var ToUser = _pingContainer.user;
+									var _session = _pingContainer.session;
+									var _pings = _pingContainer.pings;
 
-									var _deliveryType = _constants.constants.pingDeliveryTypes.sessionEnd;
+									var deliveryType = _constants.constants.pingDeliveryTypes.sessionEnd;
 
 									// if ToUser is not in session,
 									// send pings that are from this user!
-									if (!_session2) {
-										sendPings(_pings2, _deliveryType);
+									if (!_session) {
+										(function () {
+
+											var pingPromises = [];
+											_pings.forEach(function (ping) {
+												pingPromises.push(_models2.default.Ping.update({
+													live: false
+												}, {
+													where: { id: ping.dataValues.id }
+												}));
+											});
+
+											if ((0, _pingFunctions.sendGroupPings)(_pings, deliveryType)) {
+												Promise.all(pingPromises);
+											}
+										})();
 									}
 								}
 							});

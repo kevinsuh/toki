@@ -3,7 +3,7 @@ import models from './models';
 import moment from 'moment-timezone';
 import _ from 'lodash';
 import { colorsHash, constants } from '../bot/lib/constants';
-import { sendPing } from '../bot/controllers/pings/pingFunctions';
+import { sendGroupPings } from '../bot/controllers/pings/pingFunctions';
 
 // the cron file!
 export default function() {
@@ -29,69 +29,62 @@ let checkForPings = () => {
 		where: [ `"Ping"."live" = ? AND "Ping"."deliveryType" != ?`, true, constants.pingDeliveryTypes.sessionEnd ],
 		order: `"Ping"."createdAt" ASC`
 	}).then((pings) => {
-		
+
+		const groupPings = { fromUser: {} };
+
+		// group pings together by unique FromUser => ToUser combo
 		pings.forEach((ping) => {
+			
+			const { FromUserId, ToUserId, deliveryType, pingTime } = ping.dataValues;
 
-			const { FromUserId, ToUserId, deliveryType, pingTime } = ping;
+			if (groupPings.fromUser[FromUserId]) {
 
-			// if there's a pingTime, respect it and dont send yet!
-			if (pingTime && deliveryType != constants.pingDeliveryTypes.bomb) {
-				let pingTimeObject = moment(pingTime);
-				if (pingTimeObject > now) {
-					return;
+				if (groupPings[FromUserId].toUser[ToUserId]) {
+					groupPings[FromUserId].toUser[ToUserId].push(ping);
+				} else {
+					groupPings[FromUserId].toUser[ToUserId] = [ ping ];
 				}
+
+			} else {
+				
+				groupPings.fromUser[FromUserId] = { toUser: {} };
+				groupPings.fromUser[FromUserId].toUser[ToUserId] = [ ping ];
+
 			}
 
-			ping.getPingMessages({})
-			.then((pingMessages) => {
-				models.User.find({
-					where: { id: FromUserId }
-				})
-				.then((fromUser) => {
+		})
 
-					const fromUserTeamId = fromUser.TeamId;
+		// send all unique group pings!
+		for (let fromUserId in groupPings.fromUser) {
+			
+			if (!groupPings.fromUser.hasOwnProperty(fromUserId)) {
+				continue;
+			}
 
-					models.User.find({
-						where: { id: ToUserId }
-					})
-					.then((toUser) => {
+			for (let toUserId in groupPings.fromUser[fromUserId].toUser) {
+				
+				if (!groupPings.fromUser[fromUserId].toUser.hasOwnProperty(toUserId)) {
+					continue;
+				}
 
-						const toUserTeamId = toUser.TeamId;
-
-						if (fromUserTeamId != toUserTeamId) {
-							// ERROR ERROR -- this should never happen!
-							return;
-						}
-
-						ping.update({
-							live: false
-						})
-						.then(() => {
-
-							const fromUserConfig = {
-								UserId: fromUser.dataValues.id,
-								SlackUserId: fromUser.dataValues.SlackUserId,
-								TeamId: fromUser.dataValues.TeamId
-							};
-							const toUserConfig = {
-								UserId: toUser.dataValues.id,
-								SlackUserId: toUser.dataValues.SlackUserId,
-								TeamId: toUser.dataValues.TeamId
-							}
-							const config = {
-								deliveryType,
-								pingMessages
-							};
-
-							sendPing(fromUserConfig, toUserConfig, config);
-
-						})
-
-					})
+				const pings = groupPings.fromUser[fromUserId].toUser[toUserId];
+				let pingPromises = [];
+				pings.forEach((ping) => {
+					pingPromises.push(models.Ping.update({
+						live: false
+					},{
+						where: { id: ping.dataValues.id }
+					}));
 				});
-			})
 
-		});
+				if (sendGroupPings(pings, constants.pingDeliveryTypes.sessionEnd)) {
+					Promise.all(pingPromises);
+				}
+
+			}
+
+		}
+
 	});
 
 }

@@ -4,7 +4,7 @@ import models from '../../../app/models';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants, startSessionOptionsAttachments } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString } from '../../lib/messageHelpers';
-import { confirmTimeZoneExistsThenStartPingFlow, sendPing, queuePing, askForPingTime } from './pingFunctions';
+import { confirmTimeZoneExistsThenStartPingFlow, queuePing, askForPingTime } from './pingFunctions';
 
 // STARTING A SESSION
 export default function(controller) {
@@ -101,9 +101,9 @@ export default function(controller) {
 			bot.startPrivateConversation({ user: FromUser.dataValues.SlackUserId }, (err,convo) => {
 
 				if (sendBomb) {
-					convo.say(`:point_left: Got it! I just kicked off a conversation between you and <@${ToUser.dataValues.SlackUserId}>`);
+					convo.say(`:point_left: Got it! I just kicked off a conversation between you and <@${ToUser.dataValues.SlackUserId}> for that ping`);
 				} else if (cancelPing) {
-					convo.say(`The ping to <@${ToUser.dataValues.SlackUserId}> has been canceled!`);
+					convo.say(`That ping to <@${ToUser.dataValues.SlackUserId}> has been canceled!`);
 				}
 
 				convo.on(`end`, (convo) => {
