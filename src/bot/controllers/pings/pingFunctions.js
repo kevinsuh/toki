@@ -276,7 +276,7 @@ function askForQueuedPingMessages(convo) {
 		if (pingMessages && pingMessages.length > 0) {
 			attachments[0].text    = pingMessages[0];
 			attachments[0].color   = colorsHash.toki_purple.hex;
-			askMessage             = `Would you like me to send anything else to <@${user.dataValues.SlackUserId}> at *${endTimeString}*?`;
+			askMessage             = `What else would you like to send to <@${user.dataValues.SlackUserId}> at *${endTimeString}*? When done, press one of the buttons!`;
 			actions = fullAttachmentActions;
 		} else {
 			actions = [{
@@ -375,7 +375,8 @@ function askForQueuedPingMessages(convo) {
 					let pingMessageListUpdate = getMostRecentMessageToUpdate(response.channel, bot, "PING_MESSAGE_LIST");
 					if (pingMessageListUpdate) {
 
-						attachments[0].text    = pingMessages.length == 1 ? response.text : `${attachments[0].text}\n${response.text}`;
+						attachments[0].pretext = askMessage;
+						attachments[0].text    = pingMessages.length == 1 ? `${response.text}` : `${attachments[0].text}\n${response.text}`;
 						attachments[0].color   = colorsHash.toki_purple.hex;
 						attachments[attachments.length-1].actions = fullAttachmentActions;
 
