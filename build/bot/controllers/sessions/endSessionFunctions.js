@@ -118,7 +118,7 @@ function handleToUserPings(convo) {
 		var FromUser = pingContainer.user;
 
 		// do not include the user who ended session together
-		if (pingInfo && pingInfo.thisPingEndedUsersSessionsTogether && pingInfo.SlackUserId == FromUser.dataValues.SlackUserId) {
+		if (pingInfo && pingInfo.thisPingEndedUsersSessionsTogether && pingInfo.FromUser.dataValues.SlackUserId == FromUser.dataValues.SlackUserId) {
 			continue;
 		}
 

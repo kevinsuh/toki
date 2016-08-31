@@ -254,7 +254,7 @@ exports.default = function (controller) {
 											// if previous ping is what ended session together,
 											// no need to put FromUser back through endSessionFlow
 											// because FromUser's session has just gotten ended
-											if (pingInfo && pingInfo.thisPingEndedUsersSessionsTogether && pingInfo.SlackUserId == FromUser.dataValues.SlackUserId) {
+											if (pingInfo && pingInfo.thisPingEndedUsersSessionsTogether && pingInfo.FromUser.dataValues.SlackUserId == FromUser.dataValues.SlackUserId) {
 												return;
 											} else {
 
