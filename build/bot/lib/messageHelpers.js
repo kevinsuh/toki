@@ -15,6 +15,7 @@ exports.commaSeparateOutStringArray = commaSeparateOutStringArray;
 exports.getMostRecentMessageToUpdate = getMostRecentMessageToUpdate;
 exports.stringifyNumber = stringifyNumber;
 exports.getPingMessageContentAsAttachment = getPingMessageContentAsAttachment;
+exports.getGroupedPingMessagesAsAttachment = getGroupedPingMessagesAsAttachment;
 exports.getHandleQueuedPingActions = getHandleQueuedPingActions;
 
 var _constants = require('./constants');
@@ -460,6 +461,36 @@ function getPingMessageContentAsAttachment(ping) {
 		text: pingMessagesContent
 	}];
 	return attachments;
+}
+
+// this is for more than one ping
+function getGroupedPingMessagesAsAttachment(pings) {
+
+	var groupedPingMessagesAttachment = [];
+
+	pings.forEach(function (ping, index) {
+
+		var numberString = stringifyNumber(index + 1);
+
+		var pingMessagesContent = '';
+
+		ping.dataValues.PingMessages.forEach(function (pingMessage) {
+			var pingMessageContent = pingMessage.dataValues.content;
+			pingMessagesContent = pingMessagesContent + '\n' + pingMessageContent;
+		});
+
+		groupedPingMessagesAttachment.push({
+			attachment_type: 'default',
+			fallback: 'Here is the ' + numberString + ' ping!',
+			pretext: '*Here is the ' + numberString + ' ping:*',
+			mrkdwn_in: ["text", "pretext"],
+			callback_id: "PING_MESSAGE",
+			color: _constants.colorsHash.toki_purple.hex,
+			text: pingMessagesContent
+		});
+	});
+
+	return groupedPingMessagesAttachment;
 }
 
 function getHandleQueuedPingActions(ping) {

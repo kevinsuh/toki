@@ -434,6 +434,39 @@ export function getPingMessageContentAsAttachment(ping) {
 
 }
 
+// this is for more than one ping
+export function getGroupedPingMessagesAsAttachment(pings) {
+
+	let groupedPingMessagesAttachment = [];
+
+	pings.forEach((ping, index) => {
+
+		const numberString = stringifyNumber(index + 1);
+
+		let pingMessagesContent = ``;
+
+		ping.dataValues.PingMessages.forEach((pingMessage) => {
+			const pingMessageContent = pingMessage.dataValues.content;
+			pingMessagesContent      = `${pingMessagesContent}\n${pingMessageContent}`
+		});
+
+		groupedPingMessagesAttachment.push({
+			attachment_type: 'default',
+			fallback: `Here is the ${numberString} ping!`,
+			pretext: `*Here is the ${numberString} ping:*`,
+			mrkdwn_in: ["text", "pretext"],
+			callback_id: "PING_MESSAGE",
+			color: colorsHash.toki_purple.hex,
+			text: pingMessagesContent
+		});
+
+	});
+
+	return groupedPingMessagesAttachment;
+
+}
+
+
 export function getHandleQueuedPingActions(ping) {
 
 	let actions = [];

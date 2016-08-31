@@ -1,8 +1,9 @@
 import { bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
+import _ from 'lodash';
 import { utterances, colorsArray, buttonValues, colorsHash, timeZones, timeZoneAttachments, constants } from '../../lib/constants';
-import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandomExample, commaSeparateOutStringArray, getMostRecentMessageToUpdate, getUniqueSlackUsersFromString, stringifyNumber, getPingMessageContentAsAttachment } from '../../lib/messageHelpers';
+import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandomExample, commaSeparateOutStringArray, getMostRecentMessageToUpdate, getUniqueSlackUsersFromString, stringifyNumber, getPingMessageContentAsAttachment, getGroupedPingMessagesAsAttachment } from '../../lib/messageHelpers';
 
 /**
  * 		PING CONVERSATION FLOW FUNCTIONS
@@ -667,28 +668,23 @@ export function sendGroupPings(pings, deliveryType) {
 
 							} else {
 
-								convo.say(initialMessage);
+								// these need to happen one at a time
+								
+								const groupedPingMessagesAttachment = getGroupedPingMessagesAsAttachment(pings);
 
-								pings.forEach((ping, index) => {
-
-									const numberString = stringifyNumber(index + 1);
-									const pingMessagesContentAttachment = getPingMessageContentAsAttachment(ping);
-
-									convo.say({
-										text: `*Here's the ${numberString} ping:*`,
-										attachments: pingMessagesContentAttachment
-									})
-
-								})
+								convo.say({
+									text: initialMessage,
+									attachments: groupedPingMessagesAttachment
+								});
 
 							}
+							
 						});
 					}
 				});
 
 			}
 		});
-
 		return true;
 	} else {
 		return false;

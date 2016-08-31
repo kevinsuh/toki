@@ -21,6 +21,10 @@ var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 var _constants = require('../../lib/constants');
 
 var _messageHelpers = require('../../lib/messageHelpers');
@@ -699,17 +703,13 @@ function sendGroupPings(pings, deliveryType) {
 									});
 								} else {
 
-									convo.say(initialMessage);
+									// these need to happen one at a time
 
-									pings.forEach(function (ping, index) {
+									var groupedPingMessagesAttachment = (0, _messageHelpers.getGroupedPingMessagesAsAttachment)(pings);
 
-										var numberString = (0, _messageHelpers.stringifyNumber)(index + 1);
-										var pingMessagesContentAttachment = (0, _messageHelpers.getPingMessageContentAsAttachment)(ping);
-
-										convo.say({
-											text: '*Here\'s the ' + numberString + ' ping:*',
-											attachments: pingMessagesContentAttachment
-										});
+									convo.say({
+										text: initialMessage,
+										attachments: groupedPingMessagesAttachment
 									});
 								}
 							});
@@ -717,7 +717,6 @@ function sendGroupPings(pings, deliveryType) {
 					});
 				}
 			});
-
 			return {
 				v: true
 			};
