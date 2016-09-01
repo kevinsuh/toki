@@ -232,8 +232,6 @@ function connectOnInstall(team_config) {
 
 function connectOnLogin(identity) {
 
-	console.log('\n\n\n\n CONNECTING ON LOGIN \n\n\n\n');
-
 	// bot already exists, get bot token for this users team
 	var SlackUserId = identity.user.id;
 	var TeamId = identity.team.id;
@@ -250,6 +248,10 @@ function connectOnLogin(identity) {
 	});
 }
 
+controller.on('rtm_open', function (bot) {
+	console.log('\n\n\n\n** The RTM api just connected! for bot token: ' + bot.config.token + '\n\n\n');
+});
+
 // upon install
 controller.on('create_bot', function (bot, team) {
 
@@ -257,9 +259,6 @@ controller.on('create_bot', function (bot, team) {
 		// already online! do nothing.
 		console.log("already online! do nothing.");
 	} else {
-
-		console.log('\n\n\nbot that is running:');
-		console.log(bot);
 
 		bot.startRTM(function (err) {
 			if (!err) {
@@ -279,8 +278,6 @@ controller.on('create_bot', function (bot, team) {
 								(0, _scripts.seedAndUpdateUsers)(members);
 							}
 							(0, _actions.firstInstallInitiateConversation)(bot, team);
-							console.log('\n\n\n THIS MANY BOTS:\n\n\n');
-							console.log(bots);
 						});
 					}
 				});
@@ -293,8 +290,6 @@ controller.on('create_bot', function (bot, team) {
 
 // subsequent logins
 controller.on('login_bot', function (bot, identity) {
-
-	console.log('\n\n\n TRIGERED BY LOGIN BOT \n\n\n');
 
 	if (bots[bot.config.token]) {
 		// already online! do nothing.

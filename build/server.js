@@ -136,8 +136,6 @@ _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
 		teamTokens.forEach(function (token, index) {
 			var bot = _controllers.controller.spawn({ token: token, retry: 500 }).startRTM(function (err, bot, payload) {
 
-				console.log(' \n\n\n COUNT: ' + index + ' FOR TEAM TOKEN');
-
 				if (payload) {
 					var teamMembers = payload.users; // array of user objects!
 					(0, _scripts.seedAndUpdateUsers)(teamMembers);
