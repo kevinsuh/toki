@@ -153,7 +153,10 @@ export function customConfigBot(controller) {
 
 // try to avoid repeat RTM's
 export function trackBot(bot, token) {
-	bots[bot.config.token] = bot;
+
+	console.log(`\n\n\n\n\n\n ~~ token: ${token} \n\n\n\n\n`);
+
+	bots[token] = bot;
 }
 
 /**
@@ -198,11 +201,14 @@ controller.on('create_bot', (bot,team) => {
 		console.log("already online! do nothing.")
 	} else {
 
+		console.log(`\n\n\nbot that is running:`);
+		console.log(bot);
+
 		bot.startRTM((err) => {
 			if (!err) {
 				console.log("\n\n RTM on with team install and listening \n\n");
 				customConfigBot(controller);
-				trackBot(bot);
+				trackBot(bot, bot.config.token);
 				controller.saveTeam(team, (err, id) => {
 					if (err) {
 						console.log("Error saving team")
@@ -241,7 +247,7 @@ controller.on('login_bot', (bot,identity) => {
 			if (!err) {
 
 				console.log("RTM on and listening");
-				trackBot(bot);
+				trackBot(bot, bot.config.token);
 				controller.saveTeam(team, (err, team) => {
 					if (err) {
 						console.log("Error saving team")

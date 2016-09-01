@@ -126,7 +126,7 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 							})
 						}
 					}
-					trackBot(bot); // this is where we store all ze bots
+					trackBot(bot, token); // this is where we store all ze bots
 				}
 			})
 		});

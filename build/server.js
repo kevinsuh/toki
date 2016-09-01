@@ -154,7 +154,7 @@ _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
 							});
 						}
 					}
-					(0, _controllers.trackBot)(bot); // this is where we store all ze bots
+					(0, _controllers.trackBot)(bot, token); // this is where we store all ze bots
 				}
 			});
 		});
