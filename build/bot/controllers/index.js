@@ -223,7 +223,13 @@ function connectOnInstall(team_config) {
 
 	console.log('\n\n\n\n CONNECTING ON INSTALL \n\n\n\n');
 
-	var bot = controller.spawn(team_config);
+	var bot = void 0;
+	if (team_config.bot && team_config.bot.token) {
+		bot = bots[team_config.bot.token];
+	} else {
+		bot = controller.spawn(team_config);
+	}
+
 	controller.trigger('create_bot', [bot, team_config]);
 }
 

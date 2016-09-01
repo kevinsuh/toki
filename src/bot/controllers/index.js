@@ -164,16 +164,7 @@ export function trackBot(bot, token) {
 export function connectOnInstall(team_config) {
 
 	console.log(`\n\n\n\n CONNECTING ON INSTALL \n\n\n\n`);
-
-	{ id: 'T06V7FPCJ',
-  bot:
-   { token: 'xoxb-75159187553-PUs0AM1yL9qmaiYba94qK3Fz',
-     user_id: 'U274P5HG9',
-     createdBy: 'U08B9LR2B' },
-  createdBy: 'U08B9LR2B',
-  url: 'https://sendlabrador.slack.com/',
-  name: 'No. 6' }
-
+	
   let bot;
   if (team_config.bot && team_config.bot.token) {
   	bot = bots[team_config.bot.token];
