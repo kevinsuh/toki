@@ -1,6 +1,7 @@
 import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
+import _ from 'lodash';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '../../lib/messageHelpers';
@@ -87,7 +88,7 @@ export default function(controller) {
 
 					pings.forEach((ping) => {
 						const { FromUserId, ToUserId } = ping;
-						pingerSessionPromises.push(models.Session.find({
+						pingerSessionPromises.push(models.Session.findAll({
 							where: {
 								UserId: [ FromUserId, ToUserId ],
 								live: true,
@@ -97,8 +98,19 @@ export default function(controller) {
 						}));
 					});
 
+					let pingerSessions = [];
 					Promise.all(pingerSessionPromises)
-					.then((pingerSessions) => {
+					.then((pingerSessionsArrays) => {
+
+						// returns double array of pingerSessions -- only get the unique ones!
+						pingerSessionsArrays.forEach((pingerSessionsArray) => {
+							let pingerSessionIds = pingerSessions.map(pingerSession => pingerSession.dataValues.id);
+							pingerSessionsArray.forEach((pingerSession) => {
+								if (!_.includes(pingerSessionIds, pingerSession.dataValues.id)) {
+									pingerSessions.push(pingerSession);
+								}
+							});
+						});
 
 						// this object holds pings in relation to the UserId of the session that just ended!
 						// fromUser are pings that the user sent out
@@ -122,13 +134,22 @@ export default function(controller) {
 								// create new container if it doesn't exist
 								let pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
 
+								console.log(`\n\n pingToUserId: ${pingToUserId}`);
+
 								pingerSessions.forEach((pingerSession) => {
+									if (pingerSession) {
+										console.log(`\n\n pingerSessionUserId: ${pingerSession.dataValues.UserId}`);
+									}
+									
 									if (pingerSession && pingToUserId == pingerSession.dataValues.UserId) {
 										// recipient of ping is in session
 										pingContainer.session = pingerSession;
+										console.log(`\n\n ping container:`);
+										console.log(pingContainer);
 										return;
 									}
 								});
+
 
 								pingContainer.user = ping.dataValues.ToUser;
 								pingContainer.pings.push(ping);

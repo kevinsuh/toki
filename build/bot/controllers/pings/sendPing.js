@@ -218,7 +218,7 @@ exports.default = function (controller) {
 							pings.forEach(function (ping) {
 								var ToUserId = ping.dataValues.ToUserId;
 
-								pingerSessionPromises.push(_models2.default.Session.find({
+								pingerSessionPromises.push(_models2.default.Session.findAll({
 									where: {
 										UserId: ToUserId,
 										live: true,
@@ -228,7 +228,20 @@ exports.default = function (controller) {
 								}));
 							});
 
-							Promise.all(pingerSessionPromises).then(function (pingerSessions) {
+							var pingerSessions = [];
+							Promise.all(pingerSessionPromises).then(function (pingerSessionsArrays) {
+
+								// returns double array of pingerSessions -- only get the unique ones!
+								pingerSessionsArrays.forEach(function (pingerSessionsArray) {
+									var pingerSessionIds = pingerSessions.map(function (pingerSession) {
+										return pingerSession.dataValues.id;
+									});
+									pingerSessionsArray.forEach(function (pingerSession) {
+										if (!_lodash2.default.includes(pingerSessionIds, pingerSession.dataValues.id)) {
+											pingerSessions.push(pingerSession);
+										}
+									});
+								});
 
 								pings.forEach(function (ping) {
 
@@ -376,6 +389,10 @@ var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
+
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
 
 var _constants = require('../../lib/constants');
 

@@ -80,7 +80,7 @@ exports.default = function (controller) {
 						var FromUserId = ping.FromUserId;
 						var ToUserId = ping.ToUserId;
 
-						pingerSessionPromises.push(_models2.default.Session.find({
+						pingerSessionPromises.push(_models2.default.Session.findAll({
 							where: {
 								UserId: [FromUserId, ToUserId],
 								live: true,
@@ -90,7 +90,20 @@ exports.default = function (controller) {
 						}));
 					});
 
-					Promise.all(pingerSessionPromises).then(function (pingerSessions) {
+					var pingerSessions = [];
+					Promise.all(pingerSessionPromises).then(function (pingerSessionsArrays) {
+
+						// returns double array of pingerSessions -- only get the unique ones!
+						pingerSessionsArrays.forEach(function (pingerSessionsArray) {
+							var pingerSessionIds = pingerSessions.map(function (pingerSession) {
+								return pingerSession.dataValues.id;
+							});
+							pingerSessionsArray.forEach(function (pingerSession) {
+								if (!_lodash2.default.includes(pingerSessionIds, pingerSession.dataValues.id)) {
+									pingerSessions.push(pingerSession);
+								}
+							});
+						});
 
 						// this object holds pings in relation to the UserId of the session that just ended!
 						// fromUser are pings that the user sent out
@@ -115,10 +128,18 @@ exports.default = function (controller) {
 									// create new container if it doesn't exist
 									var pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
 
+									console.log('\n\n pingToUserId: ' + pingToUserId);
+
 									pingerSessions.forEach(function (pingerSession) {
+										if (pingerSession) {
+											console.log('\n\n pingerSessionUserId: ' + pingerSession.dataValues.UserId);
+										}
+
 										if (pingerSession && pingToUserId == pingerSession.dataValues.UserId) {
 											// recipient of ping is in session
 											pingContainer.session = pingerSession;
+											console.log('\n\n ping container:');
+											console.log(pingContainer);
 											return;
 										}
 									});
@@ -338,6 +359,10 @@ var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
+
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
 
 var _constants = require('../../lib/constants');
 
