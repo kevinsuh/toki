@@ -53,6 +53,10 @@ export default function(controller) {
 			if (!content) {
 				content = reminder ? reminder[0].value : null;
 			}
+			bot.send({
+				type: "typing",
+				channel: message.channel
+			});
 		} else {
 			SlackUserId = config.SlackUserId;
 		}
@@ -61,11 +65,6 @@ export default function(controller) {
 			// trim out if it starts with focus
 			content = content.replace(/^focu[us]{1,3}/i,"").trim();
 		}
-
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
 	
 		models.User.find({
 			where: { SlackUserId }

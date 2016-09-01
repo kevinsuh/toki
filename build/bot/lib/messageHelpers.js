@@ -16,8 +16,10 @@ exports.getMostRecentMessageToUpdate = getMostRecentMessageToUpdate;
 exports.stringifyNumber = stringifyNumber;
 exports.getPingMessageContentAsAttachment = getPingMessageContentAsAttachment;
 exports.getGroupedPingMessagesAsAttachment = getGroupedPingMessagesAsAttachment;
+exports.whichGroupedPingsToCancelAsAttachment = whichGroupedPingsToCancelAsAttachment;
 exports.getHandleQueuedPingActions = getHandleQueuedPingActions;
 exports.getStartSessionOptionsAttachment = getStartSessionOptionsAttachment;
+exports.convertNumberStringToArray = convertNumberStringToArray;
 
 var _constants = require('./constants');
 
@@ -494,6 +496,44 @@ function getGroupedPingMessagesAsAttachment(pings) {
 	return groupedPingMessagesAttachment;
 }
 
+// this is for more than one ping
+// pings must have sessino attached to it!
+function whichGroupedPingsToCancelAsAttachment(pings) {
+
+	var groupedPingMessagesAttachment = [];
+
+	pings.forEach(function (ping, index) {
+		var _ping$dataValues = ping.dataValues;
+		var ToUser = _ping$dataValues.ToUser;
+		var session = _ping$dataValues.session;
+
+		var endTimeObject = (0, _momentTimezone2.default)(session.dataValues.endTime);
+		var endTimeString = endTimeObject.format("h:mma");
+
+		var numberString = stringifyNumber(index + 1);
+		var count = index + 1;
+
+		var pingMessagesContent = '';
+
+		ping.dataValues.PingMessages.forEach(function (pingMessage) {
+			var pingMessageContent = pingMessage.dataValues.content;
+			pingMessagesContent = pingMessagesContent + '\n' + pingMessageContent;
+		});
+
+		groupedPingMessagesAttachment.push({
+			attachment_type: 'default',
+			fallback: count + ') Ping to <@' + ToUser.dataValues.SlackUserId + '> at ' + endTimeString + ' or sooner:',
+			pretext: count + ') Ping to <@' + ToUser.dataValues.SlackUserId + '> at ' + endTimeString + ' or sooner:',
+			mrkdwn_in: ["text", "pretext"],
+			callback_id: "PING_MESSAGE",
+			color: _constants.colorsHash.toki_purple.hex,
+			text: pingMessagesContent
+		});
+	});
+
+	return groupedPingMessagesAttachment;
+}
+
 function getHandleQueuedPingActions(ping) {
 
 	var actions = [];
@@ -621,5 +661,40 @@ function getStartSessionOptionsAttachment(pings) {
 	}
 
 	return attachments;
+}
+
+/**
+ * takes in user input for tasks done `4, 1, 3` and converts it to an array of the numbers
+ * @param  {string} taskCompletedString `4, 1, 3` (only uniques!)
+ * @param {int} maxNumber if number is higher than this it is invalid!
+ * @return {[integer]}                     [4, 1, 3] * if valid *
+ */
+function convertNumberStringToArray(numbersString, maxNumber) {
+
+	var splitter = RegExp(/(,|\ba[and]{1,}\b|\bthen\b)/);
+	var numbersSplitArray = numbersString.split(splitter);
+
+	// if we capture 0 valid tasks from string, then we start over
+	var numberRegEx = new RegExp(/[\d]+/);
+	var validNumberArray = [];
+
+	numbersSplitArray.forEach(function (numberString) {
+
+		var number = numberString.match(numberRegEx);
+
+		// if it's a valid number and within the remainingTasks length
+		if (number && number <= maxNumber) {
+			number = parseInt(number[0]);
+			if (!_lodash2.default.includes(validNumberArray, number)) {
+				validNumberArray.push(number);
+			}
+		}
+	});
+
+	if (validNumberArray.length == 0) {
+		return false;
+	} else {
+		return validNumberArray;
+	}
 }
 //# sourceMappingURL=messageHelpers.js.map

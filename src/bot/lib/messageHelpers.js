@@ -466,6 +466,44 @@ export function getGroupedPingMessagesAsAttachment(pings) {
 
 }
 
+// this is for more than one ping
+// pings must have sessino attached to it!
+export function whichGroupedPingsToCancelAsAttachment(pings) {
+
+	let groupedPingMessagesAttachment = [];
+
+	pings.forEach((ping, index) => {
+
+		const { dataValues: { ToUser, session } } = ping;
+		const endTimeObject = moment(session.dataValues.endTime);
+		const endTimeString = endTimeObject.format("h:mma");
+
+		const numberString = stringifyNumber(index + 1);
+		let count = index+1;
+
+		let pingMessagesContent = ``;
+
+		ping.dataValues.PingMessages.forEach((pingMessage) => {
+			const pingMessageContent = pingMessage.dataValues.content;
+			pingMessagesContent      = `${pingMessagesContent}\n${pingMessageContent}`
+		});
+
+		groupedPingMessagesAttachment.push({
+			attachment_type: 'default',
+			fallback: `${count}) Ping to <@${ToUser.dataValues.SlackUserId}> at ${endTimeString} or sooner:`,
+			pretext: `${count}) Ping to <@${ToUser.dataValues.SlackUserId}> at ${endTimeString} or sooner:`,
+			mrkdwn_in: ["text", "pretext"],
+			callback_id: "PING_MESSAGE",
+			color: colorsHash.toki_purple.hex,
+			text: pingMessagesContent
+		});
+
+	});
+
+	return groupedPingMessagesAttachment;
+
+}
+
 
 export function getHandleQueuedPingActions(ping) {
 
@@ -607,4 +645,41 @@ export function getStartSessionOptionsAttachment(pings, config = {}) {
 	
 
 	return attachments;
+}
+
+/**
+ * takes in user input for tasks done `4, 1, 3` and converts it to an array of the numbers
+ * @param  {string} taskCompletedString `4, 1, 3` (only uniques!)
+ * @param {int} maxNumber if number is higher than this it is invalid!
+ * @return {[integer]}                     [4, 1, 3] * if valid *
+ */
+export function convertNumberStringToArray(numbersString, maxNumber) {
+
+	const splitter        = RegExp(/(,|\ba[and]{1,}\b|\bthen\b)/);
+	let numbersSplitArray = numbersString.split(splitter);
+
+	// if we capture 0 valid tasks from string, then we start over
+	let numberRegEx          = new RegExp(/[\d]+/);
+	let validNumberArray = [];
+	
+	numbersSplitArray.forEach((numberString) => {
+
+		let number = numberString.match(numberRegEx);
+
+		// if it's a valid number and within the remainingTasks length
+		if (number && number <= maxNumber) {
+			number = parseInt(number[0]);
+			if (!_.includes(validNumberArray, number)) {
+				validNumberArray.push(number);
+			}
+		}
+
+	});
+
+	if (validNumberArray.length == 0) {
+		return false;
+	} else {
+		return validNumberArray;
+	}
+
 }

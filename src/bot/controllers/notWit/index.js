@@ -79,6 +79,18 @@ export default function(controller) {
 
 	});
 
+	// cancel ping!
+	controller.hears([utterances.cancelPing], 'direct_message', function(bot, message) {
+
+		console.log(`\n\n huh`);
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
+		controller.trigger(`cancel_ping_flow`, [ bot, message ]);
+
+	});
+
 	controller.hears([utterances.sendSooner], 'direct_message', function(bot, message) {
 
 		let botToken = bot.config.token;

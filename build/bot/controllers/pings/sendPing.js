@@ -162,6 +162,209 @@ exports.default = function (controller) {
 			});
 		});
 	});
+
+	/**
+  * 		CANCEL PINGS FUNCTIONALITY (i.e. while you are in middle of session)
+  */
+	controller.on('cancel_ping_flow', function (bot, message) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		var SlackUserId = message.user;
+		var text = message.text;
+
+		// get all of user's pings to others and then go through wizard to cancel
+		// if only one ping, automatically cancel
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+
+		_models2.default.User.find({
+			where: { SlackUserId: SlackUserId }
+		}).then(function (user) {
+
+			// need user's timezone for this flow!
+			var tz = user.tz;
+
+			var UserId = user.id;
+
+			// check for an open session before starting flow
+			user.getSessions({
+				where: ['"open" = ?', true]
+			}).then(function (sessions) {
+
+				var session = sessions[0];
+
+				if (session) {
+					(function () {
+						var _session$dataValues = session.dataValues;
+						var endTime = _session$dataValues.endTime;
+						var content = _session$dataValues.content;
+
+						var endTimeObject = (0, _momentTimezone2.default)(endTime).tz(tz);
+						var endTimeString = endTimeObject.format("h:mma");
+
+						_models2.default.Ping.findAll({
+							where: ['"Ping"."FromUserId" = ? AND "Ping"."live" = ?', UserId, true],
+							include: [{ model: _models2.default.User, as: 'FromUser' }, { model: _models2.default.User, as: 'ToUser' }, _models2.default.PingMessage],
+							order: '"Ping"."createdAt" ASC'
+						}).then(function (pings) {
+
+							// get all the sessions associated with pings that come FromUser
+							var pingerSessionPromises = [];
+							pings.forEach(function (ping) {
+								var ToUserId = ping.dataValues.ToUserId;
+
+								pingerSessionPromises.push(_models2.default.Session.find({
+									where: {
+										UserId: ToUserId,
+										live: true,
+										open: true
+									},
+									include: [_models2.default.User]
+								}));
+							});
+
+							Promise.all(pingerSessionPromises).then(function (pingerSessions) {
+
+								pings.forEach(function (ping) {
+
+									var pingToUserId = ping.dataValues.ToUserId;
+									pingerSessions.forEach(function (pingerSession) {
+										if (pingerSession && pingToUserId == pingerSession.dataValues.UserId) {
+											// the session for ToUser of this ping
+											ping.dataValues.session = pingerSession;
+											return;
+										}
+									});
+								});
+
+								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+									convo.cancelPingsObject = {
+										pingIdsToCancel: []
+									};
+
+									if (pings.length == 0) {
+
+										convo.say('You have no pings to cancel!');
+										var _text = 'Good luck with your focused session on `' + content + '` and I’ll see you at *' + endTimeString + '* :wave:';
+										var config = { customOrder: true, order: ['endSession'] };
+										var attachments = (0, _messageHelpers.getStartSessionOptionsAttachment)(pings, config);
+
+										convo.say({
+											text: _text,
+											attachments: attachments
+										});
+
+										convo.next();
+									} else if (pings.length == 1) {
+
+										// automatically cancel the single ping
+										var ping = pings[0];
+										var _ping$dataValues2 = ping.dataValues;
+										var ToUser = _ping$dataValues2.ToUser;
+										var id = _ping$dataValues2.id;
+
+
+										convo.cancelPingsObject.pingIdsToCancel.push(id);
+
+										convo.say('The ping to <@' + ToUser.dataValues.SlackUserId + '> has been canceled!');
+
+										var _text2 = 'Good luck with your focused session on `' + content + '` and I’ll see you at *' + endTimeString + '* :wave:';
+										var _config = { customOrder: true, order: ['endSession'] };
+										var _attachments = (0, _messageHelpers.getStartSessionOptionsAttachment)(pings, _config);
+
+										convo.say({
+											text: _text2,
+											attachments: _attachments
+										});
+
+										convo.next();
+									} else {
+
+										// more than 1 ping to cancel, means ask which one to cancel!
+										var _text3 = "Which ping(s) would you like to cancel? i.e. `1, 2` or `3`";
+										var _attachments2 = (0, _messageHelpers.whichGroupedPingsToCancelAsAttachment)(pings);
+
+										convo.ask({
+											text: _text3,
+											attachments: _attachments2
+										}, [{
+											pattern: _constants.utterances.noAndNeverMind,
+											callback: function callback(response, convo) {
+												convo.say("Okay! I didn't cancel any pings");
+												convo.next();
+											}
+										}, {
+											default: true,
+											callback: function callback(response, convo) {
+												var text = response.text;
+
+												var numberArray = (0, _messageHelpers.convertNumberStringToArray)(text, pings.length);
+
+												if (numberArray) {
+
+													numberArray.forEach(function (number) {
+														var index = number - 1;
+														if (pings[index]) {
+															convo.cancelPingsObject.pingIdsToCancel.push(pings[index].dataValues.id);
+														}
+													});
+
+													var pingNumberCancelString = (0, _messageHelpers.commaSeparateOutStringArray)(numberArray);
+
+													if (convo.cancelPingsObject.pingIdsToCancel.length == 1) {
+														convo.say('Great, I\'ve canceled ping ' + pingNumberCancelString + '!');
+													} else {
+														convo.say('Great, I\'ve canceled pings ' + pingNumberCancelString + '!');
+													}
+
+													var _text4 = 'Good luck with your focused session on `' + content + '` and I’ll see you at *' + endTimeString + '* :wave:';
+													var _config2 = { customOrder: true, order: ['endSession'] };
+													var _attachments3 = (0, _messageHelpers.getStartSessionOptionsAttachment)(pings, _config2);
+
+													convo.say({
+														text: _text4,
+														attachments: _attachments3
+													});
+													convo.next();
+												} else {
+													convo.say('I didn\'t get that! Please put a combination of the numbers below');
+													convo.repeat();
+												}
+												convo.next();
+											}
+										}]);
+									}
+
+									convo.on('end', function (convo) {
+										var pingIdsToCancel = convo.cancelPingsObject.pingIdsToCancel;
+
+
+										pingIdsToCancel.forEach(function (pingIdToCancel) {
+
+											_models2.default.Ping.update({
+												live: false
+											}, {
+												where: { id: pingIdToCancel }
+											});
+										});
+									});
+								});
+							});
+						});
+					})();
+				} else {
+					// ask to start a session
+					(0, _sessions.notInSessionWouldYouLikeToStartOne)({ bot: bot, SlackUserId: SlackUserId, controller: controller });
+				}
+			});
+		});
+	});
 };
 
 var _index = require('../index');
@@ -179,6 +382,8 @@ var _constants = require('../../lib/constants');
 var _messageHelpers = require('../../lib/messageHelpers');
 
 var _pingFunctions = require('./pingFunctions');
+
+var _sessions = require('../sessions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 //# sourceMappingURL=sendPing.js.map
