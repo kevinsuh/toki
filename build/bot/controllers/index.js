@@ -220,11 +220,16 @@ function trackBot(bot, token) {
  */
 
 function connectOnInstall(team_config) {
+
+	console.log('\n\n\n\n CONNECTING ON INSTALL \n\n\n\n');
+
 	var bot = controller.spawn(team_config);
 	controller.trigger('create_bot', [bot, team_config]);
 }
 
 function connectOnLogin(identity) {
+
+	console.log('\n\n\n\n CONNECTING ON LOGIN \n\n\n\n');
 
 	// bot already exists, get bot token for this users team
 	var SlackUserId = identity.user.id;
@@ -267,6 +272,7 @@ controller.on('create_bot', function (bot, team) {
 								(0, _scripts.seedAndUpdateUsers)(members);
 							}
 							(0, _actions.firstInstallInitiateConversation)(bot, team);
+							console.log('\n\n\n THIS MANY BOTS: ' + bots.length + '\n\n\n');
 						});
 					}
 				});

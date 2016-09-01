@@ -162,11 +162,31 @@ export function trackBot(bot, token) {
  */
 
 export function connectOnInstall(team_config) {
-	var bot = controller.spawn(team_config);
+
+	console.log(`\n\n\n\n CONNECTING ON INSTALL \n\n\n\n`);
+
+	{ id: 'T06V7FPCJ',
+  bot:
+   { token: 'xoxb-75159187553-PUs0AM1yL9qmaiYba94qK3Fz',
+     user_id: 'U274P5HG9',
+     createdBy: 'U08B9LR2B' },
+  createdBy: 'U08B9LR2B',
+  url: 'https://sendlabrador.slack.com/',
+  name: 'No. 6' }
+
+  let bot;
+  if (team_config.bot && team_config.bot.token) {
+  	bot = bots[team_config.bot.token];
+  } else {
+  	bot = controller.spawn(team_config);
+  }
+
 	controller.trigger('create_bot', [bot, team_config]);
 }
 
 export function connectOnLogin(identity) {
+
+	console.log(`\n\n\n\n CONNECTING ON LOGIN \n\n\n\n`);
 
 	// bot already exists, get bot token for this users team
 	var SlackUserId = identity.user.id;
@@ -210,6 +230,7 @@ controller.on('create_bot', (bot,team) => {
 								seedAndUpdateUsers(members);
 							}
 							firstInstallInitiateConversation(bot, team);
+							console.log(`\n\n\n THIS MANY BOTS: ${bots.length}\n\n\n`);
 						});
 					}
 				});
