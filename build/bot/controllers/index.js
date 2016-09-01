@@ -229,6 +229,8 @@ function connectOnInstall(team_config) {
 
 function connectOnLogin(identity) {
 
+	console.log('\n\n\n\n CONNECTING ON LOGIN \n\n\n\n');
+
 	// bot already exists, get bot token for this users team
 	var SlackUserId = identity.user.id;
 	var TeamId = identity.team.id;
@@ -253,8 +255,6 @@ controller.on('create_bot', function (bot, team) {
 		console.log("already online! do nothing.");
 	} else {
 
-		console.log('\n\n\n STARTING BOT : ' + bots.length + '\n\n\n');
-
 		bot.startRTM(function (err) {
 			if (!err) {
 				console.log("\n\n RTM on with team install and listening \n\n");
@@ -273,7 +273,8 @@ controller.on('create_bot', function (bot, team) {
 								(0, _scripts.seedAndUpdateUsers)(members);
 							}
 							(0, _actions.firstInstallInitiateConversation)(bot, team);
-							console.log('\n\n\n THIS MANY BOTS: ' + bots.length + '\n\n\n');
+							console.log('\n\n\n THIS MANY BOTS:\n\n\n');
+							console.log(bots);
 						});
 					}
 				});
