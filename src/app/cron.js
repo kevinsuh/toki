@@ -44,10 +44,10 @@ let checkForPings = () => {
 
 			if (groupPings.fromUser[FromUserId]) {
 
-				if (groupPings[FromUserId].toUser[ToUserId]) {
-					groupPings[FromUserId].toUser[ToUserId].push(ping);
+				if (groupPings.fromUser[FromUserId].toUser[ToUserId]) {
+					groupPings.fromUser[FromUserId].toUser[ToUserId].push(ping);
 				} else {
-					groupPings[FromUserId].toUser[ToUserId] = [ ping ];
+					groupPings.fromUser[FromUserId].toUser[ToUserId] = [ ping ];
 				}
 
 			} else {
