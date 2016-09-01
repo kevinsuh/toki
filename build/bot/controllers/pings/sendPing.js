@@ -99,7 +99,7 @@ exports.default = function (controller) {
 						var neverMind = _convo$pingObject.neverMind;
 
 
-						if (neverMind) // do not send if this is the cas!
+						if (neverMind) // do not send if this is the case!
 							return;
 
 						var fromUserConfig = { UserId: UserId, SlackUserId: SlackUserId };

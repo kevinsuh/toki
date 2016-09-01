@@ -92,7 +92,7 @@ export default function(controller) {
 						
 						const { SlackUserId, tz, pingUserId, pingSlackUserId, pingTimeObject, userInSession, deliveryType, pingMessages, neverMind } = convo.pingObject;
 
-						if (neverMind) // do not send if this is the cas!
+						if (neverMind) // do not send if this is the case!
 							return;
 
 						const fromUserConfig = { UserId, SlackUserId };
