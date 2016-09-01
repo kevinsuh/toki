@@ -492,52 +492,119 @@ export function getHandleQueuedPingActions(ping) {
 }
 
 // include ping actions if > 0 pings
-export function getStartSessionOptionsAttachment(pings) {
+export function getStartSessionOptionsAttachment(pings, config = {}) {
 
-	let attachments = [
-		{
-			attachment_type: 'default',
-			callback_id: "LIVE_SESSION_OPTIONS",
-			fallback: "Good luck with your session!",
-			actions: [
-				{
-					name: buttonValues.changeTimeAndTask.name,
-					text: "Change Time + Task",
-					value: buttonValues.changeTimeAndTask.value,
-					type: "button"
-				},
-				{
-					name: buttonValues.endSession.name,
-					text: "End Session",
-					value: buttonValues.endSession.value,
-					type: "button"
-				}
-			]
+	const { customOrder, order } = config;
+	let attachments = [];
+
+	let deferredPingsText = pings.length == 1 ? "Defer Ping :arrow_right:" : "Defer Pings :arrow_right:";
+	let cancelPingsText   = pings.length == 1 ? "Cancel Ping :negative_squared_cross_mark:" : "Cancel Ping(s) :negative_squared_cross_mark:";
+
+	if (customOrder && order) {
+
+		attachments = [
+			{
+				attachment_type: 'default',
+				callback_id: "LIVE_SESSION_OPTIONS",
+				fallback: "Good luck with your session!",
+				actions: []
+			}
+		];
+
+		order.forEach((order) => {
+
+			switch (order) {
+				case `changeTimeAndTask`:
+					attachments[0].actions.push({
+						name: buttonValues.changeTimeAndTask.name,
+						text: "Change Time + Task",
+						value: buttonValues.changeTimeAndTask.value,
+						type: "button"
+					})
+					break;
+				case `deferPing`:
+					attachments[0].actions.push({
+						name: buttonValues.deferPing.name,
+						text: deferredPingsText,
+						value: buttonValues.deferPing.value,
+						type: "button"
+					});
+					break;
+				case `cancelPing`:
+					attachments[0].actions.push({
+						name: buttonValues.cancelPing.name,
+						text: cancelPingsText,
+						value: buttonValues.cancelPing.value,
+						type: "button"
+					});
+					break;
+				case `endSession`:
+					attachments[0].actions.push({
+						name: buttonValues.endSession.name,
+						text: "End Session",
+						value: buttonValues.endSession.value,
+						type: "button"
+					});
+					break;
+				case `sendSooner`:
+					attachments[0].actions.push({
+						name: buttonValues.sendSooner.name,
+						text: "Send Sooner",
+						value: buttonValues.sendSooner.value,
+						type: "button"
+					});
+				default: break;
+			}
+
+		});
+
+		return attachments;
+
+	} else {
+		attachments = [
+			{
+				attachment_type: 'default',
+				callback_id: "LIVE_SESSION_OPTIONS",
+				fallback: "Good luck with your session!",
+				actions: [
+					{
+						name: buttonValues.changeTimeAndTask.name,
+						text: "Change Time + Task",
+						value: buttonValues.changeTimeAndTask.value,
+						type: "button"
+					},
+					{
+						name: buttonValues.endSession.name,
+						text: "End Session",
+						value: buttonValues.endSession.value,
+						type: "button"
+					}
+				]
+			}
+		];
+
+		if (pings.length > 0) {
+
+			let pingActions = [{
+				name: buttonValues.deferPing.name,
+				text: deferredPingsText,
+				value: buttonValues.deferPing.value,
+				type: "button"
+			},
+			{
+				name: buttonValues.cancelPing.name,
+				text: cancelPingsText,
+				value: buttonValues.cancelPing.value,
+				type: "button"
+			}];
+
+			let fullActionsArray   = _.concat(pingActions, attachments[0].actions);
+			attachments[0].actions = fullActionsArray;
+
 		}
-	];
-
-	if (pings.length > 0) {
-
-		let deferredPingsText = pings.length == 1 ? "Defer Ping :arrow_right:" : "Defer Pings :arrow_right:";
-		let cancelPingsText   = pings.length == 1 ? "Cancel Ping :negative_squared_cross_mark:" : "Cancel Ping(s) :negative_squared_cross_mark:";
-
-		let pingActions = [{
-			name: buttonValues.deferPing.name,
-			text: deferredPingsText,
-			value: buttonValues.deferPing.value,
-			type: "button"
-		},
-		{
-			name: buttonValues.cancelPing.name,
-			text: cancelPingsText,
-			value: buttonValues.cancelPing.value,
-			type: "button"
-		}];
-
-		let fullActionsArray   = _.concat(pingActions, attachments[0].actions);
-		attachments[0].actions = fullActionsArray;
-
 	}
+
+	
 
 	return attachments;
 }

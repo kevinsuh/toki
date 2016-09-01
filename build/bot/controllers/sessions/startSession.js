@@ -228,6 +228,11 @@ exports.default = function (controller) {
 															}
 														});
 
+														// cant be deferred past my own session end!
+														if (endTime < pingEndTime) {
+															pingEndTime = endTime;
+														}
+
 														var pingEndTimeString = pingEndTime.format("h:mma");
 														var slackNamesString = (0, _messageHelpers.commaSeparateOutStringArray)(slackUserIds, { SlackUserIds: true });
 

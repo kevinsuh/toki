@@ -517,43 +517,107 @@ function getHandleQueuedPingActions(ping) {
 
 // include ping actions if > 0 pings
 function getStartSessionOptionsAttachment(pings) {
+	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var customOrder = config.customOrder;
+	var order = config.order;
 
-	var attachments = [{
-		attachment_type: 'default',
-		callback_id: "LIVE_SESSION_OPTIONS",
-		fallback: "Good luck with your session!",
-		actions: [{
-			name: _constants.buttonValues.changeTimeAndTask.name,
-			text: "Change Time + Task",
-			value: _constants.buttonValues.changeTimeAndTask.value,
-			type: "button"
-		}, {
-			name: _constants.buttonValues.endSession.name,
-			text: "End Session",
-			value: _constants.buttonValues.endSession.value,
-			type: "button"
-		}]
-	}];
+	var attachments = [];
 
-	if (pings.length > 0) {
+	var deferredPingsText = pings.length == 1 ? "Defer Ping :arrow_right:" : "Defer Pings :arrow_right:";
+	var cancelPingsText = pings.length == 1 ? "Cancel Ping :negative_squared_cross_mark:" : "Cancel Ping(s) :negative_squared_cross_mark:";
 
-		var deferredPingsText = pings.length == 1 ? "Defer Ping :arrow_right:" : "Defer Pings :arrow_right:";
-		var cancelPingsText = pings.length == 1 ? "Cancel Ping :negative_squared_cross_mark:" : "Cancel Ping(s) :negative_squared_cross_mark:";
+	if (customOrder && order) {
 
-		var pingActions = [{
-			name: _constants.buttonValues.deferPing.name,
-			text: deferredPingsText,
-			value: _constants.buttonValues.deferPing.value,
-			type: "button"
-		}, {
-			name: _constants.buttonValues.cancelPing.name,
-			text: cancelPingsText,
-			value: _constants.buttonValues.cancelPing.value,
-			type: "button"
+		attachments = [{
+			attachment_type: 'default',
+			callback_id: "LIVE_SESSION_OPTIONS",
+			fallback: "Good luck with your session!",
+			actions: []
 		}];
 
-		var fullActionsArray = _lodash2.default.concat(pingActions, attachments[0].actions);
-		attachments[0].actions = fullActionsArray;
+		order.forEach(function (order) {
+
+			switch (order) {
+				case 'changeTimeAndTask':
+					attachments[0].actions.push({
+						name: _constants.buttonValues.changeTimeAndTask.name,
+						text: "Change Time + Task",
+						value: _constants.buttonValues.changeTimeAndTask.value,
+						type: "button"
+					});
+					break;
+				case 'deferPing':
+					attachments[0].actions.push({
+						name: _constants.buttonValues.deferPing.name,
+						text: deferredPingsText,
+						value: _constants.buttonValues.deferPing.value,
+						type: "button"
+					});
+					break;
+				case 'cancelPing':
+					attachments[0].actions.push({
+						name: _constants.buttonValues.cancelPing.name,
+						text: cancelPingsText,
+						value: _constants.buttonValues.cancelPing.value,
+						type: "button"
+					});
+					break;
+				case 'endSession':
+					attachments[0].actions.push({
+						name: _constants.buttonValues.endSession.name,
+						text: "End Session",
+						value: _constants.buttonValues.endSession.value,
+						type: "button"
+					});
+					break;
+				case 'sendSooner':
+					attachments[0].actions.push({
+						name: _constants.buttonValues.sendSooner.name,
+						text: "Send Sooner",
+						value: _constants.buttonValues.sendSooner.value,
+						type: "button"
+					});
+				default:
+					break;
+			}
+		});
+
+		return attachments;
+	} else {
+		attachments = [{
+			attachment_type: 'default',
+			callback_id: "LIVE_SESSION_OPTIONS",
+			fallback: "Good luck with your session!",
+			actions: [{
+				name: _constants.buttonValues.changeTimeAndTask.name,
+				text: "Change Time + Task",
+				value: _constants.buttonValues.changeTimeAndTask.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.endSession.name,
+				text: "End Session",
+				value: _constants.buttonValues.endSession.value,
+				type: "button"
+			}]
+		}];
+
+		if (pings.length > 0) {
+
+			var pingActions = [{
+				name: _constants.buttonValues.deferPing.name,
+				text: deferredPingsText,
+				value: _constants.buttonValues.deferPing.value,
+				type: "button"
+			}, {
+				name: _constants.buttonValues.cancelPing.name,
+				text: cancelPingsText,
+				value: _constants.buttonValues.cancelPing.value,
+				type: "button"
+			}];
+
+			var fullActionsArray = _lodash2.default.concat(pingActions, attachments[0].actions);
+			attachments[0].actions = fullActionsArray;
+		}
 	}
 
 	return attachments;
