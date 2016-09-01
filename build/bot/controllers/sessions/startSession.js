@@ -78,6 +78,12 @@ exports.default = function (controller) {
 			content = content.replace(/^focu[us]{1,3}/i, "").trim();
 		}
 
+		// hacky temp solution to prevent if user is just trying to enter focus with `lets focus`
+		var containsFocus = new RegExp(/\bfocu[us]{1,3}\b/i);
+		if (containsFocus.test(content) && content.length < 18) {
+			content = false;
+		}
+
 		_models2.default.User.find({
 			where: { SlackUserId: SlackUserId }
 		}).then(function (user) {
