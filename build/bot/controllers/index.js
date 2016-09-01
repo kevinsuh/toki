@@ -212,7 +212,7 @@ function customConfigBot(controller) {
 // try to avoid repeat RTM's
 function trackBot(bot) {
 
-	console.log('\n\n\n\n\n\n ~~ token: ' + token + ' \n\n\n\n\n');
+	console.log('\n\n\n\n\n\n ~~ token: ' + bot.config.token + ' \n\n\n\n\n');
 
 	bots[bot.config.token] = bot;
 }
