@@ -98,9 +98,6 @@ var registerTeam = function registerTeam(auth, res) {
         console.log(team);
 
         res.send("Thank you! You have just registered Toki");
-
-        // this isnt working for some reason
-        (0, _helpers.saveUserOnRegistration)(auth, identity);
       } catch (e) {
         console.log(e);
       }

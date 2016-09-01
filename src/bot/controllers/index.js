@@ -152,11 +152,12 @@ export function customConfigBot(controller) {
 }
 
 // try to avoid repeat RTM's
-export function trackBot(bot, token) {
+export function trackBot(bot) {
 
 	console.log(`\n\n\n\n\n\n ~~ token: ${token} \n\n\n\n\n`);
 
-	bots[token] = bot;
+	bots[bot.config.token] = bot;
+
 }
 
 /**
@@ -168,7 +169,7 @@ export function connectOnInstall(team_config) {
 
 	console.log(`\n\n\n\n CONNECTING ON INSTALL \n\n\n\n`);
 
-	var bot = controller.spawn(team_config);
+	let bot = controller.spawn(team_config);
 	controller.trigger('create_bot', [bot, team_config]);
 }
 
@@ -208,7 +209,7 @@ controller.on('create_bot', (bot,team) => {
 			if (!err) {
 				console.log("\n\n RTM on with team install and listening \n\n");
 				customConfigBot(controller);
-				trackBot(bot, bot.config.token);
+				trackBot(bot);
 				controller.saveTeam(team, (err, id) => {
 					if (err) {
 						console.log("Error saving team")
@@ -238,6 +239,8 @@ controller.on('create_bot', (bot,team) => {
 // subsequent logins
 controller.on('login_bot', (bot,identity) => {
 
+	console.log(`\n\n\n TRIGERED BY LOGIN BOT \n\n\n`);
+
 	if (bots[bot.config.token]) {
 		// already online! do nothing.
 		console.log("already online! do nothing.");
@@ -247,7 +250,7 @@ controller.on('login_bot', (bot,identity) => {
 			if (!err) {
 
 				console.log("RTM on and listening");
-				trackBot(bot, bot.config.token);
+				trackBot(bot);
 				controller.saveTeam(team, (err, team) => {
 					if (err) {
 						console.log("Error saving team")

@@ -105,8 +105,10 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 		/**
 		 * 		~~ START UP ZE BOTS ~~
 		 */
-		teamTokens.forEach((token) => {
+		teamTokens.forEach((token, index) => {
 			var bot = controller.spawn({ token, retry: 500 }).startRTM((err, bot, payload) => {
+
+				console.log(` \n\n\n COUNT: ${index} FOR TEAM TOKEN`);
 
 				if (payload) {
 					let teamMembers = payload.users; // array of user objects!
@@ -126,7 +128,7 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 							})
 						}
 					}
-					trackBot(bot, token); // this is where we store all ze bots
+					trackBot(bot); // this is where we store all ze bots
 				}
 			})
 		});

@@ -133,8 +133,10 @@ _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
 		/**
    * 		~~ START UP ZE BOTS ~~
    */
-		teamTokens.forEach(function (token) {
+		teamTokens.forEach(function (token, index) {
 			var bot = _controllers.controller.spawn({ token: token, retry: 500 }).startRTM(function (err, bot, payload) {
+
+				console.log(' \n\n\n COUNT: ' + index + ' FOR TEAM TOKEN');
 
 				if (payload) {
 					var teamMembers = payload.users; // array of user objects!
@@ -154,7 +156,7 @@ _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
 							});
 						}
 					}
-					(0, _controllers.trackBot)(bot, token); // this is where we store all ze bots
+					(0, _controllers.trackBot)(bot); // this is where we store all ze bots
 				}
 			});
 		});

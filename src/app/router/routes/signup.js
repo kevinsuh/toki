@@ -85,8 +85,6 @@ var registerTeam = (auth, res) => {
 
         res.send("Thank you! You have just registered Toki");
 
-        // this isnt working for some reason
-        saveUserOnRegistration(auth, identity);
       } catch(e){
         console.log(e);
       }

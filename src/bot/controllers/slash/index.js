@@ -86,9 +86,6 @@ export default function(controller) {
 						})
 						.then((toUser) => {
 
-							console.log(`\n\nFOUND USER: ${}`);
-							console.log(toUser);
-
 							if (toUser) {
 
 								let pingFlowConfig = {
