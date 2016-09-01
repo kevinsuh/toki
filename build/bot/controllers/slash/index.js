@@ -90,13 +90,11 @@ exports.default = function (controller) {
 								if (toUser) {
 
 									var pingFlowConfig = {
-										SlackUserId: SlackUserId, // fromUser SlackUserId
-										message: message,
 										pingSlackUserIds: [toUser.dataValues.SlackUserId],
 										pingMessages: pingMessages
 									};
 
-									controller.trigger('ping_flow', [bot, pingFlowConfig]);
+									controller.trigger('ping_flow', [bot, message, pingFlowConfig]);
 									responseObject.text = 'Got it! Let\'s deliver that ping :mailbox_with_mail:';
 									bot.replyPrivate(message, responseObject);
 								} else {

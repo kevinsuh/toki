@@ -86,16 +86,14 @@ export default function(controller) {
 						})
 						.then((toUser) => {
 
-							if (toUser) {
+							if (toUser) { 
 
 								let pingFlowConfig = {
-									SlackUserId, // fromUser SlackUserId
-									message,
 									pingSlackUserIds: [ toUser.dataValues.SlackUserId ],
 									pingMessages
 								}
 
-								controller.trigger(`ping_flow`, [bot, pingFlowConfig]);
+								controller.trigger(`ping_flow`, [bot, message, pingFlowConfig]);
 								responseObject.text = `Got it! Let's deliver that ping :mailbox_with_mail:`;
 								bot.replyPrivate(message, responseObject);
 								
