@@ -150,6 +150,7 @@ function askWhoToPing(convo) {
 		pattern: _constants.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
 			convo.say('Ok! Just let me know if you want to ping someone on your team'); // in future check if in session
+			convo.next();
 		}
 	}, {
 		default: true,

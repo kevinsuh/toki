@@ -112,6 +112,7 @@ function askWhoToPing(convo, text = `Who would you like to ping? You can type th
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
 				convo.say(`Ok! Just let me know if you want to ping someone on your team`); // in future check if in session
+				convo.next();
 			}
 		},
 		{
