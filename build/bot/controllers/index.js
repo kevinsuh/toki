@@ -263,7 +263,6 @@ controller.on('create_bot', function (bot, team) {
 		bot.startRTM(function (err) {
 			if (!err) {
 				console.log("\n\n RTM on with team install and listening \n\n");
-				customConfigBot(controller);
 				trackBot(bot);
 				controller.saveTeam(team, function (err, id) {
 					if (err) {
