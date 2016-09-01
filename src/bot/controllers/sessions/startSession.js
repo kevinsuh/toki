@@ -1,10 +1,11 @@
 import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
+import _ from 'lodash';
 
-import { utterances, colorsArray, buttonValues, colorsHash, constants, startSessionOptionsAttachments } from '../../lib/constants';
+import { utterances, colorsArray, buttonValues, colorsHash, constants } from '../../lib/constants';
 import { confirmTimeZoneExistsThenStartSessionFlow } from './startSessionFunctions';
-import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '../../lib/messageHelpers';
+import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getStartSessionOptionsAttachment, commaSeparateOutStringArray } from '../../lib/messageHelpers';
 
 // STARTING A SESSION
 export default function(controller) {
@@ -146,17 +147,108 @@ export default function(controller) {
 									content
 								}).then((session) => {
 
-									let endTimeString = endTime.format("h:mma");
+									// check if user has outstanding pings to others
+									models.Ping.findAll({
+										where: [ `"Ping"."FromUserId" = ? AND "Ping"."live" = ?`, UserId, true ],
+										include: [
+											{ model: models.User, as: `FromUser` },
+											{ model: models.User, as: `ToUser` },
+											models.PingMessage
+										],
+										order: `"Ping"."createdAt" ASC`
+									}).then((pings) => {
 
-									bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+										// get all the sessions associated with pings that come FromUser
+										let pingerSessionPromises = [];
 
-										let text = `:palm_tree: You’re now in a focused session on \`${content}\` until *${endTimeString}* :palm_tree:`;
-										convo.say({
-											text,
-											attachments: startSessionOptionsAttachments
+										pings.forEach((ping) => {
+											const { dataValues: { ToUserId } } = ping;
+											pingerSessionPromises.push(models.Session.find({
+												where: {
+													UserId: ToUserId,
+													live: true,
+													open: true
+												},
+												include: [ models.User ]
+											}));
+										});
+
+										Promise.all(pingerSessionPromises)
+										.then((pingerSessions) => {
+
+											pings.forEach((ping) => {
+
+												const pingToUserId = ping.dataValues.ToUserId;
+												pingerSessions.forEach((pingerSession) => {
+													if (pingerSession && pingToUserId == pingerSession.dataValues.UserId) {
+														// the session for ToUser of this ping
+														ping.dataValues.session = pingerSession;
+														return;
+													}
+												});
+
+											});
+
+											let endTimeString = endTime.format("h:mma");
+
+											bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+												let text = `:palm_tree: You're now in a focused session on \`${content}\` until *${endTimeString}* :palm_tree:`;
+												let attachments = getStartSessionOptionsAttachment(pings);
+
+												if (pings.length > 0) {
+
+													// say session info, then provide ping options
+													convo.say(text);
+
+													// get slackNames and earliest endTime for pending fromUser pings
+													let slackUserIds = [];
+													let pingEndTime  = moment().tz(tz);
+
+													pings.forEach((ping) => {
+														const { dataValues: { deliveryType, ToUser, pingTime, session } } = ping;
+														if (!_.includes(slackUserIds, ToUser.dataValues.SlackUserId)) {
+
+															slackUserIds.push(ToUser.dataValues.SlackUserId);
+															let thisPingEndTime;
+															if (pingTime) {
+																thisPingEndTime = moment(thisPingEndTime).tz(tz);
+															} else if (deliveryType == constants.pingDeliveryTypes.sessionEnd && session) {
+																thisPingEndTime = moment(session.dataValues.endTime).tz(tz);
+															}
+
+															if (thisPingEndTime > pingEndTime) {
+																pingEndTime = thisPingEndTime;
+															}
+
+														}
+													});
+
+													let pingEndTimeString = pingEndTime.format("h:mma");
+													let slackNamesString  = commaSeparateOutStringArray(slackUserIds, { SlackUserIds: true });
+
+													let outstandingPingText = pings.length == 1 ? `an outstanding ping` : `outstanding pings`;
+													text = `You also have ${outstandingPingText} for ${slackNamesString} that will start a conversation for you at or before ${pingEndTimeString}`;
+													convo.say({
+														text,
+														attachments
+													});
+													
+
+												} else {
+													// just start the session
+													convo.say({
+														text,
+														attachments
+													});
+												}
+
+											});
+
 										});
 
 									});
+
 								});
 
 							});

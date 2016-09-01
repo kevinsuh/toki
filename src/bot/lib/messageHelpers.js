@@ -490,3 +490,54 @@ export function getHandleQueuedPingActions(ping) {
 		
 	return actions;
 }
+
+// include ping actions if > 0 pings
+export function getStartSessionOptionsAttachment(pings) {
+
+	let attachments = [
+		{
+			attachment_type: 'default',
+			callback_id: "LIVE_SESSION_OPTIONS",
+			fallback: "Good luck with your session!",
+			actions: [
+				{
+					name: buttonValues.changeTimeAndTask.name,
+					text: "Change Time + Task",
+					value: buttonValues.changeTimeAndTask.value,
+					type: "button"
+				},
+				{
+					name: buttonValues.endSession.name,
+					text: "End Session",
+					value: buttonValues.endSession.value,
+					type: "button"
+				}
+			]
+		}
+	];
+
+	if (pings.length > 0) {
+
+		let deferredPingsText = pings.length == 1 ? "Defer Ping :arrow_right:" : "Defer Pings :arrow_right:";
+		let cancelPingsText   = pings.length == 1 ? "Cancel Ping :negative_squared_cross_mark:" : "Cancel Ping(s) :negative_squared_cross_mark:";
+
+		let pingActions = [{
+			name: buttonValues.deferPing.name,
+			text: deferredPingsText,
+			value: buttonValues.deferPing.value,
+			type: "button"
+		},
+		{
+			name: buttonValues.cancelPing.name,
+			text: cancelPingsText,
+			value: buttonValues.cancelPing.value,
+			type: "button"
+		}];
+
+		let fullActionsArray   = _.concat(pingActions, attachments[0].actions);
+		attachments[0].actions = fullActionsArray;
+
+	}
+
+	return attachments;
+}

@@ -151,14 +151,101 @@ exports.default = function (controller) {
 									content: content
 								}).then(function (session) {
 
-									var endTimeString = endTime.format("h:mma");
+									// check if user has outstanding pings to others
+									_models2.default.Ping.findAll({
+										where: ['"Ping"."FromUserId" = ? AND "Ping"."live" = ?', UserId, true],
+										include: [{ model: _models2.default.User, as: 'FromUser' }, { model: _models2.default.User, as: 'ToUser' }, _models2.default.PingMessage],
+										order: '"Ping"."createdAt" ASC'
+									}).then(function (pings) {
 
-									bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+										// get all the sessions associated with pings that come FromUser
+										var pingerSessionPromises = [];
 
-										var text = ':palm_tree: You’re now in a focused session on `' + content + '` until *' + endTimeString + '* :palm_tree:';
-										convo.say({
-											text: text,
-											attachments: _constants.startSessionOptionsAttachments
+										pings.forEach(function (ping) {
+											var ToUserId = ping.dataValues.ToUserId;
+
+											pingerSessionPromises.push(_models2.default.Session.find({
+												where: {
+													UserId: ToUserId,
+													live: true,
+													open: true
+												},
+												include: [_models2.default.User]
+											}));
+										});
+
+										Promise.all(pingerSessionPromises).then(function (pingerSessions) {
+
+											pings.forEach(function (ping) {
+
+												var pingToUserId = ping.dataValues.ToUserId;
+												pingerSessions.forEach(function (pingerSession) {
+													if (pingerSession && pingToUserId == pingerSession.dataValues.UserId) {
+														// the session for ToUser of this ping
+														ping.dataValues.session = pingerSession;
+														return;
+													}
+												});
+											});
+
+											var endTimeString = endTime.format("h:mma");
+
+											bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+												var text = ':palm_tree: You\'re now in a focused session on `' + content + '` until *' + endTimeString + '* :palm_tree:';
+												var attachments = (0, _messageHelpers.getStartSessionOptionsAttachment)(pings);
+
+												if (pings.length > 0) {
+													(function () {
+
+														// say session info, then provide ping options
+														convo.say(text);
+
+														// get slackNames and earliest endTime for pending fromUser pings
+														var slackUserIds = [];
+														var pingEndTime = (0, _momentTimezone2.default)().tz(tz);
+
+														pings.forEach(function (ping) {
+															var _ping$dataValues = ping.dataValues;
+															var deliveryType = _ping$dataValues.deliveryType;
+															var ToUser = _ping$dataValues.ToUser;
+															var pingTime = _ping$dataValues.pingTime;
+															var session = _ping$dataValues.session;
+
+															if (!_lodash2.default.includes(slackUserIds, ToUser.dataValues.SlackUserId)) {
+
+																slackUserIds.push(ToUser.dataValues.SlackUserId);
+																var thisPingEndTime = void 0;
+																if (pingTime) {
+																	thisPingEndTime = (0, _momentTimezone2.default)(thisPingEndTime).tz(tz);
+																} else if (deliveryType == _constants.constants.pingDeliveryTypes.sessionEnd && session) {
+																	thisPingEndTime = (0, _momentTimezone2.default)(session.dataValues.endTime).tz(tz);
+																}
+
+																if (thisPingEndTime > pingEndTime) {
+																	pingEndTime = thisPingEndTime;
+																}
+															}
+														});
+
+														var pingEndTimeString = pingEndTime.format("h:mma");
+														var slackNamesString = (0, _messageHelpers.commaSeparateOutStringArray)(slackUserIds, { SlackUserIds: true });
+
+														var outstandingPingText = pings.length == 1 ? 'an outstanding ping' : 'outstanding pings';
+														text = 'You also have ' + outstandingPingText + ' for ' + slackNamesString + ' that will start a conversation for you at or before ' + pingEndTimeString;
+														convo.say({
+															text: text,
+															attachments: attachments
+														});
+													})();
+												} else {
+													// just start the session
+													convo.say({
+														text: text,
+														attachments: attachments
+													});
+												}
+											});
 										});
 									});
 								});
@@ -180,6 +267,10 @@ var _momentTimezone2 = _interopRequireDefault(_momentTimezone);
 var _models = require('../../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
+
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
 
 var _constants = require('../../lib/constants');
 

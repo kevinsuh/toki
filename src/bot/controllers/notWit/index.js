@@ -6,6 +6,7 @@ import models from '../../../app/models';
 import { isJsonObject } from '../../middleware/hearsMiddleware';
 import { utterances, colorsArray, constants, buttonValues, colorsHash, timeZones } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString } from '../../lib/messageHelpers';
+import { notInSessionWouldYouLikeToStartOne } from '../sessions';
 
 import dotenv from 'dotenv';
 
@@ -83,6 +84,94 @@ export default function(controller) {
 			}
 
 		}, 500);
+
+	});
+
+	// defer ping!
+	controller.hears([utterances.deferPing], 'direct_message', function(bot, message) {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
+		const SlackUserId = message.user;
+		const { text }    = message;
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(() => {
+
+			// defer all pings from this user
+			models.User.find({
+				where: { SlackUserId }
+			}).then((user) => {
+
+				// need user's timezone for this flow!
+				const { tz } = user;
+				const UserId = user.id;
+
+				models.Session.find({
+					where: {
+						UserId,
+						live: true,
+						open: true
+					}
+				})
+				.then((session) => {
+
+					if (session) {
+						session.update({
+							superFocus: true
+						})
+						.then((session) => {
+
+							const { dataValues: { endTime, content } } = session;
+							const endTimeObject = moment(endTime).tz(tz);
+							let endTimeString   = endTimeObject.format("h:mma");
+
+							bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
+
+								let text = `:palm_tree: I’ll follow up with you to send your message after your focused session on \`${content}\` ends at *${endTimeString}*. Good luck! :palm_tree:`;
+								let attachments = [
+									{
+										attachment_type: 'default',
+										callback_id: "DEFERRED_PING_SESSION_OPTIONS",
+										fallback: "Good luck with your focus session!",
+										actions: [
+											{
+												name: buttonValues.sendSooner.name,
+												text: "Send Sooner",
+												value: buttonValues.sendSooner.value,
+												type: "button"
+											},
+											{
+												name: buttonValues.endSession.name,
+												text: "End Session",
+												value: buttonValues.endSession.value,
+												type: "button"
+											}
+										]
+									}
+								];
+
+								convo.say({
+									text,
+									attachments
+								});
+
+							});
+
+						})
+					} else {
+						notInSessionWouldYouLikeToStartOne({bot, SlackUserId, controller})
+					}
+
+				});
+
+			});
+
+		}, 300);
 
 	});
 

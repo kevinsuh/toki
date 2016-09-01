@@ -81,6 +81,85 @@ exports.default = function (controller) {
 		}, 500);
 	});
 
+	// defer ping!
+	controller.hears([_constants.utterances.deferPing], 'direct_message', function (bot, message) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		var SlackUserId = message.user;
+		var text = message.text;
+
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+		setTimeout(function () {
+
+			// defer all pings from this user
+			_models2.default.User.find({
+				where: { SlackUserId: SlackUserId }
+			}).then(function (user) {
+
+				// need user's timezone for this flow!
+				var tz = user.tz;
+
+				var UserId = user.id;
+
+				_models2.default.Session.find({
+					where: {
+						UserId: UserId,
+						live: true,
+						open: true
+					}
+				}).then(function (session) {
+
+					if (session) {
+						session.update({
+							superFocus: true
+						}).then(function (session) {
+							var _session$dataValues = session.dataValues;
+							var endTime = _session$dataValues.endTime;
+							var content = _session$dataValues.content;
+
+							var endTimeObject = (0, _momentTimezone2.default)(endTime).tz(tz);
+							var endTimeString = endTimeObject.format("h:mma");
+
+							bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+								var text = ':palm_tree: I’ll follow up with you to send your message after your focused session on `' + content + '` ends at *' + endTimeString + '*. Good luck! :palm_tree:';
+								var attachments = [{
+									attachment_type: 'default',
+									callback_id: "DEFERRED_PING_SESSION_OPTIONS",
+									fallback: "Good luck with your focus session!",
+									actions: [{
+										name: _constants.buttonValues.sendSooner.name,
+										text: "Send Sooner",
+										value: _constants.buttonValues.sendSooner.value,
+										type: "button"
+									}, {
+										name: _constants.buttonValues.endSession.name,
+										text: "End Session",
+										value: _constants.buttonValues.endSession.value,
+										type: "button"
+									}]
+								}];
+
+								convo.say({
+									text: text,
+									attachments: attachments
+								});
+							});
+						});
+					} else {
+						(0, _sessions.notInSessionWouldYouLikeToStartOne)({ bot: bot, SlackUserId: SlackUserId, controller: controller });
+					}
+				});
+			});
+		}, 300);
+	});
+
 	controller.hears([_constants.constants.THANK_YOU.reg_exp], 'direct_message', function (bot, message) {
 
 		var botToken = bot.config.token;
@@ -175,6 +254,8 @@ var _hearsMiddleware = require('../../middleware/hearsMiddleware');
 var _constants = require('../../lib/constants');
 
 var _messageHelpers = require('../../lib/messageHelpers');
+
+var _sessions = require('../sessions');
 
 var _dotenv = require('dotenv');
 

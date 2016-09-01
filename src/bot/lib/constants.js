@@ -85,7 +85,9 @@ export const utterances = {
 	changeTimeAndTask: new RegExp(/\bchan[nge]{1,5}\b.{1,3}\btim[me]{1,3}\b.{1,7}\btas[sk]{1,3}\b/i),
 	keepWorking: new RegExp(/\bkee[ep]{1,3}\b.{1,3}\bwor[king]{1,6}\b/i),
 	sendSooner: new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bsoon[ner]{1,4}\b/i),
-	containsSendAt: new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bat[t]{0,3}\b/i)
+	containsSendAt: new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bat[t]{0,3}\b/i),
+	deferPing: new RegExp(/^def[er]{1,3}\b.{1,3}\bpin[ngs]{1,3}\b/i),
+	sendSooner: new RegExp(/^sen[nd]{1,3}\b.{1,3}\bsoon[ner]{1,3}\b/i),
 }
 
 
@@ -306,6 +308,14 @@ export const buttonValues ={
 	cancelPing: {
 		name: "CANCEL_PING",
 		value: "cancel ping"
+	},
+	deferPing: {
+		name: "DEFER_PING",
+		value: "defer ping"
+	},
+	sendSooner: {
+		name: "SEND_SOONER",
+		value: "send sooner"
 	}
 }
 
@@ -349,27 +359,6 @@ export const startSessionExamples = [
 /**
  * 	ATTACHMENTS
  */
-export const startSessionOptionsAttachments = [
-	{
-		attachment_type: 'default',
-		callback_id: "LIVE_SESSION_OPTIONS",
-		fallback: "Good luck with your session!",
-		actions: [
-			{
-				name: buttonValues.changeTimeAndTask.name,
-				text: "Change Time + Task",
-				value: buttonValues.changeTimeAndTask.value,
-				type: "button"
-			},
-			{
-				name: buttonValues.endSession.name,
-				text: "End Session",
-				value: buttonValues.endSession.value,
-				type: "button"
-			}
-		]
-	}
-]
 
 export const letsFocusAttachments = [
 	{
