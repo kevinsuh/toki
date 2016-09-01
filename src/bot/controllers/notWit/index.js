@@ -19,15 +19,6 @@ import dotenv from 'dotenv';
 
 export default function(controller) {
 
-	controller.hears([utterances.startsWithFocus], 'direct_message', (bot, message) => {
-		
-		let botToken = bot.config.token;
-		bot          = bots[botToken];
-
-		controller.trigger(`begin_session_flow`, [ bot, message ]);
-
-	});
-
 	controller.hears([utterances.startsWithPing], 'direct_message', (bot, message) => {
 
 		let botToken = bot.config.token;

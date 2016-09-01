@@ -19,6 +19,16 @@ exports.default = function (controller) {
 		controller.trigger('begin_session_flow', [bot, message]);
 	});
 
+	// this needs to be after Wit.hears `start_ession` because this is
+	// a fallback. we want Wit to be trained to handle this!
+	controller.hears([_constants.utterances.startsWithFocus], 'direct_message', function (bot, message) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		controller.trigger('begin_session_flow', [bot, message]);
+	});
+
 	/**
   * 		ACTUAL START SESSION FLOW
   * 		this will begin the start_session flow with user
