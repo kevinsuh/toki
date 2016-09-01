@@ -13,6 +13,8 @@ import sessionsController from './sessions';
 import pingsController from './pings';
 import slashController from './slash';
 
+import { seedAndUpdateUsers } from '../../app/scripts';
+
 require('dotenv').config();
 
 var env = process.env.NODE_ENV || 'development';
@@ -192,7 +194,7 @@ controller.on('create_bot', (bot,team) => {
 	} else {
 		bot.startRTM((err) => {
 			if (!err) {
-				console.log("RTM on and listening");
+				console.log("\n\n RTM on with team install and listening \n\n");
 				customConfigBot(controller);
 				trackBot(bot);
 				controller.saveTeam(team, (err, id) => {
@@ -200,10 +202,18 @@ controller.on('create_bot', (bot,team) => {
 						console.log("Error saving team")
 					}
 					else {
-						console.log("Team " + team.name + " saved")
+						console.log("Team " + team.name + " saved");
+						console.log(`\n\n installing users... \n\n`);
+						bot.api.users.list({}, (err, response) => {
+							if (!err) {
+								const { members } = response;
+								seedAndUpdateUsers(members);
+							}
+							firstInstallInitiateConversation(bot, team);
+						});
 					}
-				})
-				firstInstallInitiateConversation(bot, team);
+				});
+				
 			} else {
 				console.log("RTM failed")
 			}

@@ -138,7 +138,7 @@ _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
 
 				if (payload) {
 					var teamMembers = payload.users; // array of user objects!
-					(0, _scripts.seedAndUpdateUsers)(teamMembers, bot);
+					(0, _scripts.seedAndUpdateUsers)(teamMembers);
 				}
 
 				if (err) {

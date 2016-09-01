@@ -57,6 +57,8 @@ var _slash = require('./slash');
 
 var _slash2 = _interopRequireDefault(_slash);
 
+var _scripts = require('../../app/scripts');
+
 var _actions = require('../actions');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -249,7 +251,7 @@ controller.on('create_bot', function (bot, team) {
 	} else {
 		bot.startRTM(function (err) {
 			if (!err) {
-				console.log("RTM on and listening");
+				console.log("\n\n RTM on with team install and listening \n\n");
 				customConfigBot(controller);
 				trackBot(bot);
 				controller.saveTeam(team, function (err, id) {
@@ -257,9 +259,17 @@ controller.on('create_bot', function (bot, team) {
 						console.log("Error saving team");
 					} else {
 						console.log("Team " + team.name + " saved");
+						console.log('\n\n installing users... \n\n');
+						bot.api.users.list({}, function (err, response) {
+							if (!err) {
+								var members = response.members;
+
+								(0, _scripts.seedAndUpdateUsers)(members);
+							}
+							(0, _actions.firstInstallInitiateConversation)(bot, team);
+						});
 					}
 				});
-				(0, _actions.firstInstallInitiateConversation)(bot, team);
 			} else {
 				console.log("RTM failed");
 			}

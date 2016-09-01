@@ -32,7 +32,7 @@ function firstInstallInitiateConversation(bot, team) {
    */
 
 		convo.say('Hey! I\'m Toki!');
-		convo.say('This is your first time installing me');
+		convo.say('Thanks for inviting me to your team. I\'m excited to work together :grin:');
 
 		convo.on('end', function (convo) {
 			// let's save team info to DB

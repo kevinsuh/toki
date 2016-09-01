@@ -25,7 +25,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * 		For fun one-off thingz
  */
 
-function seedAndUpdateUsers(members, bot) {
+function seedAndUpdateUsers(members) {
 
 	members.forEach(function (member) {
 		var id = member.id;

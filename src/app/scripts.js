@@ -7,7 +7,7 @@ import models from './models';
 import moment from 'moment-timezone';
 import dotenv from 'dotenv';
 
-export function seedAndUpdateUsers(members, bot) {
+export function seedAndUpdateUsers(members) {
 
 	members.forEach((member) => {
 
@@ -51,6 +51,6 @@ export function seedAndUpdateUsers(members, bot) {
 			}
 		});
 
-	})
+	});
 
 }
