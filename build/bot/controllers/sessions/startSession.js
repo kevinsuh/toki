@@ -12,48 +12,11 @@ exports.default = function (controller) {
   * 							~* via Wit *~
   */
 	controller.hears(['start_session'], 'direct_message', _index.wit.hears, function (bot, message) {
-		var _message$intentObject = message.intentObject.entities;
-		var intent = _message$intentObject.intent;
-		var reminder = _message$intentObject.reminder;
-		var duration = _message$intentObject.duration;
-		var datetime = _message$intentObject.datetime;
-
 
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
 
-		var SlackUserId = message.user;
-		var text = message.text;
-
-
-		var config = {
-			SlackUserId: SlackUserId,
-			message: message
-		};
-
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(function () {
-
-			_models2.default.User.find({
-				where: { SlackUserId: SlackUserId }
-			}).then(function (user) {
-				var tz = user.tz;
-
-
-				if (tz) {
-					var customTimeObject = (0, _messageHelpers.witTimeResponseToTimeZoneObject)(message, tz);
-					if (customTimeObject) {
-						var now = (0, _momentTimezone2.default)().tz(tz);
-						var minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
-						config.minutes = minutes;
-					}
-				}
-				controller.trigger('begin_session_flow', [bot, config]);
-			});
-		}, 750);
+		controller.trigger('begin_session_flow', [bot, message]);
 	});
 
 	/**
@@ -64,15 +27,47 @@ exports.default = function (controller) {
   * 			- show and decide tasks to work on
   * 			- decide session duration
   */
-	controller.on('begin_session_flow', function (bot, config) {
-		var SlackUserId = config.SlackUserId;
+	controller.on('begin_session_flow', function (bot, message) {
+		var config = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 		var content = config.content;
-		var minutes = config.minutes;
 		var changeTimeAndTask = config.changeTimeAndTask;
 
 
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
+
+		var SlackUserId = void 0;
+		var duration = void 0;
+		var intent = void 0;
+		var reminder = void 0;
+		var datetime = void 0;
+		var text = void 0;
+
+		if (message) {
+			SlackUserId = message.user;
+			var _text = message.text;
+			var _message$intentObject = message.intentObject.entities;
+			var _intent = _message$intentObject.intent;
+			var _reminder = _message$intentObject.reminder;
+			var _duration = _message$intentObject.duration;
+			var _datetime = _message$intentObject.datetime;
+
+			if (!content) {
+				content = _reminder ? _reminder[0].value : null;
+			}
+		} else {
+			SlackUserId = config.SlackUserId;
+		}
+
+		if (content) {
+			// trim out if it starts with focus
+			content = content.replace(/^focu[us]{1,3}/i, "").trim();
+		}
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
 
 		_models2.default.User.find({
 			where: { SlackUserId: SlackUserId }
@@ -82,6 +77,19 @@ exports.default = function (controller) {
 			var tz = user.tz;
 
 			var UserId = user.id;
+			var minutes = false;
+
+			// we can only shortcut tz if we know message
+			if (tz && message) {
+				var customTimeObject = (0, _messageHelpers.witTimeResponseToTimeZoneObject)(message, tz);
+				if (customTimeObject) {
+					var now = (0, _momentTimezone2.default)().tz(tz);
+					minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
+				} else if (duration) {
+					// if user puts in min and not picked up by customTimeObject
+					config.minutes = witDurationToMinutes(duration);
+				}
+			}
 
 			// check for an open session before starting flow
 			user.getSessions({

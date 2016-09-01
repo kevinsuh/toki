@@ -50,21 +50,7 @@ exports.default = function (controller) {
 			switch (message.command) {
 				case "/focus":
 
-					customTimeObject = (0, _messageHelpers.witTimeResponseToTimeZoneObject)(message, tz);
-
-					var config = { SlackUserId: SlackUserId };
-					config.content = reminder ? reminder[0].value : null;
-
-					if (customTimeObject) {
-						var _now = (0, _momentTimezone2.default)().tz(tz);
-						var minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(_now)).asMinutes());
-						config.minutes = minutes;
-					} else if (duration) {
-						// if user puts in min and not picked up by customTimeObject
-						config.minutes = (0, _messageHelpers.witDurationToMinutes)(duration);
-					}
-
-					controller.trigger('begin_session_flow', [bot, config]);
+					controller.trigger('begin_session_flow', [bot, message]);
 					responseObject.text = 'Boom! Let\'s get this done :muscle:';
 					bot.replyPrivate(message, responseObject);
 					break;
@@ -163,7 +149,7 @@ exports.default = function (controller) {
 
 							if (toUser) {
 
-								var _config = {
+								var config = {
 									fromUserConfig: {
 										UserId: user.dataValues.id,
 										SlackUserId: user.dataValues.SlackUserId
@@ -174,7 +160,7 @@ exports.default = function (controller) {
 									}
 								};
 
-								controller.trigger('explain_toki_flow', [bot, _config]);
+								controller.trigger('explain_toki_flow', [bot, config]);
 
 								responseObject.text = 'Okay I just explained how I work to *@' + toSlackName + '!*';
 								bot.replyPrivate(message, responseObject);

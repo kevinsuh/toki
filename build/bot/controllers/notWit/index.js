@@ -6,7 +6,15 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
-	controller.hears(['^pin[ng]{1,4}'], 'direct_message', function (bot, message) {
+	controller.hears([_constants.utterances.startsWithFocus], 'direct_message', function (bot, message) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		controller.trigger('begin_session_flow', [bot, message]);
+	});
+
+	controller.hears([_constants.utterances.startsWithPing], 'direct_message', function (bot, message) {
 
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
@@ -95,7 +103,7 @@ exports.default = function (controller) {
 		});
 		setTimeout(function () {
 			var config = { SlackUserId: SlackUserId, changeTimeAndTask: true };
-			controller.trigger('begin_session_flow', [bot, config]);
+			controller.trigger('begin_session_flow', [bot, message, config]);
 		}, 500);
 	});
 

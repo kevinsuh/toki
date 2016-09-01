@@ -49,21 +49,7 @@ export default function(controller) {
 			switch (message.command) {
 				case "/focus":
 
-					customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
-
-					const config     = { SlackUserId };
-					config.content   = reminder ? reminder[0].value : null;
-
-					if (customTimeObject) {
-						let now = moment().tz(tz);
-						let minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
-						config.minutes = minutes;
-					} else if (duration) {
-						// if user puts in min and not picked up by customTimeObject
-						config.minutes = witDurationToMinutes(duration);
-					}
-
-					controller.trigger(`begin_session_flow`, [ bot, config ]);
+					controller.trigger(`begin_session_flow`, [ bot, message ]);
 					responseObject.text = `Boom! Let's get this done :muscle:`;
 					bot.replyPrivate(message, responseObject);
 					break;

@@ -85,7 +85,7 @@ export function notInSessionWouldYouLikeToStartOne(config) {
 			convo.next();
 			convo.on('end', (convo) => {
 				if (convo.startSession) {
-					controller.trigger(`begin_session_flow`, [bot, config]);
+					controller.trigger(`begin_session_flow`, [bot, null, config]);
 				}
 			});
 		});

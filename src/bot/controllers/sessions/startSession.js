@@ -17,45 +17,11 @@ export default function(controller) {
 	 * 							~* via Wit *~
 	 */
 	controller.hears(['start_session'], 'direct_message', wit.hears, (bot, message) => {
-
-		const { intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
 		
 		let botToken = bot.config.token;
 		bot          = bots[botToken];
 
-		const SlackUserId = message.user;
-		const { text }    = message;
-
-		let config = {
-			SlackUserId,
-			message
-		}
-
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(() => {
-
-			models.User.find({
-				where: { SlackUserId }
-			}).then((user) => {
-
-				const { tz } = user;
-
-				if (tz) {
-					let customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
-					if (customTimeObject) {
-						let now = moment().tz(tz);
-						let minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
-						config.minutes = minutes;
-					}
-				}
-				controller.trigger(`begin_session_flow`, [ bot, config ]);
-
-			});
-
-		}, 750);
+		controller.trigger(`begin_session_flow`, [ bot, message ]);
 
 	});
 
@@ -67,13 +33,40 @@ export default function(controller) {
 	 * 			- show and decide tasks to work on
 	 * 			- decide session duration
 	 */
-	controller.on('begin_session_flow', (bot, config) => {
+	controller.on('begin_session_flow', (bot, message, config = {}) => {
 
-		const { SlackUserId, content, minutes, changeTimeAndTask } = config;
+		let { content, changeTimeAndTask } = config;
 
 		let botToken = bot.config.token;
 		bot          = bots[botToken];
 
+		let SlackUserId;
+		let duration;
+		let intent;
+		let reminder;
+		let datetime;
+		let text; 
+
+		if (message) {
+			SlackUserId = message.user;
+			const { text, intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
+			if (!content) {
+				content = reminder ? reminder[0].value : null;
+			}
+		} else {
+			SlackUserId = config.SlackUserId;
+		}
+
+		if (content) {
+			// trim out if it starts with focus
+			content = content.replace(/^focu[us]{1,3}/i,"").trim();
+		}
+
+		bot.send({
+			type: "typing",
+			channel: message.channel
+		});
+	
 		models.User.find({
 			where: { SlackUserId }
 		}).then((user) => {
@@ -81,6 +74,19 @@ export default function(controller) {
 			// need user's timezone for this flow!
 			const { tz } = user;
 			const UserId = user.id;
+			let minutes  = false;
+
+			// we can only shortcut tz if we know message
+			if (tz && message) {
+				let customTimeObject = witTimeResponseToTimeZoneObject(message, tz);
+				if (customTimeObject) {
+					let now = moment().tz(tz);
+					minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
+				} else if (duration) {
+					// if user puts in min and not picked up by customTimeObject
+					config.minutes = witDurationToMinutes(duration);
+				}
+			}
 
 			// check for an open session before starting flow
 			user.getSessions({

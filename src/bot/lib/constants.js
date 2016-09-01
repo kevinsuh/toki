@@ -88,6 +88,8 @@ export const utterances = {
 	containsSendAt: new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bat[t]{0,3}\b/i),
 	deferPing: new RegExp(/^def[er]{1,3}\b.{1,3}\bpin[ngs]{1,3}\b/i),
 	sendSooner: new RegExp(/^sen[nd]{1,3}\b.{1,3}\bsoon[ner]{1,3}\b/i),
+	startsWithFocus: new RegExp(/^focu[us]{1,3}\b/i),
+	startsWithPing: new RegExp(/^pin[ng]{1,3}\b/i)
 }
 
 
