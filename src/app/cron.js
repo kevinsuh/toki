@@ -35,40 +35,56 @@ let checkForDailyRecaps = () => {
 		users.forEach((user) => {
 
 			const { tz, dailyRecapTime } = user;
+			const UserId                 = user.id;
 
 			// if user has dailyRecapTime, adhere to it. if not,
 			// insert "default", which is next 8AM possible
-
 			if (dailyRecapTime) {
 
-				const dailyRecapTimeObject    = moment(dailyRecapTime);
-				const { SlackUserId, TeamId } = user;
+				const dailyRecapTimeObject = moment(dailyRecapTime);
 
-				let config = {
-					SlackUserId
-				}
+				let day = moment().tz(tz).format('dddd');
+				if (day == "Saturday" || day == "Sunday") {
 
-				models.Team.find({
-					where: { TeamId }
-				})
-				.then((team) => {
+					// don't trigger on weekends for now!
+					let nextDay = dailyRecapTimeObject.add(1, 'days');
+					models.User.update({
+						dailyRecapTime: nextDay
+					}, {
+						where: [`"id" = ?`, UserId]
+					});
 
-					const { token } = team;
+				} else {
 
-					let bot = bots[token];
-					if (bot) {
-						// time for daily recap
-						
-						let nextDailyRecapTime = dailyRecapTimeObject.add(1, `day`);
-						user.update({
-							dailyRecapTime: nextDailyRecapTime
-						})
-						.then(() => {
-							controller.trigger(`daily_recap_flow`, [bot, config]);
-						});
+					const { SlackUserId, TeamId } = user;
+
+					let config = {
+						SlackUserId
 					}
 
-				});
+					models.Team.find({
+						where: { TeamId }
+					})
+					.then((team) => {
+
+						const { token } = team;
+
+						let bot = bots[token];
+						if (bot) {
+							// time for daily recap
+							
+							let nextDailyRecapTime = dailyRecapTimeObject.add(1, `day`);
+							user.update({
+								dailyRecapTime: nextDailyRecapTime
+							})
+							.then(() => {
+								controller.trigger(`daily_recap_flow`, [bot, config]);
+							});
+						}
+
+					});
+
+				}
 
 			} else {
 

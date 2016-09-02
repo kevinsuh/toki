@@ -52,39 +52,55 @@ var checkForDailyRecaps = function checkForDailyRecaps() {
 			var tz = user.tz;
 			var dailyRecapTime = user.dailyRecapTime;
 
+			var UserId = user.id;
+
 			// if user has dailyRecapTime, adhere to it. if not,
 			// insert "default", which is next 8AM possible
-
 			if (dailyRecapTime) {
 				(function () {
 
 					var dailyRecapTimeObject = (0, _momentTimezone2.default)(dailyRecapTime);
-					var SlackUserId = user.SlackUserId;
-					var TeamId = user.TeamId;
+
+					var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');
+					if (day == "Saturday" || day == "Sunday") {
+
+						// don't trigger on weekends for now!
+						var nextDay = dailyRecapTimeObject.add(1, 'days');
+						_models2.default.User.update({
+							dailyRecapTime: nextDay
+						}, {
+							where: ['"id" = ?', UserId]
+						});
+					} else {
+						(function () {
+							var SlackUserId = user.SlackUserId;
+							var TeamId = user.TeamId;
 
 
-					var config = {
-						SlackUserId: SlackUserId
-					};
+							var config = {
+								SlackUserId: SlackUserId
+							};
 
-					_models2.default.Team.find({
-						where: { TeamId: TeamId }
-					}).then(function (team) {
-						var token = team.token;
+							_models2.default.Team.find({
+								where: { TeamId: TeamId }
+							}).then(function (team) {
+								var token = team.token;
 
 
-						var bot = _controllers.bots[token];
-						if (bot) {
-							// time for daily recap
+								var bot = _controllers.bots[token];
+								if (bot) {
+									// time for daily recap
 
-							var nextDailyRecapTime = dailyRecapTimeObject.add(1, 'day');
-							user.update({
-								dailyRecapTime: nextDailyRecapTime
-							}).then(function () {
-								_controllers.controller.trigger('daily_recap_flow', [bot, config]);
+									var nextDailyRecapTime = dailyRecapTimeObject.add(1, 'day');
+									user.update({
+										dailyRecapTime: nextDailyRecapTime
+									}).then(function () {
+										_controllers.controller.trigger('daily_recap_flow', [bot, config]);
+									});
+								}
 							});
-						}
-					});
+						})();
+					}
 				})();
 			} else {
 
@@ -179,9 +195,9 @@ var checkForPings = function checkForPings() {
 			};
 
 			for (var toUserId in groupPings.fromUser[fromUserId].toUser) {
-				var _ret2 = _loop(toUserId);
+				var _ret3 = _loop(toUserId);
 
-				if (_ret2 === 'continue') continue;
+				if (_ret3 === 'continue') continue;
 			}
 		}
 	});
