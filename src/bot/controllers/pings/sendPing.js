@@ -1,6 +1,7 @@
 import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
+import _ from 'lodash';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString, getStartSessionOptionsAttachment, whichGroupedPingsToCancelAsAttachment, convertNumberStringToArray, commaSeparateOutStringArray } from '../../lib/messageHelpers';
@@ -220,7 +221,7 @@ export default function(controller) {
 						let pingerSessionPromises = [];
 						pings.forEach((ping) => {
 							const { dataValues: { ToUserId } } = ping;
-							pingerSessionPromises.push(models.Session.find({
+							pingerSessionPromises.push(models.Session.findAll({
 								where: {
 									UserId: ToUserId,
 									live: true,
@@ -230,8 +231,19 @@ export default function(controller) {
 							}));
 						});
 
+						let pingerSessions = [];
 						Promise.all(pingerSessionPromises)
-						.then((pingerSessions) => {
+						.then((pingerSessionsArrays) => {
+
+							// returns double array of pingerSessions -- only get the unique ones!
+							pingerSessionsArrays.forEach((pingerSessionsArray) => {
+								let pingerSessionIds = pingerSessions.map(pingerSession => pingerSession.dataValues.id);
+								pingerSessionsArray.forEach((pingerSession) => {
+									if (!_.includes(pingerSessionIds, pingerSession.dataValues.id)) {
+										pingerSessions.push(pingerSession);
+									}
+								});
+							});
 
 							pings.forEach((ping) => {
 

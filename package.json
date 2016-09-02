@@ -25,6 +25,7 @@
   },
   "homepage": "https://tokibot.com",
   "dependencies": {
+    "bluebird": "^3.4.5",
     "body-parser": "^1.15.1",
     "bootstrap": "^3.3.6",
     "botkit": "https://github.com/kevinsuh/botkit.git",

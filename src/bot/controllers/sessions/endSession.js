@@ -1,6 +1,7 @@
 import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
+import _ from 'lodash';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '../../lib/messageHelpers';
@@ -49,6 +50,7 @@ export default function(controller) {
 
 		// pingInfo only relevant when endSessionType == `endByPingToUserId`
 		const { SlackUserId, endSessionType, pingInfo } = config;
+		let { mutualSessionEndingPings } = config;
 
 		models.User.find({
 			where: { SlackUserId }
@@ -80,14 +82,15 @@ export default function(controller) {
 						models.PingMessage
 					],
 					order: `"Ping"."createdAt" ASC`
-				}).then((pings) => {
+				})
+				.then((pings) => {
 
 					// get all the sessions associated with pings that come FromUser
 					let pingerSessionPromises = [];
 
 					pings.forEach((ping) => {
 						const { FromUserId, ToUserId } = ping;
-						pingerSessionPromises.push(models.Session.find({
+						pingerSessionPromises.push(models.Session.findAll({
 							where: {
 								UserId: [ FromUserId, ToUserId ],
 								live: true,
@@ -97,8 +100,19 @@ export default function(controller) {
 						}));
 					});
 
+					let pingerSessions = [];
 					Promise.all(pingerSessionPromises)
-					.then((pingerSessions) => {
+					.then((pingerSessionsArrays) => {
+
+						// returns double array of pingerSessions -- only get the unique ones!
+						pingerSessionsArrays.forEach((pingerSessionsArray) => {
+							let pingerSessionIds = pingerSessions.map(pingerSession => pingerSession.dataValues.id);
+							pingerSessionsArray.forEach((pingerSession) => {
+								if (!_.includes(pingerSessionIds, pingerSession.dataValues.id)) {
+									pingerSessions.push(pingerSession);
+								}
+							});
+						});
 
 						// this object holds pings in relation to the UserId of the session that just ended!
 						// fromUser are pings that the user sent out
@@ -123,6 +137,7 @@ export default function(controller) {
 								let pingContainer = pingContainers.fromUser.toUser[pingToUserId] || { session: false, pings: [] };
 
 								pingerSessions.forEach((pingerSession) => {
+									
 									if (pingerSession && pingToUserId == pingerSession.dataValues.UserId) {
 										// recipient of ping is in session
 										pingContainer.session = pingerSession;
@@ -169,6 +184,49 @@ export default function(controller) {
 							
 						}
 
+						// this session is the one that's ended. find the pings where FromUser and ToUser are both going to be ending each other's sessions
+						// if this is the case (this is if FromUser <=> ToUser, and both are not in `superFocus` mode)
+						// the hard work has been done up to this point. all the pings where the FromUser is in `superFocus` has gotten excluded
+						// thus, the only thing needed up to this point is to see which pings are toUser <=> fromUser
+						// once we match those, update the pings as false, remove them from pings array, then communicate that this convo has gotten started
+						if (!mutualSessionEndingPings) {
+
+							mutualSessionEndingPings = {};
+
+							for (let toUserId in pingContainers.fromUser.toUser) {
+
+								if (!pingContainers.fromUser.toUser.hasOwnProperty(toUserId)) {
+									continue;
+								}
+
+								const fromPingContainer = pingContainers.fromUser.toUser[toUserId];
+								const toPingContainer = pingContainers.toUser.fromUser[toUserId];
+								// this means FromUser <=> ToUser pings (mutually session ending)
+								if (toPingContainer) {
+
+									// this paradigm is more about sessions than pings
+									// this is FROM the user who ended the session, TO the user who got session ended
+									const fromSessionEndingUser      = user;
+									const fromSessionEndingUserPings = fromPingContainer.pings;
+									const toSessionEndingUser        = toPingContainer.user
+									const toSessionEndingUserPings   = toPingContainer.pings;
+									
+									mutualSessionEndingPings = {
+										fromSessionEndingUser,
+										fromSessionEndingUserPings,
+										toSessionEndingUser,
+										toSessionEndingUserPings
+									};
+
+									// it is held in mutualSessionEndingPings now, you can delete from ping containers
+									delete pingContainers.fromUser.toUser[toUserId];
+									delete pingContainers.toUser.fromUser[toUserId];
+
+								}
+
+							}
+
+						}
 
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
@@ -187,7 +245,8 @@ export default function(controller) {
 								user,
 								pingContainers,
 								endSessionType,
-								pingInfo
+								pingInfo,
+								mutualSessionEndingPings
 							}
 
 							// end the session if it exists!
@@ -226,8 +285,32 @@ export default function(controller) {
 
 							convo.on('end', (convo) => {
 
+								/**
+								 * 		THIS IS WHERE THE SHARED CONVOS WILL BEGIN
+								 */
+
 								// all the ping objects here are relevant!
 								const { pingContainers, endSessionType, pingInfo, user } = convo.sessionEnd;
+
+								// put the mutual session ending pings back
+								// onto the matching pingContainer now, so they
+								// will be sent into shared convo
+								if (mutualSessionEndingPings) {
+
+									const { fromSessionEndingUser, fromSessionEndingUserPings, toSessionEndingUser, toSessionEndingUserPings } = mutualSessionEndingPings;
+
+									// from user who ended session
+									if (fromSessionEndingUser && fromSessionEndingUser.dataValues.SlackUserId == SlackUserId && fromSessionEndingUserPings.length > 0) {
+
+										pingContainers.fromUser.toUser[toSessionEndingUser.dataValues.id] = { session: false, user: toSessionEndingUser, pings: fromSessionEndingUserPings };
+										pingContainers.toUser.fromUser[toSessionEndingUser.dataValues.id] = { session: false, user: toSessionEndingUser, pings: toSessionEndingUserPings };
+
+										mutualSessionEndingPings.fromSessionEndingUserPings = [];
+										mutualSessionEndingPings.toSessionEndingUserPings   = [];
+
+									}
+
+								}
 
 								// pings queued to this user who just ended this session
 								for (let fromUserId in pingContainers.toUser.fromUser) {
@@ -270,10 +353,10 @@ export default function(controller) {
 													pingInfo: {
 														FromUser,
 														ToUser: user,
-														session, // did this come while in session?
 														endSessionType // whether OG user ended early or sessionTimerUp
 													},
-													SlackUserId: FromUser.dataValues.SlackUserId
+													SlackUserId: FromUser.dataValues.SlackUserId,
+													mutualSessionEndingPings
 												};
 
 												if (pingContainer.thisPingEndedUsersSessionsTogether) {

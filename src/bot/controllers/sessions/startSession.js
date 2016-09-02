@@ -186,7 +186,7 @@ export default function(controller) {
 
 										pings.forEach((ping) => {
 											const { dataValues: { ToUserId } } = ping;
-											pingerSessionPromises.push(models.Session.find({
+											pingerSessionPromises.push(models.Session.findAll({
 												where: {
 													UserId: ToUserId,
 													live: true,
@@ -196,8 +196,19 @@ export default function(controller) {
 											}));
 										});
 
+										let pingerSessions = [];
 										Promise.all(pingerSessionPromises)
-										.then((pingerSessions) => {
+										.then((pingerSessionsArrays) => {
+
+											// returns double array of pingerSessions -- only get the unique ones!
+											pingerSessionsArrays.forEach((pingerSessionsArray) => {
+												let pingerSessionIds = pingerSessions.map(pingerSession => pingerSession.dataValues.id);
+												pingerSessionsArray.forEach((pingerSession) => {
+													if (!_.includes(pingerSessionIds, pingerSession.dataValues.id)) {
+														pingerSessions.push(pingerSession);
+													}
+												});
+											});
 
 											pings.forEach((ping) => {
 
@@ -350,7 +361,7 @@ export default function(controller) {
 
 							pings.forEach((ping) => {
 								const { dataValues: { ToUserId } } = ping;
-								pingerSessionPromises.push(models.Session.find({
+								pingerSessionPromises.push(models.Session.findAll({
 									where: {
 										UserId: ToUserId,
 										live: true,
@@ -360,20 +371,18 @@ export default function(controller) {
 								}));
 							});
 
+							let pingerSessions = [];
 							Promise.all(pingerSessionPromises)
-							.then((pingerSessions) => {
+							.then((pingerSessionsArrays) => {
 
-								pings.forEach((ping) => {
-
-									const pingToUserId = ping.dataValues.ToUserId;
-									pingerSessions.forEach((pingerSession) => {
-										if (pingerSession && pingToUserId == pingerSession.dataValues.UserId) {
-											// the session for ToUser of this ping
-											ping.dataValues.session = pingerSession;
-											return;
+								// returns double array of pingerSessions -- only get the unique ones!
+								pingerSessionsArrays.forEach((pingerSessionsArray) => {
+									let pingerSessionIds = pingerSessions.map(pingerSession => pingerSession.dataValues.id);
+									pingerSessionsArray.forEach((pingerSession) => {
+										if (!_.includes(pingerSessionIds, pingerSession.dataValues.id)) {
+											pingerSessions.push(pingerSession);
 										}
 									});
-
 								});
 
 								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {

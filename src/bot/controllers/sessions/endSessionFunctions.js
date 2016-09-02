@@ -11,7 +11,7 @@ import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, commaSepa
 // confirm that user has tz configured before continuing
 export function startEndSessionFlow(convo) {
 
-	const { SlackUserId, UserId, session, tz, endSessionType, pingContainers, pingInfo }  = convo.sessionEnd;
+	const { SlackUserId, UserId, session, tz, endSessionType, pingContainers, pingInfo, mutualSessionEndingPings }  = convo.sessionEnd;
 
 	let startTimeObject;
 	let endTimeObject;
@@ -33,12 +33,40 @@ export function startEndSessionFlow(convo) {
 		sessionTimeString = convertMinutesToHoursString(sessionMinutes);
 	}
 
-	// if this flow is triggered by `endByPingToUserId`, and the userId of this session matches with FromUser.UserId of ping
-	if (endSessionType == constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
+	if (mutualSessionEndingPings) {
+
+		// ping ends both sessions together
+		
+		const { fromSessionEndingUser, fromSessionEndingUserPings, toSessionEndingUser, toSessionEndingUserPings } = mutualSessionEndingPings;
+
+		// this is the user who ended the session!
+		if (fromSessionEndingUser && fromSessionEndingUser.dataValues.SlackUserId == SlackUserId) {
+			
+			message = `While you were heads down, you and <@${toSessionEndingUser.dataValues.SlackUserId}> wanted to send a message to each other`;
+
+		} else if (toSessionEndingUser && toSessionEndingUser.dataValues.SlackUserId == SlackUserId) {
+
+			message = `Hey! <@${fromSessionEndingUser.dataValues.SlackUserId}> finished their session`;
+			if (pingInfo.endSessionType == constants.endSessionTypes.endSessionEarly) {
+				message = `${message} early`;
+			}
+			message = `${message}, and you two wanted to send a message to each other`
+
+		}
+
+		message = `${message}\n:point_left: I just kicked off a conversation between you two`;
+
+		if (pingInfo && pingInfo.session) {
+			letsFocusMessage = `I ended your focused session on \`${session.dataValues.content}\`. ${letsFocusMessage}`;
+		}
+
+	} else if (endSessionType == constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
+
+		// just a one-way ended by session end
 		
 		const { FromUser, ToUser } = pingInfo;
 
-		message = `Hey! <@${ToUser.dataValues.SlackName}> finished their session`;
+		message = `Hey! <@${ToUser.dataValues.SlackUserId}> finished their session`;
 		if (pingInfo.endSessionType == constants.endSessionTypes.endSessionEarly) {
 			message = `${message} early`;
 		}
