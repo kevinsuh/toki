@@ -58,11 +58,17 @@ body {
 
 .site-wrapper-inner {
   display: table-cell;
-  vertical-align: top; }
+  vertical-align: middle; }
 
 .cover-container {
   margin-right: auto;
   margin-left: auto; }
+
+.masthead {
+  width: 100%;
+  position: fixed;
+  top: 0;
+  text-align: right; }
 
 /* Padding for spacing */
 .inner {
@@ -151,4 +157,4 @@ body {
   .masthead,
   .mastfoot,
   .cover-container {
-    width: 700px; } }
+    width: 800px; } }
