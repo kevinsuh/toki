@@ -3,6 +3,7 @@ import moment from 'moment-timezone';
 import models from '../../../app/models';
 
 import { utterances, colorsArray, constants, buttonValues, colorsHash, timeZones, tokiExplainAttachments } from '../../lib/constants';
+import { convertMinutesToHoursString } from '../../lib/messageHelpers';
 
 export default function(controller) {
 
@@ -74,6 +75,279 @@ export default function(controller) {
 				});
 
 			});
+
+		});
+
+	});
+
+	controller.on('daily_recap_flow', (bot, config) => {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
+		const { SlackUserId } = config;
+
+		models.User.find({
+			where: { SlackUserId }
+		}).then((user) => {
+
+			const { tz, dailyRecapTime } = user;
+			const UserId = user.id;
+
+			const dailyRecapTimeObject = moment(dailyRecapTime).tz(tz);
+
+			let previousDaysTime = dailyRecapTimeObject.subtract(1, `day`).format("YYYY-MM-DD HH:mm:ss Z");
+			user.getSessions({
+				where: [`"startTime" > ?`, previousDaysTime]
+			})
+			.then((sessions) => {
+
+				models.Ping.findAll({
+					where: [ `("Ping"."ToUserId" = ? OR "Ping"."FromUserId" = ?) AND "Ping"."createdAt" > ?`, UserId, UserId, previousDaysTime ],
+					include: [
+						{ model: models.User, as: `FromUser` },
+						{ model: models.User, as: `ToUser` },
+						models.PingMessage
+					],
+					order: `"Ping"."createdAt" ASC`
+				})
+				.then((pings) => {
+
+					let fromUserPings = [];
+					let toUserPings   = [];
+
+					pings.forEach((ping) => {
+						if (ping.FromUserId == UserId) {
+							fromUserPings.push(ping);
+						} else if (ping.ToUserId == UserId) {
+							toUserPings.push(ping);
+						}
+					});
+
+					bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
+
+						// have 5-minute exit time limit
+						if (convo)
+							convo.task.timeLimit = 1000 * 60 * 5;
+
+						convo.say(`Hey <@${SlackUserId}>!`);
+
+						// sessions recap
+						if (sessions.length > 0) {
+
+							let text                = ``;
+							let attachments         = [];
+							let totalTimeInSessions = 0;
+
+							sessions.forEach((session) => {
+
+								const { content, startTime, endTime } = session;
+
+								const startTimeObject   = moment(startTime).tz(tz);
+								const endTimeObject     = moment(endTime).tz(tz);
+								const sessionMinutes    = Math.round(moment.duration(endTimeObject.diff(startTimeObject)).asMinutes());
+								const sessionTimeString = convertMinutesToHoursString(sessionMinutes);
+
+								totalTimeInSessions += sessionMinutes;
+
+								const sessionInfoMessage = `\`${content}\` for *${sessionTimeString}*`;
+
+								attachments.push({
+									attachment_type: 'default',
+									mrkdwn_in: ["text", "pretext"],
+									callback_id: "SESSION_INFO",
+									color: colorsHash.toki_purple.hex,
+									fallback: sessionInfoMessage,
+									text: sessionInfoMessage
+								});
+
+							});
+
+							const totalTimeInSessionsString = convertMinutesToHoursString(totalTimeInSessions);
+							text = `You spent ${totalTimeInSessionsString} in focused sessions today. Here's a quick breakdown of what you spent your time on:`;
+
+							convo.say({
+								text,
+								attachments
+							});
+
+						}
+
+						// pings sent to recap
+						if (toUserPings.length > 0) {
+
+							let text              = ``;
+							let attachments       = [];
+							let totalPingsToCount = toUserPings.length;
+							let totalBombsToCount = 0;
+
+							let toUserPingsContainer = { fromUser: {} };
+
+							toUserPings.forEach((ping) => {
+
+								const { dataValues: { FromUser, deliveryType } } = ping;
+								const FromUserSlackUserId = FromUser.dataValues.SlackUserId;
+
+								let pingContainer = toUserPingsContainer.fromUser[FromUserSlackUserId] || { bombCount: 0, pingCount: 0 };
+								pingContainer.pingCount++;
+								if (deliveryType == constants.pingDeliveryTypes.bomb) {
+									pingContainer.bombCount++;
+									totalBombsToCount++;
+								}
+								toUserPingsContainer.fromUser[FromUserSlackUserId] = pingContainer;
+
+							});
+
+							let SlackUserIdForMostBombs;
+							let mostBombs = 0;
+							let SlackUserIdForMostPings;
+							let mostPings = 0;
+
+							for (let FromUserSlackUserId in toUserPingsContainer.fromUser) {
+
+								if (!toUserPingsContainer.fromUser.hasOwnProperty(FromUserSlackUserId)) {
+									continue;
+								}
+
+								const pingContainer = toUserPingsContainer.fromUser[FromUserSlackUserId];
+								const { bombCount, pingCount } = pingContainer;
+
+								if (bombCount > mostBombs) {
+									mostBombs               = bombCount;
+									SlackUserIdForMostBombs = FromUserSlackUserId;
+								}
+								if (pingCount > mostPings) {
+									mostPings               = pingCount;
+									SlackUserIdForMostPings = FromUserSlackUserId;
+								}
+
+							}
+
+							let pingCountString = totalPingsToCount == 1 ? `*${totalPingsToCount}* ping` : `*${totalPingsToCount}* pings`;
+							let bombCountString = totalBombsToCount == 1 ? `${totalBombsToCount} bomb` : `${totalBombsToCount} bombs`;
+							text = `You received ${pingCountString} today, including ${bombCountString} that interrupted your workflow:`;
+							
+							if (mostPings > 0) {
+								let mostPingsString = `Most pings received from: <@${SlackUserIdForMostPings}> :mailbox_closed:`;
+								attachments.push({
+									attachment_type: 'default',
+									mrkdwn_in: ["text", "pretext"],
+									callback_id: "PINGS_RECEIVED_FROM",
+									fallback: mostPingsString,
+									text: mostPingsString
+								})
+							}
+							if (mostBombs) {
+								
+								let mostBombsString = `Most bombs received from: <@${SlackUserIdForMostBombs}> :bomb:`;
+								attachments.push({
+									attachment_type: 'default',
+									mrkdwn_in: ["text", "pretext"],
+									callback_id: "BOMBS_RECEIVED_FROM",
+									fallback: mostBombsString,
+									text: mostBombsString
+								});
+
+							}
+
+							convo.say({
+								text,
+								attachments
+							});
+
+						}
+
+						// pings sent from recap
+						if (fromUserPings.length > 0) {
+
+							let text                = ``;
+							let attachments         = [];
+							let totalPingsFromCount = fromUserPings.length;
+							let totalBombsFromCount = 0;
+
+							let fromUserPingsContainer = { toUser: {} };
+
+							fromUserPings.forEach((ping) => {
+
+								const { dataValues: { ToUser, deliveryType } } = ping;
+								const ToUserSlackUserId = ToUser.dataValues.SlackUserId;
+
+								let pingContainer = fromUserPingsContainer.toUser[ToUserSlackUserId] || { bombCount: 0, pingCount: 0 };
+								pingContainer.pingCount++;
+								if (deliveryType == constants.pingDeliveryTypes.bomb) {
+									pingContainer.bombCount++;
+									totalBombsFromCount++;
+								}
+								fromUserPingsContainer.toUser[ToUserSlackUserId] = pingContainer;
+
+							});
+
+							let SlackUserIdForMostBombs;
+							let mostBombs = 0;
+							let SlackUserIdForMostPings;
+							let mostPings = 0;
+
+							for (let ToUserSlackUserId in fromUserPingsContainer.toUser) {
+
+								if (!fromUserPingsContainer.toUser.hasOwnProperty(ToUserSlackUserId)) {
+									continue;
+								}
+
+								const pingContainer = fromUserPingsContainer.toUser[ToUserSlackUserId];
+								const { bombCount, pingCount } = pingContainer;
+
+								if (bombCount > mostBombs) {
+									mostBombs               = bombCount;
+									SlackUserIdForMostBombs = ToUserSlackUserId;
+								}
+								if (pingCount > mostPings) {
+									mostPings               = pingCount;
+									SlackUserIdForMostPings = ToUserSlackUserId;
+								}
+
+							}
+
+							let pingCountString = totalPingsFromCount == 1 ? `*${totalPingsFromCount}* ping` : `*${totalPingsFromCount}* pings`;
+							let bombCountString = totalBombsFromCount == 1 ? `${totalBombsFromCount} bomb` : `${totalBombsFromCount} bombs`;
+							text = `You sent ${pingCountString} today, including ${bombCountString} that interrupted a team member's workflow:`;
+							
+							if (mostPings > 0) {
+								let mostPingsString = `Most pings sent to: <@${SlackUserIdForMostPings}> :mailbox_closed:`;
+								attachments.push({
+									attachment_type: 'default',
+									mrkdwn_in: ["text", "pretext"],
+									callback_id: "PINGS_SENT_TO",
+									fallback: mostPingsString,
+									text: mostPingsString
+								})
+							}
+							if (mostBombs) {
+								
+								let mostBombsString = `Most bombs sent to: <@${SlackUserIdForMostBombs}> :bomb:`;
+								attachments.push({
+									attachment_type: 'default',
+									mrkdwn_in: ["text", "pretext"],
+									callback_id: "BOMBS_RECEIVED_FROM",
+									fallback: mostBombsString,
+									text: mostBombsString
+								});
+
+							}
+
+							convo.say({
+								text,
+								attachments
+							});
+
+						}
+
+
+					});
+
+				});
+
+			});
+
 
 		});
 
