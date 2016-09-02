@@ -18,7 +18,12 @@ module.exports = function (sequelize, DataTypes) {
     tz: DataTypes.STRING,
     TeamId: DataTypes.STRING,
     scopes: DataTypes.STRING,
-    accessToken: DataTypes.STRING
+    accessToken: DataTypes.STRING,
+    dailyRecapTime: DataTypes.DATE,
+    wantsDailyRecap: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true
+    }
   }, {
 
     classMethods: {

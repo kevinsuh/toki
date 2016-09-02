@@ -12,9 +12,84 @@ export default function() {
 		// cron job functions go here
 		checkForSessions()
 		checkForPings()
+		checkForDailyRecaps()
 	}
 
 }
+
+// these are all pings that are not sessionEnd
+let checkForDailyRecaps = () => {
+
+	// sequelize is in EST by default. include date offset to make it correct UTC wise
+	let now       = moment();
+	let nowString = now.format("YYYY-MM-DD HH:mm:ss Z");
+
+	models.User.findAll({
+		where: [ `"User"."wantsDailyRecap" = ? AND ("User"."dailyRecapTime" IS ? OR "User"."dailyRecapTime" < ?)`, true, null, nowString ],
+		order: `"User"."createdAt" DESC`
+	})
+	.then((users) => {
+
+		// go through all the nulls and update to next possible time
+		// the next cron job will then trigger them
+		users.forEach((user) => {
+
+			const { tz, dailyRecapTime } = user;
+
+			// if user has dailyRecapTime, adhere to it. if not,
+			// insert "default", which is next 8AM possible
+
+			if (dailyRecapTime) {
+
+				const dailyRecapTimeObject    = moment(dailyRecapTime);
+				const { SlackUserId, TeamId } = user;
+
+				let config = {
+					SlackUserId
+				}
+
+				models.Team.find({
+					where: { TeamId }
+				})
+				.then((team) => {
+
+					const { token } = team;
+
+					let bot = bots[token];
+					if (bot) {
+						// time for daily recap
+						
+						let nextDailyRecapTime = dailyRecapTimeObject.add(1, `day`);
+						user.update({
+							dailyRecapTime: nextDailyRecapTime
+						})
+						.then(() => {
+							controller.trigger(`daily_recap_flow`, [bot, config]);
+						});
+					}
+
+				});
+
+			} else {
+
+				// create dailyRecapTime default to closest 8AM
+				if (tz) {
+
+					let tomorrowDate = moment().tz(tz).add(1, 'day').format("YYYY-MM-DD");
+					let nextDailyRecapTime = moment(`${tomorrowDate} 08:00:00`,"YYYY-MM-DD HH:mm:ss").tz(tz);
+
+					user.update({
+						dailyRecapTime: nextDailyRecapTime
+					});
+					
+				}
+			}
+		})
+
+	})
+
+}
+
 
 // these are all pings that are not sessionEnd
 let checkForPings = () => {

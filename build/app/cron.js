@@ -10,6 +10,7 @@ exports.default = function () {
 		// cron job functions go here
 		checkForSessions();
 		checkForPings();
+		checkForDailyRecaps();
 	}
 };
 
@@ -34,6 +35,78 @@ var _pingFunctions = require('../bot/controllers/pings/pingFunctions');
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // these are all pings that are not sessionEnd
+var checkForDailyRecaps = function checkForDailyRecaps() {
+
+	// sequelize is in EST by default. include date offset to make it correct UTC wise
+	var now = (0, _momentTimezone2.default)();
+	var nowString = now.format("YYYY-MM-DD HH:mm:ss Z");
+
+	_models2.default.User.findAll({
+		where: ['"User"."wantsDailyRecap" = ? AND ("User"."dailyRecapTime" IS ? OR "User"."dailyRecapTime" < ?)', true, null, nowString],
+		order: '"User"."createdAt" DESC'
+	}).then(function (users) {
+
+		// go through all the nulls and update to next possible time
+		// the next cron job will then trigger them
+		users.forEach(function (user) {
+			var tz = user.tz;
+			var dailyRecapTime = user.dailyRecapTime;
+
+			// if user has dailyRecapTime, adhere to it. if not,
+			// insert "default", which is next 8AM possible
+
+			if (dailyRecapTime) {
+				(function () {
+
+					var dailyRecapTimeObject = (0, _momentTimezone2.default)(dailyRecapTime);
+					var SlackUserId = user.SlackUserId;
+					var TeamId = user.TeamId;
+
+
+					var config = {
+						SlackUserId: SlackUserId
+					};
+
+					_models2.default.Team.find({
+						where: { TeamId: TeamId }
+					}).then(function (team) {
+						var token = team.token;
+
+
+						var bot = _controllers.bots[token];
+						if (bot) {
+							// time for daily recap
+
+							var nextDailyRecapTime = dailyRecapTimeObject.add(1, 'day');
+							user.update({
+								dailyRecapTime: nextDailyRecapTime
+							}).then(function () {
+								_controllers.controller.trigger('daily_recap_flow', [bot, config]);
+							});
+						}
+					});
+				})();
+			} else {
+
+				// create dailyRecapTime default to closest 8AM
+				if (tz) {
+
+					var tomorrowDate = (0, _momentTimezone2.default)().tz(tz).add(1, 'day').format("YYYY-MM-DD");
+					var nextDailyRecapTime = (0, _momentTimezone2.default)(tomorrowDate + ' 08:00:00', "YYYY-MM-DD HH:mm:ss").tz(tz);
+
+					user.update({
+						dailyRecapTime: nextDailyRecapTime
+					});
+				}
+			}
+		});
+	});
+};
+
+// these are all pings that are not sessionEnd
+
+
+// the cron file!
 var checkForPings = function checkForPings() {
 
 	// sequelize is in EST by default. include date offset to make it correct UTC wise
@@ -106,16 +179,13 @@ var checkForPings = function checkForPings() {
 			};
 
 			for (var toUserId in groupPings.fromUser[fromUserId].toUser) {
-				var _ret = _loop(toUserId);
+				var _ret2 = _loop(toUserId);
 
-				if (_ret === 'continue') continue;
+				if (_ret2 === 'continue') continue;
 			}
 		}
 	});
 };
-
-// the cron file!
-
 
 var checkForSessions = function checkForSessions() {
 
