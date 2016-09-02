@@ -37,6 +37,7 @@ function startEndSessionFlow(convo) {
 	var endSessionType = _convo$sessionEnd.endSessionType;
 	var pingContainers = _convo$sessionEnd.pingContainers;
 	var pingInfo = _convo$sessionEnd.pingInfo;
+	var mutualSessionEndingPings = _convo$sessionEnd.mutualSessionEndingPings;
 
 
 	var startTimeObject = void 0;
@@ -63,13 +64,43 @@ function startEndSessionFlow(convo) {
 		sessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
 	}
 
-	// if this flow is triggered by `endByPingToUserId`, and the userId of this session matches with FromUser.UserId of ping
-	if (endSessionType == _constants.constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
+	if (mutualSessionEndingPings) {
+
+		// ping ends both sessions together
+
+		var fromSessionEndingUser = mutualSessionEndingPings.fromSessionEndingUser;
+		var fromSessionEndingUserPings = mutualSessionEndingPings.fromSessionEndingUserPings;
+		var toSessionEndingUser = mutualSessionEndingPings.toSessionEndingUser;
+		var toSessionEndingUserPings = mutualSessionEndingPings.toSessionEndingUserPings;
+
+		// this is the user who ended the session!
+
+		if (fromSessionEndingUser && fromSessionEndingUser.dataValues.SlackUserId == SlackUserId) {
+
+			message = 'While you were heads down, you and <@' + toSessionEndingUser.dataValues.SlackUserId + '> wanted to send a message to each other';
+		} else if (toSessionEndingUser && toSessionEndingUser.dataValues.SlackUserId == SlackUserId) {
+
+			message = 'Hey! <@' + fromSessionEndingUser.dataValues.SlackUserId + '> finished their session';
+			if (pingInfo.endSessionType == _constants.constants.endSessionTypes.endSessionEarly) {
+				message = message + ' early';
+			}
+			message = message + ', and you two wanted to send a message to each other';
+		}
+
+		message = message + '\n:point_left: I just kicked off a conversation between you two';
+
+		if (pingInfo && pingInfo.session) {
+			letsFocusMessage = 'I ended your focused session on `' + session.dataValues.content + '`. ' + letsFocusMessage;
+		}
+	} else if (endSessionType == _constants.constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
+
+		// just a one-way ended by session end
+
 		var FromUser = pingInfo.FromUser;
 		var ToUser = pingInfo.ToUser;
 
 
-		message = 'Hey! <@' + ToUser.dataValues.SlackName + '> finished their session';
+		message = 'Hey! <@' + ToUser.dataValues.SlackUserId + '> finished their session';
 		if (pingInfo.endSessionType == _constants.constants.endSessionTypes.endSessionEarly) {
 			message = message + ' early';
 		}
