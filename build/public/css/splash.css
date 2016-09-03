@@ -74,6 +74,10 @@ body {
 .inner {
   padding: 30px; }
 
+#slack-logo-splash {
+  height: 38px;
+  padding-bottom: 7px; }
+
 /*
  * Header
  */
