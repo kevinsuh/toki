@@ -73,7 +73,12 @@ exports.default = function (controller) {
 			var _datetime = _message$intentObject.datetime;
 
 			if (!content) {
-				content = _reminder ? _reminder[0].value : null;
+				if (_duration || _datetime) {
+					content = _reminder ? _reminder[0].value : null;
+				} else {
+					// if no duration or datetime, we should just use entire text
+					content = _text;
+				}
 			}
 			bot.send({
 				type: "typing",

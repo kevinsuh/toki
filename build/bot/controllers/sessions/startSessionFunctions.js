@@ -356,6 +356,12 @@ function askForSessionTime(convo) {
 			convo.next();
 		}
 	}, {
+		pattern: _constants.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.say('Okay, let me know when you\'re ready to focus!');
+			convo.next();
+		}
+	}, {
 		default: true,
 		callback: function callback(response, convo) {
 

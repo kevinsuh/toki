@@ -74,7 +74,13 @@ export default function(controller) {
 			SlackUserId = message.user;
 			const { text, intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
 			if (!content) {
-				content = reminder ? reminder[0].value : null;
+				if (duration || datetime) {
+					content = reminder ? reminder[0].value : null;
+				} else {
+					// if no duration or datetime, we should just use entire text
+					content = text;
+				}
+				
 			}
 			bot.send({
 				type: "typing",
