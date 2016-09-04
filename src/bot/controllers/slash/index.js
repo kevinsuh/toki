@@ -105,7 +105,7 @@ export default function(controller) {
 										};
 
 										queuePing(bot, fromUserConfig, toUserConfig, config);
-										responseObject.text = `<@${toUser.dataValues.SlackUserId}> is not in a session so I started a conversation for you. Thank you for being mindful of <@${toUser.dataValues.SlackUserId}>'s attention :raised_hands:`;
+										responseObject.text = `<@${toUser.dataValues.SlackUserId}> is not in a session so I started a conversation for you. Thank you for being mindful of their attention :raised_hands:`;
 										bot.replyPrivate(message, responseObject);
 										
 
