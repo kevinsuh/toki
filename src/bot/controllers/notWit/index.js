@@ -19,15 +19,6 @@ import dotenv from 'dotenv';
 
 export default function(controller) {
 
-	controller.hears([utterances.startsWithPing], 'direct_message', (bot, message) => {
-
-		let botToken = bot.config.token;
-		bot          = bots[botToken];
-
-		controller.trigger(`ping_flow`, [bot, message]);
-
-	});
-
 	controller.hears(['^{'], 'direct_message',isJsonObject, function(bot, message) {
 
 		let botToken = bot.config.token;

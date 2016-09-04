@@ -15,8 +15,13 @@ exports.default = function (controller) {
 
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
+		var SlackUserId = message.user;
 
-		controller.trigger('begin_session_flow', [bot, message]);
+		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+			convo.say('It looks like you’re trying to focus! :palm_tree:');
+			convo.say("Just type `/focus [put task here] for [put duration here]`\nLike this `/focus squash front-end bug for 45 min` or `/focus marketing report until 4pm`");
+		});
 	});
 
 	// this needs to be after Wit.hears `start_ession` because this is
@@ -25,8 +30,13 @@ exports.default = function (controller) {
 
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
+		var SlackUserId = message.user;
 
-		controller.trigger('begin_session_flow', [bot, message]);
+		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+			convo.say('It looks like you’re trying to focus! :palm_tree:');
+			convo.say("Just type `/focus [put task here] for [put duration here]`\nLike this `/focus squash front-end bug for 45 min` or `/focus marketing report until 4pm`");
+		});
 	});
 
 	/**

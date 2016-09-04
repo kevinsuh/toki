@@ -6,14 +6,6 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
-	controller.hears([_constants.utterances.startsWithPing], 'direct_message', function (bot, message) {
-
-		var botToken = bot.config.token;
-		bot = _index.bots[botToken];
-
-		controller.trigger('ping_flow', [bot, message]);
-	});
-
 	controller.hears(['^{'], 'direct_message', _hearsMiddleware.isJsonObject, function (bot, message) {
 
 		var botToken = bot.config.token;

@@ -6,15 +6,35 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
+	controller.hears([_constants.utterances.startsWithPing], 'direct_message', function (bot, message) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		var SlackUserId = message.user;
+
+		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+			convo.say('It looks like you’re trying to ping a teammate! :mailbox_with_mail:');
+			convo.say("Just type `/ping @user [message]`\nLike this `/ping @colleen did Janet submit the assets to the portal yet?`");
+		});
+	});
+
 	/**
   *		Enter ping flow via Wit
+  *		we now encourage user to just do via slash command
   */
 	controller.hears(['ping'], 'direct_message', _index.wit.hears, function (bot, message) {
 
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
+		var SlackUserId = message.user;
 
-		controller.trigger('ping_flow', [bot, message]);
+		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+			convo.say('It looks like you’re trying to ping a teammate! :mailbox_with_mail:');
+			convo.say("Just type `/ping @user [message]`\nLike this `/ping @colleen did Janet submit the assets to the portal yet?`");
+		});
 	});
 
 	/**
