@@ -75,14 +75,39 @@ exports.default = function (controller) {
 
 								if (toUser) {
 
-									var pingFlowConfig = {
-										pingSlackUserIds: [toUser.dataValues.SlackUserId],
-										pingMessages: pingMessages
-									};
+									// check if user is in session... if so, then do not DM receipt
+									toUser.getSessions({
+										where: ['"open" = ?', true],
+										order: '"Session"."createdAt" DESC'
+									}).then(function (sessions) {
 
-									controller.trigger('ping_flow', [bot, message, pingFlowConfig]);
-									responseObject.text = 'Got it! Let\'s deliver that ping :mailbox_with_mail:';
-									bot.replyPrivate(message, responseObject);
+										var session = sessions[0];
+
+										if (session) {
+
+											var pingFlowConfig = {
+												pingSlackUserIds: [toUser.dataValues.SlackUserId],
+												pingMessages: pingMessages
+											};
+
+											controller.trigger('ping_flow', [bot, message, pingFlowConfig]);
+											responseObject.text = 'Got it! Let\'s deliver that ping :mailbox_with_mail:';
+											bot.replyPrivate(message, responseObject);
+										} else {
+
+											// user is not in session, no need for DM receipt!
+											var fromUserConfig = { UserId: UserId, SlackUserId: SlackUserId };
+											var toUserConfig = { UserId: toUser.dataValues.id, SlackUserId: toUser.dataValues.SlackUserId };
+											var config = {
+												deliveryType: _constants.constants.pingDeliveryTypes.sessionNotIn,
+												pingMessages: pingMessages
+											};
+
+											(0, _pingFunctions.queuePing)(bot, fromUserConfig, toUserConfig, config);
+											responseObject.text = '<@' + toUser.dataValues.SlackUserId + '> is not in a session so I started a conversation for you. Thank you for being mindful of <@' + toUser.dataValues.SlackUserId + '>\'s attention :raised_hands:';
+											bot.replyPrivate(message, responseObject);
+										}
+									});
 								} else {
 
 									// user might have changed names ... this is very rare!
