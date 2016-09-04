@@ -187,7 +187,7 @@ exports.default = function (controller) {
 
 								controller.trigger('explain_toki_flow', [bot, config]);
 
-								responseObject.text = 'Okay I just explained how I work to *@' + toSlackName + '!*';
+								responseObject.text = 'Okay I just explained how I work to <@' + toUser.dataValues.SlackUserId + '>!';
 								bot.replyPrivate(message, responseObject);
 							}
 						});
