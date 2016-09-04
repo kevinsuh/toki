@@ -68,7 +68,7 @@ export default function(controller) {
 					text: `Here's how I do this:`,
 					attachments: tokiExplainAttachments
 				});
-				convo.say(`I'm here whenever you're ready to go! Just let me know when you want to \`ping\` someone, or enter a \`focus\` session yourself :raised_hands:`);
+				convo.say(`I'm here whenever you're ready to go! Just let me know when you want to \`/ping\` someone, or enter a \`/focus\` session yourself :raised_hands:`);
 
 				convo.on(`end`, (convo) => {
 

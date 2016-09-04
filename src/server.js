@@ -8,7 +8,7 @@ import fs from 'fs';
 // CronJob
 import cron from 'cron';
 import cronFunction from './app/cron';
-import { seedAndUpdateUsers } from './app/scripts';
+import { seedAndUpdateUsers, test } from './app/scripts';
 var CronJob = cron.CronJob;
 
 import './app/globalHelpers';
@@ -111,6 +111,7 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 				if (payload) {
 					let teamMembers = payload.users; // array of user objects!
 					seedAndUpdateUsers(teamMembers);
+					test(bot);
 				}
 
 				if (err) {

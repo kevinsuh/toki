@@ -7,6 +7,43 @@ import models from './models';
 import moment from 'moment-timezone';
 import dotenv from 'dotenv';
 
+export function test(bot) {
+	
+	// U1NCGAETZ slackid of @test
+	// U121ZK15J slackid of @kevin
+	const SlackUserIds = `U1NCGAETZ,U121ZK15J`;
+	bot.api.mpim.open({
+		users: SlackUserIds
+	}, (err, response) => {
+		console.log(response);
+		if (!err) {
+
+			const { group: { id } } = response;
+			bot.api.mpim.history({
+				channel: id
+			}, (err, response) => {
+
+				if (!err) {
+
+					const { messages } = response;
+					console.log(`\n\n\n displaying the ${messages.length} messages for this convo`);
+					console.log(messages[0]);
+					const timeStampObject = moment.unix(messages[0].ts);
+					console.log(`\n\n\n timestamp: ${timeStampObject.format()}`);
+
+					if (messages[0].reactions) {
+						console.log(messages[0].reactions);
+					}
+
+				}
+
+			});
+
+		}
+	});
+
+}
+
 export function seedAndUpdateUsers(members) {
 
 	members.forEach((member) => {

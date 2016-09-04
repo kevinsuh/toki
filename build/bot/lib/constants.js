@@ -390,7 +390,7 @@ var timeZoneAttachments = exports.timeZoneAttachments = [{
 
 var tokiExplainAttachments = exports.tokiExplainAttachments = [{
 	title: "Focus Sessions",
-	text: "Direct message me `focus` to knock out a task and protect yourself from non-urgent messages while you work",
+	text: "In any channel, use the command `/focus` to knock out a task and protect yourself from non-urgent messages while you work",
 	mrkdwn_in: ["text"],
 	color: colorsHash.toki_purple.hex,
 	attachment_type: "default",
@@ -398,20 +398,12 @@ var tokiExplainAttachments = exports.tokiExplainAttachments = [{
 	fallback: "Focus Sessions"
 }, {
 	title: "Ping Members",
-	text: "Direct message me `ping @user` whenever you would otherwise send a DM or mention to @user. I'll handle the message based on whether @user is focused or not, and let you send it sooner if it's urgent",
+	text: "In any channel, use the command `/ping @user` whenever you would otherwise send a DM. I'll default queue the message if @user is focused, while letting you send it sooner if it's urgent",
 	mrkdwn_in: ["text"],
 	color: colorsHash.toki_purple.hex,
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
 	fallback: "Ping members"
-}, {
-	title: "Slash Commands to Focus or Ping",
-	text: "Enter focus sessions and ping teammates with the `/focus` and `/ping` single-line commands",
-	mrkdwn_in: ["text"],
-	color: colorsHash.toki_purple.hex,
-	attachment_type: "default",
-	callback_id: "TOKI_OPTIONS",
-	fallback: "Slash Commands"
 }];
 
 var specialNumbers = exports.specialNumbers = ['zeroth', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelvth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'];

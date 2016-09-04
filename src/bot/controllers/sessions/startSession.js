@@ -18,10 +18,16 @@ export default function(controller) {
 	 */
 	controller.hears(['start_session'], 'direct_message', wit.hears, (bot, message) => {
 		
-		let botToken = bot.config.token;
-		bot          = bots[botToken];
+		let botToken      = bot.config.token;
+		bot               = bots[botToken];
+		const SlackUserId = message.user;
 
-		controller.trigger(`begin_session_flow`, [ bot, message ]);
+		bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
+
+			convo.say(`It looks like you’re trying to focus! :palm_tree:`);
+			convo.say("Just type `/focus [put task here] for [put duration here]`\nLike this `/focus squash front-end bug for 45 min` or `/focus marketing report until 4pm`");
+
+		});
 
 	});
 
@@ -29,10 +35,16 @@ export default function(controller) {
 	// a fallback. we want Wit to be trained to handle this!
 	controller.hears([utterances.startsWithFocus], 'direct_message', (bot, message) => {
 		
-		let botToken = bot.config.token;
-		bot          = bots[botToken];
+		let botToken      = bot.config.token;
+		bot               = bots[botToken];
+		const SlackUserId = message.user;
 
-		controller.trigger(`begin_session_flow`, [ bot, message ]);
+		bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
+
+			convo.say(`It looks like you’re trying to focus! :palm_tree:`);
+			convo.say("Just type `/focus [put task here] for [put duration here]`\nLike this `/focus squash front-end bug for 45 min` or `/focus marketing report until 4pm`");
+
+		});
 
 	});
 
@@ -62,7 +74,13 @@ export default function(controller) {
 			SlackUserId = message.user;
 			const { text, intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
 			if (!content) {
-				content = reminder ? reminder[0].value : null;
+				if (duration || datetime) {
+					content = reminder ? reminder[0].value : null;
+				} else {
+					// if no duration or datetime, we should just use entire text
+					content = text;
+				}
+				
 			}
 			bot.send({
 				type: "typing",

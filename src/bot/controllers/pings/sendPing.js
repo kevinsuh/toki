@@ -12,15 +12,38 @@ import { notInSessionWouldYouLikeToStartOne } from '../sessions';
 // STARTING A SESSION
 export default function(controller) {
 
-	/**
-	 *		Enter ping flow via Wit
-	 */
-	controller.hears(['ping'], 'direct_message', wit.hears, (bot, message) => {
+	controller.hears([utterances.startsWithPing], 'direct_message', (bot, message) => {
 
 		let botToken = bot.config.token;
 		bot          = bots[botToken];
 
-		controller.trigger(`ping_flow`, [bot, message]);
+		const SlackUserId = message.user;
+
+		bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
+
+			convo.say(`It looks like you’re trying to ping a teammate! :mailbox_with_mail:`);
+			convo.say("Just type `/ping @user [message]`\nLike this `/ping @colleen did Janet submit the assets to the portal yet?`");
+
+		});
+
+	});
+
+	/**
+	 *		Enter ping flow via Wit
+	 *		we now encourage user to just do via slash command
+	 */
+	controller.hears(['ping'], 'direct_message', wit.hears, (bot, message) => {
+
+		let botToken      = bot.config.token;
+		bot               = bots[botToken];
+		const SlackUserId = message.user;
+
+		bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
+
+			convo.say(`It looks like you’re trying to ping a teammate! :mailbox_with_mail:`);
+			convo.say("Just type `/ping @user [message]`\nLike this `/ping @colleen did Janet submit the assets to the portal yet?`");
+
+		});
 		
 	});
 

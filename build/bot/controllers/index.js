@@ -187,6 +187,12 @@ controller.on('user_change', function (bot, message) {
 	}
 });
 
+controller.on('reaction_added', function (bot, message) {
+
+	console.log('\n\n yo reaction added:');
+	console.log(message);
+});
+
 // simple way to keep track of bots
 var bots = exports.bots = {};
 

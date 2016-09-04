@@ -346,6 +346,13 @@ function askForSessionTime(convo) {
 			}
 		},
 		{
+			pattern: utterances.noAndNeverMind,
+			callback: (response, convo) => {
+				convo.say(`Okay, let me know when you're ready to focus!`);
+				convo.next();
+			}
+		},
+		{
 			default: true,
 			callback: (response, convo) => {
 

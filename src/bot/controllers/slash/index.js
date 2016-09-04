@@ -74,14 +74,45 @@ export default function(controller) {
 
 							if (toUser) { 
 
-								let pingFlowConfig = {
-									pingSlackUserIds: [ toUser.dataValues.SlackUserId ],
-									pingMessages
-								}
+								// check if user is in session... if so, then do not DM receipt
+								toUser.getSessions({
+									where: [ `"open" = ?`, true ],
+									order: `"Session"."createdAt" DESC`
+								})
+								.then((sessions) => {
 
-								controller.trigger(`ping_flow`, [bot, message, pingFlowConfig]);
-								responseObject.text = `Got it! Let's deliver that ping :mailbox_with_mail:`;
-								bot.replyPrivate(message, responseObject);
+									let session = sessions[0];
+
+									if (session) {
+
+										let pingFlowConfig = {
+											pingSlackUserIds: [ toUser.dataValues.SlackUserId ],
+											pingMessages
+										}
+
+										controller.trigger(`ping_flow`, [bot, message, pingFlowConfig]);
+										responseObject.text = `Got it! Let's deliver that ping :mailbox_with_mail:`;
+										bot.replyPrivate(message, responseObject);
+
+									} else {
+
+										// user is not in session, no need for DM receipt!
+										const fromUserConfig = { UserId, SlackUserId };
+										const toUserConfig   = { UserId: toUser.dataValues.id, SlackUserId: toUser.dataValues.SlackUserId };
+										const config   = {
+											deliveryType: constants.pingDeliveryTypes.sessionNotIn,
+											pingMessages
+										};
+
+										queuePing(bot, fromUserConfig, toUserConfig, config);
+										responseObject.text = `<@${toUser.dataValues.SlackUserId}> is not in a session so I started a conversation for you. Thank you for being mindful of their attention :raised_hands:`;
+										bot.replyPrivate(message, responseObject);
+										
+
+									}
+
+								});
+
 								
 							} else {
 
@@ -166,7 +197,7 @@ export default function(controller) {
 
 								controller.trigger(`explain_toki_flow`, [ bot, config ]);
 
-								responseObject.text = `Okay I just explained how I work to *@${toSlackName}!*`;
+								responseObject.text = `Okay I just explained how I work to <@${toUser.dataValues.SlackUserId}>!`;
 								bot.replyPrivate(message, responseObject);
 							}
 						});
