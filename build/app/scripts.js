@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
+exports.test = test;
 exports.seedAndUpdateUsers = seedAndUpdateUsers;
 
 var _controllers = require('../bot/controllers');
@@ -24,6 +25,39 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 /**
  * 		For fun one-off thingz
  */
+
+function test(bot) {
+
+	// U1NCGAETZ slackid of @test
+	// U121ZK15J slackid of @kevin
+	var SlackUserIds = 'U1NCGAETZ,U121ZK15J';
+	bot.api.mpim.open({
+		users: SlackUserIds
+	}, function (err, response) {
+		console.log(response);
+		if (!err) {
+			var id = response.group.id;
+
+			bot.api.mpim.history({
+				channel: id
+			}, function (err, response) {
+
+				if (!err) {
+					var messages = response.messages;
+
+					console.log('\n\n\n displaying the ' + messages.length + ' messages for this convo');
+					console.log(messages[0]);
+					var timeStampObject = _momentTimezone2.default.unix(messages[0].ts);
+					console.log('\n\n\n timestamp: ' + timeStampObject.format());
+
+					if (messages[0].reactions) {
+						console.log(messages[0].reactions);
+					}
+				}
+			});
+		}
+	});
+}
 
 function seedAndUpdateUsers(members) {
 
