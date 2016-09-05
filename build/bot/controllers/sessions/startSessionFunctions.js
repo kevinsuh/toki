@@ -295,11 +295,23 @@ function askForSessionContent(convo) {
 	}, {
 		default: true,
 		callback: function callback(response, convo) {
-			var reminder = response.intentObject.entities.reminder;
+			var text = response.text;
+			var _response$intentObjec = response.intentObject.entities;
+			var reminder = _response$intentObjec.reminder;
+			var duration = _response$intentObjec.duration;
+			var datetime = _response$intentObjec.datetime;
+
+			var content = false;
+
+			if (duration || datetime) {
+				content = reminder ? reminder[0].value : null;
+			} else {
+				// if no duration or datetime, we should just use entire text
+				content = text;
+			}
 
 			// reminder is necessary to be session content
-
-			if (reminder) {
+			if (content) {
 
 				// optionally accept time here
 				var customTimeObject = (0, _messageHelpers.witTimeResponseToTimeZoneObject)(response, tz);
@@ -310,7 +322,7 @@ function askForSessionContent(convo) {
 					convo.next();
 				}
 
-				convo.sessionStart.content = reminder[0].value;
+				convo.sessionStart.content = content;
 				finalizeSessionTimeAndContent(convo);
 			} else {
 				convo.say('I didn\'t get that :thinking_face:');

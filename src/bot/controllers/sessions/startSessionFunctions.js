@@ -282,10 +282,18 @@ function askForSessionContent(convo, question = '') {
 			default: true,
 			callback: (response, convo) => {
 
-				const { intentObject: { entities: { reminder } } } = response;
+				const { text, intentObject: { entities: { reminder, duration, datetime } } } = response;
+				let content = false;
+
+				if (duration || datetime) {
+					content = reminder ? reminder[0].value : null;
+				} else {
+					// if no duration or datetime, we should just use entire text
+					content = text;
+				}
 				
 				// reminder is necessary to be session content
-				if (reminder) {
+				if (content) {
 
 					// optionally accept time here
 					let customTimeObject = witTimeResponseToTimeZoneObject(response, tz);
@@ -296,7 +304,7 @@ function askForSessionContent(convo, question = '') {
 						convo.next();
 					}
 
-					convo.sessionStart.content = reminder[0].value;
+					convo.sessionStart.content = content;
 					finalizeSessionTimeAndContent(convo);
 
 				} else {
