@@ -139,8 +139,14 @@ exports.default = function (controller) {
 							(function () {
 
 								var text = '';
-								var attachments = [];
 								var totalTimeInSessions = 0;
+								var fields = [{
+									title: 'Priority',
+									short: true
+								}, {
+									title: 'Time',
+									short: true
+								}];
 
 								sessions.forEach(function (session) {
 									var content = session.content;
@@ -155,20 +161,30 @@ exports.default = function (controller) {
 
 									totalTimeInSessions += sessionMinutes;
 
-									var sessionInfoMessage = '`' + content + '` for *' + sessionTimeString + '*';
+									// 1. add priority
+									fields.push({
+										value: '`' + content + '`',
+										short: true
+									});
 
-									attachments.push({
-										attachment_type: 'default',
-										mrkdwn_in: ["text", "pretext"],
-										callback_id: "SESSION_INFO",
-										color: _constants.colorsHash.toki_purple.hex,
-										fallback: sessionInfoMessage,
-										text: sessionInfoMessage
+									// 2. add amount of time
+									fields.push({
+										value: '' + sessionTimeString,
+										short: true
 									});
 								});
 
 								var totalTimeInSessionsString = (0, _messageHelpers.convertMinutesToHoursString)(totalTimeInSessions);
 								text = 'You spent ' + totalTimeInSessionsString + ' in focused sessions ' + sinceDayString + '. Here\'s a quick breakdown of what you spent your time on:';
+
+								var attachments = [{
+									attachment_type: 'default',
+									mrkdwn_in: ["text", "pretext", "fields"],
+									callback_id: "SESSION_INFO",
+									color: _constants.colorsHash.toki_purple.hex,
+									fallback: text,
+									fields: fields
+								}];
 
 								convo.say({
 									text: text,
@@ -182,7 +198,7 @@ exports.default = function (controller) {
 							(function () {
 
 								var text = '';
-								var attachments = [];
+								var fields = [];
 								var totalPingsToCount = toUserPings.length;
 								var totalBombsToCount = 0;
 
@@ -236,30 +252,30 @@ exports.default = function (controller) {
 
 								if (mostPings > 0) {
 									var mostPingsString = 'Most pings received from: <@' + SlackUserIdForMostPings + '> :mailbox_closed:';
-									attachments.push({
-										attachment_type: 'default',
-										mrkdwn_in: ["text", "pretext"],
-										callback_id: "PINGS_RECEIVED_FROM",
-										fallback: mostPingsString,
-										text: mostPingsString
+									fields.push({
+										value: mostPingsString
 									});
 								}
 								if (mostBombs) {
-
 									var mostBombsString = 'Most bombs received from: <@' + SlackUserIdForMostBombs + '> :bomb:';
-									attachments.push({
-										attachment_type: 'default',
-										mrkdwn_in: ["text", "pretext"],
-										callback_id: "BOMBS_RECEIVED_FROM",
-										fallback: mostBombsString,
-										text: mostBombsString
+									fields.push({
+										value: mostBombsString
 									});
 								}
 
-								convo.say({
-									text: text,
-									attachments: attachments
-								});
+								var convoResponseObject = { text: text };
+								if (fields.length > 0) {
+									var _attachments = [{
+										attachment_type: 'default',
+										mrkdwn_in: ["text", "pretext", "fields"],
+										callback_id: "PINGS_BOMBS_RECEIVED_FROM",
+										fallback: text,
+										fields: fields
+									}];
+									convoResponseObject.attachments = _attachments;
+								}
+
+								convo.say(convoResponseObject);
 							})();
 						}
 
@@ -268,7 +284,7 @@ exports.default = function (controller) {
 							(function () {
 
 								var text = '';
-								var attachments = [];
+								var fields = [];
 								var totalPingsFromCount = fromUserPings.length;
 								var totalBombsFromCount = 0;
 
@@ -322,30 +338,31 @@ exports.default = function (controller) {
 
 								if (mostPings > 0) {
 									var mostPingsString = 'Most pings sent to: <@' + SlackUserIdForMostPings + '> :mailbox_closed:';
-									attachments.push({
-										attachment_type: 'default',
-										mrkdwn_in: ["text", "pretext"],
-										callback_id: "PINGS_SENT_TO",
-										fallback: mostPingsString,
-										text: mostPingsString
+									fields.push({
+										value: mostPingsString
 									});
 								}
 								if (mostBombs) {
 
 									var mostBombsString = 'Most bombs sent to: <@' + SlackUserIdForMostBombs + '> :bomb:';
-									attachments.push({
-										attachment_type: 'default',
-										mrkdwn_in: ["text", "pretext"],
-										callback_id: "BOMBS_RECEIVED_FROM",
-										fallback: mostBombsString,
-										text: mostBombsString
+									fields.push({
+										value: mostBombsString
 									});
 								}
 
-								convo.say({
-									text: text,
-									attachments: attachments
-								});
+								var convoResponseObject = { text: text };
+								if (fields.length > 0) {
+									var _attachments2 = [{
+										attachment_type: 'default',
+										mrkdwn_in: ["text", "pretext", "fields"],
+										callback_id: "PINGS_BOMBS_SENT_TO",
+										fallback: text,
+										fields: fields
+									}];
+									convoResponseObject.attachments = _attachments2;
+								}
+
+								convo.say(convoResponseObject);
 							})();
 						}
 					});

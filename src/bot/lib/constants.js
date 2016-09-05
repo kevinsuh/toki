@@ -178,6 +178,9 @@ export const constants = {
 }
 
 export const colorsHash = {
+	white: {
+		hex: "#ffffff"
+	},
 	green: {
 		hex: "#36a64f"
 	},

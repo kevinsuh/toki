@@ -170,6 +170,9 @@ var constants = exports.constants = {
 };
 
 var colorsHash = exports.colorsHash = {
+	white: {
+		hex: "#ffffff"
+	},
 	green: {
 		hex: "#36a64f"
 	},

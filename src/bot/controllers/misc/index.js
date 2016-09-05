@@ -148,8 +148,17 @@ export default function(controller) {
 						if (sessions.length > 0) {
 
 							let text                = ``;
-							let attachments         = [];
 							let totalTimeInSessions = 0;
+							let fields              = [
+								{
+									title: `Priority`,
+									short: true
+								},
+								{
+									title: `Time`,
+									short: true
+								}
+							];
 
 							sessions.forEach((session) => {
 
@@ -162,21 +171,31 @@ export default function(controller) {
 
 								totalTimeInSessions += sessionMinutes;
 
-								const sessionInfoMessage = `\`${content}\` for *${sessionTimeString}*`;
+								// 1. add priority
+								fields.push({
+									value: `\`${content}\``,
+									short: true
+								});
 
-								attachments.push({
-									attachment_type: 'default',
-									mrkdwn_in: ["text", "pretext"],
-									callback_id: "SESSION_INFO",
-									color: colorsHash.toki_purple.hex,
-									fallback: sessionInfoMessage,
-									text: sessionInfoMessage
+								// 2. add amount of time
+								fields.push({
+									value: `${sessionTimeString}`,
+									short: true
 								});
 
 							});
 
 							const totalTimeInSessionsString = convertMinutesToHoursString(totalTimeInSessions);
 							text = `You spent ${totalTimeInSessionsString} in focused sessions ${sinceDayString}. Here's a quick breakdown of what you spent your time on:`;
+
+							let attachments = [{
+								attachment_type: 'default',
+								mrkdwn_in: ["text", "pretext", "fields"],
+								callback_id: "SESSION_INFO",
+								color: colorsHash.toki_purple.hex,
+								fallback: text,
+								fields
+							}];
 
 							convo.say({
 								text,
@@ -189,7 +208,7 @@ export default function(controller) {
 						if (toUserPings.length > 0) {
 
 							let text              = ``;
-							let attachments       = [];
+							let fields            = [];
 							let totalPingsToCount = toUserPings.length;
 							let totalBombsToCount = 0;
 
@@ -241,31 +260,30 @@ export default function(controller) {
 							
 							if (mostPings > 0) {
 								let mostPingsString = `Most pings received from: <@${SlackUserIdForMostPings}> :mailbox_closed:`;
-								attachments.push({
-									attachment_type: 'default',
-									mrkdwn_in: ["text", "pretext"],
-									callback_id: "PINGS_RECEIVED_FROM",
-									fallback: mostPingsString,
-									text: mostPingsString
-								})
+								fields.push({
+									value: mostPingsString
+								});
 							}
 							if (mostBombs) {
-								
 								let mostBombsString = `Most bombs received from: <@${SlackUserIdForMostBombs}> :bomb:`;
-								attachments.push({
-									attachment_type: 'default',
-									mrkdwn_in: ["text", "pretext"],
-									callback_id: "BOMBS_RECEIVED_FROM",
-									fallback: mostBombsString,
-									text: mostBombsString
+								fields.push({
+									value: mostBombsString
 								});
-
 							}
 
-							convo.say({
-								text,
-								attachments
-							});
+							let convoResponseObject = { text };
+							if (fields.length > 0) {
+								let attachments = [{
+									attachment_type: 'default',
+									mrkdwn_in: ["text", "pretext", "fields"],
+									callback_id: "PINGS_BOMBS_RECEIVED_FROM",
+									fallback: text,
+									fields
+								}];
+								convoResponseObject.attachments = attachments;
+							}
+
+							convo.say(convoResponseObject);
 
 						}
 
@@ -273,7 +291,7 @@ export default function(controller) {
 						if (fromUserPings.length > 0) {
 
 							let text                = ``;
-							let attachments         = [];
+							let fields              = [];
 							let totalPingsFromCount = fromUserPings.length;
 							let totalBombsFromCount = 0;
 
@@ -325,31 +343,31 @@ export default function(controller) {
 							
 							if (mostPings > 0) {
 								let mostPingsString = `Most pings sent to: <@${SlackUserIdForMostPings}> :mailbox_closed:`;
-								attachments.push({
-									attachment_type: 'default',
-									mrkdwn_in: ["text", "pretext"],
-									callback_id: "PINGS_SENT_TO",
-									fallback: mostPingsString,
-									text: mostPingsString
-								})
+								fields.push({
+									value: mostPingsString
+								});
 							}
 							if (mostBombs) {
 								
 								let mostBombsString = `Most bombs sent to: <@${SlackUserIdForMostBombs}> :bomb:`;
-								attachments.push({
-									attachment_type: 'default',
-									mrkdwn_in: ["text", "pretext"],
-									callback_id: "BOMBS_RECEIVED_FROM",
-									fallback: mostBombsString,
-									text: mostBombsString
+								fields.push({
+									value: mostBombsString
 								});
-
 							}
 
-							convo.say({
-								text,
-								attachments
-							});
+							let convoResponseObject = { text };
+							if (fields.length > 0) {
+								let attachments = [{
+									attachment_type: 'default',
+									mrkdwn_in: ["text", "pretext", "fields"],
+									callback_id: "PINGS_BOMBS_SENT_TO",
+									fallback: text,
+									fields
+								}];
+								convoResponseObject.attachments = attachments;
+							}
+
+							convo.say(convoResponseObject);
 
 						}
 
