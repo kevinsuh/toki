@@ -67,19 +67,23 @@ let checkForDailyRecaps = () => {
 					})
 					.then((team) => {
 
-						const { token } = team;
+						if (team) {
 
-						let bot = bots[token];
-						if (bot) {
-							// time for daily recap
+							const { token } = team;
+
+							let bot = bots[token];
+							if (bot) {
+								// time for daily recap
+								
+								let nextDailyRecapTime = dailyRecapTimeObject.add(1, `day`);
+								user.update({
+									dailyRecapTime: nextDailyRecapTime
+								})
+								.then(() => {
+									controller.trigger(`daily_recap_flow`, [bot, config]);
+								});
+							}
 							
-							let nextDailyRecapTime = dailyRecapTimeObject.add(1, `day`);
-							user.update({
-								dailyRecapTime: nextDailyRecapTime
-							})
-							.then(() => {
-								controller.trigger(`daily_recap_flow`, [bot, config]);
-							});
 						}
 
 					});

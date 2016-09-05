@@ -84,19 +84,24 @@ var checkForDailyRecaps = function checkForDailyRecaps() {
 							_models2.default.Team.find({
 								where: { TeamId: TeamId }
 							}).then(function (team) {
-								var token = team.token;
+
+								if (team) {
+									(function () {
+										var token = team.token;
 
 
-								var bot = _controllers.bots[token];
-								if (bot) {
-									// time for daily recap
+										var bot = _controllers.bots[token];
+										if (bot) {
+											// time for daily recap
 
-									var nextDailyRecapTime = dailyRecapTimeObject.add(1, 'day');
-									user.update({
-										dailyRecapTime: nextDailyRecapTime
-									}).then(function () {
-										_controllers.controller.trigger('daily_recap_flow', [bot, config]);
-									});
+											var nextDailyRecapTime = dailyRecapTimeObject.add(1, 'day');
+											user.update({
+												dailyRecapTime: nextDailyRecapTime
+											}).then(function () {
+												_controllers.controller.trigger('daily_recap_flow', [bot, config]);
+											});
+										}
+									})();
 								}
 							});
 						})();
@@ -195,9 +200,9 @@ var checkForPings = function checkForPings() {
 			};
 
 			for (var toUserId in groupPings.fromUser[fromUserId].toUser) {
-				var _ret3 = _loop(toUserId);
+				var _ret4 = _loop(toUserId);
 
-				if (_ret3 === 'continue') continue;
+				if (_ret4 === 'continue') continue;
 			}
 		}
 	});
