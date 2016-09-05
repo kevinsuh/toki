@@ -20,6 +20,7 @@ exports.whichGroupedPingsToCancelAsAttachment = whichGroupedPingsToCancelAsAttac
 exports.getHandleQueuedPingActions = getHandleQueuedPingActions;
 exports.getStartSessionOptionsAttachment = getStartSessionOptionsAttachment;
 exports.convertNumberStringToArray = convertNumberStringToArray;
+exports.getSessionContentFromMessageObject = getSessionContentFromMessageObject;
 
 var _constants = require('./constants');
 
@@ -696,5 +697,58 @@ function convertNumberStringToArray(numbersString, maxNumber) {
 	} else {
 		return validNumberArray;
 	}
+}
+
+// get the session content from message object
+// if DateTime, it will get the reminder unless the 2nd or 3rd to last word is "until" or "to"
+// if Duration, it will get the reminder unless the 2nd or 3rd to last word is "for"
+// if no DateTime or Duration, will just get the message text
+// if it has Duration || DateTime and no reminder, then content will be false
+function getSessionContentFromMessageObject(message) {
+	var text = message.text;
+	var _message$intentObject = message.intentObject.entities;
+	var intent = _message$intentObject.intent;
+	var reminder = _message$intentObject.reminder;
+	var duration = _message$intentObject.duration;
+	var datetime = _message$intentObject.datetime;
+
+
+	var textArray = text.split(" ");
+	var content = false;
+
+	if (duration) {
+
+		if (_lodash2.default.nth(textArray, -2) == "for") {
+
+			textArray = textArray.slice(0, -2);
+			content = textArray.join(" ");
+		} else if (_lodash2.default.nth(textArray, -3) == "for") {
+
+			textArray = textArray.slice(0, -3);
+			content = textArray.join(" ");
+		} else if (reminder) {
+
+			content = reminder[0].value;
+		}
+	} else if (datetime) {
+
+		if (_lodash2.default.nth(textArray, -2) == "until" || _lodash2.default.nth(textArray, -2) == "to") {
+
+			textArray = textArray.slice(0, -2);
+			content = textArray.join(" ");
+		} else if (_lodash2.default.nth(textArray, -3) == "until" || _lodash2.default.nth(textArray, -3) == "to") {
+
+			textArray = textArray.slice(0, -3);
+			content = textArray.join(" ");
+		} else if (reminder) {
+
+			content = reminder[0].value;
+		}
+	} else {
+		// if no duration or datetime, we should just use entire text
+		content = text;
+	}
+
+	return content;
 }
 //# sourceMappingURL=messageHelpers.js.map

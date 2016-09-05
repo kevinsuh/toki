@@ -5,7 +5,7 @@ import _ from 'lodash';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants, timeZones } from '../../lib/constants';
 import { confirmTimeZoneExistsThenStartSessionFlow } from './startSessionFunctions';
-import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString, getStartSessionOptionsAttachment, commaSeparateOutStringArray } from '../../lib/messageHelpers';
+import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString, getStartSessionOptionsAttachment, commaSeparateOutStringArray, getSessionContentFromMessageObject } from '../../lib/messageHelpers';
 import { notInSessionWouldYouLikeToStartOne } from './index';
 
 // STARTING A SESSION
@@ -74,13 +74,7 @@ export default function(controller) {
 			SlackUserId = message.user;
 			const { text, intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
 			if (!content) {
-				if (duration || datetime) {
-					content = reminder ? reminder[0].value : null;
-				} else {
-					// if no duration or datetime, we should just use entire text
-					content = text;
-				}
-				
+				content = getSessionContentFromMessageObject(message);
 			}
 			bot.send({
 				type: "typing",
@@ -93,12 +87,6 @@ export default function(controller) {
 		if (content) {
 			// trim out if it starts with focus
 			content = content.replace(/^focu[us]{1,3}/i,"").trim();
-		}
-
-		// hacky temp solution to prevent if user is just trying to enter focus with `lets focus`
-		const containsFocus = new RegExp(/\bfocu[us]{1,3}\b/i);
-		if (containsFocus.test(content) && content.length < 18) {
-			content = false;
 		}
 	
 		models.User.find({

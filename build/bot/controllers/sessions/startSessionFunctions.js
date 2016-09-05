@@ -301,16 +301,9 @@ function askForSessionContent(convo) {
 			var duration = _response$intentObjec.duration;
 			var datetime = _response$intentObjec.datetime;
 
-			var content = false;
 
-			if (duration || datetime) {
-				content = reminder ? reminder[0].value : null;
-			} else {
-				// if no duration or datetime, we should just use entire text
-				content = text;
-			}
+			var content = (0, _messageHelpers.getSessionContentFromMessageObject)(response);
 
-			// reminder is necessary to be session content
 			if (content) {
 
 				// optionally accept time here

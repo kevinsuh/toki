@@ -73,12 +73,7 @@ exports.default = function (controller) {
 			var _datetime = _message$intentObject.datetime;
 
 			if (!content) {
-				if (_duration || _datetime) {
-					content = _reminder ? _reminder[0].value : null;
-				} else {
-					// if no duration or datetime, we should just use entire text
-					content = _text;
-				}
+				content = (0, _messageHelpers.getSessionContentFromMessageObject)(message);
 			}
 			bot.send({
 				type: "typing",
@@ -91,12 +86,6 @@ exports.default = function (controller) {
 		if (content) {
 			// trim out if it starts with focus
 			content = content.replace(/^focu[us]{1,3}/i, "").trim();
-		}
-
-		// hacky temp solution to prevent if user is just trying to enter focus with `lets focus`
-		var containsFocus = new RegExp(/\bfocu[us]{1,3}\b/i);
-		if (containsFocus.test(content) && content.length < 18) {
-			content = false;
 		}
 
 		_models2.default.User.find({

@@ -1,7 +1,7 @@
 import moment from 'moment-timezone';
 import models from '../../../app/models';
 import { utterances, colorsArray, buttonValues, colorsHash, timeZones, timeZoneAttachments } from '../../lib/constants';
-import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandomExample } from '../../lib/messageHelpers';
+import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandomExample, getSessionContentFromMessageObject } from '../../lib/messageHelpers';
 
 /**
  * 		START WORK SESSION CONVERSATION FLOW FUNCTIONS
@@ -283,16 +283,9 @@ function askForSessionContent(convo, question = '') {
 			callback: (response, convo) => {
 
 				const { text, intentObject: { entities: { reminder, duration, datetime } } } = response;
-				let content = false;
 
-				if (duration || datetime) {
-					content = reminder ? reminder[0].value : null;
-				} else {
-					// if no duration or datetime, we should just use entire text
-					content = text;
-				}
+				let content = getSessionContentFromMessageObject(response);
 				
-				// reminder is necessary to be session content
 				if (content) {
 
 					// optionally accept time here

@@ -683,3 +683,60 @@ export function convertNumberStringToArray(numbersString, maxNumber) {
 	}
 
 }
+
+// get the session content from message object
+// if DateTime, it will get the reminder unless the 2nd or 3rd to last word is "until" or "to"
+// if Duration, it will get the reminder unless the 2nd or 3rd to last word is "for"
+// if no DateTime or Duration, will just get the message text
+// if it has Duration || DateTime and no reminder, then content will be false
+export function getSessionContentFromMessageObject(message) {
+
+	const { text, intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
+
+	let textArray = text.split(" ");
+	let content   = false;
+
+	if (duration) {
+
+		if (_.nth(textArray, -2) == "for") {
+
+			textArray = textArray.slice(0, -2);
+			content   = textArray.join(" ");
+
+		} else if (_.nth(textArray, -3) == "for") {
+
+			textArray = textArray.slice(0, -3);
+			content   = textArray.join(" ");
+
+		} else if (reminder) {
+
+			content = reminder[0].value;
+
+		}
+
+	} else if (datetime) {
+
+		if (_.nth(textArray, -2) == "until" || _.nth(textArray, -2) == "to") {
+
+			textArray = textArray.slice(0, -2);
+			content   = textArray.join(" ");
+
+		} else if (_.nth(textArray, -3) == "until" || _.nth(textArray, -3) == "to") {
+
+			textArray = textArray.slice(0, -3);
+			content   = textArray.join(" ");
+
+		} else if (reminder) {
+
+			content = reminder[0].value;
+
+		}
+
+	} else {
+		// if no duration or datetime, we should just use entire text
+		content = text;
+	}
+
+	return content;
+
+}
