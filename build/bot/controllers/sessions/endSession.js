@@ -181,6 +181,7 @@ exports.default = function (controller) {
 						// the hard work has been done up to this point. all the pings where the FromUser is in `superFocus` has gotten excluded
 						// thus, the only thing needed up to this point is to see which pings are toUser <=> fromUser
 						// once we match those, update the pings as false, remove them from pings array, then communicate that this convo has gotten started
+						// **** ~~ REFACTOR THIS TO `_.forIn` USING LODASH EVENTUALLY
 						if (!mutualSessionEndingPings) {
 
 							mutualSessionEndingPings = {};
