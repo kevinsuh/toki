@@ -105,7 +105,8 @@ exports.default = function (controller) {
 
 			var fromThisDateTimeString = fromThisDateTime.format("YYYY-MM-DD HH:mm:ss Z");
 			user.getSessions({
-				where: ['"startTime" > ?', fromThisDateTimeString]
+				where: ['"startTime" > ?', fromThisDateTimeString],
+				order: '("Session"."endTime" - "Session"."startTime") DESC'
 			}).then(function (sessions) {
 
 				_models2.default.Ping.findAll({

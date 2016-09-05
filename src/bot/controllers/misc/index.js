@@ -107,7 +107,8 @@ export default function(controller) {
 
 			let fromThisDateTimeString = fromThisDateTime.format("YYYY-MM-DD HH:mm:ss Z");
 			user.getSessions({
-				where: [`"startTime" > ?`, fromThisDateTimeString]
+				where: [`"startTime" > ?`, fromThisDateTimeString],
+				order: `("Session"."endTime" - "Session"."startTime") DESC`
 			})
 			.then((sessions) => {
 
