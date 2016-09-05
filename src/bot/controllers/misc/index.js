@@ -85,7 +85,8 @@ export default function(controller) {
 		let botToken = bot.config.token;
 		bot          = bots[botToken];
 
-		const { SlackUserId } = config;
+		const { SlackUserId, fromThisDateTime } = config;
+		let now = moment();
 
 		models.User.find({
 			where: { SlackUserId }
@@ -94,16 +95,24 @@ export default function(controller) {
 			const { tz, dailyRecapTime } = user;
 			const UserId = user.id;
 
+			// i.e. `You sent 5 pings today`
+			// vs `You sent 5 pings since Friday`
+			let sinceDayString = `today`;
+			if (Math.ceil(moment.duration(now.diff(fromThisDateTime)).asDays()) > 1) {
+				let day = fromThisDateTime.tz(tz).format('dddd');
+				sinceDayString = `since ${day}`;
+			}
+
 			const dailyRecapTimeObject = moment(dailyRecapTime).tz(tz);
 
-			let previousDaysTime = dailyRecapTimeObject.subtract(1, `day`).format("YYYY-MM-DD HH:mm:ss Z");
+			let fromThisDateTimeString = fromThisDateTime.format("YYYY-MM-DD HH:mm:ss Z");
 			user.getSessions({
-				where: [`"startTime" > ?`, previousDaysTime]
+				where: [`"startTime" > ?`, fromThisDateTimeString]
 			})
 			.then((sessions) => {
 
 				models.Ping.findAll({
-					where: [ `("Ping"."ToUserId" = ? OR "Ping"."FromUserId" = ?) AND "Ping"."createdAt" > ?`, UserId, UserId, previousDaysTime ],
+					where: [ `("Ping"."ToUserId" = ? OR "Ping"."FromUserId" = ?) AND "Ping"."createdAt" > ?`, UserId, UserId, fromThisDateTimeString ],
 					include: [
 						{ model: models.User, as: `FromUser` },
 						{ model: models.User, as: `ToUser` },
@@ -130,7 +139,10 @@ export default function(controller) {
 						if (convo)
 							convo.task.timeLimit = 1000 * 60 * 5;
 
-						convo.say(`Hey <@${SlackUserId}>!`);
+						if (sessions.length > 0 || toUserPings.length > 0 || fromUserPings.length > 0) {
+							convo.say(`Hey <@${SlackUserId}>!`);
+						}
+							
 
 						// sessions recap
 						if (sessions.length > 0) {
@@ -164,7 +176,7 @@ export default function(controller) {
 							});
 
 							const totalTimeInSessionsString = convertMinutesToHoursString(totalTimeInSessions);
-							text = `You spent ${totalTimeInSessionsString} in focused sessions today. Here's a quick breakdown of what you spent your time on:`;
+							text = `You spent ${totalTimeInSessionsString} in focused sessions ${sinceDayString}. Here's a quick breakdown of what you spent your time on:`;
 
 							convo.say({
 								text,
@@ -225,7 +237,7 @@ export default function(controller) {
 
 							let pingCountString = totalPingsToCount == 1 ? `*${totalPingsToCount}* ping` : `*${totalPingsToCount}* pings`;
 							let bombCountString = totalBombsToCount == 1 ? `${totalBombsToCount} bomb` : `${totalBombsToCount} bombs`;
-							text = `You received ${pingCountString} today, including ${bombCountString} that interrupted your workflow:`;
+							text = `You received ${pingCountString} ${sinceDayString}, including ${bombCountString} that interrupted your workflow:`;
 							
 							if (mostPings > 0) {
 								let mostPingsString = `Most pings received from: <@${SlackUserIdForMostPings}> :mailbox_closed:`;
@@ -309,7 +321,7 @@ export default function(controller) {
 
 							let pingCountString = totalPingsFromCount == 1 ? `*${totalPingsFromCount}* ping` : `*${totalPingsFromCount}* pings`;
 							let bombCountString = totalBombsFromCount == 1 ? `${totalBombsFromCount} bomb` : `${totalBombsFromCount} bombs`;
-							text = `You sent ${pingCountString} today, including ${bombCountString} that interrupted a team member's workflow:`;
+							text = `You sent ${pingCountString} ${sinceDayString}, including ${bombCountString} that interrupted a team member's workflow:`;
 							
 							if (mostPings > 0) {
 								let mostPingsString = `Most pings sent to: <@${SlackUserIdForMostPings}> :mailbox_closed:`;

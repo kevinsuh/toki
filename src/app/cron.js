@@ -43,11 +43,14 @@ let checkForDailyRecaps = () => {
 
 				const dailyRecapTimeObject = moment(dailyRecapTime);
 
+				// add as many days as necessary to get it up to speed
+				let updatedDays = Math.ceil(moment.duration(now.diff(dailyRecapTimeObject)).asDays());
+
 				let day = moment().tz(tz).format('dddd');
 				if (day == "Saturday" || day == "Sunday") {
 
 					// don't trigger on weekends for now!
-					let nextDay = dailyRecapTimeObject.add(1, 'days');
+					let nextDay = dailyRecapTimeObject.add(updatedDays, 'days');
 					models.User.update({
 						dailyRecapTime: nextDay
 					}, {
@@ -73,17 +76,30 @@ let checkForDailyRecaps = () => {
 
 							let bot = bots[token];
 							if (bot) {
+
 								// time for daily recap
-								
-								let nextDailyRecapTime = dailyRecapTimeObject.add(1, `day`);
+								let nextDailyRecapTime = dailyRecapTimeObject.add(updatedDays, `days`);
 								user.update({
 									dailyRecapTime: nextDailyRecapTime
 								})
-								.then(() => {
+								.then((user) => {
+
+									const { dailyRecapTime } = user;
+
+									// this is how we know from what day to get stuff
+									// subtract back what we added, to get previous day
+									config.fromThisDateTime = moment(dailyRecapTime).tz(tz).subtract(updatedDays, 'days');
+
+									// if it's monday, get friday's stuff
+									if (day == "Monday") {
+										config.fromThisDateTime = config.fromThisDateTime.subtract(3, 'days');
+									}
+
 									controller.trigger(`daily_recap_flow`, [bot, config]);
+
 								});
 							}
-							
+
 						}
 
 					});

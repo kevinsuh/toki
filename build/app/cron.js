@@ -61,11 +61,14 @@ var checkForDailyRecaps = function checkForDailyRecaps() {
 
 					var dailyRecapTimeObject = (0, _momentTimezone2.default)(dailyRecapTime);
 
+					// add as many days as necessary to get it up to speed
+					var updatedDays = Math.ceil(_momentTimezone2.default.duration(now.diff(dailyRecapTimeObject)).asDays());
+
 					var day = (0, _momentTimezone2.default)().tz(tz).format('dddd');
 					if (day == "Saturday" || day == "Sunday") {
 
 						// don't trigger on weekends for now!
-						var nextDay = dailyRecapTimeObject.add(1, 'days');
+						var nextDay = dailyRecapTimeObject.add(updatedDays, 'days');
 						_models2.default.User.update({
 							dailyRecapTime: nextDay
 						}, {
@@ -92,12 +95,24 @@ var checkForDailyRecaps = function checkForDailyRecaps() {
 
 										var bot = _controllers.bots[token];
 										if (bot) {
-											// time for daily recap
 
-											var nextDailyRecapTime = dailyRecapTimeObject.add(1, 'day');
+											// time for daily recap
+											var nextDailyRecapTime = dailyRecapTimeObject.add(updatedDays, 'days');
 											user.update({
 												dailyRecapTime: nextDailyRecapTime
-											}).then(function () {
+											}).then(function (user) {
+												var dailyRecapTime = user.dailyRecapTime;
+
+												// this is how we know from what day to get stuff
+												// subtract back what we added, to get previous day
+
+												config.fromThisDateTime = (0, _momentTimezone2.default)(dailyRecapTime).tz(tz).subtract(updatedDays, 'days');
+
+												// if it's monday, get friday's stuff
+												if (day == "Monday") {
+													config.fromThisDateTime = config.fromThisDateTime.subtract(3, 'days');
+												}
+
 												_controllers.controller.trigger('daily_recap_flow', [bot, config]);
 											});
 										}

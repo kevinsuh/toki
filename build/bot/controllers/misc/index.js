@@ -81,7 +81,9 @@ exports.default = function (controller) {
 		bot = _index.bots[botToken];
 
 		var SlackUserId = config.SlackUserId;
+		var fromThisDateTime = config.fromThisDateTime;
 
+		var now = (0, _momentTimezone2.default)();
 
 		_models2.default.User.find({
 			where: { SlackUserId: SlackUserId }
@@ -91,15 +93,23 @@ exports.default = function (controller) {
 
 			var UserId = user.id;
 
+			// i.e. `You sent 5 pings today`
+			// vs `You sent 5 pings since Friday`
+			var sinceDayString = 'today';
+			if (Math.ceil(_momentTimezone2.default.duration(now.diff(fromThisDateTime)).asDays()) > 1) {
+				var day = fromThisDateTime.tz(tz).format('dddd');
+				sinceDayString = 'since ' + day;
+			}
+
 			var dailyRecapTimeObject = (0, _momentTimezone2.default)(dailyRecapTime).tz(tz);
 
-			var previousDaysTime = dailyRecapTimeObject.subtract(1, 'day').format("YYYY-MM-DD HH:mm:ss Z");
+			var fromThisDateTimeString = fromThisDateTime.format("YYYY-MM-DD HH:mm:ss Z");
 			user.getSessions({
-				where: ['"startTime" > ?', previousDaysTime]
+				where: ['"startTime" > ?', fromThisDateTimeString]
 			}).then(function (sessions) {
 
 				_models2.default.Ping.findAll({
-					where: ['("Ping"."ToUserId" = ? OR "Ping"."FromUserId" = ?) AND "Ping"."createdAt" > ?', UserId, UserId, previousDaysTime],
+					where: ['("Ping"."ToUserId" = ? OR "Ping"."FromUserId" = ?) AND "Ping"."createdAt" > ?', UserId, UserId, fromThisDateTimeString],
 					include: [{ model: _models2.default.User, as: 'FromUser' }, { model: _models2.default.User, as: 'ToUser' }, _models2.default.PingMessage],
 					order: '"Ping"."createdAt" ASC'
 				}).then(function (pings) {
@@ -120,7 +130,9 @@ exports.default = function (controller) {
 						// have 5-minute exit time limit
 						if (convo) convo.task.timeLimit = 1000 * 60 * 5;
 
-						convo.say('Hey <@' + SlackUserId + '>!');
+						if (sessions.length > 0 || toUserPings.length > 0 || fromUserPings.length > 0) {
+							convo.say('Hey <@' + SlackUserId + '>!');
+						}
 
 						// sessions recap
 						if (sessions.length > 0) {
@@ -156,7 +168,7 @@ exports.default = function (controller) {
 								});
 
 								var totalTimeInSessionsString = (0, _messageHelpers.convertMinutesToHoursString)(totalTimeInSessions);
-								text = 'You spent ' + totalTimeInSessionsString + ' in focused sessions today. Here\'s a quick breakdown of what you spent your time on:';
+								text = 'You spent ' + totalTimeInSessionsString + ' in focused sessions ' + sinceDayString + '. Here\'s a quick breakdown of what you spent your time on:';
 
 								convo.say({
 									text: text,
@@ -220,7 +232,7 @@ exports.default = function (controller) {
 
 								var pingCountString = totalPingsToCount == 1 ? '*' + totalPingsToCount + '* ping' : '*' + totalPingsToCount + '* pings';
 								var bombCountString = totalBombsToCount == 1 ? totalBombsToCount + ' bomb' : totalBombsToCount + ' bombs';
-								text = 'You received ' + pingCountString + ' today, including ' + bombCountString + ' that interrupted your workflow:';
+								text = 'You received ' + pingCountString + ' ' + sinceDayString + ', including ' + bombCountString + ' that interrupted your workflow:';
 
 								if (mostPings > 0) {
 									var mostPingsString = 'Most pings received from: <@' + SlackUserIdForMostPings + '> :mailbox_closed:';
@@ -306,7 +318,7 @@ exports.default = function (controller) {
 
 								var pingCountString = totalPingsFromCount == 1 ? '*' + totalPingsFromCount + '* ping' : '*' + totalPingsFromCount + '* pings';
 								var bombCountString = totalBombsFromCount == 1 ? totalBombsFromCount + ' bomb' : totalBombsFromCount + ' bombs';
-								text = 'You sent ' + pingCountString + ' today, including ' + bombCountString + ' that interrupted a team member\'s workflow:';
+								text = 'You sent ' + pingCountString + ' ' + sinceDayString + ', including ' + bombCountString + ' that interrupted a team member\'s workflow:';
 
 								if (mostPings > 0) {
 									var mostPingsString = 'Most pings sent to: <@' + SlackUserIdForMostPings + '> :mailbox_closed:';
