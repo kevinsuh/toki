@@ -33,7 +33,7 @@ export function startEndSessionFlow(convo) {
 		sessionTimeString = convertMinutesToHoursString(sessionMinutes);
 	}
 
-	if (mutualSessionEndingPings) {
+	if (mutualSessionEndingPings && !_.isEmpty(mutualSessionEndingPings)) {
 
 		// ping ends both sessions together
 		

@@ -64,7 +64,7 @@ function startEndSessionFlow(convo) {
 		sessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
 	}
 
-	if (mutualSessionEndingPings) {
+	if (mutualSessionEndingPings && !_lodash2.default.isEmpty(mutualSessionEndingPings)) {
 
 		// ping ends both sessions together
 
