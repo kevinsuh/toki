@@ -302,7 +302,7 @@ export default function(controller) {
 									sessionTime    = moment(session.dataValues.endTime).tz(tz).format("h:mma");
 									sessionColor   = colorsHash.toki_purple.hex;
 								} else {
-									sessionContent = `_No context_`;
+									sessionContent = `_No active priority_`;
 									sessionTime    = ``;
 									sessionColor   = colorsHash.grey.hex;
 								}
@@ -342,11 +342,12 @@ export default function(controller) {
 								callback_id: "DASHBOARD_ACTIONS_FOR_USER",
 								fallback: `Would you like to set a priority?`,
 								mrkdwn_in: [ "text", "fields" ],
-								color: colorsHash.blue.hex,
+								color: colorsHash.toki_yellow.hex,
+								text: "_What is your current priority?_",
 								actions: [
 									{
 										name: "SET_PRIORITY",
-										text: "Set priority",
+										text: "Set My Priority",
 										value: `{"setPriority": true}`,
 										type: "button"
 									}

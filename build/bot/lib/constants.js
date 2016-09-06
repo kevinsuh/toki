@@ -207,7 +207,10 @@ var colorsHash = exports.colorsHash = {
 		hex: "#F0D003"
 	},
 	toki_purple: {
-		hex: "#8a3df0"
+		hex: "#9370DB"
+	},
+	toki_yellow: {
+		hex: "#FFC72C"
 	}
 };
 

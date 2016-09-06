@@ -60,7 +60,6 @@ export default function(controller) {
 	 */
 	controller.hears(['^{'], 'ambient', isJsonObject, function(bot, message) {
 
-
 		let botToken = bot.config.token;
 		bot          = bots[botToken];
 
