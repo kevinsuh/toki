@@ -42,37 +42,46 @@ exports.default = function (controller) {
 				BotSlackUserId: BotSlackUserId
 			};
 
-			if (ChannelId && tz) {
+			_models2.default.User.find({
+				where: { SlackUserId: creator }
+			}).then(function (user) {
 
-				// this means Toki is just getting re-invited
-				controller.trigger('setup_dashboard_flow', [bot, config]);
-			} else {
-
-				// creating Toki for the first time
-
-				// get timezone for the channel
-				bot.startPrivateConversation({ user: creator }, function (err, convo) {
-
-					convo.dashboardConfirm = {
-						ChannelId: id
-					};
-
-					// right now we cannot handle confirmation of dashboard because
-					// we don't have channels:write permission		
-					askTimeZoneForChannelDashboard(convo);
-
-					// now trigger dashboard intro
-					convo.on('end', function (convo) {
-
-						// only way to get here is if timezone got updated.
-						// now we can handle dashboard flow
-						var ChannelId = convo.dashboardConfirm.ChannelId;
-
-
-						controller.trigger('setup_dashboard_flow', [bot, config]);
+				if (user && user.TeamId) {
+					channel.update({
+						TeamId: user.TeamId
 					});
-				});
-			}
+				}
+
+				if (tz) {
+
+					// this means Toki is just getting re-invited
+					controller.trigger('setup_dashboard_flow', [bot, config]);
+				} else {
+
+					// get timezone for the channel
+					bot.startPrivateConversation({ user: creator }, function (err, convo) {
+
+						convo.dashboardConfirm = {
+							ChannelId: id
+						};
+
+						// right now we cannot handle confirmation of dashboard because
+						// we don't have channels:write permission		
+						askTimeZoneForChannelDashboard(convo);
+
+						// now trigger dashboard intro
+						convo.on('end', function (convo) {
+
+							// only way to get here is if timezone got updated.
+							// now we can handle dashboard flow
+							var ChannelId = convo.dashboardConfirm.ChannelId;
+
+
+							controller.trigger('setup_dashboard_flow', [bot, config]);
+						});
+					});
+				}
+			});
 		});
 
 		/*

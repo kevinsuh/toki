@@ -11,7 +11,6 @@ module.exports = function(sequelize, DataTypes) {
   }, {
     classMethods: {
       associate: function(models) {
-        // Team.belongsTo(models.Bot, { foreignKey: 'token' });
       }
     }
   });

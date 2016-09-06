@@ -40,40 +40,50 @@ export default function(controller) {
 				BotSlackUserId
 			}
 
-			if (ChannelId && tz) {
+			models.User.find({
+				where: { SlackUserId: creator }
+			})
+			.then((user) => {
 
-				// this means Toki is just getting re-invited
-				controller.trigger(`setup_dashboard_flow`, [ bot, config ]);
+				if (user && user.TeamId) {
+					channel.update({
+						TeamId: user.TeamId
+					});
+				}
 
-			} else {
+				if (tz) {
 
-				// creating Toki for the first time
-				
-				// get timezone for the channel
-				bot.startPrivateConversation({ user: creator }, (err, convo) => {
+					// this means Toki is just getting re-invited
+					controller.trigger(`setup_dashboard_flow`, [ bot, config ]);
 
-					convo.dashboardConfirm = {
-						ChannelId: id
-					}
+				} else {
+					
+					// get timezone for the channel
+					bot.startPrivateConversation({ user: creator }, (err, convo) => {
 
-					// right now we cannot handle confirmation of dashboard because
-					// we don't have channels:write permission		
-					askTimeZoneForChannelDashboard(convo);
+						convo.dashboardConfirm = {
+							ChannelId: id
+						}
 
-					// now trigger dashboard intro
-					convo.on(`end`, (convo) => {
+						// right now we cannot handle confirmation of dashboard because
+						// we don't have channels:write permission		
+						askTimeZoneForChannelDashboard(convo);
 
-						// only way to get here is if timezone got updated.
-						// now we can handle dashboard flow
-						const { ChannelId } = convo.dashboardConfirm;
+						// now trigger dashboard intro
+						convo.on(`end`, (convo) => {
 
-						controller.trigger(`setup_dashboard_flow`, [ bot, config ]);
+							// only way to get here is if timezone got updated.
+							// now we can handle dashboard flow
+							const { ChannelId } = convo.dashboardConfirm;
 
-					})
+							controller.trigger(`setup_dashboard_flow`, [ bot, config ]);
 
-				});
+						})
 
-			}
+					});
+				}
+
+			});
 
 		})
 

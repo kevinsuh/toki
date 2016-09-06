@@ -11,9 +11,7 @@ module.exports = function (sequelize, DataTypes) {
     accessToken: DataTypes.STRING
   }, {
     classMethods: {
-      associate: function associate(models) {
-        // Team.belongsTo(models.Bot, { foreignKey: 'token' });
-      }
+      associate: function associate(models) {}
     }
   });
   return Team;
