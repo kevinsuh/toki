@@ -85,10 +85,10 @@ export function test(bot) {
 					console.log(`\n\n\n channel name: ${name} has both members in slack user`);
 					console.log(channel);
 
-					updateDashboardForChannelId(id);
+					updateDashboardForChannelId(bot, id);
 
 				}
-				
+
 			});
 
 

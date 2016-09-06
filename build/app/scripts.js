@@ -105,7 +105,7 @@ function test(bot) {
 					console.log('\n\n\n channel name: ' + name + ' has both members in slack user');
 					console.log(channel);
 
-					(0, _slackHelpers.updateDashboardForChannelId)(id);
+					(0, _slackHelpers.updateDashboardForChannelId)(bot, id);
 				}
 			});
 		} else {

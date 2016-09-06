@@ -25,9 +25,11 @@ var _models2 = _interopRequireDefault(_models);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function updateDashboardForChannelId(ChannelId) {
-	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+function updateDashboardForChannelId(bot, ChannelId) {
+	var config = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
+
+	var BotSlackUserId = bot.identity.id;
 
 	_models2.default.Channel.find({
 		where: { ChannelId: ChannelId }
@@ -42,238 +44,250 @@ function updateDashboardForChannelId(ChannelId) {
 			return;
 		}
 
-		var zoneAbbrString = (0, _momentTimezone2.default)().tz(tz).zoneAbbr(); // ex. EDT
-		var todayString = (0, _momentTimezone2.default)().tz(tz).format('MMMM Do YYYY'); // ex. September 6th, 2016
-		var text = ':raised_hands: *Team Pulse for ' + todayString + '* :raised_hands:';
-		var attachments = [];
+		// get channel info!
+		bot.api.channels.info({
+			channel: ChannelId
+		}, function (err, response) {
+			var channel = response.channel;
+			var _response$channel = response.channel;
+			var id = _response$channel.id;
+			var name = _response$channel.name;
+			var members = _response$channel.members;
 
-		_models2.default.Team.find({
-			where: ['"Team"."TeamId" = ?', TeamId]
-		}).then(function (team) {
-			var accessToken = team.accessToken;
+
+			var zoneAbbrString = (0, _momentTimezone2.default)().tz(tz).zoneAbbr(); // ex. EDT
+			var todayString = (0, _momentTimezone2.default)().tz(tz).format('MMMM Do YYYY'); // ex. September 6th, 2016
+			var text = ':raised_hands: *Team Pulse for ' + todayString + '* :raised_hands:';
+			var attachments = [];
+
+			_models2.default.Team.find({
+				where: ['"Team"."TeamId" = ?', TeamId]
+			}).then(function (team) {
+				var accessToken = team.accessToken;
 
 
-			if (!accessToken) {
-				console.log('\n\n\n ERROR... NO TZ FOR BOT: ' + ChannelId);
-				return;
-			}
-
-			var dashboardMemberSlackUserIds = [];
-			members.forEach(function (MemberSlackUserId) {
-
-				if (MemberSlackUserId != BotSlackUserId) {
-					dashboardMemberSlackUserIds.push(MemberSlackUserId);
+				if (!accessToken) {
+					console.log('\n\n\n ERROR... NO ACCESS TOKEN FOR BOT: ' + accessToken);
+					return;
 				}
-			});
 
-			_models2.default.User.findAll({
-				where: ['"User"."SlackUserId" IN (?)', dashboardMemberSlackUserIds]
-			}).then(function (users) {
+				var dashboardMemberSlackUserIds = [];
+				members.forEach(function (MemberSlackUserId) {
 
-				var sessionPromises = [];
-				var dashboardUsers = {}; // by SlackUserId key i.e. dashboardUsers[`UI14242`] = {}
-
-				users.forEach(function (user) {
-
-					sessionPromises.push(_models2.default.Session.find({
-						where: {
-							UserId: user.dataValues.id,
-							live: true,
-							open: true
-						},
-						include: [_models2.default.User]
-					}));
-					dashboardUsers[user.dataValues.SlackUserId] = {
-						session: false,
-						user: user
-					};
+					if (MemberSlackUserId != BotSlackUserId) {
+						dashboardMemberSlackUserIds.push(MemberSlackUserId);
+					}
 				});
 
-				var userSessions = []; // unique sessions only
-				Promise.all(sessionPromises).then(function (userSessions) {
+				_models2.default.User.findAll({
+					where: ['"User"."SlackUserId" IN (?)', dashboardMemberSlackUserIds]
+				}).then(function (users) {
 
-					userSessions.forEach(function (userSession) {
+					var sessionPromises = [];
+					var dashboardUsers = {}; // by SlackUserId key i.e. dashboardUsers[`UI14242`] = {}
 
-						if (userSession && dashboardUsers[userSession.dataValues.User.SlackUserId]) {
-							dashboardUsers[userSession.dataValues.User.SlackUserId].session = userSession;
-						}
+					users.forEach(function (user) {
+
+						sessionPromises.push(_models2.default.Session.find({
+							where: {
+								UserId: user.dataValues.id,
+								live: true,
+								open: true
+							},
+							include: [_models2.default.User]
+						}));
+						dashboardUsers[user.dataValues.SlackUserId] = {
+							session: false,
+							user: user
+						};
 					});
 
-					attachments = [{
-						mrkdwn_in: ["text", "fields"],
-						callback_id: _constants.constants.dashboardCallBackId,
-						fallback: 'Here\'s your team pulse!',
-						fields: [{
-							title: "Current Priority",
-							short: true
-						}, {
-							title: 'Until (' + zoneAbbrString + ')',
-							short: true
-						}],
-						color: _constants.colorsHash.white.hex
-					}];
+					var userSessions = []; // unique sessions only
+					Promise.all(sessionPromises).then(function (userSessions) {
 
-					// iterate through dashboardUsers and put into alphabetized array
-					var dashboardUsersArrayAlphabetical = [];
-					_lodash2.default.forOwn(dashboardUsers, function (value, key) {
-						// value is the object that has value.user and value.session
-						dashboardUsersArrayAlphabetical.push(value);
-					});
+						userSessions.forEach(function (userSession) {
 
-					dashboardUsersArrayAlphabetical.sort(function (a, b) {
+							if (userSession && dashboardUsers[userSession.dataValues.User.SlackUserId]) {
+								dashboardUsers[userSession.dataValues.User.SlackUserId].session = userSession;
+							}
+						});
 
-						var nameA = a.user.dataValues.SlackName;
-						var nameB = b.user.dataValues.SlackName;
-						return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
-					});
-
-					dashboardUsersArrayAlphabetical.forEach(function (dashboardUser) {
-
-						console.log(dashboardUser);
-
-						var session = dashboardUser.session;
-						var SlackUserId = dashboardUser.user.dataValues.SlackUserId;
-
-
-						var sessionContent = void 0;
-						var sessionTime = void 0;
-						var sessionColor = void 0;
-
-						if (session) {
-							sessionContent = '`' + session.dataValues.content + '`';
-							sessionTime = (0, _momentTimezone2.default)(session.dataValues.endTime).tz(tz).format("h:mma");
-							sessionColor = _constants.colorsHash.toki_purple.hex;
-						} else {
-							sessionContent = '_No active priority_';
-							sessionTime = '';
-							sessionColor = _constants.colorsHash.grey.hex;
-						}
-
-						// alphabetize the 
-						attachments.push({
-							attachment_type: 'default',
-							callback_id: "DASHBOARD_SESSION_INFO_FOR_USER",
-							fallback: 'Here\'s the session info!',
-							text: '<@' + SlackUserId + '>',
+						attachments = [{
 							mrkdwn_in: ["text", "fields"],
+							callback_id: _constants.constants.dashboardCallBackId,
+							fallback: 'Here\'s your team pulse!',
 							fields: [{
-								value: sessionContent,
+								title: "Current Priority",
 								short: true
 							}, {
-								value: sessionTime,
+								title: 'Until (' + zoneAbbrString + ')',
 								short: true
 							}],
-							color: sessionColor,
+							color: _constants.colorsHash.white.hex
+						}];
+
+						// iterate through dashboardUsers and put into alphabetized array
+						var dashboardUsersArrayAlphabetical = [];
+						_lodash2.default.forOwn(dashboardUsers, function (value, key) {
+							// value is the object that has value.user and value.session
+							dashboardUsersArrayAlphabetical.push(value);
+						});
+
+						dashboardUsersArrayAlphabetical.sort(function (a, b) {
+
+							var nameA = a.user.dataValues.SlackName;
+							var nameB = b.user.dataValues.SlackName;
+							return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
+						});
+
+						dashboardUsersArrayAlphabetical.forEach(function (dashboardUser) {
+
+							console.log(dashboardUser);
+
+							var session = dashboardUser.session;
+							var SlackUserId = dashboardUser.user.dataValues.SlackUserId;
+
+
+							var sessionContent = void 0;
+							var sessionTime = void 0;
+							var sessionColor = void 0;
+
+							if (session) {
+								sessionContent = '`' + session.dataValues.content + '`';
+								sessionTime = (0, _momentTimezone2.default)(session.dataValues.endTime).tz(tz).format("h:mma");
+								sessionColor = _constants.colorsHash.toki_purple.hex;
+							} else {
+								sessionContent = '_No active priority_';
+								sessionTime = '';
+								sessionColor = _constants.colorsHash.grey.hex;
+							}
+
+							// alphabetize the 
+							attachments.push({
+								attachment_type: 'default',
+								callback_id: "DASHBOARD_SESSION_INFO_FOR_USER",
+								fallback: 'Here\'s the session info!',
+								text: '<@' + SlackUserId + '>',
+								mrkdwn_in: ["text", "fields"],
+								fields: [{
+									value: sessionContent,
+									short: true
+								}, {
+									value: sessionTime,
+									short: true
+								}],
+								color: sessionColor,
+								actions: [{
+									name: "SEND_PING",
+									text: "Send Message",
+									value: '{"pingUser": true, "PingToSlackUserId": "' + SlackUserId + '"}',
+									type: "button"
+								}]
+							});
+						});
+
+						attachments.push({
+							attachment_type: 'default',
+							callback_id: "DASHBOARD_ACTIONS_FOR_USER",
+							fallback: 'Would you like to set a priority?',
+							mrkdwn_in: ["text", "fields"],
+							color: _constants.colorsHash.toki_yellow.hex,
+							text: "_Update your current priority_",
 							actions: [{
-								name: "SEND_PING",
-								text: "Send Message",
-								value: '{"pingUser": true, "PingToSlackUserId": "' + SlackUserId + '"}',
+								name: "SET_PRIORITY",
+								text: "Set My Priority",
+								value: '{"setPriority": true}',
 								type: "button"
 							}]
 						});
-					});
 
-					attachments.push({
-						attachment_type: 'default',
-						callback_id: "DASHBOARD_ACTIONS_FOR_USER",
-						fallback: 'Would you like to set a priority?',
-						mrkdwn_in: ["text", "fields"],
-						color: _constants.colorsHash.toki_yellow.hex,
-						text: "_Update your current priority_",
-						actions: [{
-							name: "SET_PRIORITY",
-							text: "Set My Priority",
-							value: '{"setPriority": true}',
-							type: "button"
-						}]
-					});
+						bot.api.channels.history({
+							token: accessToken,
+							channel: ChannelId
+						}, function (err, response) {
 
-					bot.api.channels.history({
-						token: accessToken,
-						channel: ChannelId
-					}, function (err, response) {
+							if (!err) {
+								(function () {
+									var messages = response.messages;
 
-						if (!err) {
-							(function () {
-								var messages = response.messages;
+									var teamPulseDashboardMessage = false;
+									var messageCount = 0;
 
-								var teamPulseDashboardMessage = false;
-								var messageCount = 0;
+									// iterate through messages to find
+									// the `DASHBOARD_TEAM_PULSE` attachment
+									_lodash2.default.some(messages, function (message) {
 
-								// iterate through messages to find
-								// the `DASHBOARD_TEAM_PULSE` attachment
-								_lodash2.default.some(messages, function (message) {
+										// user is `SlackUserId`
+										var user = message.user;
+										var attachments = message.attachments;
 
-									// user is `SlackUserId`
-									var user = message.user;
-									var attachments = message.attachments;
+										// find the message of the team pulse
 
-									// find the message of the team pulse
+										if (user == BotSlackUserId && attachments && attachments[0].callback_id == _constants.constants.dashboardCallBackId) {
+											teamPulseDashboardMessage = message;
+											return true;
+										}
 
-									if (user == BotSlackUserId && attachments && attachments[0].callback_id == _constants.constants.dashboardCallBackId) {
-										teamPulseDashboardMessage = message;
-										return true;
-									}
+										messageCount++;
+									});
 
-									messageCount++;
-								});
+									console.log('\n\n\n\n message count: ' + messageCount);
 
-								console.log('\n\n\n\n message count: ' + messageCount);
+									if (teamPulseDashboardMessage) {
+										(function () {
 
-								if (teamPulseDashboardMessage) {
-									(function () {
+											console.log('\n\n\n this is the teamPulseDashboardMessage:');
+											console.log(teamPulseDashboardMessage);
 
-										console.log('\n\n\n this is the teamPulseDashboardMessage:');
-										console.log(teamPulseDashboardMessage);
+											// update the attachments with the session info!
+											var _teamPulseDashboardMe = teamPulseDashboardMessage;
+											var ts = _teamPulseDashboardMe.ts;
 
-										// update the attachments with the session info!
-										var _teamPulseDashboardMe = teamPulseDashboardMessage;
-										var ts = _teamPulseDashboardMe.ts;
-
-										var updateTeamPulseDashboardMessageObject = {
-											channel: ChannelId,
-											ts: ts,
-											attachments: attachments
-										};
-
-										updateTeamPulseDashboardMessageObject.text = text;
-										updateTeamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
-										bot.api.chat.update(updateTeamPulseDashboardMessageObject);
-
-										if (messageCount > 15) {
-
-											// if it's been over 15 messages since
-											// team_pulse dashboard, then we should reset it
-											// (i.e. delete => create new one)
-
-											bot.send({
+											var updateTeamPulseDashboardMessageObject = {
 												channel: ChannelId,
-												text: 'Hey, it\'s been ' + messageCount + ' since the dashboard so I refreshed it'
-											}, function () {
-												bot.api.chat.delete(updateTeamPulseDashboardMessageObject);
+												ts: ts,
+												attachments: attachments
+											};
+
+											updateTeamPulseDashboardMessageObject.text = text;
+											updateTeamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
+											bot.api.chat.update(updateTeamPulseDashboardMessageObject);
+
+											if (messageCount > 15) {
+
+												// if it's been over 15 messages since
+												// team_pulse dashboard, then we should reset it
+												// (i.e. delete => create new one)
+
 												bot.send({
 													channel: ChannelId,
-													text: text,
-													attachments: attachments
+													text: 'Hey, it\'s been ' + messageCount + ' since the dashboard so I refreshed it'
+												}, function () {
+													bot.api.chat.delete(updateTeamPulseDashboardMessageObject);
+													bot.send({
+														channel: ChannelId,
+														text: text,
+														attachments: attachments
+													});
 												});
-											});
-										}
-									})();
-								} else {
-									// channel does not have pulse dashboard, let's insert one...
-									console.log('\n\n\n no pulse dashboard... creating new one:');
-									bot.send({
-										channel: ChannelId,
-										text: text,
-										attachments: attachments
-									});
-								}
-							})();
-						} else {
+											}
+										})();
+									} else {
+										// channel does not have pulse dashboard, let's insert one...
+										console.log('\n\n\n no pulse dashboard... creating new one:');
+										bot.send({
+											channel: ChannelId,
+											text: text,
+											attachments: attachments
+										});
+									}
+								})();
+							} else {
 
-							console.log('\n\n\n error in getting history of channel:');
-							console.log(err);
-						}
+								console.log('\n\n\n error in getting history of channel:');
+								console.log(err);
+							}
+						});
 					});
 				});
 			});
