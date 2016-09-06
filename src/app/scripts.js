@@ -59,7 +59,7 @@ export function test(bot) {
 					console.log(members);
 					// bot.send({
 					// 	channel: id,
-					// 	text: `<@U121U9CAU> is working on \`test this out\` until *3:31pm*`,
+					// 	text: `<@U121ZK15J> is working on \`what if i ping myself\` until *3:31pm*`,
 					// 	attachments: [
 					// 		{
 					// 			attachment_type: 'default',
@@ -69,7 +69,7 @@ export function test(bot) {
 					// 				{
 					// 					name: `PING CHIP`,
 					// 					text: "Send Message",
-					// 					value: `{"pingUser": true, "PingToSlackUserId": "U121U9CAU"}`,
+					// 					value: `{"pingUser": true, "PingToSlackUserId": "U121ZK15J"}`,
 					// 					type: "button"
 					// 				},
 					// 			]

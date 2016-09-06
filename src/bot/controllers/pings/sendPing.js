@@ -116,9 +116,16 @@ export default function(controller) {
 					pingMessages
 				}
 
-				confirmTimeZoneExistsThenStartPingFlow(convo);
+				if (pingSlackUserIds && pingSlackUserIds[0] == SlackUserId) {
+					convo.pingObject.neverMind = true;
+					convo.say(` `); // maybe you can say "You cant ping yourself!"
+				} else {
+					confirmTimeZoneExistsThenStartPingFlow(convo);
+				}
 
 				convo.on(`end`, (convo) => {
+
+					console.log(`\n\n\n ~~ end of ping object ~~ \n\n\n`);
 					
 					const { SlackUserId, tz, pingUserId, pingSlackUserId, pingTimeObject, userInSession, deliveryType, pingMessages, neverMind } = convo.pingObject;
 

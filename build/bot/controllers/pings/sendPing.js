@@ -107,9 +107,17 @@ exports.default = function (controller) {
 					pingMessages: pingMessages
 				};
 
-				(0, _pingFunctions.confirmTimeZoneExistsThenStartPingFlow)(convo);
+				if (pingSlackUserIds && pingSlackUserIds[0] == SlackUserId) {
+					convo.pingObject.neverMind = true;
+					convo.say(' '); // maybe you can say "You cant ping yourself!"
+				} else {
+					(0, _pingFunctions.confirmTimeZoneExistsThenStartPingFlow)(convo);
+				}
 
 				convo.on('end', function (convo) {
+
+					console.log('\n\n\n ~~ end of ping object ~~ \n\n\n');
+
 					var _convo$pingObject = convo.pingObject;
 					var SlackUserId = _convo$pingObject.SlackUserId;
 					var tz = _convo$pingObject.tz;
