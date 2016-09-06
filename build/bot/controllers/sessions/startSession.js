@@ -289,6 +289,45 @@ exports.default = function (controller) {
 											});
 										});
 									});
+
+									// update dashboard with info!
+									bot.api.channels.list({}, function (err, response) {
+
+										var BotSlackUserId = bot.identity.id;
+
+										if (!err) {
+											var channels = response.channels;
+
+
+											channels.forEach(function (channel) {
+												var id = channel.id;
+												var name = channel.name;
+												var is_channel = channel.is_channel;
+												var topic = channel.topic;
+												var purpose = channel.purpose;
+												var members = channel.members;
+
+
+												var hasBotSlackUserId = false;
+												var hasMemberSlackUserId = false;
+
+												_lodash2.default.some(members, function (member) {
+													if (member == SlackUserId) {
+														hasBotSlackUserId = true;
+													} else if (member == BotSlackUserId) {
+														hasMemberSlackUserId = true;
+													}
+												});
+
+												if (hasBotSlackUserId && hasMemberSlackUserId) {
+													(0, _slackHelpers.updateDashboardForChannelId)(bot, id);
+												}
+											});
+										} else {
+											console.log('\n\n\n ~~ error in listing channel:');
+											console.log(err);
+										}
+									});
 								});
 							});
 						}
@@ -555,6 +594,8 @@ var _startSessionFunctions = require('./startSessionFunctions');
 var _messageHelpers = require('../../lib/messageHelpers');
 
 var _index2 = require('./index');
+
+var _slackHelpers = require('../../lib/slackHelpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 //# sourceMappingURL=startSession.js.map

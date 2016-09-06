@@ -7,6 +7,7 @@ import { utterances, colorsArray, buttonValues, colorsHash, constants, timeZones
 import { confirmTimeZoneExistsThenStartSessionFlow } from './startSessionFunctions';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString, getStartSessionOptionsAttachment, commaSeparateOutStringArray, getSessionContentFromMessageObject } from '../../lib/messageHelpers';
 import { notInSessionWouldYouLikeToStartOne } from './index';
+import { updateDashboardForChannelId } from '../../lib/slackHelpers';
 
 // STARTING A SESSION
 export default function(controller) {
@@ -287,6 +288,44 @@ export default function(controller) {
 											});
 
 										});
+
+									});
+
+									// update dashboard with info!
+									bot.api.channels.list({
+									}, (err, response) => {
+
+										const BotSlackUserId = bot.identity.id;
+
+										if (!err) {
+
+											const { channels } = response;
+
+											channels.forEach((channel) => {
+
+												const { id, name, is_channel, topic, purpose, members } = channel;
+
+												let hasBotSlackUserId    = false;
+												let hasMemberSlackUserId = false;
+
+												_.some(members, (member) => {
+													if (member == SlackUserId) {
+														hasBotSlackUserId = true;
+													} else if (member == BotSlackUserId) {
+														hasMemberSlackUserId = true;
+													}
+												});
+
+												if (hasBotSlackUserId && hasMemberSlackUserId) {
+													updateDashboardForChannelId(bot, id);
+												}
+
+											});
+
+										} else {
+											console.log(`\n\n\n ~~ error in listing channel:`);
+											console.log(err);
+										}
 
 									});
 
