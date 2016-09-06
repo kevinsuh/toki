@@ -19,7 +19,8 @@ import dotenv from 'dotenv';
 
 export default function(controller) {
 
-	controller.hears(['^{'], 'ambient', isJsonObject, function(bot, message) {
+	// this is for updating ping functionality
+	controller.hears(['^{'], 'direct_message', isJsonObject, function(bot, message) {
 
 
 		let botToken = bot.config.token;
@@ -31,14 +32,11 @@ export default function(controller) {
 		try {
 
 			let jsonObject = JSON.parse(text);
-			const { updatePing, cancelPing, sendBomb, PingId, pingUser, PingToSlackUserId } = jsonObject;
+			const { updatePing, cancelPing, sendBomb, PingId } = jsonObject;
 			let config = {};
 			if (updatePing) {
 				config = { PingId, sendBomb, cancelPing };
 				controller.trigger(`update_ping_message`, [bot, config]);
-			} else if (pingUser) {
-				config = { SlackUserId, pingSlackUserIds: [ PingToSlackUserId ] };
-				controller.trigger(`ping_flow`, [bot, null, config]);
 			}
 
 		}

@@ -12,6 +12,7 @@ import miscController from './misc';
 import sessionsController from './sessions';
 import pingsController from './pings';
 import slashController from './slash';
+import dashboardController from './dashboard';
 
 import { seedAndUpdateUsers } from '../../app/scripts';
 
@@ -128,12 +129,6 @@ controller.on('user_change', function (bot, message) {
 
 });
 
-// join a channel
-controller.on(`channel_joined`, (bot, message) => {
-	console.log(`\n\n\n yo joined the channel:`);
-	console.log(message);
-});
-
 controller.on(`reaction_added`, (bot, message) => {
 
 	console.log(`\n\n yo reaction added:`);
@@ -156,6 +151,7 @@ export function customConfigBot(controller) {
 	setupReceiveMiddleware(controller);
 
 	notWitController(controller);
+	dashboardController(controller);
 	pingsController(controller);
 	sessionsController(controller);
 	slashController(controller);

@@ -57,6 +57,10 @@ var _slash = require('./slash');
 
 var _slash2 = _interopRequireDefault(_slash);
 
+var _dashboard = require('./dashboard');
+
+var _dashboard2 = _interopRequireDefault(_dashboard);
+
 var _scripts = require('../../app/scripts');
 
 var _actions = require('../actions');
@@ -187,12 +191,6 @@ controller.on('user_change', function (bot, message) {
 	}
 });
 
-// join a channel
-controller.on('channel_joined', function (bot, message) {
-	console.log('\n\n\n yo joined the channel:');
-	console.log(message);
-});
-
 controller.on('reaction_added', function (bot, message) {
 
 	console.log('\n\n yo reaction added:');
@@ -214,6 +212,7 @@ function customConfigBot(controller) {
 	(0, _receiveMiddleware2.default)(controller);
 
 	(0, _notWit2.default)(controller);
+	(0, _dashboard2.default)(controller);
 	(0, _pings2.default)(controller);
 	(0, _sessions2.default)(controller);
 	(0, _slash2.default)(controller);

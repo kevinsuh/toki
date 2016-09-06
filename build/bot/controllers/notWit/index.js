@@ -6,7 +6,8 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
-	controller.hears(['^{'], 'ambient', _hearsMiddleware.isJsonObject, function (bot, message) {
+	// this is for updating ping functionality
+	controller.hears(['^{'], 'direct_message', _hearsMiddleware.isJsonObject, function (bot, message) {
 
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
@@ -22,16 +23,11 @@ exports.default = function (controller) {
 			var cancelPing = jsonObject.cancelPing;
 			var sendBomb = jsonObject.sendBomb;
 			var PingId = jsonObject.PingId;
-			var pingUser = jsonObject.pingUser;
-			var PingToSlackUserId = jsonObject.PingToSlackUserId;
 
 			var config = {};
 			if (updatePing) {
 				config = { PingId: PingId, sendBomb: sendBomb, cancelPing: cancelPing };
 				controller.trigger('update_ping_message', [bot, config]);
-			} else if (pingUser) {
-				config = { SlackUserId: SlackUserId, pingSlackUserIds: [PingToSlackUserId] };
-				controller.trigger('ping_flow', [bot, null, config]);
 			}
 		} catch (error) {
 
