@@ -5,7 +5,7 @@ import models from '../../../app/models';
 import dotenv from 'dotenv';
 
 import { isJsonObject } from '../../middleware/hearsMiddleware';
-import { utterances, colorsArray, constants, buttonValues, colorsHash, timeZones } from '../../lib/constants';
+import { utterances, colorsArray, constants, buttonValues, colorsHash, timeZones, timeZoneAttachments } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString, getStartSessionOptionsAttachment, commaSeparateOutStringArray } from '../../lib/messageHelpers';
 import { notInSessionWouldYouLikeToStartOne } from '../sessions';
 
@@ -18,7 +18,10 @@ export default function(controller) {
 
 	// joined a channel => make sure they want dashboard functionality
 	controller.on([`channel_joined`, `group_joined`], (bot, message) => {
-		console.log(`\n\n\n yo joined the channel or group:`);
+
+		const BotSlackUserId = bot.identity.id;
+
+		console.log(`\n\n\n yo joined the channel or group. (bot id is ${BotSlackUserId}):`);
 		console.log(message);
 
 		const { type, channel: { id, creator, members, name } } = message;
@@ -26,37 +29,51 @@ export default function(controller) {
 		let botToken = bot.config.token;
 		bot          = bots[botToken];
 
-		// creator is SlackUserIds, members is [ SlackUserIds ]
-		
-		// inform the creator of channel that this will become a dashboard
-		// of your team's priorities
-		bot.startPrivateConversation({ user: creator }, (err, convo) => {
+		// create channel record
+		models.Channel.findOrCreate({
+			where: { ChannelId: id }
+		})
+		.then((channel) => {
 
-			// right now we cannot handle confirmation of dashboard because
-			// we don't have channels:write permission			
-			convo.say(`Thanks for inviting me to <#${id}>! I'll introduce myself and set up a dashboard there of your team's priorities :raised_hands:`);
+			const { ChannelId, tz } = channel;
 
-		});
+			if (ChannelId && tz) {
 
-		bot.send({
-			channel: id,
-			text: `Hi! I'm Toki, your team's sidekick to make the most of your attention each day :raised_hands:\nI'll set up a dashboard here of your team's statuses each day. If you ever need a refresher on how I work, just say \`/explain\` and I'd love to go into more detail`,
-			attachments: [
-				{
-					attachment_type: 'default',
-					callback_id: "LETS_FOCUS_AGAIN",
-					fallback: "Let's focus again!",
-					actions: [
-						{
-							name: `PING CHIP`,
-							text: "Send Message",
-							value: `{"pingUser": true, "PingToSlackUserId": "U121ZK15J"}`,
-							type: "button"
-						},
-					]
-				}
-			]
-		});
+				// this means Toki is just getting re-invited
+				controller.trigger(`setup_dashboard_flow`, [ bot, config ]);
+
+			} else {
+				// creating Toki for the first time
+				
+				// get timezone for the channel
+				bot.startPrivateConversation({ user: creator }, (err, convo) => {
+
+					convo.dashboardConfirm = {
+						ChannelId: id
+					}
+
+					// right now we cannot handle confirmation of dashboard because
+					// we don't have channels:write permission		
+					askTimeZoneForChannelDashboard(convo);
+
+					// now trigger dashboard intro
+					convo.on(`end`, (convo) => {
+
+						// only way to get here is if timezone got updated.
+						// now we can handle dashboard flow
+						const { ChannelId } = convo.dashboardConfirm;
+						const config = {
+							ChannelId
+						}
+						controller.trigger(`setup_dashboard_flow`, [ bot, config ]);
+
+					})
+
+				});
+
+			}
+
+		})
 
 		/*
 // CHANNEL
@@ -119,6 +136,40 @@ export default function(controller) {
 
 	});
 
+	controller.on(`setup_dashboard_flow`, (bot, config) => {
+
+		console.log(`\n\n ~~ setting up dashboard now ~~ \n\n`);
+		console.log(config);
+
+		const { ChannelId } = config;
+
+		// 1. find ChannelId using Slack API
+		// 2. get members of that channel
+		// 3. make sure Toki is in the channel
+		// 4. if so, post in it with the dashboard!
+		
+
+		// bot.send({
+		// 			channel: id,
+		// 			text: `Hi! I'm Toki, your team's sidekick to make the most of your attention each day :raised_hands:\nI'll set up a dashboard here of your team's statuses each day. If you ever need a refresher on how I work, just say \`/explain\` and I'd love to go into more detail`
+		// 		});
+
+		// 		let dashboardMessage = {};
+
+		// 		// Attention board for September 6, 2016
+		// 		members.forEach((MemberSlackUserId) => {
+
+
+		// 			if (MemberSlackUserId != BotSlackUserId) {
+		// 				// ignore if bot is the member
+
+		// 			}
+
+
+		// 		})
+
+	});
+
 	/**
 	 * 	This is where we handle "Send Message" button and other buttons in dashboard
 	 */
@@ -149,6 +200,69 @@ export default function(controller) {
 			// this should never happen!
 			bot.reply(message, "Hmm, something went wrong");
 			return false;
+		}
+
+	});
+
+}
+
+function askTimeZoneForChannelDashboard(convo, text = '') {
+
+	const { ChannelId } = convo.dashboardConfirm;
+
+	if (text == '') {
+		text = `Thanks for inviting me to <#${ChannelId}>! I'll introduce myself and set up a dashboard there of your team's priorities once I get which timezone you want it to operate in :raised_hands:`
+	}
+
+	convo.ask({
+		text,
+		attachments: timeZoneAttachments
+	}, (response, convo) => {
+		const { text } = response;
+		let timeZoneObject = false;
+		switch (text) {
+			case (text.match(utterances.eastern) || {}).input:
+				timeZoneObject = timeZones.eastern;
+				break;
+			case (text.match(utterances.central) || {}).input:
+				timeZoneObject = timeZones.central;
+				break;
+			case (text.match(utterances.mountain) || {}).input:
+				timeZoneObject = timeZones.mountain;
+				break;
+			case (text.match(utterances.pacific) || {}).input:
+				timeZoneObject = timeZones.pacific;
+				break;
+			case (text.match(utterances.other) || {}).input:
+				timeZoneObject = timeZones.other;
+				break;
+			default:
+				break;
+		}
+
+		if (!timeZoneObject) {
+			convo.say("I didn't get that :thinking_face:");
+			askTimeZoneForChannelDashboard(convo, `Which timezone do you want the channel in?`);
+			convo.next();
+		} else if (timeZoneObject == timeZones.other) {
+			convo.say(`Sorry!`);
+			convo.say("Right now I’m only able to work in these timezones. If you want to demo Toki, just pick one of these timezones for now. I’ll try to get your timezone included as soon as possible!");
+			askTimeZoneForChannelDashboard(convo, `Which timezone do you want to go with for now?`);
+			convo.next();
+		} else { // success!!
+
+			const { tz } = timeZoneObject;
+			console.log(timeZoneObject);
+			models.Channel.update({
+				tz
+			}, {
+				where: { ChannelId }
+			})
+			.then((user) => {
+				convo.say(`Great! If your timezone for <#${ChannelId}> changes, you can always \`update settings\``);
+				convo.next();
+			});
+
 		}
 
 	});
