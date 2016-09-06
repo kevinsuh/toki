@@ -257,6 +257,7 @@ export default function(controller) {
 							attachments = [{
 								mrkdwn_in: [ "text", "fields" ],
 								callback_id: constants.dashboardCallBackId,
+								fallback: `Here's your team pulse!`,
 								fields: [
 									{
 										title: "Current Priority",
@@ -343,7 +344,7 @@ export default function(controller) {
 								fallback: `Would you like to set a priority?`,
 								mrkdwn_in: [ "text", "fields" ],
 								color: colorsHash.toki_yellow.hex,
-								text: "_What is your current priority?_",
+								text: "_Update your current priority_",
 								actions: [
 									{
 										name: "SET_PRIORITY",

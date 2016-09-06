@@ -92,6 +92,7 @@ function test(bot) {
 				var hasMemberSlackUserId = false;
 
 				var KevinSlackUserId = 'U121ZK15J';
+				var KevinTeamId = 'T121VLM63';
 
 				_lodash2.default.some(members, function (member) {
 					if (member == KevinSlackUserId) {
@@ -106,103 +107,164 @@ function test(bot) {
 					console.log('\n\n\n channel name: ' + name + ' has both members in slack user');
 					console.log(channel);
 
-					_models2.default.User.findAll({
-						where: ['"User"."SlackUserId" IN (?)', members]
-					}).then(function (users) {
-
-						var accessToken = false;
-
-						// find the access token
-						_lodash2.default.some(users, function (user) {
-							if (user.dataValues.accessToken) {
-								accessToken = user.dataValues.accessToken;
-								return true;
-							}
-						});
-
-						if (accessToken) {
-
-							bot.api.channels.history({
-								token: accessToken,
-								channel: id
-							}, function (err, response) {
-
-								if (!err) {
-									(function () {
-										var messages = response.messages;
-
-										var channelHasTeamPulseDashboard = false;
-										var messageCount = 0;
-
-										// iterate through messages to find
-										// the `DASHBOARD_TEAM_PULSE` attachment
-										_lodash2.default.some(messages, function (message) {
-
-											// user is `SlackUserId`
-											var user = message.user;
-											var attachments = message.attachments;
-
-											// find the message of the team pulse
-
-											if (user == BotSlackUserId && attachments && attachments[0].callback_id == _constants.constants.dashboardCallBackId) {
-												console.log('\n\n\n this is the message:');
-												console.log(message);
-												channelHasTeamPulseDashboard = true;
-												return channelHasTeamPulseDashboard;
-											}
-
-											messageCount++;
-										});
-
-										if (!channelHasTeamPulseDashboard) {
-											// channel does not have pulse dashboard, let's insert one...
-
-										} else if (messageCount > 15) {
-											// if it's been over 15 messages since
-											// team_pulse dashboard, then we should reset it
-											// (i.e. delete => create new one)
+					_models2.default.Channel.find({
+						where: { ChannelId: id }
+					}).then(function (channel) {
+						var ChannelId = channel.ChannelId;
+						var tz = channel.tz;
 
 
-										}
-									})();
-								} else {
-
-									console.log('\n\n\n error in getting history of channel:');
-									console.log(err);
-								}
-							});
-						} else {
-							console.log('\n\n\n could not find access token for user in slack channel');
+						if (!tz) {
+							console.log('\n\n\n ERROR... NO TZ FOR CHANNEL: ' + ChannelId);
+							return;
 						}
+
+						_models2.default.Team.find({
+							where: ['"Team"."TeamId" = ?', KevinTeamId]
+						}).then(function (team) {
+
+							_models2.default.User.find({
+								where: { SlackUserId: KevinSlackUserId }
+							}).then(function (user) {
+
+								user.getSessions({
+									where: ['"Session"."open" = ?', true],
+									order: '"Session"."createdAt" DESC',
+									limit: 1
+								}).then(function (sessions) {
+
+									var session = sessions[0];
+
+									var accessToken = team.dataValues.accessToken;
+
+
+									if (accessToken) {
+
+										bot.api.channels.history({
+											token: accessToken,
+											channel: ChannelId
+										}, function (err, response) {
+
+											if (!err) {
+												(function () {
+													var messages = response.messages;
+
+													var teamPulseDashboardMessage = false;
+													var messageCount = 0;
+
+													// iterate through messages to find
+													// the `DASHBOARD_TEAM_PULSE` attachment
+													_lodash2.default.some(messages, function (message) {
+
+														// user is `SlackUserId`
+														var user = message.user;
+														var attachments = message.attachments;
+
+														// find the message of the team pulse
+
+														if (user == BotSlackUserId && attachments && attachments[0].callback_id == _constants.constants.dashboardCallBackId) {
+															teamPulseDashboardMessage = message;
+															return true;
+														}
+
+														messageCount++;
+													});
+
+													console.log('\n\n\n\n message count: ' + messageCount);
+
+													if (teamPulseDashboardMessage) {
+														(function () {
+
+															console.log('\n\n\n this is the teamPulseDashboardMessage:');
+															console.log(teamPulseDashboardMessage);
+
+															// update the attachments with the session info!
+															var _teamPulseDashboardMe = teamPulseDashboardMessage;
+															var text = _teamPulseDashboardMe.text;
+															var attachments = _teamPulseDashboardMe.attachments;
+															var ts = _teamPulseDashboardMe.ts;
+
+															var updateTeamPulseDashboardMessageObject = {
+																text: text,
+																channel: ChannelId,
+																ts: ts
+															};
+
+															attachments = attachments.map(function (attachment) {
+																var text = attachment.text;
+																var fields = attachment.fields;
+																var color = attachment.color;
+
+
+																if (text == '<@' + KevinSlackUserId + '>') {
+
+																	// update for this user!
+																	var sessionContent = void 0;
+																	var sessionTime = void 0;
+																	var sessionColor = void 0;
+
+																	if (session) {
+																		sessionContent = '`' + session.dataValues.content + '`';
+																		sessionTime = (0, _momentTimezone2.default)(session.dataValues.endTime).tz(tz).format("h:mma");
+																		sessionColor = _constants.colorsHash.toki_purple.hex;
+																	} else {
+																		sessionContent = '_No active priority_';
+																		sessionTime = '';
+																		sessionColor = _constants.colorsHash.grey.hex;
+																	}
+
+																	fields[0].value = sessionContent;
+																	fields[1].value = sessionTime;
+																	color = sessionColor;
+																}
+
+																attachment.color = color;
+																attachment.fields = fields;
+
+																return attachment;
+															});
+
+															updateTeamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
+															bot.api.chat.update(updateTeamPulseDashboardMessageObject);
+
+															if (messageCount > 15) {
+
+																// if it's been over 15 messages since
+																// team_pulse dashboard, then we should reset it
+																// (i.e. delete => create new one)
+
+																bot.send({
+																	channel: ChannelId,
+																	text: 'Hey, it\'s been ' + messageCount + ' since the dashboard so I refreshed it'
+																}, function () {
+																	bot.api.chat.delete(updateTeamPulseDashboardMessageObject);
+																	bot.send({
+																		channel: ChannelId,
+																		text: text,
+																		attachments: attachments
+																	});
+																});
+															}
+														})();
+													} else {
+														// channel does not have pulse dashboard, let's insert one...
+
+
+													}
+												})();
+											} else {
+
+												console.log('\n\n\n error in getting history of channel:');
+												console.log(err);
+											}
+										});
+									} else {
+										console.log('\n\n\n could not find access token for user in slack channel');
+									}
+								});
+							});
+						});
 					});
-
-					return;
-				}
-
-				if (name == 'distractions') {
-
-					console.log('\n\n in distractions:');
-					console.log(channel);
-					console.log(members);
-					// bot.send({
-					// 	channel: id,
-					// 	text: `<@U121ZK15J> is working on \`what if i ping myself\` until *3:31pm*`,
-					// 	attachments: [
-					// 		{
-					// 			attachment_type: 'default',
-					// 			callback_id: "LETS_FOCUS_AGAIN",
-					// 			fallback: "Let's focus again!",
-					// 			actions: [
-					// 				{
-					// 					name: `PING CHIP`,
-					// 					text: "Send Message",
-					// 					value: `{"pingUser": true, "PingToSlackUserId": "U121ZK15J"}`,
-					// 					type: "button"
-					// 				},
-					// 			]
-					// 		}
-					// 	]
-					// });
 				}
 			});
 		} else {

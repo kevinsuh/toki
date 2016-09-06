@@ -69,6 +69,7 @@ export function test(bot) {
 				let hasMemberSlackUserId = false;
 
 				let KevinSlackUserId = `U121ZK15J`;
+				let KevinTeamId = `T121VLM63`;
 
 				_.some(members, (member) => {
 					if (member == KevinSlackUserId) {
@@ -83,110 +84,164 @@ export function test(bot) {
 					console.log(`\n\n\n channel name: ${name} has both members in slack user`);
 					console.log(channel);
 
-					models.User.findAll({
-						where: [`"User"."SlackUserId" IN (?)`, members]
+					models.Channel.find({
+						where: { ChannelId: id }
 					})
-					.then((users) => {
+					.then((channel) => {
 
-						let accessToken = false;
+						const { ChannelId, tz } = channel;
 
-						// find the access token
-						_.some(users, (user) => {
-							if (user.dataValues.accessToken) {
-								accessToken = user.dataValues.accessToken;
-								return true;
-							}
-						});
+						if (!tz) {
+							console.log(`\n\n\n ERROR... NO TZ FOR CHANNEL: ${ChannelId}`);
+							return;
+						}
 
-						if (accessToken) {
+						models.Team.find({
+							where: [`"Team"."TeamId" = ?`, KevinTeamId]
+						})
+						.then((team) => {
 
-							bot.api.channels.history({
-								token: accessToken,
-								channel: id
-							}, (err, response) => {
+							models.User.find({
+								where: { SlackUserId: KevinSlackUserId }
+							})
+							.then((user) => {
 
-								if (!err) {
+								user.getSessions({
+									where: [ `"Session"."open" = ?`, true ],
+									order: `"Session"."createdAt" DESC`,
+									limit: 1
+								})
+								.then((sessions) => {
 
-									const { messages }               = response;
-									let channelHasTeamPulseDashboard = false;
-									let messageCount                 = 0;
+									let session = sessions[0];
 
-									// iterate through messages to find
-									// the `DASHBOARD_TEAM_PULSE` attachment
-									_.some(messages, (message) => {
+									const { accessToken } = team.dataValues;
 
-										// user is `SlackUserId`
-										const { user, attachments } = message;
+									if (accessToken) {
 
-										// find the message of the team pulse
-										if (user == BotSlackUserId && attachments && attachments[0].callback_id == constants.dashboardCallBackId) {
-											console.log(`\n\n\n this is the message:`);
-											console.log(message);
-											channelHasTeamPulseDashboard = true;
-											return channelHasTeamPulseDashboard;
-										}
+										bot.api.channels.history({
+											token: accessToken,
+											channel: ChannelId
+										}, (err, response) => {
 
-										messageCount++;
+											if (!err) {
 
-									});
+												const { messages }            = response;
+												let teamPulseDashboardMessage = false;
+												let messageCount              = 0;
 
-									if (!channelHasTeamPulseDashboard) {
-										// channel does not have pulse dashboard, let's insert one...
-										
-									} else if (messageCount > 15) {
-										// if it's been over 15 messages since
-										// team_pulse dashboard, then we should reset it
-										// (i.e. delete => create new one)
-										
-										
+												// iterate through messages to find
+												// the `DASHBOARD_TEAM_PULSE` attachment
+												_.some(messages, (message) => {
 
+													// user is `SlackUserId`
+													const { user, attachments } = message;
+
+													// find the message of the team pulse
+													if (user == BotSlackUserId && attachments && attachments[0].callback_id == constants.dashboardCallBackId) {
+														teamPulseDashboardMessage = message;
+														return true;
+													}
+
+													messageCount++;
+
+												});
+
+												console.log(`\n\n\n\n message count: ${messageCount}`);
+
+												if (teamPulseDashboardMessage) {
+
+													console.log(`\n\n\n this is the teamPulseDashboardMessage:`);
+													console.log(teamPulseDashboardMessage);
+
+													// update the attachments with the session info!
+													let { text, attachments, ts } = teamPulseDashboardMessage;
+													const updateTeamPulseDashboardMessageObject = {
+														text,
+														channel: ChannelId,
+														ts
+													};
+
+													attachments = attachments.map((attachment) => {
+
+														let { text, fields, color } = attachment;
+
+														if (text == `<@${KevinSlackUserId}>`) {
+
+															// update for this user!
+															let sessionContent;
+															let sessionTime;
+															let sessionColor;
+
+															if (session) {
+																sessionContent = `\`${session.dataValues.content}\``;
+																sessionTime    = moment(session.dataValues.endTime).tz(tz).format("h:mma");
+																sessionColor   = colorsHash.toki_purple.hex;
+															} else {
+																sessionContent = `_No active priority_`;
+																sessionTime    = ``;
+																sessionColor   = colorsHash.grey.hex;
+															}
+
+															fields[0].value = sessionContent;
+															fields[1].value = sessionTime;
+															color           = sessionColor;
+
+														}
+
+														attachment.color  = color;
+														attachment.fields = fields;
+
+														return attachment;
+
+													});
+
+													updateTeamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
+													bot.api.chat.update(updateTeamPulseDashboardMessageObject);
+
+													if (messageCount > 15) {
+
+														// if it's been over 15 messages since
+														// team_pulse dashboard, then we should reset it
+														// (i.e. delete => create new one)
+
+														bot.send({
+															channel: ChannelId,
+															text: `Hey, it's been ${messageCount} since the dashboard so I refreshed it`
+														}, () => {
+															bot.api.chat.delete(updateTeamPulseDashboardMessageObject);
+															bot.send({
+																channel: ChannelId,
+																text,
+																attachments
+															});
+														})
+
+													}
+
+												} else {
+													// channel does not have pulse dashboard, let's insert one...
+
+
+												}
+
+											} else {
+
+												console.log(`\n\n\n error in getting history of channel:`);
+												console.log(err);
+
+											}
+
+										})
+
+									} else {
+										console.log(`\n\n\n could not find access token for user in slack channel`);
 									}
 
-								} else {
-
-									console.log(`\n\n\n error in getting history of channel:`);
-									console.log(err);
-
-								}
-
-							})
-
-						} else {
-							console.log(`\n\n\n could not find access token for user in slack channel`);
-						}
-						
+								})
+							});
+						})
 					})
-
-					return;
-
-				}
-
-
-				if (name == 'distractions') {
-
-					console.log(`\n\n in distractions:`);
-					console.log(channel);
-					console.log(members);
-					// bot.send({
-					// 	channel: id,
-					// 	text: `<@U121ZK15J> is working on \`what if i ping myself\` until *3:31pm*`,
-					// 	attachments: [
-					// 		{
-					// 			attachment_type: 'default',
-					// 			callback_id: "LETS_FOCUS_AGAIN",
-					// 			fallback: "Let's focus again!",
-					// 			actions: [
-					// 				{
-					// 					name: `PING CHIP`,
-					// 					text: "Send Message",
-					// 					value: `{"pingUser": true, "PingToSlackUserId": "U121ZK15J"}`,
-					// 					type: "button"
-					// 				},
-					// 			]
-					// 		}
-					// 	]
-					// });
-
 				}
 			});
 
