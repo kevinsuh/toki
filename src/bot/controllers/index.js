@@ -184,7 +184,6 @@ export function connectOnInstall(team_config) {
 
 export function connectOnLogin(identity) {
 
-
 	// bot already exists, get bot token for this users team
 	var SlackUserId = identity.user.id;
 	var TeamId      = identity.team.id;
@@ -209,79 +208,54 @@ controller.on('rtm_open',function(bot) {
 // upon install
 controller.on('create_bot', (bot,team) => {
 
+	const { id, url, name, bot: { token, user_id, createdBy, accessToken, scopes } } = team;
+
+	// this is what is used to save team data
+	const teamConfig = {
+		TeamId: id,
+		createdBy,
+		url,
+		name,
+		token,
+		scopes,
+		accessToken
+	}
+
 	if (bots[bot.config.token]) {
 		// already online! do nothing.
-		console.log("already online! updating bot...");
+		console.log("already online! restarting bot due to re-install");
+		// restart the bot
+		bots[bot.config.token].closeRTM();
 
-		const { id, bot: { token, user_id, createdBy } } = team;
+	}
 
-		models.Team.update({
-			createdBy,
-			token
-		}, {
-			where: { TeamId: id }
-		})
-		.then(() => {
+	bot.startRTM((err) => {
 
-			// restart the bot
-			bots[bot.config.token].closeRTM();
-			bots[bot.config.token] = bot;
-			bot.startRTM((err) => {
-				if (!err) {
-					console.log("\n\n RTM on with team install and listening \n\n");
-					trackBot(bot);
-					controller.saveTeam(team, (err, id) => {
-						if (err) {
-							console.log("Error saving team")
+		if (!err) {
+			console.log("\n\n RTM on with team install and listening \n\n");
+			trackBot(bot);
+			controller.saveTeam(teamConfig, (err, id) => {
+				if (err) {
+					console.log("Error saving team")
+				}
+				else {
+					console.log("Team " + team.name + " saved");
+					console.log(`\n\n installing users... \n\n`);
+					bot.api.users.list({}, (err, response) => {
+						if (!err) {
+							const { members } = response;
+							seedAndUpdateUsers(members);
 						}
-						else {
-							console.log("Team " + team.name + " saved");
-							console.log(`\n\n installing users... \n\n`);
-							bot.api.users.list({}, (err, response) => {
-								if (!err) {
-									const { members } = response;
-									seedAndUpdateUsers(members);
-								}
-								firstInstallInitiateConversation(bot, team);
-							});
-						}
+						firstInstallInitiateConversation(bot, team);
 					});
-					
-				} else {
-					console.log("RTM failed")
 				}
 			});
+			
+		} else {
+			console.log("RTM failed")
+		}
+	});
 
-		});
-
-	} else {
-
-		bot.startRTM((err) => {
-			if (!err) {
-				console.log("\n\n RTM on with team install and listening \n\n");
-				trackBot(bot);
-				controller.saveTeam(team, (err, id) => {
-					if (err) {
-						console.log("Error saving team")
-					}
-					else {
-						console.log("Team " + team.name + " saved");
-						console.log(`\n\n installing users... \n\n`);
-						bot.api.users.list({}, (err, response) => {
-							if (!err) {
-								const { members } = response;
-								seedAndUpdateUsers(members);
-							}
-							firstInstallInitiateConversation(bot, team);
-						});
-					}
-				});
-				
-			} else {
-				console.log("RTM failed")
-			}
-		});
-	}
 });
 
 // subsequent logins
@@ -297,14 +271,22 @@ controller.on('login_bot', (bot,identity) => {
 
 				console.log("RTM on and listening");
 				trackBot(bot);
-				controller.saveTeam(team, (err, team) => {
-					if (err) {
-						console.log("Error saving team")
-					}
-					else {
-						console.log("Team " + team.name + " saved")
-					}
-				});
+				/*
+					// ~~~ this should be login-user instead ~~~
+					// 
+					// functionality needs to be: login user! i.e. controller.saveUser
+					// will put this functionality when we have web app functionality
+				 */
+				// 
+				// controller.saveTeam(team, (err, team) => {
+				// 	if (err) {
+				// 		console.log("Error saving team")
+				// 	}
+				// 	else {
+				// 		console.log("Team " + team.name + " saved")
+				// 	}
+				// });
+				
 				loginInitiateConversation(bot, identity);
 			} else {
 				console.log("RTM failed")

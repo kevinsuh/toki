@@ -6,7 +6,9 @@ module.exports = function (sequelize, DataTypes) {
     createdBy: DataTypes.STRING,
     url: DataTypes.STRING,
     name: DataTypes.STRING,
-    token: DataTypes.STRING
+    token: DataTypes.STRING,
+    scopes: DataTypes.STRING,
+    accessToken: DataTypes.STRING
   }, {
     classMethods: {
       associate: function associate(models) {

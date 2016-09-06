@@ -265,80 +265,60 @@ controller.on('rtm_open', function (bot) {
 
 // upon install
 controller.on('create_bot', function (bot, team) {
+	var id = team.id;
+	var url = team.url;
+	var name = team.name;
+	var _team$bot = team.bot;
+	var token = _team$bot.token;
+	var user_id = _team$bot.user_id;
+	var createdBy = _team$bot.createdBy;
+	var accessToken = _team$bot.accessToken;
+	var scopes = _team$bot.scopes;
+
+	// this is what is used to save team data
+
+	var teamConfig = {
+		TeamId: id,
+		createdBy: createdBy,
+		url: url,
+		name: name,
+		token: token,
+		scopes: scopes,
+		accessToken: accessToken
+	};
 
 	if (bots[bot.config.token]) {
 		// already online! do nothing.
-		console.log("already online! updating bot...");
+		console.log("already online! restarting bot due to re-install");
+		// restart the bot
+		bots[bot.config.token].closeRTM();
+	}
 
-		var id = team.id;
-		var _team$bot = team.bot;
-		var token = _team$bot.token;
-		var user_id = _team$bot.user_id;
-		var createdBy = _team$bot.createdBy;
+	bot.startRTM(function (err) {
 
-
-		_models2.default.Team.update({
-			createdBy: createdBy,
-			token: token
-		}, {
-			where: { TeamId: id }
-		}).then(function () {
-
-			// restart the bot
-			bots[bot.config.token].closeRTM();
-			bots[bot.config.token] = bot;
-			bot.startRTM(function (err) {
-				if (!err) {
-					console.log("\n\n RTM on with team install and listening \n\n");
-					trackBot(bot);
-					controller.saveTeam(team, function (err, id) {
-						if (err) {
-							console.log("Error saving team");
-						} else {
-							console.log("Team " + team.name + " saved");
-							console.log('\n\n installing users... \n\n');
-							bot.api.users.list({}, function (err, response) {
-								if (!err) {
-									var members = response.members;
-
-									(0, _scripts.seedAndUpdateUsers)(members);
-								}
-								(0, _actions.firstInstallInitiateConversation)(bot, team);
-							});
-						}
-					});
+		if (!err) {
+			console.log("\n\n RTM on with team install and listening \n\n");
+			trackBot(bot);
+			controller.saveTeam(teamConfig, function (err, id) {
+				if (err) {
+					console.log("Error saving team");
 				} else {
-					console.log("RTM failed");
+					console.log("Team " + team.name + " saved");
+					console.log('\n\n installing users... \n\n');
+					bot.api.users.list({}, function (err, response) {
+						if (!err) {
+							var members = response.members;
+
+							(0, _scripts.seedAndUpdateUsers)(members);
+						}
+						(0, _actions.firstInstallInitiateConversation)(bot, team);
+					});
 				}
 			});
-		});
-	} else {
-
-		bot.startRTM(function (err) {
-			if (!err) {
-				console.log("\n\n RTM on with team install and listening \n\n");
-				trackBot(bot);
-				controller.saveTeam(team, function (err, id) {
-					if (err) {
-						console.log("Error saving team");
-					} else {
-						console.log("Team " + team.name + " saved");
-						console.log('\n\n installing users... \n\n');
-						bot.api.users.list({}, function (err, response) {
-							if (!err) {
-								var members = response.members;
-
-								(0, _scripts.seedAndUpdateUsers)(members);
-							}
-							(0, _actions.firstInstallInitiateConversation)(bot, team);
-						});
-					}
-				});
-			} else {
-				console.log("RTM failed");
-			}
-		});
-	}
+		} else {
+			console.log("RTM failed");
+		}
+	});
 });
 
 // subsequent logins
@@ -354,13 +334,22 @@ controller.on('login_bot', function (bot, identity) {
 
 				console.log("RTM on and listening");
 				trackBot(bot);
-				controller.saveTeam(team, function (err, team) {
-					if (err) {
-						console.log("Error saving team");
-					} else {
-						console.log("Team " + team.name + " saved");
-					}
-				});
+				/*
+    	// ~~~ this should be login-user instead ~~~
+    	// 
+    	// functionality needs to be: login user! i.e. controller.saveUser
+    	// will put this functionality when we have web app functionality
+     */
+				// 
+				// controller.saveTeam(team, (err, team) => {
+				// 	if (err) {
+				// 		console.log("Error saving team")
+				// 	}
+				// 	else {
+				// 		console.log("Team " + team.name + " saved")
+				// 	}
+				// });
+
 				(0, _actions.loginInitiateConversation)(bot, identity);
 			} else {
 				console.log("RTM failed");
