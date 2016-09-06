@@ -4,7 +4,6 @@ import _ from 'lodash';
 import models from '../../../app/models';
 import dotenv from 'dotenv';
 
-import { isJsonObject } from '../../middleware/hearsMiddleware';
 import { utterances, colorsArray, constants, buttonValues, colorsHash, timeZones, timeZoneAttachments } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString, getStartSessionOptionsAttachment, commaSeparateOutStringArray } from '../../lib/messageHelpers';
 import { notInSessionWouldYouLikeToStartOne } from '../sessions';
@@ -184,7 +183,7 @@ export default function(controller) {
 					let zoneAbbrString = moment().tz(tz).zoneAbbr(); // ex. EDT
 					let todayString    = moment().tz(tz).format(`MMMM Do YYYY`); // ex. September 6th, 2016
 
-					let text        = `:raised_hands: *Attention board for ${todayString}* :raised_hands:`;
+					let text        = `:raised_hands: *Team Pulse for ${todayString}* :raised_hands:`;
 					let attachments = [];
 
 					let dashboardMemberSlackUserIds = [];
@@ -214,7 +213,10 @@ export default function(controller) {
 								},
 								include: [ models.User ]
 							}));
-							dashboardUsers[user.dataValues.SlackUserId] = { session: false };
+							dashboardUsers[user.dataValues.SlackUserId] = {
+								session: false,
+								user: user
+							};
 
 						});
 
@@ -254,6 +256,7 @@ export default function(controller) {
 							 */
 							attachments = [{
 								mrkdwn_in: [ "text", "fields" ],
+								callback_id: 'DASHBOARD_TEAM_PULSE',
 								fields: [
 									{
 										title: "Current Priority",
@@ -267,20 +270,49 @@ export default function(controller) {
 								color: colorsHash.white.hex
 							}];
 
-							// iterate through dashboardUsers
+							// iterate through dashboardUsers and put into alphabetized array
+							let dashboardUsersArrayAlphabetical = [];
 							_.forOwn(dashboardUsers, (value, key) => {
 
-								// value is the object, key is SlackUserId
-								const { session }  = value;
-								let sessionContent = session ? `\`${session.dataValues.content}\`` : `_No context_`;
-								let sessionTime    = session ? moment(session.dataValues.endTime).tz(tz).format("h:mma") : '';
-								let sessionColor   = session ? colorsHash.toki_purple.hex : colorsHash.grey.hex;
+								// value is the object that has value.user and value.session
+								dashboardUsersArrayAlphabetical.push(value);
 
+							});
+
+							dashboardUsersArrayAlphabetical.sort((a, b) => {
+								
+								let nameA = a.user.dataValues.SlackName;
+								let nameB = b.user.dataValues.SlackName;
+								return (nameA < nameB) ? -1 : (nameA > nameB) ? 1 : 0;
+
+							});
+
+							dashboardUsersArrayAlphabetical.forEach((dashboardUser) => {
+
+								console.log(dashboardUser);
+
+								const { session, user: { dataValues: { SlackUserId } } } = dashboardUser;
+
+								let sessionContent;
+								let sessionTime;
+								let sessionColor;
+
+								if (session) {
+									sessionContent = `\`${session.dataValues.content}\``;
+									sessionTime    = moment(session.dataValues.endTime).tz(tz).format("h:mma");
+									sessionColor   = colorsHash.toki_purple.hex;
+								} else {
+									sessionContent = `_No context_`;
+									sessionTime    = ``;
+									sessionColor   = colorsHash.grey.hex;
+								}
+
+								// alphabetize the 
 								attachments.push({
 									attachment_type: 'default',
 									callback_id: "DASHBOARD_SESSION_INFO_FOR_USER",
 									fallback: `Here's the session info!`,
-									text: `<@${key}>`,
+									text: `<@${SlackUserId}>`,
 									mrkdwn_in: [ "text", "fields" ],
 									fields: [
 										{
@@ -297,7 +329,7 @@ export default function(controller) {
 										{
 											name: "SEND_PING",
 											text: "Send Message",
-											value: `{"pingUser": true, "PingToSlackUserId": "${key}"}`,
+											value: `{"pingUser": true, "PingToSlackUserId": "${SlackUserId}"}`,
 											type: "button"
 										}
 									]
@@ -305,9 +337,46 @@ export default function(controller) {
 
 							});
 
-							console.log(`\n\n\n about to send message:`);
-							console.log(attachments);
-							console.log(text)
+							attachments.push({
+								attachment_type: 'default',
+								callback_id: "DASHBOARD_ACTIONS_FOR_USER",
+								fallback: `Would you like to set a priority?`,
+								mrkdwn_in: [ "text", "fields" ],
+								color: colorsHash.blue.hex,
+								actions: [
+									{
+										name: "SET_PRIORITY",
+										text: "Set priority",
+										value: `{"setPriority": true}`,
+										type: "button"
+									}
+								]
+							});
+
+/*
+
+// this is the attachments that is about to send
+[ { mrkdwn_in: [ 'text', 'fields' ],
+    fields: [ [Object], [Object] ],
+    color: '#ffffff' },
+  { attachment_type: 'default',
+    callback_id: 'DASHBOARD_SESSION_INFO_FOR_USER',
+    fallback: 'Here\'s the session info!',
+    text: '<@U121ZK15J>',
+    mrkdwn_in: [ 'text', 'fields' ],
+    fields: [ [Object], [Object] ],
+    color: '#C1C1C3',
+    actions: [ [Object] ] },
+  { attachment_type: 'default',
+    callback_id: 'DASHBOARD_SESSION_INFO_FOR_USER',
+    fallback: 'Here\'s the session info!',
+    text: '<@U1NCGAETZ>',
+    mrkdwn_in: [ 'text', 'fields' ],
+    fields: [ [Object], [Object] ],
+    color: '#C1C1C3',
+    actions: [ [Object] ] } ]
+ */
+
 
 							// send the message!
 							bot.send({
@@ -360,40 +429,6 @@ export default function(controller) {
 			}
 
 		});
-
-	});
-
-	/**
-	 * 	This is where we handle "Send Message" button and other buttons in dashboard
-	 */
-	controller.hears(['^{'], 'ambient', isJsonObject, function(bot, message) {
-
-
-		let botToken = bot.config.token;
-		bot          = bots[botToken];
-
-		const SlackUserId = message.user;
-		const { text }    = message;
-
-		try {
-
-			let jsonObject = JSON.parse(text);
-			const { pingUser, PingToSlackUserId } = jsonObject;
-			let config = {};
-			if (pingUser) {
-				config = { SlackUserId, pingSlackUserIds: [ PingToSlackUserId ] };
-				controller.trigger(`ping_flow`, [bot, null, config]);
-			}
-
-		}
-		catch (error) {
-
-			console.log(error);
-
-			// this should never happen!
-			bot.reply(message, "Hmm, something went wrong");
-			return false;
-		}
 
 	});
 

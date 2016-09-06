@@ -224,47 +224,54 @@ function askToOverrideCurrentSession(convo) {
 		actions: [{
 			name: _constants.buttonValues.newSession.name,
 			text: "New Session :new:",
-			value: _constants.buttonValues.newSession.value,
-			type: "button"
-		}, {
-			name: _constants.buttonValues.keepWorking.name,
-			text: "Keep Working!",
-			value: _constants.buttonValues.keepWorking.value,
+			value: '{"overrideNewSession": true}',
 			type: "button"
 		}]
 	}];
 
-	convo.ask({
+	convo.say({
 		text: text,
 		attachments: attachments
-	}, [{
-		pattern: _constants.utterances.containsNew,
-		callback: function callback(response, convo) {
-			convo.say('Okay, sounds good to me!');
+	});
 
-			// restart everything!
-			convo.sessionStart.minutes = false;
-			convo.sessionStart.content = false;
-			convo.sessionStart.currentSession = false;
+	convo.next();
 
-			finalizeSessionTimeAndContent(convo);
-			convo.next();
-		}
-	}, {
-		pattern: _constants.utterances.containsKeep,
-		callback: function callback(response, convo) {
+	// convo.ask({
+	// 	text,
+	// 	attachments
+	// }, [
+	// 	{
+	// 		pattern: utterances.containsNew,
+	// 		callback: (response, convo) => {
+	// 			convo.say(`Okay, sounds good to me!`);
 
-			convo.say('You got this! Keep focusing on `' + currentSession.dataValues.content + '` and I’ll see you at *' + endTimeString + '*');
-			convo.next();
-		}
-	}, {
-		default: true,
-		callback: function callback(response, convo) {
-			convo.say("Sorry, I didn't catch that");
-			convo.repeat();
-			convo.next();
-		}
-	}]);
+	// 			// restart everything!
+	// 			convo.sessionStart.minutes        = false;
+	// 			convo.sessionStart.content        = false;
+	// 			convo.sessionStart.currentSession = false;
+
+	// 			finalizeSessionTimeAndContent(convo);
+	// 			convo.next();
+	// 		}
+	// 	},
+	// 	{
+	// 		pattern: utterances.containsKeep,
+	// 		callback: (response, convo) => {
+
+	// 			convo.say(`You got this! Keep focusing on \`${currentSession.dataValues.content}\` and I’ll see you at *${endTimeString}*`);
+	// 			convo.next();
+
+	// 		}
+	// 	},
+	// 	{
+	// 		default: true,
+	// 		callback: (response, convo) => {
+	// 			convo.say("Sorry, I didn't catch that");
+	// 			convo.repeat();
+	// 			convo.next();
+	// 		}
+	// 	}
+	// ]);
 }
 
 /**

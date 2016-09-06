@@ -184,7 +184,7 @@ exports.default = function (controller) {
 						var zoneAbbrString = (0, _momentTimezone2.default)().tz(tz).zoneAbbr(); // ex. EDT
 						var todayString = (0, _momentTimezone2.default)().tz(tz).format('MMMM Do YYYY'); // ex. September 6th, 2016
 
-						var text = ':raised_hands: *Attention board for ' + todayString + '* :raised_hands:';
+						var text = ':raised_hands: *Team Pulse for ' + todayString + '* :raised_hands:';
 						var attachments = [];
 
 						var dashboardMemberSlackUserIds = [];
@@ -212,7 +212,10 @@ exports.default = function (controller) {
 									},
 									include: [_models2.default.User]
 								}));
-								dashboardUsers[user.dataValues.SlackUserId] = { session: false };
+								dashboardUsers[user.dataValues.SlackUserId] = {
+									session: false,
+									user: user
+								};
 							});
 
 							var userSessions = []; // unique sessions only
@@ -249,6 +252,7 @@ exports.default = function (controller) {
          */
 								attachments = [{
 									mrkdwn_in: ["text", "fields"],
+									callback_id: 'DASHBOARD_TEAM_PULSE',
 									fields: [{
 										title: "Current Priority",
 										short: true
@@ -259,21 +263,49 @@ exports.default = function (controller) {
 									color: _constants.colorsHash.white.hex
 								}];
 
-								// iterate through dashboardUsers
+								// iterate through dashboardUsers and put into alphabetized array
+								var dashboardUsersArrayAlphabetical = [];
 								_lodash2.default.forOwn(dashboardUsers, function (value, key) {
 
-									// value is the object, key is SlackUserId
-									var session = value.session;
+									// value is the object that has value.user and value.session
+									dashboardUsersArrayAlphabetical.push(value);
+								});
 
-									var sessionContent = session ? '`' + session.dataValues.content + '`' : '_No context_';
-									var sessionTime = session ? (0, _momentTimezone2.default)(session.dataValues.endTime).tz(tz).format("h:mma") : '';
-									var sessionColor = session ? _constants.colorsHash.toki_purple.hex : _constants.colorsHash.grey.hex;
+								dashboardUsersArrayAlphabetical.sort(function (a, b) {
 
+									var nameA = a.user.dataValues.SlackName;
+									var nameB = b.user.dataValues.SlackName;
+									return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
+								});
+
+								dashboardUsersArrayAlphabetical.forEach(function (dashboardUser) {
+
+									console.log(dashboardUser);
+
+									var session = dashboardUser.session;
+									var SlackUserId = dashboardUser.user.dataValues.SlackUserId;
+
+
+									var sessionContent = void 0;
+									var sessionTime = void 0;
+									var sessionColor = void 0;
+
+									if (session) {
+										sessionContent = '`' + session.dataValues.content + '`';
+										sessionTime = (0, _momentTimezone2.default)(session.dataValues.endTime).tz(tz).format("h:mma");
+										sessionColor = _constants.colorsHash.toki_purple.hex;
+									} else {
+										sessionContent = '_No context_';
+										sessionTime = '';
+										sessionColor = _constants.colorsHash.grey.hex;
+									}
+
+									// alphabetize the 
 									attachments.push({
 										attachment_type: 'default',
 										callback_id: "DASHBOARD_SESSION_INFO_FOR_USER",
 										fallback: 'Here\'s the session info!',
-										text: '<@' + key + '>',
+										text: '<@' + SlackUserId + '>',
 										mrkdwn_in: ["text", "fields"],
 										fields: [{
 											value: sessionContent,
@@ -286,15 +318,49 @@ exports.default = function (controller) {
 										actions: [{
 											name: "SEND_PING",
 											text: "Send Message",
-											value: '{"pingUser": true, "PingToSlackUserId": "' + key + '"}',
+											value: '{"pingUser": true, "PingToSlackUserId": "' + SlackUserId + '"}',
 											type: "button"
 										}]
 									});
 								});
 
-								console.log('\n\n\n about to send message:');
-								console.log(attachments);
-								console.log(text);
+								attachments.push({
+									attachment_type: 'default',
+									callback_id: "DASHBOARD_ACTIONS_FOR_USER",
+									fallback: 'Would you like to set a priority?',
+									mrkdwn_in: ["text", "fields"],
+									color: _constants.colorsHash.blue.hex,
+									actions: [{
+										name: "SET_PRIORITY",
+										text: "Set priority",
+										value: '{"setPriority": true}',
+										type: "button"
+									}]
+								});
+
+								/*
+        
+        // this is the attachments that is about to send
+        [ { mrkdwn_in: [ 'text', 'fields' ],
+            fields: [ [Object], [Object] ],
+            color: '#ffffff' },
+          { attachment_type: 'default',
+            callback_id: 'DASHBOARD_SESSION_INFO_FOR_USER',
+            fallback: 'Here\'s the session info!',
+            text: '<@U121ZK15J>',
+            mrkdwn_in: [ 'text', 'fields' ],
+            fields: [ [Object], [Object] ],
+            color: '#C1C1C3',
+            actions: [ [Object] ] },
+          { attachment_type: 'default',
+            callback_id: 'DASHBOARD_SESSION_INFO_FOR_USER',
+            fallback: 'Here\'s the session info!',
+            text: '<@U1NCGAETZ>',
+            mrkdwn_in: [ 'text', 'fields' ],
+            fields: [ [Object], [Object] ],
+            color: '#C1C1C3',
+            actions: [ [Object] ] } ]
+         */
 
 								// send the message!
 								bot.send({
@@ -343,39 +409,6 @@ exports.default = function (controller) {
 			}
 		});
 	});
-
-	/**
-  * 	This is where we handle "Send Message" button and other buttons in dashboard
-  */
-	controller.hears(['^{'], 'ambient', _hearsMiddleware.isJsonObject, function (bot, message) {
-
-		var botToken = bot.config.token;
-		bot = _index.bots[botToken];
-
-		var SlackUserId = message.user;
-		var text = message.text;
-
-
-		try {
-
-			var jsonObject = JSON.parse(text);
-			var pingUser = jsonObject.pingUser;
-			var PingToSlackUserId = jsonObject.PingToSlackUserId;
-
-			var config = {};
-			if (pingUser) {
-				config = { SlackUserId: SlackUserId, pingSlackUserIds: [PingToSlackUserId] };
-				controller.trigger('ping_flow', [bot, null, config]);
-			}
-		} catch (error) {
-
-			console.log(error);
-
-			// this should never happen!
-			bot.reply(message, "Hmm, something went wrong");
-			return false;
-		}
-	});
 };
 
 var _index = require('../index');
@@ -395,8 +428,6 @@ var _models2 = _interopRequireDefault(_models);
 var _dotenv = require('dotenv');
 
 var _dotenv2 = _interopRequireDefault(_dotenv);
-
-var _hearsMiddleware = require('../../middleware/hearsMiddleware');
 
 var _constants = require('../../lib/constants');
 
