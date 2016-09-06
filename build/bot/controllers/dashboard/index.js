@@ -46,41 +46,109 @@ exports.default = function (controller) {
 				where: { SlackUserId: creator }
 			}).then(function (user) {
 
+				var promise = [];
 				if (user && user.TeamId) {
-					channel.update({
+					promise.push(channel.update({
 						TeamId: user.TeamId
-					});
+					}));
 				}
 
-				if (tz) {
+				Promise.all(promise).then(function () {
 
-					// this means Toki is just getting re-invited
-					controller.trigger('setup_dashboard_flow', [bot, config]);
-				} else {
-
-					// get timezone for the channel
-					bot.startPrivateConversation({ user: creator }, function (err, convo) {
-
-						convo.dashboardConfirm = {
-							ChannelId: id
-						};
-
-						// right now we cannot handle confirmation of dashboard because
-						// we don't have channels:write permission		
-						askTimeZoneForChannelDashboard(convo);
-
-						// now trigger dashboard intro
-						convo.on('end', function (convo) {
-
-							// only way to get here is if timezone got updated.
-							// now we can handle dashboard flow
-							var ChannelId = convo.dashboardConfirm.ChannelId;
+					// delete all teamPulseMessages for now and then create new one
+					// when inviting for the first time
+					_models2.default.Channel.find({
+						where: { ChannelId: ChannelId }
+					}).then(function (channel) {
+						var ChannelId = channel.ChannelId;
+						var tz = channel.tz;
+						var TeamId = channel.TeamId;
 
 
-							controller.trigger('setup_dashboard_flow', [bot, config]);
+						_models2.default.Team.find({
+							where: ['"Team"."TeamId" = ?', TeamId]
+						}).then(function (team) {
+							var accessToken = team.accessToken;
+
+							if (!accessToken) {
+								console.log('\n\n\n ERROR... NO ACCESS TOKEN FOR BOT: ' + accessToken);
+								return;
+							}
+
+							bot.api.channels.history({
+								token: accessToken,
+								channel: ChannelId
+							}, function (err, response) {
+								var messages = response.messages;
+
+								messages.forEach(function (message) {
+
+									// user is `SlackUserId`
+									var user = message.user;
+									var attachments = message.attachments;
+									var ts = message.ts;
+
+									// find the message of the team pulse
+
+									if (user == BotSlackUserId && attachments && attachments[0].callback_id == _constants.constants.dashboardCallBackId) {
+										bot.api.chat.delete({
+											ts: ts,
+											channel: ChannelId
+										});
+									}
+								});
+
+								if (tz) {
+									// give a little time for all things to delete
+									setTimeout(function () {
+										controller.trigger('setup_dashboard_flow', [bot, config]);
+									}, 500);
+								} else {
+									var timezoneConfig = {
+										CreatorSlackUserId: creator,
+										ChannelId: ChannelId
+									};
+									controller.trigger('get_timezone_for_dashboard_flow', [bot, timezoneConfig]);
+								}
+							});
 						});
 					});
+				});
+			});
+		});
+	});
+
+	// this is set up for dashboard flow when tz does not exist
+	controller.on('get_timezone_for_dashboard_flow', function (bot, config) {
+		var CreatorSlackUserId = config.CreatorSlackUserId;
+		var ChannelId = config.ChannelId;
+
+
+		bot.startPrivateConversation({ user: CreatorSlackUserId }, function (err, convo) {
+
+			convo.dashboardConfirm = {
+				ChannelId: ChannelId
+			};
+
+			// right now we cannot handle confirmation of dashboard because
+			// we don't have channels:write permission		
+			askTimeZoneForChannelDashboard(convo);
+
+			// now trigger dashboard intro
+			convo.on('end', function (convo) {
+
+				// only way to get here is if timezone got updated.
+				// now we can handle dashboard flow
+				var _convo$dashboardConfi = convo.dashboardConfirm;
+				var ChannelId = _convo$dashboardConfi.ChannelId;
+				var neverMind = _convo$dashboardConfi.neverMind;
+
+
+				if (neverMind) {
+					return;
 				}
+
+				controller.trigger('setup_dashboard_flow', [bot, config]);
 			});
 		});
 	});
@@ -97,53 +165,7 @@ exports.default = function (controller) {
 			text: 'Hi! I\'m Toki, your team\'s sidekick to make the most of your attention each day :raised_hands:\nI\'ll set up a dashboard here of your team\'s statuses each day. If you ever need a refresher on how I work, just say `/explain` and I\'d love to go into more detail!'
 		}, function () {
 
-			// delete all teamPulseMessages for now and then create new one
-			// when inviting for the first time
-			_models2.default.Channel.find({
-				where: { ChannelId: ChannelId }
-			}).then(function (channel) {
-				var ChannelId = channel.ChannelId;
-				var tz = channel.tz;
-				var TeamId = channel.TeamId;
-
-
-				_models2.default.Team.find({
-					where: ['"Team"."TeamId" = ?', TeamId]
-				}).then(function (team) {
-					var accessToken = team.accessToken;
-
-					if (!accessToken) {
-						console.log('\n\n\n ERROR... NO ACCESS TOKEN FOR BOT: ' + accessToken);
-						return;
-					}
-
-					bot.api.channels.history({
-						token: accessToken,
-						channel: ChannelId
-					}, function (err, response) {
-						var messages = response.messages;
-
-						messages.forEach(function (message) {
-
-							// user is `SlackUserId`
-							var user = message.user;
-							var attachments = message.attachments;
-							var ts = message.ts;
-
-							// find the message of the team pulse
-
-							if (user == BotSlackUserId && attachments && attachments[0].callback_id == _constants.constants.dashboardCallBackId) {
-								bot.api.chat.delete({
-									ts: ts,
-									channel: ChannelId
-								});
-							}
-						});
-
-						(0, _slackHelpers.updateDashboardForChannelId)(bot, ChannelId);
-					});
-				});
-			});
+			(0, _slackHelpers.updateDashboardForChannelId)(bot, ChannelId);
 		});
 	});
 };
@@ -188,55 +210,65 @@ function askTimeZoneForChannelDashboard(convo) {
 	convo.ask({
 		text: text,
 		attachments: _constants.timeZoneAttachments
-	}, function (response, convo) {
-		var text = response.text;
-
-		var timeZoneObject = false;
-		switch (text) {
-			case (text.match(_constants.utterances.eastern) || {}).input:
-				timeZoneObject = _constants.timeZones.eastern;
-				break;
-			case (text.match(_constants.utterances.central) || {}).input:
-				timeZoneObject = _constants.timeZones.central;
-				break;
-			case (text.match(_constants.utterances.mountain) || {}).input:
-				timeZoneObject = _constants.timeZones.mountain;
-				break;
-			case (text.match(_constants.utterances.pacific) || {}).input:
-				timeZoneObject = _constants.timeZones.pacific;
-				break;
-			case (text.match(_constants.utterances.other) || {}).input:
-				timeZoneObject = _constants.timeZones.other;
-				break;
-			default:
-				break;
+	}, [{ // completedPriority
+		pattern: _constants.utterances.noAndNeverMind,
+		callback: function callback(response, convo) {
+			convo.dashboardConfirm.neverMind = true;
+			convo.say('Okay! If you want me to set up a dashboard in <#' + ChannelId + '> in the future, please `/remove` me then `/invite` me in <#' + ChannelId + '> again :wave:');
+			convo.next();
 		}
+	}, {
+		default: true,
+		callback: function callback(response, convo) {
+			var text = response.text;
 
-		if (!timeZoneObject) {
-			convo.say("I didn't get that :thinking_face:");
-			askTimeZoneForChannelDashboard(convo, 'Which timezone do you want the channel in?');
-			convo.next();
-		} else if (timeZoneObject == _constants.timeZones.other) {
-			convo.say('Sorry!');
-			convo.say("Right now I’m only able to work in these timezones. If you want to demo Toki, just pick one of these timezones for now. I’ll try to get your timezone included as soon as possible!");
-			askTimeZoneForChannelDashboard(convo, 'Which timezone do you want to go with for now?');
-			convo.next();
-		} else {
-			// success!!
+			var timeZoneObject = false;
+			switch (text) {
+				case (text.match(_constants.utterances.eastern) || {}).input:
+					timeZoneObject = _constants.timeZones.eastern;
+					break;
+				case (text.match(_constants.utterances.central) || {}).input:
+					timeZoneObject = _constants.timeZones.central;
+					break;
+				case (text.match(_constants.utterances.mountain) || {}).input:
+					timeZoneObject = _constants.timeZones.mountain;
+					break;
+				case (text.match(_constants.utterances.pacific) || {}).input:
+					timeZoneObject = _constants.timeZones.pacific;
+					break;
+				case (text.match(_constants.utterances.other) || {}).input:
+					timeZoneObject = _constants.timeZones.other;
+					break;
+				default:
+					break;
+			}
 
-			var _timeZoneObject = timeZoneObject;
-			var tz = _timeZoneObject.tz;
-
-			console.log(timeZoneObject);
-			_models2.default.Channel.update({
-				tz: tz
-			}, {
-				where: { ChannelId: ChannelId }
-			}).then(function (user) {
-				convo.say('Great! If your timezone for <#' + ChannelId + '> changes, you can always `update settings`');
+			if (!timeZoneObject) {
+				convo.say("I didn't get that :thinking_face:");
+				askTimeZoneForChannelDashboard(convo, 'Which timezone do you want the channel in?');
 				convo.next();
-			});
+			} else if (timeZoneObject == _constants.timeZones.other) {
+				convo.say('Sorry!');
+				convo.say("Right now I’m only able to work in these timezones. If you want to demo Toki, just pick one of these timezones for now. I’ll try to get your timezone included as soon as possible!");
+				askTimeZoneForChannelDashboard(convo, 'Which timezone do you want to go with for now?');
+				convo.next();
+			} else {
+				// success!!
+
+				var _timeZoneObject = timeZoneObject;
+				var tz = _timeZoneObject.tz;
+
+				console.log(timeZoneObject);
+				_models2.default.Channel.update({
+					tz: tz
+				}, {
+					where: { ChannelId: ChannelId }
+				}).then(function (user) {
+					convo.say('Great! If your timezone for <#' + ChannelId + '> changes, you can always `update settings`');
+					convo.next();
+				});
+			}
 		}
-	});
+	}]);
 }
 //# sourceMappingURL=index.js.map
