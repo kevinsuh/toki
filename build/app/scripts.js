@@ -20,7 +20,13 @@ var _dotenv = require('dotenv');
 
 var _dotenv2 = _interopRequireDefault(_dotenv);
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 var _constants = require('../bot/lib/constants');
+
+var _slackHelpers = require('../bot/lib/slackHelpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -56,10 +62,20 @@ function test(bot) {
 		}
 	});
 
+	// on session_start or session_end...
+	// go through all the channels where this BOT is in the channel
+	// then find the channels where the user who ended session is ALSO in the channel
+	// if both are true, update that message with the user's updated status!
+
 	bot.api.channels.list({}, function (err, response) {
+
+		var BotSlackUserId = bot.identity.id;
 
 		if (!err) {
 			var channels = response.channels;
+
+
+			console.log('\n\n\n there are ' + channels.length + ' channels');
 
 			channels.forEach(function (channel) {
 				var id = channel.id;
@@ -69,30 +85,27 @@ function test(bot) {
 				var purpose = channel.purpose;
 				var members = channel.members;
 
-				if (name == 'distractions') {
 
-					console.log('\n\n in distractions:');
+				var hasBotSlackUserId = false;
+				var hasMemberSlackUserId = false;
+
+				var KevinSlackUserId = 'U121ZK15J';
+				var KevinTeamId = 'T121VLM63';
+
+				_lodash2.default.some(members, function (member) {
+					if (member == KevinSlackUserId) {
+						hasBotSlackUserId = true;
+					} else if (member == BotSlackUserId) {
+						hasMemberSlackUserId = true;
+					}
+				});
+
+				if (hasBotSlackUserId && hasMemberSlackUserId) {
+
+					console.log('\n\n\n channel name: ' + name + ' has both members in slack user');
 					console.log(channel);
-					console.log(members);
-					// bot.send({
-					// 	channel: id,
-					// 	text: `<@U121ZK15J> is working on \`what if i ping myself\` until *3:31pm*`,
-					// 	attachments: [
-					// 		{
-					// 			attachment_type: 'default',
-					// 			callback_id: "LETS_FOCUS_AGAIN",
-					// 			fallback: "Let's focus again!",
-					// 			actions: [
-					// 				{
-					// 					name: `PING CHIP`,
-					// 					text: "Send Message",
-					// 					value: `{"pingUser": true, "PingToSlackUserId": "U121ZK15J"}`,
-					// 					type: "button"
-					// 				},
-					// 			]
-					// 		}
-					// 	]
-					// });
+
+					(0, _slackHelpers.updateDashboardForChannelId)(bot, id);
 				}
 			});
 		} else {

@@ -193,7 +193,19 @@ exports.default = function (controller) {
 							}
 						});
 					} else {
-						responseObject.text = 'Let me know who you want to explain myself to! (i.e. `@emily`)';
+						// assume to self
+
+						var explainConfig = {
+							explainToSelf: true,
+							UserConfig: {
+								UserId: user.dataValues.id,
+								SlackUserId: user.dataValues.SlackUserId
+							}
+						};
+
+						controller.trigger('explain_toki_flow', [bot, explainConfig]);
+
+						responseObject.text = 'Thanks for asking me how I work! If you ever want to explain me to someone else, just include their username (i.e. `@emily`)';
 						bot.replyPrivate(message, responseObject);
 					}
 					break;

@@ -104,14 +104,17 @@ function finalizeSessionTimeAndContent(convo) {
 		
 		if (!content) {
 			askForSessionContent(convo);
+			convo.next();
 			return;
 		} else if (!minutes) {
 			askForSessionTime(convo);
+			convo.next();
 			return;
 		}
 
 		convo.say(" ");
 		convo.sessionStart.confirmNewSession = true;
+		convo.next();
 
 	}
 
@@ -203,55 +206,56 @@ function askToOverrideCurrentSession(convo) {
 				{
 					name: buttonValues.newSession.name,
 					text: "New Session :new:",
-					value: buttonValues.newSession.value,
-					type: "button"
-				},
-				{
-					name: buttonValues.keepWorking.name,
-					text: "Keep Working!",
-					value: buttonValues.keepWorking.value,
+					value: `{"overrideNewSession": true}`,
 					type: "button"
 				}
 			]
 		}
-	]
+	];
 
-	convo.ask({
+	convo.say({
 		text,
 		attachments
-	}, [
-		{
-			pattern: utterances.containsNew,
-			callback: (response, convo) => {
-				convo.say(`Okay, sounds good to me!`);
+	});
 
-				// restart everything!
-				convo.sessionStart.minutes        = false;
-				convo.sessionStart.content        = false;
-				convo.sessionStart.currentSession = false;
+	convo.next();
 
-				finalizeSessionTimeAndContent(convo);
-				convo.next();
-			}
-		},
-		{
-			pattern: utterances.containsKeep,
-			callback: (response, convo) => {
+	// convo.ask({
+	// 	text,
+	// 	attachments
+	// }, [
+	// 	{
+	// 		pattern: utterances.containsNew,
+	// 		callback: (response, convo) => {
+	// 			convo.say(`Okay, sounds good to me!`);
 
-				convo.say(`You got this! Keep focusing on \`${currentSession.dataValues.content}\` and I’ll see you at *${endTimeString}*`);
-				convo.next();
+	// 			// restart everything!
+	// 			convo.sessionStart.minutes        = false;
+	// 			convo.sessionStart.content        = false;
+	// 			convo.sessionStart.currentSession = false;
 
-			}
-		},
-		{
-			default: true,
-			callback: (response, convo) => {
-				convo.say("Sorry, I didn't catch that");
-				convo.repeat();
-				convo.next();
-			}
-		}
-	]);
+	// 			finalizeSessionTimeAndContent(convo);
+	// 			convo.next();
+	// 		}
+	// 	},
+	// 	{
+	// 		pattern: utterances.containsKeep,
+	// 		callback: (response, convo) => {
+
+	// 			convo.say(`You got this! Keep focusing on \`${currentSession.dataValues.content}\` and I’ll see you at *${endTimeString}*`);
+	// 			convo.next();
+
+	// 		}
+	// 	},
+	// 	{
+	// 		default: true,
+	// 		callback: (response, convo) => {
+	// 			convo.say("Sorry, I didn't catch that");
+	// 			convo.repeat();
+	// 			convo.next();
+	// 		}
+	// 	}
+	// ]);
 
 }
 
@@ -308,6 +312,8 @@ function askForSessionContent(convo, question = '') {
 			}
 		}
 	]);
+
+	convo.next();
 
 }
 

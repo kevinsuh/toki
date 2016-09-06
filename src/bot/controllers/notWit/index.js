@@ -19,7 +19,8 @@ import dotenv from 'dotenv';
 
 export default function(controller) {
 
-	controller.hears(['^{'], 'ambient', isJsonObject, function(bot, message) {
+	// this is for updating ping functionality
+	controller.hears(['^{'], 'direct_message', isJsonObject, function(bot, message) {
 
 
 		let botToken = bot.config.token;
@@ -31,14 +32,51 @@ export default function(controller) {
 		try {
 
 			let jsonObject = JSON.parse(text);
-			const { updatePing, cancelPing, sendBomb, PingId, pingUser, PingToSlackUserId } = jsonObject;
+			const { overrideNewSession, updatePing, cancelPing, sendBomb, PingId } = jsonObject;
 			let config = {};
 			if (updatePing) {
 				config = { PingId, sendBomb, cancelPing };
 				controller.trigger(`update_ping_message`, [bot, config]);
-			} else if (pingUser) {
+			} else if (overrideNewSession) {
+				config = { SlackUserId, changeTimeAndTask: true }
+				controller.trigger('begin_session_flow', [bot, null, config]);
+			}
+
+		}
+		catch (error) {
+
+			console.log(error);
+
+			// this should never happen!
+			bot.reply(message, "Hmm, something went wrong");
+			return false;
+		}
+
+	});
+
+	/**
+	 * 	This is where we handle "Send Message" button and other buttons in dashboard
+	 * 	Give `direct_message` precedence above: if it is DM it will get picked up before this catch-all `ambient`
+	 */
+	controller.hears(['^{'], 'ambient', isJsonObject, function(bot, message) {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
+		const SlackUserId = message.user;
+		const { text }    = message;
+
+		try {
+
+			let jsonObject = JSON.parse(text);
+			const { setPriority, pingUser, PingToSlackUserId } = jsonObject;
+			let config = {};
+			if (pingUser) {
 				config = { SlackUserId, pingSlackUserIds: [ PingToSlackUserId ] };
 				controller.trigger(`ping_flow`, [bot, null, config]);
+			} else if (setPriority) {
+				config = { SlackUserId };
+				controller.trigger(`begin_session_flow`, [ bot, null, config ]);
 			}
 
 		}
@@ -95,9 +133,7 @@ export default function(controller) {
 			type: "typing",
 			channel: message.channel
 		});
-		setTimeout(() => {
-			bot.reply(message, "You're welcome!! :smile:");
-		}, 500);
+		bot.reply(message, "You're welcome!! :smile:");
 	});
 
 	// when user wants to "change time and task" of an existing session,
@@ -113,10 +149,8 @@ export default function(controller) {
 			type: "typing",
 			channel: message.channel
 		});
-		setTimeout(() => {
-			const config = { SlackUserId, changeTimeAndTask: true }
-			controller.trigger(`begin_session_flow`, [bot, message, config]);
-		}, 500);
+		const config = { SlackUserId, changeTimeAndTask: true }
+		controller.trigger(`begin_session_flow`, [bot, message, config]);
 	});
 
 	// TOKI_T1ME TESTER

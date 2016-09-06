@@ -18,27 +18,26 @@ exports.default = function (controller) {
 
 
 		var SlackUserId = message.user;
+
 		bot.send({
 			type: "typing",
 			channel: message.channel
 		});
-		setTimeout(function () {
 
-			var replyMessage = "I'm not sure what you mean by that :thinking_face:";
+		var replyMessage = "I'm not sure what you mean by that :thinking_face:";
 
-			var config = { SlackUserId: SlackUserId };
+		var config = { SlackUserId: SlackUserId };
 
-			// some fallbacks for button clicks
-			switch (text) {
-				case (text.match(_constants.utterances.keepWorking) || {}).input:
-					controller.trigger('current_session_status', [bot, config]);
-					break;
-				default:
-					bot.reply(message, replyMessage);
-					controller.trigger('current_session_status', [bot, config]);
-					break;
-			}
-		}, 500);
+		// some fallbacks for button clicks
+		switch (text) {
+			case (text.match(_constants.utterances.keepWorking) || {}).input:
+				controller.trigger('current_session_status', [bot, config]);
+				break;
+			default:
+				// bot.reply(message, replyMessage);
+				controller.trigger('current_session_status', [bot, config]);
+				break;
+		}
 	});
 
 	controller.on('explain_toki_flow', function (bot, config) {
@@ -48,7 +47,13 @@ exports.default = function (controller) {
 
 		var fromUserConfig = config.fromUserConfig;
 		var toUserConfig = config.toUserConfig;
+		var explainToSelf = config.explainToSelf;
+		var UserConfig = config.UserConfig;
 
+
+		if (explainToSelf) {
+			toUserConfig = UserConfig;
+		}
 
 		_models2.default.User.find({
 			where: { SlackUserId: toUserConfig.SlackUserId }
@@ -61,14 +66,19 @@ exports.default = function (controller) {
 				// have 5-minute exit time limit
 				if (convo) convo.task.timeLimit = 1000 * 60 * 5;
 
-				convo.say('Hey! <@' + fromUserConfig.SlackUserId + '> wanted me to explain how I can also help you get your most meaningful things done each day');
-				convo.say('Think of me as an office manager for each of your teammate\'s attention. *I make sure you only get interrupted with messages that are actually urgent*, so that you can maintain focus on your priorities');
-				convo.say('On the flip side, *I also make it easy for you to ping teammates when they\'re actually ready to switch contexts.* This lets you get requests out of your head when you think of them, while making sure it doesn\'t unnecessarily interrupt anyone\'s flow');
+				if (!explainToSelf) {
+					convo.say('Hey! <@' + fromUserConfig.SlackUserId + '> wanted me to explain how I can also help you get your most meaningful things done each day');
+				} else {
+					convo.say('Hope you\'re having a great day so far, <@' + SlackUserId + '>!');
+				}
+
+				convo.say('Think of me as an office manager for each of your teammate\'s attention. *I share your current priority to your team*, so that you can work without getting pulled to switch contexts');
+				convo.say('On the flip side, *I also make it easy for you to ping teammates at the right times.* This lets you get requests out of your head when you think of them, while making sure it doesn\'t unnecessarily interrupt anyone\'s flow');
 				convo.say({
 					text: 'Here\'s how I do this:',
 					attachments: _constants.tokiExplainAttachments
 				});
-				convo.say('I\'m here whenever you\'re ready to go! Just let me know when you want to `/ping` someone, or enter a `/focus` session yourself :raised_hands:');
+				convo.say('I\'m here whenever you\'re ready to go! Just let me know when you want to `/ping` someone, or enter a `/priority` session yourself :raised_hands:');
 
 				convo.on('end', function (convo) {});
 			});
@@ -176,7 +186,7 @@ exports.default = function (controller) {
 								});
 
 								var totalTimeInSessionsString = (0, _messageHelpers.convertMinutesToHoursString)(totalTimeInSessions);
-								text = 'You spent ' + totalTimeInSessionsString + ' in focused sessions ' + sinceDayString + '. Here\'s a quick breakdown of what you spent your time on:';
+								text = 'You spent ' + totalTimeInSessionsString + ' on your priorities with me ' + sinceDayString + '. Here\'s a quick breakdown of what you spent your time on:';
 
 								var attachments = [{
 									attachment_type: 'default',

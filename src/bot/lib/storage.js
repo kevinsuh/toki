@@ -66,8 +66,9 @@ export default function(config) {
 			},
 			save: (teamData, cb) => {
 				console.log("\n\n ~~ calling storage.teams.save ~~ \n\n");
-				const TeamId = teamData.id;
-				const { url, name, token, createdBy } = teamData;
+
+				const { TeamId, url, name, token, createdBy, accessToken, scopes } = teamData;
+
 				models.Team.find({
 					where: { TeamId }
 				})
@@ -79,7 +80,9 @@ export default function(config) {
 							url,
 							name,
 							token,
-							createdBy
+							createdBy,
+							accessToken,
+							scopes
 						});
 					} else {
 						console.log("found team... updating now");
@@ -88,7 +91,9 @@ export default function(config) {
 							url,
 							name,
 							token,
-							createdBy
+							createdBy,
+							accessToken,
+							scopes
 						});
 					}
 				})

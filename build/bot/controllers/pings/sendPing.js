@@ -93,6 +93,13 @@ exports.default = function (controller) {
 
 			var UserId = user.id;
 
+			var isNotAlreadyInConversation = (0, _slackHelpers.checkIsNotAlreadyInConversation)(controller, SlackUserId);
+
+			if (!isNotAlreadyInConversation) {
+				// user is already in conversation, do not continue here!
+				return;
+			}
+
 			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
 				// have 5-minute exit time limit
@@ -431,6 +438,8 @@ var _messageHelpers = require('../../lib/messageHelpers');
 var _pingFunctions = require('./pingFunctions');
 
 var _sessions = require('../sessions');
+
+var _slackHelpers = require('../../lib/slackHelpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 //# sourceMappingURL=sendPing.js.map

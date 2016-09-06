@@ -6,6 +6,47 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
+	// this is for updating ping functionality
+	controller.hears(['^{'], 'direct_message', _hearsMiddleware.isJsonObject, function (bot, message) {
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		var SlackUserId = message.user;
+		var text = message.text;
+
+
+		try {
+
+			var jsonObject = JSON.parse(text);
+			var overrideNewSession = jsonObject.overrideNewSession;
+			var updatePing = jsonObject.updatePing;
+			var cancelPing = jsonObject.cancelPing;
+			var sendBomb = jsonObject.sendBomb;
+			var PingId = jsonObject.PingId;
+
+			var config = {};
+			if (updatePing) {
+				config = { PingId: PingId, sendBomb: sendBomb, cancelPing: cancelPing };
+				controller.trigger('update_ping_message', [bot, config]);
+			} else if (overrideNewSession) {
+				config = { SlackUserId: SlackUserId, changeTimeAndTask: true };
+				controller.trigger('begin_session_flow', [bot, null, config]);
+			}
+		} catch (error) {
+
+			console.log(error);
+
+			// this should never happen!
+			bot.reply(message, "Hmm, something went wrong");
+			return false;
+		}
+	});
+
+	/**
+  * 	This is where we handle "Send Message" button and other buttons in dashboard
+  * 	Give `direct_message` precedence above: if it is DM it will get picked up before this catch-all `ambient`
+  */
 	controller.hears(['^{'], 'ambient', _hearsMiddleware.isJsonObject, function (bot, message) {
 
 		var botToken = bot.config.token;
@@ -18,20 +59,17 @@ exports.default = function (controller) {
 		try {
 
 			var jsonObject = JSON.parse(text);
-			var updatePing = jsonObject.updatePing;
-			var cancelPing = jsonObject.cancelPing;
-			var sendBomb = jsonObject.sendBomb;
-			var PingId = jsonObject.PingId;
+			var setPriority = jsonObject.setPriority;
 			var pingUser = jsonObject.pingUser;
 			var PingToSlackUserId = jsonObject.PingToSlackUserId;
 
 			var config = {};
-			if (updatePing) {
-				config = { PingId: PingId, sendBomb: sendBomb, cancelPing: cancelPing };
-				controller.trigger('update_ping_message', [bot, config]);
-			} else if (pingUser) {
+			if (pingUser) {
 				config = { SlackUserId: SlackUserId, pingSlackUserIds: [PingToSlackUserId] };
 				controller.trigger('ping_flow', [bot, null, config]);
+			} else if (setPriority) {
+				config = { SlackUserId: SlackUserId };
+				controller.trigger('begin_session_flow', [bot, null, config]);
 			}
 		} catch (error) {
 
@@ -81,9 +119,7 @@ exports.default = function (controller) {
 			type: "typing",
 			channel: message.channel
 		});
-		setTimeout(function () {
-			bot.reply(message, "You're welcome!! :smile:");
-		}, 500);
+		bot.reply(message, "You're welcome!! :smile:");
 	});
 
 	// when user wants to "change time and task" of an existing session,
@@ -99,10 +135,8 @@ exports.default = function (controller) {
 			type: "typing",
 			channel: message.channel
 		});
-		setTimeout(function () {
-			var config = { SlackUserId: SlackUserId, changeTimeAndTask: true };
-			controller.trigger('begin_session_flow', [bot, message, config]);
-		}, 500);
+		var config = { SlackUserId: SlackUserId, changeTimeAndTask: true };
+		controller.trigger('begin_session_flow', [bot, message, config]);
 	});
 
 	// TOKI_T1ME TESTER

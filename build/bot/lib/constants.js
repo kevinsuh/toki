@@ -87,6 +87,7 @@ var utterances = exports.utterances = (_utterances = {
 }, _defineProperty(_utterances, "containsNew", new RegExp(/\bnew[ew]*\b/i)), _defineProperty(_utterances, "moveOn", new RegExp(/\bmov[ove]*\b.*\bon[n]*\b/i)), _defineProperty(_utterances, "notToday", new RegExp(/\bno[ot]{1,3}\b.*\btod[day]{2,5}\b/i)), _defineProperty(_utterances, "notShare", new RegExp(/\bno[ot]{1,3}\b.*\bsha[areing]{2,5}\b/i)), _defineProperty(_utterances, "containsRename", new RegExp(/\bre[ name]{3,7}\b/i)), _defineProperty(_utterances, "noMore", new RegExp(/^no[o]{0,5}\b.*\bmor[re]{1,4}\b/i)), _defineProperty(_utterances, "redo", new RegExp(/^re[re do]{2,5}\b/i)), _defineProperty(_utterances, "noDontAskAgain", new RegExp(/^no[o]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "yesDontAskAgain", new RegExp(/^yes[s]{0,4}\b.*\bas[sk]{1,4}\b.*\baga[ain]{2,5}\b/i)), _defineProperty(_utterances, "changePriority", new RegExp(/^chang[ge]{1,4}\b|\b(chang[ge]{0,3}|differe[ent]{1,5})\b.*\b(priori[tiyes]{1,5}|tas[sk]{1,5})\b/i)), _defineProperty(_utterances, "goBack", new RegExp(/\bgo[o]{0,5}\b.*\bbac[ck]{1,5}\b/i)), _defineProperty(_utterances, "setTime", new RegExp(/\bset[o]{0,5}\b.*\btim[me]{1,5}\b/i)), _defineProperty(_utterances, "beginAdventure", new RegExp(/\bbegin\b.*\badventure\b/i)), _defineProperty(_utterances, "changeTimeAndTask", new RegExp(/\bchan[nge]{1,5}\b.{1,3}\btim[me]{1,3}\b.{1,7}\btas[sk]{1,3}\b/i)), _defineProperty(_utterances, "keepWorking", new RegExp(/\bkee[ep]{1,3}\b.{1,3}\bwor[king]{1,6}\b/i)), _defineProperty(_utterances, "sendSooner", new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bsoon[ner]{1,4}\b/i)), _defineProperty(_utterances, "containsSendAt", new RegExp(/\bsen[nd]{1,3}\b.{1,3}\bat[t]{0,3}\b/i)), _defineProperty(_utterances, "deferPing", new RegExp(/^def[er]{1,3}\b.{1,3}\bpin[ngs]{1,3}\b/i)), _defineProperty(_utterances, "cancelPing", new RegExp(/^canc[cel]{1,3}\b.{1,3}\bpin[ngs]{1,3}\b/i)), _defineProperty(_utterances, "sendSooner", new RegExp(/^sen[nd]{1,3}\b.{1,3}\bsoon[ner]{1,3}\b/i)), _defineProperty(_utterances, "startsWithFocus", new RegExp(/^focu[us]{1,3}\b/i)), _defineProperty(_utterances, "startsWithPing", new RegExp(/^pin[ng]{1,3}\b/i)), _utterances);
 
 var constants = exports.constants = {
+	dashboardCallBackId: "DASHBOARD_TEAM_PULSE",
 	endSessionTypes: {
 		endByPingToUserId: "END_BY_PING_TO_USER_ID",
 		sessionTimerUp: "SESSION_TIMER_UP",
@@ -207,7 +208,10 @@ var colorsHash = exports.colorsHash = {
 		hex: "#F0D003"
 	},
 	toki_purple: {
-		hex: "#8a3df0"
+		hex: "#9370DB"
+	},
+	toki_yellow: {
+		hex: "#FFC72C"
 	}
 };
 
@@ -392,13 +396,13 @@ var timeZoneAttachments = exports.timeZoneAttachments = [{
 }];
 
 var tokiExplainAttachments = exports.tokiExplainAttachments = [{
-	title: "Focus Sessions",
-	text: "In any channel, use the command `/focus` to knock out a task and protect yourself from non-urgent messages while you work",
+	title: "Set your priority",
+	text: "In any channel, use the command `/priority` to share your current priority and protect yourself from getting pulled to switch contexts from non-urgent messages while you work",
 	mrkdwn_in: ["text"],
 	color: colorsHash.toki_purple.hex,
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
-	fallback: "Focus Sessions"
+	fallback: "Set my priority"
 }, {
 	title: "Ping Members",
 	text: "In any channel, use the command `/ping @user` whenever you would otherwise send a DM. I'll default queue the message if @user is focused, while letting you send it sooner if it's urgent",

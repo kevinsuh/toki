@@ -78,7 +78,9 @@ var registerTeam = function registerTeam(auth, res) {
           bot: {
             token: auth.bot.bot_access_token,
             user_id: auth.bot.bot_user_id,
-            createdBy: identity.user_id
+            createdBy: identity.user_id,
+            scopes: auth.scope,
+            accessToken: auth.access_token
           },
           createdBy: identity.user_id,
           url: identity.url,

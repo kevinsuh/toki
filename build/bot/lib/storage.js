@@ -79,11 +79,15 @@ exports.default = function (config) {
 			},
 			save: function save(teamData, cb) {
 				console.log("\n\n ~~ calling storage.teams.save ~~ \n\n");
-				var TeamId = teamData.id;
+
+				var TeamId = teamData.TeamId;
 				var url = teamData.url;
 				var name = teamData.name;
 				var token = teamData.token;
 				var createdBy = teamData.createdBy;
+				var accessToken = teamData.accessToken;
+				var scopes = teamData.scopes;
+
 
 				_models2.default.Team.find({
 					where: { TeamId: TeamId }
@@ -95,7 +99,9 @@ exports.default = function (config) {
 							url: url,
 							name: name,
 							token: token,
-							createdBy: createdBy
+							createdBy: createdBy,
+							accessToken: accessToken,
+							scopes: scopes
 						});
 					} else {
 						console.log("found team... updating now");
@@ -104,7 +110,9 @@ exports.default = function (config) {
 							url: url,
 							name: name,
 							token: token,
-							createdBy: createdBy
+							createdBy: createdBy,
+							accessToken: accessToken,
+							scopes: scopes
 						});
 					}
 				}).then(function (team) {

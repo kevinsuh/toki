@@ -245,7 +245,7 @@ function askForQueuedPingMessages(convo) {
 		let now            = moment().tz(tz);
 		let minutesLeft    = Math.round(moment.duration(endTimeObject.diff(now)).asMinutes());
 
-		let askMessage = `What would you like me to send <@${user.dataValues.SlackUserId}> at *${endTimeString}*?`;
+		let askMessage = `What would you like me to send <@${user.dataValues.SlackUserId}> at ${endTimeString}?`;
 		
 		let attachments = [{
 			text: "Enter as many lines as you’d like to include in the message then choose one of the send options when your message is ready to go\n(These few lines will delete after you type your first line and hit Enter :wink:)",

@@ -95,6 +95,7 @@ export const utterances = {
 
 
 export const constants = {
+	dashboardCallBackId: `DASHBOARD_TEAM_PULSE`,
 	endSessionTypes: {
 		endByPingToUserId: `END_BY_PING_TO_USER_ID`,
 		sessionTimerUp: `SESSION_TIMER_UP`,
@@ -215,7 +216,10 @@ export const colorsHash = {
 		hex: "#F0D003"
 	},
 	toki_purple: {
-		hex: "#8a3df0"
+		hex: "#9370DB"
+	},
+	toki_yellow: {
+		hex: "#FFC72C"
 	}
 };
 
@@ -425,13 +429,13 @@ export const timeZoneAttachments = [
 
 export const tokiExplainAttachments = [
 	{
-		title: "Focus Sessions",
-		text: "In any channel, use the command `/focus` to knock out a task and protect yourself from non-urgent messages while you work",
+		title: "Set your priority",
+		text: "In any channel, use the command `/priority` to share your current priority and protect yourself from getting pulled to switch contexts from non-urgent messages while you work",
 		mrkdwn_in: [ "text" ],
 		color: colorsHash.toki_purple.hex,
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
-		fallback: "Focus Sessions"
+		fallback: "Set my priority"
 	},
 	{
 		title: "Ping Members",

@@ -6,7 +6,9 @@ import { bots, controller } from '../bot/controllers';
 import models from './models';
 import moment from 'moment-timezone';
 import dotenv from 'dotenv';
+import _ from 'lodash';
 import { utterances, colorsArray, constants, buttonValues, colorsHash, timeZones, tokiExplainAttachments } from '../bot/lib/constants';
+import { updateDashboardForChannelId } from '../bot/lib/slackHelpers';
 
 
 export function test(bot) {
@@ -44,40 +46,49 @@ export function test(bot) {
 		}
 	});
 
+	// on session_start or session_end...
+	// go through all the channels where this BOT is in the channel
+	// then find the channels where the user who ended session is ALSO in the channel
+	// if both are true, update that message with the user's updated status!
+
 	bot.api.channels.list({
 	}, (err, response) => {
+
+		const BotSlackUserId = bot.identity.id;
 
 		if (!err) {
 
 			const { channels } = response;
-			channels.forEach((channel) => {
-				const { id, name, is_channel, topic, purpose, members } = channel;
-				if (name == 'distractions') {
 
-					console.log(`\n\n in distractions:`);
+			console.log(`\n\n\n there are ${channels.length} channels`);
+
+			channels.forEach((channel) => {
+
+				const { id, name, is_channel, topic, purpose, members } = channel;
+
+				let hasBotSlackUserId    = false;
+				let hasMemberSlackUserId = false;
+
+				let KevinSlackUserId = `U121ZK15J`;
+				let KevinTeamId = `T121VLM63`;
+
+				_.some(members, (member) => {
+					if (member == KevinSlackUserId) {
+						hasBotSlackUserId = true;
+					} else if (member == BotSlackUserId) {
+						hasMemberSlackUserId = true;
+					}
+				});
+
+				if (hasBotSlackUserId && hasMemberSlackUserId) {
+
+					console.log(`\n\n\n channel name: ${name} has both members in slack user`);
 					console.log(channel);
-					console.log(members);
-					// bot.send({
-					// 	channel: id,
-					// 	text: `<@U121ZK15J> is working on \`what if i ping myself\` until *3:31pm*`,
-					// 	attachments: [
-					// 		{
-					// 			attachment_type: 'default',
-					// 			callback_id: "LETS_FOCUS_AGAIN",
-					// 			fallback: "Let's focus again!",
-					// 			actions: [
-					// 				{
-					// 					name: `PING CHIP`,
-					// 					text: "Send Message",
-					// 					value: `{"pingUser": true, "PingToSlackUserId": "U121ZK15J"}`,
-					// 					type: "button"
-					// 				},
-					// 			]
-					// 		}
-					// 	]
-					// });
+
+					updateDashboardForChannelId(bot, id);
 
 				}
+
 			});
 
 
