@@ -80,6 +80,11 @@ function updateDashboardForChannelId(bot, ChannelId) {
 					}
 				});
 
+				if (dashboardMemberSlackUserIds.length == 0) {
+					console.log('\n\n ~~ error no dashboard member slack user ids ~~ \n\n');;
+					return;
+				}
+
 				_models2.default.User.findAll({
 					where: ['"User"."SlackUserId" IN (?)', dashboardMemberSlackUserIds]
 				}).then(function (users) {

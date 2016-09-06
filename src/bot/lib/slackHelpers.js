@@ -57,6 +57,11 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 				});
 
+				if (dashboardMemberSlackUserIds.length == 0) {
+					console.log(`\n\n ~~ error no dashboard member slack user ids ~~ \n\n`);;
+					return;
+				}
+
 				models.User.findAll({
 					where: [ `"User"."SlackUserId" IN (?)`, dashboardMemberSlackUserIds ]
 				})
