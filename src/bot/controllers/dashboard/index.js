@@ -256,7 +256,7 @@ export default function(controller) {
 							 */
 							attachments = [{
 								mrkdwn_in: [ "text", "fields" ],
-								callback_id: 'DASHBOARD_TEAM_PULSE',
+								callback_id: constants.dashboardCallBackId,
 								fields: [
 									{
 										title: "Current Priority",

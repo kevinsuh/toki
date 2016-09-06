@@ -92,7 +92,7 @@ if (env == 'development') {
 _controllers.controller.configureSlackApp({
 	clientId: process.env.SLACK_ID,
 	clientSecret: process.env.SLACK_SECRET,
-	scopes: ['bot', 'commands', 'groups:write', 'groups:read', 'channels:write']
+	scopes: ['bot', 'commands', 'channels:history']
 });
 _controllers.controller.createWebhookEndpoints(app);
 _controllers.controller.createOauthEndpoints(app, function (err, req, res) {

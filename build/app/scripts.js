@@ -106,6 +106,76 @@ function test(bot) {
 					console.log('\n\n\n channel name: ' + name + ' has both members in slack user');
 					console.log(channel);
 
+					_models2.default.User.findAll({
+						where: ['"User"."SlackUserId" IN (?)', members]
+					}).then(function (users) {
+
+						var accessToken = false;
+
+						// find the access token
+						_lodash2.default.some(users, function (user) {
+							if (user.dataValues.accessToken) {
+								accessToken = user.dataValues.accessToken;
+								return true;
+							}
+						});
+
+						if (accessToken) {
+
+							bot.api.channels.history({
+								token: accessToken,
+								channel: id
+							}, function (err, response) {
+
+								if (!err) {
+									(function () {
+										var messages = response.messages;
+
+										var channelHasTeamPulseDashboard = false;
+										var messageCount = 0;
+
+										// iterate through messages to find
+										// the `DASHBOARD_TEAM_PULSE` attachment
+										_lodash2.default.some(messages, function (message) {
+
+											// user is `SlackUserId`
+											var user = message.user;
+											var attachments = message.attachments;
+
+											// find the message of the team pulse
+
+											if (user == BotSlackUserId && attachments && attachments[0].callback_id == _constants.constants.dashboardCallBackId) {
+												console.log('\n\n\n this is the message:');
+												console.log(message);
+												channelHasTeamPulseDashboard = true;
+												return channelHasTeamPulseDashboard;
+											}
+
+											messageCount++;
+										});
+
+										if (!channelHasTeamPulseDashboard) {
+											// channel does not have pulse dashboard, let's insert one...
+
+										} else if (messageCount > 15) {
+											// if it's been over 15 messages since
+											// team_pulse dashboard, then we should reset it
+											// (i.e. delete => create new one)
+
+
+										}
+									})();
+								} else {
+
+									console.log('\n\n\n error in getting history of channel:');
+									console.log(err);
+								}
+							});
+						} else {
+							console.log('\n\n\n could not find access token for user in slack channel');
+						}
+					});
+
 					return;
 				}
 
