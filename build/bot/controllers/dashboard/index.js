@@ -182,7 +182,7 @@ function askTimeZoneForChannelDashboard(convo) {
 
 
 	if (text == '') {
-		text = 'Thanks for inviting me to <#' + ChannelId + '>! I\'ll introduce myself and set up a dashboard there of your team\'s priorities once I get which timezone you want it to operate in :raised_hands:';
+		text = 'Thanks for inviting me to <#' + ChannelId + '>! I\'ll introduce myself and set up a dashboard there of your team\'s priorities once I get which timezone you want <#' + ChannelId + '> to operate in :raised_hands:';
 	}
 
 	convo.ask({

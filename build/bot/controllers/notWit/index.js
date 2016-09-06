@@ -119,9 +119,7 @@ exports.default = function (controller) {
 			type: "typing",
 			channel: message.channel
 		});
-		setTimeout(function () {
-			bot.reply(message, "You're welcome!! :smile:");
-		}, 500);
+		bot.reply(message, "You're welcome!! :smile:");
 	});
 
 	// when user wants to "change time and task" of an existing session,
@@ -137,10 +135,8 @@ exports.default = function (controller) {
 			type: "typing",
 			channel: message.channel
 		});
-		setTimeout(function () {
-			var config = { SlackUserId: SlackUserId, changeTimeAndTask: true };
-			controller.trigger('begin_session_flow', [bot, message, config]);
-		}, 500);
+		var config = { SlackUserId: SlackUserId, changeTimeAndTask: true };
+		controller.trigger('begin_session_flow', [bot, message, config]);
 	});
 
 	// TOKI_T1ME TESTER

@@ -18,27 +18,26 @@ exports.default = function (controller) {
 
 
 		var SlackUserId = message.user;
+
 		bot.send({
 			type: "typing",
 			channel: message.channel
 		});
-		setTimeout(function () {
 
-			var replyMessage = "I'm not sure what you mean by that :thinking_face:";
+		var replyMessage = "I'm not sure what you mean by that :thinking_face:";
 
-			var config = { SlackUserId: SlackUserId };
+		var config = { SlackUserId: SlackUserId };
 
-			// some fallbacks for button clicks
-			switch (text) {
-				case (text.match(_constants.utterances.keepWorking) || {}).input:
-					controller.trigger('current_session_status', [bot, config]);
-					break;
-				default:
-					bot.reply(message, replyMessage);
-					controller.trigger('current_session_status', [bot, config]);
-					break;
-			}
-		}, 500);
+		// some fallbacks for button clicks
+		switch (text) {
+			case (text.match(_constants.utterances.keepWorking) || {}).input:
+				controller.trigger('current_session_status', [bot, config]);
+				break;
+			default:
+				// bot.reply(message, replyMessage);
+				controller.trigger('current_session_status', [bot, config]);
+				break;
+		}
 	});
 
 	controller.on('explain_toki_flow', function (bot, config) {

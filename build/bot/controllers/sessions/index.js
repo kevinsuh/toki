@@ -85,32 +85,8 @@ function notInSessionWouldYouLikeToStartOne(config) {
 
 	if (bot && SlackUserId && controller) {
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-			convo.ask('You\'re not in a session right now! Would you like to start one?', [{
-				pattern: _constants.utterances.yes,
-				callback: function callback(response, convo) {
-					convo.startSession = true;
-					convo.next();
-				}
-			}, {
-				pattern: _constants.utterances.no,
-				callback: function callback(response, convo) {
-					convo.say("Okay! Let me know when you want to `/focus` :smile_cat:");
-					convo.next();
-				}
-			}, {
-				default: true,
-				callback: function callback(response, convo) {
-					convo.say("Sorry, I didn't catch that");
-					convo.repeat();
-					convo.next();
-				}
-			}]);
-			convo.next();
-			convo.on('end', function (convo) {
-				if (convo.startSession) {
-					controller.trigger('begin_session_flow', [bot, null, config]);
-				}
-			});
+
+			convo.say('You don\'t have a priority set right now! Let me know when you\'re ready to set a `/priority` :smile_cat:');
 		});
 	}
 }

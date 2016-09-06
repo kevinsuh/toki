@@ -29,9 +29,7 @@ exports.default = function (controller) {
 			channel: message.channel
 		});
 
-		setTimeout(function () {
-			controller.trigger('end_session_flow', [bot, config]);
-		}, 800);
+		controller.trigger('end_session_flow', [bot, config]);
 	});
 
 	/**
