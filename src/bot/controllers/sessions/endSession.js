@@ -7,6 +7,7 @@ import { utterances, colorsArray, buttonValues, colorsHash, constants } from '..
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString } from '../../lib/messageHelpers';
 import { startEndSessionFlow } from './endSessionFunctions';
 import { sendGroupPings } from '../pings/pingFunctions';
+import { updateDashboardForChannelId } from '../../lib/slackHelpers';
 
 
 // END OF A WORK SESSION
@@ -372,6 +373,7 @@ export default function(controller) {
 
 									}
 
+
 								}
 
 								// pings from this end_session user to other users
@@ -406,6 +408,44 @@ export default function(controller) {
 									}
 
 								}
+
+								// update the dashboard for each channel user is in
+								bot.api.channels.list({
+								}, (err, response) => {
+
+									const BotSlackUserId = bot.identity.id;
+
+									if (!err) {
+
+										const { channels } = response;
+
+										channels.forEach((channel) => {
+
+											const { id, name, is_channel, topic, purpose, members } = channel;
+
+											let hasBotSlackUserId    = false;
+											let hasMemberSlackUserId = false;
+
+											_.some(members, (member) => {
+												if (member == SlackUserId) {
+													hasBotSlackUserId = true;
+												} else if (member == BotSlackUserId) {
+													hasMemberSlackUserId = true;
+												}
+											});
+
+											if (hasBotSlackUserId && hasMemberSlackUserId) {
+												updateDashboardForChannelId(bot, id);
+											}
+
+										});
+
+									} else {
+										console.log(`\n\n\n ~~ error in listing channel:`);
+										console.log(err);
+									}
+
+								});
 
 							});
 						});
