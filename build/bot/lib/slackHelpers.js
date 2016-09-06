@@ -141,9 +141,6 @@ function updateDashboardForChannelId(bot, ChannelId) {
 						});
 
 						dashboardUsersArrayAlphabetical.forEach(function (dashboardUser) {
-
-							console.log(dashboardUser);
-
 							var session = dashboardUser.session;
 							var SlackUserId = dashboardUser.user.dataValues.SlackUserId;
 
@@ -231,13 +228,8 @@ function updateDashboardForChannelId(bot, ChannelId) {
 										messageCount++;
 									});
 
-									console.log('\n\n\n\n message count: ' + messageCount);
-
 									if (teamPulseDashboardMessage) {
 										(function () {
-
-											console.log('\n\n\n this is the teamPulseDashboardMessage:');
-											console.log(teamPulseDashboardMessage);
 
 											// update the attachments with the session info!
 											var _teamPulseDashboardMe = teamPulseDashboardMessage;

@@ -429,13 +429,13 @@ export const timeZoneAttachments = [
 
 export const tokiExplainAttachments = [
 	{
-		title: "Focus Sessions",
-		text: "In any channel, use the command `/focus` to knock out a task and protect yourself from non-urgent messages while you work",
+		title: "Set your priority",
+		text: "In any channel, use the command `/priority` to share your current priority and protect yourself from getting pulled to switch contexts from non-urgent messages while you work",
 		mrkdwn_in: [ "text" ],
 		color: colorsHash.toki_purple.hex,
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
-		fallback: "Focus Sessions"
+		fallback: "Set my priority"
 	},
 	{
 		title: "Ping Members",

@@ -128,8 +128,6 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 						dashboardUsersArrayAlphabetical.forEach((dashboardUser) => {
 
-							console.log(dashboardUser);
-
 							const { session, user: { dataValues: { SlackUserId } } } = dashboardUser;
 
 							let sessionContent;
@@ -221,12 +219,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 								});
 
-								console.log(`\n\n\n\n message count: ${messageCount}`);
-
 								if (teamPulseDashboardMessage) {
-
-									console.log(`\n\n\n this is the teamPulseDashboardMessage:`);
-									console.log(teamPulseDashboardMessage);
 
 									// update the attachments with the session info!
 									let { ts } = teamPulseDashboardMessage;
