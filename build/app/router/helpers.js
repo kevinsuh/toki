@@ -10,6 +10,10 @@ exports.saveUserOnLogin = saveUserOnLogin;
 
 var _controllers = require('../../bot/controllers');
 
+var _dotenv = require('dotenv');
+
+var _dotenv2 = _interopRequireDefault(_dotenv);
+
 var _models = require('../models');
 
 var _models2 = _interopRequireDefault(_models);
@@ -17,6 +21,16 @@ var _models2 = _interopRequireDefault(_models);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function getAuthAddress(authCode, uri_path) {
+
+	var env = process.env.NODE_ENV || 'development';
+	if (env == 'development') {
+		console.log("\n\n ~~ In development part of Toki install ~~ \n\n");
+		process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
+		process.env.SLACK_ID = process.env.DEV_SLACK_ID;
+		process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
+		process.env.SLACK_REDIRECT = process.env.DEV_SLACK_REDIRECT;
+	}
+
 	//post code, app ID, and app secret, to get token
 	var authAddress = 'https://slack.com/api/oauth.access?';
 	authAddress += 'client_id=' + process.env.SLACK_ID;

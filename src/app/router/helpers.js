@@ -1,8 +1,19 @@
 import { connectOnLogin, connectOnInstall } from '../../bot/controllers';
 import { controller, bots } from '../../bot/controllers';
+import dotenv from 'dotenv';
 import models from '../models';
 
 export function getAuthAddress(authCode, uri_path) {
+
+	var env = process.env.NODE_ENV || 'development';
+	if (env == 'development') {
+		console.log("\n\n ~~ In development part of Toki install ~~ \n\n");
+	  process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
+	  process.env.SLACK_ID = process.env.DEV_SLACK_ID;
+		process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
+		process.env.SLACK_REDIRECT = process.env.DEV_SLACK_REDIRECT;
+	}
+
 	//post code, app ID, and app secret, to get token
 	var authAddress = 'https://slack.com/api/oauth.access?'
 	authAddress += 'client_id=' + process.env.SLACK_ID

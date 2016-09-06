@@ -19,7 +19,8 @@ import dotenv from 'dotenv';
 
 export default function(controller) {
 
-	controller.hears(['^{'], 'direct_message',isJsonObject, function(bot, message) {
+	controller.hears(['^{'], 'ambient', isJsonObject, function(bot, message) {
+
 
 		let botToken = bot.config.token;
 		bot          = bots[botToken];
@@ -27,27 +28,28 @@ export default function(controller) {
 		const SlackUserId = message.user;
 		const { text }    = message;
 
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(() => {
-			
-			try {
-				let jsonObject = JSON.parse(text);
-				const { updatePing, cancelPing, sendBomb, PingId } = jsonObject;
-				if (updatePing) {
-					const config = { PingId, sendBomb, cancelPing };
-					controller.trigger(`update_ping_message`, [bot, config]);
-				}
-			}
-			catch (error) {
-				// this should never happen!
-				bot.reply(message, "Hmm, something went wrong");
-				return false;
+		try {
+
+			let jsonObject = JSON.parse(text);
+			const { updatePing, cancelPing, sendBomb, PingId, pingUser, PingToSlackUserId } = jsonObject;
+			let config = {};
+			if (updatePing) {
+				config = { PingId, sendBomb, cancelPing };
+				controller.trigger(`update_ping_message`, [bot, config]);
+			} else if (pingUser) {
+				config = { SlackUserId, pingSlackUserIds: [ PingToSlackUserId ] };
+				controller.trigger(`ping_flow`, [bot, null, config]);
 			}
 
-		}, 500);
+		}
+		catch (error) {
+
+			console.log(error);
+
+			// this should never happen!
+			bot.reply(message, "Hmm, something went wrong");
+			return false;
+		}
 
 	});
 

@@ -43,27 +43,36 @@ exports.default = function (controller) {
   */
 	controller.on('ping_flow', function (bot, message) {
 		var config = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-		var _message$intentObject = message.intentObject.entities;
-		var intent = _message$intentObject.intent;
-		var reminder = _message$intentObject.reminder;
-		var duration = _message$intentObject.duration;
-		var datetime = _message$intentObject.datetime;
 
+
+		console.log('\n\n\n PING FLOW:');
+		console.log(message);
+		console.log('\n\n\n\n');
+		console.log(config);
 
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
 
-		var SlackUserId = message.user;
-		var text = message.text;
-
-		var pingSlackUserIds = (0, _messageHelpers.getUniqueSlackUsersFromString)(text);
+		// config is through button-click flow
+		var SlackUserId = config.SlackUserId;
+		var pingSlackUserIds = config.pingSlackUserIds;
 
 		var pingMessages = [];
-		if (pingSlackUserIds) {
-			// this replaces up to "ping <@UIFSMIOM>"
-			var pingMessage = text.replace(/^pi[ng]{1,4}([^>]*>)?/, "").trim();
-			if (pingMessage) {
-				pingMessages.push(pingMessage);
+
+		// this is through slash-command flow
+		if (!SlackUserId && message) {
+
+			var _SlackUserId = message.user;
+			var text = message.text;
+
+			pingSlackUserIds = (0, _messageHelpers.getUniqueSlackUsersFromString)(text);
+
+			if (pingSlackUserIds) {
+				// this replaces up to "ping <@UIFSMIOM>"
+				var pingMessage = text.replace(/^pi[ng]{1,4}([^>]*>)?/, "").trim();
+				if (pingMessage) {
+					pingMessages.push(pingMessage);
+				}
 			}
 		}
 
@@ -77,60 +86,53 @@ exports.default = function (controller) {
 			}
 		}
 
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(function () {
+		_models2.default.User.find({
+			where: { SlackUserId: SlackUserId }
+		}).then(function (user) {
+			var tz = user.tz;
 
-			_models2.default.User.find({
-				where: { SlackUserId: SlackUserId }
-			}).then(function (user) {
-				var tz = user.tz;
+			var UserId = user.id;
 
-				var UserId = user.id;
+			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+				// have 5-minute exit time limit
+				if (convo) convo.task.timeLimit = 1000 * 60 * 5;
 
-					// have 5-minute exit time limit
-					if (convo) convo.task.timeLimit = 1000 * 60 * 5;
+				convo.pingObject = {
+					SlackUserId: SlackUserId,
+					UserId: UserId,
+					bot: bot,
+					tz: tz,
+					pingSlackUserIds: pingSlackUserIds,
+					pingMessages: pingMessages
+				};
 
-					convo.pingObject = {
-						SlackUserId: SlackUserId,
-						UserId: UserId,
-						bot: bot,
-						tz: tz,
-						pingSlackUserIds: pingSlackUserIds,
-						pingMessages: pingMessages
-					};
+				(0, _pingFunctions.confirmTimeZoneExistsThenStartPingFlow)(convo);
 
-					(0, _pingFunctions.confirmTimeZoneExistsThenStartPingFlow)(convo);
-
-					convo.on('end', function (convo) {
-						var _convo$pingObject = convo.pingObject;
-						var SlackUserId = _convo$pingObject.SlackUserId;
-						var tz = _convo$pingObject.tz;
-						var pingUserId = _convo$pingObject.pingUserId;
-						var pingSlackUserId = _convo$pingObject.pingSlackUserId;
-						var pingTimeObject = _convo$pingObject.pingTimeObject;
-						var userInSession = _convo$pingObject.userInSession;
-						var deliveryType = _convo$pingObject.deliveryType;
-						var pingMessages = _convo$pingObject.pingMessages;
-						var neverMind = _convo$pingObject.neverMind;
+				convo.on('end', function (convo) {
+					var _convo$pingObject = convo.pingObject;
+					var SlackUserId = _convo$pingObject.SlackUserId;
+					var tz = _convo$pingObject.tz;
+					var pingUserId = _convo$pingObject.pingUserId;
+					var pingSlackUserId = _convo$pingObject.pingSlackUserId;
+					var pingTimeObject = _convo$pingObject.pingTimeObject;
+					var userInSession = _convo$pingObject.userInSession;
+					var deliveryType = _convo$pingObject.deliveryType;
+					var pingMessages = _convo$pingObject.pingMessages;
+					var neverMind = _convo$pingObject.neverMind;
 
 
-						if (neverMind) // do not send if this is the case!
-							return;
+					if (neverMind) // do not send if this is the case!
+						return;
 
-						var fromUserConfig = { UserId: UserId, SlackUserId: SlackUserId };
-						var toUserConfig = { UserId: pingUserId, SlackUserId: pingSlackUserId };
-						var config = { userInSession: userInSession, deliveryType: deliveryType, pingTimeObject: pingTimeObject, pingMessages: pingMessages };
+					var fromUserConfig = { UserId: UserId, SlackUserId: SlackUserId };
+					var toUserConfig = { UserId: pingUserId, SlackUserId: pingSlackUserId };
+					var config = { userInSession: userInSession, deliveryType: deliveryType, pingTimeObject: pingTimeObject, pingMessages: pingMessages };
 
-						(0, _pingFunctions.queuePing)(bot, fromUserConfig, toUserConfig, config);
-					});
+					(0, _pingFunctions.queuePing)(bot, fromUserConfig, toUserConfig, config);
 				});
 			});
-		}, 250);
+		});
 	});
 
 	/**

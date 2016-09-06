@@ -20,11 +20,9 @@ var _dotenv = require('dotenv');
 
 var _dotenv2 = _interopRequireDefault(_dotenv);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _constants = require('../bot/lib/constants');
 
-/**
- * 		For fun one-off thingz
- */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function test(bot) {
 
@@ -57,7 +55,62 @@ function test(bot) {
 			});
 		}
 	});
-}
+
+	bot.api.channels.list({}, function (err, response) {
+
+		if (!err) {
+			var channels = response.channels;
+
+			channels.forEach(function (channel) {
+				var id = channel.id;
+				var name = channel.name;
+				var is_channel = channel.is_channel;
+				var topic = channel.topic;
+				var purpose = channel.purpose;
+				var members = channel.members;
+
+				if (name == 'distractions') {
+
+					console.log('\n\n in distractions:');
+					console.log(channel);
+					console.log(members);
+					// bot.send({
+					// 	channel: id,
+					// 	text: `<@U121U9CAU> is working on \`test this out\` until *3:31pm*`,
+					// 	attachments: [
+					// 		{
+					// 			attachment_type: 'default',
+					// 			callback_id: "LETS_FOCUS_AGAIN",
+					// 			fallback: "Let's focus again!",
+					// 			actions: [
+					// 				{
+					// 					name: `PING CHIP`,
+					// 					text: "Send Message",
+					// 					value: `{"pingUser": true, "PingToSlackUserId": "U121U9CAU"}`,
+					// 					type: "button"
+					// 				},
+					// 			]
+					// 		}
+					// 	]
+					// });
+				}
+			});
+		} else {
+			console.log('\n\n\n ~~ error in listing channel:');
+			console.log(err);
+		}
+	});
+
+	bot.api.groups.create({
+		name: 'kevin-dashboard'
+	}, function (err, response) {
+
+		console.log('\n\n\n group created:');
+		console.log(response);
+	});
+} /**
+   * 		For fun one-off thingz
+   */
 
 function seedAndUpdateUsers(members) {
 

@@ -92,7 +92,7 @@ if (env == 'development') {
 _controllers.controller.configureSlackApp({
 	clientId: process.env.SLACK_ID,
 	clientSecret: process.env.SLACK_SECRET,
-	scopes: ['bot', 'commands']
+	scopes: ['bot', 'commands', 'groups:write', 'groups:read', 'channels:write']
 });
 _controllers.controller.createWebhookEndpoints(app);
 _controllers.controller.createOauthEndpoints(app, function (err, req, res) {
@@ -135,6 +135,12 @@ _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
    */
 		teamTokens.forEach(function (token, index) {
 			var bot = _controllers.controller.spawn({ token: token, retry: 500 }).startRTM(function (err, bot, payload) {
+
+				console.log('\n\n\n\n\n\n ~~ token: alskfm ' + token);
+
+				if (token == 'xoxb-52208318340-k0U87TEOjyU3DWZwXIJmWB5N') {
+					console.log('\n\n in dev navi group!!!!');
+				}
 
 				if (payload) {
 					var teamMembers = payload.users; // array of user objects!

@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
-	controller.hears(['^{'], 'direct_message', _hearsMiddleware.isJsonObject, function (bot, message) {
+	controller.hears(['^{'], 'ambient', _hearsMiddleware.isJsonObject, function (bot, message) {
 
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
@@ -15,29 +15,32 @@ exports.default = function (controller) {
 		var text = message.text;
 
 
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(function () {
+		try {
 
-			try {
-				var jsonObject = JSON.parse(text);
-				var updatePing = jsonObject.updatePing;
-				var cancelPing = jsonObject.cancelPing;
-				var sendBomb = jsonObject.sendBomb;
-				var PingId = jsonObject.PingId;
+			var jsonObject = JSON.parse(text);
+			var updatePing = jsonObject.updatePing;
+			var cancelPing = jsonObject.cancelPing;
+			var sendBomb = jsonObject.sendBomb;
+			var PingId = jsonObject.PingId;
+			var pingUser = jsonObject.pingUser;
+			var PingToSlackUserId = jsonObject.PingToSlackUserId;
 
-				if (updatePing) {
-					var config = { PingId: PingId, sendBomb: sendBomb, cancelPing: cancelPing };
-					controller.trigger('update_ping_message', [bot, config]);
-				}
-			} catch (error) {
-				// this should never happen!
-				bot.reply(message, "Hmm, something went wrong");
-				return false;
+			var config = {};
+			if (updatePing) {
+				config = { PingId: PingId, sendBomb: sendBomb, cancelPing: cancelPing };
+				controller.trigger('update_ping_message', [bot, config]);
+			} else if (pingUser) {
+				config = { SlackUserId: SlackUserId, pingSlackUserIds: [PingToSlackUserId] };
+				controller.trigger('ping_flow', [bot, null, config]);
 			}
-		}, 500);
+		} catch (error) {
+
+			console.log(error);
+
+			// this should never happen!
+			bot.reply(message, "Hmm, something went wrong");
+			return false;
+		}
 	});
 
 	// defer ping!

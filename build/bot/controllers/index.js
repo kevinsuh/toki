@@ -187,6 +187,12 @@ controller.on('user_change', function (bot, message) {
 	}
 });
 
+// join a channel
+controller.on('channel_joined', function (bot, message) {
+	console.log('\n\n\n yo joined the channel:');
+	console.log(message);
+});
+
 controller.on('reaction_added', function (bot, message) {
 
 	console.log('\n\n yo reaction added:');
@@ -263,7 +269,50 @@ controller.on('create_bot', function (bot, team) {
 
 	if (bots[bot.config.token]) {
 		// already online! do nothing.
-		console.log("already online! do nothing.");
+		console.log("already online! updating bot...");
+
+		var id = team.id;
+		var _team$bot = team.bot;
+		var token = _team$bot.token;
+		var user_id = _team$bot.user_id;
+		var createdBy = _team$bot.createdBy;
+
+
+		_models2.default.Team.update({
+			createdBy: createdBy,
+			token: token
+		}, {
+			where: { TeamId: id }
+		}).then(function () {
+
+			// restart the bot
+			bots[bot.config.token].closeRTM();
+			bots[bot.config.token] = bot;
+			bot.startRTM(function (err) {
+				if (!err) {
+					console.log("\n\n RTM on with team install and listening \n\n");
+					trackBot(bot);
+					controller.saveTeam(team, function (err, id) {
+						if (err) {
+							console.log("Error saving team");
+						} else {
+							console.log("Team " + team.name + " saved");
+							console.log('\n\n installing users... \n\n');
+							bot.api.users.list({}, function (err, response) {
+								if (!err) {
+									var members = response.members;
+
+									(0, _scripts.seedAndUpdateUsers)(members);
+								}
+								(0, _actions.firstInstallInitiateConversation)(bot, team);
+							});
+						}
+					});
+				} else {
+					console.log("RTM failed");
+				}
+			});
+		});
 	} else {
 
 		bot.startRTM(function (err) {

@@ -54,22 +54,34 @@ export default function(controller) {
 	 */
 	controller.on('ping_flow', (bot, message, config = {}) => {
 
-		const { intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
+		console.log(`\n\n\n PING FLOW:`);
+		console.log(message);
+		console.log(`\n\n\n\n`);
+		console.log(config);
 
 		let botToken = bot.config.token;
 		bot          = bots[botToken];
 
-		const SlackUserId    = message.user;
-		const { text }       = message;
-		let pingSlackUserIds = getUniqueSlackUsersFromString(text);
+		// config is through button-click flow
+		const { SlackUserId }    = config;
+		let { pingSlackUserIds } = config;
+		let pingMessages         = [];
 
-		let pingMessages = [];
-		if (pingSlackUserIds) {
-			// this replaces up to "ping <@UIFSMIOM>"
-			let pingMessage = text.replace(/^pi[ng]{1,4}([^>]*>)?/,"").trim()
-			if (pingMessage) {
-				pingMessages.push(pingMessage);
+		// this is through slash-command flow
+		if (!SlackUserId && message) {
+
+			const SlackUserId = message.user;
+			const { text }    = message;
+			pingSlackUserIds  = getUniqueSlackUsersFromString(text);
+
+			if (pingSlackUserIds) {
+				// this replaces up to "ping <@UIFSMIOM>"
+				let pingMessage = text.replace(/^pi[ng]{1,4}([^>]*>)?/,"").trim()
+				if (pingMessage) {
+					pingMessages.push(pingMessage);
+				}
 			}
+
 		}
 
 		// allow customization
@@ -82,56 +94,48 @@ export default function(controller) {
 			}
 		}
 
-		bot.send({
-			type: "typing",
-			channel: message.channel
-		});
-		setTimeout(() => {
+		models.User.find({
+			where: { SlackUserId }
+		}).then((user) => {
 
-			models.User.find({
-				where: { SlackUserId }
-			}).then((user) => {
+			const { tz } = user;
+			const UserId = user.id;
 
-				const { tz } = user;
-				const UserId = user.id;
+			bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
 
-				bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
+				// have 5-minute exit time limit
+				if (convo)
+					convo.task.timeLimit = 1000 * 60 * 5;
 
-					// have 5-minute exit time limit
-					if (convo)
-						convo.task.timeLimit = 1000 * 60 * 5;
+				convo.pingObject = {
+					SlackUserId,
+					UserId,
+					bot,
+					tz,
+					pingSlackUserIds,
+					pingMessages
+				}
 
-					convo.pingObject = {
-						SlackUserId,
-						UserId,
-						bot,
-						tz,
-						pingSlackUserIds,
-						pingMessages
-					}
+				confirmTimeZoneExistsThenStartPingFlow(convo);
 
-					confirmTimeZoneExistsThenStartPingFlow(convo);
+				convo.on(`end`, (convo) => {
+					
+					const { SlackUserId, tz, pingUserId, pingSlackUserId, pingTimeObject, userInSession, deliveryType, pingMessages, neverMind } = convo.pingObject;
 
-					convo.on(`end`, (convo) => {
-						
-						const { SlackUserId, tz, pingUserId, pingSlackUserId, pingTimeObject, userInSession, deliveryType, pingMessages, neverMind } = convo.pingObject;
+					if (neverMind) // do not send if this is the case!
+						return;
 
-						if (neverMind) // do not send if this is the case!
-							return;
+					const fromUserConfig = { UserId, SlackUserId };
+					const toUserConfig   = { UserId: pingUserId, SlackUserId: pingSlackUserId };
+					const config   = { userInSession, deliveryType, pingTimeObject, pingMessages };
 
-						const fromUserConfig = { UserId, SlackUserId };
-						const toUserConfig   = { UserId: pingUserId, SlackUserId: pingSlackUserId };
-						const config   = { userInSession, deliveryType, pingTimeObject, pingMessages };
+					queuePing(bot, fromUserConfig, toUserConfig, config);
 
-						queuePing(bot, fromUserConfig, toUserConfig, config);
-
-					})
-
-				});
+				})
 
 			});
 
-		}, 250);
+		});
 
 	});
 

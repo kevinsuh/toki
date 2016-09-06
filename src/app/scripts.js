@@ -6,6 +6,8 @@ import { bots, controller } from '../bot/controllers';
 import models from './models';
 import moment from 'moment-timezone';
 import dotenv from 'dotenv';
+import { utterances, colorsArray, constants, buttonValues, colorsHash, timeZones, tokiExplainAttachments } from '../bot/lib/constants';
+
 
 export function test(bot) {
 	
@@ -41,6 +43,59 @@ export function test(bot) {
 
 		}
 	});
+
+	bot.api.channels.list({
+	}, (err, response) => {
+
+		if (!err) {
+
+			const { channels } = response;
+			channels.forEach((channel) => {
+				const { id, name, is_channel, topic, purpose, members } = channel;
+				if (name == 'distractions') {
+
+					console.log(`\n\n in distractions:`);
+					console.log(channel);
+					console.log(members);
+					// bot.send({
+					// 	channel: id,
+					// 	text: `<@U121U9CAU> is working on \`test this out\` until *3:31pm*`,
+					// 	attachments: [
+					// 		{
+					// 			attachment_type: 'default',
+					// 			callback_id: "LETS_FOCUS_AGAIN",
+					// 			fallback: "Let's focus again!",
+					// 			actions: [
+					// 				{
+					// 					name: `PING CHIP`,
+					// 					text: "Send Message",
+					// 					value: `{"pingUser": true, "PingToSlackUserId": "U121U9CAU"}`,
+					// 					type: "button"
+					// 				},
+					// 			]
+					// 		}
+					// 	]
+					// });
+
+				}
+			});
+
+
+		} else {
+			console.log(`\n\n\n ~~ error in listing channel:`);
+			console.log(err);
+		}
+
+	});
+
+	bot.api.groups.create({
+		name: `kevin-dashboard`
+	}, (err, response) => {
+
+		console.log(`\n\n\n group created:`);
+		console.log(response);
+
+	})
 
 }
 

@@ -64,7 +64,7 @@ customConfigBot(controller);
 controller.configureSlackApp({
 	clientId: process.env.SLACK_ID,
 	clientSecret: process.env.SLACK_SECRET,
-	scopes: ['bot', 'commands']
+	scopes: ['bot', 'commands', 'groups:write', 'groups:read', 'channels:write']
 })
 controller.createWebhookEndpoints(app);
 controller.createOauthEndpoints(app,function(err,req,res) {
@@ -107,6 +107,13 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 		 */
 		teamTokens.forEach((token, index) => {
 			var bot = controller.spawn({ token, retry: 500 }).startRTM((err, bot, payload) => {
+
+				console.log(`\n\n\n\n\n\n ~~ token: alskfm ${token}`)
+
+				if (token == `xoxb-52208318340-k0U87TEOjyU3DWZwXIJmWB5N`) {
+					console.log(`\n\n in dev navi group!!!!`);
+				}
+					
 
 				if (payload) {
 					let teamMembers = payload.users; // array of user objects!

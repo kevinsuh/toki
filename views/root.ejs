@@ -109,14 +109,25 @@
 </html>
 
 
-<% if (false) { %>
-	
-<center>
-	<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot,commands'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
-</center>
+<% var env = locals.env || 'development';
+	if (env == "development") { %>
+	<center>
+		DEV MODE:
+		<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.DEV_SLACK_ID %>&redirect_uri=<%= process.env.DEV_SLACK_REDIRECT %>new&scope=bot,commands,channels:write'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
+	</center>
 
-<center style="margin-top: 25px;">
-	<a href="https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>login&scope=identity.basic"><img alt="Add to Slack" height="40" width="172" src="/assets/images/sign_in_with_slack_2.png" /></a>
-</center>
+	<center style="margin-top: 25px;">
+		<a href="https://slack.com/oauth/authorize?client_id=<%= process.env.DEV_SLACK_ID %>&redirect_uri=<%= process.env.DEV_SLACK_REDIRECT %>login&scope=identity.basic,channels:write"><img alt="Sign in with Slack" height="40" width="172" src="/assets/images/sign_in_with_slack_2.png" /></a>
+	</center>
+<% } else { %>
+	<center>
+		<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot,commands,groups:write'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
+	</center>
 
+	<center style="margin-top: 25px;">
+		<a href="https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>login&scope=identity.basic,groups:write"><img alt="Add to Slack" height="40" width="172" src="/assets/images/sign_in_with_slack_2.png" /></a>
+	</center>
 <% } %>
+
+
+
