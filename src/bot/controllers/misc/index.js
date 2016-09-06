@@ -38,7 +38,7 @@ export default function(controller) {
 				controller.trigger(`current_session_status`, [bot, config])
 				break;
 		}
-		
+
 	});
 
 	controller.on('explain_toki_flow', (bot, config) => {
@@ -195,7 +195,7 @@ export default function(controller) {
 							});
 
 							const totalTimeInSessionsString = convertMinutesToHoursString(totalTimeInSessions);
-							text = `You spent ${totalTimeInSessionsString} in focused sessions ${sinceDayString}. Here's a quick breakdown of what you spent your time on:`;
+							text = `You spent ${totalTimeInSessionsString} on your priorities with me ${sinceDayString}. Here's a quick breakdown of what you spent your time on:`;
 
 							let attachments = [{
 								attachment_type: 'default',
