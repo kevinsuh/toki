@@ -46,7 +46,7 @@ function startEndSessionFlow(convo) {
 	var sessionMinutes = void 0;
 	var sessionTimeString = void 0;
 	var message = ' ';
-	var letsFocusMessage = 'When you’re ready, let me know when you’d like to focus again';
+	var letsFocusMessage = 'When you’re ready, let me know when you’d like to `/focus` again';
 
 	// add session info (the one that just got ended) if existing
 	// this is not the case when you have queued ping
@@ -119,8 +119,7 @@ function startEndSessionFlow(convo) {
 	handleFromUserPings(convo);
 
 	convo.say({
-		text: letsFocusMessage,
-		attachments: _constants.letsFocusAttachments
+		text: letsFocusMessage
 	});
 
 	convo.next();
