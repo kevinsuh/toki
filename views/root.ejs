@@ -116,19 +116,19 @@
 		<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.DEV_SLACK_ID %>&redirect_uri=<%= process.env.DEV_SLACK_REDIRECT %>new&scope=bot,commands,channels:history'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
 	</center>
 
-	<center style="margin-top: 25px;">
-		<a href="https://slack.com/oauth/authorize?client_id=<%= process.env.DEV_SLACK_ID %>&redirect_uri=<%= process.env.DEV_SLACK_REDIRECT %>login&scope=identity.basic,channels:history"><img alt="Sign in with Slack" height="40" width="172" src="/assets/images/sign_in_with_slack_2.png" /></a>
-	</center>
 <% } else if (false) { %>
-	<!-- dont show this for now -->
+	<!-- this is production, but not ready yet -->
 	<center>
 		<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot,commands,channels:history'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
 	</center>
 
+<% } else if (false) { %>
+	<!-- this is Sign In with Slack, which we aren't using right now -->
 	<center style="margin-top: 25px;">
-		<a href="https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>login&scope=identity.basic,channels:history"><img alt="Add to Slack" height="40" width="172" src="/assets/images/sign_in_with_slack_2.png" /></a>
+		<a href="https://slack.com/oauth/authorize?client_id=<%= process.env.DEV_SLACK_ID %>&redirect_uri=<%= process.env.DEV_SLACK_REDIRECT %>login&scope=identity.basic,channels:history"><img alt="Sign in with Slack" height="40" width="172" src="/assets/images/sign_in_with_slack_2.png" /></a>
 	</center>
+	<center style="margin-top: 25px;">
+		<a href="https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>login&scope=identity.basic,channels:history"><img alt="Sign in with Slack" height="40" width="172" src="/assets/images/sign_in_with_slack_2.png" /></a>
+	</center>
+
 <% } %>
-
-
-
