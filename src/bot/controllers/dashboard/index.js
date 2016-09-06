@@ -103,6 +103,9 @@ export default function(controller) {
 										controller.trigger(`setup_dashboard_flow`, [ bot, config ]);
 									}, 500);
 								} else {
+
+									console.log(`\n\n\n creator is: ${creator} \n\n\n`);
+
 									const timezoneConfig = {
 										CreatorSlackUserId: creator,
 										ChannelId
