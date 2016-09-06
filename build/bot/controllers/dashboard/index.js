@@ -32,10 +32,14 @@ exports.default = function (controller) {
 		// create channel record
 		_models2.default.Channel.findOrCreate({
 			where: { ChannelId: id }
-		}).then(function (channel) {
+		}).spread(function (channel, created) {
 			var ChannelId = channel.ChannelId;
 			var tz = channel.tz;
 
+
+			var config = {
+				ChannelId: ChannelId
+			};
 
 			if (ChannelId && tz) {
 
@@ -62,9 +66,6 @@ exports.default = function (controller) {
 						// now we can handle dashboard flow
 						var ChannelId = convo.dashboardConfirm.ChannelId;
 
-						var config = {
-							ChannelId: ChannelId
-						};
 						controller.trigger('setup_dashboard_flow', [bot, config]);
 					});
 				});
@@ -140,6 +141,21 @@ exports.default = function (controller) {
 		// 3. make sure Toki is in the channel
 		// 4. if so, post in it with the dashboard!
 
+		bot.api.channels.info({
+			channel: ChannelId
+		}, function (err, response) {
+
+			if (!err) {
+
+				console.log('\n\n\n successfully got channel in setup_dashboard_flow');
+				console.log(response);
+			} else {
+
+				console.log('\n\n\n error in getting channel info in setup_dashboard_flow');
+				console.log(err);
+				console.log('\n\n\n');
+			}
+		});
 
 		// bot.send({
 		// 			channel: id,
@@ -179,10 +195,10 @@ exports.default = function (controller) {
 			var pingUser = jsonObject.pingUser;
 			var PingToSlackUserId = jsonObject.PingToSlackUserId;
 
-			var _config = {};
+			var config = {};
 			if (pingUser) {
-				_config = { SlackUserId: SlackUserId, pingSlackUserIds: [PingToSlackUserId] };
-				controller.trigger('ping_flow', [bot, null, _config]);
+				config = { SlackUserId: SlackUserId, pingSlackUserIds: [PingToSlackUserId] };
+				controller.trigger('ping_flow', [bot, null, config]);
 			}
 		} catch (error) {
 

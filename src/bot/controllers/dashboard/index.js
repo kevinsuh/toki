@@ -33,9 +33,13 @@ export default function(controller) {
 		models.Channel.findOrCreate({
 			where: { ChannelId: id }
 		})
-		.then((channel) => {
+		.spread((channel, created) => {
 
 			const { ChannelId, tz } = channel;
+
+			const config = {
+				ChannelId
+			}
 
 			if (ChannelId && tz) {
 
@@ -62,9 +66,6 @@ export default function(controller) {
 						// only way to get here is if timezone got updated.
 						// now we can handle dashboard flow
 						const { ChannelId } = convo.dashboardConfirm;
-						const config = {
-							ChannelId
-						}
 						controller.trigger(`setup_dashboard_flow`, [ bot, config ]);
 
 					})
@@ -148,6 +149,24 @@ export default function(controller) {
 		// 3. make sure Toki is in the channel
 		// 4. if so, post in it with the dashboard!
 		
+		bot.api.channels.info({
+			channel: ChannelId
+		}, (err, response) => {
+
+			if (!err) {
+
+				console.log(`\n\n\n successfully got channel in setup_dashboard_flow`);
+				console.log(response);
+
+			} else {
+
+				console.log(`\n\n\n error in getting channel info in setup_dashboard_flow`);
+				console.log(err);
+				console.log(`\n\n\n`);
+
+			}
+
+		})
 
 		// bot.send({
 		// 			channel: id,
