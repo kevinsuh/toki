@@ -96,149 +96,258 @@ export function test(bot) {
 							return;
 						}
 
+						let zoneAbbrString = moment().tz(tz).zoneAbbr(); // ex. EDT
+						let todayString    = moment().tz(tz).format(`MMMM Do YYYY`); // ex. September 6th, 2016
+						let text           = `:raised_hands: *Team Pulse for ${todayString}* :raised_hands:`;
+						let attachments    = [];
+
 						models.Team.find({
 							where: [`"Team"."TeamId" = ?`, KevinTeamId]
 						})
 						.then((team) => {
 
-							models.User.find({
-								where: { SlackUserId: KevinSlackUserId }
+							const { accessToken } = team;
+
+							if (!accessToken) {
+								console.log(`\n\n\n ERROR... NO TZ FOR BOT: ${ChannelId}`);
+								return;
+							}
+
+							let dashboardMemberSlackUserIds = [];
+							members.forEach((MemberSlackUserId) => {
+
+								if (MemberSlackUserId != BotSlackUserId) {
+									dashboardMemberSlackUserIds.push(MemberSlackUserId);
+								}
+
+							});
+
+							models.User.findAll({
+								where: [ `"User"."SlackUserId" IN (?)`, dashboardMemberSlackUserIds ]
 							})
-							.then((user) => {
+							.then((users) => {
 
-								user.getSessions({
-									where: [ `"Session"."open" = ?`, true ],
-									order: `"Session"."createdAt" DESC`,
-									limit: 1
-								})
-								.then((sessions) => {
+								let sessionPromises = [];
+								let dashboardUsers  = {}; // by SlackUserId key i.e. dashboardUsers[`UI14242`] = {}
 
-									let session = sessions[0];
+								users.forEach((user) => {
 
-									const { accessToken } = team.dataValues;
+									sessionPromises.push(models.Session.find({
+										where: {
+											UserId: user.dataValues.id,
+											live: true,
+											open: true
+										},
+										include: [ models.User ]
+									}));
+									dashboardUsers[user.dataValues.SlackUserId] = {
+										session: false,
+										user: user
+									};
 
-									if (accessToken) {
+								});
 
-										bot.api.channels.history({
-											token: accessToken,
-											channel: ChannelId
-										}, (err, response) => {
+								let userSessions = []; // unique sessions only
+								Promise.all(sessionPromises)
+								.then((userSessions) => {
 
-											if (!err) {
+									userSessions.forEach((userSession) => {
 
-												const { messages }            = response;
-												let teamPulseDashboardMessage = false;
-												let messageCount              = 0;
+										if (userSession && dashboardUsers[userSession.dataValues.User.SlackUserId]) {
+											dashboardUsers[userSession.dataValues.User.SlackUserId].session = userSession;
+										}
 
-												// iterate through messages to find
-												// the `DASHBOARD_TEAM_PULSE` attachment
-												_.some(messages, (message) => {
+									});
 
-													// user is `SlackUserId`
-													const { user, attachments } = message;
+									attachments = [{
+										mrkdwn_in: [ "text", "fields" ],
+										callback_id: constants.dashboardCallBackId,
+										fallback: `Here's your team pulse!`,
+										fields: [
+											{
+												title: "Current Priority",
+												short: true
+											},
+											{
+												title: `Until (${zoneAbbrString})`,
+												short: true
+											}
+										],
+										color: colorsHash.white.hex
+									}];
 
-													// find the message of the team pulse
-													if (user == BotSlackUserId && attachments && attachments[0].callback_id == constants.dashboardCallBackId) {
-														teamPulseDashboardMessage = message;
-														return true;
-													}
+									// iterate through dashboardUsers and put into alphabetized array
+									let dashboardUsersArrayAlphabetical = [];
+									_.forOwn(dashboardUsers, (value, key) => {
+										// value is the object that has value.user and value.session
+										dashboardUsersArrayAlphabetical.push(value);
+									});
 
-													messageCount++;
+									dashboardUsersArrayAlphabetical.sort((a, b) => {
+								
+										let nameA = a.user.dataValues.SlackName;
+										let nameB = b.user.dataValues.SlackName;
+										return (nameA < nameB) ? -1 : (nameA > nameB) ? 1 : 0;
 
-												});
+									});
 
-												console.log(`\n\n\n\n message count: ${messageCount}`);
+									dashboardUsersArrayAlphabetical.forEach((dashboardUser) => {
 
-												if (teamPulseDashboardMessage) {
+										console.log(dashboardUser);
 
-													console.log(`\n\n\n this is the teamPulseDashboardMessage:`);
-													console.log(teamPulseDashboardMessage);
+										const { session, user: { dataValues: { SlackUserId } } } = dashboardUser;
 
-													// update the attachments with the session info!
-													let { text, attachments, ts } = teamPulseDashboardMessage;
-													const updateTeamPulseDashboardMessageObject = {
-														text,
+										let sessionContent;
+										let sessionTime;
+										let sessionColor;
+
+										if (session) {
+											sessionContent = `\`${session.dataValues.content}\``;
+											sessionTime    = moment(session.dataValues.endTime).tz(tz).format("h:mma");
+											sessionColor   = colorsHash.toki_purple.hex;
+										} else {
+											sessionContent = `_No active priority_`;
+											sessionTime    = ``;
+											sessionColor   = colorsHash.grey.hex;
+										}
+
+										// alphabetize the 
+										attachments.push({
+											attachment_type: 'default',
+											callback_id: "DASHBOARD_SESSION_INFO_FOR_USER",
+											fallback: `Here's the session info!`,
+											text: `<@${SlackUserId}>`,
+											mrkdwn_in: [ "text", "fields" ],
+											fields: [
+												{
+													value: sessionContent,
+													short: true
+												},
+												{
+													value: sessionTime,
+													short: true
+												}
+											],
+											color: sessionColor,
+											actions: [
+												{
+													name: "SEND_PING",
+													text: "Send Message",
+													value: `{"pingUser": true, "PingToSlackUserId": "${SlackUserId}"}`,
+													type: "button"
+												}
+											]
+										});
+
+									});
+
+									attachments.push({
+										attachment_type: 'default',
+										callback_id: "DASHBOARD_ACTIONS_FOR_USER",
+										fallback: `Would you like to set a priority?`,
+										mrkdwn_in: [ "text", "fields" ],
+										color: colorsHash.toki_yellow.hex,
+										text: "_Update your current priority_",
+										actions: [
+											{
+												name: "SET_PRIORITY",
+												text: "Set My Priority",
+												value: `{"setPriority": true}`,
+												type: "button"
+											}
+										]
+									});
+
+									bot.api.channels.history({
+										token: accessToken,
+										channel: ChannelId
+									}, (err, response) => {
+
+										if (!err) {
+
+											const { messages }            = response;
+											let teamPulseDashboardMessage = false;
+											let messageCount              = 0;
+
+											// iterate through messages to find
+											// the `DASHBOARD_TEAM_PULSE` attachment
+											_.some(messages, (message) => {
+
+												// user is `SlackUserId`
+												const { user, attachments } = message;
+
+												// find the message of the team pulse
+												if (user == BotSlackUserId && attachments && attachments[0].callback_id == constants.dashboardCallBackId) {
+													teamPulseDashboardMessage = message;
+													return true;
+												}
+
+												messageCount++;
+
+											});
+
+											console.log(`\n\n\n\n message count: ${messageCount}`);
+
+											if (teamPulseDashboardMessage) {
+
+												console.log(`\n\n\n this is the teamPulseDashboardMessage:`);
+												console.log(teamPulseDashboardMessage);
+
+												// update the attachments with the session info!
+												let { ts } = teamPulseDashboardMessage;
+												const updateTeamPulseDashboardMessageObject = {
+													channel: ChannelId,
+													ts,
+													attachments
+												};
+
+												updateTeamPulseDashboardMessageObject.text        = text;
+												updateTeamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
+												bot.api.chat.update(updateTeamPulseDashboardMessageObject);
+
+												if (messageCount > 15) {
+
+													// if it's been over 15 messages since
+													// team_pulse dashboard, then we should reset it
+													// (i.e. delete => create new one)
+
+													bot.send({
 														channel: ChannelId,
-														ts
-													};
-
-													attachments = attachments.map((attachment) => {
-
-														let { text, fields, color } = attachment;
-
-														if (text == `<@${KevinSlackUserId}>`) {
-
-															// update for this user!
-															let sessionContent;
-															let sessionTime;
-															let sessionColor;
-
-															if (session) {
-																sessionContent = `\`${session.dataValues.content}\``;
-																sessionTime    = moment(session.dataValues.endTime).tz(tz).format("h:mma");
-																sessionColor   = colorsHash.toki_purple.hex;
-															} else {
-																sessionContent = `_No active priority_`;
-																sessionTime    = ``;
-																sessionColor   = colorsHash.grey.hex;
-															}
-
-															fields[0].value = sessionContent;
-															fields[1].value = sessionTime;
-															color           = sessionColor;
-
-														}
-
-														attachment.color  = color;
-														attachment.fields = fields;
-
-														return attachment;
-
-													});
-
-													updateTeamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
-													bot.api.chat.update(updateTeamPulseDashboardMessageObject);
-
-													if (messageCount > 15) {
-
-														// if it's been over 15 messages since
-														// team_pulse dashboard, then we should reset it
-														// (i.e. delete => create new one)
-
+														text: `Hey, it's been ${messageCount} since the dashboard so I refreshed it`
+													}, () => {
+														bot.api.chat.delete(updateTeamPulseDashboardMessageObject);
 														bot.send({
 															channel: ChannelId,
-															text: `Hey, it's been ${messageCount} since the dashboard so I refreshed it`
-														}, () => {
-															bot.api.chat.delete(updateTeamPulseDashboardMessageObject);
-															bot.send({
-																channel: ChannelId,
-																text,
-																attachments
-															});
-														})
-
-													}
-
-												} else {
-													// channel does not have pulse dashboard, let's insert one...
-
+															text,
+															attachments
+														});
+													})
 
 												}
 
 											} else {
-
-												console.log(`\n\n\n error in getting history of channel:`);
-												console.log(err);
+												// channel does not have pulse dashboard, let's insert one...
+												console.log(`\n\n\n no pulse dashboard... creating new one:`);
+												bot.send({
+													channel: ChannelId,
+													text,
+													attachments
+												});
 
 											}
 
-										})
+										} else {
 
-									} else {
-										console.log(`\n\n\n could not find access token for user in slack channel`);
-									}
+											console.log(`\n\n\n error in getting history of channel:`);
+											console.log(err);
 
-								})
+										}
+
+									})
+
+
+								});
+								
 							});
 						})
 					})

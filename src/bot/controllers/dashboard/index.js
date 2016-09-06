@@ -13,7 +13,6 @@ export default function(controller) {
 	/**
 	 * HANDLE DASHBOARD HERE
 	 */
-	
 
 	// joined a channel => make sure they want dashboard functionality
 	controller.on([`channel_joined`, `group_joined`], (bot, message) => {
