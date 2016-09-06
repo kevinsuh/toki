@@ -86,6 +86,7 @@ export default function(controller) {
 									if (session) {
 
 										let pingFlowConfig = {
+											SlackUserId,
 											pingSlackUserIds: [ toUser.dataValues.SlackUserId ],
 											pingMessages
 										}

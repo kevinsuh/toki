@@ -274,7 +274,7 @@ function askForSessionContent(convo, question = '') {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
-				convo.say(`Okay! Let me know when you want to \`get focused\``);
+				convo.say(`Okay! Let me know when you want to \`/focus\``);
 				convo.next();
 			}
 		},
