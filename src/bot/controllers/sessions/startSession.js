@@ -76,10 +76,6 @@ export default function(controller) {
 			if (!content) {
 				content = getSessionContentFromMessageObject(message);
 			}
-			bot.send({
-				type: "typing",
-				channel: message.channel
-			});
 		} else {
 			SlackUserId = config.SlackUserId;
 		}

@@ -38,7 +38,8 @@ exports.default = function (controller) {
 
 
 			var config = {
-				ChannelId: ChannelId
+				ChannelId: ChannelId,
+				BotSlackUserId: BotSlackUserId
 			};
 
 			if (ChannelId && tz) {
@@ -46,6 +47,7 @@ exports.default = function (controller) {
 				// this means Toki is just getting re-invited
 				controller.trigger('setup_dashboard_flow', [bot, config]);
 			} else {
+
 				// creating Toki for the first time
 
 				// get timezone for the channel
@@ -65,6 +67,7 @@ exports.default = function (controller) {
 						// only way to get here is if timezone got updated.
 						// now we can handle dashboard flow
 						var ChannelId = convo.dashboardConfirm.ChannelId;
+
 
 						controller.trigger('setup_dashboard_flow', [bot, config]);
 					});
@@ -135,6 +138,8 @@ exports.default = function (controller) {
 		console.log(config);
 
 		var ChannelId = config.ChannelId;
+		var BotSlackUserId = config.BotSlackUserId;
+		var tz = config.tz;
 
 		// 1. find ChannelId using Slack API
 		// 2. get members of that channel
@@ -146,9 +151,190 @@ exports.default = function (controller) {
 		}, function (err, response) {
 
 			if (!err) {
+				(function () {
 
-				console.log('\n\n\n successfully got channel in setup_dashboard_flow');
-				console.log(response);
+					console.log('\n\n\n successfully got channel in setup_dashboard_flow');
+					console.log(response);
+
+					var channel = response.channel;
+					var _response$channel = response.channel;
+					var id = _response$channel.id;
+					var name = _response$channel.name;
+					var members = _response$channel.members;
+
+
+					_models2.default.Channel.find({
+						where: { ChannelId: id }
+					}).then(function (channel) {
+						var tz = channel.tz;
+						var ChannelId = channel.ChannelId;
+
+
+						if (!tz) {
+							console.log('\n\n\n channel needs tz... \n\n\n');
+							return;
+						}
+
+						// introduction message
+						bot.send({
+							channel: ChannelId,
+							text: 'Hi! I\'m Toki, your team\'s sidekick to make the most of your attention each day :raised_hands:\nI\'ll set up a dashboard here of your team\'s statuses each day. If you ever need a refresher on how I work, just say `/explain` and I\'d love to go into more detail!'
+						});
+
+						var zoneAbbrString = (0, _momentTimezone2.default)().tz(tz).zoneAbbr(); // ex. EDT
+						var todayString = (0, _momentTimezone2.default)().tz(tz).format('MMMM Do YYYY'); // ex. September 6th, 2016
+
+						var text = ':raised_hands: *Attention board for ' + todayString + '* :raised_hands:';
+						var attachments = [];
+
+						var dashboardMemberSlackUserIds = [];
+						members.forEach(function (MemberSlackUserId) {
+
+							if (MemberSlackUserId != BotSlackUserId) {
+								dashboardMemberSlackUserIds.push(MemberSlackUserId);
+							}
+						});
+
+						_models2.default.User.findAll({
+							where: ['"User"."SlackUserId" IN (?)', dashboardMemberSlackUserIds]
+						}).then(function (users) {
+
+							var sessionPromises = [];
+							var dashboardUsers = {}; // by SlackUserId key i.e. dashboardUsers[`UI14242`] = {}
+
+							users.forEach(function (user) {
+
+								sessionPromises.push(_models2.default.Session.find({
+									where: {
+										UserId: user.dataValues.id,
+										live: true,
+										open: true
+									},
+									include: [_models2.default.User]
+								}));
+								dashboardUsers[user.dataValues.SlackUserId] = { session: false };
+							});
+
+							var userSessions = []; // unique sessions only
+							Promise.all(sessionPromises).then(function (userSessions) {
+
+								userSessions.forEach(function (userSession) {
+
+									if (userSession && dashboardUsers[userSession.dataValues.User.SlackUserId]) {
+										dashboardUsers[userSession.dataValues.User.SlackUserId].session = userSession;
+									}
+								});
+
+								// you will have all the sessions and users here
+								// now you must post the dashboard with the session info
+								// via attachment that has specific msg
+
+								console.log('\n\n\n dashboardUsers object: ');
+								console.log(dashboardUsers);
+
+								/*
+         dashboardUsers object:
+        { U1NCGAETZ: { session: false },
+          U121ZK15J:
+           { session:
+              { dataValues: [Object],
+                _previousDataValues: [Object],
+                _changed: {},
+                '$modelOptions': [Object],
+                '$options': [Object],
+                hasPrimaryKeys: true,
+                __eagerlyLoadedAssociations: [],
+                isNewRecord: false,
+                User: [Object] } } }
+         */
+								attachments = [{
+									mrkdwn_in: ["text", "fields"],
+									fields: [{
+										title: "Current Priority",
+										short: true
+									}, {
+										title: 'Until (' + zoneAbbrString + ')',
+										short: true
+									}],
+									color: _constants.colorsHash.white.hex
+								}];
+
+								// iterate through dashboardUsers
+								_lodash2.default.forOwn(dashboardUsers, function (value, key) {
+
+									// value is the object, key is SlackUserId
+									var session = value.session;
+
+									var sessionContent = session ? '`' + session.dataValues.content + '`' : '_No context_';
+									var sessionTime = session ? (0, _momentTimezone2.default)(session.dataValues.endTime).tz(tz).format("h:mma") : '';
+									var sessionColor = session ? _constants.colorsHash.toki_purple.hex : _constants.colorsHash.grey.hex;
+
+									attachments.push({
+										attachment_type: 'default',
+										callback_id: "DASHBOARD_SESSION_INFO_FOR_USER",
+										fallback: 'Here\'s the session info!',
+										text: '<@' + key + '>',
+										mrkdwn_in: ["text", "fields"],
+										fields: [{
+											value: sessionContent,
+											short: true
+										}, {
+											value: sessionTime,
+											short: true
+										}],
+										color: sessionColor,
+										actions: [{
+											name: "SEND_PING",
+											text: "Send Message",
+											value: '{"pingUser": true, "PingToSlackUserId": "' + key + '"}',
+											type: "button"
+										}]
+									});
+								});
+
+								console.log('\n\n\n about to send message:');
+								console.log(attachments);
+								console.log(text);
+
+								// send the message!
+								bot.send({
+									channel: ChannelId,
+									text: text,
+									attachments: attachments
+								});
+							});
+						});
+					});
+
+					/*
+     { ok: true,
+       channel:
+        { id: 'C28K3L3K6',
+          name: 'test-dashboard',
+          is_channel: true,
+          created: 1473168840,
+          creator: 'U121ZK15J',
+          is_archived: false,
+          is_general: false,
+          is_member: true,
+          last_read: '1473175401.000034',
+          latest:
+           { user: 'U1J649CA0',
+             inviter: 'U121ZK15J',
+             text: '<@U1J649CA0|dev_navi> has joined the channel',
+             type: 'message',
+             subtype: 'channel_join',
+             ts: '1473175404.000035' },
+          unread_count: 1,
+          unread_count_display: 0,
+          members: [ 'U121ZK15J', 'U1J649CA0', 'U1NCGAETZ' ],
+          topic: { value: '', creator: '', last_set: 0 },
+          purpose:
+           { value: 'test toki’s dashboard',
+             creator: 'U121ZK15J',
+             last_set: 1473168841 } } }
+     */
+				})();
 			} else {
 
 				console.log('\n\n\n error in getting channel info in setup_dashboard_flow');
@@ -156,25 +342,6 @@ exports.default = function (controller) {
 				console.log('\n\n\n');
 			}
 		});
-
-		// bot.send({
-		// 			channel: id,
-		// 			text: `Hi! I'm Toki, your team's sidekick to make the most of your attention each day :raised_hands:\nI'll set up a dashboard here of your team's statuses each day. If you ever need a refresher on how I work, just say \`/explain\` and I'd love to go into more detail`
-		// 		});
-
-		// 		let dashboardMessage = {};
-
-		// 		// Attention board for September 6, 2016
-		// 		members.forEach((MemberSlackUserId) => {
-
-
-		// 			if (MemberSlackUserId != BotSlackUserId) {
-		// 				// ignore if bot is the member
-
-		// 			}
-
-
-		// 		})
 	});
 
 	/**
