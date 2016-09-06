@@ -7,6 +7,7 @@ import { utterances, colorsArray, buttonValues, colorsHash, constants } from '..
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString, getStartSessionOptionsAttachment, whichGroupedPingsToCancelAsAttachment, convertNumberStringToArray, commaSeparateOutStringArray } from '../../lib/messageHelpers';
 import { confirmTimeZoneExistsThenStartPingFlow, queuePing, askForPingTime } from './pingFunctions';
 import { notInSessionWouldYouLikeToStartOne } from '../sessions';
+import { checkIsNotAlreadyInConversation } from '../../lib/slackHelpers';
 
 
 // STARTING A SESSION
@@ -100,6 +101,13 @@ export default function(controller) {
 
 			const { tz } = user;
 			const UserId = user.id;
+
+			let isNotAlreadyInConversation = checkIsNotAlreadyInConversation(controller, SlackUserId);
+
+			if (!isNotAlreadyInConversation) {
+				// user is already in conversation, do not continue here!
+				return;
+			}
 
 			bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
 

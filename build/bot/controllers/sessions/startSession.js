@@ -111,6 +111,13 @@ exports.default = function (controller) {
 				where: ['"open" = ?', true]
 			}).then(function (sessions) {
 
+				var isNotAlreadyInConversation = (0, _slackHelpers.checkIsNotAlreadyInConversation)(controller, SlackUserId);
+
+				if (!isNotAlreadyInConversation) {
+					// user is already in conversation, do not continue here!
+					return;
+				}
+
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
 					// console.log(controller.tasks[0].convos);

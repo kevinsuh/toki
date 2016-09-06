@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 exports.updateDashboardForChannelId = updateDashboardForChannelId;
+exports.checkIsNotAlreadyInConversation = checkIsNotAlreadyInConversation;
 
 var _constants = require('./constants');
 
@@ -288,4 +289,42 @@ function updateDashboardForChannelId(bot, ChannelId) {
 } /**
    * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
    */
+
+function checkIsNotAlreadyInConversation(controller, SlackUserId) {
+
+	var valid = true;
+
+	// at start of convo,
+	// check if user is in conversation
+	// if so, return and do not do another convo here.
+	if (controller.tasks && controller.tasks.length > 0) {
+		(function () {
+
+			var userConversationsCount = 0;
+
+			_lodash2.default.some(controller.tasks, function (task) {
+				var convos = task.convos;
+
+
+				_lodash2.default.some(convos, function (convo) {
+					var source_message = convo.source_message;
+
+					console.log(source_message);
+
+					if (source_message.channel && source_message.user && source_message.user == SlackUserId) {
+						userConversationsCount++;
+						return true;
+					}
+				});
+			});
+
+			if (userConversationsCount > 0) {
+				console.log('\n\n ~~ user is in a convo already!!! this conversation cannot happen due to double conversation ~~ \n\n');
+				valid = false;
+			}
+		})();
+	}
+
+	return valid;
+}
 //# sourceMappingURL=slackHelpers.js.map

@@ -132,14 +132,17 @@ function finalizeSessionTimeAndContent(convo) {
 
 		if (!content) {
 			askForSessionContent(convo);
+			convo.next();
 			return;
 		} else if (!minutes) {
 			askForSessionTime(convo);
+			convo.next();
 			return;
 		}
 
 		convo.say(" ");
 		convo.sessionStart.confirmNewSession = true;
+		convo.next();
 	}
 
 	convo.next();
@@ -331,6 +334,8 @@ function askForSessionContent(convo) {
 			convo.next();
 		}
 	}]);
+
+	convo.next();
 }
 
 function askForSessionTime(convo) {

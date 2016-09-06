@@ -282,3 +282,43 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 	})
 
 }
+
+export function checkIsNotAlreadyInConversation(controller, SlackUserId) {
+
+	let valid = true;
+
+	// at start of convo,
+	// check if user is in conversation
+	// if so, return and do not do another convo here.
+	if (controller.tasks && controller.tasks.length > 0) {
+
+		let userConversationsCount = 0;
+
+		_.some(controller.tasks, (task) => {
+
+			const { convos } = task;
+
+			_.some(convos, (convo) => {
+
+				const { source_message } = convo;
+				console.log(source_message);
+
+				if (source_message.channel && source_message.user && source_message.user == SlackUserId) {
+					userConversationsCount++;
+					return true;
+				}
+
+			});
+
+		})
+
+		if (userConversationsCount > 0) {
+			console.log(`\n\n ~~ user is in a convo already!!! this conversation cannot happen due to double conversation ~~ \n\n`);
+			valid = false;
+		}
+
+	}
+
+	return valid;
+
+}
