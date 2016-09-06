@@ -86,6 +86,7 @@ exports.default = function (controller) {
 										if (session) {
 
 											var pingFlowConfig = {
+												SlackUserId: SlackUserId,
 												pingSlackUserIds: [toUser.dataValues.SlackUserId],
 												pingMessages: pingMessages
 											};

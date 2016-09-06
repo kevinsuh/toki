@@ -94,7 +94,7 @@ function notInSessionWouldYouLikeToStartOne(config) {
 			}, {
 				pattern: _constants.utterances.no,
 				callback: function callback(response, convo) {
-					convo.say("Okay! Let me know when you want to `get focused` :smile_cat:");
+					convo.say("Okay! Let me know when you want to `/focus` :smile_cat:");
 					convo.next();
 				}
 			}, {
