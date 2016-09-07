@@ -51,7 +51,7 @@ exports.default = function (controller) {
 				case "/priority":
 
 					controller.trigger('begin_session_flow', [bot, message]);
-					responseObject.text = 'Got it. Let\'s set your current priority';
+					responseObject.text = 'Woo! Let\'s set your current priority';
 					bot.replyPrivate(message, responseObject);
 					break;
 
