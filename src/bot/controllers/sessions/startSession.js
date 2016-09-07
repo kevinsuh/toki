@@ -25,8 +25,8 @@ export default function(controller) {
 
 		bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
 
-			convo.say(`It looks like you’re trying to focus! :palm_tree:`);
-			convo.say("Just type `/focus [put task here] for [put duration here]`\nLike this `/focus squash front-end bug for 45 min` or `/focus marketing report until 4pm`");
+			convo.say(`It looks like you’re trying to set your current priority! :palm_tree:`);
+			convo.say("Just type `/priority [put task here] for [put duration here]`\nLike this `/priority squash front-end bug for 45 min` or `/priority marketing report until 4pm`");
 
 		});
 
@@ -34,7 +34,7 @@ export default function(controller) {
 
 	// this needs to be after Wit.hears `start_ession` because this is
 	// a fallback. we want Wit to be trained to handle this!
-	controller.hears([utterances.startsWithFocus], 'direct_message', (bot, message) => {
+	controller.hears([utterances.startsWithFocusOrPriority], 'direct_message', (bot, message) => {
 		
 		let botToken      = bot.config.token;
 		bot               = bots[botToken];
@@ -42,8 +42,8 @@ export default function(controller) {
 
 		bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
 
-			convo.say(`It looks like you’re trying to focus! :palm_tree:`);
-			convo.say("Just type `/focus [put task here] for [put duration here]`\nLike this `/focus squash front-end bug for 45 min` or `/focus marketing report until 4pm`");
+			convo.say(`It looks like you’re trying to set your current priority! :palm_tree:`);
+			convo.say("Just type `/priority [put task here] for [put duration here]`\nLike this `/priority squash front-end bug for 45 min` or `/priority marketing report until 4pm`");
 
 		});
 
@@ -84,6 +84,7 @@ export default function(controller) {
 		if (content) {
 			// trim out if it starts with focus
 			content = content.replace(/^focu[us]{1,3}/i,"").trim();
+			content = content.replace(/^prior[ity]{1,3}/i,"").trim();
 		}
 	
 		models.User.find({
@@ -237,7 +238,7 @@ export default function(controller) {
 
 											bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-												let text = `:palm_tree: You're now in a focused session on \`${content}\` until *${endTimeString}* :palm_tree:`;
+												let text = `:palm_tree: You've set your current priority as \`${content}\` until *${endTimeString}* :palm_tree:`;
 												let attachments = getStartSessionOptionsAttachment(pings);
 
 												if (pings.length > 0) {
@@ -435,7 +436,7 @@ export default function(controller) {
 
 								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-									let text = `:palm_tree: You're in a focused session on \`${content}\` until *${endTimeString}* :palm_tree:`;
+									let text = `:palm_tree: You've set your current priority as \`${content}\` until *${endTimeString}* :palm_tree:`;
 									let attachments = getStartSessionOptionsAttachment(pings);
 
 									if (pings.length > 0) { // success in sendSooner!
@@ -551,12 +552,12 @@ export default function(controller) {
 
 						bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-							let text = `:palm_tree: I’ll follow up with you to send your message after your focused session on \`${content}\` ends at *${endTimeString}*. Good luck! :palm_tree:`;
+							let text = `:palm_tree: I’ll follow up with you to send your message after you're done working on \`${content}\` at *${endTimeString}*. Good luck! :palm_tree:`;
 							let attachments = [
 								{
 									attachment_type: 'default',
 									callback_id: "DEFERRED_PING_SESSION_OPTIONS",
-									fallback: "Good luck with your focus session!",
+									fallback: "Good luck with your session!",
 									actions: [
 										{
 											name: buttonValues.sendSooner.name,

@@ -309,7 +309,7 @@ export default function(controller) {
 								if (pings.length == 0) {
 
 									convo.say(`You have no pings to cancel!`);
-									const text        = `Good luck with your focused session on \`${content}\` and I’ll see you at *${endTimeString}* :wave:`;
+									const text        = `Good luck with \`${content}\` and I’ll see you at *${endTimeString}* :wave:`;
 									const config      = { customOrder: true, order: ['endSession'] };
 									const attachments = getStartSessionOptionsAttachment(pings, config);
 
@@ -330,7 +330,7 @@ export default function(controller) {
 
 									convo.say(`The ping to <@${ToUser.dataValues.SlackUserId}> has been canceled!`);
 
-									const text        = `Good luck with your focused session on \`${content}\` and I’ll see you at *${endTimeString}* :wave:`;
+									const text        = `Good luck with \`${content}\` and I’ll see you at *${endTimeString}* :wave:`;
 									const config      = { customOrder: true, order: ['endSession'] };
 									const attachments = getStartSessionOptionsAttachment(pings, config);
 
@@ -383,7 +383,7 @@ export default function(controller) {
 													}
 
 													
-													const text        = `Good luck with your focused session on \`${content}\` and I’ll see you at *${endTimeString}* :wave:`;
+													const text        = `Good luck with \`${content}\` and I’ll see you at *${endTimeString}* :wave:`;
 													const config      = { customOrder: true, order: ['endSession'] };
 													const attachments = getStartSessionOptionsAttachment(pings, config);
 

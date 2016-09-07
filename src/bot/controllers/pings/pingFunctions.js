@@ -182,7 +182,7 @@ function handlePingSlackUserIds(convo) {
 						let endTimeString = endTimeObject.format("h:mma");
 						let minutesLeft   = Math.round(moment.duration(endTimeObject.diff(now)).asMinutes());
 
-						convo.say(`<@${user.dataValues.SlackUserId}> is focusing on \`${content}\` until *${endTimeString}*`);
+						convo.say(`<@${user.dataValues.SlackUserId}> is working on \`${content}\` until *${endTimeString}*`);
 						convo.pingObject.userInSession = {
 							user,
 							endTimeObject
@@ -192,7 +192,7 @@ function handlePingSlackUserIds(convo) {
 					} else {
 						// send the message
 						convo.pingObject.deliveryType = constants.pingDeliveryTypes.sessionNotIn;
-						convo.say(`:point_left: <@${user.dataValues.SlackUserId}> is not in a focused work session right now, so I started a conversation for you`);
+						convo.say(`:point_left: <@${user.dataValues.SlackUserId}> does not have a current priority set right now, so I started a conversation for you`);
 						convo.say(`Thank you for being mindful of <@${user.dataValues.SlackUserId}>'s attention :raised_hands:`);
 						convo.next();
 					}

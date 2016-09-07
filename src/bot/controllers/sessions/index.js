@@ -40,7 +40,7 @@ export default function(controller) {
 					let endTimeString = endTime.format("h:mma");
 					
 					bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
-						convo.say(`You're in a session right now for \`${currentSession.dataValues.content}\`. Keep focusing and I'll see you at *${endTimeString}* :raised_hands:`);
+						convo.say(`You have your current priority set for \`${currentSession.dataValues.content}\`. Keep jamming and I'll see you at *${endTimeString}* :raised_hands:`);
 					});
 
 				} else {
@@ -60,7 +60,7 @@ export function notInSessionWouldYouLikeToStartOne(config) {
 		bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
 			convo.say(`You don't have a priority set right now! Let me know when you're ready to set a \`/priority\` :smile_cat:`);
-			
+
 		});
 	}
 }

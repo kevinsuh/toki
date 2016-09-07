@@ -46,7 +46,7 @@ function startEndSessionFlow(convo) {
 	var sessionMinutes = void 0;
 	var sessionTimeString = void 0;
 	var message = ' ';
-	var letsFocusMessage = 'When you’re ready, let me know when you’d like to `/focus` again';
+	var letsFocusMessage = 'When you’re ready, let me know when you’d like to set a `/priority` again';
 
 	// add session info (the one that just got ended) if existing
 	// this is not the case when you have queued ping
@@ -90,7 +90,7 @@ function startEndSessionFlow(convo) {
 		message = message + '\n:point_left: I just kicked off a conversation between you two';
 
 		if (pingInfo && pingInfo.session) {
-			letsFocusMessage = 'I ended your focused session on `' + session.dataValues.content + '`. ' + letsFocusMessage;
+			letsFocusMessage = 'I ended your current priority on `' + session.dataValues.content + '`. ' + letsFocusMessage;
 		}
 	} else if (endSessionType == _constants.constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
 
@@ -107,11 +107,11 @@ function startEndSessionFlow(convo) {
 		message = message + '\n:point_left: I just kicked off a conversation between you two';
 
 		if (pingInfo.session) {
-			letsFocusMessage = 'I ended your focused session on `' + session.dataValues.content + '`. ' + letsFocusMessage;
+			letsFocusMessage = 'I ended your current priority on `' + session.dataValues.content + '`. ' + letsFocusMessage;
 		}
 	} else if (session) {
 		// session must exist for all endSessionTypes other than endByPingToUserId
-		message = 'Great work on `' + session.dataValues.content + '`! You were focused for *' + sessionTimeString + '*';
+		message = 'Great job on `' + session.dataValues.content + '`! You were working for *' + sessionTimeString + '*';
 	}
 
 	convo.say(message);
@@ -218,7 +218,7 @@ function handleFromUserPings(convo) {
 
 			var endTimeString = (0, _momentTimezone2.default)(endTime).tz(ToUser.dataValues.tz).format("h:mma");
 
-			var sessionMessage = '<@' + ToUser.dataValues.SlackUserId + '> is focusing on `' + content + '` until *' + endTimeString + '*.';
+			var sessionMessage = '<@' + ToUser.dataValues.SlackUserId + '> is working on `' + content + '` until *' + endTimeString + '*.';
 
 			// separation when only queued 1 ping vs many pings
 			if (pings.length == 1) {
@@ -265,7 +265,7 @@ function handleFromUserPings(convo) {
 				});
 			}
 		} else {
-			convo.say('<@' + ToUser.dataValues.SlackUserId + '> is not in a focused session, so I just started a conversation between you two :simple_smile:');
+			convo.say('<@' + ToUser.dataValues.SlackUserId + '> does not have a current priority set, so I just started a conversation between you two :simple_smile:');
 		}
 	}
 }

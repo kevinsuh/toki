@@ -185,7 +185,7 @@ function changeTimeAndTaskFlow(convo) {
 		pattern: _constants.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.sessionStart.content = false;
-			var question = 'What would you like to focus on?';
+			var question = 'What would you like to set your current priority as?';
 			askForSessionContent(convo, question);
 			convo.next();
 		}
@@ -219,14 +219,14 @@ function askToOverrideCurrentSession(convo) {
 	var endTimeString = endTime.format("h:mma");
 	var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
 
-	var text = 'Hey! You’re already in a focused session working on `' + currentSession.dataValues.content + '` until *' + endTimeString + '*';
+	var text = 'Hey! You’ve already set your current priority as `' + currentSession.dataValues.content + '` until *' + endTimeString + '*';
 	var attachments = [{
 		attachment_type: 'default',
 		callback_id: "EXISTING_SESSION_OPTIONS",
 		fallback: "Hey, you're already in a session!!",
 		actions: [{
 			name: _constants.buttonValues.newSession.name,
-			text: "New Session :new:",
+			text: "New Priority :new:",
 			value: '{"overrideNewSession": true}',
 			type: "button"
 		}]
@@ -261,7 +261,7 @@ function askToOverrideCurrentSession(convo) {
 	// 		pattern: utterances.containsKeep,
 	// 		callback: (response, convo) => {
 
-	// 			convo.say(`You got this! Keep focusing on \`${currentSession.dataValues.content}\` and I’ll see you at *${endTimeString}*`);
+	// 			convo.say(`You got this! Keep working on \`${currentSession.dataValues.content}\` and I’ll see you at *${endTimeString}*`);
 	// 			convo.next();
 
 	// 		}
@@ -292,14 +292,14 @@ function askForSessionContent(convo) {
 
 	var sessionExample = (0, _messageHelpers.getRandomExample)("session");
 
-	if (question == '') question = 'What would you like to focus on right now? (i.e. `' + sessionExample + '`)';
+	if (question == '') question = 'What would you like to set your current priority as? (i.e. `' + sessionExample + '`)';
 
 	convo.ask({
 		text: question
 	}, [{
 		pattern: _constants.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.say('Okay! Let me know when you want to `/focus`');
+			convo.say('Okay! Let me know when you want to set your `/priority`');
 			convo.next();
 		}
 	}, {

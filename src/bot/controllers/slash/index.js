@@ -47,10 +47,10 @@ export default function(controller) {
 			let toSlackName = slackNames.length > 0 ? slackNames[0] : false;
 
 			switch (message.command) {
-				case "/focus":
+				case "/priority":
 
 					controller.trigger(`begin_session_flow`, [ bot, message ]);
-					responseObject.text = `Boom! Let's get this done :muscle:`;
+					responseObject.text = `Got it. Let's set your current priority`;
 					bot.replyPrivate(message, responseObject);
 					break;
 
@@ -63,7 +63,7 @@ export default function(controller) {
 						let pingMessages = [];
 						if (pingMessage) pingMessages.push(pingMessage);
 
-						// for now this automatically queues to end of focus session
+						// for now this automatically queues to end of session
 						models.User.find({
 							where: {
 								SlackName: toSlackName,
@@ -174,7 +174,7 @@ export default function(controller) {
 
 						// if msg starts with @pinger, remove it from message
 						let pingMessage = text[0] == "@" ? text.replace(/@(\S*)/,"").trim() : text;
-						// for now this automatically queues to end of focus session
+						// for now this automatically queues to end of session
 						models.User.find({
 							where: {
 								SlackName: toSlackName,

@@ -90,6 +90,7 @@ export const utterances = {
 	cancelPing: new RegExp(/^canc[cel]{1,3}\b.{1,3}\bpin[ngs]{1,3}\b/i),
 	sendSooner: new RegExp(/^sen[nd]{1,3}\b.{1,3}\bsoon[ner]{1,3}\b/i),
 	startsWithFocus: new RegExp(/^focu[us]{1,3}\b/i),
+	startsWithFocusOrPriority: new RegExp(/^(focu[us]{1,3}|prior[ity]{1,3})\b/i),
 	startsWithPing: new RegExp(/^pin[ng]{1,3}\b/i)
 }
 
