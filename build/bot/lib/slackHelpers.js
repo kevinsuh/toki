@@ -259,7 +259,7 @@ function updateDashboardForChannelId(bot, ChannelId) {
 
 												bot.send({
 													channel: ChannelId,
-													text: 'Hey, it\'s been ' + messageCount + ' since the dashboard so I refreshed it'
+													text: 'Hey, looks like the dashboard has been pushed up by some messages, so here it is again!'
 												}, function () {
 													bot.api.chat.delete(updateTeamPulseDashboardMessageObject);
 													bot.send({
