@@ -231,8 +231,8 @@ function handlePingSlackUserIds(convo) {
 						} else {
 							// send the message
 							convo.pingObject.deliveryType = _constants.constants.pingDeliveryTypes.sessionNotIn;
-							convo.say(':point_left: <@' + user.dataValues.SlackUserId + '> does not have a current priority set right now, so I started a conversation for you');
-							convo.say('Thank you for being mindful of <@' + user.dataValues.SlackUserId + '>\'s attention :raised_hands:');
+							// let's just not ping here
+							convo.say(' ');
 							convo.next();
 						}
 					});
