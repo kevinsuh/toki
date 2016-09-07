@@ -108,9 +108,12 @@ var checkForDailyRecaps = function checkForDailyRecaps() {
 
 												config.fromThisDateTime = (0, _momentTimezone2.default)(dailyRecapTime).tz(tz).subtract(updatedDays, 'days');
 
-												// if it's monday, get friday's stuff
 												if (day == "Monday") {
+													// if it's monday, get friday's stuff
 													config.fromThisDateTime = config.fromThisDateTime.subtract(3, 'days');
+												} else {
+													// otherwise, get yesterdays stuff
+													config.fromThisDateTime = config.fromThisDateTime.subtract(1, 'days');
 												}
 
 												_controllers.controller.trigger('daily_recap_flow', [bot, config]);

@@ -106,9 +106,12 @@ exports.default = function (controller) {
 			// i.e. `You sent 5 pings today`
 			// vs `You sent 5 pings since Friday`
 			var sinceDayString = 'today';
-			if (Math.ceil(_momentTimezone2.default.duration(now.diff(fromThisDateTime)).asDays()) > 1) {
+			if (Math.round(_momentTimezone2.default.duration(now.diff(fromThisDateTime)).asDays()) == 1) {
 				var day = fromThisDateTime.tz(tz).format('dddd');
-				sinceDayString = 'since ' + day;
+				sinceDayString = 'yesterday';
+			} else if (Math.round(_momentTimezone2.default.duration(now.diff(fromThisDateTime)).asDays()) > 1) {
+				var _day = fromThisDateTime.tz(tz).format('dddd');
+				sinceDayString = 'since ' + _day;
 			}
 
 			var dailyRecapTimeObject = (0, _momentTimezone2.default)(dailyRecapTime).tz(tz);

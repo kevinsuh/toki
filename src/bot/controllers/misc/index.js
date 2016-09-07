@@ -106,7 +106,10 @@ export default function(controller) {
 			// i.e. `You sent 5 pings today`
 			// vs `You sent 5 pings since Friday`
 			let sinceDayString = `today`;
-			if (Math.ceil(moment.duration(now.diff(fromThisDateTime)).asDays()) > 1) {
+			if (Math.round(moment.duration(now.diff(fromThisDateTime)).asDays()) == 1) {
+				let day = fromThisDateTime.tz(tz).format('dddd');
+				sinceDayString = `yesterday`;
+			} else if (Math.round(moment.duration(now.diff(fromThisDateTime)).asDays()) > 1) {
 				let day = fromThisDateTime.tz(tz).format('dddd');
 				sinceDayString = `since ${day}`;
 			}
