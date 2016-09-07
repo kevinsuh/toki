@@ -46,7 +46,7 @@ function startEndSessionFlow(convo) {
 	var sessionMinutes = void 0;
 	var sessionTimeString = void 0;
 	var message = ' ';
-	var letsFocusMessage = 'When you’re ready, let me know when you’d like to set a `/priority` again';
+	var letsFocusMessage = 'When you’re ready, let me know when you’d like to set another `/priority`';
 
 	// add session info (the one that just got ended) if existing
 	// this is not the case when you have queued ping
@@ -111,7 +111,7 @@ function startEndSessionFlow(convo) {
 		}
 	} else if (session) {
 		// session must exist for all endSessionTypes other than endByPingToUserId
-		message = 'Great job on `' + session.dataValues.content + '`! You were working for *' + sessionTimeString + '*';
+		message = 'Great work on `' + session.dataValues.content + '`! You spent *' + sessionTimeString + '* on this priority';
 	}
 
 	convo.say(message);
