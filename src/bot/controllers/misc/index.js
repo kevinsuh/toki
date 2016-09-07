@@ -119,7 +119,7 @@ export default function(controller) {
 			let fromThisDateTimeString = fromThisDateTime.format("YYYY-MM-DD HH:mm:ss Z");
 			user.getSessions({
 				where: [`"startTime" > ?`, fromThisDateTimeString],
-				order: `("Session"."endTime" - "Session"."startTime") DESC`
+				order: `"Session"."startTime" ASC`
 			})
 			.then((sessions) => {
 
@@ -181,6 +181,9 @@ export default function(controller) {
 								const sessionMinutes    = Math.round(moment.duration(endTimeObject.diff(startTimeObject)).asMinutes());
 								const sessionTimeString = convertMinutesToHoursString(sessionMinutes);
 
+								const startTimeString = startTimeObject.format("h:mm");
+								const endTimeString   = endTimeObject.format("h:mma");
+
 								totalTimeInSessions += sessionMinutes;
 
 								// 1. add priority
@@ -191,7 +194,7 @@ export default function(controller) {
 
 								// 2. add amount of time
 								fields.push({
-									value: `${sessionTimeString}`,
+									value: `${startTimeString} \u2013 ${endTimeString} *(${sessionTimeString})*`,
 									short: true
 								});
 

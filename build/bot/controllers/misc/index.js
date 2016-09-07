@@ -119,7 +119,7 @@ exports.default = function (controller) {
 			var fromThisDateTimeString = fromThisDateTime.format("YYYY-MM-DD HH:mm:ss Z");
 			user.getSessions({
 				where: ['"startTime" > ?', fromThisDateTimeString],
-				order: '("Session"."endTime" - "Session"."startTime") DESC'
+				order: '"Session"."startTime" ASC'
 			}).then(function (sessions) {
 
 				_models2.default.Ping.findAll({
@@ -173,6 +173,9 @@ exports.default = function (controller) {
 									var sessionMinutes = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(startTimeObject)).asMinutes());
 									var sessionTimeString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
 
+									var startTimeString = startTimeObject.format("h:mm");
+									var endTimeString = endTimeObject.format("h:mma");
+
 									totalTimeInSessions += sessionMinutes;
 
 									// 1. add priority
@@ -183,7 +186,7 @@ exports.default = function (controller) {
 
 									// 2. add amount of time
 									fields.push({
-										value: '' + sessionTimeString,
+										value: startTimeString + ' – ' + endTimeString + ' *(' + sessionTimeString + ')*',
 										short: true
 									});
 								});
