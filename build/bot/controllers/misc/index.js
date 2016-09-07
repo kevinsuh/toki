@@ -189,7 +189,7 @@ exports.default = function (controller) {
 								});
 
 								var totalTimeInSessionsString = (0, _messageHelpers.convertMinutesToHoursString)(totalTimeInSessions);
-								text = 'You spent ' + totalTimeInSessionsString + ' on your priorities with me ' + sinceDayString + '. Here\'s a quick breakdown of what you spent your time on:';
+								text = 'You spent *' + totalTimeInSessionsString + '* on your priorities with me ' + sinceDayString + '. Here\'s a quick breakdown of what you spent your time on:';
 
 								var attachments = [{
 									attachment_type: 'default',

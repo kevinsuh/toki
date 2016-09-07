@@ -198,7 +198,7 @@ export default function(controller) {
 							});
 
 							const totalTimeInSessionsString = convertMinutesToHoursString(totalTimeInSessions);
-							text = `You spent ${totalTimeInSessionsString} on your priorities with me ${sinceDayString}. Here's a quick breakdown of what you spent your time on:`;
+							text = `You spent *${totalTimeInSessionsString}* on your priorities with me ${sinceDayString}. Here's a quick breakdown of what you spent your time on:`;
 
 							let attachments = [{
 								attachment_type: 'default',
