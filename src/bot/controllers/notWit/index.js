@@ -8,6 +8,7 @@ import { isJsonObject } from '../../middleware/hearsMiddleware';
 import { utterances, colorsArray, constants, buttonValues, colorsHash, timeZones } from '../../lib/constants';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString, getStartSessionOptionsAttachment, commaSeparateOutStringArray } from '../../lib/messageHelpers';
 import { notInSessionWouldYouLikeToStartOne } from '../sessions';
+import { updateDashboardForChannelId } from '../../lib/slackHelpers';
 
 import dotenv from 'dotenv';
 
@@ -18,6 +19,24 @@ import dotenv from 'dotenv';
  */
 
 export default function(controller) {
+
+	controller.on(`user_channel_join`, (bot, message) => {
+
+		if (message && message.channel) {
+			const { channel } = message;
+			updateDashboardForChannelId(bot, channel);
+		}
+		
+	});
+
+	controller.on(`channel_leave`, (bot, message) => {
+
+		if (message && message.channel) {
+			const { channel } = message;
+			updateDashboardForChannelId(bot, channel);
+		}
+
+	})
 
 	// this is for updating ping functionality
 	controller.hears(['^{'], 'direct_message', isJsonObject, function(bot, message) {

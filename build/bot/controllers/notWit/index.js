@@ -6,6 +6,24 @@ Object.defineProperty(exports, "__esModule", {
 
 exports.default = function (controller) {
 
+	controller.on('user_channel_join', function (bot, message) {
+
+		if (message && message.channel) {
+			var channel = message.channel;
+
+			(0, _slackHelpers.updateDashboardForChannelId)(bot, channel);
+		}
+	});
+
+	controller.on('channel_leave', function (bot, message) {
+
+		if (message && message.channel) {
+			var channel = message.channel;
+
+			(0, _slackHelpers.updateDashboardForChannelId)(bot, channel);
+		}
+	});
+
 	// this is for updating ping functionality
 	controller.hears(['^{'], 'direct_message', _hearsMiddleware.isJsonObject, function (bot, message) {
 
@@ -205,6 +223,8 @@ var _constants = require('../../lib/constants');
 var _messageHelpers = require('../../lib/messageHelpers');
 
 var _sessions = require('../sessions');
+
+var _slackHelpers = require('../../lib/slackHelpers');
 
 var _dotenv = require('dotenv');
 
