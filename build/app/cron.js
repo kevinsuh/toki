@@ -241,6 +241,9 @@ var checkForSessions = function checkForSessions() {
 		var accountedForUserIds = []; // ensure no double-counts
 
 		sessions.forEach(function (session) {
+
+			if (!session) return;
+
 			var UserId = session.UserId;
 			var open = session.open;
 			var live = session.live;

@@ -81,36 +81,40 @@ export default function(controller) {
 								channel: ChannelId
 							}, (err, response) => {
 
-								const { messages } = response;
-								messages.forEach((message) => {
+								if (!err) {
 
-									// user is `SlackUserId`
-									const { user, attachments, ts } = message;
+									const { messages } = response;
+									messages.forEach((message) => {
 
-									// find the message of the team pulse
-									if (user == BotSlackUserId && attachments && attachments[0].callback_id == constants.dashboardCallBackId) {
-										bot.api.chat.delete({
-											ts,
-											channel: ChannelId
-										});
+										// user is `SlackUserId`
+										const { user, attachments, ts } = message;
+
+										// find the message of the team pulse
+										if (user == BotSlackUserId && attachments && attachments[0].callback_id == constants.dashboardCallBackId) {
+											bot.api.chat.delete({
+												ts,
+												channel: ChannelId
+											});
+										}
+
+									});
+
+									if (tz) {
+										// give a little time for all things to delete
+										setTimeout(() => {
+											controller.trigger(`setup_dashboard_flow`, [ bot, config ]);
+										}, 500);
+									} else {
+
+										console.log(`\n\n\n creator is: ${creator} \n\n\n`);
+
+										const timezoneConfig = {
+											CreatorSlackUserId: creator,
+											ChannelId
+										}
+										controller.trigger(`get_timezone_for_dashboard_flow`, [ bot, timezoneConfig ]);
 									}
-
-								});
-
-								if (tz) {
-									// give a little time for all things to delete
-									setTimeout(() => {
-										controller.trigger(`setup_dashboard_flow`, [ bot, config ]);
-									}, 500);
-								} else {
-
-									console.log(`\n\n\n creator is: ${creator} \n\n\n`);
-
-									const timezoneConfig = {
-										CreatorSlackUserId: creator,
-										ChannelId
-									}
-									controller.trigger(`get_timezone_for_dashboard_flow`, [ bot, timezoneConfig ]);
+									
 								}
 
 							});

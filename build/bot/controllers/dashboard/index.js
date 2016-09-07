@@ -79,39 +79,42 @@ exports.default = function (controller) {
 								token: accessToken,
 								channel: ChannelId
 							}, function (err, response) {
-								var messages = response.messages;
 
-								messages.forEach(function (message) {
+								if (!err) {
+									var messages = response.messages;
 
-									// user is `SlackUserId`
-									var user = message.user;
-									var attachments = message.attachments;
-									var ts = message.ts;
+									messages.forEach(function (message) {
 
-									// find the message of the team pulse
+										// user is `SlackUserId`
+										var user = message.user;
+										var attachments = message.attachments;
+										var ts = message.ts;
 
-									if (user == BotSlackUserId && attachments && attachments[0].callback_id == _constants.constants.dashboardCallBackId) {
-										bot.api.chat.delete({
-											ts: ts,
-											channel: ChannelId
-										});
+										// find the message of the team pulse
+
+										if (user == BotSlackUserId && attachments && attachments[0].callback_id == _constants.constants.dashboardCallBackId) {
+											bot.api.chat.delete({
+												ts: ts,
+												channel: ChannelId
+											});
+										}
+									});
+
+									if (tz) {
+										// give a little time for all things to delete
+										setTimeout(function () {
+											controller.trigger('setup_dashboard_flow', [bot, config]);
+										}, 500);
+									} else {
+
+										console.log('\n\n\n creator is: ' + creator + ' \n\n\n');
+
+										var timezoneConfig = {
+											CreatorSlackUserId: creator,
+											ChannelId: ChannelId
+										};
+										controller.trigger('get_timezone_for_dashboard_flow', [bot, timezoneConfig]);
 									}
-								});
-
-								if (tz) {
-									// give a little time for all things to delete
-									setTimeout(function () {
-										controller.trigger('setup_dashboard_flow', [bot, config]);
-									}, 500);
-								} else {
-
-									console.log('\n\n\n creator is: ' + creator + ' \n\n\n');
-
-									var timezoneConfig = {
-										CreatorSlackUserId: creator,
-										ChannelId: ChannelId
-									};
-									controller.trigger('get_timezone_for_dashboard_flow', [bot, timezoneConfig]);
 								}
 							});
 						});

@@ -228,6 +228,9 @@ let checkForSessions = () => {
 
 		sessions.forEach((session) => {
 
+			if (!session)
+				return;
+
 			const { UserId, open, live } = session;
 
 			session.update({
