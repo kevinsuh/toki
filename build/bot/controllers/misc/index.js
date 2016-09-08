@@ -72,13 +72,13 @@ exports.default = function (controller) {
 					convo.say('Hope you\'re having a great day so far, <@' + SlackUserId + '>!');
 				}
 
-				convo.say('Think of me as an office manager for each of your teammate\'s attention. *I share your current priority to your team*, so that you can work without getting pulled to switch contexts');
+				convo.say('Think of me as an office manager for each of your teammate\'s attention. *I share what you\'re currently doing to your team*, so that you can work without getting pulled to switch contexts');
 				convo.say('On the flip side, *I also make it easy for you to ping teammates at the right times.* This lets you get requests out of your head when you think of them, while making sure it doesn\'t unnecessarily interrupt anyone\'s flow');
 				convo.say({
 					text: 'Here\'s how I do this:',
 					attachments: _constants.tokiExplainAttachments
 				});
-				convo.say('I\'m here whenever you\'re ready to go! Just let me know when you want to `/ping` someone, or enter a `/priority` session yourself :raised_hands:');
+				convo.say('I\'m here whenever you\'re ready to go! Just let me know when you want to `/ping` someone, or start `/doing` something yourself :raised_hands:');
 
 				convo.on('end', function (convo) {});
 			});
@@ -155,10 +155,10 @@ exports.default = function (controller) {
 								var text = '';
 								var totalTimeInSessions = 0;
 								var fields = [{
-									title: 'Priority',
+									title: 'Did',
 									short: true
 								}, {
-									title: 'Time',
+									title: 'From',
 									short: true
 								}];
 
@@ -178,7 +178,7 @@ exports.default = function (controller) {
 
 									totalTimeInSessions += sessionMinutes;
 
-									// 1. add priority
+									// 1. add what you did
 									fields.push({
 										value: '`' + content + '`',
 										short: true

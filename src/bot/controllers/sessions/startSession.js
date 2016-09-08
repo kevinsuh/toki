@@ -25,8 +25,8 @@ export default function(controller) {
 
 		bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
 
-			convo.say(`It looks like you’re trying to set your current priority! :palm_tree:`);
-			convo.say("Just type `/priority [put task here] for [put duration here]`\nLike this `/priority squash front-end bug for 45 min` or `/priority marketing report until 4pm`");
+			convo.say(`It looks like you’re trying to get something done! :palm_tree:`);
+			convo.say("Just type `/doing [put task here] for [put duration here]`\nLike this `/doing squash front-end bug for 45 min` or `/doing marketing report until 4pm`");
 
 		});
 
@@ -34,7 +34,7 @@ export default function(controller) {
 
 	// this needs to be after Wit.hears `start_ession` because this is
 	// a fallback. we want Wit to be trained to handle this!
-	controller.hears([utterances.startsWithFocusOrPriority], 'direct_message', (bot, message) => {
+	controller.hears([utterances.startsWithDoing], 'direct_message', (bot, message) => {
 		
 		let botToken      = bot.config.token;
 		bot               = bots[botToken];
@@ -42,8 +42,8 @@ export default function(controller) {
 
 		bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
 
-			convo.say(`It looks like you’re trying to set your current priority! :palm_tree:`);
-			convo.say("Just type `/priority [put task here] for [put duration here]`\nLike this `/priority squash front-end bug for 45 min` or `/priority marketing report until 4pm`");
+			convo.say(`It looks like you’re trying to get something done! :palm_tree:`);
+			convo.say("Just type `/doing [put task here] for [put duration here]`\nLike this `/doing squash front-end bug for 45 min` or `/doing marketing report until 4pm`");
 
 		});
 
@@ -238,7 +238,7 @@ export default function(controller) {
 
 											bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-												let text = `:palm_tree: You've set your current priority as \`${content}\` until *${endTimeString}* :palm_tree:`;
+												let text = `:palm_tree: You're currently doing \`${content}\` until *${endTimeString}* :palm_tree:`;
 												let attachments = getStartSessionOptionsAttachment(pings);
 
 												if (pings.length > 0) {
@@ -436,7 +436,7 @@ export default function(controller) {
 
 								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-									let text = `:palm_tree: You've set your current priority as \`${content}\` until *${endTimeString}* :palm_tree:`;
+									let text = `:palm_tree: You're currently doing \`${content}\` until *${endTimeString}* :palm_tree:`;
 									let attachments = getStartSessionOptionsAttachment(pings);
 
 									if (pings.length > 0) { // success in sendSooner!

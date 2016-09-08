@@ -48,10 +48,10 @@ exports.default = function (controller) {
 			var toSlackName = slackNames.length > 0 ? slackNames[0] : false;
 
 			switch (message.command) {
-				case "/priority":
+				case "/doing":
 
 					controller.trigger('begin_session_flow', [bot, message]);
-					responseObject.text = 'Woo! Let\'s set your current priority';
+					responseObject.text = 'Woo! You can do it :dancer:';
 					bot.replyPrivate(message, responseObject);
 					break;
 

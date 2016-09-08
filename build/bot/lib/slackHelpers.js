@@ -123,7 +123,7 @@ function updateDashboardForChannelId(bot, ChannelId) {
 							callback_id: _constants.constants.dashboardCallBackId,
 							fallback: 'Here\'s your team pulse!',
 							fields: [{
-								title: "Current Priority",
+								title: "Currently Doing",
 								short: true
 							}, {
 								title: 'Until (' + zoneAbbrString + ')',
@@ -160,7 +160,7 @@ function updateDashboardForChannelId(bot, ChannelId) {
 								sessionTime = (0, _momentTimezone2.default)(session.dataValues.endTime).tz(tz).format("h:mma");
 								sessionColor = _constants.colorsHash.toki_purple.hex;
 							} else {
-								sessionContent = '_No active priority_';
+								sessionContent = '_No status set_';
 								sessionTime = '';
 								sessionColor = _constants.colorsHash.grey.hex;
 							}
@@ -192,13 +192,13 @@ function updateDashboardForChannelId(bot, ChannelId) {
 						attachments.push({
 							attachment_type: 'default',
 							callback_id: "DASHBOARD_ACTIONS_FOR_USER",
-							fallback: 'Would you like to set a priority?',
+							fallback: 'Would you like to do something?',
 							mrkdwn_in: ["text", "fields"],
 							color: _constants.colorsHash.toki_yellow.hex,
-							text: "_Update your current priority_",
+							text: "_Set your status:_",
 							actions: [{
 								name: "SET_PRIORITY",
-								text: "Set My Priority",
+								text: "Let's do it!",
 								value: '{"setPriority": true}',
 								type: "button"
 							}]

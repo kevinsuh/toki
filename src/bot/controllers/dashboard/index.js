@@ -114,7 +114,7 @@ export default function(controller) {
 										}
 										controller.trigger(`get_timezone_for_dashboard_flow`, [ bot, timezoneConfig ]);
 									}
-									
+
 								}
 
 							});
@@ -193,7 +193,7 @@ function askTimeZoneForChannelDashboard(convo, text = '') {
 		text,
 		attachments: timeZoneAttachments
 	}, [
-		{ // completedPriority
+		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
 				convo.dashboardConfirm.neverMind = true;

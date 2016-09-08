@@ -90,8 +90,9 @@ export const utterances = {
 	cancelPing: new RegExp(/^canc[cel]{1,3}\b.{1,3}\bpin[ngs]{1,3}\b/i),
 	sendSooner: new RegExp(/^sen[nd]{1,3}\b.{1,3}\bsoon[ner]{1,3}\b/i),
 	startsWithFocus: new RegExp(/^focu[us]{1,3}\b/i),
-	startsWithFocusOrPriority: new RegExp(/^(focu[us]{1,3}|prior[ity]{1,3})\b/i),
-	startsWithPing: new RegExp(/^pin[ng]{1,3}\b/i)
+	startsWithFocusOrPriorityOrStatus: new RegExp(/^(focu[us]{1,3}|prior[ity]{1,3}||stat[tus]{1,3})\b/i),
+	startsWithPing: new RegExp(/^pin[ng]{1,3}\b/i),
+	startsWithDoing: new RegExp(/^doi[ing]{1,3}\b/i)
 }
 
 
@@ -430,13 +431,13 @@ export const timeZoneAttachments = [
 
 export const tokiExplainAttachments = [
 	{
-		title: "Set your priority",
-		text: "In any channel, use the command `/priority` to share your current priority and protect yourself from getting pulled to switch contexts from non-urgent messages while you work",
+		title: "Set your status",
+		text: "In any channel, use the command `/doing` to share your current status and protect yourself from getting pulled to switch contexts from non-urgent messages while you work",
 		mrkdwn_in: [ "text" ],
 		color: colorsHash.toki_purple.hex,
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
-		fallback: "Set my priority"
+		fallback: "Set my status"
 	},
 	{
 		title: "Ping Members",

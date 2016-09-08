@@ -19,14 +19,14 @@ exports.default = function (controller) {
 
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-			convo.say('It looks like you’re trying to set your current priority! :palm_tree:');
-			convo.say("Just type `/priority [put task here] for [put duration here]`\nLike this `/priority squash front-end bug for 45 min` or `/priority marketing report until 4pm`");
+			convo.say('It looks like you’re trying to get something done! :palm_tree:');
+			convo.say("Just type `/doing [put task here] for [put duration here]`\nLike this `/doing squash front-end bug for 45 min` or `/doing marketing report until 4pm`");
 		});
 	});
 
 	// this needs to be after Wit.hears `start_ession` because this is
 	// a fallback. we want Wit to be trained to handle this!
-	controller.hears([_constants.utterances.startsWithFocusOrPriority], 'direct_message', function (bot, message) {
+	controller.hears([_constants.utterances.startsWithDoing], 'direct_message', function (bot, message) {
 
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
@@ -34,8 +34,8 @@ exports.default = function (controller) {
 
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-			convo.say('It looks like you’re trying to set your current priority! :palm_tree:');
-			convo.say("Just type `/priority [put task here] for [put duration here]`\nLike this `/priority squash front-end bug for 45 min` or `/priority marketing report until 4pm`");
+			convo.say('It looks like you’re trying to get something done! :palm_tree:');
+			convo.say("Just type `/doing [put task here] for [put duration here]`\nLike this `/doing squash front-end bug for 45 min` or `/doing marketing report until 4pm`");
 		});
 	});
 
@@ -236,7 +236,7 @@ exports.default = function (controller) {
 
 											bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-												var text = ':palm_tree: You\'ve set your current priority as `' + content + '` until *' + endTimeString + '* :palm_tree:';
+												var text = ':palm_tree: You\'re currently doing `' + content + '` until *' + endTimeString + '* :palm_tree:';
 												var attachments = (0, _messageHelpers.getStartSessionOptionsAttachment)(pings);
 
 												if (pings.length > 0) {
@@ -431,7 +431,7 @@ exports.default = function (controller) {
 
 								bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-									var text = ':palm_tree: You\'ve set your current priority as `' + content + '` until *' + endTimeString + '* :palm_tree:';
+									var text = ':palm_tree: You\'re currently doing `' + content + '` until *' + endTimeString + '* :palm_tree:';
 									var attachments = (0, _messageHelpers.getStartSessionOptionsAttachment)(pings);
 
 									if (pings.length > 0) {

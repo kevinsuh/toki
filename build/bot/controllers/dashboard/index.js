@@ -216,7 +216,7 @@ function askTimeZoneForChannelDashboard(convo) {
 	convo.ask({
 		text: text,
 		attachments: _constants.timeZoneAttachments
-	}, [{ // completedPriority
+	}, [{
 		pattern: _constants.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
 			convo.dashboardConfirm.neverMind = true;

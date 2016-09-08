@@ -185,7 +185,7 @@ function changeTimeAndTaskFlow(convo) {
 		pattern: _constants.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.sessionStart.content = false;
-			var question = 'What would you like to set your current priority as?';
+			var question = 'What task are you doing?';
 			askForSessionContent(convo, question);
 			convo.next();
 		}
@@ -219,14 +219,14 @@ function askToOverrideCurrentSession(convo) {
 	var endTimeString = endTime.format("h:mma");
 	var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
 
-	var text = 'Hey! You’ve already set your current priority as `' + currentSession.dataValues.content + '` until *' + endTimeString + '*';
+	var text = 'Hey! You\'re already doing `' + currentSession.dataValues.content + '` until *' + endTimeString + '*';
 	var attachments = [{
 		attachment_type: 'default',
 		callback_id: "EXISTING_SESSION_OPTIONS",
 		fallback: "Hey, you're already in a session!!",
 		actions: [{
 			name: _constants.buttonValues.newSession.name,
-			text: "New Priority :new:",
+			text: "Do something new :new:",
 			value: '{"overrideNewSession": true}',
 			type: "button"
 		}]
@@ -292,14 +292,14 @@ function askForSessionContent(convo) {
 
 	var sessionExample = (0, _messageHelpers.getRandomExample)("session");
 
-	if (question == '') question = 'What would you like to set your current priority as? (i.e. `' + sessionExample + '`)';
+	if (question == '') question = 'What would you like to start doing? (i.e. `' + sessionExample + '`)';
 
 	convo.ask({
 		text: question
 	}, [{
 		pattern: _constants.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.say('Okay! Let me know when you want to set your `/priority`');
+			convo.say('Okay! Let me know when you want to start `/doing` something');
 			convo.next();
 		}
 	}, {
