@@ -2,12 +2,15 @@ import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
 import _ from 'lodash';
+import dotenv from 'dotenv';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants, timeZones } from '../../lib/constants';
 import { confirmTimeZoneExistsThenStartSessionFlow } from './startSessionFunctions';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString, getStartSessionOptionsAttachment, commaSeparateOutStringArray, getSessionContentFromMessageObject } from '../../lib/messageHelpers';
 import { notInSessionWouldYouLikeToStartOne } from './index';
 import { updateDashboardForChannelId, checkIsNotAlreadyInConversation } from '../../lib/slackHelpers';
+
+dotenv.load();
 
 // STARTING A SESSION
 export default function(controller) {
@@ -69,7 +72,16 @@ export default function(controller) {
 		let intent;
 		let reminder;
 		let datetime;
-		let text; 
+		let text;
+
+		let env = process.env.NODE_ENV || 'development';
+
+		if (env == 'development') {
+			process.env.SLACK_ID = process.env.DEV_SLACK_ID;
+			process.env.SLACK_REDIRECT = process.env.DEV_SLACK_REDIRECT;
+		}
+
+		const signInWithSlackLink = `https://slack.com/oauth/authorize?client_id=${process.env.SLACK_ID}&redirect_uri=${process.env.SLACK_REDIRECT}login&scope=channels:history,dnd:write,dnd:read`;
 
 		if (message) {
 			SlackUserId = message.user;
@@ -92,7 +104,7 @@ export default function(controller) {
 		}).then((user) => {
 
 			// need user's timezone for this flow!
-			const { tz } = user;
+			const { tz, scopes, accessToken } = user;
 			const UserId = user.id;
 			let minutes  = false;
 
@@ -123,8 +135,6 @@ export default function(controller) {
 
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-					// console.log(controller.tasks[0].convos);
-
 					// have 5-minute exit time limit
 					if (convo) {
 						convo.task.timeLimit = 1000 * 60 * 5;
@@ -138,19 +148,25 @@ export default function(controller) {
 						minutes
 					}
 
-					// check here if user is already in a session or not
-					let currentSession = false;
-					if (sessions.length > 0) {
-						currentSession = sessions[0];
-						convo.sessionStart.changeTimeAndTask = changeTimeAndTask;
+					if (!accessToken) {
+						convo.say(signInWithSlackLink);
+						convo.next();
+					} else {
+
+						// check here if user is already in a session or not
+						let currentSession = false;
+						if (sessions.length > 0) {
+							currentSession = sessions[0];
+							convo.sessionStart.changeTimeAndTask = changeTimeAndTask;
+						}
+
+						convo.sessionStart.currentSession = currentSession;
+
+						// entry point!
+						confirmTimeZoneExistsThenStartSessionFlow(convo);
+						convo.next();
+
 					}
-
-					convo.sessionStart.currentSession = currentSession;
-
-					// entry point!
-					confirmTimeZoneExistsThenStartSessionFlow(convo);
-					convo.next();
-					
 
 					convo.on('end', (convo) => {
 

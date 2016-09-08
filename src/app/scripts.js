@@ -51,6 +51,33 @@ export function test(bot) {
 	// then find the channels where the user who ended session is ALSO in the channel
 	// if both are true, update that message with the user's updated status!
 
+	bot.api.dnd.setSnooze({
+		token: "xoxp-36063701207-56424354951-77681914739-74b9d496d0",
+		num_minutes: 2
+	}, (err, res) => {
+
+		console.log(`\n\n\n setting snooze`);
+		console.log(err);
+		console.log(res);
+		console.log(`\n\n\n\n`);
+
+
+
+	});
+
+	bot.api.dnd.teamInfo({
+		token: "xoxp-36063701207-36067647188-61457777139-37c84dc5c2"
+	}, (err, res) => {
+
+		console.log(`\n\n\n dnd team info snooze`);
+		console.log(err);
+		console.log(res);
+		console.log(`\n\n\n\n`);
+
+
+
+	});
+
 	bot.api.channels.list({
 	}, (err, response) => {
 

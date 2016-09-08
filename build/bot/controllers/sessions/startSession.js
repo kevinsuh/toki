@@ -63,6 +63,15 @@ exports.default = function (controller) {
 		var datetime = void 0;
 		var text = void 0;
 
+		var env = process.env.NODE_ENV || 'development';
+
+		if (env == 'development') {
+			process.env.SLACK_ID = process.env.DEV_SLACK_ID;
+			process.env.SLACK_REDIRECT = process.env.DEV_SLACK_REDIRECT;
+		}
+
+		var signInWithSlackLink = 'https://slack.com/oauth/authorize?client_id=' + process.env.SLACK_ID + '&redirect_uri=' + process.env.SLACK_REDIRECT + 'login&scope=channels:history,dnd:write,dnd:read';
+
 		if (message) {
 			SlackUserId = message.user;
 			var _text = message.text;
@@ -91,6 +100,8 @@ exports.default = function (controller) {
 
 			// need user's timezone for this flow!
 			var tz = user.tz;
+			var scopes = user.scopes;
+			var accessToken = user.accessToken;
 
 			var UserId = user.id;
 			var minutes = false;
@@ -121,8 +132,6 @@ exports.default = function (controller) {
 
 				bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-					// console.log(controller.tasks[0].convos);
-
 					// have 5-minute exit time limit
 					if (convo) {
 						convo.task.timeLimit = 1000 * 60 * 5;
@@ -136,18 +145,24 @@ exports.default = function (controller) {
 						minutes: minutes
 					};
 
-					// check here if user is already in a session or not
-					var currentSession = false;
-					if (sessions.length > 0) {
-						currentSession = sessions[0];
-						convo.sessionStart.changeTimeAndTask = changeTimeAndTask;
+					if (!accessToken) {
+						convo.say(signInWithSlackLink);
+						convo.next();
+					} else {
+
+						// check here if user is already in a session or not
+						var currentSession = false;
+						if (sessions.length > 0) {
+							currentSession = sessions[0];
+							convo.sessionStart.changeTimeAndTask = changeTimeAndTask;
+						}
+
+						convo.sessionStart.currentSession = currentSession;
+
+						// entry point!
+						(0, _startSessionFunctions.confirmTimeZoneExistsThenStartSessionFlow)(convo);
+						convo.next();
 					}
-
-					convo.sessionStart.currentSession = currentSession;
-
-					// entry point!
-					(0, _startSessionFunctions.confirmTimeZoneExistsThenStartSessionFlow)(convo);
-					convo.next();
 
 					convo.on('end', function (convo) {
 						var sessionStart = convo.sessionStart;
@@ -595,6 +610,10 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
+var _dotenv = require('dotenv');
+
+var _dotenv2 = _interopRequireDefault(_dotenv);
+
 var _constants = require('../../lib/constants');
 
 var _startSessionFunctions = require('./startSessionFunctions');
@@ -606,4 +625,8 @@ var _index2 = require('./index');
 var _slackHelpers = require('../../lib/slackHelpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+_dotenv2.default.load();
+
+// STARTING A SESSION
 //# sourceMappingURL=startSession.js.map
