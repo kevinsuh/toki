@@ -174,6 +174,8 @@ exports.default = function (controller) {
 						var tz = _convo$sessionStart.tz;
 
 
+						if (!accessToken) return;
+
 						console.log("\n\n\n end of start session ");
 						console.log(sessionStart);
 						console.log("\n\n\n");
@@ -351,6 +353,18 @@ exports.default = function (controller) {
 											console.log('\n\n\n ~~ error in listing channel:');
 											console.log(err);
 										}
+									});
+
+									// turn on DND for user!
+									bot.api.dnd.setSnooze({
+										token: accessToken,
+										num_minutes: minutes
+									}, function (err, res) {
+
+										console.log('\n\n\n setting snooze at end of start session!');
+										console.log(err);
+										console.log(res);
+										console.log('\n\n\n\n');
 									});
 								});
 							});

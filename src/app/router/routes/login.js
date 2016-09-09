@@ -80,9 +80,10 @@ var authenticateTeam = (auth, res) => {
           console.log(auth);
 
           saveUserOnLogin(auth, identity);
+          startBot(identity, "login");
 
           // this is the message you send to user!!
-          res.send("Thank you! You are now friends with Toki");
+          res.send("Thank you! I'm excited to help you make the most of each day");
 
         } else {
 

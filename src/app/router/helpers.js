@@ -34,6 +34,7 @@ export function startBot(team, type) {
 	}
 }
 
+
 // on register team
 export function saveUserOnRegistration(auth, identity) {
 

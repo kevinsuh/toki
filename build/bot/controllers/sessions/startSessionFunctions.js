@@ -25,12 +25,20 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 // confirm that user has tz configured before continuing
 function confirmTimeZoneExistsThenStartSessionFlow(convo) {
-	var text = arguments.length <= 1 || arguments[1] === undefined ? 'Ah! Since I help you make time for your priorities, I need to know your *timezone* before we continue' : arguments[1];
+	var text = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
 	var _convo$sessionStart = convo.sessionStart;
 	var SlackUserId = _convo$sessionStart.SlackUserId;
 	var UserId = _convo$sessionStart.UserId;
 	var tz = _convo$sessionStart.tz;
+	var content = _convo$sessionStart.content;
 
+
+	if (text == '') {
+		text = 'One more thing! Since I help you make time for your priorities, I need to know your *timezone* before we focus';
+		if (content) {
+			text = text + ' on `' + content + '`';
+		}
+	}
 
 	if (tz) {
 		// user has tz config'd

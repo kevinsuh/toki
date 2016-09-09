@@ -8,9 +8,17 @@ import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandom
  */
 
 // confirm that user has tz configured before continuing
-export function confirmTimeZoneExistsThenStartSessionFlow(convo, text = `Ah! Since I help you make time for your priorities, I need to know your *timezone* before we continue`) {
+export function confirmTimeZoneExistsThenStartSessionFlow(convo, text = ``) {
 
-	const { SlackUserId, UserId, tz }  = convo.sessionStart;
+	const { SlackUserId, UserId, tz, content }  = convo.sessionStart;
+
+	if (text == ``) {
+		text = `One more thing! Since I help you make time for your priorities, I need to know your *timezone* before we focus`
+		if (content) {
+			 text = `${text} on \`${content}\``;
+		}
+		
+	}
 
 	if (tz) { // user has tz config'd
 		finalizeSessionTimeAndContent(convo); // entry point
