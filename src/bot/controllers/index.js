@@ -185,8 +185,8 @@ export function connectOnInstall(team_config) {
 export function connectOnLogin(identity) {
 
 	// bot already exists, get bot token for this users team
-	var SlackUserId = identity.user.id;
-	var TeamId      = identity.team.id;
+	var SlackUserId = identity.user_id;
+	var TeamId      = identity.team_id;
 	models.Team.find({
 		where: { TeamId }
 	})

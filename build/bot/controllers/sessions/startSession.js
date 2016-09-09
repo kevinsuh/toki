@@ -346,7 +346,7 @@ exports.default = function (controller) {
 												});
 
 												if (hasBotSlackUserId && hasMemberSlackUserId) {
-													(0, _slackHelpers.updateDashboardForChannelId)(bot, id);
+													(0, _slackHelpers.updateDashboardForChannelId)(bot, id, { statusUpdate: { startSession: true, UserId: UserId } });
 												}
 											});
 										} else {

@@ -135,8 +135,12 @@ function updateDashboardForChannelId(bot, ChannelId) {
 						// iterate through dashboardUsers and put into alphabetized array
 						var dashboardUsersArrayAlphabetical = [];
 						_lodash2.default.forOwn(dashboardUsers, function (value, key) {
-							// value is the object that has value.user and value.session
-							dashboardUsersArrayAlphabetical.push(value);
+							var session = value.session;
+
+							if (session) {
+								// value is the object that has value.user and value.session
+								dashboardUsersArrayAlphabetical.push(value);
+							}
 						});
 
 						dashboardUsersArrayAlphabetical.sort(function (a, b) {

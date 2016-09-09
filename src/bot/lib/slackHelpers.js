@@ -119,8 +119,12 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 						// iterate through dashboardUsers and put into alphabetized array
 						let dashboardUsersArrayAlphabetical = [];
 						_.forOwn(dashboardUsers, (value, key) => {
-							// value is the object that has value.user and value.session
-							dashboardUsersArrayAlphabetical.push(value);
+
+							const { session } = value;
+							if (session) {
+								// value is the object that has value.user and value.session
+								dashboardUsersArrayAlphabetical.push(value);
+							}
 						});
 
 						dashboardUsersArrayAlphabetical.sort((a, b) => {

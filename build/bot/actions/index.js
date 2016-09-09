@@ -52,7 +52,7 @@ function firstInstallInitiateConversation(bot, team) {
 // initiate conversation on login
 function loginInitiateConversation(bot, identity) {
 
-	var SlackUserId = identity.user.id;
+	var SlackUserId = identity.user_id;
 	var botToken = bot.config.token;
 	bot = _controllers.bots[botToken];
 

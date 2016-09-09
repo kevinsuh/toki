@@ -36,7 +36,7 @@ export function firstInstallInitiateConversation(bot, team) {
 // initiate conversation on login
 export function loginInitiateConversation(bot, identity) {
 
-	let SlackUserId = identity.user.id;
+	let SlackUserId = identity.user_id;
 	let botToken    = bot.config.token;
 	bot             = bots[botToken];
 
