@@ -11,6 +11,7 @@ import models from '../../app/models';
 export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 	const BotSlackUserId = bot.identity.id;
+	const { statusUpdate } = config;
 
 	models.Channel.find({
 		where: { ChannelId }
@@ -99,13 +100,13 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 						});
 
-						attachments = [{
+						const titleOfDashboard = {
 							mrkdwn_in: [ "text", "fields" ],
 							callback_id: constants.dashboardCallBackId,
 							fallback: `Here's your team pulse!`,
 							fields: [
 								{
-									title: "Currently Doing",
+									title: "Current Focus",
 									short: true
 								},
 								{
@@ -114,7 +115,9 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 								}
 							],
 							color: colorsHash.white.hex
-						}];
+						};
+
+						attachments = [titleOfDashboard];
 
 						// iterate through dashboardUsers and put into alphabetized array
 						let dashboardUsersArrayAlphabetical = [];
@@ -137,7 +140,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 						dashboardUsersArrayAlphabetical.forEach((dashboardUser) => {
 
-							const { session, user: { dataValues: { SlackUserId } } } = dashboardUser;
+							const { session, user: { dataValues: { SlackUserId, SlackName, TeamId } } } = dashboardUser;
 
 							let sessionContent;
 							let sessionTime;
@@ -158,7 +161,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 								attachment_type: 'default',
 								callback_id: "DASHBOARD_SESSION_INFO_FOR_USER",
 								fallback: `Here's the session info!`,
-								text: `<@${SlackUserId}>`,
+								text: `<slack://user?team=${TeamId}&id=${SlackUserId}|@${SlackName}>`,
 								mrkdwn_in: [ "text", "fields" ],
 								fields: [
 									{
@@ -183,22 +186,23 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 						});
 
-						attachments.push({
+						let dashboardActions = {
 							attachment_type: 'default',
 							callback_id: "DASHBOARD_ACTIONS_FOR_USER",
 							fallback: `Would you like to do something?`,
 							mrkdwn_in: [ "text", "fields" ],
 							color: colorsHash.toki_yellow.hex,
-							text: "_Set your status:_",
+							text: "_What would you like to do?_",
 							actions: [
 								{
 									name: "SET_PRIORITY",
-									text: "Let's do it!",
+									text: "Let's focus!",
 									value: `{"setPriority": true}`,
 									type: "button"
 								}
 							]
-						});
+						};
+						attachments.push(dashboardActions);
 
 						bot.api.channels.history({
 							token: accessToken,
@@ -210,6 +214,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 								const { messages }            = response;
 								let teamPulseDashboardMessage = false;
 								let messageCount              = 0;
+								let updateMessage             = ''; // this is the message that will trigger beating of team-pulse
 
 								// iterate through messages to find
 								// the `DASHBOARD_TEAM_PULSE` attachment
@@ -238,38 +243,76 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 										attachments
 									};
 
-									updateTeamPulseDashboardMessageObject.text        = text;
-									updateTeamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
-									bot.api.chat.update(updateTeamPulseDashboardMessageObject);
+									updateTeamPulseDashboardMessageObject.text = text;
 
-									if (messageCount > 15) {
+									// if status update, send why you are pinging
+									if (statusUpdate) {
+										
+										const { startSession, SlackUserId } = statusUpdate;
 
-										// if it's been over 15 messages since
-										// team_pulse dashboard, then we should reset it
-										// (i.e. delete => create new one)
+										if (startSession) {
 
-										bot.send({
-											channel: ChannelId,
-											text: `Hey, looks like the dashboard has been pushed up by some messages, so here it is again!`
-										}, () => {
-											bot.api.chat.delete(updateTeamPulseDashboardMessageObject);
-											bot.send({
-												channel: ChannelId,
-												text,
-												attachments
-											});
-										})
+											const startSessionObject = dashboardUsers[SlackUserId];
+											const { session, user }  = startSessionObject;
+
+											const { dataValues: { content, startTime, endTime } } = session;
+											const { dataValues: { SlackName } }          = user;
+
+											const endTimeString = moment(endTime).tz(tz).format("h:mma");
+											updateMessage = `*Update*: <@${SlackUserId}> is working on \`${content}\` until *${endTimeString}*`;
+
+										}
 
 									}
 
-								} else {
-									// channel does not have pulse dashboard, let's insert one...
-									console.log(`\n\n\n no pulse dashboard... creating new one:`);
-									bot.send({
-										channel: ChannelId,
-										text,
-										attachments
-									});
+									// proxy for right now that an update happened
+									// this means it will delete and send dashboard again (in order to cause a ping)
+									if (updateMessage != '') {
+
+										bot.api.chat.delete(updateTeamPulseDashboardMessageObject);
+										bot.send({
+											channel: ChannelId,
+											text,
+											attachments: [ titleOfDashboard ]
+										}, (err, response) => {
+
+											// send without attachments then update, in order to avoid @mention of users in focus sessions
+											let { message: { ts, text } } = response;
+											text = `${updateMessage}\n\n${text}`;
+											const updateDashboardObject = {
+												text,
+												ts,
+												channel: ChannelId
+											}
+											updateDashboardObject.attachments = JSON.stringify(attachments);
+											bot.api.chat.update(updateDashboardObject);
+
+										});
+
+									} else {
+
+										// this will just update it without ping
+										// if no one is in session, say that										
+										if (attachments.length < 3) {
+											let noUsers = true;
+											attachments.forEach((attachment) => {
+												console.log(`\n\n attachment:`);
+												const { callback_id } = attachment;
+												// double check that no users are in focus session
+												if (callback_id == `DASHBOARD_SESSION_INFO_FOR_USER`) {
+													noUsers = false;
+												}
+											});
+
+											if (noUsers) {
+												delete attachments[0].fields;
+											}
+											
+										}
+
+										updateTeamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
+										bot.api.chat.update(updateTeamPulseDashboardMessageObject);
+									}
 
 								}
 

@@ -344,7 +344,7 @@ export default function(controller) {
 												});
 
 												if (hasBotSlackUserId && hasMemberSlackUserId) {
-													updateDashboardForChannelId(bot, id, { statusUpdate: { startSession: true, UserId } });
+													updateDashboardForChannelId(bot, id, { statusUpdate: { startSession: true, SlackUserId } });
 												}
 
 											});
