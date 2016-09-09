@@ -255,48 +255,39 @@ export default function(controller) {
 									token: accessToken
 								}, (err, res) => {
 
-									console.log(`\n\nending snooze in end session flow:`);
-									if (!err) {
-										console.log(res);
+									// end the session if it exists!
+									if (session) {
 
-										// end the session if it exists!
-										if (session) {
+										let now     = moment();
+										let endTime = moment(session.dataValues.endTime);
+										if ( now < endTime )
+											endTime = now;
 
-											let now     = moment();
-											let endTime = moment(session.dataValues.endTime);
-											if ( now < endTime )
-												endTime = now;
+										// END THE SESSION HERE
+										session.update({
+											open: false,
+											live: false,
+											endTime
+										})
+										.then((session) => {
 
-											// END THE SESSION HERE
-											session.update({
+											convo.sessionEnd.session = session;
+
+											models.Session.update({
 												open: false,
-												live: false,
-												endTime
-											})
-											.then((session) => {
-
-												convo.sessionEnd.session = session;
-
-												models.Session.update({
-													open: false,
-													live: false
-												}, {
-													where: [ `"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)`, UserId, true, true ]
-												});
-
-												// start the flow after ending session
-												startEndSessionFlow(convo);
-
+												live: false
+											}, {
+												where: [ `"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)`, UserId, true, true ]
 											});
-										} else {
-											// go thru flow without session to end
+
+											// start the flow after ending session
 											startEndSessionFlow(convo);
-										}
-										
+
+										});
 									} else {
-										console.log(err);
+										// go thru flow without session to end
+										startEndSessionFlow(convo);
 									}
-									console.log(`\n~~\n\n`);
 
 								});
 							}

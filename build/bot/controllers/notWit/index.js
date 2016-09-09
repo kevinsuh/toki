@@ -80,6 +80,8 @@ exports.default = function (controller) {
 			var setPriority = jsonObject.setPriority;
 			var pingUser = jsonObject.pingUser;
 			var PingToSlackUserId = jsonObject.PingToSlackUserId;
+			var collaborateNow = jsonObject.collaborateNow;
+			var collaborateNowSlackUserId = jsonObject.collaborateNowSlackUserId;
 
 			var config = {};
 			if (pingUser) {
@@ -88,6 +90,12 @@ exports.default = function (controller) {
 			} else if (setPriority) {
 				config = { SlackUserId: SlackUserId };
 				controller.trigger('begin_session_flow', [bot, null, config]);
+			} else if (collaborateNow) {
+				config = { SlackUserId: SlackUserId, collaborateNowSlackUserIds: [collaborateNowSlackUserId] };
+				console.log(config);
+				console.log(jsonObject);
+				console.log(text);
+				controller.trigger('collaborate_now_flow', [bot, null, config]);
 			}
 		} catch (error) {
 

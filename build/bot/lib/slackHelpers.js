@@ -199,8 +199,8 @@ function updateDashboardForChannelId(bot, ChannelId) {
 								color: sessionColor,
 								actions: [{
 									name: "SEND_PING",
-									text: "Send Message",
-									value: '{"pingUser": true, "PingToSlackUserId": "' + SlackUserId + '"}',
+									text: "Collaborate Now",
+									value: '{"collaborateNow": true, "collaborateNowSlackUserId": "' + SlackUserId + '"}',
 									type: "button"
 								}]
 							});
@@ -291,7 +291,7 @@ function updateDashboardForChannelId(bot, ChannelId) {
 												var sessionDurationString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
 
 												var endTimeString = (0, _momentTimezone2.default)(endTime).tz(tz).format("h:mma");
-												updateMessage = '*Update*: <@' + SlackUserId + '> is working on `' + content + '` for *' + sessionDurationString + '* until *' + endTimeString + '*';
+												updateMessage = '*Update*: <@' + SlackUserId + '> is working on `' + content + '` for ' + sessionDurationString + ' until *' + endTimeString + '*';
 											}
 										}
 

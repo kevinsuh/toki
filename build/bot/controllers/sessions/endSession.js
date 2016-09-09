@@ -244,44 +244,36 @@ exports.default = function (controller) {
 									token: accessToken
 								}, function (err, res) {
 
-									console.log('\n\nending snooze in end session flow:');
-									if (!err) {
-										console.log(res);
+									// end the session if it exists!
+									if (session) {
 
-										// end the session if it exists!
-										if (session) {
+										var now = (0, _momentTimezone2.default)();
+										var endTime = (0, _momentTimezone2.default)(session.dataValues.endTime);
+										if (now < endTime) endTime = now;
 
-											var now = (0, _momentTimezone2.default)();
-											var endTime = (0, _momentTimezone2.default)(session.dataValues.endTime);
-											if (now < endTime) endTime = now;
+										// END THE SESSION HERE
+										session.update({
+											open: false,
+											live: false,
+											endTime: endTime
+										}).then(function (session) {
 
-											// END THE SESSION HERE
-											session.update({
+											convo.sessionEnd.session = session;
+
+											_models2.default.Session.update({
 												open: false,
-												live: false,
-												endTime: endTime
-											}).then(function (session) {
-
-												convo.sessionEnd.session = session;
-
-												_models2.default.Session.update({
-													open: false,
-													live: false
-												}, {
-													where: ['"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)', UserId, true, true]
-												});
-
-												// start the flow after ending session
-												(0, _endSessionFunctions.startEndSessionFlow)(convo);
+												live: false
+											}, {
+												where: ['"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)', UserId, true, true]
 											});
-										} else {
-											// go thru flow without session to end
+
+											// start the flow after ending session
 											(0, _endSessionFunctions.startEndSessionFlow)(convo);
-										}
+										});
 									} else {
-										console.log(err);
+										// go thru flow without session to end
+										(0, _endSessionFunctions.startEndSessionFlow)(convo);
 									}
-									console.log('\n~~\n\n');
 								});
 							}
 

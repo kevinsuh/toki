@@ -88,7 +88,7 @@ export default function(controller) {
 		try {
 
 			let jsonObject = JSON.parse(text);
-			const { setPriority, pingUser, PingToSlackUserId } = jsonObject;
+			const { setPriority, pingUser, PingToSlackUserId, collaborateNow, collaborateNowSlackUserId } = jsonObject;
 			let config = {};
 			if (pingUser) {
 				config = { SlackUserId, pingSlackUserIds: [ PingToSlackUserId ] };
@@ -96,6 +96,12 @@ export default function(controller) {
 			} else if (setPriority) {
 				config = { SlackUserId };
 				controller.trigger(`begin_session_flow`, [ bot, null, config ]);
+			} else if (collaborateNow) {
+				config = { SlackUserId, collaborateNowSlackUserIds: [ collaborateNowSlackUserId ] };
+				console.log(config);
+				console.log(jsonObject);
+				console.log(text);
+				controller.trigger(`collaborate_now_flow`, [bot, null, config]);
 			}
 
 		}

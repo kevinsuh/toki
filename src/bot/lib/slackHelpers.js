@@ -178,8 +178,8 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 								actions: [
 									{
 										name: "SEND_PING",
-										text: "Send Message",
-										value: `{"pingUser": true, "PingToSlackUserId": "${SlackUserId}"}`,
+										text: "Collaborate Now",
+										value: `{"collaborateNow": true, "collaborateNowSlackUserId": "${SlackUserId}"}`,
 										type: "button"
 									}
 								]
@@ -265,7 +265,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 											const sessionDurationString = convertMinutesToHoursString(sessionMinutes);
 
 											const endTimeString = moment(endTime).tz(tz).format("h:mma");
-											updateMessage = `*Update*: <@${SlackUserId}> is working on \`${content}\` for *${sessionDurationString}* until *${endTimeString}*`;
+											updateMessage = `*Update*: <@${SlackUserId}> is working on \`${content}\` for ${sessionDurationString} until *${endTimeString}*`;
 
 										}
 

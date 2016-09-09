@@ -38,6 +38,187 @@ exports.default = function (controller) {
 	});
 
 	/**
+  * 		COLLABORATE NOW FLOW
+  * 		this will begin collaborate now flow with user who you clicked
+  */
+	controller.on('collaborate_now_flow', function (bot, message) {
+		var config = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+
+
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
+		// config is through button-click flow
+		var SlackUserId = config.SlackUserId;
+		var collaborateNowSlackUserIds = config.collaborateNowSlackUserIds;
+
+		var pingMessages = [];
+
+		// this is through slash-command flow
+		if (!SlackUserId && message) {
+
+			var _SlackUserId = message.user;
+			var text = message.text;
+
+			collaborateNowSlackUserIds = (0, _messageHelpers.getUniqueSlackUsersFromString)(text);
+
+			if (collaborateNowSlackUserIds) {
+				// this replaces up to "ping <@UIFSMIOM>"
+				var pingMessage = text.replace(/^pi[ng]{1,4}([^>]*>)?/, "").trim();
+				if (pingMessage) {
+					pingMessages.push(pingMessage);
+				}
+			}
+		}
+
+		// allow customization
+		if (config) {
+			if (config.pingMessages) {
+				pingMessages = config.pingMessages;
+			}
+			if (config.collaborateNowSlackUserIds) {
+				collaborateNowSlackUserIds = config.collaborateNowSlackUserIds;
+			}
+		}
+
+		_models2.default.User.find({
+			where: { SlackUserId: SlackUserId }
+		}).then(function (user) {
+			var tz = user.tz;
+
+			var UserId = user.id;
+
+			var isNotAlreadyInConversation = (0, _slackHelpers.checkIsNotAlreadyInConversation)(controller, SlackUserId);
+
+			if (!isNotAlreadyInConversation) {
+				// user is already in conversation, do not continue here!
+				return;
+			}
+
+			bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
+
+				// have 5-minute exit time limit
+				if (convo) convo.task.timeLimit = 1000 * 60 * 5;
+
+				convo.pingObject = {
+					SlackUserId: SlackUserId,
+					UserId: UserId,
+					bot: bot,
+					tz: tz,
+					collaborateNowSlackUserIds: collaborateNowSlackUserIds,
+					pingMessages: pingMessages
+				};
+
+				var collaborateNowSlackUserId = collaborateNowSlackUserIds[0];
+				if (collaborateNowSlackUserId) {
+
+					if (collaborateNowSlackUserId == SlackUserId) {
+						convo.pingObject.neverMind = true;
+						convo.say(' '); // maybe you can say "You cant ping yourself!"
+					} else {
+
+						convo.say(' ');
+
+						// for collaborating now
+						// 1. Toki temporarily turns off DND, while knowing how many minutes left you have
+						// 2. Starts the conversation between you and that person, sending you a message
+						// 3. Toki turns DND back on
+
+						_models2.default.User.find({
+							where: { SlackUserId: collaborateNowSlackUserId }
+						}).then(function (toUser) {
+
+							if (toUser) {
+								(function () {
+									var accessToken = toUser.dataValues.accessToken;
+
+									var toUserSlackUserId = toUser.dataValues.SlackUserId;
+
+									toUser.getSessions({
+										where: ['"open" = ?', true]
+									}).then(function (sessions) {
+
+										var session = sessions[0];
+
+										if (session) {
+											(function () {
+												var _session$dataValues = session.dataValues;
+												var content = _session$dataValues.content;
+												var startTime = _session$dataValues.startTime;
+												var endTime = _session$dataValues.endTime;
+
+												var now = (0, _momentTimezone2.default)();
+												var endTimeObject = (0, _momentTimezone2.default)(endTime);
+												var remainingMinutes = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(now)).asMinutes());
+
+												bot.api.dnd.endSnooze({
+													token: accessToken
+												}, function (err, res) {
+
+													if (!err) {
+
+														var SlackUserIds = SlackUserId + ',' + toUserSlackUserId;
+
+														bot.api.mpim.open({
+															users: SlackUserIds
+														}, function (err, res) {
+
+															if (!err) {
+																var id = res.group.id;
+
+																bot.startConversation({ channel: id }, function (err, convo) {
+																	convo.say('Hey <@' + toUserSlackUserId + '>! <@' + SlackUserId + '> wanted to talk about something relevant to `' + content + '`');
+																	convo.on('end', function (convo) {
+
+																		// turn back on DND
+																		bot.api.dnd.setSnooze({
+																			token: accessToken,
+																			num_minutes: remainingMinutes
+																		}, function (err, res) {
+
+																			console.log('\n\n\n~~ setting snooze back on after collaborate now!');
+																			if (!err) {
+																				console.log(res);
+																			} else {
+																				console.log(err);
+																			}
+																			console.log('\n~~\n\n');
+																		});
+																	});
+																});
+															} else {
+
+																console.log('\n\n error in trying mpim open in sendPing.js');
+																console.log(err);
+															}
+														});
+													} else {
+														console.log('\n\n\n error in dnd end snooze in sendPing.js');
+														console.log(err);
+													}
+												});
+											})();
+										}
+									});
+								})();
+							}
+						});
+					}
+				} else {
+					// error!
+					convo.pingObject.neverMind = true;
+					convo.say(' ');
+				}
+
+				convo.on('end', function (convo) {
+
+					console.log('\n\n\n ~~ end of collaborate now object ~~ \n\n\n');
+				});
+			});
+		});
+	});
+
+	/**
   * 		ACTUAL PING FLOW
   * 		this will begin the ping flow with user
   */
@@ -62,7 +243,7 @@ exports.default = function (controller) {
 		// this is through slash-command flow
 		if (!SlackUserId && message) {
 
-			var _SlackUserId = message.user;
+			var _SlackUserId2 = message.user;
 			var text = message.text;
 
 			pingSlackUserIds = (0, _messageHelpers.getUniqueSlackUsersFromString)(text);
@@ -237,9 +418,9 @@ exports.default = function (controller) {
 
 				if (session) {
 					(function () {
-						var _session$dataValues = session.dataValues;
-						var endTime = _session$dataValues.endTime;
-						var content = _session$dataValues.content;
+						var _session$dataValues2 = session.dataValues;
+						var endTime = _session$dataValues2.endTime;
+						var content = _session$dataValues2.content;
 
 						var endTimeObject = (0, _momentTimezone2.default)(endTime).tz(tz);
 						var endTimeString = endTimeObject.format("h:mma");
