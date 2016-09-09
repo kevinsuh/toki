@@ -8,6 +8,8 @@ exports.checkIsNotAlreadyInConversation = checkIsNotAlreadyInConversation;
 
 var _constants = require('./constants');
 
+var _messageHelpers = require('./messageHelpers');
+
 var _nlp_compromise = require('nlp_compromise');
 
 var _nlp_compromise2 = _interopRequireDefault(_nlp_compromise);
@@ -25,6 +27,10 @@ var _models = require('../../app/models');
 var _models2 = _interopRequireDefault(_models);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
+ */
 
 function updateDashboardForChannelId(bot, ChannelId) {
 	var config = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
@@ -279,8 +285,13 @@ function updateDashboardForChannelId(bot, ChannelId) {
 												var SlackName = user.dataValues.SlackName;
 
 
+												var startTimeObject = (0, _momentTimezone2.default)(startTime);
+												var endTimeObject = (0, _momentTimezone2.default)(endTime);
+												var sessionMinutes = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(startTimeObject)).asMinutes());
+												var sessionDurationString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
+
 												var endTimeString = (0, _momentTimezone2.default)(endTime).tz(tz).format("h:mma");
-												updateMessage = '*Update*: <@' + SlackUserId + '> is working on `' + content + '` until *' + endTimeString + '*';
+												updateMessage = '*Update*: <@' + SlackUserId + '> is working on `' + content + '` for *' + sessionDurationString + '* until *' + endTimeString + '*';
 											}
 										}
 
@@ -288,26 +299,36 @@ function updateDashboardForChannelId(bot, ChannelId) {
 										// this means it will delete and send dashboard again (in order to cause a ping)
 										if (updateMessage != '') {
 
-											bot.api.chat.delete(updateTeamPulseDashboardMessageObject);
-											bot.send({
-												channel: ChannelId,
-												text: text,
-												attachments: [titleOfDashboard]
-											}, function (err, response) {
+											bot.api.chat.delete({
+												ts: ts,
+												channel: ChannelId
+											}, function (err, res) {
 
-												// send without attachments then update, in order to avoid @mention of users in focus sessions
-												var _response$message = response.message;
-												var ts = _response$message.ts;
-												var text = _response$message.text;
+												if (!err) {
 
-												text = updateMessage + '\n\n' + text;
-												var updateDashboardObject = {
-													text: text,
-													ts: ts,
-													channel: ChannelId
-												};
-												updateDashboardObject.attachments = JSON.stringify(attachments);
-												bot.api.chat.update(updateDashboardObject);
+													bot.send({
+														channel: ChannelId,
+														text: text,
+														attachments: [titleOfDashboard]
+													}, function (err, response) {
+
+														// send without attachments then update, in order to avoid @mention of users in focus sessions
+														var _response$message = response.message;
+														var ts = _response$message.ts;
+														var text = _response$message.text;
+
+														text = updateMessage + '\n\n' + text;
+														var updateDashboardObject = {
+															text: text,
+															ts: ts,
+															channel: ChannelId
+														};
+														updateDashboardObject.attachments = JSON.stringify(attachments);
+														bot.api.chat.update(updateDashboardObject);
+													});
+												} else {
+													console.log(err);
+												}
 											});
 										} else {
 
@@ -316,7 +337,6 @@ function updateDashboardForChannelId(bot, ChannelId) {
 											if (attachments.length < 3) {
 												var noUsers = true;
 												attachments.forEach(function (attachment) {
-													console.log('\n\n attachment:');
 													var callback_id = attachment.callback_id;
 													// double check that no users are in focus session
 
@@ -346,9 +366,7 @@ function updateDashboardForChannelId(bot, ChannelId) {
 			});
 		});
 	});
-} /**
-   * 			THINGS THAT HELP WITH JS OBJECTS <> MESSAGES
-   */
+}
 
 function checkIsNotAlreadyInConversation(controller, SlackUserId) {
 

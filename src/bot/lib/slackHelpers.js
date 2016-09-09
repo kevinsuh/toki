@@ -3,6 +3,7 @@
  */
 
 import { constants, buttonValues, colorsHash, quotes, approvalWords, startSessionExamples, utterances, specialNumbers, decaNumbers } from './constants';
+import { convertMinutesToHoursString } from './messageHelpers';
 import nlp from 'nlp_compromise';
 import moment from 'moment-timezone';
 import _ from 'lodash';
@@ -256,10 +257,15 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 											const { session, user }  = startSessionObject;
 
 											const { dataValues: { content, startTime, endTime } } = session;
-											const { dataValues: { SlackName } }          = user;
+											const { dataValues: { SlackName } } = user;
+
+											const startTimeObject       = moment(startTime);
+											const endTimeObject         = moment(endTime);
+											const sessionMinutes        = Math.round(moment.duration(endTimeObject.diff(startTimeObject)).asMinutes());
+											const sessionDurationString = convertMinutesToHoursString(sessionMinutes);
 
 											const endTimeString = moment(endTime).tz(tz).format("h:mma");
-											updateMessage = `*Update*: <@${SlackUserId}> is working on \`${content}\` until *${endTimeString}*`;
+											updateMessage = `*Update*: <@${SlackUserId}> is working on \`${content}\` for *${sessionDurationString}* until *${endTimeString}*`;
 
 										}
 
@@ -269,23 +275,35 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 									// this means it will delete and send dashboard again (in order to cause a ping)
 									if (updateMessage != '') {
 
-										bot.api.chat.delete(updateTeamPulseDashboardMessageObject);
-										bot.send({
-											channel: ChannelId,
-											text,
-											attachments: [ titleOfDashboard ]
-										}, (err, response) => {
+										bot.api.chat.delete({
+											ts,
+											channel: ChannelId
+										}, (err, res) => {
 
-											// send without attachments then update, in order to avoid @mention of users in focus sessions
-											let { message: { ts, text } } = response;
-											text = `${updateMessage}\n\n${text}`;
-											const updateDashboardObject = {
-												text,
-												ts,
-												channel: ChannelId
+											if (!err) {
+
+												bot.send({
+													channel: ChannelId,
+													text,
+													attachments: [ titleOfDashboard ]
+												}, (err, response) => {
+
+													// send without attachments then update, in order to avoid @mention of users in focus sessions
+													let { message: { ts, text } } = response;
+													text = `${updateMessage}\n\n${text}`;
+													const updateDashboardObject = {
+														text,
+														ts,
+														channel: ChannelId
+													}
+													updateDashboardObject.attachments = JSON.stringify(attachments);
+													bot.api.chat.update(updateDashboardObject);
+
+												});
+
+											} else {
+												console.log(err);
 											}
-											updateDashboardObject.attachments = JSON.stringify(attachments);
-											bot.api.chat.update(updateDashboardObject);
 
 										});
 
@@ -296,7 +314,6 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 										if (attachments.length < 3) {
 											let noUsers = true;
 											attachments.forEach((attachment) => {
-												console.log(`\n\n attachment:`);
 												const { callback_id } = attachment;
 												// double check that no users are in focus session
 												if (callback_id == `DASHBOARD_SESSION_INFO_FOR_USER`) {

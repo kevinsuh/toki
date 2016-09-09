@@ -56,7 +56,7 @@ export default function(controller) {
 		})
 		.then((user) => {
 
-			const { tz } = user;
+			const { tz, accessToken } = user;
 			const UserId = user.id;
 
 			user.getSessions({
@@ -249,38 +249,56 @@ export default function(controller) {
 								mutualSessionEndingPings
 							}
 
-							// end the session if it exists!
-							if (session) {
+							if (accessToken) {
+								// turn off snooze
+								bot.api.dnd.endSnooze({
+									token: accessToken
+								}, (err, res) => {
 
-								let now     = moment();
-								let endTime = moment(session.dataValues.endTime);
-								if ( now < endTime )
-									endTime = now;
+									console.log(`\n\nending snooze in end session flow:`);
+									if (!err) {
+										console.log(res);
 
-								// END THE SESSION HERE
-								session.update({
-									open: false,
-									live: false,
-									endTime
-								})
-								.then((session) => {
+										// end the session if it exists!
+										if (session) {
 
-									convo.sessionEnd.session = session;
+											let now     = moment();
+											let endTime = moment(session.dataValues.endTime);
+											if ( now < endTime )
+												endTime = now;
 
-									models.Session.update({
-										open: false,
-										live: false
-									}, {
-										where: [ `"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)`, UserId, true, true ]
-									});
+											// END THE SESSION HERE
+											session.update({
+												open: false,
+												live: false,
+												endTime
+											})
+											.then((session) => {
 
-									// start the flow after ending session
-									startEndSessionFlow(convo);
+												convo.sessionEnd.session = session;
+
+												models.Session.update({
+													open: false,
+													live: false
+												}, {
+													where: [ `"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)`, UserId, true, true ]
+												});
+
+												// start the flow after ending session
+												startEndSessionFlow(convo);
+
+											});
+										} else {
+											// go thru flow without session to end
+											startEndSessionFlow(convo);
+										}
+										
+									} else {
+										console.log(err);
+									}
+									console.log(`\n~~\n\n`);
 
 								});
-							} else {
-								// go thru flow without session to end
-								startEndSessionFlow(convo);
 							}
 
 							convo.on('end', (convo) => {

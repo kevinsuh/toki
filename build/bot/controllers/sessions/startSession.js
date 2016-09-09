@@ -361,10 +361,13 @@ exports.default = function (controller) {
 										num_minutes: minutes
 									}, function (err, res) {
 
-										console.log('\n\n\n setting snooze at end of start session!');
-										console.log(err);
-										console.log(res);
-										console.log('\n\n\n\n');
+										console.log('\n\n\n~~ setting snooze at end of start session!');
+										if (!err) {
+											console.log(res);
+										} else {
+											console.log(err);
+										}
+										console.log('\n~~\n\n');
 									});
 								});
 							});
