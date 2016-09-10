@@ -383,7 +383,7 @@ function sendNewDashboardObject(config) {
 
 		// send without attachments then update, in order to avoid @mention of users in focus sessions
 		let { ts, message: { text } } = response;
-		text = `${statusUpdateMessage}\n\n${text}`;
+		text = `${text}`;
 		const updateDashboardObject = {
 			text,
 			ts,
@@ -410,10 +410,20 @@ function sendNewDashboardObject(config) {
 
 			}
 
+			// put status update msg at bottom
+			attachments.push({
+				attachment_type: 'default',
+				callback_id: "STATUS_UPDATE_TO_DASHBOARD",
+				fallback: `Here's the status update!`,
+				pretext: statusUpdateMessage,
+				mrkdwn_in: [ "pretext"]
+			});
+
 		}
 
 		// 2. update dashboard msg
 		updateDashboardObject.attachments = JSON.stringify(attachments);
+
 		bot.api.chat.update(updateDashboardObject);
 
 	});

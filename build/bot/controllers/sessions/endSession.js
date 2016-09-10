@@ -454,6 +454,9 @@ exports.default = function (controller) {
 										console.log(err);
 									}
 								});
+
+								// mark unresponded to DM's as unread
+
 							});
 						});
 					});

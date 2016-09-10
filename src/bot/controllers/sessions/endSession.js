@@ -454,8 +454,10 @@ export default function(controller) {
 										console.log(`\n\n\n ~~ error in listing channel:`);
 										console.log(err);
 									}
-
 								});
+
+								// mark unresponded to DM's as unread
+								
 
 							});
 						});
