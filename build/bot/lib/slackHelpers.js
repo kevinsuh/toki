@@ -215,7 +215,7 @@ function updateDashboardForChannelId(bot, ChannelId) {
 							text: "_Would you like to do anything?_",
 							actions: [{
 								name: "SET_PRIORITY",
-								text: "Let's focus!",
+								text: "Let's Focus!",
 								value: '{"setPriority": true}',
 								type: "button"
 							}]
