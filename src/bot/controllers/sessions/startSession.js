@@ -135,9 +135,9 @@ export default function(controller) {
 
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-					// have 5-minute exit time limit
+					// have 4-minute exit time limit
 					if (convo) {
-						convo.task.timeLimit = 1000 * 60 * 5;
+						convo.task.timeLimit = 1000 * 60 * 4;
 					}
 
 					convo.sessionStart = {

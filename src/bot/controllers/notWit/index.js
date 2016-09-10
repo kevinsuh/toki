@@ -39,45 +39,7 @@ export default function(controller) {
 	})
 
 	// this is for updating ping functionality
-	controller.hears(['^{'], 'direct_message', isJsonObject, function(bot, message) {
-
-
-		let botToken = bot.config.token;
-		bot          = bots[botToken];
-
-		const SlackUserId = message.user;
-		const { text }    = message;
-
-		try {
-
-			let jsonObject = JSON.parse(text);
-			const { overrideNewSession, updatePing, cancelPing, sendBomb, PingId } = jsonObject;
-			let config = {};
-			if (updatePing) {
-				config = { PingId, sendBomb, cancelPing };
-				controller.trigger(`update_ping_message`, [bot, config]);
-			} else if (overrideNewSession) {
-				config = { SlackUserId, changeTimeAndTask: true }
-				controller.trigger('begin_session_flow', [bot, null, config]);
-			}
-
-		}
-		catch (error) {
-
-			console.log(error);
-
-			// this should never happen!
-			bot.reply(message, "Hmm, something went wrong");
-			return false;
-		}
-
-	});
-
-	/**
-	 * 	This is where we handle "Send Message" button and other buttons in dashboard
-	 * 	Give `direct_message` precedence above: if it is DM it will get picked up before this catch-all `ambient`
-	 */
-	controller.hears(['^{'], 'ambient', isJsonObject, function(bot, message) {
+	controller.hears(['^{'], ['direct_message','ambient'], isJsonObject, function(bot, message) {
 
 		let botToken = bot.config.token;
 		bot          = bots[botToken];
@@ -85,10 +47,12 @@ export default function(controller) {
 		const SlackUserId = message.user;
 		const { text }    = message;
 
+		console.log(`\n\n ~~ picked up button action ~~ \n\n`);
+
 		try {
 
 			let jsonObject = JSON.parse(text);
-			const { setPriority, pingUser, PingToSlackUserId, collaborateNow, collaborateNowSlackUserId } = jsonObject;
+			const { setPriority, pingUser, PingToSlackUserId, collaborateNow, collaborateNowSlackUserId, overrideNewSession, updatePing, cancelPing, sendBomb, PingId } = jsonObject;
 			let config = {};
 			if (pingUser) {
 				config = { SlackUserId, pingSlackUserIds: [ PingToSlackUserId ] };
@@ -102,6 +66,12 @@ export default function(controller) {
 				console.log(jsonObject);
 				console.log(text);
 				controller.trigger(`collaborate_now_flow`, [bot, null, config]);
+			} else if (updatePing) {
+				config = { PingId, sendBomb, cancelPing };
+				controller.trigger(`update_ping_message`, [bot, config]);
+			} else if (overrideNewSession) {
+				config = { SlackUserId, changeTimeAndTask: true }
+				controller.trigger('begin_session_flow', [bot, null, config]);
 			}
 
 		}

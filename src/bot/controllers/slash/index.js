@@ -1,4 +1,4 @@
-import { wit } from '../index';
+import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
 import dotenv from 'dotenv';
@@ -78,11 +78,26 @@ export default function(controller) {
 
 						} else {
 
-							responseObject.text = `You're not in a current session! Let me know when to \`/focus\` again :thinking_face:`;
-							bot.replyPrivate(message, responseObject);
+							responseObject.text = `You're not in a current session! Do you want to focus again?`;
+							responseObject.attachments = [{
+								attachment_type: 'default',
+								callback_id: `NOT_IN_SESSION_LETS_FOCUS`,
+								fallback: `Would you like to focus on something?`,
+								mrkdwn_in: [ "text", "fields" ],
+								color: colorsHash.toki_yellow.hex,
+								actions: [
+									{
+										name: "SET_PRIORITY",
+										text: "Let's focus!",
+										value: `{"setPriority": true}`,
+										type: "button"
+									}
+								]
+							}];
+							responseObject.channel = message.channel;
+							bot.res.json(responseObject);
 
 						}
-
 
 					});
 					
@@ -93,6 +108,8 @@ export default function(controller) {
 					break;
 
 				case "/pulse":
+
+
 
 					controller.trigger(`begin_session_flow`, [ bot, message ]);
 					responseObject.text = `Woo! You can do it :dancer:`;
