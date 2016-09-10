@@ -325,7 +325,22 @@ function updateDashboardForChannelId(bot, ChannelId) {
 																channel: ChannelId
 															};
 															updateDashboardObject.attachments = JSON.stringify(attachments);
-															bot.api.chat.update(updateDashboardObject);
+															bot.api.chat.update(updateDashboardObject, function (err, response) {
+
+																if (!err) {
+																	var _ts = response.message.ts;
+
+																	bot.api.channels.mark({
+																		token: accessToken,
+																		channel: ChannelId,
+																		ts: _ts
+																	}, function (err, res) {
+																		console.log('\n\n success on mark');
+																		console.log(err);
+																		console.log(res);
+																	});
+																}
+															});
 														});
 													} else {
 														console.log(err);

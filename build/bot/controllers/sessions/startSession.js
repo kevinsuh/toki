@@ -26,7 +26,7 @@ exports.default = function (controller) {
 
 	// this needs to be after Wit.hears `start_ession` because this is
 	// a fallback. we want Wit to be trained to handle this!
-	controller.hears([_constants.utterances.startsWithFocusOrPriorityOrStatus], 'direct_message', function (bot, message) {
+	controller.hears([_constants.utterances.startsWithFocus], 'direct_message', function (bot, message) {
 
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
@@ -312,6 +312,17 @@ exports.default = function (controller) {
 														attachments: attachments
 													});
 												}
+
+												convo.on('end', function (convo) {
+													console.log('\n\n ended saying user is started session');
+													// turn on DND for user BEFORE continuing!
+													setTimeout(function () {
+														bot.api.dnd.setSnooze({
+															token: accessToken,
+															num_minutes: minutes
+														});
+													}, 300);
+												});
 											});
 										});
 									});
@@ -353,21 +364,6 @@ exports.default = function (controller) {
 											console.log('\n\n\n ~~ error in listing channel:');
 											console.log(err);
 										}
-									});
-
-									// turn on DND for user!
-									bot.api.dnd.setSnooze({
-										token: accessToken,
-										num_minutes: minutes
-									}, function (err, res) {
-
-										console.log('\n\n\n~~ setting snooze at end of start session!');
-										if (!err) {
-											console.log(res);
-										} else {
-											console.log(err);
-										}
-										console.log('\n~~\n\n');
 									});
 								});
 							});

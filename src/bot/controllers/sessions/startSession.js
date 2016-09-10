@@ -37,7 +37,7 @@ export default function(controller) {
 
 	// this needs to be after Wit.hears `start_ession` because this is
 	// a fallback. we want Wit to be trained to handle this!
-	controller.hears([utterances.startsWithFocusOrPriorityOrStatus], 'direct_message', (bot, message) => {
+	controller.hears([utterances.startsWithFocus], 'direct_message', (bot, message) => {
 		
 		let botToken      = bot.config.token;
 		bot               = bots[botToken];
@@ -184,6 +184,8 @@ export default function(controller) {
 
 						if (confirmNewSession) {
 
+							
+									
 							// close all old sessions when creating new one
 							models.Session.update({
 								open: false,
@@ -312,6 +314,17 @@ export default function(controller) {
 													});
 												}
 
+												convo.on(`end`, (convo) => {
+													console.log(`\n\n ended saying user is started session`);
+													// turn on DND for user BEFORE continuing!
+													setTimeout(()=>{
+														bot.api.dnd.setSnooze({
+															token: accessToken,
+															num_minutes: minutes
+														});
+													}, 300);
+												})
+
 											});
 
 										});
@@ -353,22 +366,6 @@ export default function(controller) {
 											console.log(`\n\n\n ~~ error in listing channel:`);
 											console.log(err);
 										}
-
-									});
-
-									// turn on DND for user!
-									bot.api.dnd.setSnooze({
-										token: accessToken,
-										num_minutes: minutes
-									}, (err, res) => {
-
-										console.log(`\n\n\n~~ setting snooze at end of start session!`);
-										if (!err) {
-											console.log(res);
-										} else {
-											console.log(err);
-										}
-										console.log(`\n~~\n\n`);
 
 									});
 

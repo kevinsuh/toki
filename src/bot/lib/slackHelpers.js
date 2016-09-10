@@ -297,7 +297,24 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 														channel: ChannelId
 													}
 													updateDashboardObject.attachments = JSON.stringify(attachments);
-													bot.api.chat.update(updateDashboardObject);
+													bot.api.chat.update(updateDashboardObject, (err, response) => {
+
+														if (!err) {
+
+															const { message: { ts } } = response;
+															bot.api.channels.mark({
+																token: accessToken,
+																channel: ChannelId,
+																ts
+															}, (err, res) => {
+																console.log(`\n\n success on mark`);
+																console.log(err);
+																console.log(res);
+															});
+
+														}
+
+													});
 
 												});
 
