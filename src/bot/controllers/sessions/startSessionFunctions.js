@@ -8,9 +8,17 @@ import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandom
  */
 
 // confirm that user has tz configured before continuing
-export function confirmTimeZoneExistsThenStartSessionFlow(convo, text = `Ah! Since I help you make time for your priorities, I need to know your *timezone* before we continue`) {
+export function confirmTimeZoneExistsThenStartSessionFlow(convo, text = ``) {
 
-	const { SlackUserId, UserId, tz }  = convo.sessionStart;
+	const { SlackUserId, UserId, tz, content }  = convo.sessionStart;
+
+	if (text == ``) {
+		text = `One more thing! Since I help you make time for your priorities, I need to know your *timezone* before we focus`
+		if (content) {
+			 text = `${text} on \`${content}\``;
+		}
+		
+	}
 
 	if (tz) { // user has tz config'd
 		finalizeSessionTimeAndContent(convo); // entry point
@@ -162,7 +170,7 @@ function changeTimeAndTaskFlow(convo) {
 			pattern: utterances.yes,
 			callback: (response, convo) => {
 				convo.sessionStart.content = false;
-				let question = `What task are you doing?`;
+				let question = `What task are you working on?`;
 				askForSessionContent(convo, question);
 				convo.next();
 			}
@@ -196,7 +204,7 @@ function askToOverrideCurrentSession(convo) {
 	let endTimeString = endTime.format("h:mma");
 	let minutesLeft   = Math.round(moment.duration(endTime.diff(now)).asMinutes());
 
-	let text = `Hey! You're already doing \`${currentSession.dataValues.content}\` until *${endTimeString}*`;
+	let text = `Hey! You're already working on \`${currentSession.dataValues.content}\` until *${endTimeString}*`;
 	let attachments = [
 		{
 			attachment_type: 'default',
@@ -270,7 +278,7 @@ function askForSessionContent(convo, question = '') {
 	const sessionExample = getRandomExample("session");
 
 	if (question == '')
-		question = `What would you like to start doing? (i.e. \`${sessionExample}\`)`;
+		question = `What would you like to work on? (i.e. \`${sessionExample}\`)`;
 
 	convo.ask({
 		text: question,
@@ -278,7 +286,7 @@ function askForSessionContent(convo, question = '') {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
-				convo.say(`Okay! Let me know when you want to start \`/doing\` something`);
+				convo.say(`Okay! Let me know when you want to \`/focus\` on something`);
 				convo.next();
 			}
 		},
@@ -355,7 +363,7 @@ function askForSessionTime(convo) {
 		{
 			pattern: utterances.noAndNeverMind,
 			callback: (response, convo) => {
-				convo.say(`Okay, let me know when you're ready to focus!`);
+				convo.say(`Okay, let me know when to \`/focus\`!`);
 				convo.next();
 			}
 		},

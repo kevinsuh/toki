@@ -74,6 +74,7 @@ var registerTeam = (auth, res) => {
         }
 
         // start the bot!
+        saveUserOnRegistration(auth, identity);
         startBot(team, "create");
 
         // user has signed up

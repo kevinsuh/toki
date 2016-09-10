@@ -49,14 +49,17 @@ export default function(controller) {
 
 		// pingInfo only relevant when endSessionType == `endByPingToUserId`
 		const { SlackUserId, endSessionType, pingInfo } = config;
-		let { mutualSessionEndingPings } = config;
+		let { mutualSessionEndingPings }                = config;
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
 		models.User.find({
 			where: { SlackUserId }
 		})
 		.then((user) => {
 
-			const { tz } = user;
+			const { tz, accessToken } = user;
 			const UserId = user.id;
 
 			user.getSessions({
@@ -249,38 +252,47 @@ export default function(controller) {
 								mutualSessionEndingPings
 							}
 
-							// end the session if it exists!
-							if (session) {
+							if (accessToken) {
+								// turn off snooze
+								bot.api.dnd.endSnooze({
+									token: accessToken
+								}, (err, res) => {
 
-								let now     = moment();
-								let endTime = moment(session.dataValues.endTime);
-								if ( now < endTime )
-									endTime = now;
+									// end the session if it exists!
+									if (session) {
 
-								// END THE SESSION HERE
-								session.update({
-									open: false,
-									live: false,
-									endTime
-								})
-								.then((session) => {
+										let now     = moment();
+										let endTime = moment(session.dataValues.endTime);
+										if ( now < endTime )
+											endTime = now;
 
-									convo.sessionEnd.session = session;
+										// END THE SESSION HERE
+										session.update({
+											open: false,
+											live: false,
+											endTime
+										})
+										.then((session) => {
 
-									models.Session.update({
-										open: false,
-										live: false
-									}, {
-										where: [ `"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)`, UserId, true, true ]
-									});
+											convo.sessionEnd.session = session;
 
-									// start the flow after ending session
-									startEndSessionFlow(convo);
+											models.Session.update({
+												open: false,
+												live: false
+											}, {
+												where: [ `"Sessions"."UserId" = ? AND ("Sessions"."open" = ? OR "Sessions"."live" = ?)`, UserId, true, true ]
+											});
+
+											// start the flow after ending session
+											startEndSessionFlow(convo);
+
+										});
+									} else {
+										// go thru flow without session to end
+										startEndSessionFlow(convo);
+									}
 
 								});
-							} else {
-								// go thru flow without session to end
-								startEndSessionFlow(convo);
 							}
 
 							convo.on('end', (convo) => {

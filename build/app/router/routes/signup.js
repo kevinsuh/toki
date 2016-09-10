@@ -88,6 +88,7 @@ var registerTeam = function registerTeam(auth, res) {
         };
 
         // start the bot!
+        (0, _helpers.saveUserOnRegistration)(auth, identity);
         (0, _helpers.startBot)(team, "create");
 
         // user has signed up

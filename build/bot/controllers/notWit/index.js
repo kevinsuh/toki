@@ -25,7 +25,7 @@ exports.default = function (controller) {
 	});
 
 	// this is for updating ping functionality
-	controller.hears(['^{'], 'direct_message', _hearsMiddleware.isJsonObject, function (bot, message) {
+	controller.hears(['^{'], ['direct_message', 'ambient'], _hearsMiddleware.isJsonObject, function (bot, message) {
 
 		var botToken = bot.config.token;
 		bot = _index.bots[botToken];
@@ -34,45 +34,7 @@ exports.default = function (controller) {
 		var text = message.text;
 
 
-		try {
-
-			var jsonObject = JSON.parse(text);
-			var overrideNewSession = jsonObject.overrideNewSession;
-			var updatePing = jsonObject.updatePing;
-			var cancelPing = jsonObject.cancelPing;
-			var sendBomb = jsonObject.sendBomb;
-			var PingId = jsonObject.PingId;
-
-			var config = {};
-			if (updatePing) {
-				config = { PingId: PingId, sendBomb: sendBomb, cancelPing: cancelPing };
-				controller.trigger('update_ping_message', [bot, config]);
-			} else if (overrideNewSession) {
-				config = { SlackUserId: SlackUserId, changeTimeAndTask: true };
-				controller.trigger('begin_session_flow', [bot, null, config]);
-			}
-		} catch (error) {
-
-			console.log(error);
-
-			// this should never happen!
-			bot.reply(message, "Hmm, something went wrong");
-			return false;
-		}
-	});
-
-	/**
-  * 	This is where we handle "Send Message" button and other buttons in dashboard
-  * 	Give `direct_message` precedence above: if it is DM it will get picked up before this catch-all `ambient`
-  */
-	controller.hears(['^{'], 'ambient', _hearsMiddleware.isJsonObject, function (bot, message) {
-
-		var botToken = bot.config.token;
-		bot = _index.bots[botToken];
-
-		var SlackUserId = message.user;
-		var text = message.text;
-
+		console.log('\n\n ~~ picked up button action ~~ \n\n');
 
 		try {
 
@@ -80,6 +42,13 @@ exports.default = function (controller) {
 			var setPriority = jsonObject.setPriority;
 			var pingUser = jsonObject.pingUser;
 			var PingToSlackUserId = jsonObject.PingToSlackUserId;
+			var collaborateNow = jsonObject.collaborateNow;
+			var collaborateNowSlackUserId = jsonObject.collaborateNowSlackUserId;
+			var overrideNewSession = jsonObject.overrideNewSession;
+			var updatePing = jsonObject.updatePing;
+			var cancelPing = jsonObject.cancelPing;
+			var sendBomb = jsonObject.sendBomb;
+			var PingId = jsonObject.PingId;
 
 			var config = {};
 			if (pingUser) {
@@ -87,6 +56,18 @@ exports.default = function (controller) {
 				controller.trigger('ping_flow', [bot, null, config]);
 			} else if (setPriority) {
 				config = { SlackUserId: SlackUserId };
+				controller.trigger('begin_session_flow', [bot, null, config]);
+			} else if (collaborateNow) {
+				config = { SlackUserId: SlackUserId, collaborateNowSlackUserIds: [collaborateNowSlackUserId] };
+				console.log(config);
+				console.log(jsonObject);
+				console.log(text);
+				controller.trigger('collaborate_now_flow', [bot, null, config]);
+			} else if (updatePing) {
+				config = { PingId: PingId, sendBomb: sendBomb, cancelPing: cancelPing };
+				controller.trigger('update_ping_message', [bot, config]);
+			} else if (overrideNewSession) {
+				config = { SlackUserId: SlackUserId, changeTimeAndTask: true };
 				controller.trigger('begin_session_flow', [bot, null, config]);
 			}
 		} catch (error) {

@@ -65,10 +65,10 @@ var authenticateTeam = function authenticateTeam(auth, res) {
 
   // you have bot access_token now
   // use this to identify the user
-  var url = 'https://slack.com/api/users.identity?';
+  var url = 'https://slack.com/api/auth.test?';
   url += 'token=' + auth.access_token;
 
-  console.log("in authenticate team");
+  console.log("in authenticate user");
   console.log(url);
 
   _request2.default.get(url, function (error, response, body) {
@@ -83,6 +83,7 @@ var authenticateTeam = function authenticateTeam(auth, res) {
 
         // identified user and check if oauth is valid
         var identity = JSON.parse(body);
+        console.log(identity);
 
         if (identity.ok) {
 
@@ -94,9 +95,10 @@ var authenticateTeam = function authenticateTeam(auth, res) {
           console.log(auth);
 
           (0, _helpers.saveUserOnLogin)(auth, identity);
+          (0, _helpers.startBot)(identity, "login");
 
           // this is the message you send to user!!
-          res.send("Thank you! You are now friends with Toki");
+          res.send("Thank you! I'm excited to help you make the most of each day");
         } else {
 
           res.send("Sorry! Please try again");

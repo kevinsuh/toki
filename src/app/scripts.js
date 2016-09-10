@@ -46,10 +46,6 @@ export function test(bot) {
 		}
 	});
 
-	// on session_start or session_end...
-	// go through all the channels where this BOT is in the channel
-	// then find the channels where the user who ended session is ALSO in the channel
-	// if both are true, update that message with the user's updated status!
 
 	bot.api.channels.list({
 	}, (err, response) => {

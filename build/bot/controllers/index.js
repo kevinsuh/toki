@@ -244,8 +244,8 @@ function connectOnInstall(team_config) {
 function connectOnLogin(identity) {
 
 	// bot already exists, get bot token for this users team
-	var SlackUserId = identity.user.id;
-	var TeamId = identity.team.id;
+	var SlackUserId = identity.user_id;
+	var TeamId = identity.team_id;
 	_models2.default.Team.find({
 		where: { TeamId: TeamId }
 	}).then(function (team) {
@@ -334,22 +334,6 @@ controller.on('login_bot', function (bot, identity) {
 
 				console.log("RTM on and listening");
 				trackBot(bot);
-				/*
-    	// ~~~ this should be login-user instead ~~~
-    	// 
-    	// functionality needs to be: login user! i.e. controller.saveUser
-    	// will put this functionality when we have web app functionality
-     */
-				// 
-				// controller.saveTeam(team, (err, team) => {
-				// 	if (err) {
-				// 		console.log("Error saving team")
-				// 	}
-				// 	else {
-				// 		console.log("Team " + team.name + " saved")
-				// 	}
-				// });
-
 				(0, _actions.loginInitiateConversation)(bot, identity);
 			} else {
 				console.log("RTM failed");

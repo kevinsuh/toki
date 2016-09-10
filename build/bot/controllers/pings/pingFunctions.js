@@ -36,7 +36,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 
 function confirmTimeZoneExistsThenStartPingFlow(convo) {
-	var text = arguments.length <= 1 || arguments[1] === undefined ? 'Ah! Since I help you make time for your priorities, I need to know your *timezone* before we continue' : arguments[1];
+	var text = arguments.length <= 1 || arguments[1] === undefined ? 'One more thing! Since I help you make time for your priorities, I need to know your *timezone* before we set our first focus session' : arguments[1];
 	var _convo$pingObject = convo.pingObject;
 	var SlackUserId = _convo$pingObject.SlackUserId;
 	var UserId = _convo$pingObject.UserId;

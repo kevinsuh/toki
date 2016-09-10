@@ -30,7 +30,7 @@ var SlackData = function (_EventEmitter) {
 
     _classCallCheck(this, SlackData);
 
-    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(SlackData).call(this));
+    var _this = _possibleConstructorReturn(this, (SlackData.__proto__ || Object.getPrototypeOf(SlackData)).call(this));
 
     _this.host = host;
     _this.token = token;

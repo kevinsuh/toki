@@ -19,7 +19,7 @@ export function startEndSessionFlow(convo) {
 	let sessionMinutes;
 	let sessionTimeString;
 	let message = ' ';
-	let letsFocusMessage = `When you’re ready, let me know when you’d like to start \`/doing\` something else`;
+	let letsFocusMessage = `Let me know when you want to \`/focus\` again`;
 
 	// add session info (the one that just got ended) if existing
 	// this is not the case when you have queued ping
@@ -57,7 +57,7 @@ export function startEndSessionFlow(convo) {
 		message = `${message}\n:point_left: I just kicked off a conversation between you two`;
 
 		if (pingInfo && pingInfo.session) {
-			letsFocusMessage = `I ended your current status on \`${session.dataValues.content}\`. ${letsFocusMessage}`;
+			letsFocusMessage = `I ended your current focus on \`${session.dataValues.content}\`. ${letsFocusMessage}`;
 		}
 
 	} else if (endSessionType == constants.endSessionTypes.endByPingToUserId && pingInfo && pingInfo.FromUser.dataValues.id == UserId) {
@@ -73,7 +73,7 @@ export function startEndSessionFlow(convo) {
 		message = `${message}\n:point_left: I just kicked off a conversation between you two`;
 
 		if (pingInfo.session) {
-			letsFocusMessage = `I ended your current status on \`${session.dataValues.content}\`. ${letsFocusMessage}`;
+			letsFocusMessage = `I ended your current focus on \`${session.dataValues.content}\`. ${letsFocusMessage}`;
 		}
 
 	} else if (session) { // session must exist for all endSessionTypes other than endByPingToUserId
@@ -218,7 +218,7 @@ function handleFromUserPings(convo) {
 			}
 
 		} else {
-			convo.say(`<@${ToUser.dataValues.SlackUserId}> does not have a current status set, so I just started a conversation between you two :simple_smile:`);
+			convo.say(`<@${ToUser.dataValues.SlackUserId}> does not have a current focus set, so I just started a conversation between you two :simple_smile:`);
 		}
 
 	}

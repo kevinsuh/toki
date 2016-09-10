@@ -3,6 +3,7 @@
  */
 
 import { constants, buttonValues, colorsHash, quotes, approvalWords, startSessionExamples, utterances, specialNumbers, decaNumbers } from './constants';
+import { convertMinutesToHoursString } from './messageHelpers';
 import nlp from 'nlp_compromise';
 import moment from 'moment-timezone';
 import _ from 'lodash';
@@ -11,6 +12,7 @@ import models from '../../app/models';
 export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 	const BotSlackUserId = bot.identity.id;
+	const { statusUpdate } = config;
 
 	models.Channel.find({
 		where: { ChannelId }
@@ -99,13 +101,13 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 						});
 
-						attachments = [{
+						const titleOfDashboard = {
 							mrkdwn_in: [ "text", "fields" ],
 							callback_id: constants.dashboardCallBackId,
 							fallback: `Here's your team pulse!`,
 							fields: [
 								{
-									title: "Currently Doing",
+									title: "Current Focus",
 									short: true
 								},
 								{
@@ -114,13 +116,19 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 								}
 							],
 							color: colorsHash.white.hex
-						}];
+						};
+
+						attachments = [titleOfDashboard];
 
 						// iterate through dashboardUsers and put into alphabetized array
 						let dashboardUsersArrayAlphabetical = [];
 						_.forOwn(dashboardUsers, (value, key) => {
-							// value is the object that has value.user and value.session
-							dashboardUsersArrayAlphabetical.push(value);
+
+							const { session } = value;
+							if (session) {
+								// value is the object that has value.user and value.session
+								dashboardUsersArrayAlphabetical.push(value);
+							}
 						});
 
 						dashboardUsersArrayAlphabetical.sort((a, b) => {
@@ -133,7 +141,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 						dashboardUsersArrayAlphabetical.forEach((dashboardUser) => {
 
-							const { session, user: { dataValues: { SlackUserId } } } = dashboardUser;
+							const { session, user: { dataValues: { SlackUserId, SlackName, TeamId } } } = dashboardUser;
 
 							let sessionContent;
 							let sessionTime;
@@ -144,7 +152,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 								sessionTime    = moment(session.dataValues.endTime).tz(tz).format("h:mma");
 								sessionColor   = colorsHash.toki_purple.hex;
 							} else {
-								sessionContent = `_No status set_`;
+								sessionContent = `_No current focus_`;
 								sessionTime    = ``;
 								sessionColor   = colorsHash.grey.hex;
 							}
@@ -154,7 +162,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 								attachment_type: 'default',
 								callback_id: "DASHBOARD_SESSION_INFO_FOR_USER",
 								fallback: `Here's the session info!`,
-								text: `<@${SlackUserId}>`,
+								text: `<slack://user?team=${TeamId}&id=${SlackUserId}|@${SlackName}>`,
 								mrkdwn_in: [ "text", "fields" ],
 								fields: [
 									{
@@ -170,8 +178,8 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 								actions: [
 									{
 										name: "SEND_PING",
-										text: "Send Message",
-										value: `{"pingUser": true, "PingToSlackUserId": "${SlackUserId}"}`,
+										text: "Collaborate Now",
+										value: `{"collaborateNow": true, "collaborateNowSlackUserId": "${SlackUserId}"}`,
 										type: "button"
 									}
 								]
@@ -179,22 +187,23 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 						});
 
-						attachments.push({
+						let dashboardActions = {
 							attachment_type: 'default',
-							callback_id: "DASHBOARD_ACTIONS_FOR_USER",
+							callback_id: constants.dashboardActions,
 							fallback: `Would you like to do something?`,
 							mrkdwn_in: [ "text", "fields" ],
 							color: colorsHash.toki_yellow.hex,
-							text: "_Set your status:_",
+							text: "_What would you like to do?_",
 							actions: [
 								{
 									name: "SET_PRIORITY",
-									text: "Let's do it!",
+									text: "Let's focus!",
 									value: `{"setPriority": true}`,
 									type: "button"
 								}
 							]
-						});
+						};
+						attachments.push(dashboardActions);
 
 						bot.api.channels.history({
 							token: accessToken,
@@ -206,6 +215,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 								const { messages }            = response;
 								let teamPulseDashboardMessage = false;
 								let messageCount              = 0;
+								let updateMessage             = ''; // this is the message that will trigger beating of team-pulse
 
 								// iterate through messages to find
 								// the `DASHBOARD_TEAM_PULSE` attachment
@@ -234,38 +244,116 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 										attachments
 									};
 
-									updateTeamPulseDashboardMessageObject.text        = text;
-									updateTeamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
-									bot.api.chat.update(updateTeamPulseDashboardMessageObject);
+									updateTeamPulseDashboardMessageObject.text = text;
 
-									if (messageCount > 15) {
+									// if status update, send why you are pinging
+									if (statusUpdate) {
+										
+										const { startSession, SlackUserId } = statusUpdate;
 
-										// if it's been over 15 messages since
-										// team_pulse dashboard, then we should reset it
-										// (i.e. delete => create new one)
+										if (startSession) {
 
-										bot.send({
-											channel: ChannelId,
-											text: `Hey, looks like the dashboard has been pushed up by some messages, so here it is again!`
-										}, () => {
-											bot.api.chat.delete(updateTeamPulseDashboardMessageObject);
-											bot.send({
-												channel: ChannelId,
-												text,
-												attachments
-											});
-										})
+											const startSessionObject = dashboardUsers[SlackUserId];
+											const { session, user }  = startSessionObject;
+
+											const { dataValues: { content, startTime, endTime } } = session;
+											const { dataValues: { SlackName } } = user;
+
+											const startTimeObject       = moment(startTime);
+											const endTimeObject         = moment(endTime);
+											const sessionMinutes        = Math.round(moment.duration(endTimeObject.diff(startTimeObject)).asMinutes());
+											const sessionDurationString = convertMinutesToHoursString(sessionMinutes);
+
+											const endTimeString = moment(endTime).tz(tz).format("h:mma");
+											updateMessage = `*Update*: <@${SlackUserId}> is working on \`${content}\` for ${sessionDurationString} until *${endTimeString}*`;
+
+										}
 
 									}
 
-								} else {
-									// channel does not have pulse dashboard, let's insert one...
-									console.log(`\n\n\n no pulse dashboard... creating new one:`);
-									bot.send({
-										channel: ChannelId,
-										text,
-										attachments
-									});
+									// proxy for right now that an update happened
+									// this means it will delete and send dashboard again (in order to cause a ping)
+									if (updateMessage != '') {
+
+										bot.api.chat.delete({
+											ts,
+											channel: ChannelId
+										}, (err, res) => {
+
+											if (!err) {
+
+												bot.send({
+													channel: ChannelId,
+													text,
+													attachments: [ titleOfDashboard ]
+												}, (err, response) => {
+
+													// send without attachments then update, in order to avoid @mention of users in focus sessions
+													let { message: { ts, text } } = response;
+													text = `${updateMessage}\n\n${text}`;
+													const updateDashboardObject = {
+														text,
+														ts,
+														channel: ChannelId
+													}
+													updateDashboardObject.attachments = JSON.stringify(attachments);
+													bot.api.chat.update(updateDashboardObject, (err, response) => {
+
+														if (!err) {
+
+															const { message: { ts } } = response;
+															bot.api.channels.mark({
+																token: accessToken,
+																channel: ChannelId,
+																ts
+															}, (err, res) => {
+																console.log(`\n\n success on mark`);
+																console.log(err);
+																console.log(res);
+															});
+
+														}
+
+													});
+
+												});
+
+											} else {
+												console.log(err);
+											}
+
+										});
+
+									} else {
+
+										// this will just update it without ping
+										// if no one is in session, say that										
+										if (attachments.length < 3) {
+											let noUsers = true;
+											attachments.forEach((attachment) => {
+												const { callback_id } = attachment;
+												// double check that no users are in focus session
+												if (callback_id == `DASHBOARD_SESSION_INFO_FOR_USER`) {
+													noUsers = false;
+												}
+											});
+
+											if (noUsers) {
+												delete attachments[0].fields;
+												attachments.forEach((attachment) => {
+													console.log(attachment);
+													if (attachment.callback_id == constants.dashboardActions) {
+														attachment.text = `Start a focus session by clicking the button below :point_down:\nI’ll post what you’re working on here so your team knows what you’re focused on :dancers:\nI’ll also snooze your non-urgent notifications :palm_tree:`;
+													}
+													updateTeamPulseDashboardMessageObject.text = ` `;
+												});
+											}
+											
+										}
+
+										updateTeamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
+										bot.api.chat.update(updateTeamPulseDashboardMessageObject);
+									}
 
 								}
 

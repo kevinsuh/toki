@@ -88,6 +88,7 @@ var utterances = exports.utterances = (_utterances = {
 
 var constants = exports.constants = {
 	dashboardCallBackId: "DASHBOARD_TEAM_PULSE",
+	dashboardActions: "DASHBOARD_ACTIONS_FOR_USER",
 	endSessionTypes: {
 		endByPingToUserId: "END_BY_PING_TO_USER_ID",
 		sessionTimerUp: "SESSION_TIMER_UP",
@@ -396,21 +397,29 @@ var timeZoneAttachments = exports.timeZoneAttachments = [{
 }];
 
 var tokiExplainAttachments = exports.tokiExplainAttachments = [{
-	title: "Set your status",
-	text: "In any channel, use the command `/doing` to share your current status and protect yourself from getting pulled to switch contexts from non-urgent messages while you work",
+	title: "Set your current focus",
+	text: "In any channel, use the command `/focus` to share your current focus and protect yourself from getting pulled to switch contexts from non-urgent messages while you work. If you finish early, you can use the `/end` command",
 	mrkdwn_in: ["text"],
 	color: colorsHash.toki_purple.hex,
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
-	fallback: "Set my status"
+	fallback: "Set my current focus"
 }, {
-	title: "Ping Members",
-	text: "In any channel, use the command `/ping @user` whenever you would otherwise send a DM. I'll default queue the message if @user is focused, while letting you send it sooner if it's urgent",
+	title: "Respect your teammates",
+	text: "In any channel, use the command `/pulse @user` to see your teammate's current focus. If you're working on something relevant and want to send a message, I'll push the notification through",
 	mrkdwn_in: ["text"],
 	color: colorsHash.toki_purple.hex,
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
-	fallback: "Ping members"
+	fallback: "See team member's pulse"
+}, {
+	title: "Handle urgent messages",
+	text: "In any channel, use the command `/now @user` when you have a truly urgent message to send. I'll push through the notification and start a conversation between you two so you can talk",
+	mrkdwn_in: ["text"],
+	color: colorsHash.toki_purple.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "Send urgent messages"
 }];
 
 var specialNumbers = exports.specialNumbers = ['zeroth', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelvth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'];

@@ -48,6 +48,220 @@ export default function(controller) {
 		
 	});
 
+	/**
+	 * 		COLLABORATE NOW FLOW
+	 * 		this will begin collaborate now flow with user who you clicked
+	 */
+	controller.on('collaborate_now_flow', (bot, message, config = {}) => {
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
+
+		// config is through button-click flow
+		const { SlackUserId }    = config;
+		let { collaborateNowSlackUserIds } = config;
+		let pingMessages         = [];
+
+		// this is through slash-command flow
+		if (!SlackUserId && message) {
+
+			const SlackUserId = message.user;
+			const { text }    = message;
+			collaborateNowSlackUserIds  = getUniqueSlackUsersFromString(text);
+
+			if (collaborateNowSlackUserIds) {
+				// this replaces up to "ping <@UIFSMIOM>"
+				let pingMessage = text.replace(/^pi[ng]{1,4}([^>]*>)?/,"").trim()
+				if (pingMessage) {
+					pingMessages.push(pingMessage);
+				}
+			}
+
+		}
+
+		// allow customization
+		if (config) {
+			if (config.pingMessages) {
+				pingMessages = config.pingMessages;
+			}
+			if (config.collaborateNowSlackUserIds) {
+				collaborateNowSlackUserIds = config.collaborateNowSlackUserIds;
+			}
+		}
+
+		models.User.find({
+			where: { SlackUserId }
+		}).then((user) => {
+
+			const { tz } = user;
+			const UserId = user.id;
+
+			let isNotAlreadyInConversation = checkIsNotAlreadyInConversation(controller, SlackUserId);
+
+			if (!isNotAlreadyInConversation) {
+				// user is already in conversation, do not continue here!
+				return;
+			}
+
+			bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
+
+				// have 5-minute exit time limit
+				if (convo)
+					convo.task.timeLimit = 1000 * 60 * 5;
+
+				convo.pingObject = {
+					SlackUserId,
+					UserId,
+					bot,
+					tz,
+					collaborateNowSlackUserIds,
+					pingMessages
+				};
+
+				let collaborateNowSlackUserId = collaborateNowSlackUserIds[0];
+				if (collaborateNowSlackUserId) {
+
+					if (collaborateNowSlackUserId == SlackUserId) {
+						convo.pingObject.neverMind = true;
+						convo.say(` `); // maybe you can say "You cant ping yourself!"
+					} else {
+
+						convo.say(` `);
+
+						// for collaborating now
+						// 1. Toki temporarily turns off DND, while knowing how many minutes left you have
+						// 2. Starts the conversation between you and that person, sending you a message
+						// 3. Toki turns DND back on
+						
+						models.User.find({
+							where: { SlackUserId: collaborateNowSlackUserId }
+						})
+						.then((toUser) => {
+
+							if (toUser) {
+
+								const { dataValues: { accessToken } } = toUser;
+
+								const toUserSlackUserId = toUser.dataValues.SlackUserId;
+								const SlackUserIds      = `${SlackUserId},${toUserSlackUserId}`;
+
+								toUser.getSessions({
+									where: [ `"open" = ?`, true ]
+								})
+								.then((sessions) => {
+
+									let session = sessions[0];
+
+									if (session) {
+
+										const { dataValues: { content, startTime, endTime } } = session;
+										const now              = moment();
+										const endTimeObject    = moment(endTime);
+										const remainingMinutes = Math.round(moment.duration(endTimeObject.diff(now)).asMinutes());
+
+										bot.api.dnd.endSnooze({
+											token: accessToken
+										}, (err, res) => {
+
+											if (!err) {
+
+												bot.api.mpim.open({
+													users: SlackUserIds
+												}, (err, res) => {
+
+													if (!err) {
+
+														const { group: { id } } = res;
+														bot.startConversation({ channel: id }, (err, convo) => {
+															convo.say(`Hey <@${toUserSlackUserId}>! <@${SlackUserId}> wanted to talk about something relevant to \`${content}\``);
+															convo.on(`end`, (convo) => {
+
+																// turn back on DND
+																	bot.api.dnd.setSnooze({
+																		token: accessToken,
+																		num_minutes: remainingMinutes
+																	}, (err, res) => {
+
+																		console.log(`\n\n\n~~ setting snooze back on after collaborate now!`);
+																		if (!err) {
+																			console.log(res);
+																		} else {
+																			console.log(err);
+																		}
+																		console.log(`\n~~\n\n`);
+
+																	});
+
+															})
+														});
+
+													} else {
+
+														console.log(`\n\n error in trying mpim open in sendPing.js`);
+														console.log(err);
+
+													}
+
+												});
+
+											} else {
+												console.log(`\n\n\n error in dnd end snooze in sendPing.js`);
+												console.log(err);
+											}
+
+										})
+
+
+									} else {
+
+										// not in session, still want to send msg
+										bot.api.mpim.open({
+											users: SlackUserIds
+										}, (err, res) => {
+
+											if (!err) {
+
+												const { group: { id } } = res;
+												bot.startConversation({ channel: id }, (err, convo) => {
+													
+													convo.say(`Hey <@${toUserSlackUserId}>! You're not in a current focus and <@${SlackUserId}> wanted to reach out`);
+
+												});
+
+											} else {
+
+												console.log(`\n\n error in trying mpim open in sendPing.js`);
+												console.log(err);
+
+											}
+
+										});
+
+									}
+
+								})
+							}
+						})
+					}
+
+				} else {
+					// error!
+					convo.pingObject.neverMind = true;
+					convo.say(` `)
+				}
+
+				convo.on(`end`, (convo) => {
+
+					console.log(`\n\n\n ~~ end of collaborate now object ~~ \n\n\n`);
+
+				})
+
+			});
+
+		});
+
+	});
+
 
 	/**
 	 * 		ACTUAL PING FLOW

@@ -34,6 +34,7 @@ export function startBot(team, type) {
 	}
 }
 
+
 // on register team
 export function saveUserOnRegistration(auth, identity) {
 
@@ -73,16 +74,17 @@ export function saveUserOnRegistration(auth, identity) {
 // on login
 export function saveUserOnLogin(auth, identity) {
 
-	controller.storage.users.get(identity.user.id, function(err, user) {
+
+	controller.storage.users.get(identity.user_id, function(err, user) {
 
 		let isnew = user ? false : true;
 		// data from slack API to create or update our DB with
 		user = {
-			id: identity.user.id,
+			id: identity.user_id,
 			access_token: auth.access_token,
 			scopes: auth.scope,
-			team_id: identity.team.id,
-			user: identity.user.name
+			team_id: identity.team_id,
+			user: identity.user
 		};
 
 		controller.storage.users.save(user, function(err, user) {

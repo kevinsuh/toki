@@ -9,7 +9,7 @@ import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getRandom
  * 		PING CONVERSATION FLOW FUNCTIONS
  */
 
-export function confirmTimeZoneExistsThenStartPingFlow(convo, text = `Ah! Since I help you make time for your priorities, I need to know your *timezone* before we continue`) {
+export function confirmTimeZoneExistsThenStartPingFlow(convo, text = `One more thing! Since I help you make time for your priorities, I need to know your *timezone* before we set our first focus session`) {
 
 	const { SlackUserId, UserId, tz }  = convo.pingObject;
 

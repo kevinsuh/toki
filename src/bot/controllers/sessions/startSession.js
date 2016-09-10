@@ -2,12 +2,15 @@ import { wit, bots } from '../index';
 import moment from 'moment-timezone';
 import models from '../../../app/models';
 import _ from 'lodash';
+import dotenv from 'dotenv';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants, timeZones } from '../../lib/constants';
 import { confirmTimeZoneExistsThenStartSessionFlow } from './startSessionFunctions';
 import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString, getStartSessionOptionsAttachment, commaSeparateOutStringArray, getSessionContentFromMessageObject } from '../../lib/messageHelpers';
 import { notInSessionWouldYouLikeToStartOne } from './index';
 import { updateDashboardForChannelId, checkIsNotAlreadyInConversation } from '../../lib/slackHelpers';
+
+dotenv.load();
 
 // STARTING A SESSION
 export default function(controller) {
@@ -26,7 +29,7 @@ export default function(controller) {
 		bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
 
 			convo.say(`It looks like you’re trying to get something done! :palm_tree:`);
-			convo.say("Just type `/doing [put task here] for [put duration here]`\nLike this `/doing squash front-end bug for 45 min` or `/doing marketing report until 4pm`");
+			convo.say("Just type `/focus [put task here] for [put duration here]`\nLike this `/focus squash front-end bug for 45 min` or `/focus marketing report until 4pm`");
 
 		});
 
@@ -34,7 +37,7 @@ export default function(controller) {
 
 	// this needs to be after Wit.hears `start_ession` because this is
 	// a fallback. we want Wit to be trained to handle this!
-	controller.hears([utterances.startsWithDoing], 'direct_message', (bot, message) => {
+	controller.hears([utterances.startsWithFocus], 'direct_message', (bot, message) => {
 		
 		let botToken      = bot.config.token;
 		bot               = bots[botToken];
@@ -43,7 +46,7 @@ export default function(controller) {
 		bot.startPrivateConversation({ user: SlackUserId }, (err,convo) => {
 
 			convo.say(`It looks like you’re trying to get something done! :palm_tree:`);
-			convo.say("Just type `/doing [put task here] for [put duration here]`\nLike this `/doing squash front-end bug for 45 min` or `/doing marketing report until 4pm`");
+			convo.say("Just type `/focus [put task here] for [put duration here]`\nLike this `/focus squash front-end bug for 45 min` or `/focus marketing report until 4pm`");
 
 		});
 
@@ -69,7 +72,16 @@ export default function(controller) {
 		let intent;
 		let reminder;
 		let datetime;
-		let text; 
+		let text;
+
+		let env = process.env.NODE_ENV || 'development';
+
+		if (env == 'development') {
+			process.env.SLACK_ID = process.env.DEV_SLACK_ID;
+			process.env.SLACK_REDIRECT = process.env.DEV_SLACK_REDIRECT;
+		}
+
+		const signInWithSlackLink = `https://slack.com/oauth/authorize?client_id=${process.env.SLACK_ID}&redirect_uri=${process.env.SLACK_REDIRECT}login&scope=channels:history,channels:write,dnd:write,dnd:read,im:write`;
 
 		if (message) {
 			SlackUserId = message.user;
@@ -92,7 +104,7 @@ export default function(controller) {
 		}).then((user) => {
 
 			// need user's timezone for this flow!
-			const { tz } = user;
+			const { tz, scopes, accessToken } = user;
 			const UserId = user.id;
 			let minutes  = false;
 
@@ -123,11 +135,9 @@ export default function(controller) {
 
 				bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-					// console.log(controller.tasks[0].convos);
-
-					// have 5-minute exit time limit
+					// have 4-minute exit time limit
 					if (convo) {
-						convo.task.timeLimit = 1000 * 60 * 5;
+						convo.task.timeLimit = 1000 * 60 * 4;
 					}
 
 					convo.sessionStart = {
@@ -138,23 +148,32 @@ export default function(controller) {
 						minutes
 					}
 
-					// check here if user is already in a session or not
-					let currentSession = false;
-					if (sessions.length > 0) {
-						currentSession = sessions[0];
-						convo.sessionStart.changeTimeAndTask = changeTimeAndTask;
+					if (!accessToken) {
+						convo.say(`Hey <@${SlackUserId}>, for me to help you protect your attention, I need to be able to set your Do Not Disturb functionality and make sure your unread messages are presented properly after a focus session`);
+						convo.say(`Please hit *Authorize* at this link so I can do this for you:\n${signInWithSlackLink}`);
+						convo.next();
+					} else {
+
+						// check here if user is already in a session or not
+						let currentSession = false;
+						if (sessions.length > 0) {
+							currentSession = sessions[0];
+							convo.sessionStart.changeTimeAndTask = changeTimeAndTask;
+						}
+
+						convo.sessionStart.currentSession = currentSession;
+
+						// entry point!
+						confirmTimeZoneExistsThenStartSessionFlow(convo);
+						convo.next();
+
 					}
-
-					convo.sessionStart.currentSession = currentSession;
-
-					// entry point!
-					confirmTimeZoneExistsThenStartSessionFlow(convo);
-					convo.next();
-					
 
 					convo.on('end', (convo) => {
 
 						const { sessionStart, sessionStart: { confirmNewSession, content, minutes, tz } } = convo;
+
+						if (!accessToken) return;
 
 						console.log("\n\n\n end of start session ");
 						console.log(sessionStart);
@@ -165,6 +184,8 @@ export default function(controller) {
 
 						if (confirmNewSession) {
 
+							
+									
 							// close all old sessions when creating new one
 							models.Session.update({
 								open: false,
@@ -238,7 +259,7 @@ export default function(controller) {
 
 											bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-												let text = `:palm_tree: You're currently doing \`${content}\` until *${endTimeString}* :palm_tree:`;
+												let text = `:palm_tree: You're currently working on \`${content}\` until *${endTimeString}* :palm_tree:`;
 												let attachments = getStartSessionOptionsAttachment(pings);
 
 												if (pings.length > 0) {
@@ -293,6 +314,17 @@ export default function(controller) {
 													});
 												}
 
+												convo.on(`end`, (convo) => {
+													console.log(`\n\n ended saying user is started session`);
+													// turn on DND for user BEFORE continuing!
+													setTimeout(()=>{
+														bot.api.dnd.setSnooze({
+															token: accessToken,
+															num_minutes: minutes
+														});
+													}, 300);
+												})
+
 											});
 
 										});
@@ -325,7 +357,7 @@ export default function(controller) {
 												});
 
 												if (hasBotSlackUserId && hasMemberSlackUserId) {
-													updateDashboardForChannelId(bot, id);
+													updateDashboardForChannelId(bot, id, { statusUpdate: { startSession: true, SlackUserId } });
 												}
 
 											});
@@ -436,7 +468,7 @@ export default function(controller) {
 
 								bot.startPrivateConversation({ user: SlackUserId }, (err, convo) => {
 
-									let text = `:palm_tree: You're currently doing \`${content}\` until *${endTimeString}* :palm_tree:`;
+									let text = `:palm_tree: You're currently working on \`${content}\` until *${endTimeString}* :palm_tree:`;
 									let attachments = getStartSessionOptionsAttachment(pings);
 
 									if (pings.length > 0) { // success in sendSooner!

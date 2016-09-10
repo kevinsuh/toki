@@ -25,12 +25,20 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 // confirm that user has tz configured before continuing
 function confirmTimeZoneExistsThenStartSessionFlow(convo) {
-	var text = arguments.length <= 1 || arguments[1] === undefined ? 'Ah! Since I help you make time for your priorities, I need to know your *timezone* before we continue' : arguments[1];
+	var text = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
 	var _convo$sessionStart = convo.sessionStart;
 	var SlackUserId = _convo$sessionStart.SlackUserId;
 	var UserId = _convo$sessionStart.UserId;
 	var tz = _convo$sessionStart.tz;
+	var content = _convo$sessionStart.content;
 
+
+	if (text == '') {
+		text = 'One more thing! Since I help you make time for your priorities, I need to know your *timezone* before we focus';
+		if (content) {
+			text = text + ' on `' + content + '`';
+		}
+	}
 
 	if (tz) {
 		// user has tz config'd
@@ -185,7 +193,7 @@ function changeTimeAndTaskFlow(convo) {
 		pattern: _constants.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.sessionStart.content = false;
-			var question = 'What task are you doing?';
+			var question = 'What task are you working on?';
 			askForSessionContent(convo, question);
 			convo.next();
 		}
@@ -219,7 +227,7 @@ function askToOverrideCurrentSession(convo) {
 	var endTimeString = endTime.format("h:mma");
 	var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
 
-	var text = 'Hey! You\'re already doing `' + currentSession.dataValues.content + '` until *' + endTimeString + '*';
+	var text = 'Hey! You\'re already working on `' + currentSession.dataValues.content + '` until *' + endTimeString + '*';
 	var attachments = [{
 		attachment_type: 'default',
 		callback_id: "EXISTING_SESSION_OPTIONS",
@@ -292,14 +300,14 @@ function askForSessionContent(convo) {
 
 	var sessionExample = (0, _messageHelpers.getRandomExample)("session");
 
-	if (question == '') question = 'What would you like to start doing? (i.e. `' + sessionExample + '`)';
+	if (question == '') question = 'What would you like to work on? (i.e. `' + sessionExample + '`)';
 
 	convo.ask({
 		text: question
 	}, [{
 		pattern: _constants.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.say('Okay! Let me know when you want to start `/doing` something');
+			convo.say('Okay! Let me know when you want to `/focus` on something');
 			convo.next();
 		}
 	}, {
@@ -375,7 +383,7 @@ function askForSessionTime(convo) {
 	}, {
 		pattern: _constants.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.say('Okay, let me know when you\'re ready to focus!');
+			convo.say('Okay, let me know when to `/focus`!');
 			convo.next();
 		}
 	}, {
