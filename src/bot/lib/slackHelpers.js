@@ -302,6 +302,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 										// no statusUpdate => no ping, just update
 										// i.e. `end_session` situation
+										teamPulseDashboardMessageObject.text = text;
 										if (attachments.length < 3) {
 											let noUsers = true;
 											attachments.forEach((attachment) => {
@@ -326,6 +327,8 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 										}
 
 										teamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
+
+										console.log(teamPulseDashboardMessageObject);
 										bot.api.chat.update(teamPulseDashboardMessageObject);
 
 									}
