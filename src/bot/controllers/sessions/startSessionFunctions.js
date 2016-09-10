@@ -169,10 +169,13 @@ function changeTimeAndTaskFlow(convo) {
 		{
 			pattern: utterances.yes,
 			callback: (response, convo) => {
+
 				convo.sessionStart.content = false;
-				let question = `What task are you working on?`;
+				const sessionExample = getRandomExample("session");
+				let question = `What would you like to work on? (i.e. \`${sessionExample}\`)`;
 				askForSessionContent(convo, question);
 				convo.next();
+				
 			}
 		},
 		{

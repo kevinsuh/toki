@@ -192,8 +192,10 @@ function changeTimeAndTaskFlow(convo) {
 	}, [{
 		pattern: _constants.utterances.yes,
 		callback: function callback(response, convo) {
+
 			convo.sessionStart.content = false;
-			var question = 'What task are you working on?';
+			var sessionExample = (0, _messageHelpers.getRandomExample)("session");
+			var question = 'What would you like to work on? (i.e. `' + sessionExample + '`)';
 			askForSessionContent(convo, question);
 			convo.next();
 		}

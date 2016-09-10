@@ -46,7 +46,7 @@ function startEndSessionFlow(convo) {
 	var sessionMinutes = void 0;
 	var sessionTimeString = void 0;
 	var message = ' ';
-	var letsFocusMessage = 'Let me know when you want to `/focus` again';
+	var letsFocusMessage = 'Let me know when to `/focus` again';
 
 	// add session info (the one that just got ended) if existing
 	// this is not the case when you have queued ping
