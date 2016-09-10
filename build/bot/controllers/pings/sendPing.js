@@ -167,7 +167,7 @@ exports.default = function (controller) {
 																var id = res.group.id;
 
 																bot.startConversation({ channel: id }, function (err, convo) {
-																	convo.say('Hey <@' + toUserSlackUserId + '>! <@' + SlackUserId + '> wanted to talk about something relevant to `' + content + '`');
+																	convo.say('Hey <@' + toUserSlackUserId + '>! <@' + SlackUserId + '> wants to talk about something relevant to `' + content + '`');
 																	convo.on('end', function (convo) {
 
 																		// turn back on DND
@@ -210,7 +210,7 @@ exports.default = function (controller) {
 
 													bot.startConversation({ channel: id }, function (err, convo) {
 
-														convo.say('Hey <@' + toUserSlackUserId + '>! You\'re not in a current focus and <@' + SlackUserId + '> wanted to reach out');
+														convo.say('Hey <@' + toUserSlackUserId + '>! You\'re not currently in a focus session and <@' + SlackUserId + '> wanted to reach out');
 													});
 												} else {
 

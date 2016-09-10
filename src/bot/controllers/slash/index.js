@@ -149,7 +149,7 @@ export default function(controller) {
 											actions: [
 												{
 													name: "SEND_PING",
-													text: "Collaborate now",
+													text: "Collaborate Now",
 													value: `{"collaborateNow": true, "collaborateNowSlackUserId": "${toUser.dataValues.SlackUserId}"}`,
 													type: "button"
 												}
@@ -160,7 +160,7 @@ export default function(controller) {
 
 									} else {
 
-										responseObject.text = `<@${toUser.dataValues.SlackUserId}> is not currently focused on anything. Would you like to ping them?`;
+										responseObject.text = `<@${toUser.dataValues.SlackUserId}> is not in a focus session. Would you like to talk with <@${toUser.dataValues.SlackUserId}> now?`;
 										responseObject.attachments = [{
 											attachment_type: 'default',
 											callback_id: `IN_SESSION_PULSE`,
@@ -170,7 +170,7 @@ export default function(controller) {
 											actions: [
 												{
 													name: "SEND_PING",
-													text: "Send ping",
+													text: "Talk Now",
 													value: `{"collaborateNow": true, "collaborateNowSlackUserId": "${toUser.dataValues.SlackUserId}"}`,
 													type: "button"
 												}
