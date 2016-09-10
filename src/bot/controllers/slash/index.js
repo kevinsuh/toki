@@ -54,6 +54,51 @@ export default function(controller) {
 					bot.replyPrivate(message, responseObject);
 					break;
 
+				case "/end":
+
+					// if no session to end, offer to start new one right there
+					user.getSessions({
+						where: [ `"open" = ?`, true ],
+						order: `"Session"."createdAt" DESC`
+					})
+					.then((sessions) => {
+						
+						let session = sessions[0];
+
+						if (session) {
+
+							const endSessionConfig = {
+								SlackUserId,
+								endSessionType: constants.endSessionTypes.endSessionEarly
+							}
+
+							controller.trigger(`end_session_flow`, [ bot, endSessionConfig ]);
+							responseObject.text = `Okay! Let's end your current focus session`;
+							bot.replyPrivate(message, responseObject);
+
+						} else {
+
+							responseObject.text = `You're not in a current session! Let me know when to \`/focus\` again :thinking_face:`;
+							bot.replyPrivate(message, responseObject);
+
+						}
+
+
+					});
+					
+					break;
+
+				case "/now":
+
+					break;
+
+				case "/pulse":
+
+					controller.trigger(`begin_session_flow`, [ bot, message ]);
+					responseObject.text = `Woo! You can do it :dancer:`;
+					bot.replyPrivate(message, responseObject);
+					break;
+
 				case "/ping":
 
 					// ping requires a receiving end

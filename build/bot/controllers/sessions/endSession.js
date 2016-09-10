@@ -46,6 +46,9 @@ exports.default = function (controller) {
 		var mutualSessionEndingPings = config.mutualSessionEndingPings;
 
 
+		var botToken = bot.config.token;
+		bot = _index.bots[botToken];
+
 		_models2.default.User.find({
 			where: { SlackUserId: SlackUserId }
 		}).then(function (user) {

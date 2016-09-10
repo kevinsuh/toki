@@ -49,7 +49,10 @@ export default function(controller) {
 
 		// pingInfo only relevant when endSessionType == `endByPingToUserId`
 		const { SlackUserId, endSessionType, pingInfo } = config;
-		let { mutualSessionEndingPings } = config;
+		let { mutualSessionEndingPings }                = config;
+
+		let botToken = bot.config.token;
+		bot          = bots[botToken];
 
 		models.User.find({
 			where: { SlackUserId }

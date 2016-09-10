@@ -19,7 +19,7 @@ export function startEndSessionFlow(convo) {
 	let sessionMinutes;
 	let sessionTimeString;
 	let message = ' ';
-	let letsFocusMessage = `When you’re ready, let me know when you want to \`/focus\` again`;
+	let letsFocusMessage = `Let me know when you want to \`/focus\` again`;
 
 	// add session info (the one that just got ended) if existing
 	// this is not the case when you have queued ping

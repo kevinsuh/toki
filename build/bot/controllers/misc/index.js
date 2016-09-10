@@ -78,7 +78,7 @@ exports.default = function (controller) {
 					text: 'Here\'s how I do this:',
 					attachments: _constants.tokiExplainAttachments
 				});
-				convo.say('I\'m here whenever you\'re ready to go! Just let me know when you want to `/ping` someone, or `/focus` on something yourself :raised_hands:');
+				convo.say('I\'m here whenever you\'re ready to go! Just let me know when you want to `/focus` on something, or check a teammate\'s `/pulse` :raised_hands:');
 
 				convo.on('end', function (convo) {});
 			});

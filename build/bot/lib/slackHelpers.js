@@ -355,8 +355,6 @@ function updateDashboardForChannelId(bot, ChannelId) {
 															}
 															updateTeamPulseDashboardMessageObject.text = ' ';
 														});
-														console.log('\n\n\n no users: ');
-														console.log(updateTeamPulseDashboardMessageObject);
 													}
 												}
 

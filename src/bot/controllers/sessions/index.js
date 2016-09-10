@@ -59,7 +59,7 @@ export function notInSessionWouldYouLikeToStartOne(config) {
 	if (bot && SlackUserId && controller) {
 		bot.startPrivateConversation( { user: SlackUserId }, (err, convo) => {
 
-			convo.say(`You don't have a current focus set! Let me know when you're ready to \`/focus\` on something :smile_cat:`);
+			convo.say(`You don't have a current focus set! Let me know when to \`/focus\` on something :smile_cat:`);
 
 		});
 	}

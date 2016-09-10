@@ -69,7 +69,7 @@ function loginInitiateConversation(bot, identity) {
     * 		INITIATE CONVERSATION WITH LOGIN
     */
 			convo.say('Awesome!');
-			convo.say('Let\'s win this day. Let me know when you\'re ready to `/focus`');
+			convo.say('Let\'s win this day. Let me know when you want to `/focus`');
 		});
 	});
 }

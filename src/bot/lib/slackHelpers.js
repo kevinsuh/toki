@@ -329,9 +329,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 														attachment.text = `Start a focus session by clicking the button below :point_down:\nI’ll post what you’re working on here so your team knows what you’re focused on :dancers:\nI’ll also snooze your non-urgent notifications :palm_tree:`;
 													}
 													updateTeamPulseDashboardMessageObject.text = ` `;
-												})
-												console.log(`\n\n\n no users: `);
-												console.log(updateTeamPulseDashboardMessageObject);
+												});
 											}
 											
 										}
