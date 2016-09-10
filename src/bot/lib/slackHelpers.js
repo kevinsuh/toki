@@ -328,7 +328,6 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 										teamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
 
-										console.log(teamPulseDashboardMessageObject);
 										bot.api.chat.update(teamPulseDashboardMessageObject);
 
 									}

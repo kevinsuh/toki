@@ -441,7 +441,7 @@ export const tokiExplainAttachments = [
 		fallback: "Set my current focus"
 	},
 	{
-		title: "Respect your teammates",
+		title: "Make Slack work for your teammates",
 		text: "In any channel, use the command `/pulse @user` to see your teammate's current focus. If you're working on something relevant, I'll push a notification through. Otherwise, you can send a message with the ease of mind that you aren't breaking their flow with a notification",
 		mrkdwn_in: [ "text" ],
 		color: colorsHash.toki_purple.hex,
@@ -450,17 +450,8 @@ export const tokiExplainAttachments = [
 		fallback: "See team member's pulse"
 	},
 	{
-		title: "Handle urgent messages",
-		text: "Not all messages are created equal. In any channel, use the command `/now @user` when you actually have an urgent message to send. I'll push through a notification to start the conversation between you two",
-		mrkdwn_in: [ "text" ],
-		color: colorsHash.toki_purple.hex,
-		attachment_type: "default",
-		callback_id: "TOKI_OPTIONS",
-		fallback: "Send urgent messages"
-	},
-	{
 		title: "No more attention residue",
-		text: "If you read a direct message while you're focused and don't respond, I'll automatically mark that message as unread once your current focus ends. This helps you work on your current task, knowing that you'll get to other requests once you're ready to switch contexts",
+		text: "If you read a direct message while you're focused and don't respond, I'll automatically mark that message as unread once your current focus ends. This helps you work on your current task, knowing that you'll get to your other requests once you're ready to switch contexts",
 		mrkdwn_in: [ "text" ],
 		color: colorsHash.toki_purple.hex,
 		attachment_type: "default",

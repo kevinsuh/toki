@@ -49,9 +49,27 @@ export default function(controller) {
 			switch (message.command) {
 				case "/focus":
 
-					controller.trigger(`begin_session_flow`, [ bot, message ]);
-					responseObject.text = `Woo! You can do it :dancer:`;
-					bot.replyPrivate(message, responseObject);
+					// if no session to end, offer to start new one right there
+					user.getSessions({
+						where: [ `"open" = ?`, true ],
+						order: `"Session"."createdAt" DESC`
+					})
+					.then((sessions) => {
+						
+						let session = sessions[0];
+
+						if (session) {
+							const { content } = session.dataValues;
+							responseObject.text = `You're already in a focus session for \`${content}\`!`;
+						} else {
+							responseObject.text = `Woo! You can do it :dancer:`;
+						}
+
+						controller.trigger(`begin_session_flow`, [ bot, message ]);
+						bot.replyPrivate(message, responseObject);
+
+					});
+					
 					break;
 
 				case "/end":
