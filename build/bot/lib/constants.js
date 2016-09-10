@@ -88,6 +88,7 @@ var utterances = exports.utterances = (_utterances = {
 
 var constants = exports.constants = {
 	dashboardCallBackId: "DASHBOARD_TEAM_PULSE",
+	dashboardActions: "DASHBOARD_ACTIONS_FOR_USER",
 	endSessionTypes: {
 		endByPingToUserId: "END_BY_PING_TO_USER_ID",
 		sessionTimerUp: "SESSION_TIMER_UP",

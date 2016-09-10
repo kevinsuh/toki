@@ -189,7 +189,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 						let dashboardActions = {
 							attachment_type: 'default',
-							callback_id: "DASHBOARD_ACTIONS_FOR_USER",
+							callback_id: constants.dashboardActions,
 							fallback: `Would you like to do something?`,
 							mrkdwn_in: [ "text", "fields" ],
 							color: colorsHash.toki_yellow.hex,
@@ -323,6 +323,15 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 
 											if (noUsers) {
 												delete attachments[0].fields;
+												attachments.forEach((attachment) => {
+													console.log(attachment);
+													if (attachment.callback_id == constants.dashboardActions) {
+														attachment.text = `Start a focus session by clicking the button below :point_down:\nI’ll post what you’re working on here so your team knows what you’re focused on :dancers:\nI’ll also snooze your non-urgent notifications :palm_tree:`;
+													}
+													updateTeamPulseDashboardMessageObject.text = ` `;
+												})
+												console.log(`\n\n\n no users: `);
+												console.log(updateTeamPulseDashboardMessageObject);
 											}
 											
 										}
