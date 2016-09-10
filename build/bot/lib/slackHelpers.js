@@ -243,7 +243,7 @@ function updateDashboardForChannelId(bot, ChannelId) {
 										var user = message.user;
 										var attachments = message.attachments;
 
-										// find the message of the team pulse
+										// find the most recent message of the team pulse (hopefully there is only 1)
 
 										if (user == BotSlackUserId && attachments && attachments[0].callback_id == _constants.constants.dashboardCallBackId) {
 											teamPulseDashboardMessage = message;
@@ -253,6 +253,36 @@ function updateDashboardForChannelId(bot, ChannelId) {
 										messageCount++;
 									});
 
+									// if status update, send why you are pinging
+									if (statusUpdate) {
+										var startSession = statusUpdate.startSession;
+										var SlackUserId = statusUpdate.SlackUserId;
+
+
+										if (startSession) {
+
+											var startSessionObject = dashboardUsers[SlackUserId];
+											var session = startSessionObject.session;
+											var user = startSessionObject.user;
+											var _session$dataValues = session.dataValues;
+											var content = _session$dataValues.content;
+											var startTime = _session$dataValues.startTime;
+											var endTime = _session$dataValues.endTime;
+											var SlackName = user.dataValues.SlackName;
+
+
+											var startTimeObject = (0, _momentTimezone2.default)(startTime);
+											var endTimeObject = (0, _momentTimezone2.default)(endTime);
+											var sessionMinutes = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(startTimeObject)).asMinutes());
+											var sessionDurationString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
+
+											var endTimeString = (0, _momentTimezone2.default)(endTime).tz(tz).format("h:mma");
+											updateMessage = '*Update*: <@' + SlackUserId + '> is working on `' + content + '` for ' + sessionDurationString + ' until *' + endTimeString + '*';
+										}
+									}
+
+									// either update existing dashboard, or create new one if one doesn't exist
+
 									if (teamPulseDashboardMessage) {
 										(function () {
 
@@ -260,93 +290,40 @@ function updateDashboardForChannelId(bot, ChannelId) {
 											var _teamPulseDashboardMe = teamPulseDashboardMessage;
 											var ts = _teamPulseDashboardMe.ts;
 
-											var updateTeamPulseDashboardMessageObject = {
+											var teamPulseDashboardMessageObject = {
 												channel: ChannelId,
-												ts: ts,
-												attachments: attachments
+												ts: ts
 											};
 
-											updateTeamPulseDashboardMessageObject.text = text;
-
-											// if status update, send why you are pinging
+											// statusUpdate determines whether we send a new ping or not
 											if (statusUpdate) {
-												var startSession = statusUpdate.startSession;
-												var SlackUserId = statusUpdate.SlackUserId;
 
-
-												if (startSession) {
-
-													var startSessionObject = dashboardUsers[SlackUserId];
-													var session = startSessionObject.session;
-													var user = startSessionObject.user;
-													var _session$dataValues = session.dataValues;
-													var content = _session$dataValues.content;
-													var startTime = _session$dataValues.startTime;
-													var endTime = _session$dataValues.endTime;
-													var SlackName = user.dataValues.SlackName;
-
-
-													var startTimeObject = (0, _momentTimezone2.default)(startTime);
-													var endTimeObject = (0, _momentTimezone2.default)(endTime);
-													var sessionMinutes = Math.round(_momentTimezone2.default.duration(endTimeObject.diff(startTimeObject)).asMinutes());
-													var sessionDurationString = (0, _messageHelpers.convertMinutesToHoursString)(sessionMinutes);
-
-													var endTimeString = (0, _momentTimezone2.default)(endTime).tz(tz).format("h:mma");
-													updateMessage = '*Update*: <@' + SlackUserId + '> is working on `' + content + '` for ' + sessionDurationString + ' until *' + endTimeString + '*';
-												}
-											}
-
-											// proxy for right now that an update happened
-											// this means it will delete and send dashboard again (in order to cause a ping)
-											if (updateMessage != '') {
-
-												bot.api.chat.delete({
-													ts: ts,
-													channel: ChannelId
-												}, function (err, res) {
+												bot.api.chat.delete(teamPulseDashboardMessageObject, function (err, res) {
 
 													if (!err) {
 
-														bot.send({
-															channel: ChannelId,
+														var _config = {
+															bot: bot,
+															ChannelId: ChannelId,
 															text: text,
-															attachments: [titleOfDashboard]
-														}, function (err, response) {
+															ts: ts,
+															titleOfDashboard: titleOfDashboard,
+															attachments: attachments,
+															statusUpdate: statusUpdate,
+															statusUpdateMessage: updateMessage,
+															dashboardUsers: dashboardUsers
+														};
 
-															// send without attachments then update, in order to avoid @mention of users in focus sessions
-															var ts = response.ts;
-															var text = response.message.text;
-
-															text = updateMessage + '\n\n' + text;
-															var updateDashboardObject = {
-																text: text,
-																ts: ts,
-																channel: ChannelId
-															};
-
-															// 1. mark as read for sender
-															bot.api.channels.mark({
-																token: accessToken,
-																channel: ChannelId,
-																ts: ts
-															}, function (err, res) {
-																console.log('\n\n success on mark');
-																console.log(err);
-																console.log(res);
-															});
-
-															// 2. update dashboard msg
-															updateDashboardObject.attachments = JSON.stringify(attachments);
-															bot.api.chat.update(updateDashboardObject);
-														});
+														sendNewDashboardObject(_config);
 													} else {
+														console.log('\n\n error in status update portion of dashboard object');
 														console.log(err);
 													}
 												});
 											} else {
 
-												// this will just update it without ping
-												// if no one is in session, say that										
+												// no statusUpdate => no ping, just update
+												// i.e. `end_session` situation
 												if (attachments.length < 3) {
 													var noUsers = true;
 													attachments.forEach(function (attachment) {
@@ -365,15 +342,32 @@ function updateDashboardForChannelId(bot, ChannelId) {
 															if (attachment.callback_id == _constants.constants.dashboardActions) {
 																attachment.text = 'Start a focus session by clicking the button below :point_down:\nI’ll post what you’re working on here so your team knows what you’re focused on :dancers:\nI’ll also snooze your non-urgent notifications :palm_tree:';
 															}
-															updateTeamPulseDashboardMessageObject.text = ' ';
+															teamPulseDashboardMessageObject.text = ' ';
 														});
 													}
 												}
 
-												updateTeamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
-												bot.api.chat.update(updateTeamPulseDashboardMessageObject);
+												teamPulseDashboardMessageObject.attachments = JSON.stringify(attachments);
+												bot.api.chat.update(teamPulseDashboardMessageObject);
 											}
 										})();
+									} else {
+
+										// if no dashboard exists, just create a new one
+
+										var _config2 = {
+											bot: bot,
+											ChannelId: ChannelId,
+											text: text,
+											ts: ts,
+											titleOfDashboard: titleOfDashboard,
+											attachments: attachments,
+											statusUpdate: statusUpdate,
+											statusUpdateMessage: updateMessage,
+											dashboardUsers: dashboardUsers
+										};
+
+										sendNewDashboardObject(_config2);
 									}
 								})();
 							} else {
@@ -386,6 +380,62 @@ function updateDashboardForChannelId(bot, ChannelId) {
 				});
 			});
 		});
+	});
+}
+
+// send a new dashboard object with given config
+function sendNewDashboardObject(config) {
+	var bot = config.bot;
+	var ChannelId = config.ChannelId;
+	var text = config.text;
+	var ts = config.ts;
+	var titleOfDashboard = config.titleOfDashboard;
+	var attachments = config.attachments;
+	var statusUpdate = config.statusUpdate;
+	var statusUpdateMessage = config.statusUpdateMessage;
+	var dashboardUsers = config.dashboardUsers;
+
+
+	bot.send({
+		channel: ChannelId,
+		text: text,
+		attachments: [titleOfDashboard]
+	}, function (err, response) {
+
+		// send without attachments then update, in order to avoid @mention of users in focus sessions
+		var ts = response.ts;
+		var text = response.message.text;
+
+		text = statusUpdateMessage + '\n\n' + text;
+		var updateDashboardObject = {
+			text: text,
+			ts: ts,
+			channel: ChannelId
+		};
+
+		// 1. if this is your status update, we will mark channel as read
+		if (statusUpdate) {
+			var SlackUserId = statusUpdate.SlackUserId;
+			var user = dashboardUsers[SlackUserId].user;
+
+
+			if (user.dataValues) {
+
+				bot.api.channels.mark({
+					token: user.dataValues.accessToken,
+					channel: ChannelId,
+					ts: ts
+				}, function (err, res) {
+					console.log('\n\n success on mark');
+					console.log(err);
+					console.log(res);
+				});
+			}
+		}
+
+		// 2. update dashboard msg
+		updateDashboardObject.attachments = JSON.stringify(attachments);
+		bot.api.chat.update(updateDashboardObject);
 	});
 }
 
