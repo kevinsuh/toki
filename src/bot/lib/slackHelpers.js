@@ -193,7 +193,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 							fallback: `Would you like to do something?`,
 							mrkdwn_in: [ "text", "fields" ],
 							color: colorsHash.toki_yellow.hex,
-							text: "_What would you like to do?_",
+							text: "_Would you like to do anything?_",
 							actions: [
 								{
 									name: "SET_PRIORITY",

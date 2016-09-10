@@ -212,7 +212,7 @@ function updateDashboardForChannelId(bot, ChannelId) {
 							fallback: 'Would you like to do something?',
 							mrkdwn_in: ["text", "fields"],
 							color: _constants.colorsHash.toki_yellow.hex,
-							text: "_What would you like to do?_",
+							text: "_Would you like to do anything?_",
 							actions: [{
 								name: "SET_PRIORITY",
 								text: "Let's focus!",

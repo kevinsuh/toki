@@ -397,8 +397,8 @@ var timeZoneAttachments = exports.timeZoneAttachments = [{
 }];
 
 var tokiExplainAttachments = exports.tokiExplainAttachments = [{
-	title: "Set your current focus",
-	text: "In any channel, use the command `/focus` to share your current focus and protect yourself from getting pulled to switch contexts from non-urgent messages while you work. If you finish early, you can use the `/end` command",
+	title: "Share your current focus",
+	text: "In any channel, use the command `/focus` to share what you're working on and for how long. I'll set your Do Not Disturb (DND) on during that time, so that you don't get interrupted by non-urgent notifications. If you finish early, you can use the `/end` command",
 	mrkdwn_in: ["text"],
 	color: colorsHash.toki_purple.hex,
 	attachment_type: "default",
@@ -406,7 +406,7 @@ var tokiExplainAttachments = exports.tokiExplainAttachments = [{
 	fallback: "Set my current focus"
 }, {
 	title: "Respect your teammates",
-	text: "In any channel, use the command `/pulse @user` to see your teammate's current focus. If you're working on something relevant and want to send a message, I'll push the notification through",
+	text: "In any channel, use the command `/pulse @user` to see your teammate's current focus. If you're working on something relevant, I'll push a notification through. Otherwise, you can send a message with the ease of mind that you aren't breaking their flow with a notification",
 	mrkdwn_in: ["text"],
 	color: colorsHash.toki_purple.hex,
 	attachment_type: "default",
@@ -414,12 +414,20 @@ var tokiExplainAttachments = exports.tokiExplainAttachments = [{
 	fallback: "See team member's pulse"
 }, {
 	title: "Handle urgent messages",
-	text: "In any channel, use the command `/now @user` when you have a truly urgent message to send. I'll push through the notification and start a conversation between you two so you can talk",
+	text: "Not all messages are created equal. In any channel, use the command `/now @user` when you actually have an urgent message to send. I'll push through a notification to start the conversation between you two",
 	mrkdwn_in: ["text"],
 	color: colorsHash.toki_purple.hex,
 	attachment_type: "default",
 	callback_id: "TOKI_OPTIONS",
 	fallback: "Send urgent messages"
+}, {
+	title: "No more attention residue",
+	text: "If you read a direct message while you're focused and don't respond, I'll automatically mark that message as unread once your current focus ends. This helps you work on your current task, knowing that you'll get to other requests once you're ready to switch contexts",
+	mrkdwn_in: ["text"],
+	color: colorsHash.toki_purple.hex,
+	attachment_type: "default",
+	callback_id: "TOKI_OPTIONS",
+	fallback: "No more unattended requests"
 }];
 
 var specialNumbers = exports.specialNumbers = ['zeroth', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh', 'twelvth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'];
