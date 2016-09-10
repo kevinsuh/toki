@@ -141,7 +141,9 @@ export default function(controller) {
 							if (toUser) {
 
 								const { dataValues: { accessToken } } = toUser;
+
 								const toUserSlackUserId = toUser.dataValues.SlackUserId;
+								const SlackUserIds      = `${SlackUserId},${toUserSlackUserId}`;
 
 								toUser.getSessions({
 									where: [ `"open" = ?`, true ]
@@ -162,8 +164,6 @@ export default function(controller) {
 										}, (err, res) => {
 
 											if (!err) {
-
-												let SlackUserIds = `${SlackUserId},${toUserSlackUserId}`;
 
 												bot.api.mpim.open({
 													users: SlackUserIds
@@ -211,6 +211,31 @@ export default function(controller) {
 
 										})
 
+
+									} else {
+
+										// not in session, still want to send msg
+										bot.api.mpim.open({
+											users: SlackUserIds
+										}, (err, res) => {
+
+											if (!err) {
+
+												const { group: { id } } = res;
+												bot.startConversation({ channel: id }, (err, convo) => {
+													
+													convo.say(`Hey <@${toUserSlackUserId}>! You're not in a current focus and <@${SlackUserId}> wanted to reach out`);
+
+												});
+
+											} else {
+
+												console.log(`\n\n error in trying mpim open in sendPing.js`);
+												console.log(err);
+
+											}
+
+										});
 
 									}
 

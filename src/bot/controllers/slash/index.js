@@ -109,11 +109,171 @@ export default function(controller) {
 
 				case "/pulse":
 
+					// give pulse here in ephemeral message
+					if (toSlackName) {
+
+						models.User.find({
+							where: {
+								SlackName: toSlackName,
+								TeamId: team_id
+							}
+						})
+						.then((toUser) => {
+
+							if (toUser) {
+
+								// check if user is in session... if so, then do not DM receipt
+								toUser.getSessions({
+									where: [ `"open" = ?`, true ],
+									order: `"Session"."createdAt" DESC`
+								})
+								.then((sessions) => {
+
+									let session = sessions[0];
+
+									if (session) {
+
+										const { dataValues: { content, startTime, endTime } } = session;
+										const now              = moment();
+										const endTimeObject    = moment(endTime);
+										const remainingMinutes = Math.round(moment.duration(endTimeObject.diff(now)).asMinutes());
+										const remainingTimeString = convertMinutesToHoursString(remainingMinutes);
+
+										responseObject.text = `<@${toUser.dataValues.SlackUserId}> is working on \`${content}\` for another *${remainingTimeString}*`;
+										responseObject.attachments = [{
+											attachment_type: 'default',
+											callback_id: `IN_SESSION_PULSE`,
+											fallback: `${toUser.dataValues.SlackName} is in a session!`,
+											mrkdwn_in: [ "text", "fields" ],
+											color: colorsHash.toki_purple.hex,
+											actions: [
+												{
+													name: "SEND_PING",
+													text: "Collaborate now",
+													value: `{"collaborateNow": true, "collaborateNowSlackUserId": "${toUser.dataValues.SlackUserId}"}`,
+													type: "button"
+												}
+											]
+										}];
+										responseObject.channel = message.channel;
+										bot.res.json(responseObject);
+
+									} else {
+
+										responseObject.text = `<@${toUser.dataValues.SlackUserId}> is not currently focused on anything. Would you like to ping them?`;
+										responseObject.attachments = [{
+											attachment_type: 'default',
+											callback_id: `IN_SESSION_PULSE`,
+											fallback: `${toUser.dataValues.SlackName} is not in a session`,
+											mrkdwn_in: [ "text", "fields" ],
+											color: colorsHash.toki_purple.hex,
+											actions: [
+												{
+													name: "SEND_PING",
+													text: "Send ping",
+													value: `{"collaborateNow": true, "collaborateNowSlackUserId": "${toUser.dataValues.SlackUserId}"}`,
+													type: "button"
+												}
+											]
+										}];
+
+										responseObject.channel = message.channel;
+										bot.res.json(responseObject);
+										
+									}
+
+								});
+
+								
+							} else {
+
+								// user might have changed names ... this is very rare!
+								bot.api.users.list({}, (err, response) => {
+									if (!err) {
+										const { members } = response;
+										let foundSlackUserId = false;
+										let toUserConfig = {}
+										members.some((member) => {
+											if (toSlackName == member.name) {
+												const SlackUserId = member.id;
+												models.User.update({
+													SlackName: name
+												},
+												{
+													where: { SlackUserId }
+												});
+												foundSlackUserId = SlackUserId;
+												return true;
+											}
+										});
+
+										if (foundSlackUserId) {
+
+											responseObject.text = `That teammate recently changed names! I've updated my database. Can you send that command again?`;
+											bot.replyPrivate(message, responseObject);
 
 
-					controller.trigger(`begin_session_flow`, [ bot, message ]);
-					responseObject.text = `Woo! You can do it :dancer:`;
-					bot.replyPrivate(message, responseObject);
+										} else {
+											responseObject.text = `Hmm, sorry I couldn't find that teammate`;
+											bot.replyPrivate(message, responseObject);
+										}
+									}
+								})
+
+							}
+
+						})
+
+					} else {
+
+						// assume user wants own pulse (and let know if you want user? helper text is pretty clear...)
+						user.getSessions({
+							where: [ `"open" = ?`, true ],
+							order: `"Session"."createdAt" DESC`
+						})
+						.then((sessions) => {
+
+							let session = sessions[0];
+
+							if (session) {
+
+								const { dataValues: { content, startTime, endTime } } = session;
+								const now              = moment();
+								const endTimeObject    = moment(endTime);
+								const remainingMinutes = Math.round(moment.duration(endTimeObject.diff(now)).asMinutes());
+								const remainingTimeString = convertMinutesToHoursString(remainingMinutes);
+
+								responseObject.text = `You are working on \`${content}\` for another *${remainingTimeString}*`;
+								bot.replyPrivate(message, responseObject);
+
+							} else {
+
+								// not in session, would you like to start one?
+								responseObject.text = `You're not in a current session! Do you want to focus again?`;
+								responseObject.attachments = [{
+									attachment_type: 'default',
+									callback_id: `NOT_IN_SESSION_LETS_FOCUS`,
+									fallback: `Would you like to focus on something?`,
+									mrkdwn_in: [ "text", "fields" ],
+									color: colorsHash.toki_yellow.hex,
+									actions: [
+										{
+											name: "SET_PRIORITY",
+											text: "Let's focus!",
+											value: `{"setPriority": true}`,
+											type: "button"
+										}
+									]
+								}];
+								responseObject.channel = message.channel;
+								bot.res.json(responseObject);
+
+
+							}
+
+						});
+						
+					}
 					break;
 
 				case "/ping":
