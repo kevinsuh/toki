@@ -70,7 +70,7 @@ export default function(controller) {
 					convo.say(`Hope you're having a great day so far, <@${SlackUserId}>!`);
 				}
 				
-				convo.say(`Think of me as an office manager for your team's attention in Slack. *I help you manage your Slack notifications, so that you can go heads down with confidence*`);
+				convo.say(`Think of me as a sidekick for your team's attention. *I help you manage your Slack notifications, so that you can go heads down with confidence* that you won't get interrupted with non-urgent requests`);
 				convo.say({
 					text: `Here's how I do this:`,
 					attachments: tokiExplainAttachments
