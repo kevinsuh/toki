@@ -314,9 +314,8 @@ function updateDashboardForChannelId(bot, ChannelId) {
 														}, function (err, response) {
 
 															// send without attachments then update, in order to avoid @mention of users in focus sessions
-															var _response$message = response.message;
-															var ts = _response$message.ts;
-															var text = _response$message.text;
+															var ts = response.ts;
+															var text = response.message.text;
 
 															text = updateMessage + '\n\n' + text;
 															var updateDashboardObject = {
@@ -324,23 +323,21 @@ function updateDashboardForChannelId(bot, ChannelId) {
 																ts: ts,
 																channel: ChannelId
 															};
-															updateDashboardObject.attachments = JSON.stringify(attachments);
-															bot.api.chat.update(updateDashboardObject, function (err, response) {
 
-																if (!err) {
-																	var _ts = response.message.ts;
-
-																	bot.api.channels.mark({
-																		token: accessToken,
-																		channel: ChannelId,
-																		ts: _ts
-																	}, function (err, res) {
-																		console.log('\n\n success on mark');
-																		console.log(err);
-																		console.log(res);
-																	});
-																}
+															// 1. mark as read for sender
+															bot.api.channels.mark({
+																token: accessToken,
+																channel: ChannelId,
+																ts: ts
+															}, function (err, res) {
+																console.log('\n\n success on mark');
+																console.log(err);
+																console.log(res);
 															});
+
+															// 2. update dashboard msg
+															updateDashboardObject.attachments = JSON.stringify(attachments);
+															bot.api.chat.update(updateDashboardObject);
 														});
 													} else {
 														console.log(err);

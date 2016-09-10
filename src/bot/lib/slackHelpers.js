@@ -289,32 +289,28 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 												}, (err, response) => {
 
 													// send without attachments then update, in order to avoid @mention of users in focus sessions
-													let { message: { ts, text } } = response;
+													let { ts, message: { text } } = response;
 													text = `${updateMessage}\n\n${text}`;
 													const updateDashboardObject = {
 														text,
 														ts,
 														channel: ChannelId
 													}
-													updateDashboardObject.attachments = JSON.stringify(attachments);
-													bot.api.chat.update(updateDashboardObject, (err, response) => {
 
-														if (!err) {
-
-															const { message: { ts } } = response;
-															bot.api.channels.mark({
-																token: accessToken,
-																channel: ChannelId,
-																ts
-															}, (err, res) => {
-																console.log(`\n\n success on mark`);
-																console.log(err);
-																console.log(res);
-															});
-
-														}
-
+													// 1. mark as read for sender
+													bot.api.channels.mark({
+														token: accessToken,
+														channel: ChannelId,
+														ts
+													}, (err, res) => {
+														console.log(`\n\n success on mark`);
+														console.log(err);
+														console.log(res);
 													});
+
+													// 2. update dashboard msg
+													updateDashboardObject.attachments = JSON.stringify(attachments);
+													bot.api.chat.update(updateDashboardObject);
 
 												});
 
