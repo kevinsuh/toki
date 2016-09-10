@@ -193,7 +193,7 @@ function changeTimeAndTaskFlow(convo) {
 		pattern: _constants.utterances.yes,
 		callback: function callback(response, convo) {
 			convo.sessionStart.content = false;
-			var question = 'What task are you doing?';
+			var question = 'What task are you working on?';
 			askForSessionContent(convo, question);
 			convo.next();
 		}
@@ -227,7 +227,7 @@ function askToOverrideCurrentSession(convo) {
 	var endTimeString = endTime.format("h:mma");
 	var minutesLeft = Math.round(_momentTimezone2.default.duration(endTime.diff(now)).asMinutes());
 
-	var text = 'Hey! You\'re already doing `' + currentSession.dataValues.content + '` until *' + endTimeString + '*';
+	var text = 'Hey! You\'re already working on `' + currentSession.dataValues.content + '` until *' + endTimeString + '*';
 	var attachments = [{
 		attachment_type: 'default',
 		callback_id: "EXISTING_SESSION_OPTIONS",
@@ -300,14 +300,14 @@ function askForSessionContent(convo) {
 
 	var sessionExample = (0, _messageHelpers.getRandomExample)("session");
 
-	if (question == '') question = 'What would you like to start doing? (i.e. `' + sessionExample + '`)';
+	if (question == '') question = 'What would you like to work on? (i.e. `' + sessionExample + '`)';
 
 	convo.ask({
 		text: question
 	}, [{
 		pattern: _constants.utterances.noAndNeverMind,
 		callback: function callback(response, convo) {
-			convo.say('Okay! Let me know when you want to start `/doing` something');
+			convo.say('Okay! Let me know when you want to `/focus` on something');
 			convo.next();
 		}
 	}, {

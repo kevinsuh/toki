@@ -41,7 +41,7 @@ exports.default = function (controller) {
 						var endTimeString = endTime.format("h:mma");
 
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
-							convo.say('You\'re currently doing `' + currentSession.dataValues.content + '`. Keep jamming and I\'ll see you at *' + endTimeString + '* :raised_hands:');
+							convo.say('You\'re currently working on `' + currentSession.dataValues.content + '`. Keep jamming and I\'ll see you at *' + endTimeString + '* :raised_hands:');
 						});
 					})();
 				} else {
@@ -86,7 +86,7 @@ function notInSessionWouldYouLikeToStartOne(config) {
 	if (bot && SlackUserId && controller) {
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-			convo.say('You don\'t have a status set! Let me know when you\'re ready to start `/doing` something :smile_cat:');
+			convo.say('You don\'t have a current focus set! Let me know when you\'re ready to `/focus` on something :smile_cat:');
 		});
 	}
 }

@@ -177,7 +177,7 @@ function updateDashboardForChannelId(bot, ChannelId) {
 								sessionTime = (0, _momentTimezone2.default)(session.dataValues.endTime).tz(tz).format("h:mma");
 								sessionColor = _constants.colorsHash.toki_purple.hex;
 							} else {
-								sessionContent = '_No status set_';
+								sessionContent = '_No current focus_';
 								sessionTime = '';
 								sessionColor = _constants.colorsHash.grey.hex;
 							}

@@ -48,7 +48,7 @@ exports.default = function (controller) {
 			var toSlackName = slackNames.length > 0 ? slackNames[0] : false;
 
 			switch (message.command) {
-				case "/doing":
+				case "/focus":
 
 					controller.trigger('begin_session_flow', [bot, message]);
 					responseObject.text = 'Woo! You can do it :dancer:';
