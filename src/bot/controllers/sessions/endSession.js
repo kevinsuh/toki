@@ -302,7 +302,7 @@ export default function(controller) {
 								 */
 
 								// all the ping objects here are relevant!
-								const { pingContainers, endSessionType, pingInfo, user } = convo.sessionEnd;
+								const { pingContainers, endSessionType, pingInfo, user, session } = convo.sessionEnd;
 
 								// put the mutual session ending pings back
 								// onto the matching pingContainer now, so they
@@ -456,8 +456,102 @@ export default function(controller) {
 									}
 								});
 
+								let now   = moment();
+								let nowTs = now.format(`X`);
+
+								let startTimeObject = moment(session.dataValues.startTime);
+								let startTimeTs     = startTimeObject.format(`X`);
+
 								// mark unresponded to DM's as unread
-								
+								bot.api.im.list({
+									token: accessToken
+								}, (err, response) => {
+
+									if (!err) {
+
+										const { ims } = response;
+
+										ims.forEach((im) => {
+
+											const { is_im, is_user_deleted, user, id } = im;
+
+											if (!is_user_deleted && is_im) {
+
+												bot.api.im.history({
+													token: accessToken,
+													channel: id,
+													inclusive: 1,
+													count: 50,
+													unreads: 1
+												}, (err, response) => {
+
+													if (!err) {
+
+														const { unread_count_display, messages } = response;
+
+														// only msgs that have already been read
+														if (unread_count_display == 0) {
+
+															let recentMessages = messages.filter(message => message.ts > startTimeTs );
+
+															if (recentMessages.length > 0) {
+
+																// these are the only ones that matter!
+																// read messages where none of them have me responded to them. then go back to the beginning for these
+																
+																let userHasResponded = false;
+																_.some(recentMessages, (message) => {
+
+																	if (message.user == SlackUserId) {
+																		userHasResponded = true;
+																		return true;
+																	}
+
+																});
+
+																if (!userHasResponded) {
+
+																	// this gets us one before "recentMessages" to set the channel mark to the right place
+																	let lastMessage = messages[recentMessages.length];
+																	if (lastMessage) {
+
+																		const { ts }    = lastMessage;
+
+																		bot.api.im.mark({
+																			token: accessToken,
+																			channel: id,
+																			ts
+																		}, (err, res) => {
+																			console.log(`\n\n IM MARKED!??!`);
+																			console.log(err);
+																			console.log(res);
+																		})
+
+																	}
+																}
+															}
+														}
+
+													} else {
+														console.log(`\n\n error in trying to access IM history at endSession`);
+														console.log(err)
+													}
+
+												})
+
+
+											}
+
+										})
+
+									} else {
+										console.log(`\n\n error trying to see IM's in endSession`);
+										console.log(err);
+									}
+
+								})
+
+
 
 							});
 						});

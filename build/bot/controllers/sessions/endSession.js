@@ -292,6 +292,7 @@ exports.default = function (controller) {
 								var endSessionType = _convo$sessionEnd.endSessionType;
 								var pingInfo = _convo$sessionEnd.pingInfo;
 								var user = _convo$sessionEnd.user;
+								var session = _convo$sessionEnd.session;
 
 								// put the mutual session ending pings back
 								// onto the matching pingContainer now, so they
@@ -455,8 +456,97 @@ exports.default = function (controller) {
 									}
 								});
 
-								// mark unresponded to DM's as unread
+								var now = (0, _momentTimezone2.default)();
+								var nowTs = now.format('X');
 
+								var startTimeObject = (0, _momentTimezone2.default)(session.dataValues.startTime);
+								var startTimeTs = startTimeObject.format('X');
+
+								// mark unresponded to DM's as unread
+								bot.api.im.list({
+									token: accessToken
+								}, function (err, response) {
+
+									if (!err) {
+										var ims = response.ims;
+
+
+										ims.forEach(function (im) {
+											var is_im = im.is_im;
+											var is_user_deleted = im.is_user_deleted;
+											var user = im.user;
+											var id = im.id;
+
+
+											if (!is_user_deleted && is_im) {
+
+												bot.api.im.history({
+													token: accessToken,
+													channel: id,
+													inclusive: 1,
+													count: 50,
+													unreads: 1
+												}, function (err, response) {
+
+													if (!err) {
+														var unread_count_display = response.unread_count_display;
+														var messages = response.messages;
+
+														// only msgs that have already been read
+
+														if (unread_count_display == 0) {
+
+															var recentMessages = messages.filter(function (message) {
+																return message.ts > startTimeTs;
+															});
+
+															if (recentMessages.length > 0) {
+
+																// these are the only ones that matter!
+																// read messages where none of them have me responded to them. then go back to the beginning for these
+
+																var userHasResponded = false;
+																_lodash2.default.some(recentMessages, function (message) {
+
+																	if (message.user == SlackUserId) {
+																		userHasResponded = true;
+																		return true;
+																	}
+																});
+
+																if (!userHasResponded) {
+
+																	// this gets us one before "recentMessages" to set the channel mark to the right place
+																	var lastMessage = messages[recentMessages.length];
+																	if (lastMessage) {
+																		var ts = lastMessage.ts;
+
+
+																		bot.api.im.mark({
+																			token: accessToken,
+																			channel: id,
+																			ts: ts
+																		}, function (err, res) {
+																			console.log('\n\n IM MARKED!??!');
+																			console.log(err);
+																			console.log(res);
+																		});
+																	}
+																}
+															}
+														}
+													} else {
+														console.log('\n\n error in trying to access IM history at endSession');
+														console.log(err);
+													}
+												});
+											}
+										});
+									} else {
+										console.log('\n\n error trying to see IM\'s in endSession');
+										console.log(err);
+									}
+								});
 							});
 						});
 					});
