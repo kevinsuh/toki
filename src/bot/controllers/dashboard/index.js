@@ -170,7 +170,7 @@ export default function(controller) {
 		// introduction message
 		bot.send({
 			channel: ChannelId,
-			text: `Hi! I'm Toki, your team's sidekick to make Slack work for you and your collective attention :raised_hands:\nI'll set up and manage a dashboard here of your team's statuses each day. If you ever need a refresher on how I work, just say \`/explain\` and I'd love to go into more detail!`
+			text: `Hi! I'm Toki, your team's sidekick to make Slack work for you and your collective attention\nI'll set up and manage a dashboard here of your team's statuses each day. If you ever need a refresher on how I work, just say \`/explain\` and I'd love to go into more detail!`
 		}, () => {
 
 			updateDashboardForChannelId(bot, ChannelId);
