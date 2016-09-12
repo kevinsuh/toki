@@ -361,7 +361,6 @@ function updateDashboardForChannelId(bot, ChannelId) {
 											bot: bot,
 											ChannelId: ChannelId,
 											text: text,
-											ts: ts,
 											titleOfDashboard: titleOfDashboard,
 											attachments: attachments,
 											statusUpdate: statusUpdate,

@@ -347,6 +347,7 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 										statusUpdateMessage: updateMessage,
 										dashboardUsers
 									}
+									
 
 									sendNewDashboardObject(config);
 
