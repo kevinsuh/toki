@@ -150,10 +150,7 @@ export default function(controller) {
 						if (convo)
 							convo.task.timeLimit = 1000 * 60 * 5;
 
-						if (sessions.length > 0 || toUserPings.length > 0 || fromUserPings.length > 0) {
-							convo.say(`Hey <@${SlackUserId}>!`);
-						}
-							
+						convo.say(` `);
 
 						// sessions recap
 						if (sessions.length > 0) {
@@ -200,7 +197,7 @@ export default function(controller) {
 							});
 
 							const totalTimeInSessionsString = convertMinutesToHoursString(totalTimeInSessions);
-							text = `You spent *${totalTimeInSessionsString}* on your priorities with me ${sinceDayString}. Here's a quick breakdown of what you spent your time on:`;
+							text = `Hey <@${SlackUserId}>! You spent *${totalTimeInSessionsString}* on your priorities with me ${sinceDayString}. Here's a quick breakdown of what you spent your time on:`;
 
 							let attachments = [{
 								attachment_type: 'default',
@@ -297,7 +294,7 @@ export default function(controller) {
 								convoResponseObject.attachments = attachments;
 							}
 
-							convo.say(convoResponseObject);
+							// convo.say(convoResponseObject);
 
 						}
 
@@ -381,7 +378,7 @@ export default function(controller) {
 								convoResponseObject.attachments = attachments;
 							}
 
-							convo.say(convoResponseObject);
+							// convo.say(convoResponseObject);
 
 						}
 

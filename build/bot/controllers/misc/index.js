@@ -143,9 +143,7 @@ exports.default = function (controller) {
 						// have 5-minute exit time limit
 						if (convo) convo.task.timeLimit = 1000 * 60 * 5;
 
-						if (sessions.length > 0 || toUserPings.length > 0 || fromUserPings.length > 0) {
-							convo.say('Hey <@' + SlackUserId + '>!');
-						}
+						convo.say(' ');
 
 						// sessions recap
 						if (sessions.length > 0) {
@@ -191,7 +189,7 @@ exports.default = function (controller) {
 								});
 
 								var totalTimeInSessionsString = (0, _messageHelpers.convertMinutesToHoursString)(totalTimeInSessions);
-								text = 'You spent *' + totalTimeInSessionsString + '* on your priorities with me ' + sinceDayString + '. Here\'s a quick breakdown of what you spent your time on:';
+								text = 'Hey <@' + SlackUserId + '>! You spent *' + totalTimeInSessionsString + '* on your priorities with me ' + sinceDayString + '. Here\'s a quick breakdown of what you spent your time on:';
 
 								var attachments = [{
 									attachment_type: 'default',
@@ -291,7 +289,7 @@ exports.default = function (controller) {
 									convoResponseObject.attachments = _attachments;
 								}
 
-								convo.say(convoResponseObject);
+								// convo.say(convoResponseObject);
 							})();
 						}
 
@@ -378,7 +376,7 @@ exports.default = function (controller) {
 									convoResponseObject.attachments = _attachments2;
 								}
 
-								convo.say(convoResponseObject);
+								// convo.say(convoResponseObject);
 							})();
 						}
 					});
