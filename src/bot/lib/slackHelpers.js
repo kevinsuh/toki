@@ -341,7 +341,6 @@ export function updateDashboardForChannelId(bot, ChannelId, config = {}) {
 										bot,
 										ChannelId,
 										text,
-										ts,
 										titleOfDashboard,
 										attachments,
 										statusUpdate,
