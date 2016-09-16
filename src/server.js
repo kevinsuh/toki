@@ -11,6 +11,12 @@ import cronFunction from './app/cron';
 import { seedAndUpdateUsers, test } from './app/scripts';
 var CronJob = cron.CronJob;
 
+// jsx
+import jsx from 'node-jsx';
+jsx.install();
+
+import React from 'react';
+
 import './app/globalHelpers';
 
 var app = express();

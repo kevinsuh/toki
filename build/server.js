@@ -30,6 +30,14 @@ var _cron4 = _interopRequireDefault(_cron3);
 
 var _scripts = require('./app/scripts');
 
+var _nodeJsx = require('node-jsx');
+
+var _nodeJsx2 = _interopRequireDefault(_nodeJsx);
+
+var _react = require('react');
+
+var _react2 = _interopRequireDefault(_react);
+
 require('./app/globalHelpers');
 
 var _controllers = require('./bot/controllers');
@@ -39,8 +47,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // modules 
 var CronJob = _cron2.default.CronJob;
 
+// jsx
+
+
 // CronJob
 
+_nodeJsx2.default.install();
 
 var app = (0, _express2.default)();
 
