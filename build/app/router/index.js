@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-// our various routes
+// our various routes (they are essentially controllers)
 
 
 // sequelize models
@@ -42,12 +42,15 @@ var _slack2 = _interopRequireDefault(_slack);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// react!
+// import React from 'react';
+// import ReactApp from '../client/components';
+
+// let ReactAppFactory = React.createFactory(ReactApp);
+
+
 exports.default = function (app) {
 
-	var org = "tokibot1";
-	var interval = 5000;
-
-	// root
 	app.get('/', function (req, res) {
 
 		var env = process.env.NODE_ENV || 'development';
@@ -57,10 +60,13 @@ exports.default = function (app) {
 			process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 		}
 
+		// let reactHtml = React.renderToString(ReactAppFactory({}));
+
 		var variables = _extends({}, req.query, {
 			env: env
 		});
-		res.render('root', variables);
+
+		res.render('pages/index', variables);
 	});
 
 	app.use('/invite', _invite2.default);

@@ -1,7 +1,7 @@
 import request from 'request';
 import dotenv from 'dotenv';
 
-// our various routes
+// our various routes (they are essentially controllers)
 import signup from './routes/signup';
 import login from './routes/login';
 import invite from './routes/invite';
@@ -10,12 +10,15 @@ import invite from './routes/invite';
 import models from '../models';
 import Slack from '../lib/slack';
 
+// react!
+// import React from 'react';
+// import ReactApp from '../client/components';
+
+// let ReactAppFactory = React.createFactory(ReactApp);
+
+
 export default (app) => {
 
-	var org      = "tokibot1";
-	var interval = 5000;
-
-	// root
 	app.get('/', (req, res) => {
 
 		let env = process.env.NODE_ENV || 'development';
@@ -25,11 +28,14 @@ export default (app) => {
 			process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 		}
 
-		var variables = {
+		// let reactHtml = React.renderToString(ReactAppFactory({}));
+
+		let variables = {
 			...req.query,
 			env
 		}
-		res.render('root', variables);
+
+		res.render('pages/index', variables);
 	});
 
 	app.use('/invite', invite);
