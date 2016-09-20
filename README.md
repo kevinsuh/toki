@@ -1,8 +1,8 @@
-# [Toki](https://tokibot.com): attention management for teams ![Toki Logo](build/public/images/big_logo.png)
+# [Toki](https://tokibot.com): attention management for teams
 
-**Toki is an attention management slackbot for teams.** Its purpose is to enable focused work for individuals, while maintaing the amazing benefits of Slack (collaboration, transparency and fun).
+**Toki is an attention management slackbot for teams.** Its goal is to enable focused work for individuals, while maintaining the amazing benefits of Slack (collaboration, transparency and fun).
 
-We have personally noticed a growing problem: our daily attention cannot grow at the exponential rate of technology. The resulting information overload, multi-tasking and context switching drains the 4 to 6 hours of daily attention that we have per day. We believe this must be solved in order for technology to truly be leveraged for our productivity.
+We have personally noticed a growing problem: our daily attention cannot grow at the exponential rate of technology. The resulting information overload and context switching drains the 4 to 6 hours of daily attention that we have per day. We believe this must be solved in order for technology to truly be leveraged for our productivity.
 
 Toki enables individuals to focus on a specific task by sharing to their team what they're working on, while automatically turning on Do-Not-Disturb in Slack. Toki will store this information and provide you with daily reflections of how you spent your time.
 
@@ -74,19 +74,19 @@ Since the `/build` directory is a compiled version of our `/src` directory, the 
 **The following is the structure of the `/build` directory** _(excluding end files in nested directories)_:
 ```
 build/
-├── app/                                // Express web server
+├── app/                                  // Express web server
 │   ├── api/
-│   │   ├── v1/                         // RESTful API endpoints
-│   ├── migrations/                     // Sequelize DB migrations
-│   ├── models/                         // Sequelize Models
-│   ├── router/                         // Express routes
+│   │   ├── v1/                           // RESTful API endpoints
+│   ├── migrations/                       // Sequelize DB migrations
+│   ├── models/                           // Sequelize Models
+│   ├── router/                           // Express routes
 │   │   │   ├── routes/
-│   ├── cron.js/                        // Cron job functions
-│   ├── scripts.js/                     // One-off scripts
-|   ├── globalHelpers.js/               // App-wide helpers (i.e. prototype methods)
-├── bot/                                // Slackbot
-│   ├── actions/                        // Proactive actions
-│   ├── controllers/                    // Botkit controllers to handle Slack events and conversations
+│   ├── cron.js/                          // Cron job functions
+│   ├── scripts.js/                       // One-off scripts
+|   ├── globalHelpers.js/                 // App-wide helpers (i.e. prototype methods)
+├── bot/                                  // Slackbot
+│   ├── actions/                          // Proactive actions
+│   ├── controllers/                      // Botkit controllers to handle Slack events and conversations
 │   │   │   ├── buttons/
 │   │   │   ├── dashboard/
 │   │   │   ├── misc/
@@ -94,14 +94,14 @@ build/
 │   │   │   ├── pings/
 │   │   │   ├── sessions/
 │   │   │   ├── slash/
-│   ├── lib/                            // Slackbot helpers
-│   ├── middleware/                     // Botkit middleware functions
-├── public/                             // Assets
+│   ├── lib/                              // Slackbot helpers
+│   ├── middleware/                       // Botkit middleware functions
+├── public/                               // Assets
 │   ├── css/
 │   ├── gifs/
 │   ├── images/
 │   ├── js/
-├── server.js/                          // Our starting point
+├── server.js/                            // Our starting point
 ```
 
 **Notes:**
