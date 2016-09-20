@@ -6,6 +6,8 @@ We have personally noticed a growing problem: our daily attention cannot grow at
 
 Toki enables individuals to focus on a specific task by sharing to their team what they're working on, while automatically turning on Do-Not-Disturb in Slack. Toki will store this information and provide you with daily reflections of how you spent your time.
 
+Toki aims to make collaboration and focus work together :raised_hands:
+
 Toki is written in Javascript and uses the excellent [botkit](https://github.com/howdyai/botkit) and [wit](https://wit.ai) libraries.
 
 
@@ -15,7 +17,7 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 - [Directory Structure](#directory-structure)
 - [Running on Development](#running-development)
 - [Running on Production](#running-production)
-- [Eventual Features](#eventual-features)
+- [Product Roadmap](#product-roadmap)
 - [Authors](#authors)
 
 
@@ -134,9 +136,9 @@ Notes:
 * Development environment triggers dev_toki and local postgres DB
 * Production server holds some env variables through SHELL, and some through .env file. DB_HOST is absolutely necessary to be updated on shell
 
-<a name="eventual-features"/>
+<a name="product-roadmap"/>
 ## Product Roadmap
-Our ideas for the product roadmap are held in our [public trello board](https://trello.com/b/AYIEVUsN/product-development-roadmap). We'd love to hear suggestions, and work together towards a better future!
+Our ideas for the product roadmap are held in our [public trello board](https://trello.com/b/AYIEVUsN/product-development-roadmap). We'd love to hear suggestions, and work together towards a better future! You can add comments directly in Trello.
 
 <a name="authors"/>
 ## Authors
