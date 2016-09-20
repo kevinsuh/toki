@@ -75,16 +75,19 @@
 						<h1 class="cover-heading" style="line-height: 44px;">Your team's attention manager<br>in Slack <img src="/assets/images/slack_logo.png" id="slack-logo-splash"/></h1>
 						<p class="lead">Toki makes it easy for teams to go heads down on work and communicate at the right times each day in Slack</p>
 
-						<form id="invite" method="post" action="/invite" class="invite form-inline">
-
-							<div class="input-group">
-								<input class="form-control" type="email" name="email" placeholder="joeguy@example.com" required />
-								<span class="input-group-btn">
-									<input type="submit" class="btn btn-secondary" value="Get Early Access" />
-								</span>
+						<center>
+							
+							<div>
+								<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot,commands,channels:history,dnd:write,dnd:read'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
 							</div>
-
-						</form>
+							<a href="https://docs.google.com/presentation/d/1HwnDgSZRXf0rQrQEhnNgMOsqA8zchd08Q-N7DG-AgNs/edit#slide=id.p" target="_blank" style="
+								font-style: italic;
+								margin-top: 10px;
+								color: white;
+								display: inline-block;
+							">How does it work?</a>
+								
+						</center>
 
 					</div>
 
@@ -102,28 +105,3 @@
 	</body>
 </html>
 
-
-<% var env = locals.env || 'development';
-	if (env == "development") { %>
-	<center>
-		DEV MODE:
-		<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.DEV_SLACK_ID %>&redirect_uri=<%= process.env.DEV_SLACK_REDIRECT %>new&scope=bot,commands,channels:history,dnd:write,dnd:read'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
-	</center>
-
-	<center style="margin-top: 25px;">
-		<a href="https://slack.com/oauth/authorize?client_id=<%= process.env.DEV_SLACK_ID %>&redirect_uri=<%= process.env.DEV_SLACK_REDIRECT %>login&scope=channels:history,dnd:write,dnd:read"><img alt="Sign in with Slack" height="40" width="172" src="/assets/images/sign_in_with_slack_2.png" /></a>
-	</center>
-
-<% } else if (false) { %>
-	<!-- this is production, but not ready yet -->
-	<center>
-		<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot,commands,channels:history,dnd:write,dnd:read'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
-	</center>
-
-<% } else if (false) { %>
-	<!-- this is Sign In with Slack, which we aren't using right now -->
-	<center style="margin-top: 25px;">
-		<a href="https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>login&scope=identity.basic,channels:history,dnd:write,dnd:read"><img alt="Sign in with Slack" height="40" width="172" src="/assets/images/sign_in_with_slack_2.png" /></a>
-	</center>
-
-<% } %>
