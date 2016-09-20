@@ -1,6 +1,6 @@
 # [Toki](https://tokibot.com): attention management for teams
 
-**Toki is an attention management slackbot for teams.** Its goal is to enable focused work for individuals, while maintaining the amazing benefits of Slack (collaboration, transparency and fun).
+**Toki is an attention management slackbot for teams.** Its goal is to enable focused work for individuals, while maintaining the awesome benefits of Slack (collaboration, transparency and fun).
 
 We have personally noticed a growing problem: our daily attention cannot grow at the exponential rate of technology. The resulting information overload and context switching drains the 4 to 6 hours of daily attention that we have per day. We believe this must be solved in order for technology to truly be leveraged for our productivity.
 
@@ -56,15 +56,16 @@ Toki is written in Javascript and uses the excellent [Botkit](https://github.com
 * Wit.ai
 
 #### Libraries/Dependencies
-* Babel
-* SCSS
+* Babel (ES6)
+* node-sass (SCSS)
 * Sequelize
 * Moment-Timezone
 * EmbeddedJS
+* Cron
 
 <a name="directory-structure">
 # Directory Structure
-Since Toki uses a compiler for both ES6 and SCSS, we have one directory for our source code `/src`, and one directory for our deployment `/build`.
+Since Toki uses a compiler for both ES6 ([Babel](https://babeljs.io/)) and SCSS ([node-sass](https://github.com/sass/node-sass)), we have one directory for our source code `/src`, and one directory for our deployment `/build`.
 
 Code that does not need to be compiled is held outside of the `/build` and `/src` directories and and at the root-level of our project. Currently, outside of our various config files, that only includes our `/views`.
 
@@ -118,7 +119,7 @@ build/
 ## Running on Development
 Toki makes use of compilers for ES6 ([Babel](https://babeljs.io/)) and SCSS ([node-sass](https://github.com/sass/node-sass)) to be translated into ES5 and CSS, respectively.
 
-`npm run compile` is an NPM script that runs babel, node-sass, and sequelize db:migrate to convert changes.
+`npm run compile` is an NPM script that runs babel, node-sass, and sequelize db:migrate to convert changes. Toki also comes with the scripts `npm run watch-css` and `npm run watch-babel` to run in the background and compile a file everytime you save changes in `/src` to `/build`
 
 <a name="running-production"/>
 ## Running on Production
