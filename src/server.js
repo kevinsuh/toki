@@ -8,18 +8,13 @@ import fs from 'fs';
 // CronJob
 import cron from 'cron';
 import cronFunction from './app/cron';
-import { seedAndUpdateUsers, test } from './app/scripts';
-var CronJob = cron.CronJob;
 
-// jsx
-import jsx from 'node-jsx';
-jsx.install();
-
-import React from 'react';
-
+// Global helpers (i.e. Prototype methods) 
 import './app/globalHelpers';
 
-var app = express();
+let CronJob = cron.CronJob;
+
+let app = express();
 
 // configuration 
 dotenv.load();
@@ -48,7 +43,7 @@ app.use(function(err, req, res, next) {
     res.status(err.status || 500);
 });
 
-var env = process.env.NODE_ENV || 'development';
+let env = process.env.NODE_ENV || 'development';
 if (env == 'development') {
 	console.log("\n\n ~~ In development server of Toki ~~ \n\n");
   process.env.BOT_TOKEN = process.env.DEV_BOT_TOKEN;
@@ -95,14 +90,14 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 	new CronJob('*/5 * * * * *', cronFunction, null, true, "America/New_York");
 
 	// add bot to each team
-	var teamTokens = [];
+	let teamTokens = [];
 	controller.storage.teams.all((err, teams) => {
 		if (err) {
 			throw new Error(err);
 		}
 
 		// connect all the teams with bots up to slack
-		for (var t in teams) {
+		for (let t in teams) {
 			if (teams[t]) {
 				teamTokens.push(teams[t].token);
 			}
@@ -112,36 +107,14 @@ http.createServer(app).listen(process.env.HTTP_PORT, () => {
 		 * 		~~ START UP ZE BOTS ~~
 		 */
 		teamTokens.forEach((token, index) => {
-			var bot = controller.spawn({ token, retry: 500 }).startRTM((err, bot, payload) => {
-
-				console.log(`\n\n\n\n\n\n ~~ token: alskfm ${token}`)
-
-				if (token == `xoxb-52208318340-k0U87TEOjyU3DWZwXIJmWB5N`) {
-					console.log(`\n\n in dev navi group!!!!`);
-				}
-					
-
-				if (payload) {
-					let teamMembers = payload.users; // array of user objects!
-					seedAndUpdateUsers(teamMembers);
-					test(bot);
-				}
+			let bot = controller.spawn({ token, retry: 500 }).startRTM((err, bot, payload) => {
 
 				if (err) {
 					console.log(`\n\n'Error connecting to slack... :' ${err}`);
 				} else {
-					if (token == process.env.BOT_TOKEN && process.env.KEVIN_SLACK_USER_ID) {
-						bot.startPrivateConversation({user: process.env.KEVIN_SLACK_USER_ID}, (err, convo) => {
-							convo.say("Good morning Kevin, I'm ready for you :robot_face:");
-						})
-						if (env == "production" && process.env.CHIP_SLACK_USER_ID) {
-							bot.startPrivateConversation({ user: process.env.CHIP_SLACK_USER_ID}, (err, convo) => {
-								convo.say("Hello Chip, I'm ready for you :robot_face:");
-							})
-						}
-					}
-					trackBot(bot); // this is where we store all ze bots
+					trackBot(bot); // this is where we store all ze started bots
 				}
+
 			})
 		});
 	});

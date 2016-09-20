@@ -12,9 +12,6 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 // sequelize models
 
 
-// react!
-
-
 var _request = require('request');
 
 var _request2 = _interopRequireDefault(_request);
@@ -43,14 +40,6 @@ var _slack = require('../lib/slack');
 
 var _slack2 = _interopRequireDefault(_slack);
 
-var _react = require('react');
-
-var _react2 = _interopRequireDefault(_react);
-
-var _components = require('../client/components');
-
-var _components2 = _interopRequireDefault(_components);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.default = function (app) {
@@ -64,16 +53,11 @@ exports.default = function (app) {
 			process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 		}
 
-		var reactHtml = _react2.default.renderToString((0, _components2.default)({}));
-		console.log('\n\n hello world!?!?\n\n');
-		console.log(reactHtml);
-
 		var variables = _extends({}, req.query, {
-			env: env,
-			reactOutput: "hi"
+			env: env
 		});
 
-		res.render('pages/index', variables);
+		res.render('root', variables);
 	});
 
 	app.use('/invite', _invite2.default);

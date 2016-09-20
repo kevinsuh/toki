@@ -10,11 +10,6 @@ import invite from './routes/invite';
 import models from '../models';
 import Slack from '../lib/slack';
 
-// react!
-import React from 'react';
-import ReactApp from '../client/components';
-
-
 export default (app) => {
 
 	app.get('/', (req, res) => {
@@ -26,17 +21,12 @@ export default (app) => {
 			process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 		}
 
-		let reactHtml = React.renderToString(ReactApp({}));
-		console.log(`\n\n hello world!?!?\n\n`);
-		console.log(reactHtml);
-
 		let variables = {
 			...req.query,
-			env,
-			reactOutput: "hi"
+			env
 		}
 
-		res.render('pages/index', variables);
+		res.render('root', variables);
 	});
 
 	app.use('/invite', invite);

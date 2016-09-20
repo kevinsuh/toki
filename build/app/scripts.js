@@ -3,7 +3,6 @@
 Object.defineProperty(exports, "__esModule", {
 	value: true
 });
-exports.test = test;
 exports.seedAndUpdateUsers = seedAndUpdateUsers;
 
 var _controllers = require('../bot/controllers');
@@ -29,96 +28,6 @@ var _constants = require('../bot/lib/constants');
 var _slackHelpers = require('../bot/lib/slackHelpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function test(bot) {
-
-	// U1NCGAETZ slackid of @test
-	// U121ZK15J slackid of @kevin
-	var SlackUserIds = 'U1NCGAETZ,U121ZK15J';
-	bot.api.mpim.open({
-		users: SlackUserIds
-	}, function (err, response) {
-		console.log(response);
-		if (!err) {
-			var id = response.group.id;
-
-			bot.api.mpim.history({
-				channel: id
-			}, function (err, response) {
-
-				if (!err) {
-					var messages = response.messages;
-
-					console.log('\n\n\n displaying the ' + messages.length + ' messages for this convo');
-					console.log(messages[0]);
-					var timeStampObject = _momentTimezone2.default.unix(messages[0].ts);
-					console.log('\n\n\n timestamp: ' + timeStampObject.format());
-
-					if (messages[0].reactions) {
-						console.log(messages[0].reactions);
-					}
-				}
-			});
-		}
-	});
-
-	bot.api.channels.list({}, function (err, response) {
-
-		var BotSlackUserId = bot.identity.id;
-
-		if (!err) {
-			var channels = response.channels;
-
-
-			console.log('\n\n\n there are ' + channels.length + ' channels');
-
-			channels.forEach(function (channel) {
-				var id = channel.id;
-				var name = channel.name;
-				var is_channel = channel.is_channel;
-				var topic = channel.topic;
-				var purpose = channel.purpose;
-				var members = channel.members;
-
-
-				var hasBotSlackUserId = false;
-				var hasMemberSlackUserId = false;
-
-				var KevinSlackUserId = 'U121ZK15J';
-				var KevinTeamId = 'T121VLM63';
-
-				_lodash2.default.some(members, function (member) {
-					if (member == KevinSlackUserId) {
-						hasBotSlackUserId = true;
-					} else if (member == BotSlackUserId) {
-						hasMemberSlackUserId = true;
-					}
-				});
-
-				if (hasBotSlackUserId && hasMemberSlackUserId) {
-
-					console.log('\n\n\n channel name: ' + name + ' has both members in slack user');
-					console.log(channel);
-
-					(0, _slackHelpers.updateDashboardForChannelId)(bot, id);
-				}
-			});
-		} else {
-			console.log('\n\n\n ~~ error in listing channel:');
-			console.log(err);
-		}
-	});
-
-	bot.api.groups.create({
-		name: 'kevin-dashboard'
-	}, function (err, response) {
-
-		console.log('\n\n\n group created:');
-		console.log(response);
-	});
-} /**
-   * 		For fun one-off thingz
-   */
 
 function seedAndUpdateUsers(members) {
 
@@ -164,5 +73,7 @@ function seedAndUpdateUsers(members) {
 			}
 		});
 	});
-}
+} /**
+   * 		For fun one-off thingz
+   */
 //# sourceMappingURL=scripts.js.map

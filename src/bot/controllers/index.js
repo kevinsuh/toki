@@ -129,13 +129,6 @@ controller.on('user_change', function (bot, message) {
 
 });
 
-controller.on(`reaction_added`, (bot, message) => {
-
-	console.log(`\n\n yo reaction added:`);
-	console.log(message);
-
-})
-
 // simple way to keep track of bots
 export var bots = {};
 
@@ -162,11 +155,7 @@ export function customConfigBot(controller) {
 
 // try to avoid repeat RTM's
 export function trackBot(bot) {
-
-	console.log(`\n\n\n\n\n\n ~~ token: ${bot.config.token} \n\n\n\n\n`);
-
 	bots[bot.config.token] = bot;
-
 }
 
 /**

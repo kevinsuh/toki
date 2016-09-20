@@ -28,16 +28,6 @@ var _cron3 = require('./app/cron');
 
 var _cron4 = _interopRequireDefault(_cron3);
 
-var _scripts = require('./app/scripts');
-
-var _nodeJsx = require('node-jsx');
-
-var _nodeJsx2 = _interopRequireDefault(_nodeJsx);
-
-var _react = require('react');
-
-var _react2 = _interopRequireDefault(_react);
-
 require('./app/globalHelpers');
 
 var _controllers = require('./bot/controllers');
@@ -47,12 +37,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // modules 
 var CronJob = _cron2.default.CronJob;
 
-// jsx
+// Global helpers (i.e. Prototype methods) 
 
 
 // CronJob
 
-_nodeJsx2.default.install();
 
 var app = (0, _express2.default)();
 
@@ -148,32 +137,10 @@ _http2.default.createServer(app).listen(process.env.HTTP_PORT, function () {
 		teamTokens.forEach(function (token, index) {
 			var bot = _controllers.controller.spawn({ token: token, retry: 500 }).startRTM(function (err, bot, payload) {
 
-				console.log('\n\n\n\n\n\n ~~ token: alskfm ' + token);
-
-				if (token == 'xoxb-52208318340-k0U87TEOjyU3DWZwXIJmWB5N') {
-					console.log('\n\n in dev navi group!!!!');
-				}
-
-				if (payload) {
-					var teamMembers = payload.users; // array of user objects!
-					(0, _scripts.seedAndUpdateUsers)(teamMembers);
-					(0, _scripts.test)(bot);
-				}
-
 				if (err) {
 					console.log('\n\n\'Error connecting to slack... :\' ' + err);
 				} else {
-					if (token == process.env.BOT_TOKEN && process.env.KEVIN_SLACK_USER_ID) {
-						bot.startPrivateConversation({ user: process.env.KEVIN_SLACK_USER_ID }, function (err, convo) {
-							convo.say("Good morning Kevin, I'm ready for you :robot_face:");
-						});
-						if (env == "production" && process.env.CHIP_SLACK_USER_ID) {
-							bot.startPrivateConversation({ user: process.env.CHIP_SLACK_USER_ID }, function (err, convo) {
-								convo.say("Hello Chip, I'm ready for you :robot_face:");
-							});
-						}
-					}
-					(0, _controllers.trackBot)(bot); // this is where we store all ze bots
+					(0, _controllers.trackBot)(bot); // this is where we store all ze started bots
 				}
 			});
 		});
