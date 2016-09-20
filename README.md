@@ -1,4 +1,4 @@
-# Toki: attention management for teams [Toki](![Toki Logo](build/public/images/big_logo.png))
+# [Toki](https://tokibot.com): attention management for teams ![Toki Logo](build/public/images/big_logo.png)
 
 **Toki is an attention management slackbot for teams.** Its purpose is to enable focused work for individuals, while maintaing the amazing benefits of Slack (collaboration, transparency and fun).
 
