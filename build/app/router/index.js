@@ -6,10 +6,13 @@ Object.defineProperty(exports, "__esModule", {
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-// our various routes
+// our various routes (they are essentially controllers)
 
 
 // sequelize models
+
+
+// react!
 
 
 var _request = require('request');
@@ -40,14 +43,18 @@ var _slack = require('../lib/slack');
 
 var _slack2 = _interopRequireDefault(_slack);
 
+var _react = require('react');
+
+var _react2 = _interopRequireDefault(_react);
+
+var _components = require('../client/components');
+
+var _components2 = _interopRequireDefault(_components);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.default = function (app) {
 
-	var org = "tokibot1";
-	var interval = 5000;
-
-	// root
 	app.get('/', function (req, res) {
 
 		var env = process.env.NODE_ENV || 'development';
@@ -57,10 +64,16 @@ exports.default = function (app) {
 			process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 		}
 
+		var reactHtml = _react2.default.renderToString((0, _components2.default)({}));
+		console.log('\n\n hello world!?!?\n\n');
+		console.log(reactHtml);
+
 		var variables = _extends({}, req.query, {
-			env: env
+			env: env,
+			reactOutput: "hi"
 		});
-		res.render('root', variables);
+
+		res.render('pages/index', variables);
 	});
 
 	app.use('/invite', _invite2.default);

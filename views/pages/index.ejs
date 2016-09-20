@@ -2,44 +2,11 @@
 <html dir="ltr" lang="en-US">
 
 	<head>
-		<script type="text/javascript">
-			!function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error("Segment snippet included twice.");else{analytics.invoked=!0;analytics.methods=["trackSubmit","trackClick","trackLink","trackForm","pageview","identify","reset","group","track","ready","alias","page","once","off","on"];analytics.factory=function(t){return function(){var e=Array.prototype.slice.call(arguments);e.unshift(t);analytics.push(e);return analytics}};for(var t=0;t<analytics.methods.length;t++){var e=analytics.methods[t];analytics[e]=analytics.factory(e)}analytics.load=function(t){var e=document.createElement("script");e.type="text/javascript";e.async=!0;e.src=("https:"===document.location.protocol?"https://":"http://")+"cdn.segment.com/analytics.js/v1/"+t+"/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(e,n)};analytics.SNIPPET_VERSION="3.1.0";
-			analytics.load("5nvEQLHWNyMSlHkNrEWDzm9CQAPL0JHk");
-			analytics.page()
-			}}();
-		</script>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		<link rel="icon" href="https://tokibot.com/assets/images/icon.png">
-		<link rel="stylesheet" type="text/css" href="/assets/css/main.css" />
+
+		<% include ../partials/head %>
+
 		<link rel="stylesheet" type="text/css" href="/assets/css/splash.css" />
-		<link rel="stylesheet" href="/css/bootstrap.min.css" />
-		<link href='https://fonts.googleapis.com/css?family=Lato:400,900italic,700italic,900,700,400italic' rel='stylesheet' type='text/css'>
-		<script src="/js/jquery.min.js"></script>
 		<script src="/assets/js/splash.js"></script>
-
-		<title>Toki - Protect your team's attention</title>
-		
-		<!-- facebook open graph tags -->
-		<meta property="og:type" content="website" />
-		<meta property="og:url" content="https://tokibot.com" />
-		<meta property="og:title" content="Toki - Take Back Your Attention" />
-		<meta property="og:description" content="Toki is a Slack bot that makes it easy to be intentional about what you work on, and how long you work on it." />
-		<meta property="og:image" content="https://tokibot.com/assets/images/big_logo.png" />
-
-		<!-- twitter card tags additive with the og: tags  -->
-		<meta name="twitter:card" content="summary_large_image">
-		<meta name="twitter:domain" value="tokibot.com" />
-		<meta name="twitter:title" value="Toki - Take Back Your Attention" />
-		<meta name="twitter:description" value="Toki is a Slack bot that makes it easy to be intentional about what you work on, and how long you work on it." />
-		<meta name="twitter:image" content="https://tokibot.com/assets/images/big_logo.png" />
-		<meta name="twitter:url" value="https://tokibot.com" />
-		<meta name="twitter:label1" value="Make a plan..." />
-		<meta name="twitter:data1" value="Outline what you can accomplish today" />
-		<meta name="twitter:label2" value="...and protect your time" />
-		<meta name="twitter:data2" value="By focusing on tasks one-by-one" />
-
-		<!-- Viewport for Mobile View -->
-		<meta name="viewport" content="width=device-width, initial-scale=0.5">
 
 	</head>
 
@@ -95,7 +62,6 @@
 					</div>
 
 					<div id="react-main-mount">
-						<%- reactOutput %>
 					</div>
 
 					<div class="mastfoot">
@@ -105,8 +71,8 @@
 					</div>
 
 				</div>
-
 			</div>
+
 		</div>
 
 	</body>
