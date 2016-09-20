@@ -1,8 +1,10 @@
-# Toki: your time and attention sidekick
+# Toki: attention management for teams
 
-**Toki is a slackbot that helps you accomplish the things that you intend to each day.** Its goal is to help manage your time and attention throughout the day, so you can do the things that are most important to you.
+**Toki is an attention management slackbot for teams.** Its purpose is to enable focused work for individuals, while maintaing the amazing benefits of Slack (collaboration, transparency and fun).
 
-We have personally noticed a growing problem: As technology grows, our attention doesn't scale accordingly. This leads to an unceasing ask for a limited resource that is most important to each of us: our daily attention. We want to build technology that's on our side of this battle.
+We have personally noticed a growing problem: our daily attention cannot grow at the exponential rate of technology. The resulting information overload, multi-tasking and context switching drains the 4 to 6 hours of daily attention that we have per day. We believe this must be solved in order for technology to truly be leveraged for our productivity.
+
+Toki enables individuals to focus on a specific task by sharing to their team what they're working on, while automatically turning on Do-Not-Disturb in Slack. Toki will store this information and provide you with daily reflections of how you spent your time.
 
 Toki is written in Javascript and uses the excellent [botkit](https://github.com/howdyai/botkit) and [wit](https://wit.ai) libraries.
 
@@ -19,12 +21,12 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 
 <a name="main-features"/>
 # Main Features
-#### Start your day
-  * Add new tasks
-  * Prioritize tasks
-  * Add time to tasks
-  * View/add pending tasks
-  * Launch into work session
+#### Focus sessions (`/focus [task] for [time]`)
+  * Turns on your DND in Slack while in "focus" mode
+  * Shares what you are working on to your team
+  * Toki stores this information for daily / weekly reflection
+  * You can `/end` at any point, which turns off your DND
+  ![Focused Session](build/public/images/focus_example.png)
 
 #### Start Work Session
   * Choose tasks to work on
