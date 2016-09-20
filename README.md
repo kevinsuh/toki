@@ -11,11 +11,10 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 
 - [Main Features](#main-features)
 - [Technology Stack](#technology-stack)
-- [Config](#config)
 - [Directory Structure](#directory-structure)
 - [Running on Development](#running-development)
 - [Running on Production](#running-production)
-- [Eventual Features](#eventual-features)
+- [Product Roadmap](#product-roadmap)
 - [Authors](#authors)
 
 
@@ -125,7 +124,7 @@ Toki makes use of compilers for ES6 ([Babel](https://babeljs.io/)) and SCSS ([no
 ## Running on Production
 To run our production server, Toki uses [pm2](https://github.com/Unitech/pm2), a production process manager for Node.js applications.
 
-Toki use our NPM script `npm run prepare-production` to run a sequelize migrate and reset of our pm2 server. There may be occasions where you want to `npm update` on remote too, if one of our primary libraries goes through a massive update (this will happen to botkit, wit, botkit-kit-middleware, etc.).  **_Note: currently this repo uses my forked version of botkit-middleware-witai for custom configuration_**
+Toki use our NPM script `npm run prepare-production` to run a sequelize migrate and reset of our pm2 server. There may be occasions where you want to `npm update` on remote too, if one of our primary libraries goes through a massive update (this will happen to botkit, wit, botkit-kit-middleware, etc.).  *Note: currently this repo uses Toki's forked version of botkit-middleware-witai for custom configuration*
 
 Notes:
 * both development and production use environment variables
@@ -134,7 +133,7 @@ Notes:
 * Development environment triggers dev_toki and local postgres DB
 * Production server holds some env variables through SHELL, and some through .env file. DB_HOST is absolutely necessary to be updated on shell
 
-<a name="eventual-features"/>
+<a name="product-roadmap"/>
 ## Product Roadmap
 Our ideas for the product roadmap are held in our [public trello board](https://trello.com/b/AYIEVUsN/product-development-roadmap). We'd love to hear suggestions, and work together towards a better future!
 
