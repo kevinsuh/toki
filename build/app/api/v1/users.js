@@ -52,7 +52,7 @@ router.get('/:id', function (req, res) {
 router.put('/:id', function (req, res) {});
 
 // delete
-router.delete('/:id', function (req, res) {});;
+router.delete('/:id', function (req, res) {});
 
 exports.default = router;
 //# sourceMappingURL=users.js.map

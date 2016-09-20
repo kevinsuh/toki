@@ -33,6 +33,6 @@ router.put('/:id', (req, res) => {
 
 // delete
 router.delete('/:id', (req, res) => {
-});;
+});
 
 export default router;

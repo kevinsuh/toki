@@ -11,10 +11,8 @@ import models from '../models';
 import Slack from '../lib/slack';
 
 // react!
-// import React from 'react';
-// import ReactApp from '../client/components';
-
-// let ReactAppFactory = React.createFactory(ReactApp);
+import React from 'react';
+import ReactApp from '../client/components';
 
 
 export default (app) => {
@@ -28,11 +26,14 @@ export default (app) => {
 			process.env.SLACK_SECRET = process.env.DEV_SLACK_SECRET;
 		}
 
-		// let reactHtml = React.renderToString(ReactAppFactory({}));
+		let reactHtml = React.renderToString(ReactApp({}));
+		console.log(`\n\n hello world!?!?\n\n`);
+		console.log(reactHtml);
 
 		let variables = {
 			...req.query,
-			env
+			env,
+			reactOutput: "hi"
 		}
 
 		res.render('pages/index', variables);
