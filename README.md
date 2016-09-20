@@ -30,9 +30,9 @@ Toki is written in Javascript and uses the excellent [Botkit](https://github.com
 
 #### View your team's pulse
 <img src="/build/public/images/pulse_example.png" width="50%" alt="Team Pulse">
-  * Toki will update the channels that it is a part of when one of its channel members enters a focus session
-  * This allows you to create information channels (i.e. `#pulse-backend`) to view what teammates are up to
-  * You are able to send notifications through, where Toki temporary turns off the user's DND, starts a conversation, then turns back on the DND
+  * Toki will dynamically update its channels whenever one of the channel members enters a focus session
+  * This allows you to create information channels (i.e. `#pulse-backend`) and get a snapshot of what teammates are focused on
+  * You are able to send notifications through each teammate's `Collaborate Now` button, where Toki temporary turns off the user's DND, starts a conversation, then turns back on the DND
   * See what an individual is up to with `/pulse @user`
 
 #### Daily Reflection
