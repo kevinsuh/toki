@@ -21,29 +21,25 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 
 <a name="main-features"/>
 # Main Features
-#### Focus sessions (`/focus [task] for [time]`)
+#### Focus sessions
+![Focused Session](build/public/images/focus_example.png)
+  * `/focus [task] for [time]`
   * Turns on your DND in Slack while in "focus" mode
   * Shares what you are working on to your team
   * Toki stores this information for daily / weekly reflection
-  * You can `/end` at any point, which turns off your DND
-  ![Focused Session](build/public/images/focus_example.png)
+  * You can end your session at any point, which turns off your DND (via interactive button, or `/end`)
 
-#### Start Work Session
-  * Choose tasks to work on
-  * Get time estimate
-  * Checkin or start through buttons
+#### View your team's pulse
+![Team Pulse](build/public/images/pulse_example.png)
+  * Toki will update the channels that it is a part of when one of its channel members enters a focus session
+  * This allows you to create information channels (i.e. `#pulse-backend`) to view what teammates are up to
+  * You are able to send notifications through, where Toki temporary turns off the user's DND, starts a conversation, then turns back on the DND
+  * See what an individual is up to with `/pulse @user`
 
-#### End Work Session
-  * Cross out finished tasks
-  * Take a break
-
-#### View/edit tasks
-  * Add tasks and prioritize
-  * Finish ("cross out") tasks
-
-#### End your day
-  * Calculate total minutes worked with Toki
-  * Add reflection note to be stored for future use
+#### Daily Reflection
+![Daily Reflection](build/public/images/reflection_example.png)
+  * Toki provides you with a daily cadence of how you spent your time
+  * This helps build a habit of intentionality with your time, and build pictures of what you got done each day and week
 
 <a name="technology-stack"/>
 # Technology Stack
@@ -53,7 +49,6 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 * PostgreSQL
 * Node.js
 * ExpressJS
-* React-Redux
 * HTML / SCSS / jQuery
 
 #### Slack Bot
@@ -68,100 +63,80 @@ Toki is written in Javascript and uses the excellent [botkit](https://github.com
 * Moment-Timezone
 * EmbeddedJS
 
-<a name="config"/>
-# Config
-`config.json` holds DB config settings
-Our production DB settings is held in `~/.bash_profile` which you can access through the alias `update-env`. Sequelize uses this when `NODE_ENV` is set to `production`
-
 <a name="directory-structure">
 # Directory Structure
-Since Toki uses a precompiler for both our ES6 and SCSS, we have one directory for our source code `/src`, and one directory for our deployment code `/build`.
+Since Toki uses a compiler for both ES6 and SCSS, we have one directory for our source code `/src`, and one directory for our deployment `/build`.
 
-Code that does not need to be precompiled is held outside of the `/build` and `/src` directories and and is held at the root-level of our project. Currently, outside of our various config files, that only includes our `EJS views`.
+Code that does not need to be compiled is held outside of the `/build` and `/src` directories and and at the root-level of our project. Currently, outside of our various config files, that only includes our `/views`.
 
-Since the `/build` directory is a simple transpiling of our `/src` directory, the structure within each _should be_ the exact same. 
+Since the `/build` directory is a compiled version of our `/src` directory, the structure within each _should be_ the exact same. The one exception to this is `/build/public`, which is where our assets are held. They are held here because we are using the `/build` directory for deployment
 
-**The following is the structure of the `/build` directory** _(excluding files in nested directories)_:
+**The following is the structure of the `/build` directory** _(excluding end files in nested directories)_:
 ```
 build/
-├── app/
+├── app/                                // Express web server
 │   ├── api/
-│   │   ├── v1/
-│   ├── migrations/
-│   ├── models/
-│   ├── router/
+│   │   ├── v1/                         // RESTful API endpoints
+│   ├── migrations/                     // Sequelize DB migrations
+│   ├── models/                         // Sequelize Models
+│   ├── router/                         // Express routes
 │   │   │   ├── routes/
-│   ├── cron.js/
-│   ├── scripts.js/
-├── bot/
-│   ├── actions/
-│   │   ├── initiation/
-│   ├── controllers/
+│   ├── cron.js/                        // Cron job functions
+│   ├── scripts.js/                     // One-off scripts
+|   ├── globalHelpers.js/               // App-wide helpers (i.e. prototype methods)
+├── bot/                                // Slackbot
+│   ├── actions/                        // Proactive actions
+│   ├── controllers/                    // Botkit controllers to handle Slack events and conversations
 │   │   │   ├── buttons/
-│   │   │   ├── days/
+│   │   │   ├── dashboard/
 │   │   │   ├── misc/
-│   │   │   ├── reminders/
-│   │   │   ├── tasks/
-│   │   │   ├── work_sessions/
-│   ├── lib/
-│   ├── middleware/
-├── dev_slackbot.js/
-├── server.js/
+│   │   │   ├── notWit/
+│   │   │   ├── pings/
+│   │   │   ├── sessions/
+│   │   │   ├── slash/
+│   ├── lib/                            // Slackbot helpers
+│   ├── middleware/                     // Botkit middleware functions
+├── public/                             // Assets
+│   ├── css/
+│   ├── gifs/
+│   ├── images/
+│   ├── js/
+├── server.js/                          // Our starting point
 ```
 
 **Notes:**
-* There are two main sub-directores: `app` and `bot`. The `app` directory is for our web server. The `bot` directory is for Toki's existence in slack.
-  * `app` holds our web page routes, the models that link up to our DB, our DB migrations, and our API calls
+* There are two main sub-directores: `app` and `bot`. The `app` directory is for our Express web server. The `bot` directory is for Toki's existence in slack.
+  * `app` holds our Express web server, including routes, models that link up to our DB tables, and our API calls
   * `bot` holds the functionality needed for our conversation in slack
-    * `controllers` are used to take user input and respond appropriately, and to engage users in appropriate contexts
+    * `controllers` are used to respond to user events, and engage them in conversation
     * `actions` are when we proactively reach out, such as when user first signs in with our slack button
     * `lib` holds various helper functions
-* `cron.js` is used for our reminders and work_sessions functionality. It runs a script that checks our DB every 5 seconds.
+* `cron.js` is used for our focus sessions and daily reflections. It holds various functions that get run every 5 seconds (configured in `server.js`)
 * `server.js` is where our ExpressJS app is created, and where our various bots are turned on to listen to [Slack RTM](https://api.slack.com/rtm)
 
 
 <a name="running-development"/>
 ## Running on Development
-Toki makes use of precompilers for ES6 and SCSS code to be translated into ES5 and CSS, respectively. The packages `node-sass` and `babel-present-es2015` are used for this. **_since node-sass and babel both only watch for saves, if you delete files you must delete from both directories_**
+Toki makes use of compilers for ES6 ([Babel](https://babeljs.io/)) and SCSS ([node-sass](https://github.com/sass/node-sass)) to be translated into ES5 and CSS, respectively.
 
-`npm run precompile` is an NPM script that runs babel, node-sass, and sequelize db:migrate to convert changes. **_Make sure all mapping and migration is done successfully before pushing to github_**
-
-**Common commands:**
-```
-npm run precompile
-git push origin master
-```
-The `master` branch is used to as the single source for production-ready code. **Commit to `master` with extreme caution**.
-
-For additional features create a branch `feature-*`, and for hotfixes create a branch `hotfix-*`. These should always be tested thoroughly before submitting a pull request into master.
+`npm run compile` is an NPM script that runs babel, node-sass, and sequelize db:migrate to convert changes.
 
 <a name="running-production"/>
 ## Running on Production
-To run our production server, Toki uses [pm2](https://github.com/Unitech/pm2), which is a production process manager for Node.js applications.
+To run our production server, Toki uses [pm2](https://github.com/Unitech/pm2), a production process manager for Node.js applications.
 
-We can use the NPM script `npm run prepare-production` to run a sequelize migrate and reset of our pm2 server. There may be occasions where you want to `npm update` on remote too, if one of our primary libraries goes through a massive update (will happen to botkit, wit, botkit-kit-middleware, etc.).
-
-**Common commands:**
-```
-git pull origin master
-npm run prepare-production
-```
+Toki use our NPM script `npm run prepare-production` to run a sequelize migrate and reset of our pm2 server. There may be occasions where you want to `npm update` on remote too, if one of our primary libraries goes through a massive update (this will happen to botkit, wit, botkit-kit-middleware, etc.).  **_Note: currently this repo uses my forked version of botkit-middleware-witai for custom configuration_**
 
 Notes:
-* both development and production have environment variables
+* both development and production use environment variables
 * dev_toki is used for development purposes
 * dotenv picks up whether there is `NODE_ENV`. If no `NODE_ENV`, will default to `development`
 * Development environment triggers dev_toki and local postgres DB
 * Production server holds some env variables through SHELL, and some through .env file. DB_HOST is absolutely necessary to be updated on shell
 
 <a name="eventual-features"/>
-## Eventual Features
-Features are held in our [internal trello board](https://trello.com/b/AYIEVUsN/product-development-roadmap) under the list **Feature Requests (Confirmed)**. These features are prioritized in a queue. Some larger buckets:
-- [ ] Splash page with signup ability
-- [ ] Add button flow to all parts of flow, ex. starting day
-- [ ] Revamp end-day flow
-- [ ] Google cal integration
-- [ ] Personal analytics on our web app
+## Product Roadmap
+Our ideas for the product roadmap are held in our [public trello board](https://trello.com/b/AYIEVUsN/product-development-roadmap). We'd love to hear suggestions, and work together towards a better future!
 
 <a name="authors"/>
 ## Authors

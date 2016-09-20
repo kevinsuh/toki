@@ -9,7 +9,7 @@
     "watch-babel": "babel -w src/ -d build/ -s",
     "build-css": "node-sass src/app/scss/ -d -o build/public/css",
     "watch-css": "node-sass -w src/app/scss/ -d -o build/public/css/",
-    "precompile": "babel src/ -d build -s && node-sass src/app/scss/ -d -o build/public/css && sequelize db:migrate",
+    "compile": "babel src/ -d build -s && node-sass src/app/scss/ -d -o build/public/css && sequelize db:migrate",
     "prepare-production": "sequelize db:migrate --env=production && pm2 stop server && pm2 start server",
     "start": "node ./build/server.js"
   },
