@@ -73,19 +73,19 @@ Since Toki uses a compiler for both ES6 ([Babel](https://babeljs.io/)) and SCSS 
 **This is the overall structure of Toki**:
 ```
 build/
-├── app/                                  // Express web server
-│   ├── api/                              // RESTful API endpoints
-│   ├── migrations/                       // Sequelize DB migrations
-│   ├── models/                           // Sequelize Models
-│   ├── router/                           // Express routes
-│   ├── cron.js/                          // Cron job functions
-├── bot/                                  // Slackbot
-│   ├── actions/                          // Proactive actions
-│   ├── controllers/                      // Botkit controllers to handle Slack events and conversations
-│   ├── lib/                              // Slackbot helpers
-│   ├── middleware/                       // Botkit middleware functions
-├── public/                               // Static assets
-├── server.js/                            // Our starting point
+├── app/
+│   ├── api/                                  // RESTful API endpoints
+│   ├── migrations/                           // Sequelize DB migrations
+│   ├── models/                               // Sequelize Models
+│   ├── router/                               // Express routes
+│   ├── cron.js/                              // Cron job functions
+├── bot/
+│   ├── actions/                              // Proactive actions
+│   ├── controllers/                          //  Botkit controllers to handle Slack events and conversations
+│   ├── lib/                                  // Slackbot helpers
+│   ├── middleware/                           // Botkit middleware functions
+├── public/                                   // Static assets
+├── server.js/                                // App starting point
 ```
 
 **Notes:**
