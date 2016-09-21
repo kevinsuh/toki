@@ -22,7 +22,7 @@ Toki is written in Javascript and uses the excellent [Botkit](https://github.com
 <a name="main-features"/>
 # Main Features
 ### Focus sessions
-<img src="/build/public/images/focus_example.png" width="60%" alt="Focus sessions">
+<img src="/build/public/gifs/focus.gif" width="60%" alt="Focus sessions">
   * `/focus [task] for [time]`
   * Turns on your DND in Slack while in "focus" mode
   * Shares what you are working on to your team
@@ -30,7 +30,7 @@ Toki is written in Javascript and uses the excellent [Botkit](https://github.com
   * You can end your session at any point, which turns off your DND (via interactive button, or `/end`)
 
 ### View your team's pulse
-<img src="/build/public/images/pulse_example.png" width="60%" alt="Team Pulse">
+<img src="/build/public/gifs/dashboard.gif" width="60%" alt="Team Pulse">
   * Toki will dynamically update its channels whenever one of the channel members enters a focus session
   * This allows you to create information channels (i.e. `#pulse-backend`) and get a snapshot of what teams are focused on
   * You are able to send notifications through each teammate's `Collaborate Now` button, where Toki sends a ping through to the focusing user and starts a conversation
