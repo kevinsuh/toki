@@ -84,7 +84,7 @@ build/
 # Getting Started
 First, fork the repository and install node dependencies by navigating to the root of your local repository and running `npm install`.
 
-**By default, Toki comes with configuration for a development bot and a production bot.** This allows you to continue developing and testing new functionalities while your bot is live and on others' teams. So you will have to create two separate Slack apps and do basic configuration for each. Here are the steps:
+**By default, Toki comes with configuration for a development bot and a production bot** so that you can continue developing your bot and test new functionalities while it is live and on others' teams. This means you will have to create two separate Slack apps and do basic configuration for each. Here are the steps:
 
 1. Create your [two slack apps](https://api.slack.com/slack-apps) (one for development and one for production)
 2. Set up your environment variables. You can modify and rename the provided .env-example file:
@@ -141,9 +141,8 @@ For production, Toki uses Digital Ocean and [pm2](https://github.com/Unitech/pm2
 
 **Notes:**
 * Toki comes with a production bot and development bot by default
-  * dev_toki is used for development purposes
   * Development environment triggers dev_toki and local postgres DB
-* dotenv picks up whether there is `NODE_ENV` environment variable. If no `NODE_ENV`, will default to `development`. Please specify `NODE_ENV=production` on your prodution server
+  * Production environment is identified via environment variable `NODE_ENV=production`. Otherwise, it's assumed you are in development. Specify `NODE_ENV=production` on your prodution server
 * This project uses a forked version of botkit-middleware-witai for custom configuration
 * Production server holds some env variables through shell, and some through .env file. DB_HOST is necessary to be updated on shell
 
