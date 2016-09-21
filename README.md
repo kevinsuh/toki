@@ -47,19 +47,19 @@ Toki is written in Javascript and uses the excellent [Botkit](https://github.com
 # Directory Structure
 ```
 build/
-├── app/                                   // Web server
+├── app/                                 // Web server
 │   ├── api/                                  // RESTful API endpoints
 │   ├── migrations/                           // Sequelize DB migrations
 │   ├── models/                               // Sequelize Models
 │   ├── router/                               // Express routes
 │   ├── cron.js/                              // Cron job functions
-├── bot/                                   // Slackbot
+├── bot/                                 // Slackbot
 │   ├── actions/                              // Bot initiates conversation
 │   ├── controllers/                          // Botkit controllers to handle Slack events and conversations
 │   ├── lib/                                  // Slackbot helpers
 │   ├── middleware/                           // Botkit middleware functions
-├── public/                                // Static assets
-├── server.js/                             // App starting point
+├── public/                              // Static assets
+├── server.js/                           // App starting point
 ```
 
 **Notes:**
