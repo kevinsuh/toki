@@ -97,11 +97,11 @@ VERIFICATION_TOKEN=1kKzBPfFPOujZiFajN9uRGFe
 WIT_TOKEN=yourwittoken
 HTTP_PORT=8080
 ```
-  * Make sure to put `NODE_ENV=production` as an environment variable on your production server. This allows Toki to know whether to start up the production bot or the development bot
 3. Get your apps' verification tokens for [Slash commands](https://api.slack.com/slash-commands)
 4. Create a [Wit.api](https://wit.ai/getting-started) app and set your wit token
   * Wit token is located in settings of your Wit app under `Server Access Token`
 5. Decide deployment strategy
+  * Make sure to put `NODE_ENV=production` as an environment variable on your production server. This allows Toki to know whether to start up the production bot or the development bot
   * We used Digital Ocean for deployment
     * Configure environment variables while SSH'd into the server. This is done by creating this same .env file on the server, but you must also configure DB_HOST in shell to connect to your prodution postgres DB
   * For Heroku, you can use the Heroku dashboard to add these environment variables
