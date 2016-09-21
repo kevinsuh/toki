@@ -97,7 +97,7 @@ VERIFICATION_TOKEN=1kKzBPfFPOujZiFajN9uRGFe
 WIT_TOKEN=yourwittoken
 HTTP_PORT=8080
 ```
-  * Make sure to put `NODE_ENV=production` as an environment variable on your production server. This allows Toki to know whether to start up the production bot or the development bot
+* Make sure to put `NODE_ENV=production` as an environment variable on your production server. This allows Toki to know whether to start up the production bot or the development bot
 3. Get your apps' verification tokens for [Slash commands](https://api.slack.com/slash-commands)
 4. Create a [Wit.api](https://wit.ai/getting-started) app and set your wit token
   * Wit token is located in settings of your Wit app under `Server Access Token`
