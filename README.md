@@ -83,25 +83,24 @@ By default, Toki comes with configuration for a development bot and a production
 
 1. Create your [two slack apps](https://api.slack.com/slack-apps)
 2. Set up your environment variables. You can modify and rename the provided .env-example file:
-```
-SLACK_ID=your.productionSlackId
-SLACK_SECRET=yourProductionSlackSecret
-SLACK_REDIRECT=https://yourproduction.site
+  ```
+  SLACK_ID=your.productionSlackId
+  SLACK_SECRET=yourProductionSlackSecret
+  SLACK_REDIRECT=https://yourproduction.site
 
-DEV_SLACK_ID=your.developmentSlackId
-DEV_SLACK_SECRET=yourDevelopmentSlackSecret
-DEV_SLACK_REDIRECT=http://localhost:8080/
+  DEV_SLACK_ID=your.developmentSlackId
+  DEV_SLACK_SECRET=yourDevelopmentSlackSecret
+  DEV_SLACK_REDIRECT=http://localhost:8080/
 
-VERIFICATION_TOKEN=1kKzBPfFPOujZiFajN9uRGFe
+  VERIFICATION_TOKEN=1kKzBPfFPOujZiFajN9uRGFe
 
-WIT_TOKEN=yourwittoken
-HTTP_PORT=8080
-```
+  WIT_TOKEN=yourwittoken
+  HTTP_PORT=8080
+  ```
 3. Get your apps' verification tokens for [Slash commands](https://api.slack.com/slash-commands)
 4. Create a [Wit.api](https://wit.ai/getting-started) app and set your wit token
   * Wit token is located in settings of your Wit app under `Server Access Token`
 5. Decide deployment strategy
-  * Make sure to put `NODE_ENV=production` as an environment variable on your production server. This allows Toki to know whether to start up the production bot or the development bot
   * We used Digital Ocean for deployment
     * Configure environment variables while SSH'd into the server. This is done by creating this same .env file on the server, but you must also configure DB_HOST in shell to connect to your prodution postgres DB
   * For Heroku, you can use the Heroku dashboard to add these environment variables
