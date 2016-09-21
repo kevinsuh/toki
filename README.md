@@ -47,19 +47,19 @@ Toki is written in Javascript and uses the excellent [Botkit](https://github.com
 # Directory Structure
 ```
 build/
-├── app/
+├── app/                                   // Web server
 │   ├── api/                                  // RESTful API endpoints
 │   ├── migrations/                           // Sequelize DB migrations
 │   ├── models/                               // Sequelize Models
 │   ├── router/                               // Express routes
 │   ├── cron.js/                              // Cron job functions
-├── bot/
-│   ├── actions/                              // Proactive actions
+├── bot/                                   // Slackbot
+│   ├── actions/                              // Bot initiates conversation
 │   ├── controllers/                          // Botkit controllers to handle Slack events and conversations
 │   ├── lib/                                  // Slackbot helpers
 │   ├── middleware/                           // Botkit middleware functions
-├── public/                                   // Static assets
-├── server.js/                                // App starting point
+├── public/                                // Static assets
+├── server.js/                             // App starting point
 ```
 
 **Notes:**
@@ -126,9 +126,9 @@ Toki is built on top of the [Botkit](https://github.com/howdyai/botkit) framewor
 
 <a name="development"/>
 ## Development
-As mentioned above, Toki comes with a production bot and a development bot by default. You can name your development bot whatever you want. Our production bot is named `toki` and our development bot is named `dev_toki`.
+As mentioned above, Toki comes with a production bot and a development bot by default. You can name your development bot whatever you want. For reference, our production bot is named `toki` and our development bot is named `dev_toki`.
 
-Actual development is done in `/src` directory, and its changes are compiled into a mirror directory in the `/build` directory for deployment. Toki comes with the scripts `npm run watch-css` and `npm run watch-babel` to run in the background and compile a file from `/src` to `build` everytime you save changes. This allows us to use ES6 and SCSS while developing.
+Actual development is done inside the `/src` directory, and its changes are compiled into the `/build` directory for deployment. Toki comes with the scripts `npm run watch-css` and `npm run watch-babel` to run in the background and compile a file from `/src` into its mirror location in `/build` each time you save a change. This allows us to use ES6 and SCSS while developing.
 
 <a name="running-production"/>
 ## Running on Production
