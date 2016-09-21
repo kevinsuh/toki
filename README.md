@@ -80,6 +80,7 @@ build/
 First, fork the repository and install node dependencies by navigating to the root of your local repository and running `npm install`.
 
 By default, Toki comes with configuration for a development bot and a production bot. This allows you to continue developing and testing new functionalities while your bot is live and on others' teams. So you will have to create two separate Slack apps and do basic configuration for each. **Here are the steps**:
+
 1. Create your [two slack apps](https://api.slack.com/slack-apps)
 2. Set up your environment variables. You can modify and rename the provided .env-example file:
 ```
