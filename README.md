@@ -79,7 +79,7 @@ build/
 # Getting Started
 First, fork the repository and install node dependencies by navigating to the root of your local repository and running `npm install`.
 
-By default, Toki comes with configuration for a development bot and a production bot. This allows you to continue developing and testing new functionalities while your bot is live and on others' teams. So you will have to create two separate Slack apps and do basic configuration for each. **Here are the steps**:
+**By default, Toki comes with configuration for a development bot and a production bot.** This allows you to continue developing and testing new functionalities while your bot is live and on others' teams. So you will have to create two separate Slack apps and do basic configuration for each. Here are the steps:
 
 1. Create your [two slack apps](https://api.slack.com/slack-apps) (one for development and one for production)
 2. Set up your environment variables. You can modify and rename the provided .env-example file:
@@ -112,7 +112,7 @@ By default, Toki comes with configuration for a development bot and a production
 <a name="modules"/>
 # Modules
 
-Toki, a node.js bot built on top of the [Botkit](https://github.com/howdyai/botkit) framework, uses the following modules:
+Toki is built on top of the [Botkit](https://github.com/howdyai/botkit) framework and uses the following modules:
 * [cron](https://github.com/ncb000gt/node-cron): Allows you to run a cronjob
 * [botkit-middleware-witai](https://github.com/kevinsuh/botkit-middleware-witai): Forked version of Botkit's official middleware integration of Wit.ai
 * [ejs](https://github.com/tj/ejs): Write embedded javascript templates for your views
@@ -126,13 +126,9 @@ Toki, a node.js bot built on top of the [Botkit](https://github.com/howdyai/botk
 
 <a name="development"/>
 ## Development
-**Toki comes with a production bot and a development bot by default.** This allows you to add and test new functionalities through Slack's interface even while your production bot is live and on others' teams. The name of the development bot is dev_toki.
+As mentioned above, Toki comes with a production bot and a development bot by default. You can name your development bot whatever you want. Our production bot is named `toki` and our development bot is named `dev_toki`.
 
-Development is done in `/src` directory, and its changes are compiled into a mirror directory in the `/build` directory for deployment. This allows us to use ES6 and SCSS while developing.
-
-**Notes:**
-* Toki comes with the scripts `npm run watch-css` and `npm run watch-babel` to run in the background and compile a file from `/src` to `build` everytime you save changes
-* `npm run compile` is an NPM script that runs babel, node-sass, and sequelize db:migrate to update changes
+Actual development is done in `/src` directory, and its changes are compiled into a mirror directory in the `/build` directory for deployment. Toki comes with the scripts `npm run watch-css` and `npm run watch-babel` to run in the background and compile a file from `/src` to `build` everytime you save changes. This allows us to use ES6 and SCSS while developing.
 
 <a name="running-production"/>
 ## Running on Production
