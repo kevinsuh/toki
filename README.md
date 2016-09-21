@@ -124,7 +124,7 @@ Our ideas for the product roadmap are held in our [public Trello board](https://
 
 <a name="authors"/>
 ## Authors
-[Kevin Suh](https://github.com/kevinsuh) ([@kevinsuh34](https://twitter.com/kevinsuh34)) is the primary developer for Toki. Additional help from [Chip Koziara](https://github.com/chipkoziara) ([@chipkoziara](https://twitter.com/chipkoziara). For inquiries, reach out at [kevinsuh34@gmail.com](https://mail.google.com/a/?view=cm&fs=1&to=kevinsuh34@gmail.com). For issues related specifically to Toki's codebase, please post on our [issues](https://github.com/kevinsuh/toki/issues) page.
+[Kevin Suh](https://github.com/kevinsuh) ([@kevinsuh34](https://twitter.com/kevinsuh34)) is the primary developer for Toki. Additional development from [Chip Koziara](https://github.com/chipkoziara) ([@chipkoziara](https://twitter.com/chipkoziara)). For inquiries, reach out at [kevinsuh34@gmail.com](https://mail.google.com/a/?view=cm&fs=1&to=kevinsuh34@gmail.com). For issues related specifically to Toki's codebase, please post on our [issues](https://github.com/kevinsuh/toki/issues) page.
 
 
 
