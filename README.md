@@ -55,7 +55,7 @@ build/
 │   ├── cron.js/                              // Cron job functions
 ├── bot/
 │   ├── actions/                              // Proactive actions
-│   ├── controllers/                          //  Botkit controllers to handle Slack events and conversations
+│   ├── controllers/                          // Botkit controllers to handle Slack events and conversations
 │   ├── lib/                                  // Slackbot helpers
 │   ├── middleware/                           // Botkit middleware functions
 ├── public/                                   // Static assets
