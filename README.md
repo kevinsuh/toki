@@ -81,7 +81,7 @@ First, fork the repository and install node dependencies by navigating to the ro
 
 By default, Toki comes with configuration for a development bot and a production bot. This allows you to continue developing and testing new functionalities while your bot is live and on others' teams. So you will have to create two separate Slack apps and do basic configuration for each. **Here are the steps**:
 
-1. Create your [two slack apps](https://api.slack.com/slack-apps)
+1. Create your [two slack apps](https://api.slack.com/slack-apps) (one for development and one for production)
 2. Set up your environment variables. You can modify and rename the provided .env-example file:
   ```
   SLACK_ID=your.productionSlackId
@@ -97,6 +97,7 @@ By default, Toki comes with configuration for a development bot and a production
   WIT_TOKEN=yourwittoken
   HTTP_PORT=8080
   ```
+  *Make sure to put* `NODE_ENV=production` *as an environment variable on your production server. This allows Toki to know whether to start up the production bot or the development bot*
 3. Get your apps' verification tokens for [Slash commands](https://api.slack.com/slash-commands)
 4. Create a [Wit.api](https://wit.ai/getting-started) app and set your wit token
   * Wit token is located in settings of your Wit app under `Server Access Token`
