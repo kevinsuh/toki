@@ -84,7 +84,9 @@ build/
 
 <a name="getting-started">
 # Getting Started
-First, fork the repository and install node dependencies by navigating to the root of your local repository and running `npm install`.
+If you are looking for a barebones foundation to build a Slack bot app with Botkit and Express, check out this excellent [tutorial](https://github.com/mvaragnat/botkit-express-demo). 
+
+To get started with Toki, first fork the repository and install node dependencies by navigating to the root of your local repository and running `npm install`.
 
 **By default, Toki comes with configuration for a development bot and a production bot** so that you can continue developing your bot and test new functionalities while it is live and on others' teams. This means you will have to create two separate Slack apps and do basic configuration for each. Here are the steps:
 
