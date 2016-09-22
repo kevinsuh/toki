@@ -1,6 +1,6 @@
 # [Toki](https://tokibot.com): attention management for teams
 
-**Toki is an attention management slackbot for teams.** Its goal is to enable focused work for individuals, while maintaining the awesome benefits of Slack (collaboration, transparency and fun).
+**Toki is a slackbot that brings focused work to collaborative teams.** Its goal is to enable focused work for individuals, while maintaining the awesome benefits of Slack (collaboration, transparency and fun).
 
 We have noticed a growing problem: our daily attention can't grow at the exponential rate of technology. The resulting information overload and context switching drains the 4 to 6 hours of daily attention that we have per day. We believe this must be solved in order for technology to truly be leveraged for our productivity.
 
