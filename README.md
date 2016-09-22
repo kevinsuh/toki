@@ -39,14 +39,16 @@ Toki is written in Javascript and uses the excellent [Botkit](https://github.com
 <img src="/build/public/gifs/collaborate.gif" height="250px" alt="Collaborate Now">
   * You are able to send notifications through each teammate's `Collaborate Now` button, through which Toki temporarily turns off the user's DND and sends a ping to start a conversation
   * This helps segment notifications to only be ones that preserve an individual's context or is actually urgent
-  * You are also able to `Collaborate Now` when you see what an individual's specific `/pulse @user`
+  * You are also able to `Collaborate Now` when you see an individual's specific `/pulse @user`
 
 ### Daily Reflection
 <img src="/build/public/images/reflection_example.png" height="250px" alt="Daily Reflection">
   * Toki provides you with a daily cadence of how you spent your time
   * This helps build a habit of intentionality with your time, and see pictures of what you got done each day and week
 
-*Note: Toki has a web-app interface in its product roadmap and currently comes with the foundation for one using Express and EJS. There is no front-end framework (React or Angular) configured yet, but one would be installed in the* `/app` *directory, which also holds an* `/api` *folder for RESTful calls.*
+*Note: Toki has a web interface in its roadmap and currently comes with the foundation for one through Express and EJS. There is no front-end framework configured yet, but one would be installed in the* `/app` *directory, which also holds an* `/api` *folder for RESTful calls.*
+
+*In the future, we would separate into two node apps (one for the slackbot and one for the web app).*
 
 <a name="directory-structure">
 # Directory Structure
@@ -78,7 +80,7 @@ build/
   * Code that does need to be compiled is held at the root-level of our project. Currently, this only includes config files and our `/views` directory
     * Our static assets are held in `/build/public`
 * `cron.js` is used for our focus sessions and daily reflections. It holds various functions that get run every 5 seconds (configured in `server.js`)
-* `server.js` is where our ExpressJS app is created, and where Toki's installed bots are turned on to listen to [Slack RTM](https://api.slack.com/rtm)
+* `server.js` is where our ExpressJS app is created, and where Toki's installed bots are turned on to listen via [Slack RTM](https://api.slack.com/rtm)
 
 <a name="getting-started">
 # Getting Started
@@ -133,7 +135,9 @@ Toki is built on top of the [Botkit](https://github.com/howdyai/botkit) framewor
 ## Development
 As mentioned above, Toki comes with a production bot and a development bot by default. You can name your development bot whatever you want. For reference, our production bot is named `toki` and our development bot is named `dev_toki`.
 
-Actual development is done inside the `/src` directory, and its changes are compiled into the `/build` directory for deployment. Toki comes with the scripts `npm run watch-css` and `npm run watch-babel` to run in the background and compile a file from `/src` into its mirror location in `/build` each time you save a change. This allows us to use ES6 and SCSS while developing.
+Actual development is done inside the `/src` directory, and its changes are compiled into the `/build` directory via [babel](https://github.com/babel/babel) and [node-sass](https://github.com/sass/node-sass) for deployment. This allows us to use ES6 and SCSS while developing.
+
+Toki comes with the scripts `npm run watch-css` and `npm run watch-babel` to run in the background and compile a file from `/src` into its mirror location in `/build` each time you save a change.
 
 <a name="running-production"/>
 ## Running on Production
