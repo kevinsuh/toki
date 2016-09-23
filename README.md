@@ -6,8 +6,7 @@ We have noticed a growing problem: our daily attention can't grow at the exponen
 
 Toki enables individuals to focus on a specific task by sharing to their team what they're working on, while automatically turning on Do-Not-Disturb (DND) in Slack. Toki will store this information and provide you with daily reflections of how you spent your time.
 
-Toki is written in Javascript and uses the excellent [Botkit](https://github.com/howdyai/botkit) and [Wit](https://wit.ai) libraries.
-
+Toki is written in Javascript and uses the excellent [Botkit](https://github.com/howdyai/botkit) and [Wit](https://wit.ai) libraries. The Botkit + Express integration is inspired from this [tutorial](https://github.com/mvaragnat/botkit-express-demo). If you are looking for a foundation to build a Slack bot app with Botkit and Express, check it out.
 
 - [Main Features](#main-features)
 - [Directory Structure](#directory-structure)
@@ -22,7 +21,7 @@ Toki is written in Javascript and uses the excellent [Botkit](https://github.com
 <a name="main-features"/>
 # Main Features
 ### Focus sessions
-<img src="/build/public/gifs/focus.gif" height="250px" alt="Focus sessions">
+<img src="/build/public/gifs/focus.gif" style="max-height:250px" alt="Focus sessions">
   * `/focus [task] for [time]`
   * Turns on your DND in Slack while in "focus" mode
   * Shares what you are working on to your team
@@ -30,19 +29,19 @@ Toki is written in Javascript and uses the excellent [Botkit](https://github.com
   * You can end your session at any point, which turns off your DND (via interactive button, or `/end`)
 
 ### View your team's pulse
-<img src="/build/public/gifs/dashboard.gif" height="250px" alt="Team Pulse">
+<img src="/build/public/gifs/dashboard.gif" style="max-height:250px" alt="Team Pulse">
   * Toki will dynamically update its channels whenever one of the channel members enters a focus session
   * This allows you to create information channels (i.e. `#pulse-backend`) and get a snapshot of what teams are focused on
   * See what an individual is up to with `/pulse @user`
 
 ### Send appropriate notifications
-<img src="/build/public/gifs/collaborate.gif" height="250px" alt="Collaborate Now">
+<img src="/build/public/gifs/collaborate.gif" style="max-height:250px" alt="Collaborate Now">
   * You are able to send notifications through each teammate's `Collaborate Now` button, through which Toki temporarily turns off the user's DND and sends a ping to start a conversation
   * This helps segment notifications to only be ones that preserve an individual's context or is actually urgent
   * You are also able to `Collaborate Now` when you see an individual's specific `/pulse @user`
 
 ### Daily Reflection
-<img src="/build/public/images/reflection_example.png" height="250px" alt="Daily Reflection">
+<img src="/build/public/images/reflection_example.png" style="max-height:250px" alt="Daily Reflection">
   * Toki provides you with a daily cadence of how you spent your time
   * This helps build a habit of intentionality with your time, and see pictures of what you got done each day and week
 
@@ -84,9 +83,7 @@ build/
 
 <a name="getting-started">
 # Getting Started
-If you are looking for a barebones foundation to build a Slack bot app with Botkit and Express, check out this excellent [tutorial](https://github.com/mvaragnat/botkit-express-demo). 
-
-To get started with Toki, first fork the repository and install node dependencies by navigating to the root of your local repository and running `npm install`.
+First, fork the repository and install node dependencies by navigating to the root of your local repository and running `npm install`.
 
 **By default, Toki comes with configuration for a development bot and a production bot** so that you can continue developing your bot and test new functionalities while it is live and on others' teams. This means you will have to create two separate Slack apps and do basic configuration for each. Here are the steps:
 
