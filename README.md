@@ -2,11 +2,11 @@
 
 **Toki is a slackbot that brings focused work to collaborative teams.** Its goal is to enable focused work for individuals, while maintaining the awesome benefits of Slack (collaboration, transparency and fun).
 
-We have noticed a growing problem: our daily attention can't grow at the exponential rate of technology. The resulting information overload and context switching drains the 4 to 6 hours of daily attention that we have per day. We believe this must be solved in order for technology to truly be leveraged for our productivity.
+The daily frequency of notifications we receive is leading to information overload and context switching that drains the 4 to 6 hours of daily attention that we have per day. We believe this must be solved in order for technology to truly be leveraged for our productivity.
 
 Toki enables individuals to focus on a specific task by sharing to their team what they're working on, while automatically turning on Do-Not-Disturb (DND) in Slack. Toki will store this information and provide you with daily reflections of how you spent your time.
 
-Toki is written in Javascript and uses the excellent [Botkit](https://github.com/howdyai/botkit) and [Wit](https://wit.ai) libraries. The Botkit + Express integration is inspired from this [tutorial](https://github.com/mvaragnat/botkit-express-demo). If you are looking for a foundation to build a Slack bot app with Botkit and Express, check it out.
+Toki is written in Javascript and uses the excellent [Botkit](https://github.com/howdyai/botkit) and [Wit](https://wit.ai) libraries. The Botkit + Express integration is inspired from this [tutorial](https://github.com/mvaragnat/botkit-express-demo). If you are looking for a foundation to build your own Slack bot app with Botkit and Express, check out that tutorial.
 
 - [Main Features](#main-features)
 - [Directory Structure](#directory-structure)
