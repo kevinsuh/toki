@@ -98,9 +98,9 @@ First, fork the repository and install node dependencies by navigating to the ro
   DEV_SLACK_SECRET=yourDevelopmentSlackSecret
   DEV_SLACK_REDIRECT=http://localhost:8080/
 
-  VERIFICATION_TOKEN=1kKzBPfFPOujZiFajN9uRGFe
+  VERIFICATION_TOKEN=yourVerificationToken
 
-  WIT_TOKEN=yourwittoken
+  WIT_TOKEN=yourWitToken
   HTTP_PORT=8080
   ```
   *Make sure to put* `NODE_ENV=production` *as an environment variable on your production server. This allows Toki to know whether to start up the production bot or the development bot*
