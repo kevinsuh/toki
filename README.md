@@ -1,8 +1,6 @@
-# [Toki](https://tokibot.com): attention management for teams
+# [Toki](https://tokibot.com): focused work for collaborative teams
 
-**Toki is a slackbot that brings focused work to collaborative teams.** Its goal is to enable focused work for individuals, while maintaining the awesome benefits of Slack (collaboration, transparency and fun).
-
-The daily frequency of notifications we receive is leading to information overload and context switching that drains the 4 to 6 hours of daily attention that we have per day. We believe this must be solved in order for technology to truly be leveraged for our productivity.
+**Toki is a slackbot that helps individuals focus at work and track their productivity.** Its goal is to empower focused work for individuals, while maintaining the awesome benefits of Slack (collaboration, transparency and fun).
 
 Toki enables individuals to focus on a specific task by sharing to their team what they're working on, while automatically turning on Do-Not-Disturb (DND) in Slack. Toki will store this information and provide you with daily reflections of how you spent your time.
 
@@ -21,7 +19,7 @@ Toki is written in Javascript and uses the excellent [Botkit](https://github.com
 <a name="main-features"/>
 # Main Features
 ### Focus sessions
-<img src="/build/public/gifs/focus.gif" height="225px" alt="Focus sessions">
+<img src="/build/public/gifs/focus.gif" width="100%" alt="Focus sessions">
   * `/focus [task] for [time]`
   * Turns on your DND in Slack while in "focus" mode
   * Shares what you are working on to your team
@@ -29,19 +27,19 @@ Toki is written in Javascript and uses the excellent [Botkit](https://github.com
   * You can end your session at any point, which turns off your DND (via interactive button, or `/end`)
 
 ### View your team's pulse
-<img src="/build/public/gifs/dashboard.gif" height="225px" alt="Team Pulse">
+<img src="/build/public/gifs/dashboard.gif" width="100%" alt="Team Pulse">
   * Toki will dynamically update its channels whenever one of the channel members enters a focus session
   * This allows you to create information channels (i.e. `#pulse-backend`) and get a snapshot of what teams are focused on
   * See what an individual is up to with `/pulse @user`
 
 ### Send appropriate notifications
-<img src="/build/public/gifs/collaborate.gif" height="225px" alt="Collaborate Now">
+<img src="/build/public/gifs/collaborate.gif" width="100%" alt="Collaborate Now">
   * You are able to send notifications through each teammate's `Collaborate Now` button, through which Toki temporarily turns off the user's DND and sends a ping to start a conversation
   * This helps segment notifications to only be ones that preserve an individual's context or is actually urgent
   * You are also able to `Collaborate Now` when you see an individual's specific `/pulse @user`
 
 ### Daily Reflection
-<img src="/build/public/images/reflection_example.png" height="225px" alt="Daily Reflection">
+<img src="/build/public/images/reflection_example.png" width="100%" alt="Daily Reflection">
   * Toki provides you with a daily cadence of how you spent your time
   * This helps build a habit of intentionality with your time, and see pictures of what you got done each day and week
 
