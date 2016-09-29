@@ -2,7 +2,7 @@
 
 **Toki is a slackbot that helps individuals focus at work and track their productivity.** Its goal is to empower focused work for individuals, while maintaining the awesome benefits of Slack (collaboration, transparency and fun).
 
-Toki enables individuals to `/focus` on a specific task by sharing to their team what they're working on and automatically turning on Do-Not-Disturb (DND) in Slack. Teammates can then see what you are focused on by checking your `/pulse`. Toki will store this information and provide you with daily reflections of how you spent your time.
+Toki enables individuals to `/focus` on a task by sharing to their team what they're working on and automatically turning on Do-Not-Disturb (DND) in Slack. Teammates can see what an individual is focused on by checking their `/pulse`. Toki will store your focused sessions and provide you with daily reflections of how you spent your time.
 
 Toki is written in Javascript and uses the excellent [Botkit](https://github.com/howdyai/botkit) and [Wit](https://wit.ai) libraries. The Botkit + Express integration is inspired from this [tutorial](https://github.com/mvaragnat/botkit-express-demo). If you are looking for a foundation to build your own Slack bot app with Botkit and Express, check out that tutorial.
 
