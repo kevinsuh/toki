@@ -81,7 +81,7 @@ export default function(controller) {
 			process.env.SLACK_REDIRECT = process.env.DEV_SLACK_REDIRECT;
 		}
 
-		const signInWithSlackLink = `https://slack.com/oauth/authorize?client_id=${process.env.SLACK_ID}&redirect_uri=${process.env.SLACK_REDIRECT}login&scope=channels:history,channels:write,dnd:write,dnd:read,im:read,im:write,im:history`;
+		const signInWithSlackLink = `https://slack.com/oauth/authorize?client_id=${process.env.SLACK_ID}&redirect_uri=${process.env.SLACK_REDIRECT}login&scope=channels:history,dnd:write,dnd:read`;
 
 		if (message) {
 			SlackUserId = message.user;
