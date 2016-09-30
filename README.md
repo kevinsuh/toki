@@ -43,9 +43,7 @@ Toki is written in Javascript and uses the excellent [Botkit](https://github.com
   * Toki provides you with a daily cadence of how you spent your time
   * This helps build a habit of intentionality with your time, and see pictures of what you got done each day and week
 
-*Note: Toki has a web interface in its roadmap and currently comes with the foundation for one through Express and EJS. There is no front-end framework configured yet, but one would be installed in the* `/app` *directory, which also holds an* `/api` *folder for RESTful calls.*
-
-*In the future, we would separate into two node apps (one for the slackbot and one for the web app).*
+*Note: Toki has a web app interface in its roadmap. This would be hosted on another server that speaks to the API end points on this express server in the `/app/api` folder.*
 
 <a name="directory-structure">
 # Directory Structure
