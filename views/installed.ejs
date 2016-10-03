@@ -44,53 +44,16 @@
 
 				<div class="cover-container">
 
-					<div class="masthead clearfix">
-						<div class="inner" >
-
-							<img src="/assets/images/splash_logo_combined.png" style="height: 55px; position: absolute; top: 30px; left: 15px;">
-
-							<ul class="nav masthead-nav">
-								<li class="active"><a href="#">Get Toki</a></li>
-								<li><a href="mailto:hey@tokibot.com">Contact</a></li>
-							</ul>
-
-						</div>
-					</div>
-
-					<% if (locals.email) { %>
-
-						<% if (locals.success == 'true') { %>
-
-							<div class="alert alert-success" style="text-shadow: none !important;">
-								Awesome! We'll contact you at <%= locals.email %> as soon as we can
-							</div>
-
-						<% } else { %>
-							<div class="alert alert-warning" style="text-shadow: none !important;">
-									Something went wrong. Try again? 
-								</div>
-						<% } %>
-
-					<% } %>
-
 					<div class="inner cover" style="position: relative;">
 
-						<h1 class="cover-heading">Deep work for collaborative teams<br>in Slack <img src="/assets/images/slack_logo.png" id="slack-logo-splash"/></h1>
 
-						<div>
+						<img src="/assets/images/big_logo.png" style="height: 75px; position: absolute; top: 0; left: 0;">
 
-							<p class="lead">Toki superpowers your <span style="font-style: italic;">Do Not Disturb</span> in Slack to help you focus at work, track your productivity, and stay in sync with your team</p>
-
-							<center>
-								
-								<div>
-									<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot,commands,channels:history,dnd:write,dnd:read'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
-								</div>
-								<a href="https://docs.google.com/presentation/d/1HwnDgSZRXf0rQrQEhnNgMOsqA8zchd08Q-N7DG-AgNs/edit#slide=id.p" target="_blank" id="how-does-it-work-link">How does it work?</a>
-									
-							</center>
-
-						</div>
+						<h1 class="cover-heading" style="line-height: 44px;">Success!</h1>
+						<h2 class="cover-heading" style="line-height: 44px;">Toki is waiting for you  in Slack!</h2>
+						<p class="lead">Check your Slack, you should have received a direct message from Toki.</p>
+						<p class="lead">Don't forget to create a #pulse-channel to /invite Toki to. He will create a dynamic dashboard of the team's focuses in that channel!</p>
+						<p class="lead">For a full list of commands and info, check <a href="https://docs.google.com/presentation/d/1HwnDgSZRXf0rQrQEhnNgMOsqA8zchd08Q-N7DG-AgNs/edit#slide=id.p" target="_blank" id="how-does-it-work-link">this</a> out</p>
 
 					</div>
 

@@ -56,7 +56,7 @@ a:hover {
 html,
 body {
   height: 100%;
-  background-color: rebeccapurple !important;
+  background-color: $toki-blue !important;
 }
 body {
   color: #fff !important;
@@ -152,7 +152,7 @@ body {
 
 .cover {
   padding: 0 20px;
-  width: 90%;
+  width: 750px;
   margin: auto;
 }
 .cover .btn-lg {
@@ -177,9 +177,15 @@ body {
 
 
 
-// .cover-heading {
-//   font-size: 5.5rem;
-// }
+.cover-heading {
+  line-height: 50px;
+  font-weight: 600;
+  margin-bottom: 30px;
+}
+
+.lead {
+  margin-bottom: 35px !important;
+}
 
 @media only screen and (min-width: 60em) {
 
@@ -212,7 +218,7 @@ body {
   .masthead,
   .mastfoot,
   .cover-container {
-    width: 800px;
+    // width: 900px;
   }
 }
 

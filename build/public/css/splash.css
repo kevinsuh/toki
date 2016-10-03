@@ -44,7 +44,7 @@ a:hover {
 html,
 body {
   height: 100%;
-  background-color: rebeccapurple !important; }
+  background-color: #25437F !important; }
 
 body {
   color: #fff !important;
@@ -127,7 +127,7 @@ body {
  */
 .cover {
   padding: 0 20px;
-  width: 90%;
+  width: 750px;
   margin: auto; }
 
 .cover .btn-lg {
@@ -145,6 +145,14 @@ body {
 /*
  * Affix and center
  */
+.cover-heading {
+  line-height: 50px;
+  font-weight: 600;
+  margin-bottom: 30px; }
+
+.lead {
+  margin-bottom: 35px !important; }
+
 @media only screen and (min-width: 60em) {
   /* Pull out the header and footer */
   .masthead {
@@ -162,9 +170,3 @@ body {
   .cover-container {
     width: 100%;
     /* Must be percentage or pixels for horizontal alignment */ } }
-
-@media (min-width: 992px) {
-  .masthead,
-  .mastfoot,
-  .cover-container {
-    width: 800px; } }

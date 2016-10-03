@@ -104,7 +104,7 @@ var registerTeam = function registerTeam(auth, res) {
 				console.log("Team:");
 				console.log(team);
 
-				res.send("Thank you! You have just registered Toki");
+				res.render('installed');
 			} catch (e) {
 				console.log(e);
 			}
