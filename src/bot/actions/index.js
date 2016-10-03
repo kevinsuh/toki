@@ -51,8 +51,7 @@ export function loginInitiateConversation(bot, identity) {
 			/**
 			 * 		INITIATE CONVERSATION WITH LOGIN
 			 */
-			convo.say(`Awesome!`);
-			convo.say(`Let's win this day now. Let me know when you want to \`/focus\``);
+			convo.say(`Awesome! Let me know when you're ready to \`/focus on [task] for [time]\``);
 
 		});
 

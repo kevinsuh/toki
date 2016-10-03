@@ -102,7 +102,7 @@ var authenticateTeam = function authenticateTeam(auth, res) {
 					(0, _helpers.startBot)(identity, "login");
 
 					// this is the message you send to user!!
-					res.send("Thank you! I'm excited to help you make the most of each day");
+					res.render('authorized');
 				} else {
 
 					res.send("Sorry! Please try again");

@@ -88,7 +88,7 @@ var authenticateTeam = (auth, res) => {
 					startBot(identity, "login");
 
 					// this is the message you send to user!!
-					res.send("Thank you! I'm excited to help you make the most of each day");
+					res.render('authorized');
 
 				} else {
 

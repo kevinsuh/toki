@@ -149,7 +149,7 @@ export default function(controller) {
 					}
 
 					if (!accessToken) {
-						convo.say(`Hey <@${SlackUserId}>, for me to help you protect your attention, I need to be able to set your Do Not Disturb functionality and make sure your unread messages are presented properly after a focus session`);
+						convo.say(`Hey <@${SlackUserId}>, for me to help you focus at work, I need to be able to set your *Do Not Disturb* functionality!`);
 						convo.say(`Please hit *Authorize* at this link so I can do this for you:\n${signInWithSlackLink}`);
 						convo.next();
 					} else {
