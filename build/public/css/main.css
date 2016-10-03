@@ -14,3 +14,11 @@ html, body {
   position: absolute;
   top: 30px;
   left: 15px; }
+
+.inner.cover {
+  position: relative; }
+  .inner.cover.installed {
+    text-align: left;
+    width: 900px;
+    padding-left: 110px;
+    padding-top: 10px; }

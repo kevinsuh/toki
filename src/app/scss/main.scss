@@ -19,3 +19,17 @@ html, body {
 	top: 30px;
 	left: 15px;
 }
+
+.inner.cover {
+	position: relative;
+
+	&.installed {
+
+		text-align: left;
+		width: 900px;
+		padding-left: 110px;
+		padding-top: 10px;
+
+	}
+
+}
