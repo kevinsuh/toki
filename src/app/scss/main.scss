@@ -5,3 +5,17 @@ html, body {
 	margin: 0;
 	font-family: $font-family-base !important;
 }
+
+#hello-toki {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 85px;
+}
+
+#splash-logo-combined {
+	height: 55px;
+	position: absolute;
+	top: 30px;
+	left: 15px;
+}
