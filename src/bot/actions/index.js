@@ -3,6 +3,8 @@ import http from 'http';
 import bodyParser from 'body-parser';
 import models from '../../app/models';
 
+import { tokiExplainAttachments } from '../lib/constants';
+
 // initiate conversation on first install
 export function firstInstallInitiateConversation(bot, team) {
 
@@ -19,15 +21,12 @@ export function firstInstallInitiateConversation(bot, team) {
 		 * 		INITIATE CONVERSATION WITH INSTALLER
 		 */
 		
-		convo.say(`Hey! I'm Toki!`);
-		convo.say(`Thanks for inviting me to your team. I'm excited to work together :grin:`);
-
-		convo.on('end', (convo) => {
-			// let's save team info to DB
-			console.log("\n\nteam info:\n\n")
-			console.log(team);
-			
+		convo.say(`Hey <@${team.createdBy}>! I'm Toki. Nice to meet you :wave:`);
+		convo.say({
+			text: `I help empower deep work for teams. Here's how I do it:`,
+			attachments: tokiExplainAttachments
 		});
+		convo.say(`I'm here whenever you're ready to go! Just let me know when you want to \`/focus\` on something. If you want to share me to others, you can \`/explain @user\``);
 
 	});
 

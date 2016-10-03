@@ -20,6 +20,8 @@ var _models = require('../../app/models');
 
 var _models2 = _interopRequireDefault(_models);
 
+var _constants = require('../lib/constants');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // initiate conversation on first install
@@ -38,14 +40,12 @@ function firstInstallInitiateConversation(bot, team) {
    * 		INITIATE CONVERSATION WITH INSTALLER
    */
 
-		convo.say('Hey! I\'m Toki!');
-		convo.say('Thanks for inviting me to your team. I\'m excited to work together :grin:');
-
-		convo.on('end', function (convo) {
-			// let's save team info to DB
-			console.log("\n\nteam info:\n\n");
-			console.log(team);
+		convo.say('Hey <@' + team.createdBy + '>! I\'m Toki. Nice to meet you :wave:');
+		convo.say({
+			text: 'I help empower deep work for teams. Here\'s how I do it:',
+			attachments: _constants.tokiExplainAttachments
 		});
+		convo.say('I\'m here whenever you\'re ready to go! Just let me know when you want to `/focus` on something. If you want to share me to others, you can `/explain @user`');
 	});
 }
 

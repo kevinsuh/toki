@@ -432,8 +432,8 @@ export const timeZoneAttachments = [
 
 export const tokiExplainAttachments = [
 	{
-		title: "Share your current focus",
-		text: "In any channel, use the command `/focus` to share what you're working on and for how long. I'll set your Do Not Disturb (DND) on during that time, so that you don't get interrupted by non-urgent notifications. If you finish early, you can use the `/end` command",
+		title: "Focus on a task",
+		text: "In any channel, use the command `/focus on [task] for [time]`. This turns on your Do Not Disturb (DND) during that time period and shares what you're working on to your team. If you finish early, you can use the `/end` command",
 		mrkdwn_in: [ "text" ],
 		color: colorsHash.toki_purple.hex,
 		attachment_type: "default",
@@ -441,8 +441,8 @@ export const tokiExplainAttachments = [
 		fallback: "Set my current focus"
 	},
 	{
-		title: "Make Slack work for your teammates",
-		text: "In any channel, use the command `/pulse @user` to see your teammate's current focus. If you're working on something relevant, I'll push a notification through. Otherwise, you can send a message with the ease of mind that you aren't breaking their flow with a notification",
+		title: "Stay in sync with your team",
+		text: "In any channel, use the command `/pulse @user` to see what your teammate's focused on. If you're working on something relevant, I can push a notification through. Otherwise, you can send a message with the ease of mind that you aren't breaking their flow with a notification",
 		mrkdwn_in: [ "text" ],
 		color: colorsHash.toki_purple.hex,
 		attachment_type: "default",
@@ -450,13 +450,13 @@ export const tokiExplainAttachments = [
 		fallback: "See team member's pulse"
 	},
 	{
-		title: "No more attention residue",
-		text: "If you read a direct message while you're focused and don't respond, I'll automatically mark that message as unread once your current focus ends. This helps you work on your current task, knowing that you'll get to your other requests once you're ready to switch contexts",
+		title: "Track your focused time",
+		text: "Each morning, I'll tell you what tasks you focused on the day before. This builds a picture of how you spent your day and helps you be more intentional with your time. I don't share this with anyone else but you!",
 		mrkdwn_in: [ "text" ],
 		color: colorsHash.toki_purple.hex,
 		attachment_type: "default",
 		callback_id: "TOKI_OPTIONS",
-		fallback: "No more unattended requests"
+		fallback: "Daily reflection"
 	}
 ]
 

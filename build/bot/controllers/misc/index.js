@@ -72,11 +72,11 @@ exports.default = function (controller) {
 					convo.say('Hope you\'re having a great day so far, <@' + SlackUserId + '>!');
 				}
 
-				convo.say('Think of me as a sidekick for your team\'s attention. *I help you manage your Slack notifications, so that you can go heads down with confidence* that you won\'t get interrupted with non-urgent requests');
 				convo.say({
-					text: 'Here\'s how I do this:',
+					text: 'I help empower deep work for teams. Here\'s how I do it:',
 					attachments: _constants.tokiExplainAttachments
 				});
+
 				convo.say('I\'m here whenever you\'re ready to go! Just let me know when you want to `/focus` on something, or check a teammate\'s `/pulse` :raised_hands:');
 
 				convo.on('end', function (convo) {});
