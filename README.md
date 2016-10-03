@@ -1,8 +1,8 @@
 # [Toki](https://tokibot.com): deep work for collaborative teams
 
-**Toki is a slackbot that helps individuals focus at work, track their productivity and stay in sync with their team.** Its goal is to empower deep work for teams, through the awesome benefits of Slack (collaboration, transparency and fun).
+**Toki is a Slack bot that helps individuals focus at work, track their productivity and stay in sync with their team.** Its goal is to empower deep work for teams, through the benefits of Slack (collaboration, transparency and fun).
 
-Toki enables you to `/focus on [task] for [time]`. This command turns on your Do Not Disturb (DND) in Slack and shares what you're working on to your team. You can see what teammates are focused on by checking `/pulse @user`. Toki will also store these focused sessions and provide daily reflections of how you spend your time. Think of `/focus` as an upgraded `/dnd` that makes deep work more collaborative, transparent and informative.
+Toki enables you to `/focus on [task] for [time]`. This command turns on your Do Not Disturb (DND) mode in Slack and shares what you're working on to your team. You can see what teammates are focused on by checking `/pulse @user`. Toki will also store these focused sessions to provide daily reflections of how you spend your time. Think of `/focus` as an upgrade to `/dnd` that makes deep work more collaborative, transparent and informative.
 
 Toki is written in Javascript and uses the excellent [Botkit](https://github.com/howdyai/botkit) and [Wit](https://wit.ai) libraries. The Botkit + Express integration is inspired from this [tutorial](https://github.com/mvaragnat/botkit-express-demo). If you are looking for a foundation to build your own Slack bot app with Botkit and Express, check out that tutorial.
 
@@ -23,27 +23,27 @@ Toki is written in Javascript and uses the excellent [Botkit](https://github.com
   * `/focus [task] for [time]`
   * Turns on your DND in Slack while in "focus" mode
   * Shares what you are working on to your team
-  * Toki stores this information for daily / weekly reflection
+  * Toki stores this information for daily reflection
   * You can end your session at any point, which turns off your DND (via interactive button, or `/end`)
 
 ### View your team's pulse
 <img src="/build/public/gifs/dashboard.gif" width="80%" alt="Team Pulse">
   * Toki will dynamically update its channels whenever one of the channel members enters a focus session
-  * This allows you to create information channels (i.e. `#pulse-backend`) and get a snapshot of what teams are focused on
+  * This allows you to create information channels (i.e. `#pulse-backend`) to get a snapshot of what teams are focused on
   * See what an individual is up to with `/pulse @user`
 
 ### Send appropriate notifications
 <img src="/build/public/gifs/collaborate.gif" width="80%" alt="Collaborate Now">
   * You are able to send notifications through each teammate's `Collaborate Now` button, through which Toki temporarily turns off the user's DND and sends a ping to start a conversation
-  * This helps segment notifications to only be ones that preserve an individual's context or is actually urgent
-  * You are also able to `Collaborate Now` when you see an individual's specific `/pulse @user`
+  * This helps segment notifications to be ones that preserve an individual's context or is actually urgent
+  * You are also able to `Collaborate Now` when you see a specific individual's `/pulse @user`
 
 ### Daily Reflection
 <img src="/build/public/images/reflection_example.png" width="80%" alt="Daily Reflection">
-  * Toki provides you with a daily cadence of how you spent your time
-  * This helps build a habit of intentionality with your time, and see pictures of what you got done each day and week
+  * Toki provides a daily cadence of how you spent your focused time
+  * This helps you build a habit of being intentional with your time, and get pictures of what you got done each day
 
-*Note: Toki has a web app interface in its roadmap. This would be hosted on another server that speaks to the API end points on this express server in the `/app/api` folder.*
+*Note: Toki has a web app interface in its roadmap. We plan this to be a React + Redux frontend hosted on a separate server that speaks to the API end points on this server in `/app/api`.*
 
 <a name="directory-structure">
 # Directory Structure
@@ -66,7 +66,7 @@ build/
 
 **Notes:**
 * There are two main sub-directores: `app` and `bot`
-  * `app` is for our Express web application, including routes, models that link up to our DB tables, and our API calls
+  * `app` is for our Express web server, including routes, models that link up to our DB tables, and our API calls
   * `bot` holds the functionality for Toki's existence in slack
     * `controllers` are used to respond to user events, and engage them in conversation
     * `actions` are when Toki proactively reaches out
@@ -75,7 +75,7 @@ build/
   * Code that does need to be compiled is held at the root-level of our project. Currently, this only includes config files and our `/views` directory
     * Our static assets are held in `/build/public`
 * `cron.js` is used for our focus sessions and daily reflections. It holds various functions that get run every 5 seconds (configured in `server.js`)
-* `server.js` is where our ExpressJS app is created, and where Toki's installed bots are turned on to listen via [Slack RTM](https://api.slack.com/rtm)
+* `server.js` is where our Express server is created, and where Toki's installed bots are turned on to listen via [Slack RTM](https://api.slack.com/rtm)
 
 <a name="getting-started">
 # Getting Started
