@@ -70,7 +70,7 @@ exports.default = function (controller) {
 			process.env.SLACK_REDIRECT = process.env.DEV_SLACK_REDIRECT;
 		}
 
-		var signInWithSlackLink = 'https://slack.com/oauth/authorize?client_id=' + process.env.SLACK_ID + '&redirect_uri=' + process.env.SLACK_REDIRECT + 'login&scope=channels:history,dnd:write,dnd:read';
+		var signInWithSlackLink = 'https://slack.com/oauth/authorize?client_id=' + process.env.SLACK_ID + '&redirect_uri=' + process.env.SLACK_REDIRECT + 'login&scope=dnd:write,dnd:read';
 
 		if (message) {
 			SlackUserId = message.user;
