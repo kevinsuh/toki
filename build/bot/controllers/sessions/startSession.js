@@ -19,7 +19,7 @@ exports.default = function (controller) {
 
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-			convo.say('It looks like you’re trying to get something done! :palm_tree:');
+			convo.say('It looks like you\u2019re trying to get something done! :palm_tree:');
 			convo.say("Just type `/focus [put task here] for [put duration here]`\nLike this `/focus squash front-end bug for 45 min` or `/focus marketing report until 4pm`");
 		});
 	});
@@ -34,7 +34,7 @@ exports.default = function (controller) {
 
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-			convo.say('It looks like you’re trying to get something done! :palm_tree:');
+			convo.say('It looks like you\u2019re trying to get something done! :palm_tree:');
 			convo.say("Just type `/focus [put task here] for [put duration here]`\nLike this `/focus squash front-end bug for 45 min` or `/focus marketing report until 4pm`");
 		});
 	});
@@ -48,7 +48,7 @@ exports.default = function (controller) {
   * 			- decide session duration
   */
 	controller.on('begin_session_flow', function (bot, message) {
-		var config = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+		var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 		var content = config.content;
 		var changeTimeAndTask = config.changeTimeAndTask;
 
@@ -578,7 +578,7 @@ exports.default = function (controller) {
 
 						bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-							var text = ':palm_tree: I’ll follow up with you to send your message after you\'re done working on `' + content + '` at *' + endTimeString + '*. Good luck! :palm_tree:';
+							var text = ':palm_tree: I\u2019ll follow up with you to send your message after you\'re done working on `' + content + '` at *' + endTimeString + '*. Good luck! :palm_tree:';
 							var attachments = [{
 								attachment_type: 'default',
 								callback_id: "DEFERRED_PING_SESSION_OPTIONS",

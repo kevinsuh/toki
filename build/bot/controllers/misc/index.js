@@ -183,7 +183,7 @@ exports.default = function (controller) {
 
 									// 2. add amount of time
 									fields.push({
-										value: startTimeString + ' – ' + endTimeString + ' *(' + sessionTimeString + ')*',
+										value: startTimeString + ' \u2013 ' + endTimeString + ' *(' + sessionTimeString + ')*',
 										short: true
 									});
 								});

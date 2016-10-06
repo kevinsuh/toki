@@ -33,7 +33,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 
 function updateDashboardForChannelId(bot, ChannelId) {
-	var config = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+	var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
 
 	var BotSlackUserId = bot.identity.id;
@@ -341,7 +341,7 @@ function updateDashboardForChannelId(bot, ChannelId) {
 														attachments.forEach(function (attachment) {
 															console.log(attachment);
 															if (attachment.callback_id == _constants.constants.dashboardActions) {
-																attachment.text = 'Start a focus session by clicking the button below :point_down:\nI’ll post what you’re working on here so your team knows what you’re focused on :dancers:\nI’ll also snooze your non-urgent notifications :palm_tree:';
+																attachment.text = 'Start a focus session by clicking the button below :point_down:\nI\u2019ll post what you\u2019re working on here so your team knows what you\u2019re focused on :dancers:\nI\u2019ll also snooze your non-urgent notifications :palm_tree:';
 															}
 															teamPulseDashboardMessageObject.text = ' ';
 														});

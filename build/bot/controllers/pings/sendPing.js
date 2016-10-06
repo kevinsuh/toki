@@ -15,7 +15,7 @@ exports.default = function (controller) {
 
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-			convo.say('It looks like you’re trying to ping a teammate! :mailbox_with_mail:');
+			convo.say('It looks like you\u2019re trying to ping a teammate! :mailbox_with_mail:');
 			convo.say("Just type `/ping @user [message]`\nLike this `/ping @colleen did Janet submit the assets to the portal yet?`");
 		});
 	});
@@ -32,7 +32,7 @@ exports.default = function (controller) {
 
 		bot.startPrivateConversation({ user: SlackUserId }, function (err, convo) {
 
-			convo.say('It looks like you’re trying to ping a teammate! :mailbox_with_mail:');
+			convo.say('It looks like you\u2019re trying to ping a teammate! :mailbox_with_mail:');
 			convo.say("Just type `/ping @user [message]`\nLike this `/ping @colleen did Janet submit the assets to the portal yet?`");
 		});
 	});
@@ -42,7 +42,7 @@ exports.default = function (controller) {
   * 		this will begin collaborate now flow with user who you clicked
   */
 	controller.on('collaborate_now_flow', function (bot, message) {
-		var config = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+		var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
 
 		var botToken = bot.config.token;
@@ -243,7 +243,7 @@ exports.default = function (controller) {
   * 		this will begin the ping flow with user
   */
 	controller.on('ping_flow', function (bot, message) {
-		var config = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+		var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
 
 		console.log('\n\n\n PING FLOW:');
@@ -502,7 +502,7 @@ exports.default = function (controller) {
 									if (pings.length == 0) {
 
 										convo.say('You have no pings to cancel!');
-										var _text = 'Good luck with `' + content + '` and I’ll see you at *' + endTimeString + '* :wave:';
+										var _text = 'Good luck with `' + content + '` and I\u2019ll see you at *' + endTimeString + '* :wave:';
 										var config = { customOrder: true, order: ['endSession'] };
 										var attachments = (0, _messageHelpers.getStartSessionOptionsAttachment)(pings, config);
 
@@ -525,7 +525,7 @@ exports.default = function (controller) {
 
 										convo.say('The ping to <@' + ToUser.dataValues.SlackUserId + '> has been canceled!');
 
-										var _text2 = 'Good luck with `' + content + '` and I’ll see you at *' + endTimeString + '* :wave:';
+										var _text2 = 'Good luck with `' + content + '` and I\u2019ll see you at *' + endTimeString + '* :wave:';
 										var _config = { customOrder: true, order: ['endSession'] };
 										var _attachments = (0, _messageHelpers.getStartSessionOptionsAttachment)(pings, _config);
 
@@ -574,7 +574,7 @@ exports.default = function (controller) {
 														convo.say('Great, I\'ve canceled pings ' + pingNumberCancelString + '!');
 													}
 
-													var _text4 = 'Good luck with `' + content + '` and I’ll see you at *' + endTimeString + '* :wave:';
+													var _text4 = 'Good luck with `' + content + '` and I\u2019ll see you at *' + endTimeString + '* :wave:';
 													var _config2 = { customOrder: true, order: ['endSession'] };
 													var _attachments3 = (0, _messageHelpers.getStartSessionOptionsAttachment)(pings, _config2);
 

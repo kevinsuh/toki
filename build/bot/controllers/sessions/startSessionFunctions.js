@@ -25,7 +25,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 // confirm that user has tz configured before continuing
 function confirmTimeZoneExistsThenStartSessionFlow(convo) {
-	var text = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
+	var text = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 	var _convo$sessionStart = convo.sessionStart;
 	var SlackUserId = _convo$sessionStart.SlackUserId;
 	var UserId = _convo$sessionStart.UserId;
@@ -292,7 +292,7 @@ function askToOverrideCurrentSession(convo) {
  */
 // ask which task the user wants to work on
 function askForSessionContent(convo) {
-	var question = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
+	var question = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 	var _convo$sessionStart5 = convo.sessionStart;
 	var SlackUserId = _convo$sessionStart5.SlackUserId;
 	var tz = _convo$sessionStart5.tz;

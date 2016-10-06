@@ -38,8 +38,6 @@ export function startBot(team, type) {
 // on register team
 export function saveUserOnRegistration(auth, identity) {
 
-	return;
-
 	controller.storage.users.get(identity.user_id, function(err, user) {
 
 		var isnew = user ? false : true;

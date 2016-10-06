@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 exports.confirmTimeZoneExistsThenStartPingFlow = confirmTimeZoneExistsThenStartPingFlow;
 exports.askForPingTime = askForPingTime;
@@ -36,7 +36,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 
 function confirmTimeZoneExistsThenStartPingFlow(convo) {
-	var text = arguments.length <= 1 || arguments[1] === undefined ? 'One more thing! Since I help you make time for your priorities, I need to know your *timezone* before we set our first focus session' : arguments[1];
+	var text = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'One more thing! Since I help you make time for your priorities, I need to know your *timezone* before we set our first focus session';
 	var _convo$pingObject = convo.pingObject;
 	var SlackUserId = _convo$pingObject.SlackUserId;
 	var UserId = _convo$pingObject.UserId;
@@ -124,7 +124,7 @@ function startPingFlow(convo) {
 }
 
 function askWhoToPing(convo) {
-	var text = arguments.length <= 1 || arguments[1] === undefined ? 'Who would you like to ping? You can type their username, like `@emily`' : arguments[1];
+	var text = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'Who would you like to ping? You can type their username, like `@emily`';
 	var _convo$pingObject3 = convo.pingObject;
 	var SlackUserId = _convo$pingObject3.SlackUserId;
 	var tz = _convo$pingObject3.tz;
@@ -165,7 +165,7 @@ function askWhoToPing(convo) {
 				convo.pingObject.pingSlackUserIds = pingSlackUserIds;
 				handlePingSlackUserIds(convo);
 			} else {
-				askWhoToPing(convo, 'Whoops! Try *typing @ + the first few letters of the intended recipient’s first name*, like `@matt` , then clicking on the correct recipient');
+				askWhoToPing(convo, 'Whoops! Try *typing @ + the first few letters of the intended recipient\u2019s first name*, like `@matt` , then clicking on the correct recipient');
 			}
 
 			convo.next();
@@ -368,8 +368,8 @@ function askForQueuedPingMessages(convo) {
 						if (customTimeString == endTimeString) {
 							// sessionEnd ping
 							convo.pingObject.deliveryType = _constants.constants.pingDeliveryTypes.sessionEnd;
-							convo.say('Thank you for being mindful of <@' + user.dataValues.SlackUserId + '>’s attention :raised_hands:');
-							convo.say('I’ll send your message at *' + customTimeString + '*! :mailbox_with_mail:');
+							convo.say('Thank you for being mindful of <@' + user.dataValues.SlackUserId + '>\u2019s attention :raised_hands:');
+							convo.say('I\u2019ll send your message at *' + customTimeString + '*! :mailbox_with_mail:');
 							convo.next();
 						} else {
 
@@ -377,7 +377,7 @@ function askForQueuedPingMessages(convo) {
 								// grenade ping
 								convo.pingObject.pingTimeObject = customTimeObject;
 								convo.pingObject.deliveryType = _constants.constants.pingDeliveryTypes.grenade;
-								convo.say('Excellent! I’ll be sending your message to <@' + user.dataValues.SlackUserId + '> at *' + customTimeObject.format("h:mma") + '* :mailbox_with_mail:');
+								convo.say('Excellent! I\u2019ll be sending your message to <@' + user.dataValues.SlackUserId + '> at *' + customTimeObject.format("h:mma") + '* :mailbox_with_mail:');
 							} else {
 								// invalid time for grenade ping
 								var minutesBuffer = Math.round(minutesLeft / 4);
@@ -429,7 +429,7 @@ function askForQueuedPingMessages(convo) {
 }
 
 function askForPingTime(convo) {
-	var text = arguments.length <= 1 || arguments[1] === undefined ? '' : arguments[1];
+	var text = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 	var _convo$pingObject6 = convo.pingObject;
 	var SlackUserId = _convo$pingObject6.SlackUserId;
 	var bot = _convo$pingObject6.bot;
@@ -459,7 +459,7 @@ function askForPingTime(convo) {
 			var endTimeString = endTimeObject.format("h:mma");
 
 			if (text == '') {
-				text = 'Would you like to send this urgent message now, or at a specific time before ' + endTimeString + '? If it’s the latter, just tell me the time, like `' + exampleEndTimeString + '`';
+				text = 'Would you like to send this urgent message now, or at a specific time before ' + endTimeString + '? If it\u2019s the latter, just tell me the time, like `' + exampleEndTimeString + '`';
 			}
 
 			var attachments = [{
@@ -496,7 +496,7 @@ function askForPingTime(convo) {
 							// success!
 							convo.pingObject.pingTimeObject = customTimeObject;
 							convo.pingObject.deliveryType = _constants.constants.pingDeliveryTypes.grenade;
-							convo.say('Excellent! I’ll be sending your message to <@' + user.dataValues.SlackUserId + '> at *' + customTimeObject.format("h:mma") + '* :mailbox_with_mail:');
+							convo.say('Excellent! I\u2019ll be sending your message to <@' + user.dataValues.SlackUserId + '> at *' + customTimeObject.format("h:mma") + '* :mailbox_with_mail:');
 						} else {
 							// has to be less than or equal to end time
 							var minutesBuffer = Math.round(minutesLeft / 4);

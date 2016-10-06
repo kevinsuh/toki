@@ -43,7 +43,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 
 function getRandomExample(type) {
-	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
 
 	var example = false;
@@ -171,7 +171,7 @@ function witDurationToMinutes(duration) {
  * @return {string}         hour + minutes
  */
 function convertMinutesToHoursString(minutes) {
-	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	var abbreviation = config.abbreviation;
 
 
@@ -347,7 +347,7 @@ function dateStringToMomentTimeZone(timeString, timeZone) {
  * @return {array of SlackUserIds} ['UIXUXUXU'];
  */
 function getUniqueSlackUsersFromString(string) {
-	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	var normalSlackNames = config.normalSlackNames;
 	// by default will get translated into SlackUserId
 
@@ -376,7 +376,7 @@ function getUniqueSlackUsersFromString(string) {
 
 // returns array joined together into a string
 function commaSeparateOutStringArray(a) {
-	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	var codeBlock = config.codeBlock;
 	var slackNames = config.slackNames;
 	var SlackUserIds = config.SlackUserIds;
@@ -402,7 +402,7 @@ function commaSeparateOutStringArray(a) {
 // mainly used for convo.ask, when you do natural language instead
 // of clicking the button
 function getMostRecentMessageToUpdate(userChannel, bot) {
-	var callbackId = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+	var callbackId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 	var sentMessages = bot.sentMessages;
 
 
@@ -558,7 +558,7 @@ function getHandleQueuedPingActions(ping) {
 
 // include ping actions if > 0 pings
 function getStartSessionOptionsAttachment(pings) {
-	var config = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+	var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	var customOrder = config.customOrder;
 	var order = config.order;
 
