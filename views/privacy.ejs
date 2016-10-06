@@ -44,10 +44,26 @@
 
 				<div class="cover-container">
 
-					<div class="inner cover installed">
+					<div class="masthead clearfix relative">
+						<div class="inner" >
+
+							<a href="/">
+								<img src="/assets/images/splash_logo_combined.png" id="splash-logo-combined">
+							</a>
+
+							<ul class="nav masthead-nav">
+								<li><a class="header-link" href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot,commands,channels:history,dnd:write,dnd:read'>Get Toki</a></li>
+								<li class="active"><a class="header-link" href="privacy">Privacy</a></li>
+								<li><a class="header-link" href="mailto:kevinsuh34@gmail.com">Contact</a></li>
+							</ul>
+
+						</div>
+					</div>
+
+					<div class="inner cover installed stick-left">
 
 
-						<h2 class="cover-heading">Toki, Inc. Privacy Policy</h2>
+						<h1 class="cover-heading">Toki, Inc. Privacy Policy</h2>
 
 						<p class="lead par">
 							The Toki team takes your privacy and the security of your data very seriously. Communication between Toki and Slack is encrypted using SSL. We are <a href="https://github.com/kevinsuh/toki" target="_blank">open source</a> and do not intend to capitalize on your data in any capacity.

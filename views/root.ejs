@@ -47,10 +47,12 @@
 					<div class="masthead clearfix">
 						<div class="inner" >
 
-							<img src="/assets/images/splash_logo_combined.png" id="splash-logo-combined">
+							<a href="/">
+								<img src="/assets/images/splash_logo_combined.png" id="splash-logo-combined">
+							</a>
 
 							<ul class="nav masthead-nav">
-								<li class="active"><a class="header-link" href="#">Get Toki</a></li>
+								<li class="active"><a class="header-link" href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot,commands,channels:history,dnd:write,dnd:read'>Get Toki</a></li>
 								<li><a class="header-link" href="privacy">Privacy</a></li>
 								<li><a class="header-link" href="mailto:kevinsuh34@gmail.com">Contact</a></li>
 							</ul>
