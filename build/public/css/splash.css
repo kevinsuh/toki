@@ -52,7 +52,6 @@ body {
 body {
   color: black !important;
   text-align: center;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   font-family: 'Lato', sans-serif; }
 
 /* Extra markup and styles for table-esque vertical and horizontal centering */
@@ -149,9 +148,14 @@ body {
   font-style: italic !important; }
 
 .cover-heading {
-  line-height: 50px;
+  line-height: 52px;
   font-weight: 600;
   margin-bottom: 30px; }
+
+h1.cover-heading {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+  h1.cover-heading.no-shadow {
+    text-shadow: none; }
 
 .lead {
   margin-bottom: 35px !important; }
