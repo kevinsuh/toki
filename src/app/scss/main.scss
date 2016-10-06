@@ -45,6 +45,9 @@ html, body {
 
 .relative {
 	position: relative !important;
+	&.masthead {
+		margin-bottom: 50px;
+	}
 }
 
 .site-wrapper {
@@ -66,6 +69,12 @@ html, body {
 		}
 
 	}
+}
+
+#slack-logo-header {
+  height: 28px;
+  padding-bottom: 7px;
+  padding-left: 5px;
 }
 
 // for mobile
@@ -109,7 +118,7 @@ html, body {
 			.masthead {
 				margin-top: 25px;
 				top: 20px;
-				position: inherit;
+				position: relative;
 				margin-bottom: 85px;
 			}
 
@@ -139,12 +148,18 @@ html, body {
 
 	#splash-logo-combined {
 		height: 85px;
-		top: 53px;
+		top: 14px;
 	}
 
 	#slack-logo-splash {
 		height: 100px;
 		padding-bottom: 18px;
+	}
+
+	#slack-logo-header {
+		height: 45px;
+		padding-bottom: 9px;
+		padding-left: 5px;
 	}
 
 	#how-does-it-work-link {
