@@ -25,8 +25,7 @@ html, body {
 
 @media only screen and (max-device-width: 480px) {
   .site-wrapper .site-wrapper-inner {
-    display: block;
-    padding-top: 175px; }
+    display: block; }
   .site-wrapper .cover-container h1.cover-heading {
     font-size: 100px;
     line-height: 110px;
@@ -37,7 +36,8 @@ html, body {
   .site-wrapper .cover-container .header-link {
     font-size: 30px; }
   .site-wrapper .cover-container .masthead {
-    top: 20px; }
+    top: 20px;
+    position: inherit; }
   .site-wrapper .cover-container .cta_container {
     margin-top: 60px;
     margin-bottom: 45px; }

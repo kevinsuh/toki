@@ -41,10 +41,7 @@ html, body {
 
 		// splash page
 		.site-wrapper-inner {
-
 			display: block;
-			padding-top: 175px;
-
 		}
 
 		.cover-container {
@@ -66,6 +63,7 @@ html, body {
 
 			.masthead {
 				top: 20px;
+				position: inherit;
 			}
 
 			.cta_container {
