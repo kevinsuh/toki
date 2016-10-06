@@ -194,6 +194,9 @@ h1.cover-heading {
 
 .lead {
   margin-bottom: 35px !important;
+  &.sub-header {
+    font-weight: 500;
+  }
 }
 
 .add-to-slack-button {
