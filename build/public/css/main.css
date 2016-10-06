@@ -93,5 +93,6 @@ html, body {
   #privacy-policy-url {
     font-size: 22px; }
   #hello-toki {
+    margin-top: 50px;
     position: relative;
-    height: 200px; } }
+    height: 145px; } }
