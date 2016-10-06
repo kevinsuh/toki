@@ -37,7 +37,8 @@ html, body {
     font-size: 30px; }
   .site-wrapper .cover-container .masthead {
     top: 20px;
-    position: inherit; }
+    position: inherit;
+    margin-bottom: 60px; }
   .site-wrapper .cover-container .cta_container {
     margin-top: 60px;
     margin-bottom: 45px; }
