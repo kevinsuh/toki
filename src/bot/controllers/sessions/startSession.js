@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 
 import { utterances, colorsArray, buttonValues, colorsHash, constants, timeZones } from '../../lib/constants';
 import { confirmTimeZoneExistsThenStartSessionFlow } from './startSessionFunctions';
-import { witTimeResponseToTimeZoneObject, convertMinutesToHoursString, getUniqueSlackUsersFromString, getStartSessionOptionsAttachment, commaSeparateOutStringArray, getSessionContentFromMessageObject } from '../../lib/messageHelpers';
+import { witTimeResponseToTimeZoneObject, witDurationToMinutes, convertMinutesToHoursString, getUniqueSlackUsersFromString, getStartSessionOptionsAttachment, commaSeparateOutStringArray, getSessionContentFromMessageObject } from '../../lib/messageHelpers';
 import { notInSessionWouldYouLikeToStartOne } from './index';
 import { updateDashboardForChannelId, checkIsNotAlreadyInConversation } from '../../lib/slackHelpers';
 
@@ -85,7 +85,15 @@ export default function(controller) {
 
 		if (message) {
 			SlackUserId = message.user;
-			const { text, intentObject: { entities: { intent, reminder, duration, datetime } } } = message;
+
+			const { intentObject: { entities } } = message;
+
+			text     = message.text;
+			intent   = entities.intent;
+			reminder = entities.reminder;
+			duration = entities.duration;
+			datetime = entities.datetime;
+			
 			if (!content) {
 				content = getSessionContentFromMessageObject(message);
 			}
@@ -116,8 +124,10 @@ export default function(controller) {
 					minutes = Math.round(moment.duration(customTimeObject.diff(now)).asMinutes());
 				} else if (duration) {
 					// if user puts in min and not picked up by customTimeObject
-					config.minutes = witDurationToMinutes(duration);
+					minutes = witDurationToMinutes(duration);
 				}
+			} else if (duration) {
+				minutes = witDurationToMinutes(duration);
 			}
 
 			// check for an open session before starting flow

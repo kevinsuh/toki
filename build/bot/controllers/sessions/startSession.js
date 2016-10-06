@@ -74,12 +74,15 @@ exports.default = function (controller) {
 
 		if (message) {
 			SlackUserId = message.user;
-			var _text = message.text;
-			var _message$intentObject = message.intentObject.entities;
-			var _intent = _message$intentObject.intent;
-			var _reminder = _message$intentObject.reminder;
-			var _duration = _message$intentObject.duration;
-			var _datetime = _message$intentObject.datetime;
+
+			var entities = message.intentObject.entities;
+
+
+			text = message.text;
+			intent = entities.intent;
+			reminder = entities.reminder;
+			duration = entities.duration;
+			datetime = entities.datetime;
 
 			if (!content) {
 				content = (0, _messageHelpers.getSessionContentFromMessageObject)(message);
@@ -114,8 +117,10 @@ exports.default = function (controller) {
 					minutes = Math.round(_momentTimezone2.default.duration(customTimeObject.diff(now)).asMinutes());
 				} else if (duration) {
 					// if user puts in min and not picked up by customTimeObject
-					config.minutes = witDurationToMinutes(duration);
+					minutes = (0, _messageHelpers.witDurationToMinutes)(duration);
 				}
+			} else if (duration) {
+				minutes = (0, _messageHelpers.witDurationToMinutes)(duration);
 			}
 
 			// check for an open session before starting flow
