@@ -23,6 +23,19 @@ html, body {
     padding-left: 110px;
     padding-top: 10px; }
 
+.relative {
+  position: relative !important; }
+
+.site-wrapper .cover-container h4.cover-heading {
+  text-align: left;
+  font-size: 25px;
+  margin-bottom: 5px; }
+
+.site-wrapper .cover-container .lead.par {
+  font-size: 18px;
+  line-height: 25px;
+  margin: 0 !important; }
+
 @media only screen and (max-device-width: 480px) {
   .site-wrapper .site-wrapper-inner {
     display: block; }
@@ -30,9 +43,15 @@ html, body {
     font-size: 100px;
     line-height: 110px;
     text-align: left; }
+  .site-wrapper .cover-container h4.cover-heading {
+    text-align: left;
+    font-size: 60px;
+    line-height: 65px; }
   .site-wrapper .cover-container .lead {
     font-size: 50px;
     margin-top: 85px; }
+    .site-wrapper .cover-container .lead.par {
+      font-size: 30px; }
   .site-wrapper .cover-container .header-link {
     font-size: 30px; }
   .site-wrapper .cover-container .masthead {
@@ -55,4 +74,6 @@ html, body {
     height: inherit;
     width: 65%; }
   .toki-rights {
+    font-size: 22px; }
+  #privacy-policy-url {
     font-size: 22px; } }

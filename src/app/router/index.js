@@ -28,6 +28,10 @@ export default (app) => {
 		res.render('root', variables);
 	});
 
+	app.get('/privacy', (req, res) => {
+		res.render('privacy');
+	})
+
 	app.use('/invite', invite);
 
 	// web app

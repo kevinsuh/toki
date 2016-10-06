@@ -59,6 +59,10 @@ exports.default = function (app) {
 		res.render('root', variables);
 	});
 
+	app.get('/privacy', function (req, res) {
+		res.render('privacy');
+	});
+
 	app.use('/invite', _invite2.default);
 
 	// web app

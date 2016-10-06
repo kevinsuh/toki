@@ -34,6 +34,31 @@ html, body {
 
 }
 
+.relative {
+	position: relative !important;
+}
+
+.site-wrapper {
+
+	.cover-container {
+
+		h4.cover-heading {
+			text-align: left;
+			font-size: 25px;
+			margin-bottom: 5px;
+		}
+
+		.lead {
+			&.par {
+				font-size: 18px;
+				line-height: 25px;
+				margin: 0 !important;
+			}
+		}
+
+	}
+}
+
 // for mobile
 @media only screen and (max-device-width: 480px) {
 
@@ -52,9 +77,18 @@ html, body {
 				text-align: left;
 			}
 
+			h4.cover-heading {
+				text-align: left;
+				font-size: 60px;
+				line-height: 65px;
+			}
+
 			.lead {
 				font-size: 50px;
 				margin-top: 85px;
+				&.par {
+					font-size: 30px;
+				}
 			}
 
 			.header-link {
@@ -99,6 +133,10 @@ html, body {
 	}
 
 	.toki-rights {
+		font-size: 22px;
+	}
+
+	#privacy-policy-url {
 		font-size: 22px;
 	}
 
