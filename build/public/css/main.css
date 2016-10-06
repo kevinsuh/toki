@@ -42,7 +42,8 @@ html, body {
 .site-wrapper .cover-container .lead.par {
   font-size: 18px;
   line-height: 25px;
-  margin: 0 !important; }
+  margin: 0 !important;
+  text-shadow: none; }
 
 #slack-logo-header {
   height: 28px;

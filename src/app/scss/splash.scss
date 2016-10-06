@@ -8,18 +8,18 @@
 a,
 a:focus,
 a:hover {
-  color: #fff;
+  color: black;
 }
 
 #how-does-it-work-link {
   font-style: italic;
   margin-top: 10px;
-  color: white;
+  color: black;
   display: inline-block;
 }
 
 #privacy-policy-url {
-  color: rgba(255, 255, 255, 0.5);
+  color: black;
 }
 
 /* Custom default button */
@@ -34,7 +34,7 @@ a:hover {
 
 /* Custom Text Input */
 .btn-secondary {
-  color: white;
+  color: black;
   background-color: coral;
 }
 
@@ -60,10 +60,10 @@ a:hover {
 html,
 body {
   height: 100%;
-  background-color: $toki-blue !important;
+  background-color: $light-green !important;
 }
 body {
-  color: #fff !important;
+  color: black !important;
   text-align: center;
   text-shadow: 0 1px 3px rgba(0,0,0,.5);
   font-family: 'Lato', sans-serif;
@@ -123,8 +123,7 @@ body {
   padding-left: 0;
   font-size: 16px;
   font-weight: bold;
-  color: #fff; /* IE8 proofing */
-  color: rgba(255,255,255,.75);
+  color: black; /* IE8 proofing */
   border-bottom: 2px solid transparent;
 }
 .masthead-nav > li > a:hover,
@@ -136,7 +135,7 @@ body {
 .masthead-nav > .active > a,
 .masthead-nav > .active > a:hover,
 .masthead-nav > .active > a:focus {
-  color: #fff;
+  color: black;
   border-bottom-color: #fff;
 }
 
@@ -170,8 +169,7 @@ body {
  */
 
 .mastfoot {
-  color: #999; /* IE8 proofing */
-  color: rgba(255,255,255,.5);
+  color: black;
 }
 
 
