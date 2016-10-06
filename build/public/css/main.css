@@ -22,3 +22,36 @@ html, body {
     width: 900px;
     padding-left: 110px;
     padding-top: 10px; }
+
+@media only screen and (max-device-width: 480px) {
+  .site-wrapper .site-wrapper-inner {
+    display: block;
+    padding-top: 175px; }
+  .site-wrapper .cover-container h1.cover-heading {
+    font-size: 100px;
+    line-height: 110px;
+    text-align: left; }
+  .site-wrapper .cover-container .lead {
+    font-size: 50px;
+    margin-top: 85px; }
+  .site-wrapper .cover-container .header-link {
+    font-size: 30px; }
+  .site-wrapper .cover-container .masthead {
+    top: 20px; }
+  .site-wrapper .cover-container .cta_container {
+    margin-top: 60px;
+    margin-bottom: 45px; }
+  .site-wrapper .cover-container .inner {
+    padding-left: 50px; }
+  #splash-logo-combined {
+    height: 85px; }
+  #slack-logo-splash {
+    height: 100px;
+    padding-bottom: 18px; }
+  #how-does-it-work-link {
+    font-size: 35px; }
+  .add-to-slack-button {
+    height: inherit;
+    width: 65%; }
+  .toki-rights {
+    font-size: 22px; } }

@@ -4,8 +4,8 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<link rel="icon" href="https://tokibot.com/assets/images/icon.png">
-		<link rel="stylesheet" type="text/css" href="/assets/css/main.css" />
 		<link rel="stylesheet" type="text/css" href="/assets/css/splash.css" />
+		<link rel="stylesheet" type="text/css" href="/assets/css/main.css" />
 		<link rel="stylesheet" href="/css/bootstrap.min.css" />
 		<link href='https://fonts.googleapis.com/css?family=Lato:400,900italic,700italic,900,700,400italic' rel='stylesheet' type='text/css'>
 		<script src="/js/jquery.min.js"></script>
@@ -50,8 +50,8 @@
 							<img src="/assets/images/splash_logo_combined.png" id="splash-logo-combined">
 
 							<ul class="nav masthead-nav">
-								<li class="active"><a href="#">Get Toki</a></li>
-								<li><a href="mailto:hey@tokibot.com">Contact</a></li>
+								<li class="active"><a class="header-link" href="#">Get Toki</a></li>
+								<li><a class="header-link" href="mailto:kevinsuh34@gmail.com">Contact</a></li>
 							</ul>
 
 						</div>
@@ -81,11 +81,12 @@
 
 							<p class="lead">Toki superpowers your <span class="italics">Do Not Disturb</span> in Slack to help you focus at work, track your productivity, and stay in sync with your team</p>
 
-							<center>
+							<center class="cta_container">
 								
 								<div>
-									<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot,commands,channels:history,dnd:write,dnd:read'><img alt="Add to Slack" height="40" width="139" src="/assets/images/add_to_slack.png" /></a>
+									<a href='https://slack.com/oauth/authorize?client_id=<%= process.env.SLACK_ID %>&redirect_uri=<%= process.env.SLACK_REDIRECT %>new&scope=bot,commands,channels:history,dnd:write,dnd:read'><img class="add-to-slack-button" alt="Add to Slack" src="/assets/images/add_to_slack.png" /></a>
 								</div>
+
 								<a href="https://docs.google.com/presentation/d/1HwnDgSZRXf0rQrQEhnNgMOsqA8zchd08Q-N7DG-AgNs/edit#slide=id.p" target="_blank" id="how-does-it-work-link">How does it work?</a>
 									
 							</center>
@@ -96,7 +97,7 @@
 
 					<div class="mastfoot">
 						<div class="inner">
-							<p>© 2016 Toki Inc., All Rights Reserved</p>
+							<p class="toki-rights">© 2016 Toki Inc., All Rights Reserved</p>
 					</div>
 					</div>
 

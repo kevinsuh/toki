@@ -156,6 +156,9 @@ body {
 .lead {
   margin-bottom: 35px !important; }
 
+.add-to-slack-button {
+  height: 40px; }
+
 @media only screen and (min-width: 60em) {
   /* Pull out the header and footer */
   .masthead {

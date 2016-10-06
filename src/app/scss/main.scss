@@ -33,3 +33,74 @@ html, body {
 	}
 
 }
+
+// for mobile
+@media only screen and (max-device-width: 480px) {
+
+	.site-wrapper {
+
+		// splash page
+		.site-wrapper-inner {
+
+			display: block;
+			padding-top: 175px;
+
+		}
+
+		.cover-container {
+
+			h1.cover-heading {
+				font-size: 100px;
+				line-height: 110px;
+				text-align: left;
+			}
+
+			.lead {
+				font-size: 50px;
+				margin-top: 85px;
+			}
+
+			.header-link {
+				font-size: 30px;
+			}
+
+			.masthead {
+				top: 20px;
+			}
+
+			.cta_container {
+				margin-top: 60px;
+				margin-bottom: 45px;
+			}
+
+			.inner {
+				padding-left: 50px;
+			}
+
+		}
+
+	}
+
+	#splash-logo-combined {
+		height: 85px;
+	}
+
+	#slack-logo-splash {
+		height: 100px;
+		padding-bottom: 18px;
+	}
+
+	#how-does-it-work-link {
+		font-size: 35px;
+	}
+
+	.add-to-slack-button {
+		height: inherit;
+		width: 65%;
+	}
+
+	.toki-rights {
+		font-size: 22px;
+	}
+
+}
